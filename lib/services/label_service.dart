@@ -1,12 +1,18 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 import '../models/models.dart';
 import 'config_service.dart';
 
+enum LabelRequestEncoding { rawJpeg, multipart }
+
 class LabelService {
   static const Duration timeout = Duration(seconds: 60);
+
+  static LabelRequestEncoding get requestEncoding =>
+      kIsWeb ? LabelRequestEncoding.rawJpeg : LabelRequestEncoding.multipart;
 
   static Future<LabelResponse> getLabels(Uint8List imageBytes) async {
     if (ConfigService.shouldUseMock) {
@@ -35,36 +41,15 @@ class LabelService {
   static Future<LabelResponse> _getLiveLabels(Uint8List imageBytes) async {
     try {
       final uri = Uri.parse(ConfigService.labelEndpoint);
-      final request = http.MultipartRequest('POST', uri);
+      final http.Response response;
 
-      request.headers.addAll(ConfigService.authHeaders);
-
-      request.files.add(http.MultipartFile.fromBytes(
-        'image',
-        imageBytes,
-        filename: 'photo.jpg',
-      ));
-
-      final streamedResponse = await request.send().timeout(timeout);
-      final response = await http.Response.fromStream(streamedResponse);
-
-      if (response.statusCode == 200) {
-        final json = jsonDecode(response.body) as Map<String, dynamic>;
-        return LabelResponse.fromJson(json);
+      if (requestEncoding == LabelRequestEncoding.rawJpeg) {
+        response = await _postRawJpeg(uri, imageBytes);
       } else {
-        try {
-          final json = jsonDecode(response.body) as Map<String, dynamic>;
-          return LabelResponse.fromJson(json);
-        } catch (_) {
-          return LabelResponse(
-            ok: false,
-            error: LabelError(
-              code: 'http_${response.statusCode}',
-              message: 'HTTP 錯誤 ${response.statusCode}',
-            ),
-          );
-        }
+        response = await _postMultipart(uri, imageBytes);
       }
+
+      return _parseResponse(response);
     } on TimeoutException {
       return LabelResponse(
         ok: false,
@@ -75,6 +60,50 @@ class LabelService {
         ok: false,
         error: LabelError(code: 'network', message: '網路錯誤：$e'),
       );
+    }
+  }
+
+  static Future<http.Response> _postRawJpeg(Uri uri, Uint8List imageBytes) async {
+    return await http.post(
+      uri,
+      headers: {
+        ...ConfigService.authHeaders,
+        'Content-Type': 'image/jpeg',
+      },
+      body: imageBytes,
+    ).timeout(timeout);
+  }
+
+  static Future<http.Response> _postMultipart(Uri uri, Uint8List imageBytes) async {
+    final request = http.MultipartRequest('POST', uri);
+    request.headers.addAll(ConfigService.authHeaders);
+    request.files.add(http.MultipartFile.fromBytes(
+      'image',
+      imageBytes,
+      filename: 'photo.jpg',
+    ));
+
+    final streamedResponse = await request.send().timeout(timeout);
+    return await http.Response.fromStream(streamedResponse);
+  }
+
+  static LabelResponse _parseResponse(http.Response response) {
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      return LabelResponse.fromJson(json);
+    } else {
+      try {
+        final json = jsonDecode(response.body) as Map<String, dynamic>;
+        return LabelResponse.fromJson(json);
+      } catch (_) {
+        return LabelResponse(
+          ok: false,
+          error: LabelError(
+            code: 'http_${response.statusCode}',
+            message: 'HTTP 錯誤 ${response.statusCode}',
+          ),
+        );
+      }
     }
   }
 

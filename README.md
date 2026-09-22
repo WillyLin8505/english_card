@@ -56,12 +56,23 @@ flutter run \
 
 ### 標籤辨識
 
+**Web 平台（raw JPEG body）：**
+```
+POST {LABEL_API_BASE}/v1/label
+Header: X-API-Key: {LABEL_API_KEY}
+Header: Content-Type: image/jpeg
+Body: raw JPEG bytes
+```
+
+**iOS/Android/Desktop（multipart）：**
 ```
 POST {LABEL_API_BASE}/v1/label
 Header: X-API-Key: {LABEL_API_KEY}
 Content-Type: multipart/form-data
-Body: image (JPEG file)
+Body: image field (JPEG file)
 ```
+
+> **注意**：Web 使用 raw JPEG body 是因為某些後端/代理對 Web 的 multipart 處理有問題。Native 平台使用傳統 multipart 格式。
 
 成功回應：
 ```json
