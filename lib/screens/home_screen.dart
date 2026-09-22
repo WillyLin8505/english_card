@@ -6,6 +6,7 @@ import '../models/models.dart';
 import '../services/services.dart';
 import '../widgets/widgets.dart';
 import 'album_list_screen.dart';
+import 'immersive_label_screen.dart';
 
 enum HomeState { initial, loading, success, error }
 
@@ -141,6 +142,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_state == HomeState.success) {
+      return ImmersiveLabelScreen(
+        imagePath: _imagePath,
+        albumEntryId: _savedEntry?.id,
+        labels: _labels,
+        model: _model,
+        latencyMs: _latencyMs,
+        onLabelChanged: _updateLabel,
+        onReset: _reset,
+        onOpenAlbum: _openAlbum,
+        title: '拍照學英文',
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('拍照學英文'),
@@ -159,7 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       body: _buildBody(),
-      bottomNavigationBar: _buildBottomBar(),
+      bottomNavigationBar: _state == HomeState.initial ? _buildBottomBar() : null,
     );
   }
 
@@ -170,7 +185,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case HomeState.loading:
         return _buildLoadingState();
       case HomeState.success:
-        return _buildSuccessState();
+        return const SizedBox.shrink(); // Handled above
       case HomeState.error:
         return _buildErrorState();
     }
@@ -249,66 +264,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 Text('正在辨識照片...'),
               ],
             ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSuccessState() {
-    return Column(
-      children: [
-        if (_imagePath != null)
-          Container(
-            height: 200,
-            margin: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              image: DecorationImage(
-                image: FileImage(File(_imagePath!)),
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            children: [
-              const Text(
-                '辨識結果',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const Spacer(),
-              if (_model != null)
-                Text(
-                  _model!,
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                ),
-              if (_latencyMs != null) ...[
-                const SizedBox(width: 8),
-                Text(
-                  '${_latencyMs}ms',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                ),
-              ],
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.only(bottom: 16),
-            itemCount: _labels.length,
-            itemBuilder: (context, index) {
-              return LabelCard(
-                label: _labels[index],
-                index: index,
-                onChanged: (label) => _updateLabel(index, label),
-              );
-            },
           ),
         ),
       ],

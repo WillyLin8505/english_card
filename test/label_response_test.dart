@@ -127,5 +127,90 @@ void main() {
       expect(copied.zh, equals('馬克杯'));
       expect(copied.confidence, equals(0.91));
     });
+
+    test('should parse label with ipa and examples', () {
+      final json = {
+        'en': 'coffee',
+        'zh': '咖啡',
+        'ipa': '/ˈkɔːfi/',
+        'confidence': 0.95,
+        'examples': [
+          {'en': 'I love coffee.', 'zh': '我愛咖啡。'},
+          {'en': 'Coffee is hot.', 'zh': '咖啡很燙。'},
+        ],
+      };
+
+      final label = Label.fromJson(json);
+
+      expect(label.en, equals('coffee'));
+      expect(label.zh, equals('咖啡'));
+      expect(label.ipa, equals('/ˈkɔːfi/'));
+      expect(label.confidence, equals(0.95));
+      expect(label.examples.length, equals(2));
+      expect(label.examples[0].en, equals('I love coffee.'));
+      expect(label.examples[0].zh, equals('我愛咖啡。'));
+    });
+
+    test('should serialize label with ipa and examples', () {
+      final label = Label(
+        en: 'cup',
+        zh: '杯子',
+        ipa: '/kʌp/',
+        confidence: 0.92,
+        examples: [
+          ExampleSentence(en: 'A cup of tea.', zh: '一杯茶。'),
+        ],
+      );
+
+      final json = label.toJson();
+
+      expect(json['en'], equals('cup'));
+      expect(json['ipa'], equals('/kʌp/'));
+      expect(json['examples'], isA<List>());
+      expect(json['examples'].length, equals(1));
+      expect(json['examples'][0]['en'], equals('A cup of tea.'));
+    });
+
+    test('should handle missing ipa and examples gracefully', () {
+      final json = {'en': 'table', 'zh': '桌子'};
+      final label = Label.fromJson(json);
+
+      expect(label.en, equals('table'));
+      expect(label.ipa, isNull);
+      expect(label.examples, isEmpty);
+    });
+
+    test('should copy with new ipa', () {
+      final original = Label(en: 'cup', ipa: '/kʌp/');
+      final copied = original.copyWith(ipa: '/kəp/');
+
+      expect(copied.ipa, equals('/kəp/'));
+    });
+  });
+
+  group('ExampleSentence', () {
+    test('should parse from JSON', () {
+      final json = {'en': 'Hello world.', 'zh': '你好世界。'};
+      final example = ExampleSentence.fromJson(json);
+
+      expect(example.en, equals('Hello world.'));
+      expect(example.zh, equals('你好世界。'));
+    });
+
+    test('should serialize to JSON', () {
+      final example = ExampleSentence(en: 'Test sentence.', zh: '測試句子。');
+      final json = example.toJson();
+
+      expect(json['en'], equals('Test sentence.'));
+      expect(json['zh'], equals('測試句子。'));
+    });
+
+    test('should handle missing fields with defaults', () {
+      final json = <String, dynamic>{};
+      final example = ExampleSentence.fromJson(json);
+
+      expect(example.en, equals(''));
+      expect(example.zh, equals(''));
+    });
   });
 }

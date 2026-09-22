@@ -1,9 +1,7 @@
-import 'dart:io';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import '../models/models.dart';
 import '../services/services.dart';
-import '../widgets/widgets.dart';
+import 'immersive_label_screen.dart';
 
 class AlbumDetailScreen extends StatefulWidget {
   final AlbumEntry entry;
@@ -49,6 +47,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
           const SnackBar(
             content: Text('已儲存'),
             duration: Duration(seconds: 1),
+            backgroundColor: Color(0xFF1A1A2E),
           ),
         );
       }
@@ -65,16 +64,20 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
   Future<void> _confirmDelete() async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('刪除照片'),
-        content: const Text('確定要刪除這張照片嗎？此操作無法復原。'),
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A2E),
+        title: const Text('刪除照片', style: TextStyle(color: Colors.white)),
+        content: const Text(
+          '確定要刪除這張照片嗎？此操作無法復原。',
+          style: TextStyle(color: Colors.white70),
+        ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () => Navigator.pop(dialogContext, false),
             child: const Text('取消'),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.pop(dialogContext, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('刪除'),
           ),
@@ -95,8 +98,12 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
       final result = await showDialog<bool>(
         context: context,
         builder: (dialogContext) => AlertDialog(
-          title: const Text('未儲存的變更'),
-          content: const Text('你有未儲存的變更，要儲存嗎？'),
+          backgroundColor: const Color(0xFF1A1A2E),
+          title: const Text('未儲存的變更', style: TextStyle(color: Colors.white)),
+          content: const Text(
+            '你有未儲存的變更，要儲存嗎？',
+            style: TextStyle(color: Colors.white70),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
@@ -129,117 +136,16 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
           }
         }
       },
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('照片詳情'),
-          actions: [
-            if (_hasChanges)
-              IconButton(
-                icon: _isSaving
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.save),
-                onPressed: _isSaving ? null : _saveChanges,
-                tooltip: '儲存',
-              ),
-            IconButton(
-              icon: const Icon(Icons.delete_outline),
-              onPressed: _confirmDelete,
-              tooltip: '刪除',
-            ),
-          ],
-        ),
-        body: Column(
-          children: [
-            _buildImage(),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Row(
-                children: [
-                  const Text(
-                    '標籤',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    _formatDateTime(widget.entry.createdAt),
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.only(bottom: 16),
-                itemCount: _labels.length,
-                itemBuilder: (context, index) {
-                  return LabelCard(
-                    label: _labels[index],
-                    index: index,
-                    onChanged: (label) => _updateLabel(index, label),
-                    onTapEn: () => TtsService.speak(_labels[index].en),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
+      child: ImmersiveLabelScreen(
+        imagePath: widget.entry.imagePath,
+        albumEntryId: widget.entry.id,
+        labels: _labels,
+        onLabelChanged: _updateLabel,
+        onSave: _hasChanges ? (_isSaving ? null : _saveChanges) : null,
+        onDelete: _confirmDelete,
+        title: '照片詳情',
+        hasUnsavedChanges: _hasChanges,
       ),
     );
-  }
-
-  Widget _buildImage() {
-    return Container(
-      height: 250,
-      margin: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: Colors.grey[200],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: _buildImageContent(),
-    );
-  }
-
-  Widget _buildImageContent() {
-    if (kIsWeb) {
-      return FutureBuilder<dynamic>(
-        future: AlbumService.getImageBytes(widget.entry.id),
-        builder: (context, snapshot) {
-          if (snapshot.hasData && snapshot.data != null) {
-            return Image.memory(
-              snapshot.data,
-              fit: BoxFit.cover,
-              width: double.infinity,
-            );
-          }
-          return const Center(
-            child: Icon(Icons.image, size: 60, color: Colors.grey),
-          );
-        },
-      );
-    }
-
-    return Image.file(
-      File(widget.entry.imagePath),
-      fit: BoxFit.cover,
-      width: double.infinity,
-      errorBuilder: (context, error, stackTrace) {
-        return const Center(
-          child: Icon(Icons.broken_image, size: 60, color: Colors.grey),
-        );
-      },
-    );
-  }
-
-  String _formatDateTime(DateTime date) {
-    return '${date.year}/${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')} '
-        '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 }

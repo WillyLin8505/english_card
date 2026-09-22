@@ -19,6 +19,32 @@
 - 點擊英文單字 → 播放 TTS 發音（en-US）
 - 資料完全在裝置本機，不上傳雲端
 
+### UI定案 C：沉浸捲動
+全新沉浸式介面設計，以照片為主角：
+
+**照片頁面**
+- 全幅照片搭配毛玻璃效果的標籤 chip
+- 深色沉浸式設計 + glassmorphism 風格
+- 點擊 chip → 底部彈出詳情卡
+
+**標籤詳情卡（Bottom Sheet）**
+- 英文單字 + IPA 音標
+- 中文翻譯
+- TTS 播放按鈕（有波形動畫）
+- 1-2 個例句（英文 + 中文）
+- 編輯功能仍可用
+
+**下方捲動區**
+- 「全部單字整理」列表
+- 「所有例句」匯整
+- 每個單字/例句都支援 TTS
+
+**資料模型擴充**
+- `ipa`：IPA 音標（選填）
+- `examples`：例句清單 `[{en, zh}]`（1-2 句）
+
+> **已知限制**：目前 chip 位置使用均勻分布的佔位演算法。當 API 提供 `bbox` 座標時，將可精準定位 chip 到物件位置。程式碼中標記 `TODO(bbox)` 提醒此待辦事項。
+
 ## 快速開始
 
 ### Mock 模式（離線測試）
@@ -186,24 +212,28 @@ flutter analyze
 
 ```
 lib/
-├── main.dart                    # 應用程式進入點
+├── main.dart                       # 應用程式進入點
 ├── models/
-│   ├── label.dart               # 標籤資料模型
-│   ├── label_response.dart      # API 回應模型
-│   └── album_entry.dart         # 相簿項目模型
+│   ├── label.dart                  # 標籤資料模型（含 IPA、例句）
+│   ├── label_response.dart         # API 回應模型
+│   └── album_entry.dart            # 相簿項目模型
 ├── services/
-│   ├── config_service.dart      # 設定管理
-│   ├── compression_service.dart # 圖片壓縮
-│   ├── label_service.dart       # 標籤 API
-│   ├── album_service.dart       # 本機相簿持久化
-│   └── tts_service.dart         # TTS 語音服務
+│   ├── config_service.dart         # 設定管理
+│   ├── compression_service.dart    # 圖片壓縮
+│   ├── label_service.dart          # 標籤 API
+│   ├── album_service.dart          # 本機相簿持久化
+│   └── tts_service.dart            # TTS 語音服務
 ├── screens/
-│   ├── home_screen.dart         # 主畫面
-│   ├── album_list_screen.dart   # 相簿列表
-│   └── album_detail_screen.dart # 照片詳情
+│   ├── home_screen.dart            # 主畫面
+│   ├── album_list_screen.dart      # 相簿列表
+│   ├── album_detail_screen.dart    # 照片詳情
+│   └── immersive_label_screen.dart # 沉浸式標籤頁（UI C）
 └── widgets/
-    ├── label_card.dart          # 標籤卡片元件
-    └── error_view.dart          # 錯誤顯示元件
+    ├── label_card.dart             # 標籤卡片元件
+    ├── error_view.dart             # 錯誤顯示元件
+    ├── immersive_photo_view.dart   # 沉浸式照片+chip（UI C）
+    ├── label_detail_sheet.dart     # 標籤詳情底部卡片（UI C）
+    └── word_list_section.dart      # 單字整理區塊（UI C）
 ```
 
 ## 技術細節
@@ -228,7 +258,14 @@ AlbumEntry {
 Label {
   String en;
   String? zh;
+  String? ipa;
   double? confidence;
+  List<ExampleSentence> examples;
+}
+
+ExampleSentence {
+  String en;
+  String zh;
 }
 ```
 

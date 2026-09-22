@@ -27,11 +27,56 @@ class LabelService {
     return LabelResponse(
       ok: true,
       labels: [
-        Label(en: 'coffee', zh: '咖啡', confidence: 0.95),
-        Label(en: 'cup', zh: '杯子', confidence: 0.92),
-        Label(en: 'table', zh: '桌子', confidence: 0.88),
-        Label(en: 'morning', zh: '早晨', confidence: 0.75),
-        Label(en: 'drink', zh: '飲料', confidence: 0.70),
+        Label(
+          en: 'coffee',
+          zh: '咖啡',
+          ipa: '/ˈkɔːfi/',
+          confidence: 0.95,
+          examples: [
+            ExampleSentence(en: 'I need a cup of coffee to wake up.', zh: '我需要一杯咖啡來提神。'),
+            ExampleSentence(en: 'This coffee smells amazing.', zh: '這咖啡聞起來很香。'),
+          ],
+        ),
+        Label(
+          en: 'cup',
+          zh: '杯子',
+          ipa: '/kʌp/',
+          confidence: 0.92,
+          examples: [
+            ExampleSentence(en: 'Please pass me that cup.', zh: '請把那個杯子遞給我。'),
+            ExampleSentence(en: 'The cup is half full.', zh: '杯子裡有半杯水。'),
+          ],
+        ),
+        Label(
+          en: 'table',
+          zh: '桌子',
+          ipa: '/ˈteɪbl/',
+          confidence: 0.88,
+          examples: [
+            ExampleSentence(en: 'Put the book on the table.', zh: '把書放在桌上。'),
+            ExampleSentence(en: 'We sat around the table.', zh: '我們圍著桌子坐。'),
+          ],
+        ),
+        Label(
+          en: 'morning',
+          zh: '早晨',
+          ipa: '/ˈmɔːrnɪŋ/',
+          confidence: 0.75,
+          examples: [
+            ExampleSentence(en: 'Good morning!', zh: '早安！'),
+            ExampleSentence(en: 'I exercise every morning.', zh: '我每天早上運動。'),
+          ],
+        ),
+        Label(
+          en: 'drink',
+          zh: '飲料',
+          ipa: '/drɪŋk/',
+          confidence: 0.70,
+          examples: [
+            ExampleSentence(en: 'Would you like something to drink?', zh: '你想喝點什麼嗎？'),
+            ExampleSentence(en: 'This is my favorite drink.', zh: '這是我最愛的飲料。'),
+          ],
+        ),
       ],
       model: 'mock-v1',
       latencyMs: 800,
