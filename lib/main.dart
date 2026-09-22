@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
+import 'services/services.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await AlbumService.init();
+  await TtsService.init();
   runApp(const EnglishCardApp());
 }
 

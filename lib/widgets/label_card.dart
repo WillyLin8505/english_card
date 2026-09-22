@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import '../models/models.dart';
+import '../services/tts_service.dart';
 
 class LabelCard extends StatefulWidget {
   final Label label;
   final int index;
   final ValueChanged<Label> onChanged;
+  final VoidCallback? onTapEn;
 
   const LabelCard({
     super.key,
     required this.label,
     required this.index,
     required this.onChanged,
+    this.onTapEn,
   });
 
   @override
@@ -117,11 +120,31 @@ class _LabelCardState extends State<LabelCard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          widget.label.en,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+        GestureDetector(
+          onTap: () {
+            if (widget.onTapEn != null) {
+              widget.onTapEn!();
+            } else {
+              TtsService.speak(widget.label.en);
+            }
+          },
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                widget.label.en,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Icon(
+                Icons.volume_up,
+                size: 18,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ],
           ),
         ),
         if (widget.label.zh != null && widget.label.zh!.isNotEmpty)

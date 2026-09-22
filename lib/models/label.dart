@@ -32,4 +32,16 @@ class Label {
       confidence: confidence ?? this.confidence,
     );
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is Label &&
+        other.en == en &&
+        other.zh == zh &&
+        other.confidence == confidence;
+  }
+
+  @override
+  int get hashCode => Object.hash(en, zh, confidence);
 }

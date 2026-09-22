@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import '../models/models.dart';
 import '../services/services.dart';
 import '../widgets/widgets.dart';
+import 'album_list_screen.dart';
 
 enum HomeState { initial, loading, success, error }
 
@@ -25,6 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
   LabelError? _error;
   String? _model;
   int? _latencyMs;
+  AlbumEntry? _savedEntry;
 
   Future<void> _pickImage(ImageSource source) async {
     try {
@@ -62,25 +64,59 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final response = await LabelService.getLabels(_imageBytes!);
 
-    setState(() {
-      if (response.ok && response.labels != null) {
-        _state = HomeState.success;
-        _labels = response.labels!.take(5).toList();
-        _model = response.model;
-        _latencyMs = response.latencyMs;
-        _error = null;
-      } else {
+    if (response.ok && response.labels != null) {
+      final labels = response.labels!.take(5).toList();
+
+      try {
+        final entry = await AlbumService.saveEntry(
+          imageBytes: _imageBytes!,
+          labels: labels,
+        );
+        setState(() {
+          _state = HomeState.success;
+          _labels = labels;
+          _model = response.model;
+          _latencyMs = response.latencyMs;
+          _error = null;
+          _savedEntry = entry;
+        });
+      } catch (e) {
+        setState(() {
+          _state = HomeState.success;
+          _labels = labels;
+          _model = response.model;
+          _latencyMs = response.latencyMs;
+          _error = null;
+          _savedEntry = null;
+        });
+      }
+    } else {
+      setState(() {
         _state = HomeState.error;
         _error = response.error ?? LabelError(code: 'unknown', message: '未知錯誤');
         _labels = [];
-      }
-    });
+        _savedEntry = null;
+      });
+    }
   }
 
   void _updateLabel(int index, Label label) {
     setState(() {
       _labels[index] = label;
     });
+    _saveLabelsUpdate();
+  }
+
+  Future<void> _saveLabelsUpdate() async {
+    if (_savedEntry != null) {
+      try {
+        final updated = _savedEntry!.copyWith(labels: _labels);
+        await AlbumService.updateEntry(updated);
+        _savedEntry = updated;
+      } catch (_) {
+        // Silent fail for auto-save
+      }
+    }
   }
 
   void _reset() {
@@ -92,7 +128,15 @@ class _HomeScreenState extends State<HomeScreen> {
       _error = null;
       _model = null;
       _latencyMs = null;
+      _savedEntry = null;
     });
+  }
+
+  void _openAlbum() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const AlbumListScreen()),
+    );
   }
 
   @override
@@ -101,6 +145,11 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('拍照學英文'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.photo_album),
+            onPressed: _openAlbum,
+            tooltip: '我的相簿',
+          ),
           if (_state != HomeState.initial)
             IconButton(
               icon: const Icon(Icons.refresh),
