@@ -36,6 +36,10 @@ class LabelService {
             ExampleSentence(en: 'I need a cup of coffee to wake up.', zh: '我需要一杯咖啡來提神。'),
             ExampleSentence(en: 'This coffee smells amazing.', zh: '這咖啡聞起來很香。'),
           ],
+          phrases: [
+            Phrase(en: 'coffee break', zh: '咖啡休息時間'),
+            Phrase(en: 'black coffee', zh: '黑咖啡'),
+          ],
         ),
         Label(
           en: 'cup',
@@ -45,6 +49,10 @@ class LabelService {
           examples: [
             ExampleSentence(en: 'Please pass me that cup.', zh: '請把那個杯子遞給我。'),
             ExampleSentence(en: 'The cup is half full.', zh: '杯子裡有半杯水。'),
+          ],
+          phrases: [
+            Phrase(en: 'a cup of tea', zh: '一杯茶'),
+            Phrase(en: 'cup holder', zh: '杯架'),
           ],
         ),
         Label(
@@ -56,6 +64,10 @@ class LabelService {
             ExampleSentence(en: 'Put the book on the table.', zh: '把書放在桌上。'),
             ExampleSentence(en: 'We sat around the table.', zh: '我們圍著桌子坐。'),
           ],
+          phrases: [
+            Phrase(en: 'coffee table', zh: '茶几'),
+            Phrase(en: 'table manners', zh: '餐桌禮儀'),
+          ],
         ),
         Label(
           en: 'morning',
@@ -66,6 +78,10 @@ class LabelService {
             ExampleSentence(en: 'Good morning!', zh: '早安！'),
             ExampleSentence(en: 'I exercise every morning.', zh: '我每天早上運動。'),
           ],
+          phrases: [
+            Phrase(en: 'morning person', zh: '早起的人'),
+            Phrase(en: 'tomorrow morning', zh: '明天早上'),
+          ],
         ),
         Label(
           en: 'drink',
@@ -75,6 +91,10 @@ class LabelService {
           examples: [
             ExampleSentence(en: 'Would you like something to drink?', zh: '你想喝點什麼嗎？'),
             ExampleSentence(en: 'This is my favorite drink.', zh: '這是我最愛的飲料。'),
+          ],
+          phrases: [
+            Phrase(en: 'soft drink', zh: '軟性飲料'),
+            Phrase(en: 'drink up', zh: '喝光'),
           ],
         ),
       ],

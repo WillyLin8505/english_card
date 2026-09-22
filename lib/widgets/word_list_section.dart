@@ -27,14 +27,14 @@ class WordListSection extends StatelessWidget {
         children: [
           _buildHeader(context),
           _buildWordList(),
-          if (_hasExamples) _buildAllSentencesSection(),
+          _buildAllSentencesSection(),
+          _buildAllPhrasesSection(),
           const SizedBox(height: 32),
         ],
       ),
     );
   }
 
-  bool get _hasExamples => labels.any((l) => l.examples.isNotEmpty);
 
   Widget _buildHeader(BuildContext context) {
     return Padding(
@@ -103,8 +103,6 @@ class WordListSection extends StatelessWidget {
       }
     }
 
-    if (allExamples.isEmpty) return const SizedBox.shrink();
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -126,7 +124,7 @@ class WordListSection extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               const Text(
-                '所有例句',
+                '✦ 所有例句',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 20,
@@ -136,20 +134,106 @@ class WordListSection extends StatelessWidget {
             ],
           ),
         ),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: allExamples.length,
-          itemBuilder: (context, index) {
-            final entry = allExamples[index];
-            return _SentenceCard(
-              label: entry.key,
-              example: entry.value,
-            );
-          },
-        ),
+        if (allExamples.isEmpty)
+          _buildEmptyState('尚無例句')
+        else
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: allExamples.length,
+            itemBuilder: (context, index) {
+              final entry = allExamples[index];
+              return _SentenceCard(
+                label: entry.key,
+                example: entry.value,
+              );
+            },
+          ),
       ],
+    );
+  }
+
+  Widget _buildAllPhrasesSection() {
+    final allPhrases = <MapEntry<Label, Phrase>>[];
+    for (final label in labels) {
+      for (final phrase in label.phrases) {
+        allPhrases.add(MapEntry(label, phrase));
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 32, 24, 16),
+          child: Row(
+            children: [
+              Container(
+                width: 4,
+                height: 24,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.teal, Colors.cyan],
+                  ),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                '所有片語',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (allPhrases.isEmpty)
+          _buildEmptyState('尚無片語')
+        else
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: allPhrases.map((entry) => _PhraseCard(
+                label: entry.key,
+                phrase: entry.value,
+              )).toList(),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyState(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.03),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.06),
+          ),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.35),
+            fontSize: 14,
+            fontStyle: FontStyle.italic,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
     );
   }
 }
@@ -451,6 +535,87 @@ class _SentenceCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _PhraseCard extends StatelessWidget {
+  final Label label;
+  final Phrase phrase;
+
+  const _PhraseCard({
+    required this.label,
+    required this.phrase,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => TtsService.speak(phrase.en),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.1),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.teal.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    label.en,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  phrase.en,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(
+                  Icons.volume_up,
+                  size: 14,
+                  color: Colors.white.withValues(alpha: 0.5),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              phrase.zh,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.55),
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

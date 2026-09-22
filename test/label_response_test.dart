@@ -213,4 +213,103 @@ void main() {
       expect(example.zh, equals(''));
     });
   });
+
+  group('Phrase', () {
+    test('should parse from JSON', () {
+      final json = {'en': 'coffee break', 'zh': '咖啡休息時間'};
+      final phrase = Phrase.fromJson(json);
+
+      expect(phrase.en, equals('coffee break'));
+      expect(phrase.zh, equals('咖啡休息時間'));
+    });
+
+    test('should serialize to JSON', () {
+      final phrase = Phrase(en: 'black coffee', zh: '黑咖啡');
+      final json = phrase.toJson();
+
+      expect(json['en'], equals('black coffee'));
+      expect(json['zh'], equals('黑咖啡'));
+    });
+
+    test('should handle missing fields with defaults', () {
+      final json = <String, dynamic>{};
+      final phrase = Phrase.fromJson(json);
+
+      expect(phrase.en, equals(''));
+      expect(phrase.zh, equals(''));
+    });
+
+    test('should support equality', () {
+      final phrase1 = Phrase(en: 'test', zh: '測試');
+      final phrase2 = Phrase(en: 'test', zh: '測試');
+      final phrase3 = Phrase(en: 'other', zh: '其他');
+
+      expect(phrase1 == phrase2, isTrue);
+      expect(phrase1 == phrase3, isFalse);
+    });
+  });
+
+  group('Label with phrases', () {
+    test('should parse label with phrases', () {
+      final json = {
+        'en': 'coffee',
+        'zh': '咖啡',
+        'ipa': '/ˈkɔːfi/',
+        'examples': [
+          {'en': 'I love coffee.', 'zh': '我愛咖啡。'},
+        ],
+        'phrases': [
+          {'en': 'coffee break', 'zh': '咖啡休息時間'},
+          {'en': 'black coffee', 'zh': '黑咖啡'},
+        ],
+      };
+
+      final label = Label.fromJson(json);
+
+      expect(label.phrases.length, equals(2));
+      expect(label.phrases[0].en, equals('coffee break'));
+      expect(label.phrases[0].zh, equals('咖啡休息時間'));
+      expect(label.phrases[1].en, equals('black coffee'));
+    });
+
+    test('should serialize label with phrases', () {
+      final label = Label(
+        en: 'cup',
+        zh: '杯子',
+        phrases: [
+          Phrase(en: 'a cup of tea', zh: '一杯茶'),
+        ],
+      );
+
+      final json = label.toJson();
+
+      expect(json['phrases'], isA<List>());
+      expect(json['phrases'].length, equals(1));
+      expect(json['phrases'][0]['en'], equals('a cup of tea'));
+    });
+
+    test('should handle missing phrases gracefully', () {
+      final json = {'en': 'table', 'zh': '桌子'};
+      final label = Label.fromJson(json);
+
+      expect(label.phrases, isEmpty);
+    });
+
+    test('should omit empty phrases in JSON', () {
+      final label = Label(en: 'cup');
+      final json = label.toJson();
+
+      expect(json.containsKey('phrases'), isFalse);
+    });
+
+    test('should copy with new phrases', () {
+      final original = Label(en: 'cup');
+      final copied = original.copyWith(
+        phrases: [Phrase(en: 'cup holder', zh: '杯架')],
+      );
+
+      expect(copied.phrases.length, equals(1));
+      expect(copied.phrases[0].en, equals('cup holder'));
+    });
+  });
 }
