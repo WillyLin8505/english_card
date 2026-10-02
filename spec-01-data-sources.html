@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>拍照學英文 · 產品與資料來源規格</title>
+<style>
+:root{color-scheme:light;--ink:#182b37;--muted:#627480;--line:#dce5e9;--accent:#087e83}*{box-sizing:border-box}body{margin:0;background:#f3f6f8;color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI","Microsoft JhengHei",sans-serif;line-height:1.7}main{max-width:1440px;margin:auto;padding:56px 32px}header{margin-bottom:30px}.eyebrow{color:var(--accent);font-size:13px;font-weight:750;letter-spacing:.13em}h1{font-size:clamp(26px,4vw,40px);line-height:1.3;margin:12px 0}header p{color:var(--muted);margin:0;max-width:850px}.legend{display:flex;gap:12px;flex-wrap:wrap;margin:24px 0}.legend span{background:white;border:1px solid var(--line);border-radius:8px;padding:7px 14px;font-size:14px}.legend b{color:var(--accent);margin-right:6px}.table-wrap{overflow:auto;background:white;border:1px solid var(--line);border-radius:12px}table{border-collapse:collapse;width:100%;min-width:1000px;text-align:left}caption{text-align:left;padding:20px 22px;font-weight:700;border-bottom:1px solid var(--line)}th,td{padding:18px 20px;border-bottom:1px solid var(--line);vertical-align:top}thead th{background:#eaf2f4;font-size:13px;color:#425967;white-space:nowrap}tbody th{font-size:15px;width:21%;font-weight:650}td{font-size:14px}td:nth-child(2){color:#076e73;font-weight:600;width:19%}td:nth-child(3){width:17%}td:nth-child(4){width:16%}td:last-child{width:27%;color:#526570}tbody tr:last-child>*{border-bottom:0}tbody tr:hover{background:#f5fafb}small{display:block;color:var(--muted);font-size:13px;font-weight:400;margin-top:4px}code{background:#edf2f5;border-radius:4px;padding:2px 5px}aside{margin-top:24px;padding:20px 24px;border-left:3px solid var(--accent);background:#eaf3f3;border-radius:0 8px 8px 0}aside h2{font-size:16px;margin:0 0 6px}aside p{font-size:14px;margin:0;color:#425967}footer{margin-top:26px;color:var(--muted);font-size:12px}@media(max-width:640px){main{padding:30px 16px}.table-wrap{border-radius:8px}th,td{padding:14px}header p{font-size:14px}}@media print{body{background:white}main{padding:0;max-width:none}table{min-width:0}th,td{padding:9px;font-size:10px!important}thead{display:table-header-group}tr{break-inside:avoid}.table-wrap{overflow:visible}h1{font-size:26px}aside{break-inside:avoid}}@page{size:A4 landscape;margin:12mm}
+section{margin:36px 0}section>h2{font-size:23px;margin:0 0 16px}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px}.card{background:white;border:1px solid var(--line);border-radius:12px;padding:22px}.card h3{font-size:16px;margin:0 0 8px}.card p{margin:0;color:#425967}.locked{font-size:12px;background:#dcf1e8;color:#22684c;border-radius:20px;padding:4px 10px;vertical-align:middle}.flow{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:0;list-style:none;counter-reset:step}.flow li{background:#eaf3f3;padding:12px 16px;border-radius:8px;counter-increment:step}.flow li:before{content:counter(step) ' / ';color:var(--accent);font-weight:700}.details{margin:0}.details dt{font-weight:700;margin-top:16px}.details dt:first-child{margin-top:0}.details dd{margin:4px 0 0;color:#425967}.section-intro{color:var(--muted)}.quiz-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:18px;align-items:stretch}.face{background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px;box-shadow:0 8px 24px rgba(30,56,68,.06)}.face-label{color:var(--accent);font-size:12px;font-weight:750;letter-spacing:.1em}.face h3{margin:10px 0 8px}.flip{align-self:center;color:var(--muted);font-size:24px}.rating-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:16px}.rating-row span{text-align:center;border-radius:8px;padding:9px 6px;font-size:13px;font-weight:700}.again{background:#fde7e5;color:#a43c34}.hard{background:#fff0d6;color:#8d5a06}.good{background:#e2f2ea;color:#276548}.easy{background:#e1eff8;color:#256284}.rule-list{margin:10px 0 0;padding-left:20px;color:#425967}.rule-list li+li{margin-top:7px}.schema td:nth-child(n){width:auto;color:#425967;font-weight:400}.schema td:first-child{color:#076e73;font-weight:600}.schema table{min-width:860px}.mode-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.mode{position:relative;background:#fff;border:1px solid var(--line);border-top:4px solid var(--accent);border-radius:10px;padding:20px}.mode h4{margin:0 0 12px;font-size:16px}.mode ol{margin:0;padding-left:20px;color:#425967}.mode li+li{margin-top:7px}.mode-output{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;color:#076e73;font-weight:650}.entity-flow{display:grid;grid-template-columns:repeat(7,auto);gap:10px;align-items:center;margin:18px 0}.entity{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px;text-align:center}.entity strong{display:block;color:#076e73}.entity small{margin-top:3px}.arrow{color:var(--muted);font-size:20px;text-align:center}.field-order{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;counter-reset:field}.field-order span{background:#edf5f5;border:1px solid #cfe1e2;border-radius:7px;padding:7px 10px;font-size:13px;counter-increment:field}.field-order span:before{content:counter(field) '. ';color:var(--accent);font-weight:750}.status{display:inline-block;padding:2px 8px;border-radius:12px;background:#eef3f5;color:#526570;font-size:12px}@media(max-width:900px){.entity-flow{grid-template-columns:1fr}.arrow{transform:rotate(90deg)}}@media(max-width:760px){.quiz-grid,.mode-grid{grid-template-columns:1fr}.flip{transform:rotate(90deg);justify-self:center}.rating-row{grid-template-columns:repeat(2,1fr)}}@media print{.card,.face,.mode,.entity{break-inside:avoid}.flow li{padding:8px}section{margin:22px 0}}
+.difficulty-demo{display:grid;grid-template-columns:minmax(260px,1.4fr) minmax(240px,.8fr);gap:18px}.photo-demo{min-height:280px;border-radius:16px;background:linear-gradient(145deg,#8fbcc5,#f0c79f);position:relative;overflow:hidden}.photo-demo:after{content:'PHOTO';position:absolute;right:18px;bottom:14px;color:#fff;font-weight:800;letter-spacing:.12em}.word-chip{position:absolute;background:rgba(16,34,45,.82);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:7px 12px;font-size:13px}.difficulty-panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px}.dial{width:178px;height:178px;margin:12px auto 18px;border-radius:50%;background:conic-gradient(#b9dfd6 0 24%,#7dc6ba 24% 47%,#168f91 47% 70%,#3d7189 70% 86%,#2d415c 86%);position:relative}.dial:before{content:'';position:absolute;inset:25px;border-radius:50%;background:#fff}.dial:after{content:'適中  A2–B1';display:grid;place-items:center;text-align:center;position:absolute;inset:38px;border-radius:50%;color:#076e73;font-weight:750}.scale{display:flex;justify-content:space-between;color:var(--muted);font-size:12px}.level-row{display:flex;gap:8px;flex-wrap:wrap}.level-row span{background:#edf5f5;border-radius:16px;padding:5px 10px;font-size:12px;color:#42616b}@media(max-width:760px){.difficulty-demo{grid-template-columns:1fr}}
+</style>
+</head>
+<body><main>
+<header><div class="eyebrow">ENGLISH CARD / PRODUCT SPECIFICATION</div><h1>拍照學英文 · 產品規格</h1><p>用喜歡的個人照片學英文，建立想再打開翻閱的本機英文相簿。</p></header>
+<section aria-labelledby="product-title"><h2 id="product-title">1. 產品定位 <span class="locked">已鎖</span></h2>
+<div class="cards"><article class="card"><h3>產品主軸</h3><p>用喜歡的個人照片學英文，不是社交 App。</p></article><article class="card"><h3>學習調性</h3><p>低壓、嵌在生活裡；使用隱性 FSRS 排程，但不做連勝、欠卡壓力或罪惡感設計。</p></article></div>
+<h3>核心迴圈</h3><ol class="flow"><li>選喜歡的照片</li><li>AI 英文標籤</li><li>可改</li><li>存成本機英文相簿</li><li>想再打開翻</li></ol>
+<aside><h2>MVP 砍掉</h2><p>明信片、社交交換、帳號、雲端同步、連勝、強制每日任務、付費牆。驗證期先免費。</p></aside></section>
+<section aria-labelledby="architecture-title"><h2 id="architecture-title">2. App 與技術架構</h2><div class="cards">
+<article class="card"><h3>App</h3><p>Flutter</p><dl class="details"><dt>資料保存</dt><dd>照片與相簿本機保存（Hive）；原圖留裝置。</dd></dl></article>
+<article class="card"><h3>標籤推論</h3><dl class="details"><dt>運算環境</dt><dd>Predator 上 Ollama + Qwen3-VL-4B（Q4）</dd><dt>本機 API</dt><dd><code>127.0.0.1:8765</code></dd><dt>可選連線</dt><dd>Cloudflare Tunnel</dd></dl></article>
+<article class="card"><h3>請求格式</h3><dl class="details"><dt>Web</dt><dd><code>raw JPEG body</code> + <code>X-API-Key</code></dd><dt>原生</dt><dd>可使用 <code>multipart</code>。</dd></dl></article>
+</div></section>
+<section aria-labelledby="recognition-title"><h2 id="recognition-title">3. 個人化單字辨識與難度輪盤</h2>
+<p class="section-intro">系統先理解照片，再依使用者程度與個人詞彙狀態挑選最值得學的詞。模型不得直接決定最後五個詞；最終結果由本機規則排序、去重與限制數量。</p>
+<div class="difficulty-demo" aria-label="照片旁的單字難度輪盤示意">
+<div class="photo-demo"><span class="word-chip" style="left:12%;top:18%">balcony · n.</span><span class="word-chip" style="left:44%;top:44%">peaceful · adj.</span><span class="word-chip" style="left:21%;top:69%">quietly · adv.</span></div>
+<div class="difficulty-panel"><strong>單字難度</strong><div class="dial" aria-label="目前難度為適中 A2 到 B1"></div><div class="scale"><span>簡單</span><span>符合程度</span><span>挑戰</span></div><p>旋轉輪盤後，照片上的候選詞即時替換並重新定位；不修改使用者的整體程度。</p></div>
+</div>
+<h3>兩階段辨識</h3><div class="cards">
+<article class="card"><h3>第一階段 · 理解照片</h3><p>Qwen3-VL 只負責照片辨識，產生 6–8 個候選標籤及照片語境；輸出限於 lemma／片語、詞性、圖片證據與標記位置。模型不得產生釋義、翻譯、CEFR、發音、例句或詞彙關係。候選可包含名詞、動詞、形容詞、副詞與實用片語；提示詞與回傳後過濾都要排除其他語言、品牌、公司、產品型號、人名，以及只出現在標誌、包裝、浮水印或招牌上的文字。</p></article>
+<article class="card"><h3>第二階段 · 選擇學習詞</h3><p>本機依 CEFR、個人熟悉度、圖片關聯性、日常實用性、詞性多樣性與近期曝光重新評分，最多顯示 5 個。找不到足夠合適的詞時可只顯示 2–4 個，不強行湊滿。若名詞已達 3 個上限而可選結果仍不足 5 個，即使原始候選池尚有更多名詞，也要自動補抓動作或描述詞。</p></article>
+</div>
+<h3>使用者程度模型</h3><ul class="rule-list"><li><strong>整體程度</strong>使用 A1–C2，作為候選難度的初始範圍；首次可由自評及 15–20 題快速詞彙檢查估計。</li><li><strong>個人詞彙狀態</strong>分為未知、正在學、熟悉、已掌握；「看過」不等於「已知」。</li><li><strong>FSRS 記憶狀態</strong>只屬於已建立的學習卡，並只由主動測驗評分更新。</li><li>「這個我會」、刪除、保留、主動加入及測驗結果會逐步修正個人詞彙模型，但單次操作不直接改變整體 CEFR。</li></ul>
+<h3>難度輪盤行為</h3><div class="cards">
+<article class="card"><h3>五段難度</h3><div class="level-row"><span>很簡單</span><span>簡單</span><span>適中</span><span>稍難</span><span>挑戰</span></div><p>輪盤中心同時顯示文字與 CEFR 範圍，避免只靠顏色判斷。預設停在「符合我的程度」。</p></article>
+<article class="card"><h3>即時換詞</h3><p>輪盤調整的是本張照片的目標難度。拖動時先使用已產生的候選池即時換詞；候選不足才重新呼叫模型，避免每次旋轉都等待推論。</p></article>
+<article class="card"><h3>不覆寫程度</h3><p>輪盤選擇只保存為此照片的 <code>difficultyOffset</code>。若使用者經常選擇更難或更簡單，系統才提出調整預設程度的建議。</p></article>
+</div>
+<h3>候選評分與硬性規則</h3><p><code>推薦分數 = 30% 程度適配 + 25% 未知機率 + 20% 圖片關聯性 + 15% 日常實用性 + 10% 詞性多樣性 − 重複與近期曝光懲罰</code></p>
+<ul class="rule-list"><li>每張照片最多選 5 個詞，建議至少包含 2 種詞性；名詞預設最多 3 個。舊版已保存超過 5 個學習關聯的照片，在資料載入時只保留前 5 個為主動學習標籤，超額項目改為背景情境關聯；不得刪除原單字、照片關聯、字卡或 FSRS 紀錄。</li><li>預設組合為 2 個具體詞、2 個描述或動作詞、1 個挑戰詞；照片內容不適合時可彈性調整。</li><li>程度附近約 60%、稍微更難約 20%、熟悉但適合情境約 20%；已知詞過多時改用更具體的動詞、形容詞或片語。</li><li>同義詞或同詞族通常只留一個；已掌握與近期反覆出現但無學習需求的詞降權或隱藏。</li><li>形容詞與副詞若無法由畫面直接確認，必須標示「情境建議」及較低信心，不可呈現為確定事實。</li><li>點「這個我會」後立即以候選池下一個合適的詞替換；也可選「更多動作」、「更多描述」、「簡單一點」或「難一點」。</li></ul>
+<h3>辨識輸出必要欄位</h3><div class="table-wrap schema" role="region" aria-label="AI 單字候選輸出欄位，可左右捲動" tabindex="0"><table><thead><tr><th>欄位</th><th>內容</th><th>規則</th></tr></thead><tbody>
+<tr><td>詞彙識別</td><td><code>word</code>、<code>lemma</code>、<code>pos</code>、建議義項</td><td>詞性必須明確；不可把所有結果都當名詞。</td></tr>
+<tr><td>程度</td><td><code>cefr</code>、使用頻率、程度來源</td><td>CEFR 優先由本機詞彙資料庫校正，不完全信任視覺模型自評。</td></tr>
+<tr><td>圖片證據</td><td><code>evidence</code>、標籤座標／範圍、<code>visualConfidence</code></td><td>必須說明從哪個物件、動作、狀態或關係推得。</td></tr>
+<tr><td>推薦資訊</td><td><code>usefulness</code>、<code>inferred</code>、推薦分數、淘汰原因</td><td>保存排序依據，方便除錯並解釋為何出現或未出現。</td></tr>
+</tbody></table></div>
+<aside><h2>建立卡片的時機</h2><p>辨識完成只顯示「建議學習的詞」。使用者確認、刪除或替換後才建立 LexicalEntry、PhotoOccurrence 與 LearningCard，避免 AI 候選直接污染詞條資料庫。</p></aside>
+</section>
+<section aria-labelledby="quiz-title"><h2 id="quiz-title">4. 小測驗與 FSRS <span class="locked">已鎖</span></h2>
+<p class="section-intro">同一學習語言中的每個標準化單字或片語只建立一張學習卡，可連結多張照片情境並共用一份 FSRS 狀態。FSRS 只在使用者完成主動回想並按下評分後更新，不把一般相簿瀏覽視為成功複習。</p>
+<div class="quiz-grid">
+<article class="face"><div class="face-label">FLASHCARD · FRONT</div><h3>正面：回想提示</h3><ul class="rule-list"><li>正面不顯示照片。</li><li>顯示目標詞第一個字母，其餘字母依實際長度以底線表示；片語保留單字與空格結構。</li><li>顯示詞性與使用者母語釋義，不要求輸入答案，只在心中回想。</li><li>畫面底部固定「顯示答案」按鈕，點擊後翻到背面。</li></ul></article>
+<div class="flip" aria-hidden="true">⇄</div>
+<article class="face"><div class="face-label">FLASHCARD · BACK</div><h3>背面：完整資訊</h3><ul class="rule-list"><li>顯示完整單字、母語釋義、詞性與隨機照片情境；多張照片需避免近期重複。</li><li>顯示 IPA／單字發音，以及符合使用者目前 CEFR 的 3～5 組例句；有中英翻譯的句對永遠排在沒有翻譯的句子前面，背面可上下捲動。</li><li>詞形變化、衍生字、近義字、同音／近音、拼字相近字、字根、字首、字尾與來源可用時一併顯示。</li><li>底部固定母語化的 Again／Hard／Good／Easy，並顯示下次預計出現時間。</li></ul><div class="rating-row" aria-label="複習評分"><span class="again">Again<br>忘記</span><span class="hard">Hard<br>吃力</span><span class="good">Good<br>記得</span><span class="easy">Easy<br>很容易</span></div></article>
+</div>
+<h3>照片拆卡與標籤顯示規則</h3><div class="cards">
+<article class="card"><h3>一圖多詞</h3><p>一張照片最多保留 5 個可學詞；離開照片詳情頁時自動保存剩餘詞彙。新詞各建立一張卡，原圖只保存參照、不複製。</p></article>
+<article class="card"><h3>同詞條單卡</h3><p>每張卡綁定一個標準化單字或片語。同一詞條再次出現在其他照片或測驗不同用法時，只新增情境與 usage 表現，不建立重複卡片或新的 FSRS 狀態。</p></article>
+<article class="card"><h3>測驗遮罩</h3><p>測驗時保留目標區域提示，但以遮罩取代目標答案；同一圖片上的其他英文標籤全部隱藏，避免洩漏或干擾答案。</p></article>
+</div>
+<h3>FSRS 行為規格</h3><ul class="rule-list"><li><strong>Again</strong> 表示沒有想起來；<strong>Hard</strong> 表示成功想起但非常吃力，兩者不可混用。</li><li><strong>Good</strong> 表示正常回想成功；<strong>Easy</strong> 表示快速且確定地答對。</li><li>四個按鈕送出後，依 FSRS 計算下一次建議複習時間並寫入 review log。</li><li>排程在背景運作；不設定張數（見 §7 連續卡流），出完到期卡或使用者按結束就停；不顯示欠卡數，不以通知製造壓力。（問題 #80，2026-10-02）</li><li>初期使用預設參數；累積足夠有效複習紀錄後，才啟用個人化參數最佳化。</li></ul>
+<h3>瀏覽、測驗與推薦的責任分界</h3><div class="mode-grid">
+<article class="mode"><h4>被動翻相簿</h4><ol><li>依使用興趣排序。</li><li>納入最近出現時間。</li><li>維持照片與情境多樣性。</li></ol><div class="mode-output">不寫入 FSRS 成功／失敗紀錄</div></article>
+<article class="mode"><h4>主動小測驗</h4><ol><li>使用者先看正面並主動回想。</li><li>操作「顯示答案」翻到背面。</li><li>不記得選 Again；記得後依難度選 Hard、Good 或 Easy。</li></ol><div class="mode-output">只有四級評分會更新 FSRS 記憶狀態</div></article>
+<article class="mode"><h4>相簿推薦</h4><ol><li>取得 FSRS 預估遺忘機率。</li><li>乘入使用者喜愛程度。</li><li>乘入情境多樣性權重。</li></ol><div class="mode-output">決定哪些照片與單字自然地再次出現</div></article>
+</div>
+<aside><h2>推薦分數</h2><p><code>推薦分數 = FSRS 遺忘機率 × 使用者喜愛程度 × 情境多樣性</code>。此分數只影響相簿內容排序，不產生「到期」「欠卡」或強制完成狀態。</p></aside>
+<h3>本機資料紀錄</h3><div class="table-wrap schema" role="region" aria-label="FSRS 本機資料欄位，可左右捲動" tabindex="0"><table><thead><tr><th scope="col">資料實體</th><th scope="col">必要欄位</th><th scope="col">用途</th></tr></thead><tbody>
+<tr><td>Photo</td><td><code>photoId</code>、本機路徑、尺寸、建立時間</td><td>共用原圖參照；原圖只留裝置。</td></tr>
+<tr><td>LexicalEntry</td><td><code>lexemeId</code>、標準化形式、entry type、完整字典資料、欄位來源</td><td>中央詞條主檔；同一拼字的不同詞性以 usage 分開，但詞條只保存一次。</td></tr>
+<tr><td>PhotoOccurrence</td><td><code>occurrenceId</code>、<code>photoId</code>、<code>lexemeId</code>、可選 <code>usageId</code>／<code>senseId</code>、標籤座標／範圍、情境、使用者修正、<code>difficultyOffset</code></td><td>保存詞條在照片上的一次出現、可編輯 AI 標籤及該照片輪盤選擇。</td></tr>
+<tr><td>CardTemplate</td><td><code>templateId</code>、名稱、正反面欄位順序、可見與收合規則</td><td>集中決定卡片呈現內容與順序。</td></tr>
+<tr><td>LearningCard</td><td><code>cardId</code>、<code>lexemeId</code>、<code>languageProfileId</code>、<code>templateId</code>、封存狀態、建立／更新時間</td><td>同一語言每個標準化詞條只建立一張卡；可引用多個 PhotoOccurrence 與多個 usage。</td></tr>
+<tr><td>FSRSState</td><td>狀態、difficulty、stability、due、lastReview、scheduledDays、reps、lapses、演算法版本</td><td>保存每張卡目前的記憶狀態與下次建議時間。</td></tr>
+<tr><td>UsagePerformance</td><td><code>lexemeId</code>、<code>usageId</code>、答對／答錯次數、最近測驗、提示次數、暫時隱藏</td><td>只用於選擇下次測驗內容；不保存 FSRS 狀態或到期日。</td></tr>
+<tr><td>ReviewLog</td><td><code>cardId</code>、實際複習時間、rating、複習前後狀態、排程間隔、作答耗時</td><td>提供歷史追蹤、重新計算與日後個人化最佳化。</td></tr>
+<tr><td>UserLearningSettings</td><td>期望記憶率、時區、FSRS 參數、參數更新時間</td><td>所有資料只存本機；不需要帳號或雲端同步。</td></tr>
+<tr><td>UserVocabularyProfile</td><td>整體 CEFR、各詞熟悉狀態、詞性偏好、近期曝光、估計來源與更新時間</td><td>用於個人化辨識與候選排序；與 FSRS 卡片記憶狀態分開保存。</td></tr>
+</tbody></table></div>
+</section>
+<section aria-labelledby="word-db-title"><h2 id="word-db-title">5. 單字資料庫與卡片模板 <span class="locked">已鎖</span></h2>
+<p class="section-intro">參考 Anki 將 Note、Card 與 Template 分離的方式：單字或片語資料只保存一次，卡片模板決定正反面欄位及順序；同一學習語言的每個標準化詞條只有一張卡與一份 FSRS，可連結多個照片情境。</p>
+<div class="entity-flow" aria-label="詞條資料到學習卡的關聯"><div class="entity"><strong>LexicalEntry</strong><small>單字／片語與多個 usage</small></div><div class="arrow">→</div><div class="entity"><strong>PhotoOccurrence</strong><small>零至多個照片情境</small></div><div class="arrow">→</div><div class="entity"><strong>CardTemplate</strong><small>正反面欄位與順序</small></div><div class="arrow">→</div><div class="entity"><strong>LearningCard</strong><small>每詞條唯一 FSRS</small></div></div>
+<div class="cards">
+<article class="card"><h3>LexicalEntry · 詞條主檔</h3><p>相當於 Anki 的 Note。保存英文單字或片語及所有 usage；修改一次後，所有引用此詞條的照片和模板同步取得新內容。</p></article>
+<article class="card"><h3>PhotoOccurrence · 照片情境</h3><p>記錄單字在哪一張照片出現、標籤位置、AI 信心、使用者修正、情境說明及照片專屬例句。同一單字可連結多張照片。</p></article>
+<article class="card"><h3>LearningCard · 學習卡</h3><p>相當於 Anki 的 Card。由「單字＋照片情境＋卡片模板」產生，並獨立保存暫停狀態、FSRS 記憶狀態及複習歷史。</p></article>
+</div>
+<h3>完整單字資訊欄位</h3><div class="table-wrap schema" role="region" aria-label="完整單字資訊欄位，可左右捲動" tabindex="0"><table><thead><tr><th scope="col">群組</th><th scope="col">欄位</th><th scope="col">規則</th></tr></thead><tbody>
+<tr><td>識別</td><td>英文單字、標準化拼字、詞性、語言、標籤、建立／更新時間</td><td>標準化拼字＋詞性作為重複資料檢查依據；不同詞義可分開管理。</td></tr>
+<tr><td>釋義</td><td>中文釋義、英文定義、義項、使用頻率、常用搭配</td><td>義項保留來源與排序；使用者可指定主要義項。</td></tr>
+<tr><td>發音</td><td>IPA、口音標籤、音素、單字真人音檔</td><td>音檔保存授權與來源；可指定預設口音。</td></tr>
+<tr><td>詞彙關係</td><td>近義字、同音／近音字、拼字相近字、詞形變化、詞性衍生</td><td>關係需保存類型，不把所有相關字混成同一清單。</td></tr>
+<tr><td>構詞</td><td>字根、字首、字尾／後綴、詞源</td><td>資料缺少時隱藏整個區塊，不顯示空標題。</td></tr>
+<tr><td>例句</td><td>目標語言例句、母語翻譯、CEFR、例句來源、翻譯配對 ID</td><td>A1～C2 每級目標保存 3～5 組，最多 30 組；優先保存中英對照，不提供整句發音。</td></tr>
+<tr><td>照片情境</td><td>照片參照、標籤座標、情境說明、AI 原始標籤、使用者修正版</td><td>屬於 PhotoOccurrence，不因合併重複單字而遺失。</td></tr>
+<tr><td>學習資訊</td><td>卡片狀態、FSRS difficulty／stability／due、複習次數、遺忘次數、最後複習</td><td>屬於 LearningCard；同一語言相同單字的所有照片共用。</td></tr>
+<tr><td>來源追蹤</td><td>各欄位來源、授權、擷取時間、可信狀態 <span class="status">AI／已核對</span></td><td>來源以欄位為單位保存，允許使用者覆寫並保留原始值。</td></tr>
+</tbody></table></div>
+<h3>卡片模板與內容順序</h3><p class="section-intro">模板不複製資料，只保存欄位引用與顯示設定。每個欄位使用 <code>side</code>、<code>position</code>、<code>visible</code>、<code>showWhenNotEmpty</code>、<code>collapsed</code> 及樣式設定控制呈現。</p>
+<div class="cards"><article class="card"><h3>正面預設順序</h3><div class="field-order"><span>照片與目標區域</span><span>中文提示</span><span>英文首字母</span><span>情境說明</span><span>顯示答案</span></div></article><article class="card"><h3>背面預設順序</h3><div class="field-order"><span>英文單字</span><span>發音與 IPA</span><span>詞性與釋義</span><span>照片情境</span><span>例句與翻譯</span><span>詞形與衍生</span><span>相關字</span><span>構詞與詞源</span><span>來源</span><span>學習資訊</span></div></article></div>
+<ul class="rule-list"><li>使用者可拖曳調整正面及背面的欄位順序，並選擇顯示、隱藏或預設收合。</li><li>模板變更立即套用到引用該模板的所有卡片，不改動 LexicalEntry 原始資料。</li><li>背面必須能開啟「所有資訊」檢視；較長的相關字、詞源與來源區塊可預設收合。</li><li>欄位沒有內容時自動省略；不可出現空白標題、空卡或字串 <code>null</code>。</li><li>MVP 提供一個內建「照片單字卡」模板；保留日後新增中→英、英→中或聽音辨字模板的資料結構。</li></ul>
+<h3>單字管理中心</h3><div class="cards">
+<article class="card"><h3>雙模式清單</h3><p><strong>詞條模式</strong>以 LexicalEntry 為一列；<strong>卡片模式</strong>以 LearningCard 為一列。兩者可快速切換，避免把共用詞條資料與個別排程混在一起。</p></article>
+<article class="card"><h3>搜尋、篩選與排序</h3><p>搜尋所有文字欄位；可依相簿、詞性、標籤、資料來源、缺漏欄位、學習狀態、建立時間、最後複習與下次建議時間篩選及排序。</p></article>
+<article class="card"><h3>完整資訊檢視</h3><p>點選任一列後，在詳細面板呈現完整單字資訊、所有照片情境、產生的卡片、正反面預覽、FSRS 狀態與 review log。</p></article>
+<article class="card"><h3>管理操作</h3><p>支援新增、編輯、標籤、批次修改、合併重複單字、切換主要義項、暫停／恢復卡片及預覽；刪除前需顯示受影響的照片與卡片數。</p></article>
+</div>
+<aside><h2>資料一致性規則</h2><p>合併重複詞條時合併 LexicalEntry、usage 與可共用語言資料；PhotoOccurrence、LearningCard、FSRSState 與 ReviewLog 保持獨立。刪除 LexicalEntry 前若仍有照片或卡片引用，必須阻止直接刪除並提供封存選項。</p></aside>
+</section>
+<section aria-labelledby="sources-title"><h2 id="sources-title">6. 英文學習資料來源</h2><p class="section-intro">依資料類型定義首選、次選與補充來源，作為單字卡資料蒐集與整合的優先順序。</p>
+<div class="legend" aria-label="來源優先順序"><span><b>① 首選</b>優先使用</span><span><b>② 次選</b>替代或補足</span><span><b>③ 補充</b>延伸資料</span></div>
+<div class="table-wrap" role="region" aria-label="資料來源排序表，可左右捲動" tabindex="0"><table>
+<caption>11 類資料 · 英文來源優先順序與排序理由</caption>
+<thead><tr><th scope="col">資料類型</th><th scope="col">① 首選</th><th scope="col">② 次選</th><th scope="col">③ 補充</th><th scope="col">排序理由</th></tr></thead>
+<tbody>
+<tr><th scope="row">單字、釋義、詞性</th><td>Kaikki／Wiktionary</td><td>Open English WordNet</td><td>—</td><td>Kaikki 欄位廣；WordNet 適合補充詞義與語義關係。</td></tr>
+<tr><th scope="row">發音音標／音素</th><td>Kaikki／Wiktionary</td><td>CMUdict</td><td>—</td><td>Kaikki 提供 IPA 與口音標籤；CMUdict 適合美式音素運算，使用的不是 IPA。</td></tr>
+<tr><th scope="row">單字真人發音</th><td>Kaikki／Wiktionary 音檔包</td><td>—</td><td>—</td><td>提供大量單字音檔；需確認口音、覆蓋率與個別授權。</td></tr>
+<tr><th scope="row">近義字／意思相近</th><td>Open English WordNet</td><td>Kaikki／Wiktionary</td><td>Datamuse</td><td>WordNet 按詞義建立同義字集合；Datamuse 適合補充較廣泛的相關字。</td></tr>
+<tr><th scope="row">同音字／發音相近</th><td>CMUdict</td><td>Datamuse</td><td>Kaikki／Wiktionary</td><td>CMUdict 可下載後自行計算；Datamuse 可直接查近音字；Kaikki 有部分同音字資料。</td></tr>
+<tr><th scope="row">拼字相近</th><td>Kaikki 字表＋自行比對</td><td>Datamuse</td><td>—</td><td>本地字表可批次計算拼字距離；Datamuse 適合查詢補充。</td></tr>
+<tr><th scope="row">詞形變化<small>如過去式、複數</small></th><td>Kaikki／Wiktionary</td><td>—</td><td>—</td><td><code>forms</code> 提供詞形與標籤，可直接整理。</td></tr>
+<tr><th scope="row">詞性衍生<small>如 happy → happiness</small></th><td>Kaikki／Wiktionary</td><td>Open English WordNet</td><td>—</td><td>Kaikki 的衍生字與詞源可提供線索；需核對，不能把所有相關字都當詞性變化。</td></tr>
+<tr><th scope="row">字根、字尾／後綴</th><td>Kaikki／Wiktionary</td><td>—</td><td>—</td><td>從詞源模板與構詞資料解析；不是每個字都有完整拆解。</td></tr>
+<tr><th scope="row">英文例句</th><td>Tatoeba</td><td>Kaikki／Wiktionary</td><td>Open English WordNet</td><td>Tatoeba 適合大量句子；Kaikki 的例句能連到字典詞義。</td></tr>
+<tr><th scope="row">例句中文翻譯</th><td>Tatoeba</td><td>—</td><td>—</td><td>可取得英中句對，但並非每句都有中文翻譯。</td></tr>
+</tbody></table></div>
+<aside><h2>規格說明</h2><p>「—」表示本規格未指定該順位的資料來源。例句不提供整句發音。第一階段只建置英文目標語言詞庫；法文與繁體中文的目標語言來源順位與專屬欄位延後。資料覆蓋率與音檔授權於實作時依各筆來源確認。</p></aside>
+</section>
+<section aria-labelledby="decisions-title"><h2 id="decisions-title">7. 使用者訪談確認決策 <span class="locked">已確認</span></h2>
+<p class="section-intro">本節整合逐題確認結果；若與前文舊敘述不同，以本節及已同步修正的條文為準。</p>
+
+<h3>語言與首次設定</h3><div class="cards">
+<article class="card"><h3>支援語言</h3><p>第一階段的目標語言只支援英文，第一個發布語言包固定為英文→繁體中文。資料庫與語言對架構保留法文及其他母語擴充能力；母語仍作為獨立翻譯、提示與介面文字層，不把母語內容混入英文原始詞條。</p></article>
+<article class="card"><h3>第一階段詞條範圍</h3><p>只收錄一般英文單字、片語、片語動詞、慣用語與搭配詞；排除人名、品牌、公司、產品、作品名稱及其他專有名詞。之後若要加入專有名詞，另開資料範圍與審核規則。</p></article>
+<article class="card"><h3>首次程度估計</h3><p>首次詢問學習語言、母語與自評背景：從未接觸、會基礎單字、已學一段時間、熟練，並映射至初始 CEFR。</p></article>
+<article class="card"><h3>語言資料隔離</h3><p>每個學習語言分開保存相片冊、單字、已學會清單、能力分數、卡片、FSRS 與複習紀錄。設定頁切換語言，並記住最後選擇。</p></article>
+</div>
+<ul class="rule-list"><li>第一階段照片辨識只產生英文詞條與片語；未來加入其他目標語言時，同一張原始照片可被多個語言相片冊引用而不複製原圖。</li><li>第一個正式雙語資料包只建立英文→繁體中文；其他母語方向保留資料模型但暫不發布。</li><li>更改母語後，既有卡片的釋義、提示與例句翻譯切換到對應母語資料層；英文原始資料與 FSRS 不變。</li><li>卡片與模板格式維持語言無關；法文與繁體中文的目標語言專屬欄位在後續版本加入。</li></ul>
+
+<h3>照片選詞與標籤操作</h3><div class="cards">
+<article class="card"><h3>自動保存</h3><p>照片詳情頁不設「建立」按鈕。使用者透過任何導覽離開頁面時，自動保存列表中剩下的詞並建立尚未存在的卡片。</p></article>
+<article class="card"><h3>左滑已學會</h3><p>候選詞左滑後立即從列表移除，加入該語言的「已學會」清單，並補入下一個合適候選；候選不足時不必湊滿 5 個。</p></article>
+<article class="card"><h3>星星鎖定</h3><p>星星只在本次照片選詞期間有效。加星的詞在調整難度時不被替換，但仍可左滑刪除；離開頁面後不保存星星狀態。</p></article>
+<article class="card"><h3>標籤修正</h3><p>照片標籤可拖曳重新定位。MVP 暫不提供手動新增 AI 未辨識詞。</p></article>
+<article class="card"><h3>照片標籤排版（2026-09-30 補記）</h3><p>每個物件以圓點標在辨識位置，標籤用短引線連回圓點。標籤彼此不重疊、不遮住任何物件的圓點與畫面上的控制項，盡量分散並左右平衡，全部留在照片內；拖曳時標籤與圓點一起移動。App 照片、後台單字頁的詞義圖片與成品預覽都用同一套排版規則。</p></article>
+</div>
+<ul class="rule-list"><li>照片最多顯示 5 個詞；名詞最多 3 個，剩餘位置由動詞、形容詞、副詞或片語自由分配，名詞不足時名額轉給其他詞性。</li><li>片語視為一個完整學習項目與一張卡。MVP 不另顯示「情境推測」標記。</li><li>同一語言中已存在的單字歸入已學習，不建立重複卡片；新照片只加入該單字的照片情境。</li><li>照片詳情預設隱藏已學會單字，提供「顯示已學會單字」控制。開啟後，每個封存詞旁提供小型復原按鈕。</li><li>復原後還原原卡片、完整測驗歷史及 FSRS 狀態；因此左滑採封存，不做不可逆刪除。</li><li>照片中沒有新詞時列表保持空白；開啟已學會控制後才顯示舊詞。相片冊縮圖不顯示已學會標籤。</li><li>照片最後一個單字被刪除後，從 App 相片冊移除照片參照，但不刪除手機系統相簿中的原始照片。</li></ul>
+
+<h3>CEFR 難度輪盤與能力模型</h3><div class="cards">
+<article class="card"><h3>輪盤互動</h3><p>輪盤平時縮合，長按後像相機 ISO 控制般展開，刻度為 A1、A2、B1、B2、C1、C2。拖曳過程即時更新照片標籤與列表。</p></article>
+<article class="card"><h3>保留跨級詞</h3><p>切換等級不整批更換五個詞。仍符合相鄰難度或有學習價值的候選可保留，只替換明顯不合適且未加星的詞。</p></article>
+<article class="card"><h3>每張照片重設</h3><p>下一張照片回到系統目前判定的 CEFR，不沿用上一張的暫時輪盤位置。</p></article>
+</div>
+<p><code>能力更新 = 舊能力分數 + K ×（實際表現 − 預期表現）</code></p>
+<ul class="rule-list"><li>以 Elo 式連續能力分數對應 A1=0 至 C2=5，搭配移動平均與升降級緩衝。</li><li>輪盤調高／調低、左滑同級已知詞與 Flashcard 評分都是訊號；輪盤偏好使用較小 K，第一次主動回想使用較大 K。</li><li>已排程卡片的預期表現使用評分前的 FSRS 回想機率；Again 視為未回想（0），Hard／Good／Easy 都視為已回想（1）。重複複習同一批卡片是高度相關訊號，因此使用較小 K，避免勤於複習本身讓 CEFR 一路上升或下降。（問題 #38，2026-10-01）</li><li>至少累積 20 次有效行為才自動調整；跨過下一級門檻仍需約 0.2 緩衝，每次最多改一級。</li><li>FSRS 只決定卡片何時再出現；Elo 能力模型決定照片應推薦多難的詞。</li></ul>
+
+<h3>Flashcard 與 FSRS</h3><div class="cards">
+<article class="card"><h3>正面</h3><p>不顯示圖片、不輸入答案。顯示字首、依字數排列的底線、詞性與母語釋義；母語釋義取前兩個非古舊／俚語等罕用標記、非其他詞源的常用義項，重複詞義只顯示一次；有字典翻譯的義項優先，AI 補的義項只在沒有字典翻譯時才上正面（問題 #84）。底部固定「顯示答案」。（問題 #18、#84，2026-10-01）</p></article>
+<article class="card"><h3>背面</h3><p>顯示答案、完整規格資料與照片。依使用者目前 CEFR 先顯示同級且有中英翻譯的 3～5 組例句；同級不足時才用相鄰程度補足。內容可上下捲動，底部固定四個評分按鈕。</p></article>
+<article class="card"><h3>連續卡流</h3><p>由 FSRS 遺忘機率、最近出現時間與情境多樣性混合抽卡，不設定固定張數；沒有達到複習條件的卡片時停止。</p></article>
+</div>
+<ul class="rule-list"><li>底部導覽增加 Flashcard 入口；五個導覽按鈕的排列暫未決定。</li><li>Again／Hard／Good／Easy 依母語顯示，並標示按下後預計再次出現的時間。</li><li>卡片建立時若母語意思仍為空，保留卡片但不排入複習，複習頁顯示「等待詞庫補齊」；詞庫同步補上母語意思後自動恢復排程。（問題 #44，2026-10-01）</li><li>按 Again 的卡會在同一次連續測驗稍後再次出現；同一張卡在一輪中最多額外出現 2 次。第二次重出仍選 Again 時保存 FSRS 與 review log，但本輪不再排入，依排程隔天再學，避免單一卡片讓低壓複習無限延長。（問題 #64，2026-10-01）</li><li>同一單字只有一張卡與一份 FSRS；多張相關照片在背面隨機輪流顯示，避免連續重複。</li><li>翻到背面時自動播放單字真人發音；所有順位皆無音檔時才使用系統 TTS。</li><li>移除例句整句發音。例句優先採用 Tatoeba 已存在的中英配對；缺少翻譯時由資料後台的 AI 翻譯補上並標記 AI（2026-09-29 起），App 與照片辨識流程本身不產生翻譯。</li><li>卡片欄位順序、各區顯示數量與收合規則在資料庫管理 App 的字卡版型編輯器調整；MVP 所有學習語言共用同一套已發布版型。</li></ul>
+
+<h3>單字集與資料狀態</h3><ul class="rule-list"><li>手機單字集以 LexicalEntry 為一列；相同單字或片語只顯示一次，點入後查看所有照片情境、卡片、完整 review log 與 FSRS 變化。</li><li>預設依字母排列並提供搜尋；MVP 篩選條件暫不實作。</li><li>使用者可編輯所有 AI 與字典資料。使用者修改值優先於後續自動更新，不得被覆寫。</li><li>字典資料必須先由後台批次擷取、清理、整合並建立成版本化詞庫；圖片辨識時只回傳候選單字或片語、詞性、照片語境與標記位置，再查本機詞庫取得完整資料並建立照片關聯，不在辨識當下即時爬取外部網站。</li><li>詞庫查不到的候選詞條保存為「缺詞條」，等待管理後台補抓並在下一版詞庫更新；不可阻塞照片保存或要求使用者等待網路來源。</li><li>背景補抓仍失敗時保存來源與失敗狀態；單字集必須指出發音、例句、詞源、翻譯等具體失敗欄位，不可只顯示整個詞條錯誤。</li></ul>
+
+<h3>單字、片語與多字詞（已確認）</h3>
+<p>片語與單字都是正式 <code>LexicalEntry</code>。<code>entry_type</code> 至少支援 <code>word</code>、<code>phrase</code>、<code>phrasal_verb</code>、<code>idiom</code>、<code>collocation</code>、<code>fixed_expression</code>；每個詞條都可擁有自己的 sense、母語翻譯、例句、發音、圖片、難度、模板與 FSRS。</p>
+<ul class="rule-list"><li>片語保存原始顯示形式、標準化形式、token 順序與組成詞條；組成單字仍是可獨立學習的 LexicalEntry。</li><li>片語動詞保存是否可分離、可插入成分的位置、受詞限制與常見變化，例如 <code>turn it off</code> 與 <code>turn off the light</code>。</li><li>慣用語與固定表達的整體 sense 不等於每個組成字的詞義總和，必須擁有獨立翻譯和例句。</li><li>查詢時先比對完整片語，再比對個別 token；同一照片可以同時連結片語和其中的單字，但分別擁有顯示狀態與 FSRS。</li><li>句子填空與相似詞模板不可任意拆開固定片語；產生空格時以整個片語或合法變化為答案單位。</li><li>缺少片語資料時寫入既有缺詞條佇列，並保存 <code>entry_type</code>，不得自動降級成單一單字。</li></ul>
+
+<h4>片語標籤（已確認）</h4><ul class="rule-list"><li>所有 <code>entry_type != word</code> 的詞條都必須顯示類型標籤，不得只靠空格讓使用者猜測它是片語。</li><li>一般多字詞顯示「片語」；來源與規則足以判定時顯示更精確的「片語動詞」「慣用語」「搭配詞」或「固定表達」。無法可靠分類時保留「片語」，不得猜測細分類。</li><li>標籤文字依使用者母語從 <code>localized_labels</code> 取得；資料庫保存穩定的 <code>entry_type</code> 代碼，不直接以畫面文字作為類型。</li><li>片語標籤出現在照片辨識標籤、照片詳情、單字集列表、詞條詳情、字卡答案、五種練習模板、搜尋結果、後台預覽及人工審核頁。</li><li>照片上同時出現單字與片語時，片語使用帶有「片語」文字的小型 badge；顏色仍遵循既有視覺系統，不只用顏色區分類型。</li><li>單字集與後台提供 entry type 篩選；片語仍參與字母排序，排序時忽略類型標籤文字。</li><li>Qwen3-VL 只標記詞性為 <code>phrase</code>；精確 <code>entry_type</code> 由本機詞庫決定。查庫命中後以資料庫類型為準，無法判定時使用一般「片語」而不猜測細分類。</li></ul>
+
+<h3>同一拼字的不同詞性與用法（已確認）</h3>
+<div class="notice"><strong>同一個標準化拼字只建立一個 LexicalEntry、一張學習卡與一份 FSRS。</strong> 名詞、動詞、形容詞等差異不拆成多張卡，而是在詞條下建立獨立 <code>usage</code>。</div>
+<ul class="rule-list"><li><code>lexemes</code> 以 <code>target_language + normalized_form + entry_type</code> 識別詞條，不把詞性放進唯一鍵；每個詞條可有多筆 <code>lexeme_usages</code>。</li><li>每筆 usage 保存詞性、用法標籤、語域、CEFR、頻率、顯示順位與來源；每個 sense 必須屬於一個 usage。</li><li>發音、詞形、例句、衍生關係、詞彙關係與圖片可以綁定到 usage 或更精確的 sense。像 <code>record</code> 名詞與動詞重音不同時，分別保存發音。</li><li>照片辨識回傳詞性與情境後，先連到共同 <code>lexeme_id</code>，再選擇最符合的 <code>usage_id</code>／<code>sense_id</code>；信心不足時保留候選讓使用者確認。</li><li>單字集只顯示一列，並以「名詞・動詞」等 badge 提示存在多種用法；詞條詳情與字卡背面按 usage 分區顯示。</li><li>字卡版型可設定最多顯示幾個 usage、排序規則與每個 usage 的 sense 數量；預設優先顯示照片命中的用法，再顯示常用用法。</li><li>FSRS 評分更新共同卡片，不因切換詞性建立另一份 FSRS；練習紀錄仍保存本題實際測驗的 <code>usage_id</code> 和 <code>sense_id</code>，供後續分析。</li><li>來源把同一拼字拆成多個詞性詞條時，匯入層先合併到共同 LexicalEntry，再保留各來源的 usage 對應與 provenance。</li></ul>
+
+<h4>共用 FSRS 與用法紀錄（已確認）</h4><ul class="rule-list"><li>FSRS 狀態唯一鍵為 <code>user_id + target_language + lexeme_id</code>；不得加入 <code>usage_id</code> 或 <code>sense_id</code> 建立第二份排程。</li><li>名詞、動詞、形容詞、不同 sense 與片語變化的主動測驗結果，全部更新同一份詞條 FSRS。</li><li>每次作答仍保存實際測驗的 <code>usage_id</code>、<code>sense_id</code>、模板、正確與否、提示次數和反應時間，用於選擇下次優先測驗的薄弱用法。</li><li>用法層可以保存已看過、答對次數、答錯次數、最近測驗時間與暫時隱藏狀態，但這些只影響內容選擇，不產生到期時間。</li><li>FSRS 到期時，系統從同一詞條的用法中選擇薄弱、較久未測或與目前照片最相關的 usage 出題；使用者仍只看到一張到期卡。</li><li>Again／Hard／Good／Easy 永遠評分整個詞條；後台分析可以分 usage 顯示表現，但不得顯示多個 FSRS 到期日。</li></ul>
+
+<h4>大小寫與同拼字詞條（已確認）</h4><ul class="rule-list"><li>大小寫不放進 LexicalEntry 唯一鍵；<code>apple</code>、<code>Apple</code> 先歸入同一個詞條，再以不同 usage／sense 保存普通名詞、專有名詞或品牌等用法。</li><li>資料庫另外保存 <code>surface_form</code>、<code>case_pattern</code>、來源原始拼法與顯示順位；正式顯示時保留來源或使用者確認的大小寫。</li><li>查詢先嘗試完整大小寫與原始拼法，再以小寫正規化形式查共同 LexicalEntry；如果大小寫造成不同用法，交由詞性、情境、來源與使用者確認選擇 usage。</li><li>照片標籤、字卡答案、片語 badge、搜尋結果及匯出資料都可顯示正確大小寫，但不產生第二份 FSRS。</li><li>使用者將某個大小寫用法封存或標記已看過，只影響該 usage；詞條的共同 FSRS 仍維持一份。</li></ul>
+<p class="small">第一階段的專有名詞過濾優先於大小寫合併：人名、品牌、公司、產品、作品名稱及其他專有名詞不匯入正式英文詞庫，也不進入圖片候選與練習題。大小寫共用規則保留給一般詞彙及未來開放專有名詞後的資料包。</p>
+
+<h4>第一階段英文範圍與口音（已確認）</h4><ul class="rule-list"><li>第一批要匯入的英文詞表範圍暫不鎖定；後台保留依來源詞表、CEFR、頻率、缺詞請求或手動清單建立工作的能力。</li><li>英文顯示與拼字以英式英文為主；英文例句、詞形、來源排序與顯示標籤預設採英式資料。</li><li>發音不限制單一國家來源；每個 pronunciation 保存國家／地區、口音、來源與授權，可收錄多國來源。英式發音作為預設播放與卡片顯示，其他口音可在完整資訊中切換。</li><li>英式與其他拼字變體若來源提供，保留為同一 LexicalEntry 的 <code>orthographic_variant</code>；預設顯示英式拼法，搜尋可找到其他變體。</li><li>第一階段的已學會、封存、卡片與 FSRS 狀態全部以 LexicalEntry／LearningCard 為單位共用；不建立 usage 層級的獨立已學會或排程。</li></ul>
+
+<h3>非同步辨識與連線</h3><ul class="rule-list"><li>本機 AI 無法連線時，照片加入本機待處理佇列；相片冊縮圖右上角顯示沙漏。</li><li>任何恢復連線且資源可用的時間都可在背景自動處理，不發完成通知；使用者回到相片冊查看結果。</li><li>允許在外部網路透過 Cloudflare Tunnel 連回 Predator。伺服器網址與 API Key 的首次設定流程暫未決定。</li></ul>
+
+<aside><h2>MVP 暫緩項目</h2><p>學習洞察、備份還原、原始照片遺失或權限失效處理、預設口音、重複加入同一照片、手動新增漏辨詞、照片喜愛程度、測驗結束畫面，以及首次 Predator 連線設定流程。</p></aside>
+</section>
+<section id="ingestion-admin">
+<span class="kicker">08 · 可執行規格</span><h2>語言資料來源管理與擷取後台</h2>
+<p class="lead">建立一個可在本機執行的管理介面，讓管理者設定每個資料欄位的來源順位、啟動擷取工作、查看進度與失敗欄位，最後匯出 Flutter 可使用的 SQLite 資料庫。Beekeeper Studio 僅作為 PostgreSQL 的資料檢視與手動查詢工具，不承擔來源排序、擷取流程或工作管理。</p>
+
+<h3>兩階段資料流程（已鎖）</h3>
+<div class="notice"><strong>先建詞庫，再做圖片辨識連結。</strong> 外部來源的下載、解析、合併與補抓只在資料後台執行；App 的圖片辨識流程不得直接呼叫 Kaikki、WordNet、CMUdict、Tatoeba 或 Datamuse。</div>
+<ol class="rule-list"><li><strong>詞庫建置階段：</strong>第一階段目標語言固定為英文，管理者選母語、英文詞表範圍與欄位。背景 Worker 同時取得英文詞彙資料及母語解釋資料，依每個精確欄位的來源順位清理、去重、驗證後寫入 PostgreSQL。</li><li><strong>發布階段：</strong>通過驗證的英語雙語詞庫匯出成版本化 SQLite 與媒體 manifest，提供 Flutter 下載或隨 App 打包。英文原始詞條可被不同母語翻譯層引用，各語言方向獨立版本化。</li><li><strong>圖片辨識階段：</strong>Qwen3-VL 只輸出目標語言候選 lemma／片語、詞性、圖片語境及標記位置；App 再做大小寫、Unicode 與詞形正規化。圖片長邊先縮至 1024 px，Ollama 使用 4096 context、600 tokens 輸出上限、單模型單併發、Flash Attention、q8 KV cache 與常駐 GPU；同照片依雜湊、模型、提示版本及語言快取。</li><li><strong>資料比對階段：</strong>先以 <code>target_language=en + normalized_lemma + entry_type</code> 查共同詞條，再以模型詞性和情境選擇 <code>usage_id</code>／<code>sense_id</code>，並依目前 <code>native_language</code> 載入翻譯與說明；未精確命中時用詞形表回查 lemma，最後才使用模糊比對。</li><li><strong>建立關聯：</strong>命中後保存 <code>photo_id ↔ lexeme_id + usage_id + sense_id</code>、標籤位置、圖片語境、選用難度與顯示狀態；釋義、發音、詞形、衍生詞與例句直接由雙語詞庫讀取，不複製到每張照片。</li><li><strong>缺詞／缺翻譯處理：</strong>完全查不到詞條時保存到 <code>missing_lexeme_requests</code>；詞條存在但缺少母語內容時保存到 <code>missing_localization_requests</code>。照片仍可正常完成，待後台補抓、審核並發布新版資料包後自動重試連結。</li></ol>
+<p class="small">這個流程讓圖片辨識不受外部網站速度與失敗影響，也避免同一個單字在不同照片中重複保存整份字典資料。</p>
+
+<h3>雙語資料包完整內容（已鎖）</h3>
+<div class="notice"><strong>資料庫 App 每次工作都要同時指定母語與目標語言。</strong> 不只翻譯主單字；所有會顯示給學習者理解的內容，都要具有母語版本或明確的缺值狀態。</div>
+<div class="table-wrap"><table><thead><tr><th>資料類型</th><th>目標語言資料</th><th>母語資料</th></tr></thead><tbody>
+<tr><td>主詞條</td><td>lemma、顯示拼字、詞性、CEFR、頻率、用法標籤</td><td>按詞義分開的釋義、詞性名稱、用法與語域說明</td></tr>
+<tr><td>詞形變化</td><td>動詞時態、分詞、名詞單複數、形容詞比較級等表面詞形</td><td>每個詞形的標籤與必要說明，例如「過去式」「陰性複數」</td></tr>
+<tr><td>發音</td><td>IPA、音素、重音、音節、口音標籤、真人單字音檔</td><td>口音、發音與音標標籤的母語名稱；音檔本身仍播放目標語言</td></tr>
+<tr><td>例句</td><td>目標語言句子、對應詞義、來源與 A1～C2 難度；<strong>每個單字 A1～C2 每一級都要補滿 3～5 句</strong>。難度只看目標字以外的用字與句長（學習者正在學這個字，A2 的字也要有 A1 句子）。字典與例句庫補不滿的等級，由 AI 依該級造句並標記「AI 例句」</td><td>逐句翻譯；Tatoeba 中英配對優先，沒有配對時由 AI 翻譯並標記「AI 翻譯」</td></tr>
+<tr><td>衍生詞</td><td>衍生詞拼字、詞性、關係類型，例如 happy → happiness</td><td>每個衍生詞自己的詞義，以及衍生關係的母語說明</td></tr>
+<tr><td>同義、反義與相關詞</td><td>每個關係詞的正式 lexeme、詞性、對應 sense、關係類型與強度。<strong>同義詞與相關詞依關係詞本身的 CEFR 分級，A1～C2 每級 3 個</strong>；字典來源不足的等級由 AI 補近義詞／相關詞並標記 AI，但必須是有詞頻紀錄的真實單字；拼字變體、詞條本身的詞形與其他關係詞的詞形不算</td><td>每一個關係詞都必須有對應母語詞義，並翻譯關係名稱；不得只顯示一串目標語言單字</td></tr>
+<tr><td>同音、近音、拼字相近</td><td>每個候選詞的正式 lexeme、詞性、相似分數、發音或拼字差異</td><td>每一個候選詞都必須有母語詞義與差異說明</td></tr>
+<tr><td>字根與詞源</td><td>字根、字首、字尾、來源語、原始形式與構詞關係</td><td>可閱讀的母語解釋；不可只有未翻譯的來源語文字</td></tr>
+</tbody></table></div>
+<ul class="rule-list"><li>所有翻譯都綁定到 <code>sense_id</code>，不得只替整個單字保存一條模糊翻譯；一字多義必須逐義對應。</li><li>衍生詞必須連到另一個正式 <code>lexeme_id</code>，並取得該衍生詞的母語詞義；不可只保存文字字串。</li><li>每一筆詞彙關係的來源詞、目標詞和各自 sense 都必須保存。目標關係詞必須連到正式 <code>lexeme_id</code>，再由它的 <code>sense_id</code> 取得母語翻譯。</li><li>同義詞、反義詞、上位詞、下位詞、相關詞、同音字、近音字與拼字相近詞都適用母語翻譯要求；任何一個關係詞缺少翻譯，都要標成該詞的缺值，不可讓整組關係看起來已完成。</li><li>每個關係詞另存 <code>target_cefr</code>、Zipf 頻率、常見度分類、分級來源與 <code>hide_by_default</code>。正式 CEFR 詞表優先；沒有正式分級時才用頻率估算並明確標示。</li><li>Zipf 低於 2.5 或判為極生僻的關係詞預設不在學習 App 顯示，但仍保留於資料庫和後台供檢查；其他關係詞依「有母語翻譯、接近使用者程度、較常見、關聯分數」排序。</li><li>若來源只回傳關係詞字串，系統要先解析並連結正式詞條，再取得母語詞義；無法可靠連結時保存為待確認候選，不直接發布到 App。</li><li>例句與例句翻譯以明確配對 ID 關聯。例句庫沒有母語翻譯時，由後台的「AI 翻譯」來源補上並標記 AI；照片辨識流程（<code>/tag</code>）本身仍只產生照片標籤。</li><li><strong>例句與詞形發布驗證（2026-10-01）：</strong>來源提供的英文詞形必須能由該 lemma 或明確的共享 base 合理屈折得到；相鄰拼字不得當成詞形。例句必須包含 lemma 或通過此驗證的詞形（片語詞條要包含整個片語）。<strong>例句對應義項（問題回報 #87，2026-10-01 決定）：</strong>先做詞性判斷——只有動詞會用的詞形配動詞、冠詞後且名詞片語在此結束配名詞；冠詞後的動詞形（the wound）、連字號複合字（long-winded）、句中大寫的名字（the mighty Pan）、後接小品詞的片語動詞（pan out）都視為另一個字，不配也不發布。之後例句只要和某個義項的釋義有一個共同字就配到該義項；沒有證據時配到主要詞性（CEFR-J 列的詞性，句子已顯示詞性時用該詞性）的第一個常用義項（跳過古舊、俚語等罕用標記與其他詞源的義項）。同形異義字（另一詞源屬於主要詞性且發音不同，例如 wind、bow、tear）仍必須有證據才配。</li><li><strong>AI 的範圍（2026-09-29 確認）：</strong>AI 永遠是最後一順位，只補字典來源沒有的內容，每一筆都標記 AI 並可在後台覆寫。AI 可以：補所有母語翻譯（詞義、例句、關係詞、衍生詞、構詞部件、詞源說明）；在 A1～C2 仍不足 3 項的等級補例句、同義詞與相關詞。AI 不產生英文釋義與構詞拆解。App 端的單字補全（<code>/enrich</code>）維持關閉，App 只使用下載的資料包。</li><li><strong>台灣用語（2026-09-29 確認）：</strong>所有繁體中文一律使用台灣用語與台灣字形（義大利麵、起司、影片、馬鈴薯、鮭魚、計程車），任何來源（字典、例句庫、AI）存入前都要轉換，繁簡混雜的句子也要轉。台灣本來就在用的詞不得被改寫（程序、文件、社區、菠蘿麵包、面子、皇后），轉換重複執行結果不變（柳橙汁不會變成柳柳橙汁）；無法確定的詞（如「計算機」在台灣也指計算器）不自動替換。</li><li>目標語言原始資料可以跨不同母語資料包共用；母語釋義與翻譯層依語言方向分開版本化。</li></ul>
+
+<h3>系統架構</h3><div class="cards">
+<article class="card"><h3>管理前端</h3><p>React、TypeScript、Vite。提供拖曳排序、來源開關、擷取表單、工作佇列、進度、錯誤檢視、音檔管理與匯出操作；所有載入、空白、失敗與停用狀態都需完整呈現。</p></article>
+<article class="card"><h3>API 服務</h3><p>Python FastAPI、SQLAlchemy 2、Pydantic、Alembic，預設使用 <code>127.0.0.1:8770</code>。既有影像辨識 API 保留在 <code>127.0.0.1:8765</code>。</p></article>
+<article class="card"><h3>背景 Worker</h3><p>獨立 Python 程序從 PostgreSQL 取得工作，以 <code>FOR UPDATE SKIP LOCKED</code> 安全鎖定；支援檢查點、暫停、繼續、取消與失敗重試。瀏覽器關閉後工作仍繼續。</p></article>
+<article class="card"><h3>儲存</h3><p>PostgreSQL 是詞庫建置端的主資料庫，保存正規化資料、候選值、來源紀錄與工作狀態；Flutter 使用唯讀 SQLite 詞庫查詢，照片、相簿、使用者覆寫與學習紀錄仍存本機。原始資料放 <code>raw-data/</code>，音檔放 <code>media/audio/{language}/</code>，匯出檔放 <code>exports/</code>。</p></article>
+</div>
+<ul class="rule-list"><li>MVP 不使用 Redis 或 Celery；工作佇列直接存在 PostgreSQL。</li><li>API 使用環境變數中的 <code>X-API-Key</code>，專案提供 <code>.env.example</code>，不得把密鑰寫入程式或資料庫。</li><li>音檔與圖片不存入 PostgreSQL BLOB；資料庫只保存相對路徑、授權、來源與檔案資訊。</li></ul>
+
+<h3>來源 Adapter 與資料候選值</h3>
+<p>每個來源都實作一致的 <code>SourceAdapter</code>：<code>download_snapshot()</code>、<code>lookup()</code>、<code>normalize()</code>、<code>validate()</code>，媒體來源另實作 <code>download_audio()</code> 或 <code>download_image()</code>。每個候選值至少包含 <code>field</code>、<code>language</code>、<code>value</code>、<code>source</code>、<code>source_record_id</code>、<code>confidence</code>、<code>license</code>、<code>attribution</code>、<code>retrieved_at</code> 與 <code>raw_value</code>。</p>
+<div class="table-wrap"><table><thead><tr><th>來源</th><th>取得方式與限制</th></tr></thead><tbody>
+<tr><td>Kaikki／Wiktionary</td><td>優先讀取可下載 JSONL 資料包，不爬 HTML 頁面；保存版本、語言、授權與原始紀錄。</td></tr>
+<tr><td>Open English WordNet</td><td>使用官方 JSON 或 WN-LMF，取得詞義、同義集合與語義關係。</td></tr>
+<tr><td>CMUdict</td><td>保存 ARPAbet 音素及重音；不得誤標成 IPA，可用於美式近音與同音字計算。</td></tr>
+<tr><td>Tatoeba</td><td>使用 bulk dump 取得句子與英中／英法配對；本產品不保存或播放例句整句發音。</td></tr>
+<tr><td>Datamuse</td><td>透過 API 補充相關字、近音與拼字相近結果；必須有快取、節流與重試。</td></tr>
+<tr><td>AI 翻譯</td><td>本機 Qwen3-VL 經影像辨識服務的 <code>/translate</code>，永遠排在字典來源之後：補字典沒有的母語翻譯，並在 A1～C2 仍不足 3 項的等級補例句、同義詞與相關詞；每一筆標記 AI，繁中一律台灣用法。不產生英文釋義與構詞拆解；App 端的 <code>/enrich</code> 維持停用，App 只讀詞庫。（2026-09-29 起）</td></tr>
+<tr><td>系統 TTS</td><td>只有所有真人單字音檔來源都失敗時才作為播放備援，不假裝是真人音檔。</td></tr>
+<tr><td>Wikidata＋Wikimedia Commons</td><td>先以 sense 對應 Wikidata QID，再取得該概念的 Commons 圖片；只下載授權允許清單內的檔案，保存逐檔作者、授權、來源頁與 QID。</td></tr>
+<tr><td>Open Images</td><td>作為日常物品、人物、動作與場景的第二圖片來源；使用其標籤與物件框提高對應準確度，每張圖片仍需驗證授權及作者資料。</td></tr>
+<tr><td>Smithsonian Open Access</td><td>只收錄明確標示 CC0 的資產，作為動植物、自然、歷史、物件與文化圖片補充。</td></tr>
+<tr><td>Openverse</td><td>只作最後圖片搜尋入口；必須回到原始託管網站核對授權與檔案，未驗證前不得下載或發布。</td></tr>
+</tbody></table></div>
+
+<h3>欄位級來源順位（已鎖）</h3>
+<div class="notice"><strong>每一個資料欄位都能單獨設定來源順序。</strong> 動詞變化、名詞複數、形容詞比較級、例句、例句翻譯、IPA、音素、真人發音、詞義圖片、釋義、詞性、同義詞、同音字、近音字、拼字相近、衍生詞、字根與詞源，彼此都是獨立 Policy。調整其中一項不得連動其他欄位。</div>
+<ul class="rule-list"><li>Policy 以「目標語言＋母語＋精確欄位」為鍵。例如英文→繁中 <code>example_translation</code>、英文→法文 <code>example_translation</code>、英文 <code>verb_past</code> 與英文 <code>verb_past_participle</code> 都能使用不同順位。純目標語言欄位可讓多個母語資料包引用同一份結果。</li><li>每個來源步驟可拖曳排序、啟用／停用、設定逾時、重試次數、最低可信度、最大結果數，以及來源失敗時是否繼續下一個。</li><li>拖曳完成立即以單一交易保存；順位使用有間距的整數，避免每次拖曳重寫所有列。</li><li>管理者可輸入一個單字測試目前欄位 Policy，並同時看到每一順位的原始結果、正規化結果、驗證失敗原因與最後採用值。</li><li>支援 <code>FIRST_VALID</code>、<code>MERGE_UNIQUE</code>、<code>FILL_MISSING</code>、<code>BEST_SCORE</code>、<code>APPEND_LIMITED</code> 五種合併策略。</li><li>使用者手動修改值永遠優先，自動重新擷取不得覆蓋。</li></ul>
+
+<h3>每一區的來源排序介面（已鎖）</h3>
+<p>Source Policies 頁面依資料區塊分組顯示。每一區展開後，每個細項都有自己的「已啟用來源」拖曳清單與「可加入來源」清單；管理者可以為每個細項選來源、排列第一順位到最後順位、停用來源及測試結果。系統不得提供一個會強制套用全部欄位的全域來源順位。</p>
+<div class="table-wrap"><table><thead><tr><th>資料區塊</th><th>可獨立排序的細項</th><th>畫面要求</th></tr></thead><tbody>
+<tr><td>基本資料</td><td>詞性、逐義釋義、母語釋義、CEFR、頻率、用法／語域標籤</td><td>每一列各自顯示來源順位與採用策略。</td></tr>
+<tr><td>發音</td><td>IPA、音素、音節、重音、口音標籤、真人單字音檔、TTS 備援</td><td>音檔與音標不可被合併成同一個來源排序。</td></tr>
+<tr><td>詞形變化</td><td>英文動詞原形、過去式、過去分詞、現在分詞、第三人稱單數；名詞複數；形容詞比較級與最高級</td><td>每一種詞形都可有不同順位，也可手動複製另一細項的設定。<strong>同一組詞形共用同一張變化表：</strong>本身就是變化形的單字（ate、eaten、grated、apples）取原形（eat、grate、apple）的完整變化，eat／ate／eaten 顯示相同的 eat／ate／eaten／eating／eats；同一單字的不同詞性（形容詞 grated 與動詞 grated）在 App 顯示同一張變化表；只取同詞性原形的變化（grated 不取 grate 的名詞複數）；不適用的欄位仍顯示「不適用」。</td></tr>
+<tr><td>詞彙關係</td><td>同義詞、反義詞、上位詞、下位詞、相關詞、同音字、近音字、拼字相近，以及每一類關係詞的母語詞義</td><td>每種關係的詞彙來源與母語翻譯來源分開排序及設定合併數量。</td></tr>
+<tr><td>衍生詞</td><td>衍生詞清單、衍生關係、衍生詞詞性、衍生詞母語詞義</td><td>衍生詞本體與它的母語解釋分開選來源。</td></tr>
+<tr><td>字根與詞源</td><td>字根、字首、字尾、來源語、原始形式、詞源說明、母語詞源說明</td><td>結構化構詞資料與說明文字分開排序。</td></tr>
+<tr><td>例句</td><td>目標語言例句、例句難度、對應 sense、母語翻譯</td><td>例句來源和例句翻譯來源必須是兩套獨立順位。</td></tr>
+<tr><td>詞義圖片</td><td>代表圖片、情境圖片、縮圖、母語替代文字</td><td>每個 sense 獨立找圖；來源順位、保留數量與最低信心分數可調整。</td></tr>
+</tbody></table></div>
+<ul class="rule-list"><li>每一個細項列都要顯示目前第一順位、備援來源數、策略、最近測試結果與未儲存狀態。</li><li>點選細項後以拖曳方式調整順位；拖曳只改變目前細項，不得連動同區或其他區。</li><li>提供「複製此順位到⋯」按鈕，只有使用者明確選取其他細項並確認後才批次套用。</li><li>來源選單只列出宣告支援目前目標語言、母語及欄位的來源；不支援者列在下方並顯示原因。</li><li>每區可收合；收合標題顯示完成細項數、缺少來源的細項數與錯誤數，方便快速找出未設定項目。</li><li>沒有設定任何來源的細項狀態為「未設定」，不得偷偷繼承別區順位或呼叫未授權的預設來源。</li></ul>
+
+<h3>字卡版型與顯示數量編輯器（已鎖）</h3>
+<div class="notice"><strong>管理者可以調整字卡內每個內容區塊的順序與顯示數量。</strong> 這項設定只控制一張卡片如何呈現；FSRS 仍負責決定哪一張卡先出現。</div>
+<p>編輯器採三欄式畫面：左側是可加入的內容區塊，中間分成「正面」與「背面」拖曳清單，右側使用所選目標語言／母語與實際單字即時預覽。拖曳後預覽立即更新，儲存草稿不影響 App，只有按下「發布版型」才產生新版本。</p>
+<div class="table-wrap"><table><thead><tr><th>可調整區塊</th><th>可設定項目</th><th>預設</th></tr></thead><tbody>
+<tr><td>字首提示</td><td>顯示字母數、底線形式、是否顯示總字數</td><td>正面；顯示第一個字母與其餘底線</td></tr>
+<tr><td>詞性與母語提示</td><td>開關、排列順序、最多詞義數</td><td>正面；詞性 1 項、母語釋義 1 項</td></tr>
+<tr><td>答案單字</td><td>字級、詞性、CEFR 與頻率標籤開關</td><td>背面第一區；必須顯示</td></tr>
+<tr><td>照片</td><td>開關、尺寸、同詞多照片的選取方式</td><td>背面；隨機一張且避免連續重複</td></tr>
+<tr><td>發音</td><td>IPA、音素、口音、播放按鈕、自動播放各自開關；音檔數量</td><td>背面；IPA 1 項、真人音檔 1 個</td></tr>
+<tr><td>逐義釋義</td><td>顯示數量、排序依據、是否顯示來源與用法標籤</td><td>最多 3 個 sense</td></tr>
+<tr><td>詞形變化</td><td>顯示數量、要顯示的詞形類型、排列方式</td><td>最多 5 項；只顯示適用詞形</td></tr>
+<tr><td>例句與翻譯</td><td>顯示數量、CEFR 配對、翻譯優先、是否顯示來源</td><td>目前程度 3～5 組；同級不足時以相鄰程度補足，可展開瀏覽其他等級</td></tr>
+<tr><td>衍生詞</td><td>顯示數量、詞性篩選、母語詞義與關係說明開關</td><td>最多 5 個</td></tr>
+<tr><td>詞彙關係</td><td>每種關係分別設定顯示數量、母語詞義、排序與展開規則</td><td>同義詞 3 個；其餘每類 3 個</td></tr>
+<tr><td>字根與詞源</td><td>字根、字首、字尾、詞源與母語說明開關；預設展開或收合</td><td>有資料才顯示，預設收合</td></tr>
+<tr><td>來源資訊</td><td>來源名稱、授權、AI 標記與資料時間開關</td><td>精簡顯示，可點擊展開</td></tr>
+</tbody></table></div>
+<ul class="rule-list"><li>每個區塊可在正面、背面或停用區之間拖曳；「答案單字」不能移到正面，也不能停用。</li><li>數量控制允許固定上限或「顯示前 N 項＋展開全部」。N 不得超過該資料類型的系統安全上限；無資料的區塊自動隱藏，不留下空白。</li><li>每個詞彙關係類型各有獨立數量，例如同義詞 5 個、反義詞 2 個、近音字 3 個，不使用單一共用數量。</li><li>排序選項依區塊提供：來源順位、頻率、CEFR 接近程度、關聯分數或字母順序；相同條件以穩定 ID 排序，避免畫面每次跳動。</li><li>提供桌面寬度與手機寬度預覽，以及正面、背面、空資料、資料很多四種預覽狀態。</li><li>提供「恢復預設」、「儲存草稿」、「發布版型」與版本歷史；發布時驗證必要區塊及數量範圍，並可回復上一版。</li></ul>
+
+<h3>多種學習模板與瀏覽（已鎖）</h3>
+<p>原本的「母語提示→回想單字→顯示答案」保留為回想字卡模板；另外建立下列五種互動練習模板。模板共用同一份詞條與 FSRS 卡片，不為同一單字複製五份學習狀態。</p>
+<div class="table-wrap"><table><thead><tr><th>模板</th><th>題目互動</th><th>必要資料</th><th>答案後顯示</th></tr></thead><tbody>
+<tr><td>1. 句子填空・選單字</td><td>顯示一個有空格的目標語言例句，以及 3～5 個單字選項；只能有一個符合該 sense 與詞形的最佳答案。</td><td>例句、例句翻譯、目標詞、正確詞形與可用干擾選項</td><td>完整句子、母語翻譯、正確詞形、簡短原因與單字完整資料</td></tr>
+<tr><td>2. 看照片直接點選單字</td><td>顯示一張個人照片或已核准詞義圖片，以及 3～5 個目標語言單字；點選最符合圖片的單字。</td><td>照片／圖片、正確 sense、圖片語意分數及不重疊的干擾詞</td><td>正確單字、母語詞義、詞性、發音與圖片中對應位置</td></tr>
+<tr><td>3. 相似詞比較填空</td><td>顯示情境句空格與 2～4 個同義或易混淆詞，選出在該句最自然的一個。</td><td>例句、相似詞關係、每個候選的 sense、母語詞義與用法差異</td><td>完整句子、逐項差異、為何正確及其他選項何時適用</td></tr>
+<tr><td>4. 母語說明＋照片</td><td>顯示母語詞義、詞性與照片，隱藏目標單字；使用者先在心中回想，再點擊顯示答案。可選擇加入字首與底線提示。</td><td>母語 sense 翻譯、詞性、照片／圖片與目標單字</td><td>目標單字、發音、照片、例句及完整資料</td></tr>
+<tr><td>5. 拖曳單字到圖片中</td><td>一張照片顯示 1～5 個可放置區域；使用者把單字籤拖到正確物件或情境位置。錯誤時單字籤回到原位，可再次嘗試。</td><td>照片、標籤框、每個框對應的 lexeme／sense，以及 1～5 個單字</td><td>所有標籤正確位置、母語詞義與每個單字的簡短資料</td></tr>
+</tbody></table></div>
+<ul class="rule-list"><li>模板瀏覽頁以卡片畫廊呈現縮圖、名稱、互動示意、所需資料、目前可產生題數及完成率；可搜尋、篩選、啟用、停用並拖曳調整模板出現順序。</li><li>點入模板可瀏覽由實際資料產生的題目，使用上一題、下一題與隨機抽樣；可切換目標語言、母語、草稿／已發布版本及手機尺寸。</li><li>每個模板可單獨設定每次題目數、選項數、提示方式、答案後顯示區塊、Again／Hard／Good／Easy 按鈕開關與啟用條件。</li><li>系統只使用資料完整且答案唯一的題目。資料不足時不硬湊選項，標記缺少欄位並跳過該模板。</li><li>干擾選項要和正確答案詞性相容、難度接近，但不得在目前句子或圖片中同樣合理；產生後保存驗證結果與理由。</li><li>需要照片的模板可以在題目正面顯示照片；原本回想字卡仍維持正面不顯示圖片，兩者規則分開。</li><li>模板作答結果保存 <code>template_type</code>、是否正確、反應時間、提示使用量與嘗試次數；FSRS 仍以同一單字卡為單位更新，辨認型題目的成功權重低於主動回想型題目。</li><li>模板可設定「只瀏覽」模式；只瀏覽及管理後台預覽永遠不更新 FSRS。</li></ul>
+
+<h3>英文預設 Policy</h3><div class="table-wrap"><table><thead><tr><th>精確欄位</th><th>預設來源順位</th><th>策略</th></tr></thead><tbody>
+<tr><td>詞性、釋義</td><td>Kaikki → Open English WordNet → AI 補值</td><td>FILL_MISSING</td></tr>
+<tr><td>IPA</td><td>Kaikki／Wiktionary</td><td>FIRST_VALID</td></tr>
+<tr><td>ARPAbet 音素</td><td>CMUdict → Kaikki</td><td>FIRST_VALID</td></tr>
+<tr><td>單字真人發音</td><td>Kaikki（Wiktionary 連結的音檔）→ Wikimedia Commons（依 Wiktionary 檔名規則 En-uk-／En-us- 直接查檔，只查 Kaikki 缺的口音）；系統 TTS 只在 App 播放時備援，不算真人發音</td><td>MERGE_UNIQUE；<strong>每個單字 2 個：英式（預設播放）＋美式</strong>，每種口音 1 個；其他口音（澳式、加拿大、未標口音的 Lingua Libre）保留為額外選項。缺英式或美式時，後台單字頁列出「缺漏：沒有英式真人發音」，欄位狀態為「缺漏」</td></tr>
+<tr><td>同義詞</td><td>Open English WordNet → Kaikki → Datamuse → AI 補值</td><td>MERGE_UNIQUE；依關係詞 CEFR 分級，A1～C2 每級 3 個（每個都要母語詞義，固定 3 個以減少翻譯量）；AI 只補不足 3 個的等級</td></tr>
+<tr><td>相關詞</td><td>Open English WordNet → Kaikki → Datamuse → AI 補值</td><td>MERGE_UNIQUE；同上，每級 3 個，同一級內依關聯分數排序</td></tr>
+<tr><td>同音／近音字</td><td>CMUdict 本地計算 → Datamuse → Kaikki</td><td>MERGE_UNIQUE</td></tr>
+<tr><td>拼字相近</td><td>Kaikki 本地字表計算 → Datamuse</td><td>MERGE_UNIQUE</td></tr>
+<tr><td>動詞原形、過去式、過去分詞、現在分詞、第三人稱單數</td><td>每一欄各自設定；預設 Kaikki</td><td>FIRST_VALID</td></tr>
+<tr><td>名詞單複數、形容詞比較級／最高級</td><td>每一欄各自設定；預設 Kaikki</td><td>FIRST_VALID</td></tr>
+<tr><td>詞性衍生</td><td>Kaikki → Open English WordNet</td><td>MERGE_UNIQUE</td></tr>
+<tr><td>字根、字首、字尾、詞源</td><td>每一欄各自設定；預設 Kaikki</td><td>FILL_MISSING</td></tr>
+<tr><td>英文例句</td><td>Tatoeba（搜尋原形與所有詞形，依句長分段取樣）→ Kaikki → Open English WordNet → AI 造句</td><td>APPEND_LIMITED；A1～C2 每級至少 3 組、最多 5 組，總上限 30 組，中英配對優先；AI 只補不足 3 組的等級</td></tr>
+<tr><td>例句母語翻譯</td><td>Tatoeba → AI 翻譯</td><td>FILL_MISSING；以明確句子 ID 配對；Tatoeba 沒有翻譯時由 AI 翻譯並標記</td></tr>
+<tr><td>其他母語翻譯（詞義、關係詞、衍生詞、構詞部件、詞源說明）</td><td>字典來源（Kaikki、詞庫內既有詞條、本機構詞表）→ AI 翻譯</td><td>FILL_MISSING；AI 只補字典沒有的翻譯並標記</td></tr>
+<tr><td>每個 sense 的詞義圖片</td><td>Wikidata／Wikimedia Commons → Open Images → Smithsonian CC0 → Openverse</td><td>APPEND_LIMITED；<strong>擷取工作自動抓取</strong>：每個詞條的前 2 個 sense 依釋義、詞性與母語詞義自動對應 Wikidata 概念，每個 sense 自動下載 3 張候選並附語意分數（概念代表圖最高），進入審核佇列；預設每個 sense 保留 3 張已核准圖片</td></tr>
+</tbody></table></div>
+<p class="small">第一階段只執行英文目標語言 Policy；不同母語方向仍可設定不同翻譯來源順位。資料模型保留未來加入法文與繁體中文目標語言的能力，但本階段不建立其來源順位及專屬欄位。來源暫不支援某母語方向或欄位時顯示「不支援」，不可靜默回傳空值。</p>
+
+<h3>PostgreSQL 資料模型</h3>
+<p>至少包含：<code>sources</code>、<code>source_capabilities</code>、<code>source_snapshots</code>、<code>source_policies</code>、<code>source_policy_steps</code>、<code>languages</code>、<code>language_pairs</code>、<code>lexemes</code>（含 <code>entry_type</code>）、<code>orthographic_variants</code>、<code>lexeme_usages</code>、<code>expression_components</code>、<code>expression_patterns</code>、<code>senses</code>、<code>definitions</code>、<code>sense_translations</code>、<code>localized_labels</code>、<code>forms</code>、<code>pronunciations</code>、<code>audio_assets</code>、<code>image_assets</code>、<code>image_candidates</code>、<code>sense_images</code>、<code>image_reviews</code>、<code>synsets</code>、<code>semantic_relations</code>、<code>lexeme_relations</code>、<code>relation_target_senses</code>、<code>relation_translations</code>、<code>examples</code>、<code>example_translations</code>、<code>card_templates</code>、<code>card_template_versions</code>、<code>card_template_sections</code>、<code>learning_templates</code>、<code>learning_template_versions</code>、<code>generated_exercises</code>、<code>exercise_options</code>、<code>exercise_attempts</code>、<code>card_preview_issues</code>、<code>review_queue</code>、<code>content_flags</code>、<code>field_candidates</code>、<code>field_values</code>、<code>field_provenance</code>、<code>user_overrides</code>、<code>entity_redirects</code>、<code>entity_tombstones</code>、<code>missing_lexeme_requests</code>、<code>missing_localization_requests</code>、<code>dictionary_releases</code>、<code>dictionary_release_deltas</code>、<code>backup_manifests</code>、<code>import_jobs</code>、<code>import_job_steps</code>、<code>import_attempts</code>、<code>import_errors</code>、<code>api_usage</code>。</p>
+<ul class="rule-list"><li><code>field_candidates</code> 保存所有來源候選值；<code>field_values</code> 保存 Resolver 最終採用值；<code>field_provenance</code> 可追溯採用來源、快照與處理時間。</li><li>詞條以語言、正規化拼字、詞性等鍵去重；例句以正規化文字雜湊去重；音檔以 SHA-256 去重。</li><li>每次 bulk dump 保存快照版本、URL、SHA-256、下載時間與授權，可重跑舊快照並比較差異。</li><li>搜尋使用 PostgreSQL <code>pg_trgm</code> 支援拼字近似與快速查找。</li><li><code>import_errors</code> 必須記錄精確欄位、來源、錯誤類型、訊息、嘗試次數、下次重試時間與原始紀錄識別碼。</li></ul>
+
+<h3>音檔規則</h3>
+<p><code>audio_assets</code> 保存語言、口音、說話者、來源、來源網址、授權、署名、MIME、duration、sample rate、channels、SHA-256、相對路徑、下載狀態與失敗原因。下載採暫存檔，驗證 MIME 與雜湊後原子搬移；同一音檔只存一份，可被多個詞條引用。</p>
+
+<h3>圖片來源順位與擷取規則（已鎖）</h3>
+<div class="notice"><strong>預設順序：</strong>Wikidata／Wikimedia Commons → Open Images → Smithsonian Open Access CC0 → Openverse。管理者仍可在「詞義圖片」欄位中拖曳調整、停用來源及設定每個 sense 的圖片數量。</div>
+<ol class="rule-list"><li><strong>概念定位：</strong>先以目標單字的 <code>sense_id</code>、詞性及母語釋義對應 Wikidata QID 或來源類別；不得只用 lemma 字串搜尋，避免 bat、bank 等多義詞抓錯圖。</li><li><strong>搜尋候選：</strong>依設定順位查詢各來源，保存來源 ID、搜尋詞、概念 ID、標籤、物件框及原始 metadata；達到已核准圖片上限後停止後續來源。</li><li><strong>授權閘門：</strong>MVP 只允許 <code>CC0</code>、<code>Public Domain</code>、<code>CC BY</code>。拒絕 <code>CC BY-NC</code>、<code>CC BY-ND</code>、<code>CC BY-SA</code>、授權不明及無法回到原始頁面的圖片。</li><li><strong>語意驗證：</strong>以圖片標籤、物件框與本機視覺模型檢查圖片是否符合指定 sense。高信心進入待審核，中低信心保留為候選，不得自動發布。</li><li><strong>下載驗證：</strong>先下載到暫存檔，檢查 HTTP 狀態、實際 MIME、magic bytes、像素尺寸、檔案大小與 SHA-256，通過後原子搬移至 <code>media/images/{source}/{sha256}.{ext}</code>。</li><li><strong>去重與變體：</strong>以 SHA-256 做完全去重，以 perceptual hash 找出裁切或縮放近似圖；原圖只存一份，另產生固定尺寸 WebP／JPEG 縮圖供 App 使用。</li><li><strong>人工審核：</strong>審核者可核准、拒絕、改綁 sense、設為代表圖或要求重新搜尋。只有 <code>approved</code> 圖片可進入正式資料包。</li><li><strong>更新與下架：</strong>保存授權快照與最後驗證時間；來源撤除、授權改變或檔案失效時標成 <code>blocked</code>，下次發布排除，但保留稽核紀錄。</li></ol>
+<p><code>image_assets</code> 至少保存：來源、來源圖片 ID、原始頁面 URL、原檔 URL、作者、署名文字、授權代碼、授權 URL、取得時間、最後驗證時間、MIME、寬高、檔案大小、SHA-256、perceptual hash、相對路徑、縮圖路徑、內容安全狀態與下載狀態。<code>sense_images</code> 保存 <code>sense_id</code>、圖片角色、語意分數、人工審核狀態、顯示順位及母語替代文字。</p>
+<p class="small">Wikimedia Commons 每張檔案授權不同，必須逐檔保存並遵守；Open Images 的圖片授權仍逐張核對；Smithsonian 只接受明確 CC0 資產；Openverse 僅作搜尋入口，必須回原始網站驗證。官方參考：<a href="https://commons.wikimedia.org/wiki/Commons:Reusing_content_outside_Wikimedia/en">Wikimedia Commons reuse</a>、<a href="https://github.com/openimages/dataset/blob/main/READMEV1.md">Open Images dataset</a>、<a href="https://www.si.edu/openaccess/faq">Smithsonian Open Access</a>、<a href="https://docs.openverse.org/terms_of_service.html">Openverse terms</a>。</p>
+
+<h3>管理介面頁面</h3><ol class="rule-list">
+<li><strong>Dashboard：</strong>依目標語言／母語組合顯示詞條數、目標語言欄位完整率、母語翻譯完整率、例句配對率、衍生詞詞義完整率、已核准圖片覆蓋率、缺少與失敗數、執行中工作、來源健康度、API 使用量、資料庫、音檔與圖片容量。</li>
+<li><strong>Source Policies：</strong>頂部先選目標語言與母語；主區域依基本資料、發音、詞形變化、詞彙關係、衍生詞、字根與詞源、例句分成可收合區塊。每個細項列都有獨立拖曳來源清單；右側設定策略、逾時、重試、可信度與筆數，並提供「測試單字」與逐來源雙語預覽。</li>
+<li><strong>Start Import Job：</strong>母語與目標語言都是必填，再選單字範圍、精確欄位、是否抓取詞義圖片、每個 sense 圖片數、來源、缺值補齊／強制刷新／只驗證／乾跑模式；開始前分別顯示文字、音檔、圖片的預估請求數及儲存量。<strong>預設模式是「缺值補齊」（會寫入詞庫），詞義圖片預設勾選並自動抓取</strong>；乾跑必須主動選擇。乾跑完成的工作頁要明示「沒有寫入詞庫」並提供一鍵「正式擷取這些單字」；正式工作完成後列出寫入的單字連結。</li>
+<li><strong>Jobs：</strong>列出狀態、進度、成功、缺值、重試與失敗數，提供暫停、繼續、取消與重試失敗項目。</li>
+<li><strong>Job Detail：</strong>顯示每個欄位與來源步驟、即時紀錄、檢查點、錯誤分類，可下載錯誤 CSV。</li>
+<li><strong>Word Coverage：</strong>搜尋單字並並排查看目標語言與母語的所有欄位狀態；主詞義、每個 sense、每句例句、每個衍生詞及相關詞都要分別顯示成功／缺少／失敗／查無／不適用／使用者覆寫，並能針對單一缺少欄位重抓、整個單字重新抓取或檢視來源紀錄。單字下方顯示發音音檔（播放、授權與署名、設預設發音、重新下載）與已核准詞義圖片，圖片上依「照片標籤排版」疊上 AI 標籤、中文與目標字的物件框。（2026-09-30 起不另設 Audio Library 頁面。）</li>
+<li><strong>Image Library &amp; Review：</strong>依單字與 sense 顯示各來源圖片候選、語意分數、授權和重複狀態；支援核准、拒絕、改綁 sense、設代表圖、批次重抓及查看原始來源頁。</li>
+<li><strong>Source Snapshots：</strong>下載、校驗、匯入、比較與回復來源快照，清楚標示授權與版本。</li>
+<li><strong>Export for Flutter：</strong>選語言、欄位與是否包含音檔，建立 SQLite、媒體清單與 manifest，並提供下載。</li>
+<li><strong>Template Library &amp; Editor：</strong>瀏覽回想字卡及五種互動模板，查看可產生題數與完成率；可啟用、停用、拖曳模板順序，並調整正反面區塊、題目數、選項數、提示及答案內容。支援草稿、發布、版本比較與回復。</li>
+<li><strong>Completed Card &amp; Exercise Preview：</strong>使用已完成的實際資料逐張操作回想字卡與五種練習，可切換模板、翻面、選答案、拖曳、播放發音；支援上一題、下一題、搜尋、隨機抽樣與問題標記。</li>
+</ol>
+
+<h3>成品字卡預覽（已鎖）</h3>
+<p>資料抓取與解析完成後，管理者不必先匯出到 Flutter，就能在後台查看和 App 相同的成品字卡與互動練習。預覽必須使用指定的已發布或草稿模板、實際雙語詞條、已核准詞義圖片與音檔，不可使用寫死的假資料。</p>
+<ul class="rule-list"><li>先選目標語言、母語、模板類型、模板版本與預覽資料範圍；可搜尋單字、輸入 lexeme ID、看上一題／下一題，或從已完成內容隨機抽樣。</li><li>回想字卡完整模擬正面與背面，正面不顯示答案及圖片；需要照片的互動模板則依各自規則在題目正面顯示照片。</li><li>句子填空與點選題可以實際選答案，相似詞題顯示逐項解釋，拖曳題可以真正拖曳並呈現正確或退回原位。</li><li>預覽要忠實套用各區順序、顯示數量、選項數、排序、提示、收合／展開、無資料隱藏及手機寬度規則。</li><li>提供手機直向、手機橫向與桌面尺寸；顯示目前題目實際載入的 sense、各欄位來源、圖片授權、模板版本及資料包版本。</li><li>發音可手動播放，也可切換模擬 App 自動播放；圖片可以切換同一 sense 的其他已核准圖片。</li><li>管理者可標記「資料錯誤」「翻譯錯誤」「圖片不符」「音檔錯誤」「選項不唯一」「拖曳區域錯誤」「版面問題」並填寫備註；問題直接連到對應欄位或媒體。</li><li>所有後台預覽操作都只模擬結果，不建立 exercise attempt 或 review log、不更新 FSRS、不改變使用者能力。</li><li>只有必要資料通過、模板可正常互動且沒有阻擋級問題的卡片或題目才能標記為 <code>ready_for_export</code>。</li></ul>
+
+<h3>工作狀態與 API</h3>
+<p>工作狀態：<code>queued</code>、<code>running</code>、<code>pausing</code>、<code>paused</code>、<code>cancelling</code>、<code>cancelled</code>、<code>completed</code>、<code>completed_with_errors</code>、<code>failed</code>。單次嘗試狀態：<code>pending</code>、<code>running</code>、<code>succeeded</code>、<code>missing</code>、<code>retrying</code>、<code>failed</code>、<code>skipped</code>。</p>
+<p>至少提供：<code>GET /sources</code>、<code>GET/PUT /policies/{target_language}/{native_language}/{field}</code>、<code>POST /policies/{target_language}/{native_language}/{field}/test</code>、<code>POST /imports</code>、<code>GET /imports</code>、<code>GET /imports/{id}</code>、<code>POST /imports/{id}/pause</code>、<code>/resume</code>、<code>/cancel</code>、<code>/retry-failures</code>、<code>GET /words/{target_language}/{native_language}/{lemma}</code>、<code>POST /words/{id}/fields/{field}/refresh</code>、<code>GET /coverage/{target_language}/{native_language}</code>、<code>GET /audio</code>、<code>GET /images</code>、<code>POST /images/search</code>、<code>POST /images/{id}/approve</code>、<code>/reject</code>、<code>/rebind</code>、<code>POST /snapshots</code>、<code>GET/POST /card-templates</code>、<code>PUT /card-templates/{id}/draft</code>、<code>POST /card-templates/{id}/preview</code>、<code>POST /card-templates/{id}/publish</code>、<code>POST /card-templates/{id}/rollback/{version}</code>、<code>GET/POST /learning-templates</code>、<code>PUT /learning-templates/{id}/draft</code>、<code>POST /learning-templates/{id}/preview</code>、<code>/publish</code>、<code>/rollback/{version}</code>、<code>GET /exercise-previews</code>、<code>GET /exercise-previews/{exercise_id}</code>、<code>GET /card-previews</code>、<code>GET /card-previews/{lexeme_id}</code>、<code>POST /card-preview-issues</code>、<code>POST /exports/sqlite</code>。所有匯入與匯出請求都必須包含 <code>target_language</code> 和 <code>native_language</code>。</p>
+
+<h3>Flutter 匯出</h3>
+<p>輸出 <code>language-data-{target_language}-{native_language}-{yyyyMMdd-HHmm}.sqlite</code>、目標語言音檔清單、已核准詞義圖片清單與 <code>manifest.json</code>。Manifest 包含 schema 版本、目標語言、母語、來源快照、Policy 版本、已發布回想字卡版型及五種學習模板版本、建立時間、各欄位完整率、各模板可用題數、資料筆數、媒體檔案雜湊、圖片授權、音檔授權與署名摘要。匯出前檢查外鍵、孤立媒體、必要欄位、翻譯配對、圖片審核狀態、模板互動設定與 SQLite 可讀性；失敗不得留下看似完成的檔案。</p>
+<ul class="rule-list"><li>SQLite 是圖片辨識後查詢完整雙語詞條資料的正式執行期詞庫，針對 <code>target_language + normalized_form + entry_type</code>、usage 詞性、<code>native_language</code>、sense 翻譯、詞形回查與字首搜尋建立索引。</li><li>主資料庫可保留未綁定 <code>sense_id</code> 的例句作為來源證據與待審資料；匯出器必須排除這些例句，避免 App 在無義項 UI 中把例句攤平到錯誤用法。</li><li>App 的照片關聯保存穩定的 <code>lexeme_id</code>，並在可判定時保存 <code>usage_id</code> 與 <code>sense_id</code>；新版詞庫不得任意改變既有 ID。詞條或用法合併時必須提供 ID redirect 表。</li><li>詞庫更新先下載到暫存檔，驗證目標語言、母語、schema、版本與 SHA-256 後再原子切換；更新失敗時繼續使用舊版。</li></ul>
+
+<h3>處理原則與專案交付</h3>
+<ul class="rule-list"><li>所有流程可重複執行且不製造重複資料；以批次提交，失敗只回滾當批。</li><li>網路呼叫有 timeout、指數退避、jitter、來源別速率限制與熔斷；遵守來源條款、授權及署名要求。</li><li>先保存候選值與來源證據，再由 Resolver 依當下 Policy 選值；Policy 改變時可重新解析，不必重新下載所有來源。</li><li>專案目錄至少包含 <code>frontend/</code>、<code>backend/</code>、<code>worker/</code>、<code>migrations/</code>、<code>raw-data/</code>、<code>media/audio/</code>、<code>media/images/</code>、<code>exports/</code>、<code>tests/</code>、<code>docker-compose.yml</code>、<code>.env.example</code> 與 <code>README.md</code>。</li><li>README 必須說明 PostgreSQL、API、Worker、前端啟動方式、初始 migration、來源快照、圖片與音檔擷取、成品字卡預覽、第一個乾跑工作及 SQLite 匯出流程。</li></ul>
+
+<h3>測試與驗收條件</h3>
+<ul class="rule-list"><li>單元測試涵蓋每個 Adapter 的正規化、欄位驗證、Resolver 五種策略、去重、音檔與圖片雜湊、授權允許清單、圖片 MIME 驗證與匯出轉換。</li><li>整合測試涵蓋 PostgreSQL migration、兩個 Worker 不重複領取工作、暫停／續跑／取消、檢查點恢復與 API 冪等性。</li><li>可只調整「動詞過去式」或「詞義圖片」的來源順位而不影響其他欄位；重新解析後能看見新採用值與來源紀錄。</li><li>從建立 Policy、測試單字、啟動乾跑、正式擷取、圖片審核、成品字卡預覽、查看具體失敗欄位、重試到匯出 SQLite 的完整流程可在介面完成。</li><li>瀏覽器關閉後工作繼續；重新開啟可看到相同進度。來源完全不可用時工作可完成為 <code>completed_with_errors</code>，並指出每個失敗欄位。</li><li>匯出的 SQLite 可由 Flutter 讀取，音檔與圖片路徑可解析，manifest 雜湊與逐圖授權正確，使用者覆寫資料不會被後續匯入覆蓋。</li></ul>
+<h3>圖片辨識查庫驗收</h3><ul class="rule-list"><li>以資料庫已有的單字辨識圖片時，流程不發出任何外部字典請求，並能在本機離線取得釋義、詞形、例句與發音連結。</li><li>同一單字出現在多張照片時，只新增照片與詞條的關聯，不複製詞條資料；刪除其中一張照片不會刪除共用詞條。</li><li>辨識到屈折詞形時可透過 <code>forms</code> 回查正確 lemma；同形異義或多詞性時保留候選，依模型詞性與情境分數選擇，低信心時讓使用者確認。</li><li>查無單字時新增缺詞請求且照片可立即保存；詞庫更新後能重新比對並補上關聯。</li></ul>
+<h3>缺值判定、例句長度與媒體（2026-09-30 確認）</h3><ul class="rule-list"><li><strong>不適用與查無不算缺值：</strong>詞性不符的欄位標「不適用」並且不查詢（名詞沒有過去式、非形容詞沒有比較級、沒有內容可翻譯的母語欄位）；所有來源都正常回應但確實沒有的欄位標「查無」（calendar 沒有反義詞、coffee 沒有字首）。只有來源失敗或還能由後續順位補的才是缺值。</li><li><strong>後續順位補齊：</strong>每個欄位的第二、三、四順位都要能補第一順位的缺口；本機規則是字典之後的後備：CEFR 詞表外的字用詞頻估算並標示「估算」、片語 IPA 由各字組合、規則名詞複數、衍生詞詞性與衍生關係。</li><li><strong>例句長度：</strong>每句最多 20 個英文字；C1、C2 的難度由用字決定，不靠句長。</li><li><strong>減少 AI 用量：</strong>每級優先放有中英對照的例句，沒有翻譯的句子只補到該級 3 句；同義詞、相關詞每級固定 3 個；重新解析時已有答案的格子不再送 AI。</li><li><strong>圖片 AI 標籤：</strong>每張下載的詞義圖片都由本機視覺模型打標籤：每個標籤有字、詞性、位置點與物件框（標籤座標／範圍）。與照片辨識一樣至少 6–8 個；第一輪不足 8 個時排除已有的字再看一輪，最多保留 12 個。<strong>每個標籤都有自己的辨識分數（0–100%，2026-10-01）：</strong>打完標籤後模型再看一次圖片，逐一確認每個標籤是否出現在圖中，分數取它回答「有出現」的機率（由模型輸出 token 的 logprob 計算，不是模型自評數字）；圖片庫與後台單字頁（單字覆蓋率）的每張圖都顯示分數：圖上每個標籤後面附分數，圖下方依分數排列列出每個標籤與分數，未通過的收在「未通過的標籤」（綠 ≥ 80%、黃 50–79%、紅 &lt; 50%，尚未評分顯示「未評分」）。<strong>標籤通過門檻 80%（2026-10-01）：</strong>只有辨識分數 ≥ 80% 的標籤通過，才會用來認字（圖片歸屬該單字）、分享到其他單字、顯示在圖片上與進入 App；未通過的標籤只收在圖片庫每張圖下方「未通過的標籤」。通過的不足 8 個時，再看兩輪（具體名稱、外觀描述，排除已看過的字），每輪都要評分。所有既有圖片依此規則重新打標籤（Worker 背景處理，待審核的圖優先）；原本核准的圖若該單字的標籤未通過，會自動從該單字移除。Worker 在沒有擷取工作時逐張處理；標籤正好是該詞時語意分數提高為 0.95。</li><li><strong>單字頁媒體：</strong>「單字覆蓋率」點進單字後，在單字下方顯示發音音檔（播放、授權、設為預設、重新下載）與已核准的詞義圖片，圖片上疊 AI 標籤與中文；不再有獨立的音檔庫頁面。圖片庫保留作為審核頁，可批次核准概念代表圖。</li><li><strong>圖片必須看得到這個字：</strong>詞義圖片的 AI 標籤必須認出該字（含複數或包含它的片語）才可核准或留在該字；沒認出的自動拒絕並記錄原因（例如 ceramic 下的伊絲塔城門磚牆），手動與批次核准都受此限制。（2026-09-30）</li><li><strong>同一張圖片由標籤共用：</strong>每張圖片的每個 AI 標籤，只要是詞庫裡的正式單字（依標籤詞性對應詞條的第一個 sense），這張圖就同時放在那個單字下，例如長椅圖片標到 gravel，就也出現在 gravel。原圖已由管理者核准的直接核准，否則進審核佇列；同一個字只放一次。之後新匯入的字會先接收所有已標到它的圖片，已有足夠圖片的就不再下載。（2026-09-30）</li><li><strong>情境片語不建詞條：</strong>照片辨識出的場景片語（pour coffee、garnished with、in the kitchen）若任何字典都沒有詞性與釋義，就不建立詞條、不列入字表與缺詞需求；照片標籤本身不受影響。（2026-09-30）</li><li><strong>重新抓取按鈕：</strong>單字頁提供「重新抓取這個字」（強制刷新，全部欄位含圖片）與「只補缺的」。</li></ul>
+<h3>每級補滿與台灣用語驗收（2026-09-29 新增）</h3><ul class="rule-list"><li>任一正式擷取完成的單字，後台單字頁的例句、同義詞、相關詞在 A1～C2 每一級至少 3 項、最多 5 項；字典與 AI 都無法提供合理項目的等級，要在「待補項目」逐級列出，例如「缺漏：C2 例句只有 1 句，至少要 3 句（來源已查遍）」。</li><li><strong>缺漏狀態（2026-09-30）：</strong>所有來源（AI 最後）都查過仍未達標的欄位（某級例句／同義詞／相關詞不足 3 個、沒有英式或美式真人發音），欄位狀態為「缺漏（來源已查遍）」，不再算完成；覆蓋率與 App 資料包都把它算作缺漏欄位。「補缺值」擷取不會再把它送去來源與 AI（避免重複耗 token），改用「重新抓取」或強制更新才會再查。</li><li>AI 產生的例句、關係詞與翻譯在後台與 App 都看得出是 AI；AI 關係詞必須是有詞頻紀錄的真實單字。</li><li>資料庫所有繁體中文經台灣用語轉換後不再改變，沒有簡體字與繁簡混雜句。</li><li>擷取工作勾選詞義圖片時，自動為前 2 個 sense 找到 Wikidata 概念並下載候選圖片進入審核佇列；找不到可靠概念的 sense 標為缺值，不用拼字硬搜。</li></ul>
+<h3>雙語完整性驗收</h3><ul class="rule-list"><li>不能只用「主單字有一條翻譯」判定完成。每個 sense、每句例句、每個衍生詞與每個會顯示的關係詞都必須各自檢查母語內容。</li><li>管理者以英文為目標語言、繁體中文為母語建立工作後，可在同一單字頁看見英文詞形與發音，以及逐義繁中釋義、逐句繁中翻譯、衍生詞繁中詞義和關係說明。</li><li>查看 apple 的詞彙關係時，若系統列出 fruit、pear、application 等詞，每個詞都必須顯示對應詞性與繁中詞義；一字多義時採用和目前關係相符的 sense 翻譯。</li><li>相同英文原始詞條可被英文→繁中及英文→法文資料包共用，但兩個方向的翻譯狀態、來源順位、候選值與發布版本互不覆蓋。</li><li>任何母語欄位缺失都要指出實際對象，例如「例句 #3 缺翻譯」、「衍生詞 happiness 缺繁中詞義」或「同義詞 fruit 缺繁中詞義」，不可只顯示「翻譯不完整」。</li></ul>
+<h3>來源排序驗收</h3><ul class="rule-list"><li>管理者可分別設定釋義、IPA、真人發音、動詞過去式、例句、例句翻譯及衍生詞詞義的第一、第二與後續來源。</li><li>把「例句」改為 Kaikki → Tatoeba 後，「例句翻譯」仍維持 Tatoeba → AI；發音、詞形與其他區塊也完全不變。</li><li>同一個來源可以在多個細項使用不同順位、逾時、可信度與合併策略。</li><li>關閉某細項的第一順位後，下次工作從該細項的第二順位開始；既有資料保留來源紀錄，除非管理者啟動重新解析或強制刷新。</li><li>所有區塊與細項都能從介面完成選取、拖曳、儲存、測試及恢復預設，不需要直接修改資料庫。</li></ul>
+<h3>字卡與學習模板驗收</h3><ul class="rule-list"><li>管理者可把照片移到回想字卡背面任意位置，將逐義釋義設為 2 項、例句設為 6 組、同義詞設為 5 個、反義詞設為 2 個，預覽與發布後的 App 必須一致。</li><li>五種學習模板都能在模板庫瀏覽，並使用實際資料完成點選、顯示答案或拖曳互動；上一題、下一題與隨機抽樣正常運作。</li><li>改變區塊順序、數量、模板順序或選項數不會改變來源 Policy、詞庫資料或既有 FSRS 狀態。</li><li>當某單字只有 2 組例句而版型上限為 6 組時只顯示 2 組；無資料區塊自動隱藏，不用空白項目補滿。</li><li>資料不足以產生唯一答案時，該題標成不可用並指出缺少資料，不得發布含兩個合理答案的選擇題。</li><li>草稿不得影響目前 App；發布後 manifest 帶有各模板版本，App 更新資料包後才套用。回復上一版後可重現原本順序、數量與互動設定。</li><li>原本回想字卡的正面禁止加入答案單字或圖片，背面必須保留答案單字；照片互動模板可以依規則在題目正面顯示圖片。</li><li>後台操作所有模板預覽後，FSRS、review log、使用者能力與 exercise attempts 的資料筆數都不得改變。</li></ul>
+
+<h3>資料品質、更新與維護規格</h3>
+<h4>品質分數與統一審核</h4><ul class="rule-list"><li>每個可發布欄位保存 <code>confidence_score</code>、<code>completeness_score</code>、<code>review_status</code>、<code>last_verified_at</code> 與結構化 <code>validation_errors</code>。</li><li>文字、翻譯、例句、詞彙關係、圖片、音檔與產生的題目共用 <code>review_queue</code>；審核項目包含資料類型、實體 ID、問題類型、嚴重程度、狀態、指派者、備註及處理紀錄。</li><li>來源互相衝突時先保留所有候選值；Resolver 依 Policy 選值。高風險衝突或分數差距不足時進入人工審核，不直接覆蓋。</li></ul>
+
+<h4>敏感內容與公開發布</h4><ul class="rule-list"><li>圖片、例句與詞條在發布前執行成人、暴力、仇恨、個資、商標及可辨識人物標記；結果保存於 <code>content_flags</code>。</li><li>MVP 正式資料包預設排除成人內容、明顯暴力、仇恨內容、授權不明媒體及需要額外肖像同意的高風險圖片。</li><li>被排除內容保留來源與原因供稽核，不刪除原始錯誤證據，也不進入 Flutter 匯出。</li></ul>
+
+<h4>版本、增量更新與穩定 ID</h4><ul class="rule-list"><li>每次發布都產生不可變的完整版本及可選差異包；差異包明列新增、修改、刪除、媒體新增與媒體撤除，並帶有來源版本、基底版本和 SHA-256。</li><li><code>lexeme_id</code>、<code>sense_id</code>、例句 ID 與媒體 ID 一經發布即保持穩定。合併實體使用 <code>entity_redirects</code>，刪除使用 <code>entity_tombstones</code>，不得直接重用舊 ID。</li><li>App 先驗證差異包、可用空間與基底版本，在交易中套用；失敗完整回滾並繼續使用上一版。</li></ul>
+
+<h4>媒體容量與快取</h4><ul class="rule-list"><li>文字 SQLite、音檔與圖片分開成套件；使用者可只安裝文字資料，媒體依語言包或實際需要下載。</li><li>後台顯示原圖、縮圖、音檔及匯出包各自容量，支援清除孤立檔案與重建縮圖；刪除前先確認沒有正式版本引用。</li><li>App 可清除可重新下載的詞義圖片與音檔快取，但不得刪除使用者原始照片。清除後保留媒體 ID、來源及下載狀態。</li></ul>
+
+<h4>使用者修改與來源更新</h4><ul class="rule-list"><li>使用者修改以 overlay 保存，不直接改寫正式詞庫；記錄原始值、修改值、語言對、修改時間與對應詞庫版本。</li><li>新資料包更新時保留 overlay，並比較其基底值是否已變更；有衝突時同時保存新版來源值與使用者值，由使用者選擇，未選擇前繼續顯示使用者值。</li><li>提供「恢復詞庫版本」操作，只移除指定欄位的 overlay，不影響照片關聯、FSRS 或其他修改。</li></ul>
+
+<h4>備份與還原</h4><ul class="rule-list"><li>可重新下載的正式詞庫與媒體不必進入使用者備份；備份只保存照片關聯、使用者修改、已學會／刪除狀態、FSRS、練習紀錄、模板設定與必要 manifest。</li><li>備份檔包含 schema 版本、App 版本、語言包版本、建立時間、檔案清單及 SHA-256；還原前先驗證並建立本機安全快照。</li><li>還原後若缺少對應詞庫版本，先恢復使用者資料並標記待連結，下載可用詞庫後依 stable ID 或 redirect 重新接回。</li></ul>
+</section>
+<footer>拍照學語言 · 產品定位／技術架構／個人化辨識與難度輪盤／FSRS 小測驗／單字資料庫與模板／資料來源／已確認互動決策／資料擷取後台 · 可離線開啟／列印</footer>
+</main></body></html>

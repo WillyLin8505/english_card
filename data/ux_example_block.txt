@@ -1,0 +1,23 @@
+case CardBackField.example:
+        // Spec sections 4 and 7: 3–5 examples at the learner's level.
+        final recommended = learningExamples(entry, learnerLevel);
+        if (recommended.isEmpty) return null;
+        return _Block(
+          '例句與翻譯',
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final x in recommended)
+                Container(
+                  margin: const EdgeInsets.only(bottom: MSpace.xs),
+                  padding: const EdgeInsets.all(MSpace.sm),
+                  decoration: MDecor.softPanel(
+                    color: MColors.surfaceSoft,
+                    radius: MRadii.md,
+                  ),
+                  child: ExampleText(example: x),
+                ),
+            ],
+          ),
+        );
+      

@@ -1,0 +1,555 @@
+{
+ "schema_version": 4,
+ "target_language": "en",
+ "native_language": "zh-TW",
+ "created_at": "2026-10-01T18:28:19.814353+00:00",
+ "database": {
+  "file": "language-data-en-zh-TW-20261002-0227.sqlite",
+  "sha256": "31d28f8e879e15f6bf73df8708694028e2ab5a6ba34e5378c3717ffda513a9c0",
+  "bytes": 14725120
+ },
+ "media_list": {
+  "file": "media-en.json",
+  "count": 2024,
+  "included": true
+ },
+ "app_pack": {
+  "file": "language-data-en-zh-TW-20261002-0227.json",
+  "sha256": "f34cb81a4fb3b3c9f0e929fe5257b963a49f9c7f4cb0ad425767295ab5614cf5"
+ },
+ "source_snapshots": [
+  {
+   "source": "cmudict",
+   "language": "en",
+   "version": "master",
+   "sha256": "81917843c7f44ce2b094ac63873c2c7a4cf802040792c455ba3ca406891c3d22",
+   "retrieved_at": "2026-09-25 12:50:32.117758+08:00"
+  },
+  {
+   "source": "tatoeba",
+   "language": "en:zh-TW",
+   "version": "weekly export",
+   "sha256": "de218ebe16b41c791a533156dd0a691af8da3bc740a8eb967220d892e2a604c8",
+   "retrieved_at": "2026-09-25 12:59:32.426272+08:00"
+  }
+ ],
+ "policy_versions": {
+  "accent_labels": 1,
+  "adj_comparative": 1,
+  "adj_superlative": 1,
+  "antonyms": 1,
+  "antonyms_native": 3,
+  "audio": 2,
+  "cefr": 2,
+  "context_image": 1,
+  "definition": 2,
+  "derivation_relation": 1,
+  "derived_native_meaning": 3,
+  "derived_pos": 2,
+  "derived_terms": 1,
+  "etymology_native": 3,
+  "etymology_text": 1,
+  "example_difficulty": 1,
+  "example_sense": 1,
+  "example_sentences": 4,
+  "example_translation": 3,
+  "frequency": 1,
+  "homophones": 1,
+  "homophones_native": 3,
+  "hypernyms": 1,
+  "hypernyms_native": 3,
+  "hyponyms": 1,
+  "hyponyms_native": 3,
+  "image_alt_native": 2,
+  "ipa": 3,
+  "morphemes": 2,
+  "morphemes_native": 3,
+  "native_definition": 3,
+  "near_homophones": 1,
+  "near_homophones_native": 3,
+  "noun_plural": 2,
+  "origin_language": 1,
+  "original_form": 1,
+  "phonemes": 1,
+  "pos": 1,
+  "prefix": 2,
+  "related": 2,
+  "related_native": 3,
+  "root": 2,
+  "sense_image": 1,
+  "similar_spelling": 1,
+  "similar_spelling_native": 3,
+  "stress": 1,
+  "suffix": 2,
+  "syllables": 1,
+  "synonyms": 2,
+  "synonyms_native": 3,
+  "thumbnail": 1,
+  "tts_fallback": 1,
+  "usage_labels": 1,
+  "verb_base": 1,
+  "verb_past": 1,
+  "verb_past_participle": 1,
+  "verb_present_participle": 1,
+  "verb_third_person": 1
+ },
+ "policy_hash": "1c32d3ab14dc5e992471716e120f19258f980bc9c204402bd37215c041dcdedc",
+ "card_template_version": null,
+ "counts": {
+  "lexemes": 624,
+  "stubs": 11034,
+  "senses": 2346,
+  "sense_translations": 2316,
+  "forms": 1485,
+  "morphemes": 828,
+  "morpheme_translations": 828,
+  "pronunciations": 4783,
+  "audio": 451,
+  "examples": 5382,
+  "example_translations": 5283,
+  "relations": 16433,
+  "relation_translations": 16142,
+  "etymologies": 624,
+  "images": 1573
+ },
+ "completeness": {
+  "pos": {
+   "complete": 323,
+   "total": 331,
+   "rate": 0.976
+  },
+  "definition": {
+   "complete": 323,
+   "total": 331,
+   "rate": 0.976
+  },
+  "native_definition": {
+   "complete": 319,
+   "total": 331,
+   "rate": 0.964
+  },
+  "cefr": {
+   "complete": 331,
+   "total": 331,
+   "rate": 1.0
+  },
+  "frequency": {
+   "complete": 329,
+   "total": 331,
+   "rate": 0.994
+  },
+  "usage_labels": {
+   "complete": 330,
+   "total": 331,
+   "rate": 0.997
+  },
+  "ipa": {
+   "complete": 320,
+   "total": 331,
+   "rate": 0.967
+  },
+  "phonemes": {
+   "complete": 318,
+   "total": 331,
+   "rate": 0.961
+  },
+  "syllables": {
+   "complete": 315,
+   "total": 331,
+   "rate": 0.952
+  },
+  "stress": {
+   "complete": 318,
+   "total": 331,
+   "rate": 0.961
+  },
+  "accent_labels": {
+   "complete": 330,
+   "total": 331,
+   "rate": 0.997
+  },
+  "audio": {
+   "complete": 74,
+   "total": 331,
+   "rate": 0.224
+  },
+  "tts_fallback": {
+   "complete": 331,
+   "total": 331,
+   "rate": 1.0
+  },
+  "verb_base": {
+   "complete": 331,
+   "total": 331,
+   "rate": 1.0
+  },
+  "verb_past": {
+   "complete": 331,
+   "total": 331,
+   "rate": 1.0
+  },
+  "verb_past_participle": {
+   "complete": 331,
+   "total": 331,
+   "rate": 1.0
+  },
+  "verb_present_participle": {
+   "complete": 331,
+   "total": 331,
+   "rate": 1.0
+  },
+  "verb_third_person": {
+   "complete": 331,
+   "total": 331,
+   "rate": 1.0
+  },
+  "noun_plural": {
+   "complete": 331,
+   "total": 331,
+   "rate": 1.0
+  },
+  "adj_comparative": {
+   "complete": 331,
+   "total": 331,
+   "rate": 1.0
+  },
+  "adj_superlative": {
+   "complete": 331,
+   "total": 331,
+   "rate": 1.0
+  },
+  "synonyms": {
+   "complete": 58,
+   "total": 331,
+   "rate": 0.175
+  },
+  "synonyms_native": {
+   "complete": 312,
+   "total": 331,
+   "rate": 0.943
+  },
+  "antonyms": {
+   "complete": 330,
+   "total": 331,
+   "rate": 0.997
+  },
+  "antonyms_native": {
+   "complete": 330,
+   "total": 331,
+   "rate": 0.997
+  },
+  "hypernyms": {
+   "complete": 331,
+   "total": 331,
+   "rate": 1.0
+  },
+  "hypernyms_native": {
+   "complete": 325,
+   "total": 331,
+   "rate": 0.982
+  },
+  "hyponyms": {
+   "complete": 330,
+   "total": 331,
+   "rate": 0.997
+  },
+  "hyponyms_native": {
+   "complete": 314,
+   "total": 331,
+   "rate": 0.949
+  },
+  "related": {
+   "complete": 258,
+   "total": 331,
+   "rate": 0.779
+  },
+  "related_native": {
+   "complete": 227,
+   "total": 331,
+   "rate": 0.686
+  },
+  "homophones": {
+   "complete": 330,
+   "total": 331,
+   "rate": 0.997
+  },
+  "homophones_native": {
+   "complete": 327,
+   "total": 331,
+   "rate": 0.988
+  },
+  "near_homophones": {
+   "complete": 331,
+   "total": 331,
+   "rate": 1.0
+  },
+  "near_homophones_native": {
+   "complete": 305,
+   "total": 331,
+   "rate": 0.921
+  },
+  "similar_spelling": {
+   "complete": 331,
+   "total": 331,
+   "rate": 1.0
+  },
+  "similar_spelling_native": {
+   "complete": 292,
+   "total": 331,
+   "rate": 0.882
+  },
+  "derived_terms": {
+   "complete": 330,
+   "total": 331,
+   "rate": 0.997
+  },
+  "derivation_relation": {
+   "complete": 331,
+   "total": 331,
+   "rate": 1.0
+  },
+  "derived_pos": {
+   "complete": 328,
+   "total": 331,
+   "rate": 0.991
+  },
+  "derived_native_meaning": {
+   "complete": 315,
+   "total": 331,
+   "rate": 0.952
+  },
+  "morphemes": {
+   "complete": 331,
+   "total": 331,
+   "rate": 1.0
+  },
+  "morphemes_native": {
+   "complete": 331,
+   "total": 331,
+   "rate": 1.0
+  },
+  "root": {
+   "complete": 331,
+   "total": 331,
+   "rate": 1.0
+  },
+  "prefix": {
+   "complete": 330,
+   "total": 331,
+   "rate": 0.997
+  },
+  "suffix": {
+   "complete": 330,
+   "total": 331,
+   "rate": 0.997
+  },
+  "origin_language": {
+   "complete": 330,
+   "total": 331,
+   "rate": 0.997
+  },
+  "original_form": {
+   "complete": 330,
+   "total": 331,
+   "rate": 0.997
+  },
+  "etymology_text": {
+   "complete": 330,
+   "total": 331,
+   "rate": 0.997
+  },
+  "etymology_native": {
+   "complete": 286,
+   "total": 331,
+   "rate": 0.864
+  },
+  "example_sentences": {
+   "complete": 62,
+   "total": 331,
+   "rate": 0.187
+  },
+  "example_difficulty": {
+   "complete": 331,
+   "total": 331,
+   "rate": 1.0
+  },
+  "example_sense": {
+   "complete": 188,
+   "total": 331,
+   "rate": 0.568
+  },
+  "example_translation": {
+   "complete": 266,
+   "total": 331,
+   "rate": 0.804
+  },
+  "sense_image": {
+   "complete": 330,
+   "total": 331,
+   "rate": 0.997
+  },
+  "context_image": {
+   "complete": 330,
+   "total": 331,
+   "rate": 0.997
+  },
+  "thumbnail": {
+   "complete": 330,
+   "total": 331,
+   "rate": 0.997
+  },
+  "image_alt_native": {
+   "complete": 0,
+   "total": 331,
+   "rate": 0.0
+  }
+ },
+ "licenses": [
+  {
+   "source": "ai_translate",
+   "name": "AI 翻譯",
+   "license": "AI 產生（標記為 AI 翻譯）",
+   "attribution": "Qwen3-VL on the local tagging service",
+   "values": 14925
+  },
+  {
+   "source": "cmudict",
+   "name": "CMUdict",
+   "license": "BSD-2-Clause",
+   "attribution": "Carnegie Mellon University",
+   "values": 1972
+  },
+  {
+   "source": "datamuse",
+   "name": "Datamuse",
+   "license": "Datamuse API 使用條款",
+   "attribution": "Datamuse API",
+   "values": 5909
+  },
+  {
+   "source": "kaikki",
+   "name": "Kaikki／Wiktionary",
+   "license": "CC BY-SA 4.0／GFDL",
+   "attribution": "Wiktionary contributors, via kaikki.org (Tatu Ylonen, wiktextract)",
+   "values": 19583
+  },
+  {
+   "source": "kaikki_wordlist",
+   "name": "本地字表計算",
+   "license": "Apache-2.0／CC BY-SA 4.0（wordfreq 字表）",
+   "attribution": "wordfreq (Robyn Speer); CEFR-J Wordlist",
+   "values": 881
+  },
+  {
+   "source": "lexicon",
+   "name": "詞庫內既有詞條",
+   "license": "沿用該詞條的來源授權",
+   "attribution": "",
+   "values": 534
+  },
+  {
+   "source": "local_calc",
+   "name": "本機規則計算",
+   "license": "由其他欄位計算",
+   "attribution": "",
+   "values": 10
+  },
+  {
+   "source": "morph_local",
+   "name": "本機構詞分析",
+   "license": "本專案整理的構詞表（字首、字尾、拉丁／希臘字根）",
+   "attribution": "",
+   "values": 259
+  },
+  {
+   "source": "oewn",
+   "name": "Open English WordNet",
+   "license": "CC BY 4.0",
+   "attribution": "Open English WordNet (McCrae et al.)",
+   "values": 4132
+  },
+  {
+   "source": "tatoeba",
+   "name": "Tatoeba",
+   "license": "CC BY 2.0 FR",
+   "attribution": "Tatoeba contributors",
+   "values": 6281
+  },
+  {
+   "source": "wikimedia_commons",
+   "name": "Wikidata＋Wikimedia Commons",
+   "license": "逐檔授權（只收 CC0／PD／CC BY）",
+   "attribution": "Wikimedia Commons contributors",
+   "values": 7
+  }
+ ],
+ "ai_values": 14925,
+ "checks": [
+  {
+   "check": "readable",
+   "ok": true,
+   "message": "SQLite 可讀取（integrity_check: ok）",
+   "level": "ok"
+  },
+  {
+   "check": "foreign_keys",
+   "ok": true,
+   "message": "外鍵完整",
+   "level": "ok"
+  },
+  {
+   "check": "has_entries",
+   "ok": true,
+   "message": "624 個正式詞條",
+   "level": "ok"
+  },
+  {
+   "check": "required_fields",
+   "ok": true,
+   "message": "詞條必要欄位齊全",
+   "level": "ok"
+  },
+  {
+   "check": "definitions",
+   "ok": true,
+   "message": "每個 sense 都有釋義",
+   "level": "ok"
+  },
+  {
+   "check": "senses",
+   "ok": true,
+   "message": "每個正式詞條至少一個 sense",
+   "level": "ok"
+  },
+  {
+   "check": "translation_pairs",
+   "ok": true,
+   "message": "例句翻譯都配對到例句",
+   "level": "ok"
+  },
+  {
+   "check": "orphan_audio",
+   "ok": true,
+   "message": "沒有孤立音檔",
+   "level": "ok"
+  },
+  {
+   "check": "audio_files",
+   "ok": true,
+   "message": "音檔路徑都可解析",
+   "level": "ok"
+  },
+  {
+   "check": "image_files",
+   "ok": true,
+   "message": "1573 張已核准圖片路徑與授權都可解析",
+   "level": "ok"
+  },
+  {
+   "check": "card_template",
+   "ok": true,
+   "message": "尚未發布字卡版型（manifest 記為 null）",
+   "level": "ok"
+  }
+ ]
+}

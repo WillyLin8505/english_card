@@ -1,0 +1,123 @@
+# 照片單字
+balcony
+sunlight
+railing
+dappled
+ocean
+breeze
+overlook
+potted
+wet
+brick
+shade
+terrace
+coffee
+street
+garden
+veranda
+apple
+bread
+knife
+plate
+cutting board
+spoon
+mug
+butter knife
+saucer
+table
+napkin
+succulent
+steep
+slice
+warm
+rustic
+on the table
+fresh
+crumbly
+latte art
+wooden
+window
+plant
+natural
+pour coffee
+in the kitchen
+morning
+natural light
+cozy
+espresso
+croissant
+utensil
+artisan
+ceramic
+sourdough
+# 義大利麵照片
+pasta
+tomato sauce
+basil
+parmesan
+pine nuts
+marble
+bowl
+fork
+water
+grated
+garnished
+serve
+toss
+drizzled
+garnished with
+seasoned
+# CEFR-A1
+beautiful
+coat
+feeling
+hotel
+movie
+reader
+strange
+volleyball
+# CEFR-A2
+appropriate
+clue
+editor
+harmful
+metal
+product
+skiing
+understand
+# CEFR-B1
+assume
+consume
+engineering
+holy
+minus
+president
+sickness
+uncover
+# CEFR-B2
+balanced
+costly
+executive
+incurable
+mustache
+proposed
+solidity
+united
+# CEFR-C1
+atmospheric
+contextual
+enviable
+hypocritical
+mythological
+provocative
+shortlist
+tycoon
+# CEFR-C2
+antithetical
+colloquially
+embed
+hull
+meagre
+philistine
+romp
+turret

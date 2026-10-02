@@ -1,0 +1,15 @@
+# Lexicon admin (spec-01 section 08): API, worker, tests
+fastapi>=0.115
+uvicorn[standard]>=0.30
+sqlalchemy>=2.0.30
+psycopg[binary]>=3.2
+alembic>=1.13
+pydantic>=2.7
+python-dotenv>=1.0
+mutagen>=1.47
+httpx>=0.27
+wn>=0.9
+wordfreq>=3.1
+opencc-python-reimplemented>=0.1.7
+pytest>=8
+Pillow>=12.0

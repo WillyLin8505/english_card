@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>單字資料庫</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@700;800&family=Noto+Sans:wght@400&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><h1>單字資料庫</h1><small>資料來源依規格第 6 節順位</small></div>
+  <div class="tabs" role="tablist">
+    <button role="tab" id="tab-words" aria-selected="true" aria-controls="view-words">單字</button>
+    <button role="tab" id="tab-cov" aria-selected="false" aria-controls="view-cov">來源覆蓋率</button>
+  </div>
+  <div class="stat" id="stat"></div>
+  <button class="btn primary" id="add">＋ 新增單字</button>
+</header>
+
+<main>
+  <section id="view-words" class="words" role="tabpanel" aria-labelledby="tab-words">
+    <div class="panel side">
+      <div class="filters">
+        <input type="search" id="f-q" placeholder="搜尋單字、中文或定義" aria-label="搜尋">
+        <div class="frow">
+          <select id="f-tag" aria-label="標籤"><option value="">全部標籤</option></select>
+          <select id="f-level" aria-label="等級"><option value="">全部等級</option></select>
+        </div>
+        <div class="frow">
+          <select id="f-pos" aria-label="詞性"><option value="">全部詞性</option></select>
+          <select id="f-missing" aria-label="缺漏欄位"><option value="">不限缺漏</option></select>
+        </div>
+        <div class="frow">
+          <select id="f-source" aria-label="資料來源"><option value="">全部來源</option></select>
+          <select id="f-sort" aria-label="排序">
+            <option value="word">字母 A–Z</option>
+            <option value="level">等級</option>
+            <option value="examples">例句數</option>
+            <option value="updated">最近更新</option>
+            <option value="created">建立時間</option>
+          </select>
+        </div>
+        <div class="frow">
+          <select id="f-status" aria-label="狀態">
+            <option value="active">使用中</option>
+            <option value="archived">已封存</option>
+            <option value="all">全部狀態</option>
+          </select>
+          <label class="check"><input type="checkbox" id="f-dups"> 只看可能重複</label>
+        </div>
+      </div>
+      <div class="listhead"><span id="count"></span><label class="check"><input type="checkbox" id="sel-all"> 全選</label></div>
+      <div class="list" id="list" role="list"></div>
+      <div class="batch" id="batch" hidden>
+        <span class="n" id="batch-n"></span>
+        <button class="btn small" data-act="tag">加標籤</button>
+        <button class="btn small" data-act="untag">移除標籤</button>
+        <button class="btn small" data-act="refetch">重新抓取</button>
+        <button class="btn small" data-act="archive">封存</button>
+        <button class="btn small" data-act="restore">復原</button>
+        <button class="btn small" data-act="merge">合併</button>
+        <button class="btn small danger" data-act="delete">刪除</button>
+      </div>
+    </div>
+    <article class="panel" id="entry"><div class="placeholder">選一個單字看完整資料</div></article>
+  </section>
+
+  <section id="view-cov" class="panel cov" role="tabpanel" aria-labelledby="tab-cov" hidden></section>
+</main>
+
+<dialog id="dlg"><form method="dialog" class="dlg" id="dlg-form"></form></dialog>
+<div class="toast" id="toast" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>

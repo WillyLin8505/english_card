@@ -1,0 +1,52 @@
+﻿# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.venv/
+venv/
+.env
+!.env.example
+
+# Secrets / local credentials (never commit)
+tagger/.api_key
+**/.api_key
+*.api_key
+app/tagging.local.json
+**/*.local.json
+lexicon/.env
+
+# Large data / caches
+data/raw/
+data/cache/
+data/wordbase/
+tagger/cache/
+logs/
+*.log
+
+# Lexicon bulky assets
+lexicon/raw-data/*
+!lexicon/raw-data/.gitkeep
+lexicon/media/*
+!lexicon/media/audio/
+lexicon/media/audio/*
+!lexicon/media/audio/.gitkeep
+lexicon/exports/*
+!lexicon/exports/.gitkeep
+lexicon/logs/
+lexicon/frontend/node_modules/
+lexicon/frontend/dist/
+
+# Build / IDE / tooling caches
+build/
+**/build/
+dist/
+.dart_tool/
+**/.dart_tool/
+.idea/
+**/.idea/
+*.iml
+_backup/
+.claude/
+.DS_Store
+Thumbs.db

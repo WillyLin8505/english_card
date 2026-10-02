@@ -1,0 +1,10 @@
+requests>=2.31
+nltk>=3.8      # only used as a WordNet corpus reader (see pipeline/sources/wordnet_adapter.py)
+
+# dev/test
+pytest>=7.4
+
+# word database app (wordbase/)
+wn>=1.0                              # Open English WordNet 2024
+wordfreq>=3.0                        # word frequency (optional)
+opencc-python-reimplemented>=0.1.7   # Simplified -> Taiwan Traditional (optional)

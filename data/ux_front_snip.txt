@@ -1,0 +1,26 @@
+class FlashcardFront extends StatelessWidget {
+  final WordEntry entry;
+
+  const FlashcardFront({super.key, required this.entry});
+
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: 32),
+          Text(
+            firstLetterHint(entry.word),
+            textAlign: TextAlign.center,
+            style: MFont.manrope(30, FontWeight.w800, MColors.ink),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [if (entry.pos.isNotEmpty) TagChip(posLabel(entry.pos))],
+          ),
+          const SizedBox(height: 12),
+          if (entry.meaning.isNotEmpty)
+            Text(
+              entry.meaning,
+              textAlign: TextAlign.center,
+              style: MFont.manrope(24, FontW

@@ -1,0 +1,22 @@
+# Optional: PostgreSQL in Docker instead of a local install.
+#   docker compose --env-file .env up -d
+# The API, worker and admin UI still run on the host (see README.md).
+services:
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${LEXICON_DB_USER:-lexicon}
+      POSTGRES_PASSWORD: ${LEXICON_DB_PASSWORD:?set LEXICON_DB_PASSWORD in .env}
+      POSTGRES_DB: ${LEXICON_DB_NAME:-lexicon}
+    ports:
+      - "127.0.0.1:${LEXICON_DB_PORT:-5432}:5432"
+    volumes:
+      - lexicon-pg:/var/lib/postgresql/data
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${LEXICON_DB_USER:-lexicon}"]
+      interval: 5s
+      retries: 10
+volumes:
+  lexicon-pg:

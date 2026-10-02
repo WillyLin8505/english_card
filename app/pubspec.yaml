@@ -1,0 +1,41 @@
+name: photo_english_app
+description: "拍照學英文 — 用喜歡的個人照片學英文，建立本機英文相簿。"
+publish_to: "none"
+version: 0.1.0
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  http: ^1.2.0
+  path_provider: ^2.1.0
+  cupertino_icons: ^1.0.6
+  flutter_svg: ^2.3.0
+  google_fonts: ^8.2.1
+  image_picker: ^1.2.3
+  camera: ^0.12.1
+  share_plus: ^13.3.0
+  flutter_tts: ^4.2.5
+  audioplayers: ^6.8.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/word_db.json
+    - assets/cefr_en.json
+    - assets/lexicon/
+    - assets/lexicon/media/audio/en/
+    - assets/figma/
+    - assets/figma/mobile/
+    - assets/sample/

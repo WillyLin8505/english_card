@@ -1,0 +1,241 @@
+{
+  "example": {
+    "word": "example",
+    "definitions": [
+      {
+        "pos": "noun",
+        "gloss": "an item of information that is typical of a class or group"
+      },
+      {
+        "pos": "noun",
+        "gloss": "a representative form or pattern"
+      },
+      {
+        "pos": "noun",
+        "gloss": "something to be imitated"
+      },
+      {
+        "pos": "noun",
+        "gloss": "punishment intended as a warning to others"
+      },
+      {
+        "pos": "noun",
+        "gloss": "an occurrence of something"
+      },
+      {
+        "pos": "noun",
+        "gloss": "a task performed or problem solved in order to develop skill or understanding"
+      }
+    ],
+    "definitions_source": "wordnet",
+    "ipa": null,
+    "ipa_source": null,
+    "arpabet": "IH0 G Z AE1 M P AH0 L",
+    "arpabet_source": "cmudict",
+    "word_audio_url": null,
+    "word_audio_source": null,
+    "synonyms": [
+      "illustration",
+      "instance",
+      "representative",
+      "model",
+      "exemplar",
+      "good example",
+      "deterrent example",
+      "lesson"
+    ],
+    "synonyms_source": "wordnet",
+    "homophones": [],
+    "homophones_source": null,
+    "similar_spelling": [
+      "examples"
+    ],
+    "similar_spelling_source": "kaikki_wordlist",
+    "inflections": [],
+    "inflections_source": null,
+    "derivations": [
+      {
+        "word": "exemplary",
+        "pos": "adjective"
+      },
+      {
+        "word": "exemplify",
+        "pos": "verb"
+      }
+    ],
+    "derivations_source": "wordnet",
+    "root": null,
+    "affixes": [],
+    "morphology_source": null,
+    "example_sentences": [
+      {
+        "en": "this patient provides a typical example of the syndrome",
+        "zh": null,
+        "audio_url": null,
+        "source": "wordnet",
+        "zh_source": null,
+        "audio_source": null
+      },
+      {
+        "en": "there is an example on page 10",
+        "zh": null,
+        "audio_url": null,
+        "source": "wordnet",
+        "zh_source": null,
+        "audio_source": null
+      },
+      {
+        "en": "I profited from his example",
+        "zh": null,
+        "audio_url": null,
+        "source": "wordnet",
+        "zh_source": null,
+        "audio_source": null
+      }
+    ]
+  },
+  "happy": {
+    "word": "happy",
+    "definitions": [
+      {
+        "pos": "adjective",
+        "gloss": "enjoying or showing or marked by joy or pleasure"
+      },
+      {
+        "pos": "adjective",
+        "gloss": "marked by good fortune"
+      },
+      {
+        "pos": "adjective",
+        "gloss": "eagerly disposed to act or to be of service"
+      },
+      {
+        "pos": "adjective",
+        "gloss": "well expressed and to the point"
+      }
+    ],
+    "definitions_source": "wordnet",
+    "ipa": null,
+    "ipa_source": null,
+    "arpabet": "HH AE1 P IY0",
+    "arpabet_source": "cmudict",
+    "word_audio_url": null,
+    "word_audio_source": null,
+    "synonyms": [
+      "felicitous",
+      "glad",
+      "well-chosen"
+    ],
+    "synonyms_source": "wordnet",
+    "homophones": [],
+    "homophones_source": null,
+    "similar_spelling": [
+      "cappy",
+      "happ",
+      "happe",
+      "hoppy"
+    ],
+    "similar_spelling_source": "kaikki_wordlist",
+    "inflections": [],
+    "inflections_source": null,
+    "derivations": [
+      {
+        "word": "happiness",
+        "pos": "noun"
+      }
+    ],
+    "derivations_source": "wordnet",
+    "root": null,
+    "affixes": [],
+    "morphology_source": null,
+    "example_sentences": [
+      {
+        "en": "a happy smile",
+        "zh": null,
+        "audio_url": null,
+        "source": "wordnet",
+        "zh_source": null,
+        "audio_source": null
+      },
+      {
+        "en": "spent many happy days on the beach",
+        "zh": null,
+        "audio_url": null,
+        "source": "wordnet",
+        "zh_source": null,
+        "audio_source": null
+      },
+      {
+        "en": "a happy marriage",
+        "zh": null,
+        "audio_url": null,
+        "source": "wordnet",
+        "zh_source": null,
+        "audio_source": null
+      }
+    ]
+  },
+  "flour": {
+    "word": "flour",
+    "definitions": [
+      {
+        "pos": "noun",
+        "gloss": "fine powdery foodstuff obtained by grinding and sifting the meal of a cereal grain"
+      },
+      {
+        "pos": "verb",
+        "gloss": "cover with flour"
+      },
+      {
+        "pos": "verb",
+        "gloss": "convert grain into flour"
+      }
+    ],
+    "definitions_source": "wordnet",
+    "ipa": null,
+    "ipa_source": null,
+    "arpabet": "F L AW1 ER0",
+    "arpabet_source": "cmudict",
+    "word_audio_url": null,
+    "word_audio_source": null,
+    "synonyms": [],
+    "synonyms_source": null,
+    "homophones": [
+      "flower"
+    ],
+    "homophones_source": "cmudict",
+    "similar_spelling": [
+      "fleur",
+      "flohr",
+      "floor",
+      "flor",
+      "flours",
+      "flout",
+      "four",
+      "lour"
+    ],
+    "similar_spelling_source": "kaikki_wordlist",
+    "inflections": [],
+    "inflections_source": null,
+    "derivations": [
+      {
+        "word": "floury",
+        "pos": "adjective"
+      }
+    ],
+    "derivations_source": "wordnet",
+    "root": null,
+    "affixes": [],
+    "morphology_source": null,
+    "example_sentences": [
+      {
+        "en": "flour fish or meat before frying it",
+        "zh": null,
+        "audio_url": null,
+        "source": "wordnet",
+        "zh_source": null,
+        "audio_source": null
+      }
+    ]
+  }
+}
