@@ -354,7 +354,8 @@ def run(session_factory, job_id: int, worker_id: str, stop=lambda: False,
                 # Any failed source step counts, even if a later source
                 # filled the field (the admin should see and retry it).
                 step_errors = s.execute(select(func.count()).select_from(m.ImportError_).where(
-                    m.ImportError_.job_id == job.id)).scalar()
+                    m.ImportError_.job_id == job.id,
+                    m.ImportError_.resolved.is_(False))).scalar()
                 errors = counts.get("fields_failed", 0) + failed_words + step_errors
                 job.status = ("failed" if failed_words and failed_words >= job.total
                               else "completed_with_errors" if errors else "completed")

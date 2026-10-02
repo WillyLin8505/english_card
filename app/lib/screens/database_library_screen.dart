@@ -741,8 +741,7 @@ String _groupedTileLabels(Map<String, dynamic> image, LexiconPack pack) {
   return groups.map((group) {
     final words = <String>[];
     for (final tag in group.value) {
-      final word = pack.byId((tag['lexeme_id'] as num).toInt());
-      words.add(word?.lemma ?? '\u55ae\u5b57\u5f85\u88dc');
+      words.add(databaseImageLabels({'tags': [tag]}, pack));
     }
     final head = group.key == null ? '\u672a\u5206\u7d1a' : levelLabel(group.key!);
     return '$head\uff1a${words.join('\u3001')}';

@@ -86,7 +86,7 @@ void main() {
         databaseLibrary: true,
         size: const Size(360, 740));
     await tester.pumpAndSettle();
-    expect(find.text('apple · 蘋果'), findsOneWidget);
+    expect(find.text('未分級：apple · 蘋果'), findsOneWidget);
     await tester.tap(find.byType(DatabaseImageTile));
     await tester.pumpAndSettle();
     expect(find.text('已確認'), findsOneWidget);
