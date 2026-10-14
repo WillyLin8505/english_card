@@ -1,0 +1,59 @@
+{
+ "_note": "Reviewed overrides (問題回報 #184-#186, 使用者角度掃描 50 單字, 2026-10-14). Applied by app_pack via quality.apply_pack; nothing is deleted.",
+ "low_priority_senses": [
+  2629,
+  2630,
+  2631,
+  2632,
+  6336,
+  6338,
+  2676,
+  2677,
+  2678,
+  269,
+  8907,
+  1317,
+  1318,
+  1321
+ ],
+ "rejected_examples": [
+  27825,
+  21230
+ ],
+ "examples": {
+  "solitary|adj": [
+   {
+    "id": null,
+    "text": "The old man lived a solitary life in a small cabin by the lake.",
+    "translation": "那位老人在湖邊的小木屋裡過著獨居的生活。",
+    "translation_ai": true,
+    "level": "B2",
+    "sense_id": 3579,
+    "source": "manual-review",
+    "license": null
+   }
+  ],
+  "scarlet|adj": [
+   {
+    "id": null,
+    "text": "She wore a scarlet dress to the party, and everyone noticed her.",
+    "translation": "她穿了一件猩紅色的洋裝去派對，大家都注意到她。",
+    "translation_ai": true,
+    "level": "B2",
+    "sense_id": 7836,
+    "source": "manual-review",
+    "license": null
+   }
+  ]
+ },
+ "rejected_images": {
+  "5123": "rosemary: 主體是牛排與砧板，迷迭香只是小點綴（Qwen-VL: NO）",
+  "837": "laptop: 主體是拿鐵咖啡（Qwen-VL: NO）",
+  "1464": "metal(adj=重金屬風格): 圖是金屬物品，不是義項",
+  "1479": "同上",
+  "1524": "同上",
+  "1485": "同上",
+  "1734": "同上",
+  "3659": "同上"
+ }
+}

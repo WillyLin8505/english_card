@@ -97,6 +97,10 @@ def build(db_path: Path) -> dict:
     # entry when it doesn't know the part of speech (sky 天空, not the verb
     # 「飲用不碰容器」). Stable, so the id order stays within a rank.
     pack["lexemes"].sort(key=lambda lx: lx.get("usage_rank", 0))
+    # Quality rules (#182-#186): main senses first, checked examples first,
+    # lint flags and reviewed overrides from lexicon/quality/.
+    from . import quality
+    quality.apply_pack(pack)
     return pack
 
 

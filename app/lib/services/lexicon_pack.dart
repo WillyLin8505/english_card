@@ -345,6 +345,8 @@ class LexEntry {
   static const _rareLabels = {
     'obsolete', 'archaic', 'dated', 'rare', 'slang', 'humorous', 'nonstandard',
     'historical', 'vulgar', 'derogatory', 'offensive', 'euphemistic', 'poetic',
+    // Quality rules (#184): senses ranked low by lexicon/backend/app/quality.py.
+    'low_priority',
   };
 
   /// What a learner recalls from (問題回報 #18, owner decision 2026-10-01):
