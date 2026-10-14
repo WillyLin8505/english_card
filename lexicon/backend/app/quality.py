@@ -255,3 +255,71 @@ def apply_pack(pack: dict, entry_flags: dict | None = None, overrides: dict | No
             if e.get("id") in rejected_ex:
                 e["quality_flags"].append("rejected")
         lx["examples"].sort(key=lambda e: "rejected" in e["quality_flags"])
+
+
+# ------------------------------------------------- decisions (#191, owner)
+def apply_decisions(pack: dict, decisions: dict | None = None) -> dict:
+    """Owner decision 問題回報 #191 (2026-10-14), from quality/decisions.json
+    written by tools/apply_quality_decisions.py:
+
+    * redirect   {id: lemma_id}: an inflected form (tore) is a pointer to its
+      lemma (tear): no CEFR, ``redirect_to`` set, listed in pack redirects;
+      its pictures and examples are merged into the lemma's first sense.
+    * strip_cefr [id]: fragments, names, brands, abbreviations: CEFR None.
+    * set_cefr   {id: level}: a wrong level corrected to the rule's suggestion.
+
+    Runs after rank_usages/assign_cards (which would otherwise reset them);
+    idempotent. Returns per-action counts."""
+    decisions = load_json("decisions.json") if decisions is None else decisions
+    redirect = {int(k): int(v) for k, v in (decisions.get("redirect") or {}).items()}
+    strip = {int(x) for x in decisions.get("strip_cefr") or []}
+    set_cefr = {int(k): v for k, v in (decisions.get("set_cefr") or {}).items()}
+    by_id = {lx["id"]: lx for lx in pack.get("lexemes", [])}
+    counts = {"redirect": 0, "strip_cefr": 0, "set_cefr": 0, "merged_images": 0, "merged_examples": 0}
+    redirects = pack.setdefault("redirects", {})
+    for lid, level in set_cefr.items():
+        lx = by_id.get(lid)
+        if lx and lid not in redirect and lid not in strip:
+            if lx.get("cefr") != level:
+                lx.setdefault("cefr_before_rule", lx.get("cefr"))
+            lx["cefr"], lx["cefr_source"] = level, "quality_rule"
+            counts["set_cefr"] += 1
+    for lid in strip:
+        lx = by_id.get(lid)
+        if lx and lid not in redirect:
+            if lx.get("cefr") is not None:
+                lx.setdefault("cefr_before_rule", lx.get("cefr"))
+            lx["cefr"], lx["cefr_source"] = None, "quality_excluded"
+            counts["strip_cefr"] += 1
+    for lid, base_id in redirect.items():
+        lx, base = by_id.get(lid), by_id.get(base_id)
+        if not lx or not base or lid == base_id:
+            continue
+        if lx.get("cefr") is not None:
+            lx.setdefault("cefr_before_rule", lx.get("cefr"))
+        lx["cefr"], lx["cefr_source"] = None, "quality_redirect"
+        lx["redirect_to"], lx["card"] = base_id, base["normalized"]
+        lx["rare_usage"] = True
+        redirects[str(lid)] = base_id
+        counts["redirect"] += 1
+        if base.get("status") != "full" or lx.get("status") != "full":
+            continue
+        # Merge what the form had into the lemma (pictures, checked examples).
+        target = (base.get("senses") or [None])[0]
+        if target is not None:
+            have = {i.get("path") for s in base["senses"] for i in s.get("images") or []}
+            for s in lx.get("senses") or []:
+                for img in s.get("images") or []:
+                    if img.get("path") not in have:
+                        target.setdefault("images", []).append({**img, "merged_from": lx["lemma"]})
+                        have.add(img.get("path"))
+                        counts["merged_images"] += 1
+        texts = {e.get("text") for e in base.get("examples") or []}
+        for e in lx.get("examples") or []:
+            if e.get("text") not in texts and not set(e.get("quality_flags") or []) & {
+                    "missing_lemma", "not_sentence", "pos_mismatch", "rejected"}:
+                base.setdefault("examples", []).append({**e, "merged_from": lx["lemma"],
+                                                        "sense_id": None})
+                texts.add(e.get("text"))
+                counts["merged_examples"] += 1
+    return counts

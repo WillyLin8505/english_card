@@ -150,6 +150,9 @@ def live_pack(target: str, native: str):
             pack['lexemes'] = merge_catalog(exported, word_metadata)
             # The catalog's CEFR replaced the pack's; rank the usages again.
             app_pack.rank_usages(pack['lexemes'])
+            # Owner decision #191 (redirects, CEFR) after the cards are reassigned.
+            from app import quality
+            quality.apply_decisions(pack)
             pack['catalog_images'] = catalog_images
             pack['catalog_version'] = 1
         # Export time is not content. Stable versions avoid needless local writes.

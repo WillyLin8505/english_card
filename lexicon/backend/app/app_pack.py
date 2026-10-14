@@ -101,6 +101,7 @@ def build(db_path: Path) -> dict:
     # lint flags and reviewed overrides from lexicon/quality/.
     from . import quality
     quality.apply_pack(pack)
+    quality.apply_decisions(pack)  # owner decision #191
     return pack
 
 

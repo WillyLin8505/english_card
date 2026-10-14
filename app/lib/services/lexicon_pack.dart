@@ -89,7 +89,16 @@ class LexiconPack extends ChangeNotifier {
     (j['labels'] as Map? ?? {}).forEach((k, v) => labels['$k'] = '$v');
     (j['redirects'] as Map? ?? {})
         .forEach((k, v) => _redirects[int.parse('$k')] = (v as num).toInt());
+    // 問題回報 #191: an inflected form (tore) is a pointer to its lemma
+    // (tear), not a card: its id resolves to the lemma, its spelling finds it.
+    final pointers = <String, int>{};
     for (final raw in (j['lexemes'] as List? ?? const [])) {
+      final to = (raw as Map)['redirect_to'];
+      if (to is num) {
+        _redirects[(raw['id'] as num).toInt()] = to.toInt();
+        pointers['${raw['normalized']}'] = to.toInt();
+        continue;
+      }
       final e = LexEntry.fromJson(raw as Map<String, dynamic>);
       _byId[e.id] = e;
       if (!e.full) continue;
@@ -98,6 +107,12 @@ class LexiconPack extends ChangeNotifier {
         _byForm.putIfAbsent(f.normalized, () => []).add(e);
       }
     }
+    pointers.forEach((form, id) {
+      final base = _byId[id];
+      if (base == null || !base.full) return;
+      final list = _byForm.putIfAbsent(form, () => []);
+      if (!list.contains(base)) list.add(base);
+    });
     notifyListeners();
   }
 
