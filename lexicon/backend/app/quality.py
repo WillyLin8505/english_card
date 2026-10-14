@@ -422,4 +422,18 @@ def fix_catalog_senses(pack: dict) -> int:
                 t.setdefault("sense_id_before", t.get("sense_id"))
                 t["sense_id"], t["sense_fallback"] = best["id"], True
                 changed += 1
+        # P2: a photo tag's level is the card's level (after the pack's
+        # CEFR decisions), never a separate value.
+        for coll in (im.get("tags") or [], im.get("labels") or []):
+            for t in coll:
+                lx = by_id.get(t.get("lexeme_id"))
+                if not lx:
+                    continue
+                if lx.get("cefr"):
+                    t["cefr"] = lx["cefr"]
+                    t["cefr_source"] = ("estimate" if lx.get("cefr_source") in
+                                        ("frequency_estimate", "estimate", "local_calc") else "cefr-j")
+                else:
+                    t.pop("cefr", None)
+                    t.pop("cefr_source", None)
     return changed

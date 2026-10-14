@@ -38,13 +38,20 @@ def test_prompt_explicitly_excludes_names_and_invalidates_old_cache():
     assert PROMPT_VERSION == "photo-tags-context-v5"
 
 
-def test_cefr_prompt_requires_at_least_per_level():
+def test_cefr_prompt_lists_visible_objects_level_from_lexicon():
     from tagging_server import CEFR_PROMPT_VERSION, build_cefr_prompt
+    """Decision 2 (QUALITY_SYSTEM_DESIGN.md): visible objects only; the level
+    comes from the lexicon, so the prompt neither fills bands nor asks for l."""
     prompt = build_cefr_prompt("en", per_level=3)
-    assert "AT LEAST 3" in prompt
-    assert "Every band must meet the minimum" in prompt
-    assert "return fewer for that band" not in prompt
-    assert CEFR_PROMPT_VERSION == "photo-tags-cefr-bands-v3"
+    assert "EXACTLY" not in prompt and "AT LEAST" not in prompt
+    assert "Do not invent CEFR levels" in prompt
+    assert "clearly visible" in prompt
+    assert "Mix parts of speech" in prompt
+    assert "verbs" in prompt and "adjectives" in prompt and "adverbs" in prompt
+    assert "- l:" not in prompt
+    assert "safe=false" in prompt and "explicit adult nudity" in prompt
+    assert "compact JSON keys" in prompt
+    assert CEFR_PROMPT_VERSION == "photo-tags-visible-v12-lexicon-level"
 
 
 def test_merge_cefr_topup_fills_short_bands_without_inventing():

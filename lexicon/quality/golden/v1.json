@@ -1,0 +1,1779 @@
+{
+ "version": "v1",
+ "note": "Owner spot-check: QUALITY_SYSTEM_DESIGN.md decision 4.",
+ "photos": [
+  {
+   "id": 1,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 17,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 26,
+   "expect": {
+    "background": "背景",
+    "vein": "葉脈",
+    "leaf": "葉"
+   },
+   "min_tags": 3
+  },
+  {
+   "id": 31,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 44,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 57,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 70,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 71,
+   "expect": {
+    "screen": "螢幕",
+    "antenna": "天線",
+    "display": "顯示"
+   },
+   "min_tags": 3
+  },
+  {
+   "id": 84,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 85,
+   "expect": {
+    "black": "黑色",
+    "car": "車",
+    "headlight": "燈"
+   },
+   "min_tags": 3
+  },
+  {
+   "id": 98,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 111,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 125,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 140,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 153,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 169,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 182,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 195,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 213,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 227,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 240,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 254,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 267,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 280,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 293,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 306,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 319,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 333,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 346,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 359,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 372,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 386,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 399,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 412,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 425,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 438,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 451,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 467,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 482,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 497,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 512,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 614,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 616,
+   "expect": {
+    "illuminated": "光",
+    "window": "窗"
+   },
+   "min_tags": 3
+  },
+  {
+   "id": 660,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 680,
+   "expect": {
+    "arched": "拱"
+   },
+   "min_tags": 3
+  },
+  {
+   "id": 684,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 702,
+   "expect": {
+    "sign": "標牌"
+   },
+   "min_tags": 3
+  },
+  {
+   "id": 703,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 721,
+   "expect": {},
+   "min_tags": 3
+  },
+  {
+   "id": 723,
+   "expect": {
+    "weathered": "風雨"
+   },
+   "min_tags": 3
+  }
+ ],
+ "words": [
+  {
+   "word": "people",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "person",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "white",
+   "pos": "adj.",
+   "cefr": "A1"
+  },
+  {
+   "word": "open",
+   "pos": "adj.",
+   "cefr": "A1"
+  },
+  {
+   "word": "car",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "close",
+   "pos": "adj.",
+   "cefr": "A1"
+  },
+  {
+   "word": "woman",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "morning",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "child",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "building",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "baby",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "town",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "blue",
+   "pos": "adj.",
+   "cefr": "A1"
+  },
+  {
+   "word": "key",
+   "pos": "adj.",
+   "cefr": "A1"
+  },
+  {
+   "word": "cup",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "stage",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "walk",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "paper",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "table",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "card",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "wall",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "eye",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "sun",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "floor",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "wear",
+   "pos": "verb",
+   "cefr": "A1"
+  },
+  {
+   "word": "drink",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "sit",
+   "pos": "verb",
+   "cefr": "A1"
+  },
+  {
+   "word": "camera",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "coffee",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "tree",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "mouth",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "animal",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "window",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "cat",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "apple",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "fly",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "mountain",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "sky",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "chair",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "yellow",
+   "pos": "adj.",
+   "cefr": "A1"
+  },
+  {
+   "word": "milk",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "fill",
+   "pos": "verb",
+   "cefr": "A1"
+  },
+  {
+   "word": "shirt",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "bright",
+   "pos": "adj.",
+   "cefr": "A1"
+  },
+  {
+   "word": "cheese",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "button",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "rice",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "cake",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "paint",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "bread",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "court",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "police",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "road",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "center",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "natural",
+   "pos": "adj.",
+   "cefr": "A2"
+  },
+  {
+   "word": "staff",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "text",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "meaning",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "traffic",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "fresh",
+   "pos": "adj.",
+   "cefr": "A2"
+  },
+  {
+   "word": "scale",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "pull",
+   "pos": "verb",
+   "cefr": "A2"
+  },
+  {
+   "word": "silver",
+   "pos": "adj.",
+   "cefr": "A2"
+  },
+  {
+   "word": "background",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "audience",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "path",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "suit",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "golden",
+   "pos": "adj.",
+   "cefr": "A2"
+  },
+  {
+   "word": "chain",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "drawing",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "crown",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "plate",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "advertising",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "license",
+   "pos": "verb",
+   "cefr": "A2"
+  },
+  {
+   "word": "bush",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "mirror",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "belt",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "bench",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "reflect",
+   "pos": "verb",
+   "cefr": "A2"
+  },
+  {
+   "word": "script",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "wooden",
+   "pos": "adj.",
+   "cefr": "A2"
+  },
+  {
+   "word": "sauce",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "chef",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "fence",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "shade",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "ham",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "pour",
+   "pos": "verb",
+   "cefr": "A2"
+  },
+  {
+   "word": "statue",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "blanket",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "fried",
+   "pos": "adj.",
+   "cefr": "A2"
+  },
+  {
+   "word": "lamp",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "container",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "fridge",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "toast",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "spoon",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "sunlight",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "spill",
+   "pos": "verb",
+   "cefr": "A2"
+  },
+  {
+   "word": "dessert",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "balcony",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "cereal",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "season",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "organization",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "surface",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "iron",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "flow",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "pattern",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "weapon",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "document",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "ignore",
+   "pos": "verb",
+   "cefr": "B1"
+  },
+  {
+   "word": "forth",
+   "pos": "adv.",
+   "cefr": "B1"
+  },
+  {
+   "word": "pot",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "bishop",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "ward",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "crossing",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "stem",
+   "pos": "verb",
+   "cefr": "B1"
+  },
+  {
+   "word": "worn",
+   "pos": "adj.",
+   "cefr": "B1"
+  },
+  {
+   "word": "signature",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "palm",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "twist",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "carpet",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "bubble",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "curve",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "patrol",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "keyboard",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "beard",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "spectacular",
+   "pos": "adj.",
+   "cefr": "B1"
+  },
+  {
+   "word": "bust",
+   "pos": "verb",
+   "cefr": "B1"
+  },
+  {
+   "word": "helmet",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "steep",
+   "pos": "adj.",
+   "cefr": "B1"
+  },
+  {
+   "word": "expose",
+   "pos": "verb",
+   "cefr": "B1"
+  },
+  {
+   "word": "marble",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "debris",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "slope",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "trim",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "curtain",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "pupil",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "jade",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "attach",
+   "pos": "verb",
+   "cefr": "B1"
+  },
+  {
+   "word": "sticker",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "groom",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "pineapple",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "lettuce",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "flute",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "spectator",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "questionnaire",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "mourn",
+   "pos": "verb",
+   "cefr": "B1"
+  },
+  {
+   "word": "tumble",
+   "pos": "verb",
+   "cefr": "B1"
+  },
+  {
+   "word": "farmland",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "carton",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "piety",
+   "pos": "noun",
+   "cefr": "B1"
+  },
+  {
+   "word": "parliament",
+   "pos": "noun",
+   "cefr": "B2"
+  },
+  {
+   "word": "deputy",
+   "pos": "noun",
+   "cefr": "B2"
+  },
+  {
+   "word": "attached",
+   "pos": "adj.",
+   "cefr": "B2"
+  },
+  {
+   "word": "label",
+   "pos": "noun",
+   "cefr": "B2"
+  },
+  {
+   "word": "wolf",
+   "pos": "noun",
+   "cefr": "B2"
+  },
+  {
+   "word": "polish",
+   "pos": "noun",
+   "cefr": "B2"
+  },
+  {
+   "word": "laptop",
+   "pos": "noun",
+   "cefr": "B2"
+  },
+  {
+   "word": "cherry",
+   "pos": "noun",
+   "cefr": "B2"
+  },
+  {
+   "word": "rival",
+   "pos": "noun",
+   "cefr": "B2"
+  },
+  {
+   "word": "ash",
+   "pos": "noun",
+   "cefr": "B2"
+  },
+  {
+   "word": "stake",
+   "pos": "noun",
+   "cefr": "B2"
+  },
+  {
+   "word": "pine",
+   "pos": "noun",
+   "cefr": "B2"
+  },
+  {
+   "word": "fabulous",
+   "pos": "adj.",
+   "cefr": "B2"
+  },
+  {
+   "word": "flame",
+   "pos": "noun",
+   "cefr": "B2"
+  },
+  {
+   "word": "stack",
+   "pos": "noun",
+   "cefr": "B2"
+  },
+  {
+   "word": "transparent",
+   "pos": "adj.",
+   "cefr": "B2"
+  },
+  {
+   "word": "jaw",
+   "pos": "noun",
+   "cefr": "B2"
+  },
+  {
+   "word": "absurd",
+   "pos": "adj.",
+   "cefr": "B2"
+  },
+  {
+   "word": "illustration",
+   "pos": "noun",
+   "cefr": "B2"
+  },
+  {
+   "word": "porch",
+   "pos": "noun",
+   "cefr": "B2"
+  },
+  {
+   "word": "exploit",
+   "pos": "verb",
+   "cefr": "B2"
+  },
+  {
+   "word": "sympathetic",
+   "pos": "adj.",
+   "cefr": "B2"
+  },
+  {
+   "word": "peel",
+   "pos": "noun",
+   "cefr": "B2"
+  },
+  {
+   "word": "herb",
+   "pos": "noun",
+   "cefr": "B2"
+  },
+  {
+   "word": "mortar",
+   "pos": "noun",
+   "cefr": "B2"
+  },
+  {
+   "word": "upright",
+   "pos": "adj.",
+   "cefr": "B2"
+  },
+  {
+   "word": "miniature",
+   "pos": "adj.",
+   "cefr": "B2"
+  },
+  {
+   "word": "roar",
+   "pos": "verb",
+   "cefr": "B2"
+  },
+  {
+   "word": "dreadful",
+   "pos": "adj.",
+   "cefr": "B2"
+  },
+  {
+   "word": "cocoa",
+   "pos": "noun",
+   "cefr": "B2"
+  },
+  {
+   "word": "whisky",
+   "pos": "noun",
+   "cefr": "B2"
+  },
+  {
+   "word": "linen",
+   "pos": "noun",
+   "cefr": "B2"
+  },
+  {
+   "word": "cellar",
+   "pos": "noun",
+   "cefr": "B2"
+  },
+  {
+   "word": "endeavor",
+   "pos": "noun",
+   "cefr": "B2"
+  },
+  {
+   "word": "clap",
+   "pos": "verb",
+   "cefr": "B2"
+  },
+  {
+   "word": "conceal",
+   "pos": "verb",
+   "cefr": "B2"
+  },
+  {
+   "word": "cuff",
+   "pos": "noun",
+   "cefr": "B2"
+  },
+  {
+   "word": "glee",
+   "pos": "noun",
+   "cefr": "B2"
+  },
+  {
+   "word": "turbulent",
+   "pos": "adj.",
+   "cefr": "B2"
+  },
+  {
+   "word": "divert",
+   "pos": "verb",
+   "cefr": "B2"
+  },
+  {
+   "word": "conceive",
+   "pos": "verb",
+   "cefr": "B2"
+  },
+  {
+   "word": "tack",
+   "pos": "verb",
+   "cefr": "B2"
+  },
+  {
+   "word": "pebble",
+   "pos": "noun",
+   "cefr": "B2"
+  },
+  {
+   "word": "crease",
+   "pos": "noun",
+   "cefr": "B2"
+  },
+  {
+   "word": "eternally",
+   "pos": "adv.",
+   "cefr": "B2"
+  },
+  {
+   "word": "misconception",
+   "pos": "noun",
+   "cefr": "B2"
+  },
+  {
+   "word": "unhappiness",
+   "pos": "noun",
+   "cefr": "B2"
+  },
+  {
+   "word": "subtract",
+   "pos": "verb",
+   "cefr": "B2"
+  },
+  {
+   "word": "flutter",
+   "pos": "noun",
+   "cefr": "B2"
+  },
+  {
+   "word": "bestow",
+   "pos": "verb",
+   "cefr": "B2"
+  },
+  {
+   "word": "charter",
+   "pos": "verb",
+   "cefr": "C1"
+  },
+  {
+   "word": "chill",
+   "pos": "verb",
+   "cefr": "C1"
+  },
+  {
+   "word": "vertical",
+   "pos": "adj.",
+   "cefr": "C1"
+  },
+  {
+   "word": "sentiment",
+   "pos": "noun",
+   "cefr": "C1"
+  },
+  {
+   "word": "fusion",
+   "pos": "noun",
+   "cefr": "C1"
+  },
+  {
+   "word": "gig",
+   "pos": "noun",
+   "cefr": "C1"
+  },
+  {
+   "word": "integral",
+   "pos": "adj.",
+   "cefr": "C1"
+  },
+  {
+   "word": "exterior",
+   "pos": "noun",
+   "cefr": "C1"
+  },
+  {
+   "word": "likelihood",
+   "pos": "noun",
+   "cefr": "C1"
+  },
+  {
+   "word": "clutch",
+   "pos": "verb",
+   "cefr": "C1"
+  },
+  {
+   "word": "juvenile",
+   "pos": "noun",
+   "cefr": "C1"
+  },
+  {
+   "word": "gem",
+   "pos": "noun",
+   "cefr": "C1"
+  },
+  {
+   "word": "woo",
+   "pos": "verb",
+   "cefr": "C1"
+  },
+  {
+   "word": "carpenter",
+   "pos": "noun",
+   "cefr": "C1"
+  },
+  {
+   "word": "retention",
+   "pos": "noun",
+   "cefr": "C1"
+  },
+  {
+   "word": "offspring",
+   "pos": "noun",
+   "cefr": "C1"
+  },
+  {
+   "word": "vegetation",
+   "pos": "noun",
+   "cefr": "C1"
+  },
+  {
+   "word": "plaque",
+   "pos": "noun",
+   "cefr": "C1"
+  },
+  {
+   "word": "preach",
+   "pos": "verb",
+   "cefr": "C1"
+  },
+  {
+   "word": "purity",
+   "pos": "noun",
+   "cefr": "C1"
+  },
+  {
+   "word": "plausible",
+   "pos": "adj.",
+   "cefr": "C1"
+  },
+  {
+   "word": "align",
+   "pos": "verb",
+   "cefr": "C1"
+  },
+  {
+   "word": "batter",
+   "pos": "verb",
+   "cefr": "C1"
+  },
+  {
+   "word": "customary",
+   "pos": "adj.",
+   "cefr": "C1"
+  },
+  {
+   "word": "plaster",
+   "pos": "noun",
+   "cefr": "C1"
+  },
+  {
+   "word": "remorse",
+   "pos": "noun",
+   "cefr": "C1"
+  },
+  {
+   "word": "elusive",
+   "pos": "adj.",
+   "cefr": "C1"
+  },
+  {
+   "word": "suffice",
+   "pos": "verb",
+   "cefr": "C1"
+  },
+  {
+   "word": "fiddle",
+   "pos": "verb",
+   "cefr": "C1"
+  },
+  {
+   "word": "depict",
+   "pos": "verb",
+   "cefr": "C1"
+  },
+  {
+   "word": "exert",
+   "pos": "verb",
+   "cefr": "C1"
+  },
+  {
+   "word": "torment",
+   "pos": "verb",
+   "cefr": "C1"
+  },
+  {
+   "word": "appliance",
+   "pos": "noun",
+   "cefr": "C1"
+  },
+  {
+   "word": "ludicrous",
+   "pos": "adj.",
+   "cefr": "C1"
+  },
+  {
+   "word": "relapse",
+   "pos": "verb",
+   "cefr": "C1"
+  },
+  {
+   "word": "physique",
+   "pos": "noun",
+   "cefr": "C1"
+  },
+  {
+   "word": "paternal",
+   "pos": "adj.",
+   "cefr": "C1"
+  },
+  {
+   "word": "flask",
+   "pos": "noun",
+   "cefr": "C1"
+  },
+  {
+   "word": "grapefruit",
+   "pos": "noun",
+   "cefr": "C1"
+  },
+  {
+   "word": "impede",
+   "pos": "verb",
+   "cefr": "C1"
+  },
+  {
+   "word": "tranquil",
+   "pos": "adj.",
+   "cefr": "C1"
+  },
+  {
+   "word": "conjure",
+   "pos": "verb",
+   "cefr": "C1"
+  },
+  {
+   "word": "somber",
+   "pos": "adj.",
+   "cefr": "C1"
+  },
+  {
+   "word": "sanctity",
+   "pos": "noun",
+   "cefr": "C1"
+  },
+  {
+   "word": "tranquility",
+   "pos": "noun",
+   "cefr": "C1"
+  },
+  {
+   "word": "placid",
+   "pos": "adj.",
+   "cefr": "C1"
+  },
+  {
+   "word": "blister",
+   "pos": "noun",
+   "cefr": "C1"
+  },
+  {
+   "word": "succulent",
+   "pos": "noun",
+   "cefr": "C1"
+  },
+  {
+   "word": "manicure",
+   "pos": "noun",
+   "cefr": "C1"
+  },
+  {
+   "word": "sprawl",
+   "pos": "noun",
+   "cefr": "C1"
+  },
+  {
+   "word": "standing",
+   "pos": "noun",
+   "cefr": "C2"
+  },
+  {
+   "word": "proposition",
+   "pos": "noun",
+   "cefr": "C2"
+  },
+  {
+   "word": "cosmic",
+   "pos": "adj.",
+   "cefr": "C2"
+  },
+  {
+   "word": "corpse",
+   "pos": "noun",
+   "cefr": "C2"
+  },
+  {
+   "word": "solitary",
+   "pos": "adj.",
+   "cefr": "C2"
+  },
+  {
+   "word": "nostalgia",
+   "pos": "noun",
+   "cefr": "C2"
+  },
+  {
+   "word": "menace",
+   "pos": "noun",
+   "cefr": "C2"
+  },
+  {
+   "word": "physiological",
+   "pos": "adj.",
+   "cefr": "C2"
+  },
+  {
+   "word": "seismic",
+   "pos": "adj.",
+   "cefr": "C2"
+  },
+  {
+   "word": "residual",
+   "pos": "adj.",
+   "cefr": "C2"
+  },
+  {
+   "word": "brink",
+   "pos": "noun",
+   "cefr": "C2"
+  },
+  {
+   "word": "solitude",
+   "pos": "noun",
+   "cefr": "C2"
+  },
+  {
+   "word": "melancholy",
+   "pos": "noun",
+   "cefr": "C2"
+  },
+  {
+   "word": "conjecture",
+   "pos": "verb",
+   "cefr": "C2"
+  },
+  {
+   "word": "pedestal",
+   "pos": "noun",
+   "cefr": "C2"
+  },
+  {
+   "word": "malice",
+   "pos": "noun",
+   "cefr": "C2"
+  },
+  {
+   "word": "uncanny",
+   "pos": "adj.",
+   "cefr": "C2"
+  },
+  {
+   "word": "treacherous",
+   "pos": "adj.",
+   "cefr": "C2"
+  },
+  {
+   "word": "disperse",
+   "pos": "verb",
+   "cefr": "C2"
+  },
+  {
+   "word": "mercenary",
+   "pos": "noun",
+   "cefr": "C2"
+  },
+  {
+   "word": "antidote",
+   "pos": "noun",
+   "cefr": "C2"
+  },
+  {
+   "word": "meticulous",
+   "pos": "adj.",
+   "cefr": "C2"
+  },
+  {
+   "word": "calamity",
+   "pos": "noun",
+   "cefr": "C2"
+  },
+  {
+   "word": "indulgence",
+   "pos": "noun",
+   "cefr": "C2"
+  },
+  {
+   "word": "ornate",
+   "pos": "adj.",
+   "cefr": "C2"
+  },
+  {
+   "word": "unravel",
+   "pos": "verb",
+   "cefr": "C2"
+  },
+  {
+   "word": "treachery",
+   "pos": "noun",
+   "cefr": "C2"
+  },
+  {
+   "word": "snippet",
+   "pos": "noun",
+   "cefr": "C2"
+  },
+  {
+   "word": "spire",
+   "pos": "noun",
+   "cefr": "C2"
+  },
+  {
+   "word": "parable",
+   "pos": "noun",
+   "cefr": "C2"
+  },
+  {
+   "word": "rebuke",
+   "pos": "verb",
+   "cefr": "C2"
+  },
+  {
+   "word": "huddle",
+   "pos": "verb",
+   "cefr": "C2"
+  },
+  {
+   "word": "venomous",
+   "pos": "adj.",
+   "cefr": "C2"
+  },
+  {
+   "word": "banish",
+   "pos": "verb",
+   "cefr": "C2"
+  },
+  {
+   "word": "gout",
+   "pos": "noun",
+   "cefr": "C2"
+  },
+  {
+   "word": "belligerent",
+   "pos": "adj.",
+   "cefr": "C2"
+  },
+  {
+   "word": "ebb",
+   "pos": "verb",
+   "cefr": "C2"
+  },
+  {
+   "word": "confrontational",
+   "pos": "adj.",
+   "cefr": "C2"
+  },
+  {
+   "word": "figuratively",
+   "pos": "adv.",
+   "cefr": "C2"
+  },
+  {
+   "word": "topple",
+   "pos": "verb",
+   "cefr": "C2"
+  },
+  {
+   "word": "connotation",
+   "pos": "noun",
+   "cefr": "C2"
+  },
+  {
+   "word": "hysterically",
+   "pos": "adv.",
+   "cefr": "C2"
+  },
+  {
+   "word": "colloquial",
+   "pos": "adj.",
+   "cefr": "C2"
+  },
+  {
+   "word": "trifle",
+   "pos": "noun",
+   "cefr": "C2"
+  },
+  {
+   "word": "innuendo",
+   "pos": "noun",
+   "cefr": "C2"
+  },
+  {
+   "word": "buzzard",
+   "pos": "noun",
+   "cefr": "C2"
+  },
+  {
+   "word": "commensurate",
+   "pos": "adj.",
+   "cefr": "C2"
+  },
+  {
+   "word": "substantiate",
+   "pos": "verb",
+   "cefr": "C2"
+  },
+  {
+   "word": "contraption",
+   "pos": "noun",
+   "cefr": "C2"
+  },
+  {
+   "word": "etch",
+   "pos": "verb",
+   "cefr": "C2"
+  }
+ ]
+}

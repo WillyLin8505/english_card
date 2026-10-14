@@ -1,4 +1,4 @@
-"""Enrich lexicon ImageAsset tags with ~3 concrete labels per CEFR band.
+"""Enrich lexicon ImageAsset tags with visible labels; CEFR comes from the lexicon (QUALITY P2).
 
 Uses local Qwen via the tagging API:
   POST http://127.0.0.1:8765/tag?mode=cefr&lang=en&per_level=3

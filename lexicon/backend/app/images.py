@@ -546,7 +546,7 @@ def share(s, asset, only_lemma=None) -> int:
     """Put a picture under every word its AI labels name (a bench picture
     labelled gravel also shows gravel). A picture a reviewer already approved
     for another word is approved here too; otherwise it waits for review."""
-    if not labelled(asset) or asset.status != 'ready':
+    if not labelled(asset) or asset.status != 'ready' or asset.safety_status != 'safe':
         return 0
     reviewed = s.scalar(select(func.count()).select_from(m.SenseImage).where(
         m.SenseImage.image_asset_id == asset.id, m.SenseImage.review_status == 'approved')) > 0
@@ -561,22 +561,45 @@ def share(s, asset, only_lemma=None) -> int:
             continue
         pos = TAG_POS.get(str(tag.get('pos', '')), str(tag.get('pos', '')))
         lexeme = next((lx for lx in lexemes if lx.pos == pos), lexemes[0])
-        sense = s.scalars(select(m.Sense).where(m.Sense.lexeme_id == lexeme.id)
-                          .order_by(m.Sense.ordinal)).first()
-        if sense is None:
-            continue
         # Once per word: not again under another sense of it.
         if s.scalar(select(func.count()).select_from(m.SenseImage).join(
                 m.Sense, m.Sense.id == m.SenseImage.sense_id).join(
                 m.Lexeme, m.Lexeme.id == m.Sense.lexeme_id).where(
                 m.SenseImage.image_asset_id == asset.id, m.Lexeme.normalized == word)):
             continue
+        from app import quality as _q
+        # Context = the other AI labels on this photo (#195 / P2).
+        context = _q.tokens(" ".join(
+            str(t.get("word", "")) for t in (asset.tags or []) if str(t.get("word", "")).lower() != word))
+        candidates = []
+        for se in s.scalars(select(m.Sense).where(m.Sense.lexeme_id == lexeme.id)
+                            .order_by(m.Sense.ordinal)):
+            tr = s.scalars(select(m.SenseTranslation).where(
+                m.SenseTranslation.sense_id == se.id,
+                m.SenseTranslation.native_language == "zh-TW")).first()
+            df = s.scalars(select(m.Definition).where(m.Definition.sense_id == se.id)).first()
+            labels = se.labels or []
+            low = _q.sense_is_low({"labels": labels, "native": tr.text if tr else None,
+                                   "native_ai": bool(tr and tr.is_ai)}, False)
+            candidates.append({"id": se.id, "lexeme_pos": lexeme.pos, "ordinal": se.ordinal,
+                               "definition": df.text if df else "", "native": tr.text if tr else None,
+                               "native_ai": bool(tr and tr.is_ai), "labels": labels, "low": low})
+        if not candidates:
+            continue
+        best, top, second = _q.choose_sense(candidates, context, None, pos or None)
+        if best is None:
+            # No sense has Chinese yet: bind the dictionary's first sense at a
+            # low confidence; the pack guard and review handle it later.
+            best, score = candidates[0], 0.3
+        else:
+            # Confidence from how clearly the photo context prefers this sense.
+            score = 0.5 if second == float("-inf") else max(0.35, min(0.99, 0.55 + (top - second) * 0.08))
         has = s.scalar(select(func.count()).select_from(m.SenseImage).where(
-            m.SenseImage.sense_id == sense.id, m.SenseImage.review_status != 'rejected'))
-        binding = m.SenseImage(sense_id=sense.id, image_asset_id=asset.id,
-                               role='context' if has else 'representative', ordinal=has,
-                               semantic_score=0.95, alt_native={},
-                               review_status='approved' if reviewed else 'pending')
+            m.SenseImage.sense_id == best["id"], m.SenseImage.review_status != "rejected"))
+        binding = m.SenseImage(sense_id=best["id"], image_asset_id=asset.id,
+                               role="context" if has else "representative", ordinal=has,
+                               semantic_score=score, alt_native={},
+                               review_status="approved" if reviewed else "pending")
         s.add(binding)
         s.flush()
         s.add(m.ImageReview(sense_image_id=binding.id, decision=binding.review_status,

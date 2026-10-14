@@ -186,7 +186,7 @@ def build_prompt(level: str, lang: str = 'en', native: str = 'zh-TW',
 
 SCORE_PROMPT_VERSION = 'label-check-v1'
 SCORE_MAX_LABELS = 24
-CEFR_PROMPT_VERSION = 'photo-tags-cefr-bands-v3'
+CEFR_PROMPT_VERSION = 'photo-tags-visible-v12-lexicon-level'
 CEFR_TAGS_PER_LEVEL = 3
 CEFR_MAX_TOKENS = int(os.environ.get('TAGGER_CEFR_NUM_PREDICT', '1000'))
 CEFR_CANDIDATE_SCHEMA = {
@@ -228,35 +228,39 @@ SCORE_SCHEMA = {
 
 
 def build_cefr_prompt(lang: str = 'en', exclude: list[str] | None = None,
-                      per_level: int = CEFR_TAGS_PER_LEVEL) -> str:
-    """Ask for at least ``per_level`` concrete visible labels in each CEFR band."""
+                      per_level: int = CEFR_TAGS_PER_LEVEL,
+                      beginner_max: int | None = None) -> str:
+    """Ask for visible dictionary-form labels. Levels come from the lexicon
+    later (decision 2 / P2); the model must not invent CEFR bands.
+    ``per_level`` still sizes the list (~6 * per_level visible labels)."""
     lang_name = LANGS[lang]
+    n = max(6, int(per_level) * 6)
     lines = [
         f'Inspect this photo and return English learning labels for a {lang_name} learner.',
-        f'Return AT LEAST {per_level} distinct concrete noun or short noun-phrase labels for EACH '
-        f'CEFR band A1, A2, B1, B2, C1 and C2 (at least {per_level * 6} total, at most '
-        f'{per_level * 6 + 4}). Every band must meet the minimum.',
-        'Only name what is clearly visible. Prefer concrete vocabulary a learner can point to '
-        '(objects, parts, materials, tools, foods, clothing, plants, animals). Avoid brand, '
-        'product, model and person names. Ignore words only read from logos or watermarks.',
-        'Do not repeat the same idea with synonyms across bands; each word once. Spread difficulty: '
-        'A1 very common everyday words; A2 still common; B1 intermediate; B2 more precise; '
-        'C1 advanced but still visible; C2 rare or technical but still visible in the photo.',
-        'For harder bands that feel thin, dig for precise visible detail (parts, materials, '
-        'textures, tools, spatial nouns) rather than leaving a band short. Never invent objects '
-        'that are not in the photo.',
-        'For each candidate give:',
-        f'- word: dictionary form (singular noun), lowercase, in {lang_name}',
-        '- pos: prefer noun; phrase only for short visible compounds',
-        '- cefr: one of A1 A2 B1 B2 C1 C2 for that label',
-        '- evidence: at most 8 English words describing its meaning in this photo',
-        '- point: [x, y] of that evidence, relative coordinates from 0 to 1000',
-        '- box: [x1, y1, x2, y2] around that evidence, relative coordinates from 0 to 1000',
+        'First check content safety. Set safe=false and return candidates=[] for pornography, '
+        'sexual activity, exposed genitals, or explicit adult nudity. Otherwise set safe=true. '
+        'Ordinary family photos, swimwear, breastfeeding, art and medical contexts are safe '
+        'unless explicitly sexual.',
+        f'Return about {n} distinct labels for things that are clearly visible '
+        '(objects, parts, materials, actions, qualities). Do not invent CEFR levels; '
+        'do not pad the list to fill difficulty bands. Prefer concrete, pointable words.',
+        'Mix parts of speech: nouns, verbs (visible actions), adjectives (visible qualities), '
+        'adverbs and short phrases. At most half may be nouns. Avoid brand, product, model '
+        'and person names. Ignore words only read from logos or watermarks. '
+        'Do not invent objects that are not in the photo. Avoid meta labels that describe '
+        'the photo itself (photo, image, background as "the picture", scene).',
+        'For each candidate use these compact JSON keys:',
+        f'- w: dictionary form (singular noun, base verb, adjective/adverb lemma), '
+        f'lowercase, in {lang_name}',
+        '- p: n noun, v verb, a adjective, d adverb, or p phrase',
+        '- x and y: evidence point coordinates from 0 to 1000',
+        '- b: optional [x1,y1,x2,y2] box from 0 to 1000 when the region is clear',
     ]
     if exclude:
         lines.append('Do not repeat these words: ' + ', '.join(exclude[:60]) + '.')
-    lines.append('Reply with JSON only.')
-    return '\n'.join(lines)
+    lines.append('Reply with JSON only. Do not include an "l"/level field.')
+    return "\n".join(lines)
+
 
 
 def cefr_band_counts(items: list[dict]) -> dict[str, int]:

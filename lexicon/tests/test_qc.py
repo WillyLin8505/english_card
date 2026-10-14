@@ -1,0 +1,60 @@
+"""P1 contracts over a pack: stubs out, photo-tag invariants, golden guard."""
+from app import qc
+
+
+def _pack():
+    return {
+        "lexemes": [
+            {"id": 1, "lemma": "screen", "normalized": "screen", "pos": "noun", "status": "full",
+             "cefr": "A2", "cefr_source": "cefr-j",
+             "senses": [{"id": 10, "native": "螢幕", "priority": "main"},
+                        {"id": 11, "native": "屏風", "priority": "low"}],
+             "relations": [{"word": "screener", "lexeme_id": 99}]},
+            {"id": 2, "lemma": "phone", "normalized": "phone", "pos": "noun", "status": "full",
+             "cefr": "A1", "cefr_source": "cefr-j",
+             "senses": [{"id": 20, "native": "電話", "priority": "main"}]},
+            {"id": 3, "lemma": "screener", "normalized": "screener", "pos": "noun", "status": "stub",
+             "cefr": "B1"},
+            {"id": 4, "lemma": "screening", "normalized": "screening", "pos": "unknown",
+             "status": "stub", "redirect_to": 1, "card": "screen"},
+            {"id": 5, "lemma": "ghost", "normalized": "ghost", "pos": "noun", "status": "stub",
+             "redirect_to": 3},  # points at a stub
+        ],
+        "redirects": {"4": 1, "5": 3},
+        "catalog_images": [{
+            "id": 71,
+            "tags": [{"lexeme_id": 1, "sense_id": 10, "cefr": "A2"},
+                     {"lexeme_id": 2, "sense_id": 20, "cefr": "B1"},  # level mismatch
+                     {"lexeme_id": 4, "sense_id": 10, "cefr": "A2"}],  # on redirect
+            "labels": [{"lexeme_id": 1, "cefr": "A2"}, {"lexeme_id": 2, "cefr": "B1"}],
+        }],
+    }
+
+
+def test_validate_flags_stubs_and_photo_invariants():
+    v = qc.validate(_pack())
+    assert 3 in v["entry.stub_in_pack"] and 3 in v["entry.stub_has_cefr"]
+    assert [71, 2] in v["photo_tag.level_differs_from_card"]
+    assert [71, 4] in v["photo_tag.on_redirect"]
+    assert [5, 3] in v["redirect.target_not_full"]
+
+
+def test_strip_stubs_keeps_full_and_valid_pointers():
+    pack = _pack()
+    counts = qc.strip_stubs(pack)
+    ids = {lx["id"] for lx in pack["lexemes"]}
+    assert ids == {1, 2, 4}  # ghost pointer dropped; screener stub dropped
+    assert pack["redirects"] == {"4": 1}
+    assert pack["lexemes"][0]["relations"][0].get("lexeme_id") is None
+    assert counts["kept_full"] == 2 and counts["kept_pointers"] == 1
+    v = qc.validate(pack)
+    assert "entry.stub_in_pack" not in v
+    # A tag still naming a pointer id stays a violation: tags must name full entries.
+    assert [71, 4] in v["photo_tag.on_redirect"]
+
+def test_compare_detects_regression():
+    before = {"metrics": {"v.entry.stub_in_pack": 10}, "golden": {"rates": {"word.present_full": 1.0}}}
+    after = {"metrics": {"v.entry.stub_in_pack": 12}, "golden": {"rates": {"word.present_full": 0.9}}}
+    bad = qc.compare(before, after)
+    assert any("stub_in_pack" in x for x in bad) and any("word.present_full" in x for x in bad)
+    assert qc.compare(before, before) == []

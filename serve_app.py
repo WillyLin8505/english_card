@@ -79,9 +79,9 @@ def catalog_snapshot(session, target):
             if not item:
                 continue
             seen_words.add(word.id)
+            # Decision 2 / P2: the photo tag's level is the card's level
+            # (lexicon), never the vision model's guess.
             band = str(word.cefr or '').strip().upper()
-            if band not in levels:
-                band = model_cefr.get(word.normalized)
             tag_out = dict(binding)
             if band in levels:
                 tag_out['cefr'] = band
@@ -156,6 +156,10 @@ def live_pack(target: str, native: str):
             pack['catalog_images'] = catalog_images
             # #195: a photo tag shows a main sense with Chinese.
             quality.fix_catalog_senses(pack)
+            # Decision 1 / P2: stubs leave the pack; pointers stay only when
+            # they resolve to a full entry.
+            from app import qc as pack_qc
+            pack_qc.strip_stubs(pack)
             pack['catalog_version'] = 1
         # Export time is not content. Stable versions avoid needless local writes.
         pack.pop('created_at', None)

@@ -53,8 +53,11 @@ def test_catalog_matches_database_and_tracks_image_changes(session, fakes):
     serve_app._cache.clear()
     body, etag = serve_app.live_pack('en', 'zh-TW')
     result = json.loads(body)
-    database_ids = set(session.scalars(select(m.Lexeme.id).where(m.Lexeme.language == 'en')))
-    assert {word['id'] for word in result['lexemes']} == database_ids
+    # Decision 1 (QUALITY_SYSTEM_DESIGN.md): only full entries reach the pack.
+    database_ids = set(session.scalars(select(m.Lexeme.id).where(
+        m.Lexeme.language == 'en', m.Lexeme.status == 'full')))
+    assert {word['id'] for word in result['lexemes'] if not word.get('redirect_to')} == database_ids
+    assert all(word['status'] == 'full' or word.get('redirect_to') for word in result['lexemes'])
     assert result['catalog_version'] == 1
     assert result['catalog_images'] == [], 'unreviewed candidates are not learner-facing'
     binding = m.SenseImage(sense_id=sense.id, image_asset_id=asset.id,
