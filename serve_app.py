@@ -160,6 +160,9 @@ def live_pack(target: str, native: str):
             # they resolve to a full entry.
             from app import qc as pack_qc
             pack_qc.strip_stubs(pack)
+            # QUALITY P3: every pack build records validators + metrics.
+            from app import qc_hook
+            qc_hook.record_pack_metrics(pack)
             pack['catalog_version'] = 1
         # Export time is not content. Stable versions avoid needless local writes.
         pack.pop('created_at', None)

@@ -58,3 +58,13 @@ def test_compare_detects_regression():
     bad = qc.compare(before, after)
     assert any("stub_in_pack" in x for x in bad) and any("word.present_full" in x for x in bad)
     assert qc.compare(before, before) == []
+
+def test_compare_ignores_entries_added_during_a_run():
+    before = {"metrics": {"full": 2, "v.sense.main_is_ai": 1}, "golden": {"rates": {}},
+              "entry_ids": [1, 2], "v_ids": {"sense.main_is_ai": [1]}}
+    after = {"metrics": {"full": 3, "v.sense.main_is_ai": 2}, "golden": {"rates": {}},
+             "entry_ids": [1, 2, 3], "v_ids": {"sense.main_is_ai": [1, 3]}}
+    assert qc.compare(before, after) == []  # entry 3 is new, not a regression
+    after["v_ids"]["sense.main_is_ai"] = [1, 2]
+    after["metrics"]["v.sense.main_is_ai"] = 2
+    assert qc.compare(before, after)  # entry 2 got worse

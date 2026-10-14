@@ -362,6 +362,9 @@ def run(session_factory, job_id: int, worker_id: str, stop=lambda: False,
                 job.finished_at = now()
                 log(s, job.id, f"完成：{job.status}")
                 s.commit()
+                # QUALITY P3: an import job finished -> qc run (debounced).
+                from . import qc_hook
+                qc_hook.trigger("import")
                 return job.status
             word = job.words[job.checkpoint]
             s.commit()

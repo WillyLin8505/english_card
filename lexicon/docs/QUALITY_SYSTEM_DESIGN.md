@@ -145,3 +145,14 @@ Ollama 排程：一個優先權佇列（互動打標 > 品質確認 > 背景 tag
 5. **GPU**：閒置時品質工作優先於 `worker.py --lane tags`（`.runtime/qc_gpu_claim`，10 分鐘內有效）。
 6. **CEFR 估計值**：app 顯示「估」標記（`進階（C1）・估`）。
 
+## 8. P3 自動修正（已上線）
+
+- 指令：`python lexicon/tools/qc.py run [--trigger X] [--dry-run]`、`qc.py rollback RUN_ID`、`qc.py runs`。
+- 流程：建 pack（與 8123 同程式）→ 快照 → deterministic fixers（同一 transaction）→ 重建 → guard 比較 → 有回歸自動 rollback。
+- guard：違規數只比「執行前就存在的詞條」，避免同時進行的匯入造成誤判；黃金集任一比率下降即擋。
+- `qc_changes` 表：run_id、rule、entity、before、after、source、confidence、status（applied／proposed／rolled_back）。
+- 規則 → 處理方式：`app/qc_fix.py` 的 `POLICY`（deterministic／model／human），測試保證每條規則都有對應。
+- model 掛鉤：`qc_fix.propose()`，confidence ≥ 0.8 自動套用，否則記為 proposed 等人審（P4 填入 Qwen）。
+- 自動觸發：匯入工作完成（`jobs.py`）、打標完成（`enrich_cefr_tags.py`）→ 背景 `qc run`（30 分鐘去抖動）；每次 pack 建置寫 `exports/quality/qc/pack-latest.json`。
+- issue：每條規則一張 `[qc] rule：說明`，每次 run 更新筆數；歸零自動 fixed。
+

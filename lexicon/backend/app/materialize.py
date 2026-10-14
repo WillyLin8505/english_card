@@ -266,7 +266,9 @@ def materialize(s: Session, target: str, lemma: str, display: str | None = None)
             # a later full import replaces estimates with CEFR-J / wordfreq data.
             if tgt.zipf is None and it.get("zipf") is not None:
                 tgt.zipf = it["zipf"]
-            if tgt.cefr is None and it.get("cefr"):
+            # QUALITY R2: a stub is not a learnable entry and gets no CEFR
+            # (qc rule db.stub_has_cefr); a full import sets the real level.
+            if tgt.cefr is None and it.get("cefr") and tgt.status == "full":
                 tgt.cefr = it["cefr"]
             if tgt.id in ids:
                 continue

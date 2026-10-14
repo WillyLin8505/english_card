@@ -306,3 +306,6 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+    # QUALITY P3: tagging finished -> qc run (debounced, background).
+    from app import qc_hook
+    qc_hook.trigger("tagging")

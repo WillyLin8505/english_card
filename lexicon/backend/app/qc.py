@@ -212,8 +212,18 @@ def compare(before: dict, after: dict, tolerance: int = 0) -> list[str]:
     for k in sorted(set(bm) | set(am)):
         if not k.startswith("v.") or am.get(k, 0) <= bm.get(k, 0) + tolerance:
             continue
-        # Per-entry rules scale with the dictionary: new imports add entries,
-        # so compare rates per full entry, not raw counts.
+        # Per-entry rules: imports keep adding entries while a run is in
+        # flight, so only entries that existed before count (same population).
+        rule = k[2:]
+        ids_b, ids_a = before.get("entry_ids"), after.get("entry_ids")
+        if ids_b is not None and ids_a is not None and rule in (before.get("v_ids") or {}):
+            base = set(ids_b)
+            nb = len(set(map(_key, before["v_ids"].get(rule, []))) & base)
+            na = len(set(map(_key, (after.get("v_ids") or {}).get(rule, []))) & base)
+            if na <= nb + tolerance:
+                continue
+            bad.append(f"{k}: {nb} -> {na} (same entries)")
+            continue
         if k.startswith(("v.sense.", "v.entry.")) and k != "v.entry.stub_in_pack":
             rb = bm.get(k, 0) / max(1, bm.get("full", 1))
             ra = am.get(k, 0) / max(1, am.get("full", 1))
@@ -227,7 +237,15 @@ def compare(before: dict, after: dict, tolerance: int = 0) -> list[str]:
     return bad
 
 
+def _key(x):
+    """Entry id of a violation item (an id, or [entry_id, ...])."""
+    return x[0] if isinstance(x, list) else x
+
+
 def snapshot(pack: dict, golden: dict | None = None) -> dict:
     v = validate(pack)
+    per_entry = {k: x for k, x in v.items() if k.startswith(("sense.", "entry.")) and k != "entry.stub_in_pack"}
     return {"metrics": metrics(pack, v), "golden": evaluate_golden(pack, golden or load_golden()),
-            "samples": {k: x[:10] for k, x in v.items()}}
+            "samples": {k: x[:10] for k, x in v.items()},
+            "entry_ids": [lx["id"] for lx in pack.get("lexemes") or [] if lx.get("status") == "full"],
+            "v_ids": per_entry}
