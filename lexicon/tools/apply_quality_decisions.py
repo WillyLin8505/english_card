@@ -76,6 +76,14 @@ def plan(rows: list[tuple], flags: dict) -> tuple[dict, list[dict], collections.
             counts["not_in_db"] += 1
             continue
         lid, word, pos, status, cefr = r
+        if "inflected_form" in hit and status == "full":
+            # #194: a form with its own senses (arched 拱形的, weathered 飽經風霜的,
+            # lying 說謊) is a word of its own: never a pointer. Level rules
+            # below may still correct its CEFR.
+            counts["keep_independent_form"] += 1
+            log.append({"id": lid, "word": word, "pos": pos, "action": "keep",
+                        "why": "inflected form with its own senses (#194)", "cefr": cefr})
+            hit = {k: v for k, v in hit.items() if k not in ("inflected_form", "excluded_has_cefr")}
         if "inflected_form" in hit:
             base = pick_base(by_word.get(hit["inflected_form"], []), word, pos)
             if base and base != lid:
@@ -107,6 +115,30 @@ def plan(rows: list[tuple], flags: dict) -> tuple[dict, list[dict], collections.
     return decisions, log, counts
 
 
+def reconcile(s, decisions: dict, baseline: dict | None) -> tuple[int, int]:
+    """Undo earlier decisions that the current plan no longer makes: their
+    CEFR goes back to the baseline value and redirects this tool added (not
+    in the baseline) are dropped. Returns (cefr restored, redirects dropped)."""
+    if not baseline:
+        return 0, 0
+    previous = quality.load_json("decisions.json")
+    base_cefr = {i: c for i, c in baseline["lexeme_cefr"]}
+    base_red = {o for o, _ in baseline["lexeme_redirects"]}
+    now = ({int(k) for k in decisions["redirect"]} | set(decisions["strip_cefr"])
+           | {int(k) for k in decisions["set_cefr"]})
+    before = ({int(k) for k in previous.get("redirect", {})} | set(previous.get("strip_cefr", []))
+              | {int(k) for k in previous.get("set_cefr", {})})
+    undo = sorted(before - now)
+    if undo:
+        s.execute(text("UPDATE lexemes SET cefr = :c WHERE id = :i"),
+                  [{"i": i, "c": base_cefr.get(i)} for i in undo if i in base_cefr])
+    wanted = base_red | {int(k) for k in decisions["redirect"]}
+    drop = [o for (o,) in s.execute(text("SELECT old_id FROM lexeme_redirects")) if o not in wanted]
+    if drop:
+        s.execute(text("DELETE FROM lexeme_redirects WHERE old_id = ANY(:i)"), {"i": drop})
+    return len(undo), len(drop)
+
+
 def main(argv: list[str]) -> None:
     out = HOME / "exports" / "quality"
     out.mkdir(parents=True, exist_ok=True)
@@ -131,13 +163,19 @@ def main(argv: list[str]) -> None:
         print(json.dumps(dict(counts), ensure_ascii=False))
         if "--dry-run" in argv:
             return
+        earliest = sorted(out.glob("backup-191-*.json"))
+        baseline = json.loads(earliest[0].read_text(encoding="utf-8")) if earliest else None
         stamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S")
         backup = {"created": stamp, "lexeme_cefr": [[r[0], r[4]] for r in rows],
                   "lexeme_redirects": [list(r) for r in s.execute(
                       text("SELECT old_id, new_id FROM lexeme_redirects ORDER BY old_id"))]}
         bpath = out / f"backup-191-{stamp}.json"
         bpath.write_text(json.dumps(backup), encoding="utf-8")
-        existing = {r[0] for r in backup["lexeme_redirects"]}
+        # Reconcile with the state before the first #191 run (the earliest
+        # backup) so a narrower rule (#194) undoes what it no longer wants.
+        restored, unredirected = reconcile(s, decisions, baseline)
+        counts["restored_cefr"], counts["unredirected"] = restored, unredirected
+        existing = {r[0] for r in s.execute(text("SELECT old_id FROM lexeme_redirects"))}
         new = [{"o": int(k), "n": v} for k, v in decisions["redirect"].items() if int(k) not in existing]
         if new:
             s.execute(text("INSERT INTO lexeme_redirects (old_id, new_id) VALUES (:o, :n)"), new)
@@ -151,7 +189,7 @@ def main(argv: list[str]) -> None:
         json.dumps(decisions, ensure_ascii=False, sort_keys=True, indent=0), encoding="utf-8")
     (out / f"decisions-191-{stamp}.json").write_text(
         json.dumps(log, ensure_ascii=False, indent=0), encoding="utf-8")
-    print("backup:", bpath)
+    print("backup:", bpath, json.dumps(dict(counts), ensure_ascii=False))
 
 
 if __name__ == "__main__":

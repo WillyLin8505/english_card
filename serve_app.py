@@ -154,6 +154,8 @@ def live_pack(target: str, native: str):
             from app import quality
             quality.apply_decisions(pack)
             pack['catalog_images'] = catalog_images
+            # #195: a photo tag shows a main sense with Chinese.
+            quality.fix_catalog_senses(pack)
             pack['catalog_version'] = 1
         # Export time is not content. Stable versions avoid needless local writes.
         pack.pop('created_at', None)
@@ -229,7 +231,7 @@ class Handler(SimpleHTTPRequestHandler):
                 data = upstream.read()
         except (OSError, URLError):
             status = 502
-            data = json.dumps({'error': '照片辨識服務尚未啟動，請稍後重試'}, ensure_ascii=False).encode()
+            data = json.dumps({'error': '?抒?颲刻???撠??嚗?蝔??岫'}, ensure_ascii=False).encode()
         self.send_response(status)
         self.send_header('Content-Type', 'application/json; charset=utf-8')
         self.send_header('Cache-Control', 'no-store')
@@ -238,7 +240,7 @@ class Handler(SimpleHTTPRequestHandler):
         self.wfile.write(data)
 
     def record_missing(self, body: bytes):
-        """Words the app's dictionary pack lacks (spec section 7: 缺詞條) or
+        """Words the app's dictionary pack lacks (spec section 7: 蝻箄?璇? or
         has without native text, saved for the admin to fill. Only these two
         request tables are written; personal learning data never leaves the
         browser."""

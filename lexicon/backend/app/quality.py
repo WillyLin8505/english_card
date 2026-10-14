@@ -153,7 +153,9 @@ def cefr_flags(lemma: str, pos: str, cefr: str | None, zipf: float | None,
 # ------------------------------------------------------------------ senses
 def sense_is_low(sense: dict, has_dictionary_before: bool) -> bool:
     labels = {str(x).lower() for x in sense.get("labels") or []}
-    if labels & LOW_SENSE_LABELS or "low_priority" in labels:
+    # etymology-N: another word with the same spelling (phone 語音 = speech sound).
+    if labels & LOW_SENSE_LABELS or "low_priority" in labels or any(
+            x.startswith("etymology-") for x in labels):
         return True
     # Owner decision #84: an AI translation is a sub-sense description when a
     # dictionary translation of the word already exists.
@@ -323,3 +325,101 @@ def apply_decisions(pack: dict, decisions: dict | None = None) -> dict:
                 texts.add(e.get("text"))
                 counts["merged_examples"] += 1
     return counts
+
+# --------------------------------------------- photo tag senses (#195)
+_STOP = set("a an the of or and to in on for with by from as at is are be that this which "
+            "any its it into such other used use usually especially something someone one "
+            "etc e g not no than more less very".split())
+CONCRETE = set("object device apparatus structure material physical visible flat picture image "
+               "colour color screen shows surface made piece plant leaf leaves vessel container "
+               "dish worn wear walls roof frame tool metal wood glass cloth fabric fibers "
+               "electronic display rectangular paper plastic receive transmit scenery rear "
+               "behind subject vascular bundle message words bearing".split())
+ABSTRACT = set("act process faculty fact omen heritage past history information synonym style "
+               "tendency topic discussion previous life ancestors relatives colleagues employees "
+               "game argument resource event events agenda permit category".split())
+PHOTO_CONTEXT = {"photo", "picture", "image", "scene", "visible", "object", "physical"}
+# Specialist domains a photo of everyday things rarely means (window 視窗,
+# ornament 裝飾音, texture 貼圖, transparent 公開, centered 心靜平和).
+DOMAIN = set("computer computing software program programming user desktop "
+             "data file music musical note chord melody mathematics mathematical chemistry "
+             "biology law legal sport cricket baseball grammar linguistics emotionally mental "
+             "public openly honest frank genre rendering pixel polygon phonology speech".split())
+
+
+def tokens(text: str | None) -> set[str]:
+    out = set()
+    for w in re.findall(r"[a-z]+", (text or "").lower()):
+        if w in _STOP or len(w) < 3:
+            continue
+        for suf in ("ing", "ed", "es", "s"):
+            if w.endswith(suf) and len(w) - len(suf) >= 4:
+                w = w[: -len(suf)]
+                if len(w) > 4 and w[-1] == w[-2]:
+                    w = w[:-1]  # transmitting -> transmit
+                break
+        out.add(w)
+    return out
+
+
+def choose_sense(candidates: list[dict], context: set[str], current_id=None,
+                 tag_pos: str | None = None) -> tuple[dict | None, float, float]:
+    """The sense of a photo tag that fits the photo: candidates are dicts
+    {id, lexeme_pos, ordinal, definition, native, native_ai, labels, low}.
+    Only senses with Chinese and not low priority compete (fallback: any sense
+    with Chinese). Score = context overlap with the definition, concreteness
+    (a photo shows things), dictionary order and translation source, the
+    tagger's part of speech. Returns (best, best score, runner-up score)."""
+    ok = [c for c in candidates if (c.get("native") or "").strip() and not c.get("low")]
+    if not ok:
+        ok = [c for c in candidates if (c.get("native") or "").strip()]
+    if not ok:
+        return None, 0.0, 0.0
+    ctx = context | PHOTO_CONTEXT
+    pos = {"adjective": "adj", "adverb": "adv"}.get(tag_pos or "", tag_pos)
+
+    def score(c):
+        d = tokens(c.get("definition"))
+        s = 3.0 * len(d & ctx) + 1.5 * len(d & CONCRETE) - 2.0 * len(d & ABSTRACT)
+        s -= 4.0 * len(d & DOMAIN)
+        s -= 0.25 * (c.get("ordinal") or 0)
+        s += 1.0 if not c.get("ordinal") else 0.0  # the dictionary's main sense
+        s += 0.5 if not c.get("native_ai") else 0.0
+        if pos and c.get("lexeme_pos") == pos:
+            s += 1.0
+        if c.get("id") == current_id:
+            s += 0.3  # stability: keep a fitting binding
+        return s
+
+    ranked = sorted(ok, key=lambda c: (-score(c), c.get("ordinal") or 0))
+    best = ranked[0]
+    return best, score(best), (score(ranked[1]) if len(ranked) > 1 else float("-inf"))
+
+
+def fix_catalog_senses(pack: dict) -> int:
+    """Pack-time guard (#195): a photo tag never shows a low-priority or
+    Chinese-less sense; it falls back to the lexeme's best main sense with
+    Chinese. Tags on a redirected lexeme follow the redirect. Idempotent."""
+    by_id = {lx["id"]: lx for lx in pack.get("lexemes", [])}
+    redirects = {int(k): v for k, v in (pack.get("redirects") or {}).items()}
+    changed = 0
+    for im in pack.get("catalog_images") or []:
+        for coll in (im.get("tags") or [], im.get("labels") or []):
+            for t in coll:
+                lid = t.get("lexeme_id")
+                if lid in redirects and redirects[lid] in by_id:
+                    t["lexeme_id"] = redirects[lid]
+        for t in im.get("tags") or []:
+            lx = by_id.get(t.get("lexeme_id")) or {}
+            senses = lx.get("senses") or []
+            cur = next((s for s in senses if s.get("id") == t.get("sense_id")), None)
+            if cur and (cur.get("native") or "").strip() and cur.get("priority") != "low":
+                continue
+            best = next((s for s in senses if (s.get("native") or "").strip()
+                         and s.get("priority") != "low"), None) or next(
+                (s for s in senses if (s.get("native") or "").strip()), None)
+            if best and best.get("id") != t.get("sense_id"):
+                t.setdefault("sense_id_before", t.get("sense_id"))
+                t["sense_id"], t["sense_fallback"] = best["id"], True
+                changed += 1
+    return changed
