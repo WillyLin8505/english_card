@@ -37,3 +37,9 @@ Windows 的指令看 `docs/mac_inbox.md`；要 Windows 修的 bug 開 `[Mac]` �
 | 1 | flutter analyze | 0 issues | No issues found | — | — |
 | 2 | flutter test | 全部通過 | 369 通過、1 略過、0 失敗（第 1 輪的 4 個失敗在 Mac 上也已消失） | — | — |
 | 3 | M2 iPhone 模擬器逐卡驗證 | — | 尚未執行（Mac 還在裝 Xcode） | — | — |
+
+## 2026-10-18 M3（commit 79070ad）
+
+| 卡 | 結果 | 原因 | 截圖 |
+|----|------|------|------|
+| #291（問題回報 #294） | 通過 | Mac 上 flutter analyze：No issues found；flutter test：369 通過、1 略過、0 失敗（在 cfb76db 跑；之後到 79070ad 沒有改到 app/）。這張卡只改測試，不需要模擬器操作 | — |

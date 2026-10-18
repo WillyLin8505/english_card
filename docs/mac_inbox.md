@@ -101,7 +101,7 @@ commit `e91339e`（Windows：flutter analyze 無 error、01:08 +370: All tests p
 - 卡 #253：複習卡片正面標示單字在圖片中的位置
   結果：正面看圖題以 TargetRing 標出單字位置（有框加框、無座標不標、不露字）；新測試 7 個，全部 flutter test 342 通過；catalog 13278 標籤中 35 個無座標
 
-## M3（2026-10-18 23:44）狀態：待做
+## M3（2026-10-18 23:44）狀態：完成
 commit `99ba0fa`（Windows：flutter analyze 無 error、01:32 +370: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #291：問題回報 #294：[Mac] flutter test 失敗與 analyze 警告（Mac 第 1 輪，Window
   結果：全部完成：flutter analyze 3→0 個問題、flutter test 6 失敗→0（370 全過）；6 個失敗都是測試過時，程式本身沒錯，只改了測試檔。
