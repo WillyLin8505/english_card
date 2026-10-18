@@ -8,17 +8,22 @@ from .base import Candidate, Context, SourceAdapter
 from .cmudict import CMUdict
 from .commons import WikimediaCommons
 from .datamuse import Datamuse
+from .ecdict import ECDict
 from .http import SourceError
 from .kaikki import Kaikki
 from .morph import MorphLocal
 from .local import (CefrJ, KaikkiWordlist, LexiconLookup, LocalCalc, NotImplementedSource,
                     SystemTTS, WordFreq)
 from .oewn import OEWN
+from .open_images import OpenImages
+from .openverse import Openverse
+from .smithsonian import Smithsonian
 from .tatoeba import Tatoeba
 
 ADAPTERS: dict[str, SourceAdapter] = {a.key: a for a in [
     Kaikki(), OEWN(), CMUdict(), Tatoeba(), Datamuse(), WordFreq(), CefrJ(), KaikkiWordlist(),
-    LocalCalc(), LexiconLookup(), AITranslate(), SystemTTS(), MorphLocal(), WikimediaCommons()]}
+    LocalCalc(), LexiconLookup(), ECDict(), AITranslate(), SystemTTS(), MorphLocal(), WikimediaCommons(),
+    OpenImages(), Smithsonian(), Openverse()]}
 for _key, _src in catalog.SOURCES.items():
     if not _src.implemented:
         ADAPTERS[_key] = NotImplementedSource(_key)

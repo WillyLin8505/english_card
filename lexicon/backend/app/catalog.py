@@ -62,6 +62,8 @@ FIELDS: list[Field] = [
     Field("cefr", "basic", "CEFR"),
     Field("frequency", "basic", "頻率"),
     Field("usage_labels", "basic", "用法／語域標籤"),
+    Field("register", "basic", "語體（書面／口語／俚語）", itemized=True,
+          description="每個詞義的語體：中性／通用、書面語、口語或俚語"),
     # 發音
     Field("ipa", "pronunciation", "IPA"),
     Field("phonemes", "pronunciation", "音素", description="ARPAbet 等音素，不是 IPA"),
@@ -161,7 +163,7 @@ class Source:
 
 
 _KAIKKI_EN_TARGET = {
-    "pos", "definition", "usage_labels", "ipa", "syllables", "accent_labels", "audio",
+    "pos", "definition", "usage_labels", "register", "ipa", "syllables", "accent_labels", "audio",
     "verb_base", "verb_past", "verb_past_participle", "verb_present_participle",
     "verb_third_person", "noun_plural", "adj_comparative", "adj_superlative",
     "synonyms", "antonyms", "hypernyms", "hyponyms", "related", "homophones",
@@ -169,13 +171,13 @@ _KAIKKI_EN_TARGET = {
     "etymology_text", "example_sentences", "example_sense", "phonemes",
 }
 _KAIKKI_FR_TARGET = {
-    "pos", "definition", "usage_labels", "ipa", "audio", "fr_present_1s", "fr_present_2s",
+    "pos", "definition", "usage_labels", "register", "ipa", "audio", "fr_present_1s", "fr_present_2s",
     "fr_present_3s", "fr_present_1p", "fr_present_2p", "fr_present_3p", "fr_past_participle",
     "fr_feminine", "fr_plural", "fr_feminine_plural", "synonyms", "antonyms", "related",
     "derived_terms", "etymology_text", "origin_language", "original_form", "example_sentences",
     "example_sense",
 }
-_KAIKKI_ZH_TARGET = {"pos", "definition", "usage_labels", "ipa", "audio", "synonyms", "antonyms",
+_KAIKKI_ZH_TARGET = {"pos", "definition", "usage_labels", "register", "ipa", "audio", "synonyms", "antonyms",
                      "related", "derived_terms", "etymology_text", "example_sentences",
                      "example_sense"}
 _RELS = RELATION_FIELDS
@@ -242,6 +244,16 @@ SOURCES: dict[str, Source] = {s.key: s for s in [
                     "morphemes_native": {n for n in LANGUAGES if n != t},
                     "derived_pos": {"*"}} for t in LANGUAGES},
            "查詞庫裡已經建好的另一個詞條（例如衍生詞自己的詞條）。"),
+    Source("ecdict", "ECDICT 英漢字典", "dump", "MIT",
+           "ECDICT (skywind3000, Linwei)", "https://github.com/skywind3000/ECDICT",
+           {"en": {"native_definition": {"zh-TW"}, "derived_native_meaning": {"zh-TW"},
+                   "ipa": {"*"},
+                   **{f"{r}_native": {"zh-TW"} for r in _RELS}}},
+           "排在 Kaikki 之後、AI 之前：關係詞與衍生詞取該詞性第一個意思（單字時加第二個）；母語釋義只補每個詞性的"
+           "第一個詞義（其他詞義由 AI 依釋義翻譯）。原文簡體，以 OpenCC 轉台灣用語；"
+           "[網路]、專業領域的解釋不用。字典檔 raw-data/ecdict.csv。"
+           "IPA（問題回報 #209）：phonetic 欄位是傳統 DJ 式標音，轉換後格式不乾淨（含第二種讀法、"
+           "殘缺重音、亂碼）一律放棄，不猜測；只在 Kaikki／CMUdict／本機規則都沒有時才用。"),
     Source("ai_translate", "AI 翻譯", "ai", "AI 產生（標記為 AI 翻譯）",
            "Qwen3-VL on the local tagging service", "",
            {t: {f: {n for n in LANGUAGES if n != t} for f in (
@@ -269,15 +281,18 @@ SOURCES: dict[str, Source] = {s.key: s for s in [
     Source("open_images", "Open Images", "dump", "逐張核對（CC BY 2.0 為主）", "Google Open Images",
            "https://storage.googleapis.com/openimages/web/index.html",
            {t: _target({"sense_image", "context_image", "thumbnail"}) for t in LANGUAGES},
-           "adapter 尚未實作。", implemented=False),
+           "只支援英文：快照是 class-descriptions-boxable.csv + validation split 的 "
+           "images-with-rotation.csv／human-imagelabels-boxable.csv（Flickr 來源，每張圖自己的授權逐張核對，"
+           "只收 CC0／PD／CC BY）。要先在 Policies 頁為這個來源下載快照。"),
     Source("smithsonian", "Smithsonian Open Access", "api", "只收 CC0", "Smithsonian Institution",
            "https://www.si.edu/openaccess",
            {t: _target({"sense_image", "context_image", "thumbnail"}) for t in LANGUAGES},
-           "adapter 尚未實作。", implemented=False),
+           "只支援英文：呼叫 Open Access API（LEXICON_SMITHSONIAN_API_KEY，預設 DEMO_KEY 速率很低），"
+           "只收 usage.access = CC0 的 media。"),
     Source("openverse", "Openverse", "api", "須回原站核對授權", "Openverse",
            "https://openverse.org/",
            {t: _target({"sense_image", "context_image", "thumbnail"}) for t in LANGUAGES},
-           "只作最後搜尋入口；adapter 尚未實作。", implemented=False),
+           "只支援英文；最後搜尋入口：下載前重新呼叫 Openverse 的單圖 API 核對授權仍是 CC0／PD／CC BY。"),
 ]}
 
 
@@ -303,11 +318,12 @@ _IMAGE_SOURCES = ["wikimedia_commons", "open_images", "smithsonian", "openverse"
 _EN_DEFAULTS = {
     "pos": (["kaikki", "oewn"], "FILL_MISSING", None),
     "definition": (["kaikki", "oewn"], "FILL_MISSING", 12),
-    "native_definition": (["kaikki"], "FILL_MISSING", None),
+    "native_definition": (["kaikki", "ecdict"], "FILL_MISSING", None),
     "cefr": (["cefrj", "local_calc"], "FIRST_VALID", None),
     "frequency": (["wordfreq", "datamuse"], "FIRST_VALID", None),
     "usage_labels": (["kaikki"], "MERGE_UNIQUE", 10),
-    "ipa": (["kaikki", "cmudict", "local_calc"], "FIRST_VALID", 6),
+    "register": (["kaikki"], "FILL_MISSING", None),
+    "ipa": (["kaikki", "cmudict", "local_calc", "ecdict"], "FIRST_VALID", 6),
     "phonemes": (["cmudict", "kaikki"], "FIRST_VALID", 3),
     "syllables": (["kaikki", "cmudict"], "FIRST_VALID", 2),
     "stress": (["cmudict", "local_calc"], "FIRST_VALID", 2),
@@ -325,7 +341,7 @@ _EN_DEFAULTS = {
     "derived_terms": (["kaikki", "oewn"], "MERGE_UNIQUE", 12),
     "derivation_relation": (["local_calc"], "FILL_MISSING", None),
     "derived_pos": (["lexicon", "oewn", "local_calc"], "FILL_MISSING", None),
-    "derived_native_meaning": (["lexicon", "kaikki"], "FILL_MISSING", None),
+    "derived_native_meaning": (["lexicon", "kaikki", "ecdict"], "FILL_MISSING", None),
     "morphemes": (["kaikki", "morph_local"], "FIRST_VALID", 1),
     "morphemes_native": (["morph_local", "lexicon", "kaikki"], "FILL_MISSING",
                          None),
@@ -349,7 +365,7 @@ for _f in FORM_FIELDS:
     _EN_DEFAULTS.setdefault(_f, (["kaikki"], "FIRST_VALID", 3))
 _EN_DEFAULTS["noun_plural"] = (["kaikki", "local_calc"], "FIRST_VALID", 3)
 for _r in RELATION_FIELDS:
-    _EN_DEFAULTS[f"{_r}_native"] = (["lexicon", "kaikki"], "FILL_MISSING", None)
+    _EN_DEFAULTS[f"{_r}_native"] = (["lexicon", "kaikki", "ecdict"], "FILL_MISSING", None)
 # Fields filled per CEFR level (A1–C2): (at least, at most) items each level
 # keeps; a candidate's slot is its level (pipeline.level_candidates).
 # Relation words keep three a level: each one needs a native meaning.
@@ -423,6 +439,11 @@ LABELS = {
     "accent:UK": {"zh-TW": "英式", "fr": "britannique", "en": "UK"},
     "accent:AU": {"zh-TW": "澳洲", "fr": "australien", "en": "Australian"},
     "accent:CA": {"zh-TW": "加拿大", "fr": "canadien", "en": "Canadian"},
+    "register:neutral": {"zh-TW": "中性／通用", "fr": "neutre", "en": "neutral"},
+    "register:written": {"zh-TW": "書面語", "fr": "écrit", "en": "written"},
+    "register:spoken": {"zh-TW": "口語", "fr": "oral", "en": "spoken"},
+    "register:slang": {"zh-TW": "俚語", "fr": "argot", "en": "slang"},
+    "register:vulgar": {"zh-TW": "粗俗", "fr": "vulgaire", "en": "vulgar"},
     **{f"form:{f.key}": {"zh-TW": f.label, "en": f.key.replace("_", " "), "fr": f.label}
        for f in FIELDS if f.block == "forms"},
     **{f"relation:{k}": v for k, v in {

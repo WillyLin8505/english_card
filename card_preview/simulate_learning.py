@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import json
 import random
+import re
 import sys
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
@@ -16,7 +17,39 @@ from pathlib import Path
 from urllib.parse import urlencode
 from urllib.request import urlopen
 
+# A drag question places exactly this many labels (domain.DRAG_OPTIONS).
+DRAG_OPTIONS = 3
+
 KINDS = ('cloze', 'photo_choice', 'similar', 'photo_recall', 'drag')
+
+
+def cloze_suppression_candidates(word: dict, sense: dict) -> list[dict]:
+    """Flag possible over-filtering for review, not semantic correctness.
+
+    A word inside a compound may reveal the answer (apple/ applecart); other
+    substrings may be unrelated (men/ women). Neither is decided here.
+    """
+    forms = {str(word.get('lemma') or '')}
+    forms.update(str(f.get('form') or '') for f in word.get('forms', []))
+    forms.discard('')
+    candidates = []
+    for example in word.get('examples', []):
+        if example.get('sense_id') != sense['id'] or not str(example.get('translation') or '').strip():
+            continue
+        text = str(example.get('text') or '')
+        for form in sorted(forms, key=lambda f: (-len(f), f)):
+            pattern = re.compile(r'(?<!\w)' + re.escape(form) + r'(?!\w)', re.I)
+            if len(pattern.findall(text)) != 1:
+                continue
+            masked = pattern.sub('＿＿＿＿', text)
+            if any(re.search(r'(?<!\w)' + re.escape(f) + r'(?!\w)', masked, re.I) for f in forms):
+                continue
+            fragments = sorted(f for f in forms if f.casefold() in masked.casefold())
+            if fragments:
+                candidates.append({'example_id': example.get('id'), 'answer_form': form,
+                                   'prompt': masked, 'remaining_fragments': fragments})
+                break
+    return candidates
 
 
 def get(base: str, path: str, **query):
@@ -79,6 +112,13 @@ def validate_exercise(word: dict, sense: dict, kind: str, exercise: dict) -> lis
             issues.append('選項出現重複詞條或文字')
         if ids.count(exercise.get('correct_id')) != 1:
             issues.append('正確答案不是唯一選項')
+        tagged = {str(tag.get(key) or '').strip().casefold()
+                  for tag in (exercise.get('image') or {}).get('tags', [])
+                  if isinstance(tag, dict) for key in ('word', 'cefrLemma')}
+        for option in options:
+            if (option.get('id') != exercise.get('correct_id')
+                    and str(option.get('label') or '').strip().casefold() in tagged):
+                issues.append(f"錯誤選項 {option.get('label')} 同時是這張圖片的可見標籤")
         # Alternate correct and incorrect choices to exercise both feedback paths.
         chosen = exercise.get('correct_id') if word['id'] % 2 else next((i for i in ids if i != exercise.get('correct_id')), None)
         expected = chosen == exercise.get('correct_id')
@@ -102,8 +142,8 @@ def validate_exercise(word: dict, sense: dict, kind: str, exercise: dict) -> lis
             issues.append('句子填空正面洩漏答案')
     if kind == 'drag':
         options = exercise.get('options') or []
-        if not 1 <= len(options) <= 5:
-            issues.append(f'拖曳題型實際有 {len(options)} 個詞籤')
+        if len(options) != DRAG_OPTIONS:
+            issues.append(f'拖曳題型實際有 {len(options)} 個詞籤（應為 {DRAG_OPTIONS} 個）')
         if not exercise.get('image'):
             issues.append('拖曳題型缺少圖片')
         if len({item.get('id') for item in options}) != len(options):
@@ -126,6 +166,8 @@ def run(base: str, target: str, native: str, count: int, seed: int) -> dict:
     cefr_coverage = Counter()
     issues = []
     attempts = 0
+
+    review_candidates = []
 
     unavailable_reasons = defaultdict(Counter)
     for word_index, summary in enumerate(sample, 1):
@@ -154,6 +196,13 @@ def run(base: str, target: str, native: str, count: int, seed: int) -> dict:
                 if not exercise.get('available'):
                     for reason in exercise.get('reasons') or ['未提供原因']:
                         unavailable_reasons[kind][reason] += 1
+                    if kind == 'cloze':
+                        candidates = cloze_suppression_candidates(usage, sense)
+                        if candidates:
+                            review_candidates.append({'lexeme_id': word['id'], 'lemma': word['lemma'],
+                                                      'sense_id': sense['id'], 'kind': kind,
+                                                      'reason': '子字串遮罩可能過度排除；需核對複合字洩漏、詞性與義項',
+                                                      'examples': candidates})
                 for message in validate_exercise(usage, sense, kind, exercise):
                     issues.append({'lexeme_id': word['id'], 'lemma': word['lemma'],
                                    'sense_id': sense['id'], 'kind': kind, 'message': message})
@@ -178,6 +227,7 @@ def run(base: str, target: str, native: str, count: int, seed: int) -> dict:
         'availability': {kind: dict(counts) for kind, counts in availability.items()},
         'unavailable_reasons': {kind: dict(counts) for kind, counts in unavailable_reasons.items()},
         'warnings': warnings,
+        'review_candidates': review_candidates,
         'issues': issues,
     }
 

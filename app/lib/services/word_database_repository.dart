@@ -12,10 +12,12 @@ import '../models/word_candidate.dart';
 import '../models/word_detail.dart';
 import '../models/word_entry.dart';
 import 'fsrs_scheduler.dart';
+import 'fsrs_optimizer.dart';
 import 'lexicon_pack.dart';
 import 'word_database_query.dart';
 import 'word_database_store.dart';
 import 'word_selector.dart';
+import 'analytics.dart';
 
 class DuplicateWordException implements Exception {
   final WordEntry existing;
@@ -70,6 +72,90 @@ class WordDatabaseRepository extends ChangeNotifier {
   /// Replaced when the learner changes 期望記憶率 (AppSettings).
   FsrsScheduler scheduler;
 
+  FsrsOptimization? fsrsOptimization;
+  Future<void>? _optimizationFuture;
+  int _lastOptimizationSize = 0;
+  int _effectiveReviewCount = 0;
+  bool _disposed = false;
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+
+  /// Retention is independent of the learned memory model.
+  void setDesiredRetention(double retention) {
+    scheduler = FsrsScheduler(FsrsParameters(
+      w: fsrsOptimization?.weights ?? FsrsParameters.defaultWeights,
+      desiredRetention: retention,
+      maximumInterval: scheduler.params.maximumInterval,
+    ));
+  }
+
+  /// Runs off the UI isolate on native platforms; compute is synchronous on
+  /// web. Coalesce calls and retrain after 100 more logs, never per button.
+  Future<void> optimizeFsrs({FsrsOptimization? saved}) {
+    if (_optimizationFuture != null) return _optimizationFuture!;
+    final snapshot = List<ReviewLog>.of(_reviewLogs);
+    _lastOptimizationSize = _effectiveReviewCount;
+    final future = _runFsrsOptimization(snapshot, saved);
+    _optimizationFuture = future;
+    return future;
+  }
+
+  Future<void> _runFsrsOptimization(
+      List<ReviewLog> snapshot, FsrsOptimization? saved) async {
+    // Ensure the field above is assigned even when a test compute fails early.
+    await Future<void>.delayed(Duration.zero);
+    FsrsOptimization? result;
+    try {
+      result = await compute(_fitFsrs, (snapshot, saved));
+      final destination = store;
+      if (destination is FsrsOptimizationStore) {
+        await (destination as FsrsOptimizationStore)
+            .putFsrsOptimization(result);
+      }
+    } catch (_) {
+      result = null;
+    }
+    if (!_disposed) {
+      fsrsOptimization = result;
+      setDesiredRetention(scheduler.params.desiredRetention);
+      // Reconstruct memory using the same model as offline evaluation. Keep
+      // existing due dates and counters; new intervals start on the next grade.
+      // No historical ReviewLog or stored card is rewritten by calibration.
+      final histories = FsrsOptimizer.histories(_reviewLogs);
+      final states = <String, FsrsState>{};
+      for (final rows in histories) {
+        var state = FsrsState.initial;
+        for (final row in rows) {
+          state = scheduler.next(state, row.rating, row.reviewedAt).state;
+        }
+        states[rows.first.cardId] = state;
+      }
+      for (var i = 0; i < _cards.length; i++) {
+        final c = _cards[i], old = _cards[i].fsrs;
+        final state = states[c.id];
+        if (state == null || state.lastReview != old.lastReview) continue;
+        _cards[i] = c.copyWith(
+            fsrs: FsrsState(
+          state: old.state,
+          stability: state.stability,
+          difficulty: state.difficulty,
+          due: old.due,
+          lastReview: old.lastReview,
+          scheduledDays: old.scheduledDays,
+          reps: old.reps,
+          lapses: old.lapses,
+          algorithmVersion: old.algorithmVersion,
+        ));
+      }
+      notifyListeners();
+    }
+    _optimizationFuture = null;
+  }
+
   /// Looks up the offline pipeline's data for a word (WordDetailService)
   /// so a new word arrives with IPA, forms, related words and examples.
   final WordDetail? Function(String word)? lookupDetail;
@@ -78,6 +164,7 @@ class WordDatabaseRepository extends ChangeNotifier {
   final DateTime Function() clock;
 
   int _nextId = 0;
+  LexiconPack? _linkedPack;
 
   WordDatabaseRepository({
     this.language = 'en',
@@ -90,6 +177,7 @@ class WordDatabaseRepository extends ChangeNotifier {
     CardTemplate? template,
     UserVocabularyProfile? profile,
     this.store,
+    FsrsOptimization? fsrsOptimization,
     this.scheduler = const FsrsScheduler(),
     this.lookupDetail,
     this.clock = DateTime.now,
@@ -102,6 +190,10 @@ class WordDatabaseRepository extends ChangeNotifier {
         _template = template ?? CardTemplate.photoWordCard,
         _profile = profile ?? UserVocabularyProfile.start('A1', now: clock()) {
     _normalizeLegacyPhotoWordLimits();
+    _effectiveReviewCount = _reviewLogs.where(FsrsOptimizer.effective).length;
+    if (_effectiveReviewCount >= FsrsOptimizer.minimumReviews) {
+      unawaited(optimizeFsrs(saved: fsrsOptimization));
+    }
   }
 
   /// Older persisted/sample builds could save more than the current
@@ -150,6 +242,7 @@ class WordDatabaseRepository extends ChangeNotifier {
         occurrences: data.occurrences,
         cards: data.cards,
         reviewLogs: data.reviewLogs,
+        fsrsOptimization: data.fsrsOptimization,
         template: data.template,
         profile: data.profile ?? profile,
         store: store,
@@ -177,6 +270,7 @@ class WordDatabaseRepository extends ChangeNotifier {
   /// during the wait and reports failures that the UI logged asynchronously.
   /// It cannot guarantee storage after a process is forcibly terminated.
   Future<void> flush() async {
+    await _optimizationFuture;
     while (_pendingWrites.isNotEmpty) {
       await Future.wait(_pendingWrites.toList());
     }
@@ -192,19 +286,25 @@ class WordDatabaseRepository extends ChangeNotifier {
   List<WordEntry> get entries => List.unmodifiable(_entries);
   int get wordCount => _entries.length;
   int get cardCount => _cards.where((c) => !c.archived).length;
-  int get photoCount => _photos.length;
+  int get photoCount => photos.length;
   CardTemplate get template => _template;
   UserVocabularyProfile get profile => _profile;
 
   /// Newest first.
-  List<Photo> get photos =>
+  List<Photo> get photos => ([
+        for (final p in _photos)
+          if (p.safetyStatus == PhotoSafetyStatus.safe) p
+      ]..sort((a, b) => b.takenAt.compareTo(a.takenAt)));
+
+  /// Includes photos waiting for their first safety check. Queue use only;
+  /// screens and cards use [photos], so unchecked pixels never appear.
+  List<Photo> get allPhotos =>
       [..._photos]..sort((a, b) => b.takenAt.compareTo(a.takenAt));
 
   List<Album> get albums => List.unmodifiable(_albums);
 
   List<String> get partsOfSpeech => {
-        for (final e in _entries)
-          if (e.pos.isNotEmpty) shortPos(e.pos),
+        for (final e in _entries) ...e.partsOfSpeech.where((p) => p.isNotEmpty),
       }.toList(growable: false);
 
   // Lookup tables, rebuilt whenever their list changes (any write bumps the
@@ -364,7 +464,8 @@ class WordDatabaseRepository extends ChangeNotifier {
     final photoById = {for (final p in _photos) p.id: p};
     for (final entry in _entries) {
       // Words saved before adj / adj. were unified match either spelling.
-      if (filter.pos != null && shortPos(entry.pos) != shortPos(filter.pos!)) {
+      if (filter.pos != null &&
+          !entry.partsOfSpeech.contains(shortPos(filter.pos!))) {
         continue;
       }
       if (filter.level != null && entry.level != filter.level) continue;
@@ -430,6 +531,7 @@ class WordDatabaseRepository extends ChangeNotifier {
     int? lexemeId,
   }) {
     final normalized = word.trim().toLowerCase();
+    final pack = _linkedPack ?? LexiconPack.instance;
     final entry = WordEntry.fromUserInput(
       id: _newId('word'),
       word: normalized,
@@ -445,7 +547,12 @@ class WordDatabaseRepository extends ChangeNotifier {
       dataStatus: dataStatus,
       lexemeId: lexemeId,
       now: clock(),
-    );
+    ).copyWith(
+        entryType: pack.target == language
+            ? pack.lookup(normalized, pos: pos)?.entry.entryType ?? 'word'
+            : 'word',
+        usages:
+            pack.target == language ? pack.usagesFor(normalized) : const []);
     _entries.add(entry);
     _persist((s) => s.putEntry(entry));
     return entry;
@@ -494,6 +601,8 @@ class WordDatabaseRepository extends ChangeNotifier {
     _setProfile(
         _profile.withFamiliarity(entry.word, Familiarity.learning, clock()));
     notifyListeners();
+    Analytics.instance
+        .capture('word_added', {'source': 'manual', 'pos': pos}, clock());
     return entry;
   }
 
@@ -678,6 +787,8 @@ class WordDatabaseRepository extends ChangeNotifier {
   /// photo ↔ lexeme_id；釋義、發音、例句直接由詞庫讀取). Learner edits are
   /// kept. Returns how many photos and words changed.
   int linkLexicon(LexiconPack pack) {
+    _linkedPack = pack;
+    if (pack.cardTemplate != null) updateTemplate(pack.cardTemplate!);
     if (pack.isEmpty) return 0;
     var changed = 0;
     for (final p in [..._photos]) {
@@ -706,13 +817,24 @@ class WordDatabaseRepository extends ChangeNotifier {
         changed++;
       }
     }
+    // One card per word (owner 2026-10-14, 問題回報 #51): a word saved
+    // under one of its forms (runs, tethered) joins its word's card.
+    for (final e in [..._entries]) {
+      if (e.language != pack.target) continue;
+      final hit = pack.lookup(e.word, pos: e.pos);
+      if (hit == null || hit.entry.normalized == e.word) continue;
+      if (hit.via == 'form' || hit.via == 'family') {
+        _foldInto(e, hit.entry);
+        changed++;
+      }
+    }
     for (final e in [..._entries]) {
       if (e.language != pack.target) continue;
       final hit = pack.lookup(e.word, pos: e.pos);
       if (hit == null) continue;
       final x = hit.entry;
       if (x.pos != LexiconPack.packPos(e.pos)) continue;
-      final detail = x.toDetail();
+      final detail = pack.detailFor(x);
       final fresh = WordEntry.fromUserInput(
         id: e.id,
         word: e.word,
@@ -727,6 +849,7 @@ class WordDatabaseRepository extends ChangeNotifier {
       final merged = e.toJson();
       for (final field in [
         'meaning',
+        'register',
         'definition',
         'definitionEn',
         'ipa',
@@ -737,7 +860,9 @@ class WordDatabaseRepository extends ChangeNotifier {
         'related',
         'forms',
         'root',
-        'affixes'
+        'affixes',
+        WordField.morphology,
+        WordField.etymology,
       ]) {
         if (e.userEdited.contains(field)) continue;
         if (field == 'ipaSource' && e.userEdited.contains(WordField.ipa)) {
@@ -748,7 +873,11 @@ class WordDatabaseRepository extends ChangeNotifier {
         }
         merged[field] = fresh[field];
       }
+      merged['lexeme_usages'] = [
+        for (final u in pack.usagesFor(e.word)) u.toJson()
+      ];
       merged['lexemeId'] = x.id;
+      merged['entry_type'] = x.entryType;
       if (pack.mediaBase != null) {
         merged['audioUrl'] = x.audio == null
             ? null
@@ -794,6 +923,81 @@ class WordDatabaseRepository extends ChangeNotifier {
       _dropIfUnused(id);
     }
     notifyListeners();
+  }
+
+  /// Moves a word saved under one of its forms ([form]: runs, tethered) to
+  /// its word's card ([base]: run, tether). Without a card for the word
+  /// yet, the form's entry simply becomes the word's. Otherwise its photo
+  /// labels join the word's entry; of the two cards the one reviewed more
+  /// stays (with its id, so its review history), and the learner's edits
+  /// on the form fill fields the word has not been edited in.
+  void _foldInto(WordEntry form, LexEntry base) {
+    final now = clock();
+    final word = base.normalized;
+    final target = entryByWord(word);
+    var familiarity = _profile.familiarityOf(form.word);
+    if (target == null) {
+      _putEntry(WordEntry.fromJson({
+        ...form.toJson(),
+        'word': word,
+        'pos': switch (base.pos) {
+          'adj' => 'adj.',
+          'adv' => 'adv.',
+          final p => p
+        },
+        'lexemeId': base.id,
+        'updatedAt': now.toIso8601String(),
+      }));
+    } else {
+      for (final o in occurrencesOf(form.id)) {
+        final i = _occurrences.indexWhere((x) => x.id == o.id);
+        if (i < 0) continue;
+        if (occurrencesInPhoto(o.photoId)
+            .any((x) => x.wordEntryId == target.id)) {
+          _occurrences.removeAt(i); // the photo already shows the word
+          _persist((s) => s.deleteOccurrence(o.id));
+        } else {
+          final moved = o.copyWith(wordEntryId: target.id);
+          _occurrences[i] = moved;
+          _persist((s) => s.putOccurrence(moved));
+        }
+      }
+      final mine = cardOf(form.id), theirs = cardOf(target.id);
+      if (mine != null) {
+        final keepMine = theirs == null || mine.fsrs.reps > theirs.fsrs.reps;
+        final dropped = keepMine ? theirs : mine;
+        if (dropped != null) {
+          _cards.remove(dropped);
+          _persist((s) => s.deleteCard(dropped.id));
+        }
+        if (keepMine) {
+          final i = _cards.indexWhere((c) => c.id == mine.id);
+          _setCard(i, mine.copyWith(wordEntryId: target.id, updatedAt: now));
+        }
+      }
+      final edits = form.userEdited.difference(target.userEdited);
+      if (edits.isNotEmpty) {
+        final from = form.toJson();
+        _putEntry(WordEntry.fromJson({
+          ...target.toJson(),
+          for (final f in edits)
+            if (from.containsKey(f)) f: from[f],
+          'userEdited': [...target.userEdited, ...edits],
+          'updatedAt': now.toIso8601String(),
+        }));
+      }
+      _entries.remove(form);
+      _persist((s) => s.deleteEntry(form.id));
+      final theirsFamiliarity = _profile.familiarityOf(word);
+      if (theirsFamiliarity.index > familiarity.index) {
+        familiarity = theirsFamiliarity;
+      }
+    }
+    var profile = _profile.withoutFamiliarity(form.word, now);
+    if (familiarity != Familiarity.unknown) {
+      profile = profile.withFamiliarity(word, familiarity, now);
+    }
+    _setProfile(profile);
   }
 
   /// Drops a word nobody needs any more: no photo, never reviewed, not
@@ -1025,7 +1229,15 @@ class WordDatabaseRepository extends ChangeNotifier {
   /// Records one graded recall: the only thing that updates FSRS state
   /// (spec section 4 — browsing the album never counts as a review). It
   /// is also a strong signal for the ability model.
-  ReviewLog review(String cardId, Rating rating, {Duration? duration}) {
+  ReviewLog review(String cardId, Rating rating,
+      {String? usageId,
+      String? senseId,
+      Duration? duration,
+      Rating? requestedRating,
+      String? templateType,
+      bool? correct,
+      int hintCount = 0,
+      int attempts = 1}) {
     final i = _cards.indexWhere((c) => c.id == cardId);
     if (i < 0) throw ArgumentError.value(cardId, 'cardId', 'no such card');
     final before = _cards[i];
@@ -1034,17 +1246,38 @@ class WordDatabaseRepository extends ChangeNotifier {
     final result = scheduler.next(before.fsrs, rating, now);
     final after = before.copyWith(fsrs: result.state, updatedAt: now);
     final log = ReviewLog(
+      usageId: usageId,
+      senseId: senseId,
       cardId: cardId,
       reviewedAt: now,
       rating: rating,
+      requestedRating: requestedRating ?? rating,
       before: before.fsrs,
       after: result.state,
       elapsedDays: result.elapsedDays,
       scheduledDays: result.scheduledDays,
       durationMs: duration?.inMilliseconds,
+      templateType: templateType,
+      correct: correct,
+      hintCount: hintCount,
+      attempts: attempts,
     );
     _setCard(i, after);
     _reviewLogs.add(log);
+    Analytics.instance.capture('card_reviewed', {
+      'rating': rating.name,
+      'template': templateType,
+      'correct': correct,
+      'hints': hintCount,
+      'duration_ms': duration?.inMilliseconds,
+      'scheduled_days': result.scheduledDays,
+    }, now);
+    if (FsrsOptimizer.effective(log)) _effectiveReviewCount++;
+    if (_effectiveReviewCount >= FsrsOptimizer.minimumReviews &&
+        (_lastOptimizationSize == 0 ||
+            _effectiveReviewCount - _lastOptimizationSize >= 100)) {
+      unawaited(optimizeFsrs());
+    }
     _persist((s) => s.addReviewLog(log));
     final level = entry(before.wordEntryId)?.level ?? 'B1';
     // Ability observes binary recall: Hard/Good/Easy all mean the learner did
@@ -1074,14 +1307,18 @@ class WordDatabaseRepository extends ChangeNotifier {
         .isAfter(DateTime(now.year, now.month, now.day));
   }
 
-  List<LearningCard> eligibleCards() {
+  List<LearningCard> eligibleCards({bool includeFuture = false}) {
     final now = clock();
     // One lookup table, not a scan of every word per card: with a few
     // thousand words the 複習 tab waited seconds for each next card.
     final byId = {for (final e in _entries) e.id: e};
     return [
       for (final c in _cards)
-        if (_eligible(c, byId[c.wordEntryId], now)) c,
+        if (_eligible(c, byId[c.wordEntryId], now) ||
+            (includeFuture &&
+                !c.archived &&
+                (byId[c.wordEntryId]?.meaning.trim().isNotEmpty ?? false)))
+          c,
     ];
   }
 
@@ -1140,4 +1377,10 @@ class _VersionedList<T> extends ListBase<T> {
     _items.addAll(iterable);
     version++;
   }
+}
+
+FsrsOptimization? _fitFsrs((List<ReviewLog>, FsrsOptimization?) input) {
+  final (logs, saved) = input;
+  if (saved != null) return FsrsOptimizer.validate(saved, logs) ? saved : null;
+  return FsrsOptimizer.optimize(logs);
 }

@@ -31,7 +31,7 @@ from . import catalog
 from . import models as m
 from . import policies
 from .adapters import ADAPTERS, Candidate, Context, SourceError
-from .adapters.base import localize
+from .adapters.base import inflection_bases, localize
 from .adapters.local import LEVELS, sentence_level, word_forms, word_level
 from .adapters.tatoeba import length_level
 from .resolver import Resolver, status_of
@@ -45,13 +45,14 @@ DEPENDS: dict[str, list[str]] = {
     "definition": ["pos"],
     "native_definition": ["definition"],
     "usage_labels": ["definition"],
+    "register": ["definition"],
     "stress": ["ipa"],
     "derivation_relation": ["derived_terms"],
     "derived_pos": ["derived_terms"],
     "derived_native_meaning": ["derived_terms"],
     "etymology_native": ["etymology_text"],
     "morphemes": ["origin_language", "etymology_text"],
-    "morphemes_native": ["morphemes"],
+    "morphemes_native": ["morphemes", "etymology_native"],
     "root": ["morphemes"],
     "prefix": ["morphemes"],
     "suffix": ["morphemes"],
@@ -93,11 +94,25 @@ def field_order(target: str, wanted: list[str] | None = None) -> list[str]:
     return out
 
 
+def headword_level(ctx: Context) -> int:
+    """The headword's CEFR level as an index into LEVELS: the resolved cefr
+    field's, else CEFR-J's easiest level or the frequency estimate."""
+    level = next((str(i.get("level") or "").upper() for i in ctx.items("cefr")
+                  if str(i.get("level") or "").upper() in LEVELS), None)
+    return LEVELS.index(level or word_level(ctx.lemma, ctx.target))
+
+
 def expected_slots(field_key: str, ctx: Context) -> set[str] | None:
     if field_key == "definition":
         pos = {i["pos"] for i in ctx.items("pos") if i.get("pos")}
         return pos or None
     if field_key == "native_definition":
+        # Main senses first; low-priority, taxonomic and form-of senses are
+        # not required (they may stay without Chinese rather than a forced
+        # translation). See text.native_sense_keys.
+        from .text import native_sense_keys
+        return native_sense_keys(ctx.items("definition"))
+    if field_key == "register":
         return {i["sense_key"] for i in ctx.items("definition") if i.get("sense_key")}
     if field_key in catalog.RELATION_NATIVE:
         return {i["word"].lower() for i in ctx.items(catalog.RELATION_NATIVE[field_key])}
@@ -112,6 +127,10 @@ def expected_slots(field_key: str, ctx: Context) -> set[str] | None:
     if field_key == "image_alt_native":
         return {i.get("key") for i in ctx.items("sense_image")}
     if field_key in catalog.LEVELED:
+        if field_key == "example_sentences" and headword_level(ctx) < LEVELS.index("B1"):
+            # An A1/A2 word (apple) needs no C1/C2 sentences; ones found are
+            # still kept (問題回報 #21 decision, 2026-10-14).
+            return set(LEVELS[:LEVELS.index("C1")])
         return set(LEVELS)
     if field_key == "audio" and ctx.target == "en":
         return set(catalog.AUDIO_ACCENTS)
@@ -300,6 +319,19 @@ def stored_candidates(s: Session, ctx: Context, field_key: str, source: str):
     for c, r in zip(cands, rows):
         c._id = r.id
         localize(c, ctx)  # stored before the Taiwan-usage rule
+        # Card 29: historical translations can predate the Latin guard.
+        # Reuse must not trust their old valid=True bit after rules change.
+        # A corrected script detector may rehabilitate a historical false
+        # rejection (群/床). Only this validator-owned reason is eligible;
+        # other invalidations and user decisions must remain invalid.
+        script_rejection = c.invalid_reason == "簡體字（繁中資料包需繁體）"
+        if field_key == "native_definition" and c.language == "zh-TW" and (c.valid or script_rejection):
+            from .adapters.base import validate as validate_native
+            reason = validate_native(c, ctx)
+            if reason:
+                c.valid, c.invalid_reason = False, reason
+            elif script_rejection:
+                c.valid, c.invalid_reason = True, None
     return cands, look.status
 
 
@@ -324,6 +356,23 @@ class Recorder:
     def attempt(self, lemma, field_key, source, status, ms, count, error=None, kind=None,
                 attempts=1, record_id=None):
         pass
+
+
+class _OnlySourceRecorder(Recorder):
+    """Avoid counting stored non-AI candidates twice in the batch final pass."""
+
+    def __init__(self, parent: Recorder, allowed: set[str]):
+        self.parent, self.allowed = parent, allowed
+
+    def attempt(self, lemma, field_key, source, status, ms, count, error=None, kind=None,
+                attempts=1, record_id=None):
+        if source in self.allowed:
+            self.parent.attempt(lemma, field_key, source, status, ms, count, error, kind,
+                                attempts, record_id)
+
+
+def _phonemic(c) -> bool:
+    return str((c.value or {}).get("ipa", "")).startswith("/")
 
 
 def resolve_field(s: Session, ctx: Context, field_key: str, policy, steps, *, mode: str,
@@ -369,7 +418,9 @@ def resolve_field(s: Session, ctx: Context, field_key: str, policy, steps, *, mo
     expected = expected_slots(field_key, ctx)
     res = Resolver(policy.strategy, policy.max_items, expected,
                    per_slot=catalog.TARGETED.get(field_key) if expected is not None else None,
-                   only_missing=field_key == "audio")
+                   only_missing=field_key == "audio",
+                   # Learners read phonemic /…/ IPA: narrow […] alone asks on (#24).
+                   enough=_phonemic if field_key == "ipa" else None)
     rep = FieldReport(field_key, "missing", strategy=policy.strategy)
     asked = errors = unavailable = 0
     stop = False
@@ -414,10 +465,17 @@ def resolve_field(s: Session, ctx: Context, field_key: str, policy, steps, *, mo
             got = stored_candidates(s, ctx, field_key, st.source)
             if got is not None:
                 cands, looked = got
+                # A batch contains only newly missing translations.  Keep the
+                # AI candidates already paid for and merge the batch into
+                # them; replacing the source with the batch alone used to
+                # delete every older AI translation during re-resolution.
+                if st.source == "ai_translate" and \
+                        ("ai_translate_batch", field_key) in ctx.memo:
+                    stored, cands = cands, None
                 # Slots that appeared since (a new example sentence): ask the
                 # source for those only, so nothing is fetched or translated twice.
                 wanted = ctx.memo.get(("missing_slots", field_key))
-                if wanted and policy.strategy == "FILL_MISSING":
+                if cands is not None and wanted and policy.strategy == "FILL_MISSING":
                     left = set(wanted) - {c.slot for c in cands if c.valid}
                     if left:
                         ctx.memo[("missing_slots", field_key)] = left
@@ -429,7 +487,11 @@ def resolve_field(s: Session, ctx: Context, field_key: str, policy, steps, *, mo
                 snap = getattr(ADAPTERS[st.source], "snapshot", None)
                 for c in cands:
                     c.snapshot_id = snap["id"] if snap else None
-                cands = stored + [c for c in cands if c.key not in {x.key for x in stored}]
+                # Fresh candidates were requested only for missing or invalid
+                # slots.  Let a valid retry replace the old invalid row with
+                # the same key while retaining every untouched stored row.
+                fresh_keys = {c.key for c in cands}
+                cands = [c for c in stored if c.key not in fresh_keys] + cands
                 looked = "succeeded" if any(c.valid for c in cands) else "missing"
                 if write:
                     ids = store_candidates(s, ctx, field_key, st.source, cands, looked, None)
@@ -559,8 +621,21 @@ def load_existing(s: Session, ctx: Context):
 
 def process_word(s: Session, target: str, native: str, word: str, fields: list[str] | None,
                  mode: str, *, sources: list[str] | None = None, recorder: Recorder | None = None,
-                 run_policies=None, materialize_after: bool = True) -> list[FieldReport]:
+                 run_policies=None, materialize_after: bool = True,
+                 as_inflection: bool = True) -> list[FieldReport]:
     lemma = normalize_lemma(word, target)
+    bases = inflection_bases(lemma, target) \
+        if as_inflection and mode != "validate_only" and " " not in lemma else ()
+    if bases:
+        # A form with no meaning of its own (runs, climbs, leaves) is imported
+        # as its word; the app finds it through that word's forms (#51).
+        if recorder:
+            recorder.attempt(lemma, "pos", "rule", "skipped", 0, 0,
+                             f"詞形變化，改匯入原形 {'、'.join(bases)}", "inflection")
+        return [r for base in bases for r in process_word(
+            s, target, native, base, fields, mode, sources=sources, recorder=recorder,
+            run_policies=run_policies, materialize_after=materialize_after,
+            as_inflection=False)]
     ctx = Context(target, native, lemma, word.strip(), refresh=(mode == "force_refresh"),
                   session=s)
     load_existing(s, ctx)
@@ -568,7 +643,23 @@ def process_word(s: Session, target: str, native: str, word: str, fields: list[s
     write = mode != "dry_run"
     reports = []
     images_wanted = [f for f in AUTO_IMAGE_FIELDS if fields is None or f in fields]
-    for f in field_order(target, fields):
+    ordered = [f for f in field_order(target, fields) if f not in AUTO_IMAGE_FIELDS]
+    # Resolve target-language data first. Native translations can then see the
+    # final definitions, examples, relations and morphemes and share requests.
+    ordered.sort(key=lambda f: catalog.FIELD[f].scope == "native")
+    batchable, ordinary = [], []
+    for f in ordered:
+        policy, steps = run_policies.get(f, (None, []))
+        has_ai = any(st.enabled and st.source == "ai_translate" for st in steps)
+        ai_selected = sources is None or "ai_translate" in sources
+        if mode not in ("validate_only", "dry_run") and has_ai and ai_selected \
+                and catalog.FIELD[f].scope == "native":
+            batchable.append(f)
+        else:
+            ordinary.append(f)
+
+    # Target and native fields without AI keep the regular one-pass path.
+    for f in ordinary:
         if f in AUTO_IMAGE_FIELDS:
             continue  # after the word is stored (they bind to sense ids)
         policy, steps = run_policies.get(f, (None, []))
@@ -577,6 +668,48 @@ def process_word(s: Session, target: str, native: str, word: str, fields: list[s
             continue
         reports.append(resolve_field(s, ctx, f, policy, steps, mode=mode, sources=sources,
                                      recorder=recorder, write=write))
+
+    # First let every local/dump/API source fill native fields. Only the gaps
+    # are flattened into shared AI bundles; completed fields never reach AI.
+    pending, terminal = [], []
+    non_ai_sources = ([key for key in catalog.SOURCES if key != "ai_translate"]
+                      if sources is None else [key for key in sources if key != "ai_translate"])
+    for f in batchable:
+        policy, steps = run_policies.get(f, (None, []))
+        if fields and f not in fields and f in ctx.resolved:
+            continue
+        rep = resolve_field(s, ctx, f, policy, steps, mode=mode, sources=non_ai_sources,
+                            recorder=recorder, write=write)
+        if rep.status in ("partial", "missing", "failed", "short", "unavailable"):
+            missing = set(rep.missing) if expected_slots(f, ctx) is not None else None
+            # Re-resolution must not send slots with valid stored AI
+            # candidates back to the model.  It also ensures an empty batch
+            # can never erase those candidates in the final AI-only pass.
+            previous = stored_candidates(s, ctx, f, "ai_translate")
+            if missing is not None and previous is not None:
+                missing -= {c.slot for c in previous[0] if c.valid}
+            ctx.memo[("missing_slots", f)] = missing
+            pending.append(f)
+        else:
+            terminal.append(rep)
+    if pending:
+        batch_started = time.time()
+        try:
+            batch_count = ADAPTERS["ai_translate"].prefetch(ctx, pending)
+            if recorder and batch_count:
+                recorder.attempt(ctx.lemma, "native_batch", "ai_translate", "succeeded",
+                                 int((time.time() - batch_started) * 1000), batch_count)
+        except Exception:  # normal per-field requests below are the safe fallback
+            for f in pending:
+                ctx.memo.pop(("ai_translate_batch", f), None)
+        ai_recorder = _OnlySourceRecorder(recorder or Recorder(), {"ai_translate"})
+        for f in pending:
+            policy, steps = run_policies.get(f, (None, []))
+            reports.append(resolve_field(s, ctx, f, policy, steps, mode="reresolve",
+                                         sources=sources, recorder=ai_recorder, write=write))
+    reports += terminal
+    report_order = {field_key: index for index, field_key in enumerate(ordered)}
+    reports.sort(key=lambda report: report_order.get(report.field, len(report_order)))
     if write and mode != "validate_only" and " " in lemma and fields is None \
             and not ctx.items("definition") and not ctx.items("pos"):
         # A scene phrase from a photo (pour coffee, in the kitchen): no
@@ -595,8 +728,8 @@ def process_word(s: Session, target: str, native: str, word: str, fields: list[s
         materialize(s, target, lemma, word.strip())
         if images_wanted:
             from . import images
-            images.enqueue_fetch(s, target, native, lemma, images_wanted)
-            reports += [FieldReport(f, "queued", strategy="DEFERRED") for f in images_wanted]
+            if images.enqueue_fetch(s, target, native, lemma, images_wanted) is not None:
+                reports += [FieldReport(f, "queued", strategy="DEFERRED") for f in images_wanted]
     return reports
 
 

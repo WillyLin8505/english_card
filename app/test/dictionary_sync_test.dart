@@ -9,6 +9,7 @@ import 'package:http/testing.dart';
 import 'package:photo_english_app/models/learning_card.dart';
 import 'package:photo_english_app/models/word_entry.dart';
 import 'package:photo_english_app/services/app_settings.dart';
+import 'package:photo_english_app/services/background_errors.dart';
 import 'package:photo_english_app/services/dictionary_sync.dart';
 import 'package:photo_english_app/services/learning_content.dart';
 import 'package:photo_english_app/services/lexicon_pack.dart';
@@ -150,6 +151,26 @@ void main() {
     expect(LexiconPack.instance.lookup('apple')!.entry.nativeMeaning, '快取蘋果');
   });
 
+  test(
+      '問題回報 #175: a failed refresh reaches BackgroundErrors with a retry, '
+      'and a later success clears it', () async {
+    var mode = 0;
+    final client = MockClient((_) async {
+      if (mode == 1) throw const SocketException('offline');
+      return response(pack('v1', '蘋果'));
+    });
+    final s = service(client);
+    await s.start(AppSettings.inMemory(), () => repo);
+    expect(BackgroundErrors.instance.message, isNull);
+    mode = 1;
+    await s.refresh();
+    expect(BackgroundErrors.instance.message, contains('無法連線'));
+    expect(BackgroundErrors.instance.retry, isNotNull);
+    mode = 0;
+    await BackgroundErrors.instance.retry!();
+    expect(BackgroundErrors.instance.message, isNull);
+  });
+
   test('304 keeps content and sends the cached version', () async {
     var calls = 0;
     final s = service(MockClient((request) async {
@@ -161,6 +182,73 @@ void main() {
     await s.refresh();
     expect(s.status, contains('已連接'));
     expect(repo.entry(id)!.meaning, '蘋果');
+  });
+
+  test('incremental sync persists a full snapshot and restart revalidates it',
+      () async {
+    var calls = 0;
+    final updated = pack('v2', '增量蘋果');
+    final s = service(MockClient((request) async {
+      if (calls++ == 0) return response(pack('v1', '蘋果'));
+      expect(request.url.queryParameters['since'], 'v1');
+      expect(request.headers['If-None-Match'], '"v1"');
+      return response({
+        'delta_version': 1,
+        'base_version': 'v1',
+        'metadata': {...updated}..remove('lexemes'),
+        'order': [1],
+        'upserts': updated['lexemes'],
+      });
+    }));
+    await s.start(AppSettings.inMemory(), () => repo);
+    await s.refresh();
+    expect(repo.entry(id)!.meaning, '增量蘋果');
+    expect(jsonDecode(Hive.box<String>('dictionary_cache_v1').get('en-zh-TW')!),
+        updated);
+    LexiconPack.instance.clear();
+    final restarted = service(MockClient((request) async {
+      expect(request.url.queryParameters['since'], 'v2');
+      expect(request.headers['If-None-Match'], '"v2"');
+      return http.Response('', 304);
+    }));
+    await restarted.start(AppSettings.inMemory(), () => repo);
+    expect(LexiconPack.instance.lookup('apple')!.entry.nativeMeaning, '增量蘋果');
+    expect(restarted.status, contains('已連接'));
+  });
+
+  test('wrong delta base retains content and next request recovers in full',
+      () async {
+    var calls = 0;
+    final s = service(MockClient((request) async {
+      if (calls++ == 0) return response(pack('v1', '蘋果'));
+      if (calls == 2) {
+        return response({'delta_version': 1, 'base_version': 'wrong'});
+      }
+      expect(request.url.queryParameters.containsKey('since'), false);
+      expect(request.headers.containsKey('If-None-Match'), false);
+      return response(pack('v2', '恢復蘋果'));
+    }));
+    await s.start(AppSettings.inMemory(), () => repo);
+    await s.refresh();
+    expect(repo.entry(id)!.meaning, '蘋果');
+    await s.refresh();
+    expect(repo.entry(id)!.meaning, '恢復蘋果');
+  });
+
+  test('delta handles deletions, ordering and rejects incomplete rows', () {
+    final base = {'created_at': 'v1', 'lexemes': [
+      {'id': 1}, {'id': 2}, {'id': 3},
+    ]};
+    final patch = {
+      'delta_version': 1, 'base_version': 'v1',
+      'metadata': {'created_at': 'v2'},
+      'order': [3, 4, 1], 'upserts': [{'id': 4, 'meaning': 'new'}],
+    };
+    expect(applyDictionaryDelta(base, patch)['lexemes'], [
+      {'id': 3}, {'id': 4, 'meaning': 'new'}, {'id': 1},
+    ]);
+    expect(() => applyDictionaryDelta(base, {...patch, 'order': [9]}),
+        throwsFormatException);
   });
 
   test('late response cannot overwrite a newly selected language', () async {

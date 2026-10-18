@@ -11,15 +11,32 @@ tool = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(tool)
 
 
+ARCHED_ENTRIES = [
+    {"pos": "adj", "senses": [{"tags": [], "glosses": ["Curved."]}]},
+    {"pos": "verb", "senses": [{"tags": ["form-of", "participle", "past"],
+                                "form_of": [{"word": "arch"}],
+                                "glosses": ["simple past and past participle of arch"]}]},
+]
+
+
+def test_inflected_form_scoped_to_its_own_pos():
+    """#194: arched the adjective (its own sense) is never redirected, even
+    though arched the verb (same spelling, only sense is a past participle)
+    is. 問題回報 #217/#222/#223: this must be decided per pos+entry in
+    quality.inflection_base, not by a DB status check in apply_quality_decisions."""
+    assert q.inflection_base("arched", "adj", ARCHED_ENTRIES, {"arch": ["B2"]}) is None
+    assert q.inflection_base("arched", "verb", ARCHED_ENTRIES, {"arch": ["B2"]}) == "arch"
+
+
 def test_full_inflected_form_is_not_redirected():
     rows = [(1, "arch", "noun", "full", "B2"), (2, "arched", "adj", "full", "C1"),
             (3, "tore", "unknown", "stub", "B2"), (4, "tear", "verb", "full", "B1")]
-    flags = {"arched|adj": {"inflected_form": "arch", "excluded_has_cefr": "C1"},
-             "tore|unknown": {"inflected_form": "tear", "excluded_has_cefr": "B2"}}
+    # lint_lexicon.py no longer flags arched|adj at all (its own sense keeps it
+    # independent at the quality.inflection_base layer, see test above).
+    flags = {"tore|unknown": {"inflected_form": "tear", "excluded_has_cefr": "B2"}}
     d, log, counts = tool.plan(rows, flags)
     assert d["redirect"] == {"3": 4}
     assert 2 not in d["strip_cefr"] and "2" not in d["redirect"]
-    assert counts["keep_independent_form"] == 1
 
 
 def _c(i, pos, ordinal, definition, native, ai=False, low=False):

@@ -66,7 +66,7 @@ python worker/worker.py                                                        #
 npm --prefix frontend run dev                                                  # UI
 ```
 
-`start_lexicon.bat` starts the API, four workers and the UI, then opens it. The Vite dev server
+`start_lexicon.bat` starts the API, the workers and the UI, then opens it. The Vite dev server
 adds the API key on the server side (from `.env`), so the browser never
 holds it.
 
@@ -78,8 +78,34 @@ The workers keep going when the browser is closed. Stopping them
 (Ctrl+C) leaves a running job at its checkpoint, and the next worker
 continues from there. The UI divides a large import into four word shards;
 each shard is claimed with `FOR UPDATE SKIP LOCKED`, so the workers process
-different words. Image acquisition is queued separately and interleaved
-after text slices, so Wikimedia does not hold up a finished word card.
+different words.
+
+Workers run in lanes (`worker.py --lane …`) so network, model and picture
+work overlap instead of waiting for each other: six `text` workers (import
+jobs: dictionary sources, then AI text), two `images` workers (Wikimedia
+searches and downloads, network only) and one `tags` worker (AI labels for
+downloaded pictures, also while imports run). `--lane all`, the default,
+keeps the old single-process behaviour: one picture task after every three
+text words, labels only when no import is waiting.
+
+Missing native-language fields are flattened into AI batches of up to 80
+items after local and downloaded sources run. A batch can mix meanings,
+example translations, relation-word meanings, etymology and morpheme meanings;
+a failed batch automatically falls back to the original per-field requests.
+Before asking the model, AI 翻譯 reuses translations the lexicon already
+stores for the same text: a relation word translated under another headword
+(about a quarter of all relation words repeat) or an identical example
+sentence. Reused values stay marked AI, with `+reused` in their record id.
+
+The Jobs pages show rolling per-word duration and an ETA based on the last ten
+completed words. The model runs in llama-server with four parallel slots
+(`tagger/start_tagger.bat`); Ollama 0.35 serves qwen3.5 one request at a time.
+Four concurrent requests give about 1.7× the text throughput of one on the
+8 GB GPU, which the six text workers keep busy. Measured and rejected
+(2026-10-06): merging a word's AI calls (prompt processing is only ~5% of model
+time), a CPU MT model for example sentences (OPUS-MT mistranslated the very
+words being taught), and a second CPU copy of the model (+6% at the cost of
+every CPU core).
 
 ## 4. Source policies (來源順位)
 
@@ -290,9 +316,10 @@ network. They cover:
 ## Not done yet
 
 - **詞義圖片.** Policies, fields and tables (`image_assets`,
-  `sense_images`, …) exist. The four image adapters (Wikidata/Commons,
-  Open Images, Smithsonian, Openverse) are declared but not written.
-  They show as 「adapter 尚未實作」 and are skipped.
+  `sense_images`, …) exist. All four image adapters (Wikidata/Commons,
+  Open Images, Smithsonian, Openverse) are implemented; `auto_fetch`
+  tries them in the spec's order (`images.IMAGE_SOURCE_CHAIN`) until a
+  sense has enough pictures (問題回報 #3).
 - **Card Template Editor.** The tables exist; the editor and the
   `/card-templates` endpoints are not built.
 - **拼字相近 word list.** The spec names the full Kaikki word list. Until

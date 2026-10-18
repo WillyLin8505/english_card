@@ -10,9 +10,19 @@ import json
 from collections import Counter, defaultdict
 from pathlib import Path
 
+from .adapters.base import ARPABET
+from .text import native_latin_issue
+
 LEVELS = ("A1", "A2", "B1", "B2", "C1", "C2")
 ESTIMATE_SOURCES = {"frequency_estimate", "estimate", "local_calc"}
 GOLDEN = Path(__file__).resolve().parents[2] / "quality" / "golden"
+
+
+def _is_arpabet(value: str) -> bool:
+    """A pronunciation value that is bare ARPAbet (e.g. 'S T IY1 P'), not
+    IPA — issue #188: this must never end up under kind='ipa'."""
+    v = (value or "").strip("/[] ")
+    return bool(v) and bool(ARPABET.match(v))
 
 
 def _index(pack: dict):
@@ -81,8 +91,26 @@ def validate(pack: dict) -> dict[str, list]:
             v["sense.main_without_chinese"].append(lx["id"])
         elif ms.get("native_ai"):
             v["sense.main_is_ai"].append(lx["id"])
+        # Every sense, not only the main one (問題回報 #187: a word's later
+        # senses carried no native meaning, or one leaking English/residue —
+        # table「背gammon遊戲」, ship「船、船舶、CP」).
+        for sense in lx.get("senses") or []:
+            if not _has_zh(sense):
+                v["sense.native_empty"].append(lx["id"])
+                continue
+            latin = native_latin_issue(sense.get("native"))
+            if latin:
+                v["sense.native_has_latin"].append([lx["id"], latin])
         if lx.get("pos") in (None, "", "unknown"):
             v["entry.pos_unknown"].append(lx["id"])
+        prons = lx.get("pronunciations") or []
+        ipa_values = [p.get("value") for p in prons if p.get("kind") == "ipa" and p.get("value")]
+        if any(_is_arpabet(val) for val in ipa_values):
+            v["pronunciation.ipa_is_arpabet"].append(lx["id"])
+        if not ipa_values:
+            v["entry.full_without_ipa"].append(lx["id"])
+        if not any(p.get("kind") == "audio" for p in prons):
+            v["entry.full_without_audio"].append(lx["id"])
         if lx.get("cefr") and lx.get("cefr_source") in ESTIMATE_SOURCES:
             # Flagged via cefr_source (app reads it); nothing else required.
             pass
@@ -193,7 +221,12 @@ def evaluate_golden(pack: dict, golden: dict) -> dict:
         check("word.present_full", bool(entries), w["word"])
         if not entries:
             continue
-        lx = next((e for e in entries if e.get("pos") == w.get("pos")), entries[0])
+        # golden pos labels come from cefr_en.json ("adj.", "adv.", with a
+        # trailing period); pack lexeme pos never has one ("adj", "adv") -
+        # strip it so homographs (e.g. calm verb/adj/noun) pick the right
+        # entry instead of silently falling back to entries[0].
+        want_pos = (w.get("pos") or "").rstrip(".")
+        lx = next((e for e in entries if e.get("pos") == want_pos), entries[0])
         check("word.cefr_matches_list", lx.get("cefr") == w["cefr"], [w["word"], lx.get("cefr"), w["cefr"]])
         check("word.main_sense_chinese", _has_zh(main_sense(lx)), w["word"])
     names = {k.rsplit(".", 1)[0] for k in res}
@@ -244,7 +277,8 @@ def _key(x):
 
 def snapshot(pack: dict, golden: dict | None = None) -> dict:
     v = validate(pack)
-    per_entry = {k: x for k, x in v.items() if k.startswith(("sense.", "entry.")) and k != "entry.stub_in_pack"}
+    per_entry = {k: x for k, x in v.items()
+                 if k.startswith(("sense.", "entry.", "pronunciation.")) and k != "entry.stub_in_pack"}
     return {"metrics": metrics(pack, v), "golden": evaluate_golden(pack, golden or load_golden()),
             "samples": {k: x[:10] for k, x in v.items()},
             "entry_ids": [lx["id"] for lx in pack.get("lexemes") or [] if lx.get("status") == "full"],

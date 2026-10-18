@@ -24,7 +24,9 @@ String displayWord(String word) => word
 /// others (balcony → railing).
 enum RelationType {
   synonym,
+  antonym,
   homophone,
+  nearHomophone,
   similarSpelling,
   derivation,
   associated
@@ -32,13 +34,16 @@ enum RelationType {
 
 RelationType relationTypeFromKey(String relation) => switch (relation) {
       'synonyms' => RelationType.synonym,
-      'homophones' || 'near_homophones' => RelationType.homophone,
+      'antonyms' => RelationType.antonym,
+      'homophones' => RelationType.homophone,
+      'near_homophones' => RelationType.nearHomophone,
       'similar_spelling' => RelationType.similarSpelling,
       'derived_terms' => RelationType.derivation,
       _ => RelationType.associated,
     };
 
 class RelatedWord {
+  final String? native;
   final String word;
   final RelationType type;
   final String? cefr;
@@ -47,11 +52,12 @@ class RelatedWord {
   final bool hideByDefault;
 
   const RelatedWord(this.word, this.type,
-      {this.cefr, this.zipf, this.rarity, this.hideByDefault = false});
+      {this.native, this.cefr, this.zipf, this.rarity, this.hideByDefault = false});
 
   factory RelatedWord.fromJson(Map<String, dynamic> j) => RelatedWord(
         j['word'] as String,
         RelationType.values.byName(j['type'] as String),
+        native: j['native'] as String?,
         cefr: j['cefr'] as String?,
         zipf: (j['zipf'] as num?)?.toDouble(),
         rarity: j['rarity'] as String?,
@@ -61,6 +67,7 @@ class RelatedWord {
   Map<String, dynamic> toJson() => {
         'word': word,
         'type': type.name,
+        'native': native,
         'cefr': cefr,
         'zipf': zipf,
         'rarity': rarity,
@@ -72,6 +79,7 @@ class RelatedWord {
       other is RelatedWord &&
       word == other.word &&
       type == other.type &&
+      native == other.native &&
       cefr == other.cefr &&
       zipf == other.zipf &&
       rarity == other.rarity &&
@@ -79,7 +87,7 @@ class RelatedWord {
 
   @override
   int get hashCode =>
-      Object.hash(word, type, cefr, zipf, rarity, hideByDefault);
+      Object.hash(word, type, native, cefr, zipf, rarity, hideByDefault);
 }
 
 /// One inflected form (詞形變化), e.g. apples / 複數.
@@ -99,6 +107,7 @@ class WordForm {
 /// into the learner's native language. The database targets 3–5 sentences
 /// for every CEFR band and stores the source. No whole-sentence audio.
 class WordExample {
+  final String? senseId;
   final String text;
   final String? translation;
   final String? source;
@@ -114,6 +123,7 @@ class WordExample {
 
   const WordExample({
     required this.text,
+    this.senseId,
     this.translation,
     this.source,
     this.difficulty,
@@ -124,6 +134,7 @@ class WordExample {
   WordExample copyWith({String? translation, bool? aiTranslated}) =>
       WordExample(
         text: text,
+        senseId: senseId,
         translation: translation ?? this.translation,
         source: source,
         difficulty: difficulty,
@@ -133,6 +144,7 @@ class WordExample {
 
   factory WordExample.fromJson(Map<String, dynamic> j) => WordExample(
         text: (j['text'] ?? j['en']) as String,
+        senseId: j['sense_id'] as String?,
         translation: (j['translation'] ?? j['zh']) as String?,
         source: j['source'] as String?,
         difficulty: (j['difficulty'] ?? j['level']) as String?,
@@ -142,6 +154,7 @@ class WordExample {
 
   Map<String, dynamic> toJson() => {
         'text': text,
+        if (senseId != null) 'sense_id': senseId,
         'translation': translation,
         'source': source,
         'difficulty': difficulty,
@@ -175,22 +188,89 @@ abstract final class WordField {
   static const pos = 'pos';
   static const level = 'level';
   static const examples = 'examples';
+  static const related = 'related';
+  static const forms = 'forms';
+  static const morphology = 'morphology';
+  static const etymology = 'etymology';
 }
 
-/// The central word record — spec section 5's WordEntry ("相當於 Anki 的
-/// Note"). Shared language data lives here exactly once; everything that
-/// is per-photo lives on PhotoOccurrence and everything per-card on
-/// LearningCard (see learning_card.dart), so editing a WordEntry updates
-/// every card that references it.
+/// One meaning belonging to a grammatical usage.
+class WordSense {
+  final String id;
+  final String meaning;
+  final String? definition;
+  const WordSense({required this.id, required this.meaning, this.definition});
+  factory WordSense.fromJson(Map<String, dynamic> j) => WordSense(
+      id: j['id'] as String, meaning: j['meaning'] as String,
+      definition: j['definition'] as String?);
+  Map<String, dynamic> toJson() => {
+    'id': id, 'meaning': meaning, 'definition': definition,
+  };
+}
+
+/// A spelling owns usages; each usage owns senses and bound examples.
+/// Pack row ids remain stable usage ids while the legacy pack is POS-based.
+class LexemeUsage {
+  final String id;
+  final String pos;
+  final List<WordSense> senses;
+  final List<WordExample> examples;
+  const LexemeUsage({required this.id, required this.pos,
+      this.senses = const [], this.examples = const []});
+  factory LexemeUsage.fromJson(Map<String, dynamic> j) => LexemeUsage(
+      id: j['id'] as String, pos: j['pos'] as String,
+      senses: [for (final s in j['senses'] as List? ?? [])
+        WordSense.fromJson(Map<String, dynamic>.from(s as Map))],
+      examples: [for (final e in j['examples'] as List? ?? [])
+        WordExample.fromJson(Map<String, dynamic>.from(e as Map))]);
+  Map<String, dynamic> toJson() => {
+    'id': id, 'pos': pos,
+    'senses': [for (final s in senses) s.toJson()],
+    'examples': [for (final e in examples) e.toJson()],
+  };
+}
+
+/// One lexical entry per normalized spelling; usages hold POS differences.
+/// Photos and learning cards reference this shared entry.
 class WordEntry {
+  final String entryType;
+  final List<LexemeUsage> usages;
+
+  /// Legacy entries receive deterministic local identities without deleting data.
+  /// User edits to the primary meaning/examples remain authoritative.
+  List<LexemeUsage> get effectiveUsages {
+    if (usages.isEmpty) {
+      return [LexemeUsage(id: 'local:$id', pos: pos,
+        senses: [WordSense(id: 'local:$id:main', meaning: meaning,
+          definition: definitionEn)], examples: examples)];
+    }
+    return [for (final u in usages)
+      if (shortPos(u.pos) == shortPos(pos) &&
+          (u.id.startsWith('local:') || userEdited.contains(WordField.meaning) ||
+              userEdited.contains(WordField.examples)))
+        LexemeUsage(id: u.id, pos: pos,
+          senses: [for (var i = 0; i < u.senses.length; i++)
+            if (i == 0 && (u.id.startsWith('local:') || userEdited.contains(WordField.meaning)))
+              WordSense(id: u.senses[i].id, meaning: meaning,
+                definition: u.senses[i].definition)
+            else u.senses[i]],
+          examples: u.id.startsWith('local:') || userEdited.contains(WordField.examples)
+            ? examples : u.examples)
+      else u,
+    ];
+  }
+
+  List<String> get partsOfSpeech => effectiveUsages.map((u) => shortPos(u.pos)).toSet().toList();
   final String id;
 
-  /// 標準化拼字 — lowercase headword. Together with [pos] this is the
-  /// duplicate-check key per spec ("標準化拼字＋詞性作為重複資料檢查依據").
+  /// Normalized spelling; unique per language, regardless of part of speech.
   final String word;
 
   /// Short part of speech ("noun", "verb", "adj.", "adv.", "phrase").
   final String pos;
+
+  /// Main sense's language register: neutral, written, spoken, or slang.
+  final String? register;
 
   /// The learning language ("en", "fr", "zh-TW").
   final String language;
@@ -235,6 +315,8 @@ class WordEntry {
   /// 字根 and 字首／字尾.
   final String? root;
   final List<String> affixes;
+  final String? morphology;
+  final String? etymology;
 
   final WordDataStatus dataStatus;
 
@@ -260,8 +342,11 @@ class WordEntry {
 
   const WordEntry({
     required this.id,
+    this.usages = const [],
+    this.entryType = 'word',
     required this.word,
     required this.pos,
+    this.register,
     this.language = 'en',
     required this.meaning,
     this.definition,
@@ -279,6 +364,8 @@ class WordEntry {
     this.forms = const [],
     this.root,
     this.affixes = const [],
+    this.morphology,
+    this.etymology,
     this.dataStatus = WordDataStatus.complete,
     this.dataError,
     this.dataAttempts = 0,
@@ -316,6 +403,7 @@ class WordEntry {
         ? <RelatedWord>[
             for (final r in detail.relations)
               RelatedWord(r.word, relationTypeFromKey(r.relation),
+                  native: r.native,
                   cefr: r.cefr,
                   zipf: r.zipf,
                   rarity: r.rarity,
@@ -337,6 +425,7 @@ class WordEntry {
       id: id,
       word: word.trim().toLowerCase(),
       pos: pos ?? shortPos(detail?.definitions.firstOrNull?.pos ?? ''),
+      register: detail?.definitions.firstOrNull?.register,
       language: language,
       meaning: meaning.trim(),
       definitionEn: detail?.definitions.firstOrNull?.gloss,
@@ -365,6 +454,8 @@ class WordEntry {
       ],
       root: detail?.root,
       affixes: detail?.affixes ?? const [],
+      morphology: detail?.morphology,
+      etymology: detail?.etymology,
       dataStatus: dataStatus,
       lexemeId: lexemeId,
       createdAt: now,
@@ -416,6 +507,8 @@ class WordEntry {
       ];
 
   WordEntry copyWith({
+    String? entryType,
+    List<LexemeUsage>? usages,
     String? pos,
     String? meaning,
     String? Function()? definition,
@@ -425,6 +518,9 @@ class WordEntry {
     String? Function()? levelSource,
     List<WordExample>? examples,
     List<RelatedWord>? related,
+    List<WordForm>? forms,
+    String? Function()? morphology,
+    String? Function()? etymology,
     WordDataStatus? dataStatus,
     String? Function()? dataError,
     int? dataAttempts,
@@ -435,8 +531,11 @@ class WordEntry {
   }) =>
       WordEntry(
         id: id,
+        usages: usages ?? this.usages,
+        entryType: entryType ?? this.entryType,
         word: word,
         pos: pos ?? this.pos,
+        register: register,
         language: language,
         meaning: meaning ?? this.meaning,
         definition: definition != null ? definition() : this.definition,
@@ -451,9 +550,11 @@ class WordEntry {
         tags: tags,
         examples: examples ?? this.examples,
         related: related ?? this.related,
-        forms: forms,
+        forms: forms ?? this.forms,
         root: root,
         affixes: affixes,
+        morphology: morphology != null ? morphology() : this.morphology,
+        etymology: etymology != null ? etymology() : this.etymology,
         dataStatus: dataStatus ?? this.dataStatus,
         dataError: dataError != null ? dataError() : this.dataError,
         dataAttempts: dataAttempts ?? this.dataAttempts,
@@ -473,8 +574,11 @@ class WordEntry {
         [for (final t in (j[key] as List? ?? const [])) t as String];
     return WordEntry(
       id: j['id'] as String,
+      usages: list('lexeme_usages', LexemeUsage.fromJson),
+      entryType: j['entry_type'] as String? ?? 'word',
       word: j['word'] as String,
       pos: j['pos'] as String,
+      register: j['register'] as String?,
       language: j['language'] as String? ?? 'en',
       meaning: (j['meaning'] ?? j['meaningZh']) as String,
       definition: (j['definition'] ?? j['definitionZh']) as String?,
@@ -492,6 +596,8 @@ class WordEntry {
       forms: list('forms', WordForm.fromJson),
       root: j['root'] as String?,
       affixes: strings('affixes'),
+      morphology: j['morphology'] as String?,
+      etymology: j['etymology'] as String?,
       dataStatus: WordDataStatus.values.asNameMap()[j['dataStatus']] ??
           WordDataStatus.complete,
       dataError: j['dataError'] as String?,
@@ -506,8 +612,11 @@ class WordEntry {
 
   Map<String, dynamic> toJson() => {
         'id': id,
+        'lexeme_usages': [for (final u in effectiveUsages) u.toJson()],
+        'entry_type': entryType,
         'word': word,
         'pos': pos,
+        'register': register,
         'language': language,
         'meaning': meaning,
         'definition': definition,
@@ -525,6 +634,8 @@ class WordEntry {
         'forms': [for (final f in forms) f.toJson()],
         'root': root,
         'affixes': affixes,
+        'morphology': morphology,
+        'etymology': etymology,
         'dataStatus': dataStatus.name,
         'dataError': dataError,
         'dataAttempts': dataAttempts,

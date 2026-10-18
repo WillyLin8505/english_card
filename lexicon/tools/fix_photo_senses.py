@@ -17,6 +17,7 @@ from __future__ import annotations
 import collections
 import datetime as dt
 import json
+import os
 import sys
 import urllib.request
 from pathlib import Path
@@ -25,22 +26,31 @@ HOME = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(HOME / "backend"))
 from sqlalchemy import text  # noqa: E402
 
+from app import agent_pause
 from app import db, quality  # noqa: E402
 
 OUT = HOME / "exports" / "quality"
 
 
+# #43: ask the tagger's llama-server (:8790), not a second Ollama copy of
+# the model - Ollama kept that copy resident forever (OLLAMA_KEEP_ALIVE=-1),
+# overflowing the 8 GB card alongside llama-server.
+LLAMACPP_URL = os.environ.get("TAGGER_LLAMACPP_URL", "http://127.0.0.1:8790").rstrip("/")
+
+
 def ask_qwen(word: str, photo_words: list[str], options: list[dict]) -> int | None:
+    if agent_pause.is_paused("Qwen"):
+        return None  # owner paused Qwen on the board
     listing = "\n".join(f"{i + 1}. {o['definition'][:120]}" for i, o in enumerate(options))
     prompt = (f'A photo is tagged with: {", ".join(photo_words[:15])}. Which meaning of "{word}" '
               f'is shown in this photo?\n{listing}\nAnswer with the number only.')
-    body = json.dumps({"model": "qwen3-vl:4b-instruct-q4_K_M", "prompt": prompt, "stream": False,
-                       "options": {"temperature": 0, "num_predict": 4}}).encode()
+    body = json.dumps({"messages": [{"role": "user", "content": prompt}], "temperature": 0,
+                       "max_tokens": 4, "chat_template_kwargs": {"enable_thinking": False}}).encode()
     try:
         with urllib.request.urlopen(urllib.request.Request(
-                "http://127.0.0.1:11434/api/generate", body,
+                f"{LLAMACPP_URL}/v1/chat/completions", body,
                 {"Content-Type": "application/json"}), timeout=45) as r:
-            ans = json.loads(r.read())["response"]
+            ans = json.loads(r.read())["choices"][0]["message"]["content"]
     except OSError:
         return None
     digits = "".join(ch for ch in ans if ch.isdigit())

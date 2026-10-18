@@ -18,13 +18,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field as PField
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
 
 from . import adapters, catalog, config, db, exporter, jobs, pipeline, policies, snapshots, views
 from . import models as m
 from .adapters import Context
+from .adapters.base import ARPABET
 from .text import normalize_lemma
 
 app = FastAPI(title="Lexicon admin", version="1.0",
@@ -51,9 +52,12 @@ def require_key(x_api_key: str | None = Header(default=None)):
 
 Auth = Depends(require_key)
 DB = Depends(db.get_session)
-from . import images, issues
+from . import images, issues, tasks
 images.register(app, Auth)
 issues.register(app, Auth)
+tasks.register(app, Auth)
+from . import card_templates
+card_templates.register(app, Auth)
 
 
 @app.exception_handler(policies.PolicyError)
@@ -67,6 +71,10 @@ async def _bad_request(request: Request, exc: Exception):
 @app.on_event("startup")
 def _startup():
     with db.session_scope() as s:
+        # Workers seed under the same lock (worker.py); starting everything at
+        # once otherwise raced on source_capabilities (2026-10-16).
+        if s.bind is not None and s.bind.dialect.name == "postgresql":
+            s.execute(text("SELECT pg_advisory_xact_lock(770000000)"))
         policies.seed(s)
         seed_wordlists(s)
         adapters.configure(s)
@@ -443,6 +451,17 @@ def put_override(t: str, n: str, lemma: str, field: str, body: OverrideBody, s: 
     norm = normalize_lemma(lemma, t)
     items = []
     for i, it in enumerate(body.items):
+        # 問題回報 #188：手動覆寫沒經過 adapters.base.validate()（resolver 一律採用
+        # override，見 pipeline.py 的 UserOverride 短路），所以這裡單獨擋
+        # ARPAbet 混進 ipa／phonemes 欄位。
+        if field == "ipa":
+            ipa = it.get("ipa", "")
+            if not ipa or not (ipa.startswith(("/", "[")) and ipa.endswith(("/", "]"))):
+                raise HTTPException(422, "IPA 必須以 /…/ 或 […] 標示")
+            if ARPABET.match(ipa.strip("/[]")):
+                raise HTTPException(422, "這是 ARPAbet 音素，不是 IPA")
+        elif field == "phonemes" and not ARPABET.match(it.get("phonemes", "")):
+            raise HTTPException(422, "不是 ARPAbet 音素序列")
         it = {**it, "source": "user"}
         it.setdefault("key", str(it.get("sense_key") or it.get("example_key") or it.get("word")
                                  or it.get("form") or it.get("text") or i))

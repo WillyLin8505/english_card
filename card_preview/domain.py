@@ -3,6 +3,42 @@ import copy
 import re
 import math
 import random
+from difflib import SequenceMatcher
+
+
+def entry_type_of(normalized):
+    """spec-01 §7 片語標籤: a multi-token normalized form is a phrase.
+
+    Mirrors lexicon/backend/app/text.entry_type_of exactly. Duplicated (not
+    imported) because this module is a read-only boundary that never imports
+    the mutable lexicon app; the rule is a stable one-liner, so keeping both
+    copies in sync by hand is low-risk.
+    """
+    return 'phrase' if ' ' in (normalized or '').strip() else 'word'
+
+
+def confusable_rank(word, relation):
+    """Prefer actual spelling similarity or documented semantic proximity.
+
+    Level and part of speech break ties; they must not make an unrelated
+    same-level word outrank a genuinely confusable one.
+    """
+    label = relation.get('target_word', '').strip().casefold()
+    spelling = SequenceMatcher(None, word['lemma'].casefold(), label).ratio()
+    kind = relation.get('relation')
+    semantic = {'synonyms': .92, 'hyponyms': .86, 'hypernyms': .86,
+                'related': .70, 'antonyms': .65, 'derived_terms': .55}.get(kind, 0)
+    strength = max(0, min(1, float(relation.get('strength') or 0)))
+    proximity = max(semantic + .1 * strength if semantic else 0,
+                    .8 + .2 * spelling if spelling >= .65 else 0)
+    levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
+    level, other = word.get('cefr'), relation.get('cefr')
+    gap = abs(levels.index(level) - levels.index(other)) if level in levels and other in levels else 3
+    return (-proximity, relation.get('pos') != word.get('pos'), gap, -strength, label)
+
+# A drag question places exactly this many labels (owner 2026-10-14:
+# 拖曳題目固定為要拖曳 3 個項目).
+DRAG_OPTIONS = 3
 
 KINDS = [
     {'id': 'cloze', 'name': '句子填空', 'icon': '＿', 'description': '閱讀實際例句，輸入缺少的單字', 'needs': '配對例句'},
@@ -119,7 +155,9 @@ def quality(word):
             missing.append({'field': 'example:' + str(e['id']), 'message': f'例句 #{e["id"]} 缺少有效母語翻譯'})
     for e in word.get('rejected_examples', []):
         missing.append({'field': 'example:' + str(e['id']),
-                        'message': f'例句 #{e["id"]} 未包含此詞性的單字或正式詞形，已從學習卡排除'})
+                        'message': (f'例句 #{e["id"]} 是詞彙欄位清單，已從學習卡排除'
+                                    if is_column_word_list(e.get('text'), word.get('lemma')) else
+                                    f'例句 #{e["id"]} 未包含此詞性的單字或正式詞形，已從學習卡排除')})
     if len(word['examples']) < 5:
         missing.append({'field': 'examples', 'message': f'例句只有 {len(word["examples"])} 組，規格目標至少 5 組'})
     for r in word['relations']:
@@ -202,10 +240,21 @@ def example_uses_headword(word, example, usage_forms=None):
                  if plausible_form(word.get('lemma'), item.get('form')))
     forms.discard('')
     text = str(example.get('text') or '')
+    if is_column_word_list(text, word.get('lemma')):
+        return False
     if str(word.get('language') or '').startswith('zh'):
         return any(form in text for form in forms)
     return any(re.search(r"(?<![\w'’])" + re.escape(form) + r"(?![\w'’])", text, re.I)
                for form in forms)
+
+
+def is_column_word_list(text, lemma):
+    parts = [p.strip() for p in re.split(r"\t+|[\u2002-\u200a]{2,}| {3,}", text or '') if p.strip()]
+    head = (lemma or '').strip().lower()
+    return bool(head) and len(parts) >= 2 and all(
+        p == p.lower() and re.fullmatch(r"[a-z'’ -]+", p)
+        and len(p.split()) <= 4 and (p == head or p.endswith(' ' + head))
+        for p in parts)
 
 
 def merge_usages(cards):
@@ -236,7 +285,17 @@ def merge_usages(cards):
     return word
 
 
-def prepare_exercise(word, kind, sense_id, bundle=None, option_cards=None):
+def owned_candidates(candidates, owned_lexeme_ids, id_key='id'):
+    """A dictionary lookup is not ownership. Missing scope fails closed.
+
+    Callers supply the active personal library, excluding archived entries.
+    Both live relations and reviewed packets use this same membership gate.
+    """
+    owned = frozenset(owned_lexeme_ids or ())
+    return [candidate for candidate in candidates if candidate.get(id_key) in owned]
+
+
+def prepare_exercise(word, kind, sense_id, bundle=None, option_cards=None, *, owned_lexeme_ids=None):
     """Require real references and an explicit upstream validation for distractors.
 
     A JSON packet contains IDs and review explanations only, never copied word data.
@@ -244,6 +303,9 @@ def prepare_exercise(word, kind, sense_id, bundle=None, option_cards=None):
     """
     sense = next((s for s in word['senses'] if s['id'] == sense_id), None)
     reasons = []
+    restricted = kind in ('similar', 'photo_choice', 'cloze', 'drag')
+    if restricted and not owned_candidates([word], owned_lexeme_ids):
+        reasons.append('缺少使用者持有詞庫，或本題單字不在持有詞庫中')
     if not sense or not text_valid(sense.get('translation')):
         reasons.append('目前義項缺少有效母語釋義')
     if not word.get('pos') or word['pos'] == 'unknown':
@@ -292,12 +354,15 @@ def prepare_exercise(word, kind, sense_id, bundle=None, option_cards=None):
     options = bundle.get('options', [])
     if not isinstance(options, list):
         options = []
-    low, high = (1, 5) if kind == 'drag' else ((3, 3) if kind == 'similar' else (3, 5))
+    low, high = (DRAG_OPTIONS, DRAG_OPTIONS) if kind == 'drag' else ((3, 3) if kind == 'similar' else (3, 5))
     if not low <= len(options) <= high:
-        reasons.append(f'選項數量需介於 {low}～{high}')
+        reasons.append(f'選項數量需為 {low} 個' if low == high else f'選項數量需介於 {low}～{high}')
     output = []
     for o in options:
         card = (option_cards or {}).get(o.get('lexeme_id'))
+        if restricted and not owned_candidates([card] if card else [], owned_lexeme_ids):
+            reasons.append('選項不在使用者持有詞庫中；不提供此題型')
+            continue
         osense = next((s for s in card['senses'] if s['id'] == o.get('sense_id')), None) if card else None
         if not card or card['language'] != word['language'] or not osense or not text_valid(osense.get('translation')):
             reasons.append('選項缺少真實詞條、義項或母語翻譯')
@@ -342,9 +407,13 @@ def prepare_exercise(word, kind, sense_id, bundle=None, option_cards=None):
     return payload
 
 
-def live_exercise(word, kind, sense_id):
+def live_exercise(word, kind, sense_id, *, owned_lexeme_ids=None):
     """Read-only practice from real records; never asserts reviewed distractors."""
     base = {'kind': kind, 'sense_id': sense_id, 'available': False, 'reasons': []}
+    if kind in ('similar', 'photo_choice') and not owned_candidates([word], owned_lexeme_ids):
+        base['reasons'] = ['缺少使用者持有詞庫，或本題單字不在持有詞庫中']
+        return base
+    relations = owned_candidates(word['relations'], owned_lexeme_ids, 'target_lexeme_id')
     if kind == 'photo_choice':
         images = [i for i in word['images'] if i['sense_id'] == sense_id]
         sense = next((s for s in word['senses'] if s['id'] == sense_id), None)
@@ -355,37 +424,43 @@ def live_exercise(word, kind, sense_id):
             base['reasons'] = ['這個義項尚無有效母語釋義。']
             return base
 
-        relation_order = ['hyponyms', 'hypernyms', 'synonyms', 'related',
-                          'similar_spelling', 'near_homophones', 'homophones',
-                          'derived_terms', 'antonyms']
-        levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
-        level = levels.index(word['cefr']) if word.get('cefr') in levels else None
         candidates = []
         seen = {word['lemma'].casefold()}
+        seen_ids = {word['id']}
         # A synonym or taxonomic label can also describe the pictured object.
         # Exclude its spelling across every relation group, including duplicates
         # imported as generic related words by another source.
         ambiguous_labels = {r.get('target_word', '').strip().casefold()
                             for r in word['relations']
                             if r.get('relation') in ('synonyms', 'hypernyms', 'hyponyms')}
-        for relation in word['relations']:
+        for relation in relations:
             label = relation.get('target_word', '').strip()
-            if (not label or label.casefold() in seen or label.casefold() in ambiguous_labels
+            if (not label or relation.get('target_lexeme_id') in seen_ids
+                    or label.casefold() in seen or label.casefold() in ambiguous_labels
                     or not text_valid(relation.get('translation'))
                     or glosses_overlap(sense['translation'], relation.get('translation'))):
                 continue
             detail = relation.get('detail') or {}
-            if detail.get('hide_by_default') is True:
+            if (relation.get('hide_by_default') is True or detail.get('hide_by_default') is True):
                 continue
-            candidate_level = relation.get('cefr')
-            gap = abs(levels.index(candidate_level) - level) if level is not None and candidate_level in levels else 3
-            same_pos = relation.get('pos') == word.get('pos')
-            rank = relation_order.index(relation['relation']) if relation.get('relation') in relation_order else len(relation_order)
-            candidates.append((not same_pos, gap, rank, -float(relation.get('strength') or 0), relation))
+            candidates.append((*confusable_rank(word, relation), relation))
             seen.add(label.casefold())
+            seen_ids.add(relation['target_lexeme_id'])
         candidates.sort(key=lambda item: item[:-1])
-        if len(candidates) < 2:
-            base['reasons'] = ['排除同義詞、上下位詞與意思重疊選項後，需要至少兩個有母語釋義的比較詞，才能組成三選一題目。']
+        # A visible image label cannot be called "not matching this picture".
+        # Try other pictures of this sense before declaring data insufficient.
+        image = None
+        for candidate_image in images:
+            visible = {str(tag.get(key) or '').strip().casefold()
+                       for tag in candidate_image.get('tags', [])
+                       if isinstance(tag, dict) for key in ('word', 'cefrLemma')}
+            eligible = [item for item in candidates
+                        if item[-1]['target_word'].strip().casefold() not in visible]
+            if len(eligible) >= 2:
+                image, candidates = candidate_image, eligible
+                break
+        if image is None:
+            base['reasons'] = ['使用者持有的字中，排除同義詞、上下位詞、意思重疊及圖片已標示的可見詞後，需要至少兩個有母語釋義的比較詞，才能組成三選一題目。']
             return base
 
         options = [{'id': word['id'], 'sense_id': sense_id, 'label': word['lemma'],
@@ -398,11 +473,12 @@ def live_exercise(word, kind, sense_id):
                        for r in [item[-1] for item in candidates[:2]])
         random.Random(f"{word['id']}:{sense_id}:photo-choice-v1").shuffle(options)
         return {**base, 'available': True, 'mode': 'photo_choice',
-                'image': images[0], 'options': options, 'correct_id': word['id'],
+                'image': image, 'options': options, 'correct_id': word['id'],
                 'prompt': '哪個單字最適合當作這張圖片的標籤？',
                 'instruction': '觀察圖片，從三個相近的單字中選出最適合的標籤。'}
     if kind == 'cloze':
         forms = sorted({word['lemma'], *[f['form'] for f in word['forms']]}, key=len, reverse=True)
+        blocked = set()
         for example in word['examples']:
             if example.get('sense_id') != sense_id or not text_valid(example.get('translation')):
                 continue
@@ -412,11 +488,14 @@ def live_exercise(word, kind, sense_id):
                 if len(matches) == 1:
                     masked = pattern.sub('＿＿＿＿', example['text'])
                     if any(candidate.casefold() in masked.casefold() for candidate in forms if candidate):
+                        blocked.add('例句遮罩後仍出現答案詞形或字母片段；為避免提示答案，暫不提供這一題。')
                         continue
                     return {**base, 'available': True, 'mode': 'typed', 'prompt': masked,
                             'answer': matches[0].group(), 'example': example,
                             'instruction': '請填入目前詞條在原始例句中的詞形。'}
-        base['reasons'] = ['這個義項尚無包含本詞、且有翻譯的例句；請切換詞義或詞條。']
+                elif len(matches) > 1:
+                    blocked.add('例句中出現多個答案位置，無法建立單一填空；請切換詞義或詞條。')
+        base['reasons'] = sorted(blocked) or ['這個義項尚無包含本詞、且有翻譯的例句；請切換詞義或詞條。']
     elif kind == 'similar':
         sense = next((s for s in word['senses'] if s['id'] == sense_id), None)
         if not sense or not text_valid(sense.get('translation')):
@@ -426,23 +505,17 @@ def live_exercise(word, kind, sense_id):
         if not context.get('available'):
             base['reasons'] = ['這個義項需要一個包含本詞、且有母語翻譯的情境句。']
             return base
-        semantic = {'synonyms', 'hypernyms', 'hyponyms', 'related'}
-        order = ['synonyms', 'hyponyms', 'hypernyms', 'related']
-        levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
-        level = levels.index(word['cefr']) if word.get('cefr') in levels else None
+        semantic = {'synonyms', 'hypernyms', 'hyponyms', 'related', 'similar_spelling'}
         candidates, seen = [], {word['lemma'].casefold()}
-        for relation in word['relations']:
+        for relation in relations:
             label = relation.get('target_word', '').strip()
             detail = relation.get('detail') or {}
             if (relation.get('relation') not in semantic or not label
                     or label.casefold() in seen or not text_valid(relation.get('translation'))
-                    or detail.get('hide_by_default') is True):
+                    or glosses_overlap(sense['translation'], relation.get('translation'))
+                    or (relation.get('hide_by_default') is True or detail.get('hide_by_default') is True)):
                 continue
-            candidate_level = relation.get('cefr')
-            gap = abs(levels.index(candidate_level) - level) if level is not None and candidate_level in levels else 3
-            same_pos = relation.get('pos') == word.get('pos')
-            rank = order.index(relation['relation'])
-            candidates.append((not same_pos, gap, rank, -float(relation.get('strength') or 0), relation))
+            candidates.append((*confusable_rank(word, relation), relation))
             seen.add(label.casefold())
         candidates.sort(key=lambda item: item[:-1])
 
@@ -455,7 +528,7 @@ def live_exercise(word, kind, sense_id):
             if len(chosen) == 2:
                 break
         if len(chosen) < 2:
-            base['reasons'] = ['需要至少兩個有母語詞義的相似詞，才能組成情境選擇題。']
+            base['reasons'] = ['使用者持有的字中，需要至少兩個有母語詞義的相似詞，才能組成情境選擇題。']
             return base
 
         options = [{'id': word['id'], 'sense_id': sense_id, 'label': word['lemma'],
@@ -470,5 +543,5 @@ def live_exercise(word, kind, sense_id):
         return {**base, 'available': True, 'mode': 'similar_choice',
                 'prompt': context['prompt'], 'example': context['example'],
                 'options': options, 'correct_id': word['id'],
-                'instruction': '閱讀情境句，從三個意思相近的單字中選出最自然的答案。'}
+                'instruction': '閱讀情境句，從意思相近或拼字相似的選項中選出原句使用的單字。'}
     return base

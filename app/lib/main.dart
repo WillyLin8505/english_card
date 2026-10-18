@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'l10n/ui_text.dart';
 import 'services/dictionary_sync.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -10,18 +11,22 @@ import 'app/phone_frame.dart';
 import 'models/vocabulary_profile.dart';
 import 'screens/onboarding_screen.dart';
 import 'services/app_settings.dart';
+import 'services/background_errors.dart';
 import 'services/cefr_lexicon.dart';
-import 'services/fsrs_scheduler.dart';
 import 'services/lexicon_pack.dart';
 import 'services/photo_intake.dart';
 import 'services/photo_store.dart';
 import 'services/speaker.dart';
 import 'services/tagging_queue.dart';
+import 'services/web_fonts.dart';
 import 'services/word_database_repository.dart';
 import 'services/word_database_store.dart';
 import 'services/word_detail_service.dart';
 import 'services/word_enricher.dart';
 import 'theme/mobile_theme.dart';
+import 'widgets/background_error_banner.dart';
+import 'widgets/tagging_progress.dart';
+import 'services/analytics.dart';
 
 /// MaterialApp can call its builder with no child during route/bootstrap
 /// transitions on Flutter web. Keep the phone shell renderable instead of
@@ -31,10 +36,14 @@ Widget phoneFrameBuilder(BuildContext context, Widget? child) =>
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Web only: Chinese glyphs ready before the first frame (問題回報 #25).
+  final cjkFont = loadWebCjkFont();
   await Hive.initFlutter();
   await WordDetailService.instance.load();
   final lexicon = await CefrLexicon.load();
   final settings = await AppSettings.open();
+  // Usage analytics (PostHog); does nothing without POSTHOG_API_KEY.
+  await Analytics.instance.start();
 
   Future<WordDatabaseRepository> open(String language) async {
     // The downloaded language pack for this direction (assets/lexicon/).
@@ -58,8 +67,10 @@ Future<void> main() async {
     )..linkLexicon(LexiconPack.instance);
   }
 
+  final repository = await open(settings.learningLanguage);
+  await cjkFont;
   runApp(PhotoEnglishApp(
-    repository: await open(settings.learningLanguage),
+    repository: repository,
     settings: settings,
     photoStore: await PhotoStore.open(),
     lexicon: lexicon,
@@ -139,8 +150,8 @@ class _PhotoEnglishAppState extends State<PhotoEnglishApp> {
     super.dispose();
   }
 
-  void _applyRetention() => _repository.scheduler = FsrsScheduler(
-      FsrsParameters(desiredRetention: widget.settings.desiredRetention));
+  void _applyRetention() =>
+      _repository.setDesiredRetention(widget.settings.desiredRetention);
 
   Future<void> _switchLanguage(String language) async {
     final open = widget.openRepository;
@@ -160,6 +171,12 @@ class _PhotoEnglishAppState extends State<PhotoEnglishApp> {
     await _switchLanguage(r.learningLanguage);
     _repository.setLevel(r.level, source: r.source);
     settings.onboarded = true;
+    Analytics.instance.capture('onboarding_completed', {
+      'learning_language': r.learningLanguage,
+      'native_language': r.nativeLanguage,
+      'level': r.level.toString(),
+      'level_source': r.source.toString(),
+    });
   }
 
   @override
@@ -176,22 +193,37 @@ class _PhotoEnglishAppState extends State<PhotoEnglishApp> {
       navigator: _navigator,
       switchLanguage: _switchLanguage,
       clock: widget.clock,
-      child: MaterialApp(
-        title: '拍照學單字',
-        locale: const Locale('zh', 'TW'),
-        supportedLocales: const [Locale('zh', 'TW')],
-        localizationsDelegates: GlobalMaterialLocalizations.delegates,
-        debugShowCheckedModeBanner: false,
-        theme: MobileTheme.light(),
-        builder: phoneFrameBuilder,
-        home: ListenableBuilder(
-          listenable: widget.settings,
-          builder: (context, _) => widget.settings.onboarded
-              ? AppShell(
-                  databaseLibrary: widget.runWorkers,
-                  onNavigatorReady: (n) => _navigator.target = n)
-              : OnboardingScreen(
-                  lexicon: widget.lexicon, onDone: _finishOnboarding),
+      child: ListenableBuilder(
+        listenable: widget.settings,
+        builder: (context, _) => MaterialApp(
+          title: ui(context, '拍照學單字'),
+          locale: widget.settings.nativeLanguage == 'zh-TW'
+              ? const Locale('zh', 'TW')
+              : Locale(widget.settings.nativeLanguage),
+          supportedLocales: const [
+            Locale('zh', 'TW'),
+            Locale('en'),
+            Locale('fr')
+          ],
+          localizationsDelegates: GlobalMaterialLocalizations.delegates,
+          debugShowCheckedModeBanner: false,
+          theme: MobileTheme.light(),
+          builder: (context, child) => phoneFrameBuilder(
+              context,
+              BackgroundErrorBanner(
+                errors: BackgroundErrors.instance,
+                child: TaggingProgress(
+                    queue: _queue, child: child ?? const SizedBox.shrink()),
+              )),
+          home: ListenableBuilder(
+            listenable: widget.settings,
+            builder: (context, _) => widget.settings.onboarded
+                ? AppShell(
+                    databaseLibrary: widget.runWorkers,
+                    onNavigatorReady: (n) => _navigator.target = n)
+                : OnboardingScreen(
+                    lexicon: widget.lexicon, onDone: _finishOnboarding),
+          ),
         ),
       ),
     );

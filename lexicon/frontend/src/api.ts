@@ -261,6 +261,9 @@ export type Job = {
   started_at: string | null;
   finished_at: string | null;
   heartbeat_at: string | null;
+  average_word_ms: number | null;
+  recent_word_ms: number | null;
+  eta_seconds: number | null;
   succeeded: number;
   partial: number;
   missing: number;

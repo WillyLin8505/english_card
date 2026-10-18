@@ -40,8 +40,10 @@ void main() {
       for (final (rating, days, s, d) in steps) {
         t = t.add(Duration(days: days));
         state = scheduler.next(state, rating, t).state;
-        expect(state.stability, closeTo(s, 1e-4), reason: '$name $rating +${days}d S');
-        expect(state.difficulty, closeTo(d, 1e-4), reason: '$name $rating +${days}d D');
+        expect(state.stability, closeTo(s, 1e-4),
+            reason: '$name $rating +${days}d S');
+        expect(state.difficulty, closeTo(d, 1e-4),
+            reason: '$name $rating +${days}d D');
       }
     });
   }
@@ -70,10 +72,44 @@ void main() {
 
   test('retrievability is 90% after exactly S days', () {
     final start = DateTime(2026, 9, 1);
-    final s = scheduler.next(FsrsState.initial, Rating.good, start).state; // S = 3.173
+    final s = scheduler
+        .next(FsrsState.initial, Rating.good, start)
+        .state; // S = 3.173
     expect(scheduler.retrievability(FsrsState.initial, start), isNull);
     expect(scheduler.retrievability(s, start), 1.0);
     final r3 = scheduler.retrievability(s, start.add(const Duration(days: 3)))!;
     expect(r3, closeTo(0.9, 0.01)); // 3 days ≈ S
+  });
+
+  test('days count on the calendar, like due dates', () {
+    expect(
+        calendarDaysBetween(
+            DateTime(2026, 9, 1, 23, 50), DateTime(2026, 9, 2, 0, 10)),
+        1);
+    expect(
+        calendarDaysBetween(
+            DateTime(2026, 9, 2, 0, 10), DateTime(2026, 9, 2, 23, 50)),
+        0);
+    expect(
+        calendarDaysBetween(
+            DateTime(2026, 9, 30, 20), DateTime(2026, 10, 3, 8)),
+        3);
+  });
+
+  test('a review the next morning is a next-day review, not a same-day one',
+      () {
+    // Learned at 20:00 and forgotten: due tomorrow, reviewed at 08:00.
+    final evening = DateTime(2026, 9, 1, 20);
+    final forgot =
+        scheduler.next(FsrsState.initial, Rating.again, evening).state;
+    final morning =
+        scheduler.next(forgot, Rating.good, DateTime(2026, 9, 2, 8));
+    final night = scheduler.next(forgot, Rating.good, DateTime(2026, 9, 2, 20));
+    expect(morning.elapsedDays, 1);
+    // The recall formula at one day — not same-day short-term stability,
+    // which barely grows it (0.40 → 0.57, back again tomorrow).
+    expect(morning.state.stability, closeTo(night.state.stability, 1e-9));
+    expect(morning.state.stability, greaterThan(2));
+    expect(morning.scheduledDays, night.scheduledDays);
   });
 }

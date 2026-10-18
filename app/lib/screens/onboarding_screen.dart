@@ -1,3 +1,4 @@
+import '../l10n/ui_text.dart';
 import 'package:flutter/material.dart';
 
 import '../models/word_entry.dart';
@@ -94,7 +95,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final steps = [_languages, _background, if (_canCheck) _check];
-    return Scaffold(
+    return UiLanguageScope(language: _native, child: Scaffold(
       backgroundColor: MColors.canvas,
       body: SafeArea(
         child: Column(
@@ -126,12 +127,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   child: TextButton.icon(
                       onPressed: () => setState(() => _step--),
                       icon: const Icon(Icons.arrow_back),
-                      label: const Text('上一步'))),
+                      label: const UiText('上一步'))),
             Expanded(child: steps[_step]()),
           ],
         ),
       ),
-    );
+    ));
   }
 
   Widget _page({
@@ -147,10 +148,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
               children: [
-                Text(title,
+                UiText(title,
                     style: MFont.manrope(24, FontWeight.w800, MColors.ink)),
                 const SizedBox(height: 8),
-                Text(subtitle,
+                UiText(subtitle,
                     style: MFont.manrope(14, FontWeight.w600, MColors.muted)),
                 const SizedBox(height: 24),
                 ...children,
@@ -195,11 +196,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(title,
+                        UiText(title,
                             style: MFont.manrope(16, FontWeight.w800,
                                 enabled ? MColors.ink : MColors.gray500)),
                         if (subtitle != null)
-                          Text(subtitle,
+                          UiText(subtitle,
                               style: MFont.manrope(
                                   13, FontWeight.w600, MColors.muted)),
                       ],
@@ -237,7 +238,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               title: languageOptionLabel(e.key, learning: false),
               subtitle: nativeLanguageAvailable(e.key) ? null : '第一階段尚未提供翻譯資料',
               selected: _native == e.key,
-              onTap: nativeLanguageAvailable(e.key)
+              onTap: nativeLanguageAvailable(e.key) && e.key != _learning
                   ? () => setState(() => _native = e.key)
                   : null,
             ),
@@ -273,7 +274,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           _checkLevel = 0;
                           _known.clear();
                         }),
-                child: const Text('想測看看？試試單字程度（可略過）'),
+                child: const UiText('想測看看？試試單字程度（可略過）'),
               ),
           ],
         ),
@@ -318,7 +319,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
           TextButton(
               onPressed: () => _finish(checked: true),
-              child: Text(_checkLevel == 0 ? '都不認識，從基礎開始' : '先到這裡，開始學習'))
+              child: UiText(_checkLevel == 0 ? '都不認識，從基礎開始' : '先到這裡，開始學習'))
         ]),
       );
 }

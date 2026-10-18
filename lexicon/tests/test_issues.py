@@ -47,6 +47,28 @@ def test_issue_lifecycle(client):
     assert reopened["resolved_at"] is None
 
 
+def test_decline_decision_closes_as_wont_fix(client):
+    """問題回報 #246: an answer that starts with 不做 must not return to 待處理."""
+    q = client.post("/issues", headers=H, json={
+        "title": "要不要建 TTS 合成音檔管線？", "kind": "bug", "status": "needs_decision",
+        "options": ["做：新增管線", "不做：維持現狀，靠裝置端 TTS"]}).json()
+    d = client.post(f"/issues/{q['id']}/decide", headers=H, json={
+        "decision": "  不做：維持現狀，靠裝置端 TTS"}).json()
+    assert d["status"] == "wont_fix" and d["decision"] == "不做：維持現狀，靠裝置端 TTS"
+    assert d["resolved_at"]
+    changes = {c["field"]: c["to"] for c in d["history"][-1]["changes"]}
+    assert changes["status"] == "wont_fix" and d["history"][-1]["by"] == "owner"
+    active = client.get("/issues?status=active", headers=H).json()
+    assert q["id"] not in [i["id"] for i in active["items"]]
+
+    later = client.post("/issues", headers=H, json={
+        "title": "要不要下週再做？", "kind": "decision",
+        "options": ["要", "先不做這件事，下週再看"]}).json()
+    stayed = client.post(f"/issues/{later['id']}/decide", headers=H, json={
+        "decision": "先不做這件事，下週再看"}).json()
+    assert stayed["status"] == "open" and stayed["resolved_at"] is None
+
+
 def test_issue_validation(client):
     assert client.post("/issues", headers=H, json={"title": " "}).status_code == 422
     assert client.post("/issues", headers=H, json={"title": "x", "area": "moon"}).status_code == 422

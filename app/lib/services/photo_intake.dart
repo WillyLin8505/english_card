@@ -8,6 +8,7 @@ import '../models/photo.dart';
 import 'photo_store.dart';
 import 'tagging_service.dart';
 import 'word_database_repository.dart';
+import 'analytics.dart';
 
 class TaggingNotConfigured implements Exception {
   @override
@@ -29,6 +30,29 @@ class PhotoIntake {
   }) : createTagger = createTagger ??
             ((endpoint, apiKey) =>
                 TaggingService(endpoint: endpoint, apiKey: apiKey));
+
+  /// A stable fingerprint of a picture's bytes: 64-bit FNV-1a, hex. Not
+  /// cryptographic — it only has to tell "the same file again" from a new
+  /// one, without adding a dependency.
+  static String hashBytes(Uint8List bytes) {
+    var h = 0xcbf29ce484222325;
+    for (final b in bytes) {
+      h = ((h ^ b) * 0x100000001b3) & 0xFFFFFFFFFFFFFFFF;
+    }
+    return '${bytes.length}-${h.toRadixString(16)}';
+  }
+
+  /// The learner's photo that already holds exactly these bytes, if any
+  /// (spec §7 deferred 重複加入同一照片; the picker asks before adding a
+  /// second copy). Bundled samples and pre-hash photos never match.
+  Photo? findDuplicate(Uint8List bytes) {
+    final hash = hashBytes(bytes);
+    // allPhotos: a photo added a moment ago still awaits its safety check.
+    return repository()
+        .allPhotos
+        .where((p) => p.contentHash != null && p.contentHash == hash)
+        .firstOrNull;
+  }
 
   Future<Photo> addPhoto(
     Uint8List bytes, {
@@ -53,8 +77,11 @@ class PhotoIntake {
       height: size?.$2,
       createdAt: now,
       taggingStatus: TaggingStatus.pending,
+      safetyStatus: PhotoSafetyStatus.unchecked,
+      contentHash: hashBytes(bytes),
     );
     repo.addPhoto(photo);
+    Analytics.instance.capture('photo_added', {'in_album': albumId != null}, now);
     return photo;
   }
 
@@ -66,7 +93,8 @@ class PhotoIntake {
       frame.image.dispose();
       codec.dispose();
       return size;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Image size detection failed: $e');
       return null;
     }
   }

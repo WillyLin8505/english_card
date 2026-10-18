@@ -15,7 +15,7 @@ void main() {
     await tester.pumpWidget(MaterialApp(
         home: OnboardingScreen(
             lexicon: testLexicon(), onDone: (r) => result = r)));
-    expect(find.text('英文（English）'), findsOneWidget);
+    expect(find.text('英文（English）'), findsNWidgets(2));
     await tester.tap(find.text('下一步'));
     await tester.pumpAndSettle();
     expect(find.text('上一步'), findsOneWidget);
@@ -37,7 +37,8 @@ void main() {
     await tester.pumpAndSettle();
     final row = find.byKey(const ValueKey('word:apple'));
     await tester.ensureVisible(row);
-    await tester.tap(row);
+    // The row also contains independent 48px actions. Tap the word itself.
+    await tester.tap(find.descendant(of: row, matching: find.text('Apple')));
     await tester.pumpAndSettle();
     expect(find.text('單字詳情'), findsOneWidget);
     expect(find.text('查看單字'), findsNothing);
@@ -65,17 +66,11 @@ void main() {
     await tester.tap(find.text('顯示答案'));
     await tester.pumpAndSettle();
     expect(find.byType(FlashcardBack), findsOneWidget);
-    // Owner decision 2026-09-30 (問題回報 #15): the back follows the spec —
-    // 3–5 examples and every section with data, the longer ones collapsed.
+    // Owner request: answers are readable by scrolling, without expansion taps.
     expect(find.byType(ExampleText).evaluate().length, inInclusiveRange(1, 5));
-    expect(find.byIcon(Icons.expand_more), findsWidgets);
-    expect(find.byIcon(Icons.expand_less), findsNothing,
-        reason: 'long sections start collapsed');
-    await tester.ensureVisible(find.byIcon(Icons.expand_more).first);
-    await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(Icons.expand_more).first);
-    await tester.pumpAndSettle();
-    expect(find.byIcon(Icons.expand_less), findsOneWidget);
+    expect(find.byIcon(Icons.expand_more), findsNothing);
+    expect(find.byIcon(Icons.expand_less), findsNothing);
+    expect(find.text('顯示全部'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }

@@ -32,7 +32,7 @@ python card_preview/server.py --port 8772
 
 Claude 可繼續負責 `lexicon/backend`、`worker`、資料表、匯入及正式發布。此模組只讀其已存在的正規化資料表。
 
-`card_preview/data/preview.sqlite` **只**保存預覽草稿、版本與 QA 問題；不寫入主資料庫的 `card_templates`、`card_preview_issues` 或 `ready_for_export`。這是為避免兩邊同時修改 schema 的明確暫時整合界線。後台接手時可透過此模組 API 匯入這些 metadata，或替換 `state.py` 為正式儲存 adapter。
+正式版型草稿與發布版本已改由後台 `/card-templates` API 保存至 PostgreSQL（詳見 INTEGRATION.md「正式版型發布」）。`preview.sqlite` 保留既有資料與 QA 問題，不自動遷移；正式 API 失敗時不會退回本機假發布。
 
 這個畫面使用「即時建置資料」，顯示最新發布資料包資訊作參考，並不聲稱目前資料等同於某個歷史資料包。若要重現舊資料包，需對接正式快照／匯出服務。目前不修改 Flutter renderer，因此跨平台像素一致性仍須整合驗證。
 
@@ -42,7 +42,7 @@ Claude 可繼續負責 `lexicon/backend`、`worker`、資料表、匯入及正�
 
 讀取：`GET /api/catalog`、`/api/words?target=en&native=zh-TW&scope=full&q=apple`、`/api/card/1?target=en&native=zh-TW`、`/api/exercise/1?target=en&native=zh-TW&kind=similar&sense=1`、`/api/templates?target=en&native=zh-TW`。
 
-僅寫預覽 metadata：`POST /api/templates/save`、`POST /api/templates/publish`、`POST /api/issues`，必須帶語言方向 query、JSON body 與 `X-Preview-Token`（由同源 catalog 取得）。這些不是正式後台的同名 API，也不會建立 exercise attempt 或 review log。
+`POST /api/templates/save`、`POST /api/templates/publish` 會轉送正式後台版型 API；`POST /api/issues` 仍保存 QA 問題。請求必須帶語言方向 query、JSON body 與 `X-Preview-Token`（由同源 catalog 取得）。這些操作不會建立 exercise attempt 或 review log。
 
 ### 模板格式 v1
 

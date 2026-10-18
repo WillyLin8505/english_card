@@ -14,6 +14,7 @@ not invented.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from functools import lru_cache
 
@@ -396,3 +397,68 @@ def reconstructs(word: str, parts: list[str]) -> bool:
         return any(w.startswith(v, pos) and fits(n + 1, pos + len(v)) for v in variants)
 
     return fits(0, 0)
+
+
+_PART_LATIN = re.compile(r"([A-Za-z][\w'’-]*)\s*[（(]\s*[“\"「]?([^)”\"」]{1,80})")
+_PART_ZH = re.compile(r"([A-Za-z][\w'’-]*)\s*（([^）]{1,30})）")
+_GLOSS_WRAP = re.compile(r"^(意為|指|即|表示|意思是|意指)\s*")
+_EN_META = re.compile(
+    r"\b(compare|see|from|century|recorded|french|latin|greek|equivalent|below|"
+    r"originally|attested|meaning|old)\b", re.I)
+_ZH_META = re.compile(r"比較|世紀|法語|見於|原為|等於|年|下文|古法|拉丁|希臘")
+_POS_EN = {"noun", "verb", "adjective", "adverb", "prefix", "suffix"}
+_POS_ZH = {"名詞", "動詞", "形容詞", "副詞", "介詞", "前綴", "後綴"}
+
+
+def part_key(part: str) -> str:
+    """'nape', '-kin' and 'Nape' are the same etymology part."""
+    return re.sub(r"^-+|-+$", "", (part or "").lower())
+
+
+def _gloss_core(text: str) -> str:
+    text = (text or "").strip().strip("「」\"“”' ")
+    return _GLOSS_WRAP.sub("", text).strip().strip("「」\"“”' ")
+
+
+def _short_en_gloss(gloss: str) -> bool:
+    if not gloss or _EN_META.search(gloss):
+        return False
+    words = [w.lower() for w in re.findall(r"[A-Za-z][A-Za-z'-]*", gloss)]
+    if words and words[0] == "to":
+        words = words[1:]
+    if not 1 <= len(words) <= 3:
+        return False
+    return not (len(words) == 1 and words[0] in _POS_EN)
+
+
+def _short_zh_gloss(gloss: str) -> bool:
+    if not gloss or _ZH_META.search(gloss) or re.search(r"[A-Za-z0-9]", gloss):
+        return False
+    if any(ch in gloss for ch in "」「。；"):
+        return False
+    if gloss.strip("、") in _POS_ZH:
+        return False
+    return 1 <= len(re.findall(r"[\u3400-\u9fff]", gloss)) <= 8
+
+
+def etymology_part_glosses(zh_text: str, en_text: str = "") -> dict[str, str]:
+    """Short Chinese meanings the etymology assigns to its parts.
+
+    ``nape（布料）`` is kept; a part-of-speech label or a long note is not.
+    When the English etymology is present, the Chinese gloss is kept only
+    if that part's English parenthesis is also a short meaning (``cloth``,
+    ``diminutive suffix``), so a date or a language name is not used.
+    """
+    english: dict[str, str] = {}
+    for match in _PART_LATIN.finditer(en_text or ""):
+        english.setdefault(part_key(match.group(1)), _gloss_core(match.group(2)))
+    out: dict[str, str] = {}
+    for match in _PART_ZH.finditer(zh_text or ""):
+        key = part_key(match.group(1))
+        zh = _gloss_core(match.group(2))
+        if not _short_zh_gloss(zh):
+            continue
+        if en_text and not _short_en_gloss(english.get(key) or ""):
+            continue
+        out[key] = zh
+    return out

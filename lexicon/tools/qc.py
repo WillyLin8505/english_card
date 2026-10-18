@@ -3,6 +3,9 @@
     python lexicon/tools/qc.py run [--trigger import|tagging|pack|manual] [--dry-run] [--no-issues]
     python lexicon/tools/qc.py rollback RUN_ID
     python lexicon/tools/qc.py runs            # recent runs with change counts
+    python lexicon/tools/qc.py check --pack URL_OR_FILE --out snapshot.json [--before snapshot.json]
+    python lexicon/tools/qc.py check --live --out snapshot.json [--before snapshot.json]
+                                # --live includes catalog_images (photo golden/QC); needs DB access
 
 `run` builds the live pack in-process (same code as 8123 /api/lexicon),
 snapshots metrics + golden set, applies the deterministic fixers in one
@@ -24,7 +27,7 @@ sys.path.insert(0, str(ROOT / "lexicon" / "backend"))
 sys.path.insert(0, str(ROOT))
 os.environ.setdefault("QC_RUNNING", "1")  # hooks must not re-trigger from inside a run
 
-from app import db, qc, qc_fix  # noqa: E402
+from app import qc  # noqa: E402
 
 OUT = ROOT / "lexicon" / "exports" / "quality" / "qc"
 ISSUES = os.environ.get("QC_ISSUES_URL", "http://127.0.0.1:5173/api/issues")
@@ -47,16 +50,22 @@ def _req(method, url, body=None):
 RULE_TITLES = {
     "sense.main_without_chinese": "主義項沒有中文",
     "sense.main_is_ai": "主義項中文只有 AI 翻譯",
+    "sense.native_empty": "義項沒有中文（不限主義項）",
+    "sense.native_has_latin": "義項中文夾雜拉丁字母／殘字",
     "photo.fewer_than_3_tags": "照片標籤少於 3 個",
     "photo_tag.sense_low_priority": "照片標籤只剩低優先義項",
     "photo_tag.sense_without_chinese": "照片標籤義項沒有中文",
     "entry.full_without_senses": "完整詞條沒有義項",
     "entry.pos_unknown": "詞性 unknown",
+    "pronunciation.ipa_is_arpabet": "IPA 欄位混進 ARPAbet",
+    "entry.full_without_ipa": "完整詞條沒有 IPA",
+    "entry.full_without_audio": "完整詞條沒有音檔",
 }
 
 
 def file_issues(violations: dict, run_id: str) -> list:
     """One issue per rule: create once, then update count; 0 -> fixed."""
+    from app import qc_fix
     try:
         listing = _req("GET", ISSUES + "?limit=1000")
     except Exception as e:  # issue page down: skip, never fail the run
@@ -92,6 +101,7 @@ def file_issues(violations: dict, run_id: str) -> list:
 
 
 def run(trigger: str, dry_run: bool, issues: bool) -> int:
+    from app import db, qc_fix
     OUT.mkdir(parents=True, exist_ok=True)
     run_id = qc_fix.new_run_id(trigger)
     t0 = time.time()
@@ -127,6 +137,29 @@ def run(trigger: str, dry_run: bool, issues: bool) -> int:
     return 1 if bad else 0
 
 
+def check_pack(source: str | None, out: str, before: str | None, live: bool) -> int:
+    """Read-only golden/QC guard, also usable without database credentials.
+
+    `--live` builds the pack in-process (same as `run`, via serve_app.live_pack)
+    instead of reading a URL/file; it is the only way to get `catalog_images` for
+    the photo golden checks, since plain exports and the admin API don't include
+    them. Needs DB access, same as `run` does.
+    """
+    if live:
+        pack = build_pack()
+    elif source.startswith(('http://', 'https://')):
+        with urllib.request.urlopen(source, timeout=120) as response:
+            pack = json.load(response)
+    else:
+        pack = json.loads(Path(source).read_text(encoding='utf-8'))
+    snapshot = qc.snapshot(pack, qc.load_golden())
+    bad = qc.compare(json.loads(Path(before).read_text(encoding='utf-8')), snapshot) if before else []
+    Path(out).write_text(json.dumps(snapshot, ensure_ascii=False, indent=1), encoding='utf-8')
+    print(json.dumps({'metrics': snapshot['metrics'], 'golden': snapshot['golden']['rates'],
+                      'regressions': bad}, ensure_ascii=False, indent=1))
+    return 1 if bad else 0
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="qc")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -137,9 +170,22 @@ def main(argv=None) -> int:
     rb = sub.add_parser("rollback")
     rb.add_argument("run_id")
     sub.add_parser("runs")
+    check = sub.add_parser('check', help='read-only metrics and golden set; no fixers')
+    check.add_argument('--pack', help='URL or file; omit with --live')
+    check.add_argument('--live', action='store_true',
+                        help='build the pack in-process (needs DB access) instead of '
+                        'reading --pack; the only way to include catalog_images, so use '
+                        'this for photo golden/QC checks')
+    check.add_argument('--out', required=True)
+    check.add_argument('--before')
     a = ap.parse_args(argv)
+    if a.cmd == 'check':
+        if not a.live and not a.pack:
+            ap.error('check requires --pack or --live')
+        return check_pack(a.pack, a.out, a.before, a.live)
     if a.cmd == "run":
         return run(a.trigger, a.dry_run, not a.no_issues)
+    from app import db, qc_fix
     with db.session_scope() as s:
         qc_fix.ensure_schema(s)
         if a.cmd == "rollback":

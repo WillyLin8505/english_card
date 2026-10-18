@@ -1,3 +1,4 @@
+import '../l10n/ui_text.dart';
 import 'package:flutter/material.dart';
 
 import '../app/app_scope.dart';
@@ -12,7 +13,13 @@ import 'photo_picker_screen.dart';
 /// 我的相片冊 — Figma photo-album-page (17:5), the 相片冊 tab: albums by
 /// category, and 選擇新照片.
 class AlbumScreen extends StatefulWidget {
-  const AlbumScreen({super.key});
+  /// Overrides the top-bar 返回 action. Set when this screen is embedded
+  /// (e.g. inside DatabaseLibraryScreen's 我的相片冊 toggle) so 返回 steps
+  /// back to the embedding context instead of leaving the tab (問題回報
+  /// #258).
+  final VoidCallback? onBack;
+
+  const AlbumScreen({super.key, this.onBack});
 
   @override
   State<AlbumScreen> createState() => _AlbumScreenState();
@@ -56,7 +63,8 @@ class _AlbumScreenState extends State<AlbumScreen> {
                   leading: RoundIconButton(
                     label: '返回',
                     icon: const MSvg(MIcon.arrowLeft, size: 20),
-                    onTap: () => scope.navigator.selectTab(AppTab.camera),
+                    onTap:
+                        widget.onBack ?? () => scope.navigator.selectTab(AppTab.camera),
                   ),
                   trailing: RoundIconButton(
                     label: '搜尋照片',
@@ -85,7 +93,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
                 Expanded(
                   child: albums.isEmpty
                       ? Center(
-                          child: Text('這個分類還沒有相片冊',
+                          child: UiText('這個分類還沒有相片冊',
                               style: MFont.inter(
                                   14, FontWeight.w500, MColors.albumMuted)),
                         )
@@ -123,7 +131,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
                         children: [
                           const MSvg(MIcon.cameraWhite, size: 20),
                           const SizedBox(width: 8),
-                          Text('選擇新照片',
+                          UiText('選擇新照片',
                               style: MFont.inter(
                                   16, FontWeight.w700, Colors.white)),
                         ],
@@ -210,7 +218,7 @@ class _AlbumCard extends StatelessWidget {
                       color: MColors.frost,
                       radius: 10,
                     ),
-                    child: Text('$wordCount 個單字',
+                    child: UiText('$wordCount 個單字',
                         style: MFont.inter(11, FontWeight.w600, Colors.white)),
                   ),
                 ],

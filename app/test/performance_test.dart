@@ -18,7 +18,8 @@ void main() {
     final rnd = Random(1);
     final entries = [
       for (var i = 0; i < 3000; i++)
-        WordEntry.fromUserInput(id: 'w$i', word: 'word$i', pos: 'noun', meaning: '意思$i', level: 'A2', now: testNow),
+        WordEntry.fromUserInput(id: 'w$i', word: 'word$i', pos: 'noun', meaning: '意思$i', level: 'A2', now: testNow)
+            .copyWith(examples: [WordExample(text: 'I saw word$i.', translation: '測試句 $i。')]),
     ];
     final cards = [
       for (final e in entries)

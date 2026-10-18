@@ -14,6 +14,7 @@ import '../screens/word_detail_screen.dart';
 import '../widgets/mobile/tab_bar.dart';
 import 'app_scope.dart';
 import '../theme/mobile_theme.dart';
+import '../services/analytics.dart';
 
 /// The five tabs, each with its own navigation stack so the tab bar
 /// stays visible on pushed screens, as the mocks show (照片詳情 and
@@ -59,6 +60,7 @@ class AppShellState extends State<AppShell> implements AppNavigator {
       return;
     }
     setState(() => _tab = tab);
+    Analytics.instance.screen(tab.name);
   }
 
   void _pushInAlbumTab(Widget screen) {
@@ -88,6 +90,7 @@ class AppShellState extends State<AppShell> implements AppNavigator {
       WidgetsBinding.instance.addPostFrameCallback((_) => setReviewing(reviewing));
       return;
     }
+    Analytics.instance.capture(reviewing ? 'review_started' : 'review_finished');
     setState(() => _reviewing = reviewing);
   }
 

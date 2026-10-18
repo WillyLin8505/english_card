@@ -1,6 +1,6 @@
 // Learner simulation (not part of the regular suite: no _test suffix).
 //
-// A new learner keeps drawing words from the 資料庫 tab (「加入我的收藏與
+// A new learner keeps drawing words from the 資料庫 tab (「加入我的單字本與
 // 複習」) and studies them in the 複習 flow for many simulated days. Each
 // card's front and back, the rating buttons and the FSRS schedule are
 // checked against spec sections 4 and 7; the 複習 screen itself is also
@@ -331,15 +331,44 @@ void main() {
     var n = 0;
     while (find.byType(FlashcardFront).evaluate().isNotEmpty && n < limit * 3) {
       final front = tester.widget<FlashcardFront>(find.byType(FlashcardFront));
-      current = '${front.entry.word} 正面';
-      await tester.tap(find.text('顯示答案'));
-      await tester.pumpAndSettle();
-      current = '${front.entry.word} 背面';
-      await tester.drag(
-          find.byType(SingleChildScrollView).first, const Offset(0, -600));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text(n % 5 == 0 ? '忘記' : '記得'));
-      await tester.pumpAndSettle();
+      // A step that throws (a button that isn't there, a widget that never
+      // settles) is recorded and ends the run: FlutterError.onError is
+      // overridden here, so an uncaught error would only show as a
+      // 10-minute timeout (round 47).
+      try {
+        current = '${front.entry.word} 正面';
+        // A photo question waits for its picture's pixels before it can be
+        // answered; widget tests never decode images, so say it loaded.
+        // (Its image widget reports a failure again on the next frame, so
+        // the answer is shown through the session, as the button would.)
+        final s = front.session;
+        if (s != null && !s.canAnswer) {
+          s.reportPhotoState(s.photoAttempt, true);
+          s.showAnswer();
+        } else {
+          await tester.tap(find.text('顯示答案'));
+        }
+        await tester.pumpAndSettle(const Duration(milliseconds: 100),
+            EnginePhase.sendSemanticsUpdate, const Duration(seconds: 10));
+        current = '${front.entry.word} 背面';
+        await tester.drag(
+            find.byType(SingleChildScrollView).first, const Offset(0, -600));
+        await tester.pumpAndSettle(const Duration(milliseconds: 100),
+            EnginePhase.sendSemanticsUpdate, const Duration(seconds: 10));
+        await tester.tap(find.text(n % 5 == 0 ? '忘記' : '記得'));
+        await tester.pumpAndSettle(const Duration(milliseconds: 100),
+            EnginePhase.sendSemanticsUpdate, const Duration(seconds: 10));
+      } catch (e) {
+        final shown = find
+            .byType(Text)
+            .evaluate()
+            .map((el) => (el.widget as Text).data ?? '')
+            .where((t) => t.trim().isNotEmpty)
+            .take(25)
+            .join(' | ');
+        errors.add('$current：${e.toString().split('\n').first}（畫面：$shown）');
+        break;
+      }
       n++;
     }
     final report = {'rendered': n, 'errors': errors.toSet().toList()};

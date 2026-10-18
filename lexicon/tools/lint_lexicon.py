@@ -11,6 +11,7 @@ from __future__ import annotations
 import collections
 import csv
 import datetime as dt
+import hashlib
 import json
 import sqlite3
 import sys
@@ -86,6 +87,12 @@ def main(argv: list[str]) -> dict:
     quality.QUALITY_DIR.mkdir(exist_ok=True)
     (quality.QUALITY_DIR / "entry_flags.json").write_text(
         json.dumps(flags, ensure_ascii=False, sort_keys=True, indent=0), encoding="utf-8")
+    # Record all evaluated entries, including clean ones. Bind the manifest
+    # to these exact flags so stale/legacy exports fail closed in reconcile.
+    (quality.QUALITY_DIR / "entry_flags.scope.json").write_text(json.dumps({
+        "flags_sha256": hashlib.sha256(json.dumps(flags, sort_keys=True).encode()).hexdigest(),
+        "keys": sorted({f'{lx["normalized"]}|{lx["pos"]}' for lx in pack["lexemes"]}),
+    }, sort_keys=True), encoding="utf-8")
     summary = {"entries": len(pack["lexemes"]), "flagged_entries": len(flags),
                "csv": str(path), **dict(counts.most_common())}
     print(json.dumps(summary, ensure_ascii=False, indent=1))

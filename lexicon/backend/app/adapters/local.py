@@ -106,12 +106,15 @@ def _wordlist(lang: str) -> tuple[str, ...]:
 
 
 class KaikkiWordlist(SourceAdapter):
-    """Spelling neighbours: words one edit away. The spec names the Kaikki
-    headword list; without the multi-GB dump this uses the wordfreq top
-    60k (+ CEFR-J for English) as the word list — see the source note."""
+    """One-edit neighbours from the complete local Kaikki index when present.
+    Without it, use wordfreq/CEFR-J and identify the fallback explicitly."""
     key = "kaikki_wordlist"
 
     def download_snapshot(self, language, snapshot_dir):
+        from ..kaikki_index import wordlist_snapshot
+        indexed = wordlist_snapshot(language)
+        if indexed is not None:
+            return indexed
         return {"version": "wordfreq top-60k + CEFR-J", "row_count": len(_wordlist(language)),
                 "details": {"note": "Kaikki 全量字表需下載 2–3 GB 資料包；目前以常用字表代替。"}}
 
@@ -121,7 +124,10 @@ class KaikkiWordlist(SourceAdapter):
         w = ctx.lemma
         skip = {w + "s", w + "es", w + "ed", w + "d", w + "ing", w + "'s"}
         hits = []
-        for x in _wordlist(ctx.target):
+        from ..kaikki_index import spelling_candidates
+        indexed = spelling_candidates(ctx.target, w)
+        origin = 'kaikki_index' if indexed is not None else 'wordfreq_cefr_fallback'
+        for x in indexed if indexed is not None else _wordlist(ctx.target):
             if abs(len(x) - len(w)) > 1 or x in skip:
                 continue
             diff = _edit1(w, x)
@@ -130,7 +136,8 @@ class KaikkiWordlist(SourceAdapter):
         hits.sort(key=lambda h: -_zipf(h[0], ctx.target))
         from .base import by_frequency
         return by_frequency([
-            Candidate(f, ctx.target, {"word": x, "difference": diff, "note": "拼字相近"}, x,
+            Candidate(f, ctx.target, {"word": x, "difference": diff, "note": "拼字相近",
+                                      "wordlist": origin}, x,
                       confidence=0.8) for x, diff in hits[:20]
         ], ctx.target)
 
@@ -236,7 +243,8 @@ IRREGULAR_FORMS = {
     "drive": {"drove", "driven"}, "give": {"gave", "given"},
     "choose": {"chose", "chosen"}, "fall": {"fell", "fallen"},
     "feel": {"felt"}, "leave": {"left"}, "keep": {"kept"},
-    "sleep": {"slept"}, "meet": {"met"}, "good": {"better", "best"},
+    "sleep": {"slept"}, "meet": {"met"}, "blow": {"blew", "blown"},
+    "good": {"better", "best"},
     "bad": {"worse", "worst"},
 }
 
@@ -247,8 +255,16 @@ ENGLISH_STOPWORDS = {
     "its", "me", "mine", "my", "of", "on", "or", "our", "ours", "she", "that",
     "the", "their", "theirs", "them", "they", "this", "those", "to", "was", "we",
     "were", "what", "when", "where", "which", "who", "will", "with", "would",
+    "through",
     "you", "your", "yours",
 }
+
+# Incidental counts are not evidence of a shared sense: a book leaf has
+# "two pages", but leaves turning red in "two weeks" are still plant leaves.
+SENSE_COUNT_WORDS = set('zero one two three four five six seven eight nine ten '
+                      'eleven twelve thirteen fourteen fifteen sixteen seventeen '
+                      'eighteen nineteen twenty thirty forty fifty sixty seventy '
+                      'eighty ninety hundred thousand million billion'.split())
 
 
 def plausible_form(lemma: str, form: str) -> bool:
@@ -268,6 +284,8 @@ def plausible_form(lemma: str, form: str) -> bool:
         stems.add(lemma[:-1])
     if lemma.endswith("y"):
         stems.add(lemma[:-1] + "i")
+    if lemma.endswith("ie"):
+        stems.add(lemma[:-2] + "y")  # lie → lying, die → dying, tie → tying
     if lemma.endswith("f"):
         stems.add(lemma[:-1] + "v")
     if lemma.endswith("fe"):
@@ -277,10 +295,303 @@ def plausible_form(lemma: str, form: str) -> bool:
                for stem in stems)
 
 
-def word_level(word: str, language: str = "en") -> str:
-    """A word's CEFR level: its easiest CEFR-J level when listed, else an
-    estimate from how common it is (a phrase counts as its hardest word)."""
+_VOICELESS, _SIBILANT = set("ptkfθsʃ"), set("szʃʒ")  # tʃ, dʒ end in ʃ, ʒ
+
+
+def _inflection_suffix(base: str, form: str) -> str | None:
+    """"d" (past), "s" (plural, third person) or "ing" when [form] is
+    [base]'s regular inflection by spelling (not leaf → leaves: /f/ → /v/)."""
+    if form == base or form in IRREGULAR_FORMS.get(base, set()) \
+            or not plausible_form(base, form) \
+            or (base.endswith(("f", "fe")) and not form.startswith(base)):
+        return None
+    return next((s for s in ("ing", "d", "s") if form.endswith(s)), None)
+
+
+def _with_suffix(ipa: str, suffix: str) -> str:
+    """/ˈdɹɪzəl/ + d → /ˈdɹɪzəld/, /spɒt/ + d → /spɒtɪd/, /bʌs/ + s → /bʌsɪz/."""
+    body = ipa.strip("/")
+    last = re.sub(r"[ˈˌːˑ.()̀-ͯ]", "", body)[-1:]
+    if suffix == "ing":
+        end = "ɪŋ"
+    elif suffix == "d":
+        end = "ɪd" if last in "td" else "t" if last in _VOICELESS else "d"
+    else:
+        end = "ɪz" if last in _SIBILANT else "s" if last in _VOICELESS else "z"
+    if end[0] == "ɪ" and not re.search("[ˈˌ]", body):
+        body = "ˈ" + body  # one syllable more: spot → /ˈspɒtɪd/
+    return f"/{body}{end}/"
+
+
+def _phonemic_from_transcription(ipa: str) -> str | None:
+    """Reduce common Wiktionary allophones to learner-friendly /.../ IPA.
+
+    This is only used when a regular inflection has no phonemic entry.  It
+    lets dapple [ˈdæpəɫ] supply dappled /ˈdæpəld/ without making the narrow
+    transcription the learner's default.
+    """
+    if re.fullmatch(r"/[^/ ,]+/", ipa):
+        return ipa
+    if not re.fullmatch(r"\[[^\] ,]+\]", ipa):
+        return None
+    body = ipa[1:-1].replace("ɫ", "l").replace("ɾ", "t").replace("ɪ̈", "ɪ")
+    return f"/{body}/"
+
+
+def inflected_ipa(word: str) -> list[dict]:
+    """IPA for a regular inflection the dictionary gives no sound for, from
+    its base word's (drizzled ← drizzle /ˈdɹɪzəl/: /ˈdɹɪzəld/, 問題回報 #24)."""
+    from .. import kaikki_index
+    from .kaikki import _accents
+    w = word.lower()
+    bases = dict.fromkeys(str(f.get("word") or "").lower()
+                          for e in kaikki_index.lookup("en", w) or []
+                          for s in e.get("senses") or [] for f in s.get("form_of") or [])
+    for base in bases:
+        suffix = _inflection_suffix(base, w)
+        if not suffix:
+            continue
+        out = []
+        sounds = []
+        for e in kaikki_index.lookup("en", base) or []:
+            ety = str(e.get("etymology_number") or "")
+            if str(e.get("word", "")).lower() != base or (ety.isdigit() and int(ety) > 1):
+                continue  # wind (纏繞) is not wind (風)
+            sounds.extend(e.get("sounds") or [])
+        # A broad source is preferable whenever one exists. Narrow sounds are
+        # a last resort for a base such as dapple, never extra learner IPAs.
+        phonemic = [snd for snd in sounds if str(snd.get("ipa") or "").startswith("/")]
+        for snd in phonemic or sounds:
+            ipa = _phonemic_from_transcription(snd.get("ipa") or "")
+            if ipa:
+                v = {"ipa": _with_suffix(ipa, suffix), "accent": _accents(snd.get("tags")),
+                     "composed": True, "base": base}
+                if v["ipa"] not in {o["ipa"] for o in out}:
+                    out.append(v)
+        if out:
+            return out[:3]
+    return []
+
+
+def _alt_of_bases(word: str) -> list[str]:
+    """Bases named by every sense as an alternative spelling.
+
+    A form_of link is not enough: upperclassmen is the plural of
+    upperclassman and is not said the same way. A sense with its own
+    meaning blocks the copy, so a homograph cannot borrow another word.
+    """
+    from .. import kaikki_index
+    entries = kaikki_index.lookup("en", word.lower()) or []
+    if not entries:
+        return []
+    bases: list[str] = []
+    for entry in entries:
+        senses = entry.get("senses") or []
+        if not senses:
+            return []
+        for sense in senses:
+            linked = [str(item.get("word") or "").strip()
+                      for item in (sense.get("alt_of") or []) if item.get("word")]
+            if not linked:
+                return []
+            for base in linked:
+                if base.lower() != word.lower() and base not in bases:
+                    bases.append(base)
+    return bases
+
+
+def _base_phonemic(base: str) -> list[dict]:
+    """Phonemic /…/ IPA of [base], skipping a later etymology (wind 纏繞)."""
+    from .. import kaikki_index
+    from .kaikki import _accents
+    sounds = []
+    for entry in kaikki_index.lookup("en", base) or []:
+        ety = str(entry.get("etymology_number") or "")
+        if str(entry.get("word", "")).lower() != base.lower() or (ety.isdigit() and int(ety) > 1):
+            continue
+        sounds.extend(entry.get("sounds") or [])
+    out = []
+    for sound in sounds:
+        ipa = str(sound.get("ipa") or "")
+        accents = _accents(sound.get("tags"))
+        # Regional variants (Canada, Australia) must not become the default
+        # ahead of the citation form.
+        if any(accent not in ("US", "UK") for accent in accents):
+            continue
+        if not ipa.startswith("/") or not re.fullmatch(r"/[^/]+/", ipa):
+            continue
+        row = {"ipa": ipa, "accent": accents, "composed": True, "base": base}
+        if ipa not in {item["ipa"] for item in out}:
+            out.append(row)
+    return out[:3]
+
+
+def _closed_spelling(phrase: str) -> str:
+    return re.sub(r"[\s-]+", "", phrase).lower()
+
+
+def _closed_compound_bases(word: str) -> list[str]:
+    """The phrase a closed spelling names (backburner ← back burner).
+
+    One sense may define the compound in its own words. That does not make
+    it a different word, as long as every alt_of is that same phrase.
+    """
+    from .. import kaikki_index
+    entries = kaikki_index.lookup("en", word.lower()) or []
+    found: list[str] = []
+    for entry in entries:
+        for sense in entry.get("senses") or []:
+            for item in sense.get("alt_of") or []:
+                base = str(item.get("word") or "").strip()
+                if " " not in base and "-" not in base:
+                    continue
+                if _closed_spelling(base) != word.lower() or base in found:
+                    continue
+                found.append(base)
+    return found
+
+
+def _cmudict_ipa(phrase: str) -> str | None:
+    """US IPA for a word or a phrase CMUdict only lists in parts."""
+    from ..arpabet import arpabet_to_ipa
+    from .cmudict import CMUdict
+    source = CMUdict()
+    source._load()
+    text = phrase.strip()
+    parts = text.split()
+    if len(parts) == 1 and "-" in text:
+        parts = text.split("-")
+    prons = [source._pron.get(part.lower()) for part in parts]
+    if not parts or not all(prons):
+        return None
+    ipas = [arpabet_to_ipa(pron[0]) for pron in prons]
+    if not all(ipas):
+        return None
+    if len(ipas) == 1:
+        return ipas[0]
+    return "/" + " ".join(ipa.strip("/") for ipa in ipas) + "/"
+
+
+def linked_base_ipa(word: str) -> list[dict]:
+    """IPA for a spelling variant whose entry only points at a base we can
+    already pronounce (panick → panic, chainmail → chain mail, 問題回報 #209).
+
+    The base has to be the one Wiktionary names. A closed compound is never
+    split by guesswork.
+    """
+    for base in _alt_of_bases(word) or _closed_compound_bases(word):
+        copied = _base_phonemic(base)
+        if copied:
+            return copied
+        ipa = _cmudict_ipa(base)
+        if ipa:
+            return [{"ipa": ipa, "accent": "US", "composed": True, "base": base,
+                     "from_phonemes": True}]
+    return []
+
+
+def derived_adjective_ipa(word: str) -> list[dict]:
+    """Derive an *-ly* adjective after silent ``mb`` (crumb → crumbly).
+
+    The base's final ``b`` becomes audible before the suffix.  This covers a
+    productive spelling pattern when the derived entry has audio but no IPA.
+    """
+    from .. import kaikki_index
+    from .kaikki import _accents
+    w = word.lower()
+    if not w.endswith("mbly"):
+        return []
+    base = w[:-2]
+    out = []
+    for e in kaikki_index.lookup("en", base) or []:
+        for snd in e.get("sounds") or []:
+            ipa = snd.get("ipa") or ""
+            if not re.fullmatch(r"/[^/ ,]+/", ipa):
+                continue
+            body = ipa[1:-1]
+            if not body.endswith("m"):
+                continue
+            value = f"/{body}bli/"
+            row = {"ipa": value, "accent": _accents(snd.get("tags")),
+                   "composed": True, "base": base}
+            if value not in {item["ipa"] for item in out}:
+                out.append(row)
+    return out[:3]
+
+
+@lru_cache(maxsize=20_000)
+def _family_cap(word: str, language: str) -> int | None:
+    """One level above the word's base's listed level (potted <= pot B1 +
+    1, striped <= stripe B1 + 1 -- 問題回報 #214/#218), whether or not
+    [word] itself has some other listed part of speech. None when no
+    listed base spelling is found. Candidate bases reuse images.py's
+    morphology (suffix, prefix and spelling repairs already used to level
+    photo-tag labels) rather than a second guesser."""
+    if language != "en":
+        return None
+    from .. import images
+    from .base import _listed_levels
+    levels = _listed_levels()
+    best = None
+    for stem in images._base_candidates(word):
+        lv = levels.get(stem)
+        if lv is not None:
+            best = lv + 1 if best is None else min(best, lv + 1)
+    return best
+
+
+def derivation_cap(word: str, language: str) -> int | None:
+    """[_family_cap], but None when [word] itself is listed under some part
+    of speech -- its own level is then authoritative (standing noun C2
+    「social standing」), so no family ceiling applies to it as a whole."""
+    if language != "en":
+        return None
+    from .base import _listed_levels
+    if word in _listed_levels():
+        return None
+    return _family_cap(word, language)
+
+
+_CONCRETE_LEXNAMES = {"noun.artifact", "noun.food", "noun.plant", "noun.animal",
+                      "noun.body", "noun.substance", "noun.object"}
+
+
+@lru_cache(maxsize=10_000)
+def is_concrete_noun(word: str) -> bool:
+    """[word]'s dominant WordNet sense is a physical, photographable thing
+    (artifact, food, plant, animal, body part, substance) -- scarecrow,
+    croissant, cactus -- so a low zipf need not mean a hard CEFR level
+    (問題回報 #220/#221). False without the WordNet index."""
+    def lookup():
+        synsets = _wordnet().synsets(word, pos="n")
+        return synsets[0].lexfile() if synsets else None
+    try:
+        from .oewn import _thread, _wordnet
+        lexfile = _thread.submit(lookup).result(timeout=5)
+    except Exception:  # noqa: BLE001 — WordNet unavailable: no correction
+        return False
+    return lexfile in _CONCRETE_LEXNAMES
+
+
+def capped_frequency_level(word: str, zipf_value: float, language: str = "en") -> str:
+    """frequency_profile's CEFR estimate, capped by the word-family rule
+    above so a derived word never estimates far above its base (問題回報
+    #214/#218). [is_concrete_noun] is deliberately not applied here: a
+    photographable noun's rarity in text is not always wrong (chalice is a
+    genuinely C1/C2 word despite being a WordNet noun.artifact) -- the
+    owner's decision for #163 is to recompute+flag concrete-noun candidates
+    for manual review, not auto-correct them."""
     from .base import frequency_profile
+    idx = LEVELS.index(frequency_profile(round(zipf_value, 1))["cefr"])
+    cap = derivation_cap(word, language)
+    if cap is not None:
+        idx = min(idx, cap)
+    return LEVELS[idx]
+
+
+def word_level(word: str, language: str = "en") -> str:
+    """A word's CEFR level: its easiest CEFR-J level when listed, else a
+    capped frequency estimate (a phrase counts as its hardest word)."""
     w = (word or "").strip().lower()
     hit = cefr_list().get(w) if language == "en" else None
     if hit:
@@ -288,7 +599,7 @@ def word_level(word: str, language: str = "en") -> str:
     parts = tokens(w) if language == "en" else [w]
     if len(parts) > 1:
         return max((word_level(p, language) for p in parts), key=LEVELS.index)
-    return frequency_profile(round(_zipf(w, language), 1))["cefr"]
+    return capped_frequency_level(w, _zipf(w, language), language)
 
 
 def word_forms(ctx: Context) -> frozenset[str]:
@@ -337,6 +648,13 @@ class LocalCalc(SourceAdapter):
                 ipa = "/" + " ".join(p.strip("/") for p in parts) + "/"
                 C.append(Candidate(f, "en", {"ipa": ipa, "accent": "US", "composed": True}, ipa,
                                    confidence=0.6, source_record_id=ctx.lemma))
+        elif f == "ipa" and ctx.target == "en":
+            # A regular inflection (drizzled, crinkled): its base word's IPA
+            # with the suffix's sound.
+            for v in (inflected_ipa(ctx.lemma) or derived_adjective_ipa(ctx.lemma)
+                      or linked_base_ipa(ctx.lemma)):
+                C.append(Candidate(f, "en", v, v["ipa"], confidence=0.6,
+                                   source_record_id=ctx.lemma))
         elif f == "noun_plural" and ctx.target == "en":
             plural = regular_plural(ctx.lemma)
             last = plural.split()[-1]
@@ -409,13 +727,15 @@ class LocalCalc(SourceAdapter):
                 use = _usage_pos(item.get("text", ""), forms, verb_only, ctx.lemma)
                 if use == "other":
                     continue  # 「the wound」: a verb form used as a noun is another word
-                words = set(tokens(item.get("text", ""))) - ENGLISH_STOPWORDS - forms
+                words = (set(tokens(item.get("text", "")))
+                         - ENGLISH_STOPWORDS - SENSE_COUNT_WORDS - forms)
                 ranked = []
                 for s in senses:
                     if use and s.get("pos") and s.get("pos") != use and any(
                             x.get("pos") == use for x in senses):
                         continue  # mugged is the verb, the mug the noun
-                    gloss = set(tokens(s.get("gloss", ""))) - ENGLISH_STOPWORDS - forms
+                    gloss = (set(tokens(s.get("gloss", "")))
+                             - ENGLISH_STOPWORDS - SENSE_COUNT_WORDS - forms)
                     ranked.append((len(words & gloss), s))
                 ranked.sort(key=lambda pair: pair[0], reverse=True)
                 score, best = ranked[0] if ranked else (0, None)
@@ -494,6 +814,415 @@ def _verb_only_forms(ctx: Context) -> frozenset[str]:
     return frozenset(verb - other)
 
 
+# Finite copulas only. Bare "be" is "must be shadow" (a noun), not "is tired".
+_COPULA = {"is", "are", "was", "were", "am", "seems", "seem", "seemed",
+           "looks", "look", "looked", "feels", "feel", "became", "become"}
+_DEGREE = {"very", "really", "so", "too", "quite", "more", "most", "extremely"}
+_MODAL = {"will", "would", "can", "could", "should", "must", "may", "might", "did", "does"}
+# -ly nouns/verbs that are not manner adverbs.
+_NOT_LY_ADV = {"family", "apply", "reply", "supply", "imply", "only", "early", "fly", "belly"}
+# Not "al"/"ic": those endings are the noun itself (metal, traffic).
+_ADJ_SUFFIX = ("ed", "ful", "ous", "ive", "less", "able", "ible", "ish")
+# Closed-class adverbs that sit between a subject and a verb. They are not
+# the noun head of "a coffee mug", even when a determiner is two words back
+# (問題回報 #241: "My head still felt").
+_PREVERBAL = {
+    "still", "even", "just", "also", "only", "already", "always", "never",
+    "often", "ever", "almost", "rather", "quite", "not", "now", "then",
+    "yet", "again", "once", "soon", "sometimes", "usually", "really",
+    "actually", "suddenly", "seldom", "rarely", "hardly", "nearly",
+    "simply", "finally", "too", "so", "here", "there",
+}
+_FINITE_VERB = {
+    "is", "are", "was", "were", "am", "be", "been", "do", "does", "did",
+    "has", "have", "had", "will", "would", "can", "could", "should",
+    "must", "may", "might",
+}
+
+
+# Hyphenated headwords (close-up) stay one token. Other hyphens still split
+# (well-known → well, known), which is what a non-compound lemma needs.
+_SURFACE = re.compile(r"[A-Za-zÀ-ÿœæ']+(?:-[A-Za-zÀ-ÿœæ']+)*")
+_VERBISH = _FINITE_VERB | {
+    "go", "goes", "went", "gone", "come", "came", "make", "made", "take", "took",
+    "see", "saw", "feel", "feels", "felt", "seem", "seems", "look", "looks",
+    "get", "gets", "got", "say", "said", "know", "think", "want", "need",
+    "drive", "drove", "driven", "sing", "sang", "run", "ran", "give", "gave",
+}
+
+
+def _form_bag(forms) -> set[str]:
+    return {str(f).lower() for f in forms if f}
+
+
+def _surface_pieces(text: str, forms) -> tuple[list[str], list[str], list[str], list[bool]]:
+    """Lowercase tokens, original case, and whether each token starts a sentence.
+
+    A hyphen stays inside the token (close-up, merry-go-round). Splitting it
+    would make round match inside merry-go-round.
+    """
+    _ = forms
+    raw, cased, starts = [], [], []
+    for match in _SURFACE.finditer(text or ""):
+        span = match.group(0)
+        prefix = (text or "")[:match.start()]
+        sentence_start = (not prefix.rstrip(" \"'“‘(").strip()
+                          or prefix.rstrip(" \"'“‘(").endswith((".", "!", "?", ":")))
+        raw.append(span.lower())
+        cased.append(span)
+        starts.append(sentence_start)
+    toks = [t[:-2] if t.endswith("'s") else t.rstrip("'") for t in raw]
+    return raw, toks, cased, starts
+
+
+def _word_tokens(text: str, forms=()) -> tuple[list[str], list[str]]:
+    raw, toks, _cased, _starts = _surface_pieces(text, forms)
+    return raw, toks
+
+
+def _listed_poses(word: str) -> set[str]:
+    word = (word or "").lower()
+    keys = [word]
+    # "plumes" is plume + s, not plum + es. Prefer a listed singular.
+    if len(word) > 3 and word.endswith("s") and word[:-1] in cefr_list():
+        keys.append(word[:-1])
+    elif word.endswith("ies") and len(word) > 4:
+        keys.append(word[:-3] + "y")
+    elif word.endswith("es") and len(word) > 3:
+        keys.append(word[:-2])
+    elif word.endswith("s") and len(word) > 3:
+        keys.append(word[:-1])
+    for key in keys:
+        hit = cefr_list().get(key)
+        if hit and len(hit) > 1 and isinstance(hit[1], dict) and hit[1]:
+            return {str(p).rstrip(".") for p in hit[1]}
+    return set()
+
+
+def _participle_modifier(toks: list[str], i: int) -> bool:
+    """scalloped potatoes, fanged mushrooms, well versed — not He graded assignments."""
+    prev = toks[i - 1] if i else ""
+    nxt = toks[i + 1] if i + 1 < len(toks) else ""
+    if prev in _DEGREE | {"well"}:
+        return True
+    if "adj" in _listed_poses(prev):
+        return True
+    prep = {"of", "in", "on", "with", "for", "from", "by", "at", "to", "into",
+            "and", "or", "well", "against", "about", "over", "under", "after",
+            "before", "without", "through"}
+    if nxt and "noun" in _listed_poses(nxt) and (
+            prev in DETERMINERS | _DEGREE | prep
+            or (prev in {"has", "have", "had"} and toks[i].endswith("ing"))):
+        return True
+    if toks[i].endswith("ing") and prev in {"and", "or"}:
+        return True
+    # "the housing market", "a manned compact vehicle": the participle
+    # modifies a noun. "He graded assignments" and "quickly graded assignments"
+    # stay verbs.
+    subject = {"i", "he", "she", "we", "they", "you", "it", "tom", "mary"}
+    if (toks[i].endswith(("ed", "ing"))
+            and prev not in subject | _FINITE_VERB | _COPULA | _VERBISH | _MODAL
+            and not prev.endswith("ly") and "adv" not in _listed_poses(prev)):
+        nxt2 = toks[i + 2] if i + 2 < len(toks) else ""
+        if nxt and "noun" in _listed_poses(nxt):
+            return True
+        # "manned compact vehicle": compact is not listed, vehicle is the noun.
+        if nxt2 and "noun" in _listed_poses(nxt2) and (
+                _clear_adj(nxt) or not _listed_poses(nxt)):
+            return True
+    return False
+
+
+def _lexical_verb(token: str) -> bool:
+    """A real verb, not a word that merely ends in -ed (red)."""
+    if not token or token in DETERMINERS:
+        return False
+    if token in _VERBISH:
+        return True
+    poses = _listed_poses(token)
+    if poses:
+        return "verb" in poses and "adj" not in poses and "noun" not in poses
+    return len(token) > 4 and token.endswith(("ed", "ing"))
+
+
+def _adj_evidence(token: str) -> bool:
+    """Dictionary or an existing shape says this complement is an adjective."""
+    poses = _listed_poses(token)
+    if _looks_adj_token(token) or token.endswith(("ary", "ory")):
+        return True
+    if "adj" in poses and "verb" not in poses:
+        return True
+    return not poses and suffix_pos(token) == "adj"
+
+
+def _adj_not_noun(token: str) -> bool:
+    """Attributive adjective, not a noun modifying another noun (chocolate fudge)."""
+    poses = _listed_poses(token)
+    if "noun" in poses and "adj" not in poses:
+        return False
+    if "adj" in poses and "noun" not in poses:
+        return True
+    if poses:
+        return False
+    if "-" in token:
+        return True
+    return suffix_pos(token) == "adj"
+
+
+def _can_be_modified(token: str) -> bool:
+    """The word after an attributive adjective: a noun or another adjective."""
+    poses = _listed_poses(token)
+    if not poses:
+        return False
+    if "verb" in poses and "noun" not in poses and "adj" not in poses:
+        return False
+    return "noun" in poses or "adj" in poses
+
+
+def _clear_adj(token: str) -> bool:
+    """An adjective, not a noun that merely also lists an adjective reading."""
+    poses = _listed_poses(token)
+    if "adj" in poses and "noun" not in poses:
+        return True
+    if "adj" in poses and _easiest_listed_pos(token) == "adj":
+        return True
+    return not poses and suffix_pos(token) == "adj"
+
+
+def _looks_adj_token(token: str) -> bool:
+    """A real adjective ending, not a short word that happens to end that way (olive)."""
+    for suf in _ADJ_SUFFIX:
+        if token.endswith(suf) and len(token) - len(suf) >= 3:
+            return True
+    return False
+
+
+def _easiest_listed_pos(word: str) -> str | None:
+    hit = cefr_list().get(word or "")
+    if not hit or len(hit) < 2 or not isinstance(hit[1], dict) or not hit[1]:
+        return None
+    pos_map = hit[1]
+    best = min(pos_map, key=lambda p: LEVELS.index(pos_map[p]) if pos_map[p] in LEVELS else 9)
+    return best.rstrip(".")
+
+
+def _gap_modifier(word: str) -> bool:
+    """The word between a determiner and a candidate head is an adjective
+    (``an icy wind``, ``a quiet still``), not the noun of the subject
+    (``my head still``)."""
+    if not word:
+        return False
+    if word in _DEGREE or _looks_adj_token(word) or suffix_pos(word) == "adj":
+        return True
+    return _easiest_listed_pos(word) == "adj"
+
+
+def _one_edit(a: str, b: str) -> bool:
+    if a == b:
+        return True
+    if abs(len(a) - len(b)) > 1:
+        return False
+    if len(a) == len(b):
+        return sum(x != y for x, y in zip(a, b)) == 1
+    if len(a) > len(b):
+        a, b = b, a
+    for i in range(len(b)):
+        if a == b[:i] + b[i + 1:]:
+            return True
+    return False
+
+
+def _form_of_lemma(lemma: str, form: str) -> bool:
+    """True when ``form`` is this headword, not another verb's paradigm (seen/saw)."""
+    lemma, form = lemma.lower(), (form or "").lower()
+    if not form:
+        return False
+    if form == lemma or plausible_form(lemma, form):
+        return True
+    # shoe/shod is one edit. cultivated/cultivates is another word's -s form.
+    if form.endswith("s") or lemma.endswith("s"):
+        return False
+    return _one_edit(lemma, form)
+
+
+def matches_lexeme_pos(text: str, lemma: str, pos: str, forms, verb_only=()) -> bool:
+    """True when this sentence uses ``lemma`` as ``pos``.
+
+    A different detected use is rejected (``I eat bread`` is not the verb).
+    An unclear sentence is rejected too, so a rare part of speech is not
+    filled with the common one. Noun evidence has to be a real noun phrase:
+    ``My head still felt`` is not the noun ``still`` even though a determiner
+    sits two words earlier.
+    """
+    bag = {str(f).lower() for f in forms if f and _form_of_lemma(lemma, str(f))}
+    bag.add(lemma.lower())
+    only = frozenset(str(f).lower() for f in verb_only if _form_of_lemma(lemma, str(f))
+                     and str(f).lower() != lemma.lower())
+    use = _usage_pos(text, bag, only, lemma)
+    if use == "other" or (use and use != pos and pos not in ("adj", "adv")):
+        return False
+    if pos == "verb":
+        return use == "verb" or _verb_frame(text, lemma, only)
+    if pos == "noun":
+        return use != "verb" and _noun_frame(text, bag)
+    if pos == "adj":
+        return _adj_frame(text, lemma, bag)
+    if pos == "adv":
+        return _adv_frame(text, lemma, bag)
+    if pos == "phrase" and " " in lemma:
+        return lemma.lower() in " ".join(tokens(text))
+    return False
+
+
+def _verb_frame(text: str, lemma: str, verb_only: frozenset) -> bool:
+    _raw, toks = _word_tokens(text, {lemma.lower(), *verb_only})
+    if any(t in verb_only and not _participle_modifier(toks, i) for i, t in enumerate(toks)):
+        return True
+    for i, t in enumerate(toks):
+        if t != lemma.lower() or i == 0:
+            continue
+        if toks[i - 1] in _MODAL:
+            nxt = toks[i + 1] if i + 1 < len(toks) else ""
+            # "Can orange trees" — the modal belongs to the later verb.
+            if nxt in DETERMINERS or nxt in {"it", "him", "her", "them", "me", "us", "you"} or not nxt:
+                return True
+    # Imperative: "Bread the cutlets."
+    if toks and toks[0] == lemma.lower() and len(toks) > 1 and toks[1] in DETERMINERS:
+        return True
+    return False
+
+
+_IRREGULAR_VERB_FORMS = {
+    form for lemma, forms in IRREGULAR_FORMS.items()
+    if lemma not in {"child", "person", "man", "woman", "mouse", "goose",
+                     "tooth", "foot", "good", "bad"}
+    for form in forms
+}
+
+
+def _noun_frame(text: str, forms) -> bool:
+    """``a``/``an``/``the`` directly before the head (``the bread``).
+
+    ``that``/``this`` are also pronouns (``that still has``), and a following
+    -ing word is often another modifier (``a separate smoking section``).
+    """
+    raw, toks = _word_tokens(text, forms)
+    for i, t in enumerate(toks):
+        if t not in forms or i == 0 or toks[i - 1] not in {"a", "an", "the"}:
+            continue
+        # "can" is also a noun ("an empty can"), so a modal here does not
+        # prove the noun phrase has ended.
+        np_end = PHRASE_END - {"can", "may", "might", "will", "must"}
+        ends = i == len(toks) - 1 or toks[i + 1] in np_end or raw[i].endswith("'s")
+        nxt = toks[i + 1] if i + 1 < len(toks) else ""
+        # "a masculine and feminine system" and "the black-and-white marbled
+        # cover" are modifiers. "a cunning thought": thought is a noun that
+        # is also a verb form.
+        # "a masculine and feminine system": X and Y modify the noun after them.
+        # "the bread and butter" has no noun after the pair, so bread stays.
+        if nxt in {"and", "or"} and i + 3 < len(toks):
+            after = toks[i + 3]
+            after_poses = _listed_poses(after)
+            if "noun" in after_poses or (not after_poses and not _lexical_verb(after)):
+                continue
+        if "-" in t and not ends:
+            continue
+        next_verb = bool(nxt) and "noun" not in _listed_poses(nxt) and (
+            nxt in _IRREGULAR_VERB_FORMS or nxt.endswith("ed"))
+        if ends or next_verb:
+            return True
+    return False
+
+
+def _adj_frame(text: str, lemma: str, forms) -> bool:
+    """Predicative (``is crinkled``, ``is chocolate``) or attributive
+    (``the crinkled paper``, ``an aquatic park``).
+
+    A noun in front of another noun (``chocolate fudge``, ``this street``)
+    is not enough. ``was spread`` / ``was carved into`` stay passives.
+    ``Tom is observing`` is the progressive, not an adjective.
+    """
+    _raw, toks = _word_tokens(text, forms)
+    for i, t in enumerate(toks):
+        if t not in forms and t != lemma.lower():
+            continue
+        prev = toks[i - 1] if i else ""
+        prev2 = toks[i - 2] if i > 1 else ""
+        nxt = toks[i + 1] if i + 1 < len(toks) else ""
+        predicative = prev in _COPULA or (prev in _DEGREE and prev2 in _COPULA)
+        if predicative and not nxt and not t.endswith("ly"):
+            poses = _listed_poses(t)
+            if poses == {"adv"}:
+                continue
+            if (t.endswith("ing") and prev not in _DEGREE and "adj" not in poses
+                    and not _looks_adj_token(t)):
+                continue
+            # was/were + a verb (was spread) is passive. was/were + an
+            # adjective (was happy, was very fitting) is predicative.
+            if prev in {"was", "were"}:
+                if _adj_evidence(t):
+                    return True
+            else:
+                return True
+        after_det = prev in DETERMINERS or (prev in _DEGREE and prev2 in DETERMINERS)
+        verbish_next = _lexical_verb(nxt) and "noun" not in _listed_poses(nxt) and "adj" not in _listed_poses(nxt)
+        if (after_det and nxt and nxt not in PHRASE_END and nxt not in DETERMINERS
+                and not verbish_next and (
+                    (_looks_adj_token(t) and "noun" not in _listed_poses(t))
+                    or (_can_be_modified(nxt) and _adj_not_noun(t)))):
+            return True
+    return False
+
+
+def _adv_frame(text: str, lemma: str, forms) -> bool:
+    """Manner -ly adverbs by presence. Other adverbs only in an adverb slot:
+    closed-class (also), before a verb (still does), before an adjective
+    (stone cold), or after a verb (hovered overhead). Not ``the still``,
+    ``a red light``, ``goes flat``, or ``Today is Monday``.
+    """
+    w = lemma.lower()
+    bag = _form_bag(forms)
+    if w in _NOT_LY_ADV or _noun_frame(text, bag | {w}):
+        return False
+    _raw, toks = _word_tokens(text, bag | {w})
+    if w.endswith("ly"):
+        return w in toks or any(t in bag and t.endswith("ly") for t in toks)
+    if w not in toks and not any(t in bag for t in toks):
+        return False
+    poses = _listed_poses(w)
+    listed_adv = "adv" in poses
+    for i, t in enumerate(toks):
+        if t != w and t not in bag:
+            continue
+        prev = toks[i - 1] if i else ""
+        nxt = toks[i + 1] if i + 1 < len(toks) else ""
+        if prev in DETERMINERS:
+            continue
+        if "noun" in poses and nxt in _COPULA:
+            continue
+        if poses == {"adv"}:
+            return True
+        if listed_adv and _lexical_verb(nxt):
+            return True
+        if _clear_adj(nxt) and "adj" not in poses:
+            return True
+        if listed_adv and _clear_adj(nxt):
+            return True
+        if ((listed_adv or not poses) and "adj" not in poses and "noun" not in poses
+                and not nxt and _lexical_verb(prev) and prev not in _COPULA):
+            return True
+        if (listed_adv and not nxt and prev not in _COPULA and not _lexical_verb(prev)):
+            # "is not flat" / "basically flat" are adjectives. "o'clock sharp" is not.
+            prev2 = toks[i - 2] if i > 1 else ""
+            if "adj" in poses and (prev.endswith("ly") or prev in _DEGREE or prev == "not"
+                                   or prev2 in _COPULA or prev2 in _DEGREE):
+                continue
+            return True
+        if listed_adv and prev in _COPULA and _clear_adj(nxt):
+            return True
+    return False
+
+
 def _usage_pos(text: str, forms, verb_only, lemma: str | None = None) -> str | None:
     """Which part of speech the headword is in this sentence, when its form
     or a determiner before it says so: "verb" (Tom was mugged), "noun" (the
@@ -503,14 +1232,7 @@ def _usage_pos(text: str, forms, verb_only, lemma: str | None = None) -> str | N
         # A phrase entry (butter knife): the phrase itself must be there.
         low_text = " ".join(tokens(text))
         return None if any(" " in f and f in low_text for f in forms) else "other"
-    raw = tokens(text)
-    toks = [t[:-2] if t.endswith("'s") else t.rstrip("'") for t in raw]
-    words = list(re.finditer(r"[A-Za-zÀ-ÿœæ']+", text or ""))
-    cased = [m.group(0) for m in words]
-    # A capital that does not start a sentence marks a name.
-    starts = [not (text or "")[:m.start()].rstrip(" \"'“‘(").strip()
-              or (text or "")[:m.start()].rstrip(" \"'“‘(").endswith((".", "!", "?", ":"))
-              for m in words]
+    raw, toks, cased, starts = _surface_pieces(text, forms)
     low = (text or "").lower()
     if not any(t in forms for t in toks):
         return "other"  # 「this is a pen」: not this word at all
@@ -529,7 +1251,8 @@ def _usage_pos(text: str, forms, verb_only, lemma: str | None = None) -> str | N
         # (「the train leaves」) it is the other word (問題回報 #104).
         # 「the bus that leaves」: that/which here is a relative pronoun,
         # so only an article or possessive (or these/those) counts.
-        plural_det = i > 0 and toks[i - 1] in ARTICLES | {"these", "those", "some", "many"}
+        plural_det = ((i > 0 and toks[i - 1] in ARTICLES | {"these", "those", "some", "many"})
+                      or (i > 1 and toks[i - 2] in {"these", "those", "some", "many"}))
         if lemma and t != lemma and t.endswith("s") and not plural_det and any(
                 b and b not in forms for b in (t[:-1], t[:-2] if t.endswith("es") else "")
         ) and base_is_word(t, lemma):
@@ -537,14 +1260,32 @@ def _usage_pos(text: str, forms, verb_only, lemma: str | None = None) -> str | N
         if t in verb_only:
             # 「the wound」: a noun spelt like the verb's form is another
             # word; so is long-winded. (Not 「this applies」: a pronoun.)
-            if (i > 0 and toks[i - 1] in ARTICLES) or re.search(
+            # 「many layers」: a quantifier means this form is the noun.
+            if (i > 0 and toks[i - 1] in DETERMINERS | {
+                    "many", "several", "few", "two", "three", "four", "five",
+                    "six", "seven", "eight", "nine", "ten"}) or re.search(
                     r"\w-" + re.escape(t) + r"\b|\b" + re.escape(t) + r"-\w", low):
                 return "other"
+            if _participle_modifier(toks, i):
+                continue
             return "verb"
         # A determiner just before, or before one modifier (a coffee mug),
         # and the noun phrase ends here — 「the crumbly soil」 is the adjective.
         ends = i == len(toks) - 1 or toks[i + 1] in PHRASE_END or raw[i].endswith("'s")
-        return "noun" if near_det and ends else None
+        next_is_verb = i + 1 < len(toks) and (
+            toks[i + 1] in {form for values in IRREGULAR_FORMS.values() for form in values}
+            or toks[i + 1].endswith(("ed", "ing")))
+        plural_head = (t != lemma and t.endswith("s")
+                       and (after_det or (i > 1 and toks[i - 2] in {"these", "those", "some", "many"})))
+        finite_next = next_is_verb or (i + 1 < len(toks) and toks[i + 1] in _FINITE_VERB)
+        # Determiner two words back + a following verb is "My head still felt",
+        # not the noun still. "a coffee mug" is unchanged (mug is not an
+        # adverb). "the still of the night" and "a quiet still" stay nouns.
+        adverb_slot = (not after_det and t in _PREVERBAL and finite_next
+                       and not _gap_modifier(toks[i - 1] if i else ""))
+        if adverb_slot:
+            continue
+        return "noun" if near_det and (ends or next_is_verb or plural_head) else None
     return None
 
 

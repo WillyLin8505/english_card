@@ -42,8 +42,10 @@ void main() {
     await store.seed(sampleWordDatabaseData(now: now, lexicon: testLexicon()));
     expect(store.needsSeed, isFalse);
 
-    final repo = WordDatabaseRepository.fromData(store.load(), store: store, clock: () => now);
-    final counts = (repo.wordCount, repo.photoCount, repo.cardCount, repo.albums.length);
+    final repo = WordDatabaseRepository.fromData(store.load(),
+        store: store, clock: () => now);
+    final counts =
+        (repo.wordCount, repo.photoCount, repo.cardCount, repo.albums.length);
     expect(repo.photo('photo-breakfast')!.candidates, isNotEmpty);
 
     repo.addWord(word: 'patio', pos: 'noun', meaning: '露台');
@@ -59,12 +61,20 @@ void main() {
     final breakfastPool = repo.photo('photo-breakfast')!.candidates;
     repo.savePhotoWords(
       'photo-new',
-      [ListedWord(breakfastPool.firstWhere((c) => c.word == 'mug'), const LabelPoint(0.4, 0.6))],
+      [
+        ListedWord(breakfastPool.firstWhere((c) => c.word == 'mug'),
+            const LabelPoint(0.4, 0.6))
+      ],
       difficultyOffset: -1,
     );
     repo.archiveWord(repo.entryByWord('knife')!.id);
     final balcony = repo.cardOf(repo.entryByWord('balcony')!.id)!;
-    final log = repo.review(balcony.id, Rating.good, duration: const Duration(seconds: 4));
+    final log = repo.review(balcony.id, Rating.good,
+        duration: const Duration(seconds: 4),
+        templateType: 'cloze',
+        correct: true,
+        hintCount: 1,
+        attempts: 2);
     final fields = [...repo.template.backFields];
     fields.add(fields.removeAt(0).copyWith(visible: false));
     repo.updateTemplate(repo.template.copyWith(backFields: fields));
@@ -83,12 +93,18 @@ void main() {
     expect(again.photo('photo-new')!.difficultyOffset, -1);
     expect(again.photo('photo-new')!.wordsSavedAt, isNotNull);
     expect(again.isArchived(again.entryByWord('knife')!.id), isTrue);
-    expect(again.photo('photo-breakfast')!.candidates.length, breakfastPool.length);
+    expect(again.photo('photo-breakfast')!.candidates.length,
+        breakfastPool.length);
 
     final card = again.card(balcony.id)!;
     expect(card.fsrs.due, log.after.due);
     expect(card.fsrs.algorithmVersion, 'fsrs-5');
+    expect(again.logsOf(card.id).single.requestedRating, Rating.good);
     expect(again.logsOf(card.id).single.durationMs, 4000);
+    expect(again.logsOf(card.id).single.templateType, 'cloze');
+    expect(again.logsOf(card.id).single.correct, isTrue);
+    expect(again.logsOf(card.id).single.hintCount, 1);
+    expect(again.logsOf(card.id).single.attempts, 2);
 
     expect(again.template.backFields.first.field, CardBackField.posAndMeaning);
     expect(again.template.backFields.last.visible, isFalse);
@@ -96,11 +112,55 @@ void main() {
     expect(again.profile.learned, contains('knife'));
   });
 
+  test('original and effective grades survive restart and archive restore',
+      () async {
+    final store = await HiveWordDatabaseStore.open();
+    await store.seed(sampleWordDatabaseData(now: now, lexicon: testLexicon()));
+    final repo = WordDatabaseRepository.fromData(store.load(),
+        store: store, clock: () => now);
+    final entry = repo.entryByWord('balcony')!;
+    final card = repo.cardOf(entry.id)!;
+    repo.review(card.id, Rating.hard,
+        requestedRating: Rating.good,
+        templateType: 'photoChoice',
+        correct: true);
+    repo.review(card.id, Rating.hard,
+        requestedRating: Rating.hard,
+        templateType: 'photoChoice',
+        correct: true);
+    repo.archiveWord(entry.id);
+    await repo.flush();
+    final again = await reopen();
+    expect(
+        again.logsOf(card.id).map((l) => l.rating), [Rating.hard, Rating.hard]);
+    expect(again.logsOf(card.id).map((l) => l.requestedRating),
+        [Rating.good, Rating.hard]);
+    final old = again.logsOf(card.id).first.toJson()..remove('requestedRating');
+    final legacy = ReviewLog.fromJson(old);
+    expect(legacy.requestedRating, isNull);
+    expect(legacy.rating, Rating.hard);
+    expect(legacy.toJson().containsKey('requestedRating'), isFalse);
+    expect(legacy.after.toJson(), again.logsOf(card.id).first.after.toJson());
+    expect(again.isArchived(entry.id), isTrue);
+    final state = again.card(card.id)!.fsrs.toJson();
+    again.restoreWord(entry.word);
+    await again.flush();
+    expect(again.card(card.id)!.fsrs.toJson(), state);
+    final box = Hive.box<String>('wd_review_logs');
+    await box.add(jsonEncode(old));
+    final restored = await reopen();
+    expect(restored.isArchived(entry.id), isFalse);
+    expect(restored.card(card.id)!.fsrs.toJson(), state);
+    expect(restored.logsOf(card.id).map((l) => l.requestedRating),
+        [Rating.good, Rating.hard, null]);
+    expect(restored.logsOf(card.id).last.rating, Rating.hard);
+  });
+
   test('a burst of reviews is durable before an orderly close', () async {
     final store = await HiveWordDatabaseStore.open();
     await store.seed(const WordDatabaseData());
-    final repo = WordDatabaseRepository.fromData(store.load(), store: store,
-        clock: () => now);
+    final repo = WordDatabaseRepository.fromData(store.load(),
+        store: store, clock: () => now);
     for (var i = 0; i < 100; i++) {
       final e = repo.addWord(word: 'word$i', pos: 'noun', meaning: '意思$i');
       final c = repo.cardOf(e.id)!;
@@ -117,11 +177,12 @@ void main() {
     expect(loaded.cards.every((c) => c.fsrs.reps == 4), isTrue);
   });
 
-  test('flush reports writes that failed instead of silently passing', () async {
+  test('flush reports writes that failed instead of silently passing',
+      () async {
     final store = await HiveWordDatabaseStore.open();
     await store.seed(const WordDatabaseData());
-    final repo = WordDatabaseRepository.fromData(store.load(), store: store,
-        clock: () => now);
+    final repo = WordDatabaseRepository.fromData(store.load(),
+        store: store, clock: () => now);
     await store.close();
     repo.addWord(word: 'apple', pos: 'noun', meaning: '蘋果');
     await Future<void>.delayed(Duration.zero);
@@ -196,7 +257,11 @@ void main() {
             'wordEntryId': 'w-cup',
             'templateId': 'photo-word-card',
             'suspended': i == 0,
-            'fsrs': {'state': i == 1 ? 'review' : 'newCard', 'reps': i * 3, 'stability': 4.0},
+            'fsrs': {
+              'state': i == 1 ? 'review' : 'newCard',
+              'reps': i * 3,
+              'stability': 4.0
+            },
           }));
     }
     final logs = await box('review_logs');

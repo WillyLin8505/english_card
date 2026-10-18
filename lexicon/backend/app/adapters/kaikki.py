@@ -38,6 +38,11 @@ LABEL_TAGS = {"informal", "formal", "slang", "colloquial", "vulgar", "offensive"
               "humorous", "literary", "figuratively", "idiomatic", "countable", "uncountable",
               "transitive", "intransitive", "British", "US", "Australia", "Canada", "archaic",
               "dated", "rare", "obsolete", "technical", "euphemistic", "childish", "poetic"}
+REGISTER_SLANG = {"slang", "vulgar", "offensive", "derogatory", "nonstandard",
+                  "eye-dialect", "pronunciation-spelling"}
+REGISTER_SPOKEN = {"informal", "colloquial", "conversational", "childish"}
+REGISTER_WRITTEN = {"formal", "literary", "poetic", "technical", "academic"}
+REGISTER_LABELS = {"neutral": "中性／通用", "written": "書面語", "spoken": "口語", "slang": "俚語"}
 AFFIX_TEMPLATES = {"affix", "af", "prefix", "pre", "suffix", "suf", "compound", "com",
                    "confix", "con", "surf", "blend"}
 ORIGIN_TEMPLATES = {"inh", "inh+", "der", "der+", "bor", "bor+", "lbor", "slbor", "uder"}
@@ -106,8 +111,30 @@ def _gloss(s: dict) -> str:
     return (s.get("glosses") or s.get("raw_glosses") or [""])[-1].strip()
 
 
+RARE_FORM_TAGS = {"dialectal", "obsolete", "archaic", "rare", "nonstandard", "eye-dialect",
+                  "pronunciation-spelling", "misspelling", "nonce-word"}
+
+
 def _is_form_of(s: dict) -> bool:
     return bool(s.get("form_of") or s.get("alt_of")) or "form-of" in s.get("tags", [])
+
+
+def inflection_only_pos(entries) -> set[str]:
+    """Parts of speech that are only another word's form (lying the verb:
+    lie's participle) while the word means something of its own elsewhere
+    (lying 說謊的). They get no entry: the app finds lie through its forms
+    (問題回報 #51). Empty when every part of speech is a form (runs: the
+    whole word is run's, see adapters.base.inflection_bases)."""
+    real, form = set(), set()
+    for e in entries:
+        p = _pos(e)
+        if not p or p == "name":
+            continue
+        if any(_gloss(s) and not _is_form_of(s) for s in e.get("senses", [])):
+            real.add(p)
+        else:
+            form.add(p)
+    return form - real if real else set()
 
 
 # Recording file names say the accent when the tags don't
@@ -239,12 +266,20 @@ class Kaikki(SourceAdapter):
 
     def senses(self, entries, ctx) -> list[dict]:
         out, seen = [], set()
+        forms_only = inflection_only_pos(entries)
+        # Homographs can occupy separate entries. A fallback is needed only
+        # when the entire part of speech lacks independent meanings.
+        real_pos = {_pos(e) for e in entries
+                    if any(_gloss(s) and not _is_form_of(s)
+                           for s in e.get("senses", []))}
         for e in entries:
             pos = _pos(e)
-            if not pos:
+            if not pos or pos in forms_only:
                 continue
             real = [s for s in e.get("senses", []) if _gloss(s) and not _is_form_of(s)]
-            for s in real or [s for s in e.get("senses", []) if _gloss(s)][:1]:
+            selected = real if pos in real_pos else [
+                s for s in e.get("senses", []) if _gloss(s)][:1]
+            for s in selected:
                 g = _gloss(s)
                 k = sense_key(pos, g)
                 if k in seen:
@@ -267,9 +302,10 @@ class Kaikki(SourceAdapter):
 
         word = entries[0].get("word", ctx.lemma)
         if f == "pos":
+            forms_only = inflection_only_pos(entries)
             for e in entries:
                 p = _pos(e)
-                if p and p != "name":
+                if p and p != "name" and p not in forms_only:
                     add({"pos": p}, p, slot=p, rid=f"{word}#{e.get('pos')}")
         elif f == "definition":
             gloss_lang = "en"  # English Wiktionary glosses are English
@@ -296,6 +332,22 @@ class Kaikki(SourceAdapter):
             for s in self.senses(entries, ctx):
                 for tag in sorted(set(s["sense"].get("tags", [])) & LABEL_TAGS):
                     add({"label": tag, "sense_key": s["sense_key"]}, f"{tag}", slot="")
+        elif f == "register":
+            for s in self.senses(entries, ctx):
+                tags = set(s["sense"].get("tags", []))
+                if tags & REGISTER_SLANG:
+                    register, evidence = "slang", tags & REGISTER_SLANG
+                elif tags & REGISTER_SPOKEN:
+                    register, evidence = "spoken", tags & REGISTER_SPOKEN
+                elif tags & REGISTER_WRITTEN:
+                    register, evidence = "written", tags & REGISTER_WRITTEN
+                else:
+                    register, evidence = "neutral", set()
+                add({"register": register, "label": REGISTER_LABELS[register],
+                     "sense_key": s["sense_key"], "pos": s["pos"],
+                     "evidence": sorted(evidence)},
+                    s["sense_key"], slot=s["sense_key"],
+                    conf=1.0 if evidence else 0.8)
         elif f in ("ipa", "accent_labels", "audio", "homophones", "phonemes"):
             self._sounds(f, entries, ctx, add)
         elif f == "syllables":
@@ -327,8 +379,13 @@ class Kaikki(SourceAdapter):
             for e in entries:
                 senses = e.get("senses", [])
                 of = [fo.get("word") for s in senses for fo in s.get("form_of", []) if fo.get("word")]
-                if senses and of and all(_is_form_of(s) for s in senses):
+                # Not a dialect / old form (book as the Northern English past of
+                # bake would give book baked / baking).
+                rare = bool(senses) and all(RARE_FORM_TAGS & set(s.get("tags", [])) for s in senses)
+                if senses and of and all(_is_form_of(s) for s in senses) and not rare:
                     bases += [(b, _pos(e)) for b in of if b.lower() != word.lower()]
+                elif rare:
+                    continue
                 else:
                     sources.append((e, word, False))
             for base, pos in dict.fromkeys(bases):
@@ -549,18 +606,19 @@ class Kaikki(SourceAdapter):
                 ipa = snd.get("ipa")
                 if f == "ipa" and ipa:
                     phonemic = ipa.startswith("/")
-                    value = {"ipa": ipa, "accent": acc}
+                    value = {"ipa": ipa, "accent": acc, "pos": e.get("pos")}
                     # wind (風) /wɪnd/ vs wind (纏繞) /waɪnd/: another
                     # etymology's sound is never the default.
                     ety = str(e.get("etymology_number") or "")
                     if ety.isdigit() and int(ety) > 1:
                         value["etymology"] = int(ety)
-                    add(value, ipa, conf=1.0 if phonemic else 0.7)
+                    add(value, f"{ipa}:{e.get('pos') or ''}:{ety}",
+                        conf=1.0 if phonemic else 0.7)
                 elif f == "phonemes" and ipa and ipa.startswith("/") and "US" in acc:
                     arpa = ipa_to_arpabet(ipa)
                     if arpa:
-                        add({"phonemes": arpa, "system": "ARPAbet", "from_ipa": ipa},
-                            arpa, conf=0.6)
+                        add({"phonemes": arpa, "system": "ARPAbet", "from_ipa": ipa,
+                             "pos": e.get("pos")}, f"{arpa}:{e.get('pos') or ''}", conf=0.6)
                 elif f == "accent_labels":
                     for a in acc:
                         add({"accent": a}, a)
@@ -569,7 +627,9 @@ class Kaikki(SourceAdapter):
                     if url:
                         acc = acc or file_accent(snd.get("audio"))
                         add({"url": url, "file": snd.get("audio"), "accent": acc,
-                             "fallback_url": snd.get("ogg_url")}, url, slot=audio_slot(acc),
+                             "pos": e.get("pos"),
+                             "fallback_url": snd.get("ogg_url")},
+                            f"{url}:{e.get('pos') or ''}", slot=audio_slot(acc),
                             rid=snd.get("audio") or url)
                 elif f == "homophones" and snd.get("homophone") and \
                         zipf(snd["homophone"], ctx.target) >= 2.0:

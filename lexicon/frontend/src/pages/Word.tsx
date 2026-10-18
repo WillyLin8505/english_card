@@ -7,6 +7,7 @@ type Item = Record<string, unknown>;
 type WordView = {
   lemma: string;
   display: string;
+  entry_type: string;
   target_language: string;
   native_language: string;
   lexemes: { id: number; pos: string; status: string; cefr: string | null; zipf: number | null }[];
@@ -56,7 +57,7 @@ export default function Word({ target, native, lemma }: { target: string; native
   const [busyField, setBusyField] = useState<string | null>(null);
   const { toast, node } = useToast();
 
-  if (w.error) return <div className="page"><p><Link to="/coverage">← 覆蓋率</Link></p><ErrorBox error={w.error} /></div>;
+  if (w.error) return <div className="page"><p><Link to="/coverage">← 單字資料庫</Link></p><ErrorBox error={w.error} /></div>;
   if (!w.data) return <Loading />;
   const d = w.data;
   const lexId = d.lexemes.find((l) => l.status === "full")?.id;
@@ -121,8 +122,8 @@ export default function Word({ target, native, lemma }: { target: string; native
       {node}
       <header className="page-head">
         <div>
-          <p><Link to="/coverage">← 覆蓋率</Link></p>
-          <h1>{d.display}</h1>
+          <p><Link to="/coverage">← 單字資料庫</Link></p>
+          <h1>{d.display}{d.entry_type === "phrase" && <span className="pill" title="多字詞條：目前不分片語動詞／慣用語">片語</span>}</h1>
           <p className="muted">
             {langName(target)} → {langName(native)} ·{" "}
             {d.lexemes.map((l) => (

@@ -117,10 +117,12 @@ def _upgrade(s: Session, language: str, lemma: str, display: str, poses: list[st
             s.flush()
         lx.status, lx.lemma = "full", display
         out[pos] = lx
-    # Stubs with an unknown part of speech → redirect to the main lexeme.
+    # Stubs with an unknown part of speech, and a part of speech the word no
+    # longer has (lying the verb is lie's form, 問題回報 #51) → redirect to
+    # the main lexeme, like a sense the definitions no longer have.
     main = out[poses[0]]
     for r in rows:
-        if r.pos not in out and r.status == "stub":
+        if r.pos not in out:
             for rel in s.execute(select(m.LexemeRelation).where(
                     m.LexemeRelation.target_lexeme_id == r.id)).scalars().all():
                 dup = s.execute(select(m.LexemeRelation.id).where(
@@ -214,7 +216,10 @@ def materialize(s: Session, target: str, lemma: str, display: str | None = None)
     # Pronunciations (shared by every part of speech of the headword)
     s.execute(delete(m.Pronunciation).where(m.Pronunciation.lexeme_id.in_(ids)))
     audio_assets = []
-    for it in u("audio"):
+    # Keep the system voice as a playable fallback.  It is a separate policy
+    # field so it never masks a later real recording, but both become
+    # pronunciations in the app projection.
+    for it in [*u("audio"), *u("tts_fallback")]:
         if it.get("tts"):
             audio_assets.append((None, it))
         elif it.get("url"):
@@ -225,7 +230,8 @@ def materialize(s: Session, target: str, lemma: str, display: str | None = None)
         n = 0
         for kind, f in (("ipa", "ipa"), ("phonemes", "phonemes"), ("syllables", "syllables"),
                         ("stress", "stress")):
-            rows = british_first(u(f)) if f == "ipa" else u(f)
+            rows = [it for it in u(f) if not it.get("pos") or it.get("pos") == lx.pos]
+            rows = british_first(rows) if f == "ipa" else rows
             for i, it in enumerate(rows):
                 val = (it.get("ipa") or it.get("phonemes")
                        or "·".join(it.get("syllables") or []) or str(it.get("count") or "")
@@ -235,16 +241,18 @@ def materialize(s: Session, target: str, lemma: str, display: str | None = None)
                                       is_default=i == 0, source=it.get("source", ""), ordinal=n))
                 n += 1
         first_audio = True
-        for asset, it in british_first(audio_assets, lambda r: r[0].accent if r[0] else "~",
-                                       lambda r: ""):
+        matching_audio = [(asset, it) for asset, it in audio_assets
+                          if not it.get("pos") or it.get("pos") == lx.pos]
+        for asset, it in british_first(matching_audio,
+                                       lambda r: r[0].accent if r[0] else "~", lambda r: ""):
             s.add(m.Pronunciation(
                 lexeme_id=lx.id, kind="tts" if asset is None else "audio",
                 value=it.get("locale", "") if asset is None else "",
                 accent=(it.get("accent") or [None])[0] if asset is not None else None,
                 audio_asset_id=asset.id if asset is not None else None,
-                is_default=first_audio and asset is not None, source=it.get("source", ""),
+                is_default=first_audio, source=it.get("source", ""),
                 ordinal=n))
-            first_audio = first_audio and asset is None
+            first_audio = False
             n += 1
 
     # Relations and derived words, linked to real (or stub) lexemes
@@ -376,6 +384,12 @@ def materialize(s: Session, target: str, lemma: str, display: str | None = None)
                                             text=it.get("text", ""), source=it.get("source", ""),
                                             is_ai=bool(it.get("ai"))))
     s.flush()
+    # A noun saved without image fields, or whose senses were replaced, still
+    # needs a picture. ensure_picture_fetch does not restart a search that
+    # already used up the rejected-picture cap.
+    native = "zh-TW" if "zh-TW" in values else next(iter(sorted(values)))
+    from . import images
+    images.ensure_picture_fetch(s, target, native, lemma)
     return ids
 
 

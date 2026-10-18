@@ -53,7 +53,7 @@ export default function Dashboard() {
                 <h3>
                   {langName(p.target_language)} → {langName(p.native_language)}
                 </h3>
-                <p className="big">{p.words} <small>個詞條</small></p>
+                <p className="big">{p.words} <small>個已擷取單字（此語言方向）</small></p>
                 <dl className="kv">
                   <dt>目標語言欄位</dt><dd><Rate value={p.target_rate} /></dd>
                   <dt>母語翻譯</dt><dd><Rate value={p.native_rate} /></dd>
@@ -61,7 +61,7 @@ export default function Dashboard() {
                   <dt>衍生詞詞義</dt><dd><Rate value={p.derived_meaning_rate} /></dd>
                   <dt>缺少／失敗</dt><dd><span className="warn">{p.missing}</span> ／ <span className="bad">{p.failed}</span></dd>
                 </dl>
-                <Link to="/coverage">查看覆蓋率 →</Link>
+                <Link to="/coverage">查看單字資料庫 →</Link>
               </div>
             ))}
           </div>

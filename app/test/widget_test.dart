@@ -38,6 +38,8 @@ void main() {
 
     await tester.tap(find.text('設定'));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('目前程度 入門（A1）'), 200,
+        scrollable: find.byType(Scrollable).last);
     expect(find.text('目前程度 入門（A1）'), findsOneWidget);
   });
 

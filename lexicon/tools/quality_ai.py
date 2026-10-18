@@ -2,7 +2,8 @@
 
     python lexicon/tools/quality_ai.py steep hinged rosemary ...   [--dry-run]
 
-Uses local Ollama (qwen3-vl for pictures, same model for text):
+Uses the tagger's local llama-server (:8790, same model for pictures and text;
+#43 stopped loading a second copy straight into Ollama):
   * images  - asks whether each approved sense picture really shows the word;
               "no" -> sense_images.review_status = 'rejected' (reversible).
   * senses  - asks which senses a learner needs; others go to
@@ -17,6 +18,7 @@ from __future__ import annotations
 import base64
 import datetime as dt
 import json
+import os
 import re
 import sys
 import urllib.request
@@ -26,21 +28,32 @@ HOME = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(HOME / "backend"))
 from sqlalchemy import text  # noqa: E402
 
+from app import agent_pause
 from app import config, db, quality  # noqa: E402
 
-OLLAMA = "http://127.0.0.1:11434/api/generate"
-MODEL = "qwen3-vl:4b-instruct-q4_K_M"
+# #43: talk to the tagger's llama-server, not a second copy of the model
+# loaded straight into Ollama. Ollama kept that copy resident forever on
+# this machine (OLLAMA_KEEP_ALIVE=-1), overflowing the 8 GB card alongside
+# llama-server and roughly halving recognition throughput.
+LLAMACPP_URL = os.environ.get("TAGGER_LLAMACPP_URL", "http://127.0.0.1:8790").rstrip("/")
 
 
 def ask(prompt: str, image: Path | None = None) -> str:
-    body = {"model": MODEL, "prompt": prompt, "stream": False, "options": {"temperature": 0}}
+    if agent_pause.is_paused("Qwen"):
+        return ""  # owner paused Qwen on the board
+    content = [{"type": "text", "text": prompt}]
     if image:
-        body["images"] = [base64.b64encode(image.read_bytes()).decode()]
-    req = urllib.request.Request(OLLAMA, json.dumps(body).encode(), {"Content-Type": "application/json"})
+        content.insert(0, {"type": "image_url", "image_url": {
+            "url": "data:image/jpeg;base64," + base64.b64encode(image.read_bytes()).decode()}})
+    body = {"messages": [{"role": "user", "content": content}], "temperature": 0,
+            "chat_template_kwargs": {"enable_thinking": False}}
+    req = urllib.request.Request(f"{LLAMACPP_URL}/v1/chat/completions", json.dumps(body).encode(),
+                                 {"Content-Type": "application/json"})
     for _ in range(2):
         try:
             with urllib.request.urlopen(req, timeout=300) as r:
-                return json.loads(r.read())["response"].strip()
+                reply = json.loads(r.read())
+            return reply["choices"][0]["message"]["content"].strip()
         except OSError:
             continue
     return ""  # no answer: the caller keeps the current data

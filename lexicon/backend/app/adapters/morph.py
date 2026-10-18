@@ -74,7 +74,15 @@ class MorphLocal(SourceAdapter):
                                              p["part"].lower(), confidence=0.8))
             return out
         if f == "morphemes_native" and ctx.native == "zh-TW":
+            from ..morphology import etymology_part_glosses, part_key
             missing = ctx.memo.get(("missing_slots", f))
+            ety_zh = next((i.get("text") or "" for i in ctx.items("etymology_native")), "")
+            ety_en = next((i.get("text") or "" for i in ctx.items("etymology_text")), "")
+            glosses = etymology_part_glosses(ety_zh, ety_en)
+            # A part that is the headword itself keeps that word's meaning.
+            # A smaller part (nape inside napkin) keeps the etymology's gloss
+            # instead of the modern dictionary sense of the part.
+            head = part_key(ctx.lemma)
             out = []
             for bd in ctx.items("morphemes")[:1]:
                 for i, p in enumerate(bd.get("parts", [])):
@@ -86,5 +94,12 @@ class MorphLocal(SourceAdapter):
                         out.append(Candidate(f, "zh-TW", {"slot": slot, "part": p["part"],
                                                           "text": e.zh}, slot, slot=slot,
                                              source_record_id=f"{e.kind}:{e.form}"))
+                        continue
+                    key = part_key(p.get("text") or p.get("part") or "")
+                    gloss = glosses.get(key)
+                    if gloss and key and key != head:
+                        out.append(Candidate(f, "zh-TW", {"slot": slot, "part": p["part"],
+                                                          "text": gloss}, slot, slot=slot,
+                                             source_record_id=f"etymology:{key}"))
             return out
         return []

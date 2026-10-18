@@ -67,8 +67,16 @@ def missing_words(s: Session, target: str) -> list[str]:
             m.FieldValue.field.in_(catalog.FORM_FIELDS),
             m.FieldValue.lemma.in_(have))).scalars():
         have |= {str(i.get("form", "")).lower() for i in fv.items or [] if i.get("form")}
-    return list(dict.fromkeys(w for w in words if w and w not in have
-                              and not _foreign(w, target)))
+    from .adapters.base import inflection_bases
+    out = []
+    for w in words:
+        if not w or w in have or _foreign(w, target):
+            continue
+        # A form with no meaning of its own asks for its word: runs → run,
+        # leaves → leaf and leave (問題回報 #51).
+        bases = inflection_bases(w, target) if " " not in w else ()
+        out += [b for b in bases if b not in have] if bases else [w]
+    return list(dict.fromkeys(out))
 
 
 def _foreign(word: str, target: str) -> bool:
@@ -393,6 +401,13 @@ def run(session_factory, job_id: int, worker_id: str, stop=lambda: False,
                                      source="*", error_type="exception",
                                      message=f"{type(e).__name__}: {e}"[:2000]))
                 log(s, job_id, f"「{word}」處理失敗：{type(e).__name__}: {e}", "error")
+            elapsed_ms = int((time.time() - started) * 1000)
+            recent = [int(value) for value in (counts.get("recent_word_ms") or [])[-9:]
+                      if isinstance(value, (int, float))]
+            recent.append(elapsed_ms)
+            counts["recent_word_ms"] = recent
+            counts["word_ms_total"] = int(counts.get("word_ms_total", 0)) + elapsed_ms
+            counts["word_ms_samples"] = int(counts.get("word_ms_samples", 0)) + 1
             job.checkpoint += 1
             job.counts = counts
             job.heartbeat_at = now()
@@ -424,6 +439,13 @@ def heartbeat(session_factory, job_id: int, worker_id: str):
 def job_dict(job: m.ImportJob, detail: bool = False) -> dict:
     c = job.counts or {}
     words = job.words or []
+    recent_ms = [int(value) for value in (c.get("recent_word_ms") or [])
+                 if isinstance(value, (int, float)) and value >= 0]
+    recent_avg_ms = int(sum(recent_ms) / len(recent_ms)) if recent_ms else None
+    samples = int(c.get("word_ms_samples", 0) or 0)
+    average_ms = int(c.get("word_ms_total", 0) / samples) if samples else None
+    eta_seconds = (round((job.total - job.checkpoint) * recent_avg_ms / 1000)
+                   if recent_avg_ms is not None else None)
     d = {"id": job.id, "target_language": job.target_language,
          "native_language": job.native_language, "mode": job.mode,
          "mode_label": pipeline.MODES.get(job.mode, job.mode), "status": job.status,
@@ -433,6 +455,8 @@ def job_dict(job: m.ImportJob, detail: bool = False) -> dict:
          "worker_id": job.worker_id, "retry_of": job.retry_of, "note": job.note,
          "created_at": job.created_at, "started_at": job.started_at,
          "finished_at": job.finished_at, "heartbeat_at": job.heartbeat_at,
+         "average_word_ms": average_ms, "recent_word_ms": recent_avg_ms,
+         "eta_seconds": eta_seconds,
          "succeeded": sum(c.get(f"fields_{st}", 0) for st in catalog.DONE),
          "partial": c.get("fields_partial", 0), "missing": c.get("fields_missing", 0),
          "failed": c.get("fields_failed", 0) + c.get("words_failed", 0),

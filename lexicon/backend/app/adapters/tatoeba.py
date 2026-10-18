@@ -17,10 +17,11 @@ from pathlib import Path
 from sqlalchemy import text as sql
 
 from .. import catalog
+from ..quality import example_flags
 from ..text import CJK, example_key, fold, looks_simplified, opencc
 from . import http
 from .base import Candidate, Context, SourceAdapter
-from .local import LEVELS, sentence_level, word_forms
+from .local import LEVELS, _usage_pos, _verb_only_forms, sentence_level, word_forms
 
 CODE3 = {"en": "eng", "fr": "fra", "zh-TW": "cmn"}
 EXPORTS = "https://downloads.tatoeba.org/exports/per_language"
@@ -183,19 +184,39 @@ class Tatoeba(SourceAdapter):
         if f == "example_sentences":
             buckets = {level: [] for level in LEVELS}
             forms = word_forms(ctx)
+            form_list = list(forms)
             for s in sentences:
                 if ctx.target != "zh-TW" and len(s["text"].split()) > catalog.MAX_EXAMPLE_WORDS:
                     continue
+                # Shared rule (#166): a fragment or a line that never uses the
+                # headword is not a candidate. Placeholder names stay eligible
+                # but sort after an ordinary sentence.
+                flags = set(example_flags(s["text"], ctx.lemma, "", form_list)) if ctx.target == "en" \
+                    else set()
+                if flags & {"not_sentence", "missing_lemma"}:
+                    continue
+                # One part of speech on this run: drop a sentence that is
+                # clearly another use (breaded is not the noun bread). An
+                # unclear sentence stays; homographs keep every use.
+                if ctx.target == "en":
+                    poses = {i.get("pos") for i in ctx.items("pos") if i.get("pos")}
+                    if len(poses) == 1:
+                        use = _usage_pos(s["text"], forms, _verb_only_forms(ctx), ctx.lemma)
+                        if use and use not in poses and use != "other":
+                            continue
                 level = sentence_level(s["text"], forms) if ctx.target == "en" \
                     else length_level(s["text"])
-                buckets[level].append(s)
+                buckets[level].append({**s, "_odd": "odd_name" in flags,
+                                        "_charged": "charged" in flags})
             # Exactly this order is offered to APPEND_LIMITED. Every level
             # takes up to five sentences that already have a translation;
             # untranslated ones only until the level has three, since each
             # of those needs an AI translation.
             ranked = []
             for level in LEVELS:
-                group = sorted(buckets[level], key=lambda s: (abs(len(s["text"]) - 45), s["id"]))
+                group = sorted(buckets[level], key=lambda s: (
+                    s.get("_odd", False), s.get("_charged", False),
+                    abs(len(s["text"]) - 45), s["id"]))
                 paired = [s for s in group if s.get("translations")][:5]
                 bare = [s for s in group if not s.get("translations")][:max(0, 3 - len(paired))]
                 ranked.extend((s, level) for s in paired + bare)

@@ -10,9 +10,11 @@ renamed into place — a failed export leaves nothing that looks finished.
 
 from __future__ import annotations
 
+import gc
 import hashlib
 import json
 import os
+import re
 import shutil
 import sqlite3
 import uuid
@@ -25,9 +27,9 @@ from sqlalchemy.orm import Session
 
 from . import catalog, config
 from . import models as m
-from .text import example_key, text_hash
+from .text import example_key, text_hash, is_column_word_list
 
-SCHEMA_VERSION = 4  # 3: relation CEFR / frequency / rarity; 4: approved sense pictures
+SCHEMA_VERSION = 5  # 5: per-sense register (neutral / written / spoken / slang)
 
 DDL = """
 CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
@@ -43,7 +45,7 @@ CREATE TABLE lexeme_redirects (old_id INTEGER PRIMARY KEY,
 CREATE TABLE senses (
   id INTEGER PRIMARY KEY, lexeme_id INTEGER NOT NULL REFERENCES lexemes(id),
   ordinal INTEGER NOT NULL, definition TEXT NOT NULL, definition_language TEXT NOT NULL,
-  labels TEXT NOT NULL DEFAULT '[]', source TEXT NOT NULL);
+  labels TEXT NOT NULL DEFAULT '[]', register TEXT, source TEXT NOT NULL);
 CREATE INDEX ix_senses_lexeme ON senses(lexeme_id, ordinal);
 CREATE TABLE sense_translations (
   sense_id INTEGER PRIMARY KEY REFERENCES senses(id), text TEXT NOT NULL,
@@ -117,17 +119,63 @@ _PER_LEVEL = {"synonyms", "related"}
 _PER_LEVEL_MAX = 3
 
 
-from .text import clean_native, offensive_native  # noqa: E402
+from .text import clean_native, offensive_native, repair_outlaw_gloss, sense_native  # noqa: E402
 
 
-def unfit_example(text: str) -> bool:
-    """A sentence with a swear word or slur (問題回報 #92: phone's 「Fucking
-    hell…」, apple's 「…Flash crap!」). Capitalized Dick is a name."""
-    import re
+# Whole-token swears the exact OFFENSIVE list misses (bitches, shite,
+# fuckjuice). Same shape as scan_library's example/relation check.
+_PROFANE_TOKEN = re.compile(
+    r"^(?:fuck\w*|shit\w*|bitch\w*|cunt|dick|asshole|bastard|crap|whore|slut|nigger|faggot|retard\w*)$",
+    re.I,
+)
+# Stem inside a compound (assfuck, dickhead, whorehouse). Not a substring
+# of an ordinary word: dicker, dickey, benedick stay.
+_PROFANE_STEM = re.compile(r"fuck|shit|bitch|cunt|slut|whore|nigger|nigga|faggot", re.I)
+_DICK_SLUR = re.compile(
+    r"dick(?:head|weed|wad|face|ride|stain|matize|tatorship)|(?:limp|tenta)dick",
+    re.I,
+)
+_NOT_PROFANE = {
+    "dicker", "dickey", "dicky", "dickie", "benedick", "benedict",
+    "dickens", "dickinson", "dickenson",
+}
+
+
+def profane_token(token: str, *, name_dick: bool = False) -> bool:
+    """True when this token is a swear or a swear compound."""
     from .text import OFFENSIVE
+    raw = token or ""
+    low = raw.lower()
+    if not low or low in _NOT_PROFANE:
+        return False
+    if name_dick and low == "dick" and raw[:1].isupper():
+        return False
+    if low in OFFENSIVE or _PROFANE_TOKEN.fullmatch(low):
+        return True
+    return bool(_PROFANE_STEM.search(low) or _DICK_SLUR.search(low))
+
+
+def _headword_forms(lemma: str) -> set[str]:
+    """Inflections of the headword itself. A vulgar entry may use its own
+    word in an example (slut / sluts); other entries may not."""
+    w = (lemma or "").lower().strip()
+    if not w:
+        return set()
+    forms = {w, w + "s", w + "es"}
+    if len(w) > 1 and w.endswith("y") and w[-2] not in "aeiou":
+        forms.add(w[:-1] + "ies")
+    return forms
+
+
+def unfit_example(text: str, lemma: str = "") -> bool:
+    """A sentence with a swear word or slur (問題回報 #92: phone's 「Fucking
+    hell…」, apple's 「…Flash crap!」, creditor's 「sons of bitches」).
+    Capitalized Dick is a name. The headword's own inflections are allowed."""
+    allowed = _headword_forms(lemma)
     for tok in re.findall(r"[A-Za-z]+", text or ""):
-        low = tok.lower()
-        if low in OFFENSIVE and not (low == "dick" and tok[0].isupper()):
+        if tok.lower() in allowed:
+            continue
+        if profane_token(tok, name_dick=True):
             return True
     return False
 
@@ -137,9 +185,8 @@ def unfit_relation(field: str, word: str, lemma: str) -> bool:
     words, and sound/spelling neighbours that are not real look-alikes —
     patio's 「p t」, latte's 「law day」, natural light's 「natural high」,
     pan's 「an」."""
-    from .text import OFFENSIVE
     w, head = word.lower().strip(), lemma.lower().strip()
-    if w in OFFENSIVE or any(t in OFFENSIVE for t in w.split()):
+    if any(profane_token(tok) for tok in re.findall(r"[A-Za-z]+", word or "")):
         return True
     # 「st.」, 「Poaceae on Wikipedia.Wikipedia」; a capitalized word for a
     # lower-case headword is a name (book: Good Book, Word)
@@ -227,6 +274,12 @@ def export(s: Session, target: str, native: str, *, include_audio: bool = True,
         rel.manifest = json.loads(text)
         s.flush()
         savepoint.commit()
+        # Windows keeps a directory rename from completing while any sqlite3
+        # connection opened under tmp_dir (_build/_check/app_pack.build) is
+        # still alive only by a reference cycle, not a missing close(): a
+        # forced collect (問題回報 #217 debugging) reliably clears it before
+        # the rename, instead of os.replace racing the cyclic GC.
+        gc.collect()
         os.replace(tmp_dir, final_dir)  # atomic: the folder appears complete or not at all
     except Exception as e:  # noqa: BLE001
         shutil.rmtree(tmp_dir, ignore_errors=True)
@@ -252,6 +305,30 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir):
     con.executescript(DDL)  # foreign keys are checked after the build (PRAGMA foreign_key_check)
     values = _values(s, target, native)
     want = set(fields) if fields else None
+    # Keep strong references and indexes for this snapshot. Per-candidate SELECTs
+    # and Session.get() used over 100,000 round trips on a modest live pack.
+    lexeme_by_id = {lx.id: lx for lx in s.scalars(select(m.Lexeme).order_by(m.Lexeme.id))}
+    lexemes_by_lemma = {}
+    for lx in lexeme_by_id.values():
+        if lx.language == target and lx.status == 'full' and lx.normalized in values:
+            lexemes_by_lemma.setdefault(lx.normalized, []).append(lx)
+    full_ids = [lx.id for entries in lexemes_by_lemma.values() for lx in entries]
+
+    def index_rows(model, key):
+        index = {}
+        for row in s.scalars(select(model).where(model.lexeme_id.in_(full_ids)).order_by(model.id)):
+            index.setdefault((row.lexeme_id, key(row)), row)
+        return index
+
+    senses_index = index_rows(m.Sense, lambda row: row.sense_key)
+    examples_index = index_rows(m.Example, lambda row: row.text_hash)
+    relations_index = index_rows(m.LexemeRelation,
+                                lambda row: (row.relation, row.target_word.lower()))
+    audio_by_url = {row.source_url: row for row in s.scalars(select(m.AudioAsset))}
+
+    def first_for_ids(index, ids, key):
+        matches = [index[(lxid, key)] for lxid in ids if (lxid, key) in index]
+        return min(matches, key=lambda row: row.id) if matches else None
 
     def items(lemma, f):
         if want is not None and f not in want:
@@ -273,9 +350,7 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir):
             used_sources[src] = used_sources.get(src, 0) + n
 
     for lemma, fvs in sorted(values.items()):
-        lexemes = s.execute(select(m.Lexeme).where(m.Lexeme.language == target,
-                                                   m.Lexeme.normalized == lemma,
-                                                   m.Lexeme.status == "full")).scalars().all()
+        lexemes = lexemes_by_lemma.get(lemma, [])
         if not lexemes:
             continue
         by_pos = {lx.pos: lx for lx in lexemes}
@@ -294,27 +369,36 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir):
         ids = [lx.id for lx in lexemes]
         # senses + translations
         native_def = {i.get("sense_key") or i.get("slot"): i for i in items(lemma, "native_definition")}
+        registers = {i.get("sense_key") or i.get("slot"): i for i in items(lemma, "register")}
         sense_id_by_key: dict[str, int] = {}
         ord_by_lx: dict[int, int] = {}
         for it in items(lemma, "definition"):
             sk = it.get("sense_key") or it.get("key")
-            sense = s.execute(select(m.Sense).where(m.Sense.lexeme_id.in_(ids),
-                                                    m.Sense.sense_key == sk)).scalars().first()
+            sense = first_for_ids(senses_index, ids, sk)
             if sense is None:
                 continue
             n = ord_by_lx.get(sense.lexeme_id, 0)
             ord_by_lx[sense.lexeme_id] = n + 1
-            con.execute("INSERT INTO senses VALUES (?,?,?,?,?,?,?)",
+            reg = registers.get(sk) or {}
+            tr = native_def.get(sk)
+            labels = list(it.get("labels") or [])
+            gloss_zh = repair_outlaw_gloss(it.get("gloss") or "", tr.get("text") if tr else None)
+            native_text, vulgar = sense_native(gloss_zh, labels)
+            register = reg.get("register")
+            if vulgar:  # keep coarse words, flag them 粗俗 (never drop)
+                register = "vulgar"
+                if "vulgar" not in labels:
+                    labels.append("vulgar")
+            con.execute("INSERT INTO senses VALUES (?,?,?,?,?,?,?,?)",
                         (sense.id, sense.lexeme_id, n, it.get("gloss", ""),
-                         it.get("gloss_language") or target, json.dumps(it.get("labels") or []),
-                         it.get("source", "")))
+                         it.get("gloss_language") or target, json.dumps(labels),
+                         register, it.get("source", "")))
             used(it.get("source"))
             counts["senses"] += 1
             sense_id_by_key[sk] = sense.id
-            tr = native_def.get(sk)
-            if tr and clean_native(tr.get("text")):
+            if tr and native_text:
                 con.execute("INSERT INTO sense_translations VALUES (?,?,?,?,?)",
-                            (sense.id, clean_native(tr["text"]), tr.get("source", ""),
+                            (sense.id, native_text, tr.get("source", ""),
                              int(bool(tr.get("ai"))),
                              int(tr.get("source") == "user")))
                 used(tr.get("source"))
@@ -343,8 +427,7 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir):
             if it.get("tts"):
                 audio_rows.append((None, it))
                 continue
-            asset = s.execute(select(m.AudioAsset).where(
-                m.AudioAsset.source_url == it.get("url"))).scalar_one_or_none()
+            asset = audio_by_url.get(it.get('url'))
             if asset is not None and asset.status == "ready":
                 audio_rows.append((asset, it))
                 if asset.id not in audio_ids:
@@ -393,12 +476,10 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir):
         ex_level = {i.get("example_key"): i.get("level") for i in items(lemma, "example_difficulty")}
         for n, it in enumerate(items(lemma, "example_sentences")):
             k = it.get("key") or example_key(it.get("text", ""))
-            ex = s.execute(select(m.Example).where(
-                m.Example.lexeme_id.in_(ids),
-                m.Example.text_hash == text_hash(it.get("text", "")))).scalars().first()
+            ex = first_for_ids(examples_index, ids, text_hash(it.get('text', '')))
             if ex is None:
                 continue
-            if unfit_example(it.get("text", "")) or offensive_native(
+            if is_column_word_list(it.get("text", ""), lemma) or unfit_example(it.get("text", ""), lemma) or offensive_native(
                     (ex_tr.get(k) or {}).get("text")):
                 continue
             sid = sense_id_by_key.get(ex_sense.get(k) or it.get("sense_key") or "")
@@ -414,8 +495,9 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir):
             counts["examples"] += 1
             tr = ex_tr.get(k)
             if tr and tr.get("text"):
+                zh = repair_outlaw_gloss(it.get("text") or "", tr["text"]) or tr["text"]
                 con.execute("INSERT INTO example_translations VALUES (?,?,?,?)",
-                            (ex.id, tr["text"], tr.get("source", ""), int(bool(tr.get("ai")))))
+                            (ex.id, zh, tr.get("source", ""), int(bool(tr.get("ai")))))
                 used(tr.get("source"))
                 counts["example_translations"] += 1
         # relations + native meanings
@@ -434,12 +516,10 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir):
                 w = (it.get("word") or "").lower()
                 if w in own_forms or unfit_relation(f, it.get("word") or "", lemma):
                     continue
-                row = s.execute(select(m.LexemeRelation).where(
-                    m.LexemeRelation.lexeme_id.in_(ids), m.LexemeRelation.relation == f,
-                    func.lower(m.LexemeRelation.target_word) == w)).scalars().first()
+                row = first_for_ids(relations_index, ids, (f, w))
                 if row is None:
                     continue
-                tgt = s.get(m.Lexeme, row.target_lexeme_id)
+                tgt = lexeme_by_id.get(row.target_lexeme_id)
                 if tgt is None:
                     continue
                 detail = row.detail or {}
@@ -460,7 +540,8 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir):
                              row.source_sense_id if row.source_sense_id in sense_id_by_key.values()
                              else None, row.strength, json.dumps(row.detail or {},
                                                                  ensure_ascii=False),
-                             clean_native(mean.get("text")) if mean else None,
+                             clean_native(repair_outlaw_gloss(
+                                 row.target_word or w, mean.get("text"))) if mean else None,
                              mean.get("source") if mean else None,
                              int(bool(mean and mean.get("ai"))), it.get("source", ""), n,
                              target_cefr, target_zipf, detail.get("rarity"), int(hidden)))
@@ -479,7 +560,9 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir):
                     con.execute("INSERT INTO morphemes VALUES (?,?,?,?,?,?,?,?,?,?)",
                                 (lx.id, n, p.get("part", ""), p.get("kind", "root"),
                                  p.get("meaning"), int(bool(p.get("free"))),
-                                 clean_native(tr.get("text")) if tr else None,
+                                 clean_native(repair_outlaw_gloss(
+                                     " ".join(x for x in (p.get("part"), p.get("meaning")) if x),
+                                     tr.get("text"))) if tr else None,
                                  tr.get("source") if tr else None,
                                  int(bool(tr and tr.get("ai"))), bd.get("source", "")))
                     counts["morphemes"] += 1
@@ -497,11 +580,12 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir):
                             (lx.id, json.dumps(ety["root"], ensure_ascii=False),
                              json.dumps(ety["prefix"], ensure_ascii=False),
                              json.dumps(ety["suffix"], ensure_ascii=False), origin, orig_form,
-                             text, nat.get("text"), nat.get("source"), int(bool(nat.get("ai")))))
+                             text, repair_outlaw_gloss(text, nat.get("text")),
+                             nat.get("source"), int(bool(nat.get("ai")))))
                 counts["etymologies"] += 1
     # Stub lexemes that relations point to (not exported as full entries)
     for sid in sorted(stub_ids - exported):
-        lx = s.get(m.Lexeme, sid)
+        lx = lexeme_by_id[sid]
         # Not a full entry in this package: a link target only.
         con.execute("INSERT INTO lexemes VALUES (?,?,?,?,?,?,?,?)",
                     (lx.id, lx.language, lx.lemma, lx.normalized, lx.pos, "stub", lx.cefr,
@@ -516,6 +600,9 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir):
     for f in catalog.FIELDS:
         con.execute("INSERT OR IGNORE INTO labels VALUES (?,?)", (f"field:{f.key}", f.label
                                                                   if native == "zh-TW" else f.key))
+    from .card_templates import published
+    con.execute("INSERT INTO meta VALUES ('card_template', ?)",
+                (json.dumps(published(s), ensure_ascii=False),))
     con.execute("INSERT INTO meta VALUES ('schema_version', ?)", (str(SCHEMA_VERSION),))
     con.execute("INSERT INTO meta VALUES ('target_language', ?)", (target,))
     con.execute("INSERT INTO meta VALUES ('native_language', ?)", (native,))
@@ -548,6 +635,7 @@ def _images(s, con, tmp_dir: Path, counts) -> list[dict]:
                    a.attribution, a.page_url, a.tags
             FROM sense_images si JOIN image_assets a ON a.id = si.image_asset_id
             WHERE si.review_status = 'approved' AND a.status = 'ready'
+              AND a.safety_status = 'safe'
             ORDER BY si.sense_id, si.role <> 'representative', si.ordinal, si.id""")).mappings():
         if not con.execute("SELECT 1 FROM senses WHERE id = ?", (r["sense_id"],)).fetchone():
             continue
@@ -617,7 +705,11 @@ def _check(db_path: Path, folder: Path, include_audio: bool) -> list[dict]:
         add("image_files", not lost and not bad,
             f"{len(pics)} 張已核准圖片路徑與授權都可解析" if not lost and not bad
             else f"{len(lost)} 張圖片找不到、{len(bad)} 張缺授權")
-        add("card_template", True, "尚未發布字卡版型（manifest 記為 null）", level="ok")
+        template = con.execute("SELECT value FROM meta WHERE key='card_template'").fetchone()
+        template = json.loads(template[0]) if template else None
+        add("card_template", True,
+            f"已包含字卡版型 {template['id']} v{template['version']}" if template
+            else "尚未發布字卡版型（使用 App 內建版型）", level="ok")
         con.close()
     except sqlite3.Error as e:
         add("readable", False, f"SQLite 無法讀取：{e}")
@@ -635,6 +727,10 @@ def _manifest(s, target, native, base, sha, db_path, counts, completeness, used_
     policy_versions = {f: v for f, v in sorted(pols)}
     policy_hash = hashlib.sha256(json.dumps(policy_versions, sort_keys=True).encode()).hexdigest()
     ai = sum(n for src, n in used_sources.items() if src == "ai_translate")
+    # Read the exported snapshot, not a possibly newer concurrent publication.
+    with sqlite3.connect(db_path) as con:
+        template_row = con.execute("SELECT value FROM meta WHERE key='card_template'").fetchone()
+    template = json.loads(template_row[0]) if template_row else None
     return {
         "schema_version": SCHEMA_VERSION, "target_language": target, "native_language": native,
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -645,7 +741,8 @@ def _manifest(s, target, native, base, sha, db_path, counts, completeness, used_
                      "sha256": _sha256(db_path.with_suffix(".json"))},
         "source_snapshots": snaps,
         "policy_versions": policy_versions, "policy_hash": policy_hash,
-        "card_template_version": None,
+        "card_template_version": template['version'] if template else None,
+        "card_template_id": template['id'] if template else None,
         "counts": counts, "completeness": completeness,
         "licenses": [{"source": src, "name": catalog.SOURCES[src].name,
                       "license": catalog.SOURCES[src].license,

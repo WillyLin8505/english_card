@@ -56,29 +56,98 @@ def _substantive(entries: list[dict]) -> bool:
 
 _INFLECTION_TAGS = {"plural", "past", "participle", "gerund", "third-person",
                     "comparative", "superlative", "present"}
+# 問題回報 #217: a handful of Kaikki senses carry no tags/form_of at all and
+# only say so in the gloss text ("simple past and past participle of base").
+# Matched only as a fallback (see _sense_base) and only against a single,
+# un-nested gloss, so a sense with its own extra meaning layered on top of
+# the form-of note (based: "simple past and past participle of base" +
+# "Being derived from …") is never swallowed by the regex.
+_INFLECTION_GLOSS_RE = re.compile(
+    r"^(?:simple past(?: tense)? and past participle|simple past(?: tense)?|past participle|"
+    r"present participle and gerund|present participle|plural|"
+    r"third-person singular(?: simple present(?: indicative)?)?|comparative|superlative)"
+    r" of ([A-Za-z][A-Za-z'-]*(?: [A-Za-z][A-Za-z'-]*){0,3})\.?$", re.I)
 
 
-def inflection_base(lemma: str, entries: list[dict], cefr_words: dict) -> str | None:
-    """tore → tear, fleeing → flee, tenants → tenant."""
-    word = lemma.lower()
-    bases = []
-    for pos, s in _senses(entries):
-        if pos == "name":
-            continue
-        if not set(s.get("tags") or []) & _INFLECTION_TAGS:
-            continue  # empress (feminine of emperor) is a word of its own
-        for f in s.get("form_of") or []:
+def _sense_base(sense: dict, word: str) -> str | None:
+    """The word this sense is purely a form of, by tag or (fallback) gloss text."""
+    tags = set(sense.get("tags") or [])
+    if tags & _INFLECTION_TAGS:
+        for f in sense.get("form_of") or []:
             b = (f.get("word") or "").lower()
             if b and b != word:
-                bases.append(b)
-    if not bases or word in cefr_words:
+                return b
         return None
-    if not _substantive(entries) or any(b in cefr_words for b in bases):
-        return next((b for b in bases if b in cefr_words), bases[0])
-    first = entries[0]["senses"][0] if entries and entries[0].get("senses") else {}
-    if first.get("form_of") and set(first.get("tags") or []) & _INFLECTION_TAGS:
-        return bases[0]
+    if sense.get("form_of") or sense.get("alt_of"):
+        return None
+    glosses = sense.get("glosses") or []
+    if len(glosses) != 1:
+        return None  # a nested/extra gloss means this sense has its own meaning
+    m = _INFLECTION_GLOSS_RE.match(str(glosses[0]).strip())
+    if m:
+        b = m.group(1).lower()
+        if b != word:
+            return b
     return None
+
+
+def _listed_for_pos(word: str, pos: str, cefr_words: dict) -> bool:
+    """True when the official list already gives this spelling a level for this pos.
+
+    ``attached`` listed as an adjective must not also shield the verb, whose
+    only sense is "past of attach" (card #162). A stub with no pos yet stays
+    shielded whenever the spelling is listed at all."""
+    if word not in cefr_words:
+        return False
+    if pos in (None, "", "unknown"):
+        return True
+    row = cefr_words[word]
+    by_pos = row[1] if isinstance(row, (list, tuple)) and len(row) > 1 and isinstance(row[1], dict) else None
+    if not by_pos:
+        return True
+    return _POS_LIST.get(pos, pos) in by_pos
+
+
+def inflection_base(lemma: str, pos: str, entries: list[dict], cefr_words: dict) -> str | None:
+    """tore → tear, fleeing → flee, tenants → tenant.
+
+    Scoped to this lexeme's own part of speech once it has one: Kaikki
+    entries are not ordered consistently (an adjective entry for "dappled"
+    can come before the verb entry that is its only inflected sense), so
+    looking at entries[0] picked the wrong one for roughly a third of real
+    cases (問題回報 #217). A spelling that also has a substantive sense under
+    this same pos — in the same Kaikki entry (found 創立) or a different one
+    (lying 說謊的) — keeps its own entry rather than becoming a pointer, the
+    #194 rule, now decided per pos+entry instead of by DB status. A stub not
+    yet assigned a real pos (materialize.py's "unknown") has no own content
+    to protect, so it is checked across every entry, as before."""
+    if pos == "name":
+        return None
+    word = lemma.lower()
+    own = entries if pos in (None, "", "unknown") else [e for e in entries if e.get("pos") == pos]
+    if not own:
+        return None
+    bases: list[str] = []
+    has_own_sense = False
+    for e in own:
+        if e.get("pos") == "name":
+            continue  # empress (feminine of emperor) is a word of its own
+        for s in e.get("senses") or []:
+            b = _sense_base(s, word)
+            if b:
+                bases.append(b)
+                continue
+            tags = set(s.get("tags") or [])
+            if not (s.get("form_of") or s.get("alt_of") or tags & _NON_SUBSTANTIVE):
+                has_own_sense = True
+    if not bases or _listed_for_pos(word, pos, cefr_words):
+        return None
+    # Mixed entry (a real sense plus a form-of sense): never redirect the
+    # whole lexeme. An unknown stub still follows its listed base.
+    if has_own_sense and (pos not in (None, "", "unknown")
+                          or not any(b in cefr_words for b in bases)):
+        return None
+    return next((b for b in bases if b in cefr_words), bases[0])
 
 
 def inclusion_flags(lemma: str, pos: str, entries: list[dict], cefr_words: dict) -> dict:
@@ -102,13 +171,13 @@ def inclusion_flags(lemma: str, pos: str, entries: list[dict], cefr_words: dict)
     # keeps its entry when it has a substantive non-name sense.
     if (len(tokens) == 1 and not listed and any(e.get("pos") == "name" for e in entries)
             and not _substantive(entries) and "inflected_form" not in out
-            and not inflection_base(lemma, entries, cefr_words)):
+            and not inflection_base(lemma, pos, entries, cefr_words)):
         out["person_name"] = "人名"
-    if len(tokens) == 1:
-        base = inflection_base(lemma, entries, cefr_words)
-        if base:
-            out["inflected_form"] = base
-    elif not listed:
+    base = inflection_base(lemma, pos, entries, cefr_words)
+    if base and (len(tokens) == 1 or not listed):
+        # "coffee beans" / "fooling around": the whole phrase is only a form.
+        out["inflected_form"] = base
+    elif len(tokens) != 1 and not listed:
         if tokens[-1] in OBJECT_PRONOUNS or tokens[0] in OBJECT_PRONOUNS:
             out["phrase_fragment"] = "片語碎片（含受詞代名詞）"
         elif not entries and not re.search(r"\d", lemma):
@@ -151,11 +220,17 @@ def cefr_flags(lemma: str, pos: str, cefr: str | None, zipf: float | None,
 
 
 # ------------------------------------------------------------------ senses
-def sense_is_low(sense: dict, has_dictionary_before: bool) -> bool:
+def sense_is_low(sense: dict, has_dictionary_before: bool, *, count_etymology: bool = True) -> bool:
     labels = {str(x).lower() for x in sense.get("labels") or []}
-    # etymology-N: another word with the same spelling (phone 語音 = speech sound).
-    if labels & LOW_SENSE_LABELS or "low_priority" in labels or any(
-            x.startswith("etymology-") for x in labels):
+    if labels & LOW_SENSE_LABELS or "low_priority" in labels:
+        return True
+    # etymology-N: another word with the same spelling (phone 語音 = speech
+    # sound) -- but only a demotion when some other sense in the entry is
+    # not itself etymology-tagged (count_etymology=False from rank_senses
+    # otherwise); 問題回報 #216: frame/wave/drink/... had every kaikki sense
+    # filed under etymology-2+ once etymology-1's form-of-only senses were
+    # dropped upstream, leaving the entry with no main sense at all.
+    if count_etymology and any(x.startswith("etymology-") for x in labels):
         return True
     # Owner decision #84: an AI translation is a sub-sense description when a
     # dictionary translation of the word already exists.
@@ -164,9 +239,12 @@ def sense_is_low(sense: dict, has_dictionary_before: bool) -> bool:
 
 def rank_senses(senses: list[dict], low_keys: set[str] | None = None) -> list[dict]:
     """Main senses first (original order kept), low ones marked and after."""
+    count_etymology = any(
+        not any(str(x).lower().startswith("etymology-") for x in (s.get("labels") or []))
+        for s in senses)
     seen_dict = False
     for s in senses:
-        low = sense_is_low(s, seen_dict) or _sense_key(s) in (low_keys or set())
+        low = sense_is_low(s, seen_dict, count_etymology=count_etymology) or _sense_key(s) in (low_keys or set())
         s["priority"] = "low" if low else "main"
         if low and "low_priority" not in s.setdefault("labels", []):
             s["labels"] = [*s["labels"], "low_priority"]
@@ -184,7 +262,7 @@ def inflections(lemma: str, forms: list[str] = ()) -> set[str]:
     w = lemma.lower()
     out = {w, w + "s", w + "es", w + "ed", w + "d", w + "ing", w + "er", w + "est", *map(str.lower, forms)}
     if w.endswith("e"):
-        out |= {w[:-1] + "ing", w[:-1] + "ed"}
+        out |= {w[:-1] + "ing", w[:-1] + "ed", w[:-1] + "er", w[:-1] + "est"}
     if w.endswith("y"):
         out |= {w[:-1] + "ies", w[:-1] + "ied", w[:-1] + "ier", w[:-1] + "iest"}
     if len(w) > 2 and w[-1] not in "aeiouwxy" and w[-2] in "aeiou":
@@ -194,11 +272,74 @@ def inflections(lemma: str, forms: list[str] = ()) -> set[str]:
     return out
 
 
+# Keep in sync with app/lib/services/learning_content.dart exampleIsCharged.
+# Headword exemption: teaching "church" may use a sentence about a church.
+_CHARGED_SEX = re.compile(
+    r"\b(?:sex(?:es|ual\w*|y)?|nude|naked|porn|orgasm|prostitute|whore|slut|rape|rapist|"
+    r"penis|vagina|erotic|intercourse|adultery|adulter\w*|fornicat\w*|brothel|"
+    r"masturbat\w*|condom|genital)\b", re.I)
+_CHARGED_VIOLENCE = re.compile(
+    r"\b(?:murder(?:ed|ing|s|er|ers|ous)?|kill(?:ed|ing|s|er|ers)?|"
+    r"shoot(?:ing|s|er|ers)?|bullet|guns?|stab(?:bed|bing|s)?|bombs?|suicide|torture)\b",
+    re.I)
+_CHARGED_RELIGION = re.compile(
+    r"\b(?:god|jesus|christ|allah|bible|quran|koran|mosque|church|priest|buddha|"
+    r"buddhist|worship|prayer|scripture|gospel|heaven|hell)\b", re.I)
+_CHARGED_POLITICS = re.compile(
+    r"\b(?:migration|immigrant|immigration|refugee|asylum|abortion|bolshevik|"
+    r"communist|communism|nazi|hitler|genocide|trump|biden|feminis\w*|"
+    r"parliament|dictator\w*|propaganda)\b", re.I)
+_CHARGED_STANCE_NOUN = re.compile(
+    r"\b(?:woman|women|migration|immigrants?|abortion|gender|pronouns?)\b", re.I)
+_CHARGED_BAN = re.compile(r"\b(?:outlaw(?:ed|ing|s)?|ban(?:ned|ning)?)\b", re.I)
+_CHARGED_SOFT = re.compile(
+    r"\b(?:oh my god|thank god|for god'?s sake|god knows|what the hell|the hell)\b", re.I)
+_STANCE_LEMMAS = {"woman", "women", "migration", "immigrant", "abortion", "gender", "pronoun"}
+
+
+def _charged_foreign(pattern: re.Pattern, source: str, lemma: str) -> bool:
+    low = (lemma or "").lower()
+    for match in pattern.finditer(source or ""):
+        hit = match.group(0).lower()
+        if low and (hit.startswith(low) or low.startswith(hit)):
+            continue
+        return True
+    return False
+
+
+def example_is_charged(text: str, lemma: str = "") -> str | None:
+    """Politics, religion, violence or sex that is not the headword itself.
+
+    Learning cards sort these after a neutral sentence (問題回報 #254).
+    Returns the category, or None. Nothing is deleted.
+    """
+    raw = text or ""
+    if _charged_foreign(_CHARGED_SEX, raw, lemma):
+        return "sex"
+    if _charged_foreign(_CHARGED_VIOLENCE, raw, lemma):
+        return "violence"
+    if _charged_foreign(_CHARGED_POLITICS, raw, lemma):
+        return "politics"
+    if _charged_foreign(_CHARGED_RELIGION, _CHARGED_SOFT.sub(" ", raw), lemma):
+        return "religion"
+    if (lemma or "").lower() not in _STANCE_LEMMAS and _CHARGED_STANCE_NOUN.search(raw) \
+            and _CHARGED_BAN.search(raw):
+        return "politics"
+    return None
+
+
 def example_flags(text: str, lemma: str, pos: str, forms: list[str] = ()) -> list[str]:
     flags = []
     t = (text or "").strip()
-    words = re.findall(r"[A-Za-z][A-Za-z'\-]*", t)
-    low = [re.sub(r"'s$", "", x.lower()) for x in words]
+    # A trailing quote mark (closing a quoted word) is not part of the word
+    # itself, only an internal apostrophe/hyphen is ('don't, 'Tell-tale').
+    words = re.findall(r"[A-Za-z]+(?:['\-][A-Za-z]+)*", t)
+    low = []
+    for x in words:
+        x = re.sub(r"'s$", "", x.lower())
+        low.append(x)
+        if "-" in x:
+            low.extend(x.split("-"))  # "tell-tale" also counts as containing "tale"
     forms_set = inflections(lemma, forms)
     if " " in lemma:
         first = lemma.split()[0].lower()
@@ -214,7 +355,61 @@ def example_flags(text: str, lemma: str, pos: str, forms: list[str] = ()) -> lis
         flags.append("pos_mismatch")
     if any(n in words for n in ODD_NAMES):
         flags.append("odd_name")
+    if example_is_charged(t, lemma):
+        flags.append("charged")
     return flags
+
+
+def example_reject_reason(text: str, lemma: str, pos: str, forms: list[str] = ()) -> str | None:
+    """Why a sentence must not be selected. Odd names are kept out of this:
+    they only sort later (example_preference)."""
+    flags = set(example_flags(text, lemma, pos, forms))
+    if "not_sentence" in flags:
+        return "不是完整句"
+    if "missing_lemma" in flags:
+        return "例句沒有用到這個字或可信詞形"
+    if "pos_mismatch" in flags:
+        return "詞性不合"
+    return None
+
+
+def example_preference(text: str) -> tuple:
+    """Sort key, lower first: a complete ordinary sentence beats a Tatoeba
+    placeholder name (Ziri, Mennad, Baya) and a very long or very short line."""
+    words = re.findall(r"[A-Za-z]+(?:['\-][A-Za-z]+)*", text or "")
+    odd = 1 if any(name in words for name in ODD_NAMES) else 0
+    return (odd, abs(len(text or "") - 45))
+
+
+def bind_example_sense(text: str, senses: list[dict], forms: list[str] = (),
+                       fallback_main: bool = False) -> dict | None:
+    """The sense this sentence illustrates, or None when it matches none.
+
+    ``senses`` items need ``sense_key`` and may carry ``gloss``, ``labels``
+    and ``ordinal``. A gloss that shares a content word wins; a single
+    ordinary sense is used when the sentence does not point at a rival.
+    """
+    skip = _STOP | {f.lower() for f in forms} | {w.lower() for w in (forms or [])}
+    words = set(re.findall(r"[a-z]+", (text or "").lower())) - skip
+    ranked = []
+    for sense in senses:
+        labels = {str(label).lower() for label in (sense.get("labels") or [])}
+        if labels & {"obsolete", "archaic", "dated", "rare", "alt-of", "form-of"}:
+            continue
+        gloss = set(re.findall(r"[a-z]+", (sense.get("gloss") or "").lower())) - skip
+        ranked.append((len(words & gloss), sense.get("ordinal") or 0, sense))
+    if not ranked:
+        return None
+    ranked.sort(key=lambda row: (-row[0], row[1]))
+    score, _ordinal, best = ranked[0]
+    second = ranked[1][0] if len(ranked) > 1 else -1
+    if score >= 1 and score > second:
+        return best
+    if len(ranked) == 1:
+        return best
+    if fallback_main:
+        return best
+    return None
 
 
 def rank_examples(examples: list[dict], lemma: str, pos: str, forms: list[str],
@@ -225,7 +420,9 @@ def rank_examples(examples: list[dict], lemma: str, pos: str, forms: list[str],
             f.append("low_priority_sense")
         e["quality_flags"] = f
     bad = {"missing_lemma", "not_sentence", "pos_mismatch", "low_priority_sense", "rejected"}
+    # Charged sentences stay in the pack; a neutral one is offered first.
     return sorted(examples, key=lambda e: (bool(set(e["quality_flags"]) & bad),
+                                           "charged" in e["quality_flags"],
                                            "odd_name" in e["quality_flags"]))
 
 
@@ -253,9 +450,12 @@ def apply_pack(pack: dict, entry_flags: dict | None = None, overrides: dict | No
         exs = [dict(e) for e in added.get(key, [])] + list(lx.get("examples") or [])
         forms = [f.get("form") for f in lx.get("forms") or [] if f.get("form")]
         lx["examples"] = rank_examples(exs, lx["lemma"], lx["pos"], forms, low_sense)
+        vulgar_ex = {int(i) for i in overrides.get("vulgar_examples", [])}
         for e in lx["examples"]:
             if e.get("id") in rejected_ex:
                 e["quality_flags"].append("rejected")
+            if e.get("id") in vulgar_ex and "vulgar" not in e["quality_flags"]:
+                e["quality_flags"].append("vulgar")
         lx["examples"].sort(key=lambda e: "rejected" in e["quality_flags"])
 
 

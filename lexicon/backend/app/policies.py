@@ -58,6 +58,8 @@ def seed(session: Session) -> None:
                     session.add(m.SourceCapability(source=s.key, target_language=t,
                                                    native_language=n, field=f))
     upgrade_untouched_defaults(session)
+    add_sources_before_ai(session)
+    add_sources_at_end(session)
     existing = {(p.target_language, p.native_language, p.field)
                 for p in session.execute(select(m.SourcePolicy)).scalars()}
     for t, n in catalog.PAIRS:
@@ -81,6 +83,59 @@ def upgrade_untouched_defaults(session: Session) -> None:
         new = catalog.default_policy(p.target_language, p.native_language, p.field)[0]
         if sources == LEGACY_DEFAULTS[p.field] and new != sources:
             _write_default(session, p.target_language, p.native_language, p.field, p)
+    session.flush()
+
+
+# Sources added to the defaults later, each just before the AI step of every
+# policy that has one and doesn't list the source yet (an admin's other steps
+# and settings stay). The policy keeps its version on purpose: settled words
+# aren't asked again; only words resolved from now on use the new source.
+ADDED_BEFORE_AI = {"ecdict": ("native_definition", "derived_native_meaning",
+                              *catalog.RELATION_NATIVE)}
+
+
+def add_sources_before_ai(session: Session) -> None:
+    for src, fields in ADDED_BEFORE_AI.items():
+        for p in session.execute(select(m.SourcePolicy).where(
+                m.SourcePolicy.field.in_(list(fields)))).scalars().all():
+            if not catalog.supports(src, p.target_language, p.native_language, p.field)[0]:
+                continue
+            steps = steps_of(session, p)
+            ai = next((st for st in steps if st.source == "ai_translate"), None)
+            if ai is None or any(st.source == src for st in steps):
+                continue
+            before = max((st.position for st in steps if st.position < ai.position), default=0)
+            if ai.position - before < 2:
+                continue  # no gap left: the admin can place it by hand
+            kind = catalog.SOURCES[src].kind
+            session.add(m.SourcePolicyStep(
+                policy_id=p.id, source=src, position=(before + ai.position) // 2, enabled=True,
+                timeout_s=120 if kind == "ai" else 20, retries=1 if kind == "ai" else 2,
+                min_confidence=0.0, max_results=None, continue_on_failure=True))
+    session.flush()
+
+
+# Same idea as ADDED_BEFORE_AI, for a field with no ai_translate step to
+# anchor on (問題回報 #209: ECDICT as a last-resort IPA source) — the new
+# step goes after every existing one instead.
+ADDED_AT_END = {"ecdict": ("ipa",)}
+
+
+def add_sources_at_end(session: Session) -> None:
+    for src, fields in ADDED_AT_END.items():
+        for p in session.execute(select(m.SourcePolicy).where(
+                m.SourcePolicy.field.in_(list(fields)))).scalars().all():
+            if not catalog.supports(src, p.target_language, p.native_language, p.field)[0]:
+                continue
+            steps = steps_of(session, p)
+            if not steps or any(st.source == src for st in steps):
+                continue
+            kind = catalog.SOURCES[src].kind
+            session.add(m.SourcePolicyStep(
+                policy_id=p.id, source=src, position=max(st.position for st in steps) + GAP,
+                enabled=True, timeout_s=120 if kind == "ai" else 20,
+                retries=1 if kind == "ai" else 2, min_confidence=0.0, max_results=None,
+                continue_on_failure=True))
     session.flush()
 
 

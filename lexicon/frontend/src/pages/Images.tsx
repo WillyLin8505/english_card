@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { api } from '../api';
-import { ErrorBox, Link, Loading, TagScores, useLoad } from '../ui';
+import { cefrSummary, ErrorBox, Link, Loading, TagScores, useLoad } from '../ui';
 
 type Sense = { id: number; lemma: string; pos: string; translation: string | null };
 type Candidate = { id: number; title: string; description: string; author: string; license_code: string; page_url: string; imported: boolean };
@@ -9,10 +9,12 @@ type Asset = {
   ordinal: number; lemma: string; normalized: string; pos: string; gloss: string | null; native: string | null;
   asset_id: number; author: string; license_code: string; page_url: string; width: number; height: number;
   size_bytes: number; status: string; tag_status: string; tag_count: number; shared: number;
-  tags: { word: string; pos: string | null; score?: number | null }[];
-  dropped_tags: { word: string; pos: string | null; score?: number | null }[];
+  tags: { word: string; pos: string | null; score?: number | null;
+          cefr?: string | null; modelLevel?: string | null; cefrSource?: string | null;
+          cefrLemma?: string | null; cefrCoreWord?: string | null }[];
+  dropped_tags: { word: string; pos: string | null; score?: number | null;
+                  cefr?: string | null; modelLevel?: string | null; dropReason?: string | null }[];
 };
-
 
 const STATUS: Record<string, string> = { approved: '已核准', rejected: '已拒絕', pending: '待審核' };
 
@@ -76,11 +78,12 @@ export default function Images() {
                   <img src={`/api/images/${a.asset_id}/file`} alt={`${a.lemma} 詞義 ${a.ordinal + 1} 的候選圖片`} style={{ width: '100%', height: 190, objectFit: 'cover', borderRadius: 8 }} />
                   <p>{STATUS[a.review_status] ?? a.review_status}{a.role === 'representative' ? ' · 代表圖' : ''} · 語意分數 {a.semantic_score ?? '—'}
                     {' · '}{a.tag_status === 'done' ? `AI 標籤 ${a.tag_count} 個` : a.tag_status === 'failed' ? 'AI 標籤失敗'
-                      : a.tag_count > 0 ? `AI 標籤 ${a.tag_count} 個（已評分；不足 8 個，稍後再補看）` : 'AI 標籤處理中'}
+                      : a.tag_count > 0 ? `AI 標籤 ${a.tag_count} 個（A1～C2 尚未各滿 3 個）` : 'AI 標籤處理中'}
+                    {a.tag_count > 0 && ` · ${cefrSummary(a.tags)}`}
                     {a.shared > 0 && <span className="warn"> · 重複：另有 {a.shared} 個詞義使用</span>}</p>
                   <TagScores tags={a.tags} word={a.normalized} />
                   {a.dropped_tags?.length > 0 && <details>
-                    <summary className="muted">未通過的標籤（辨識分數 &lt; 80%）{a.dropped_tags.length} 個</summary>
+                    <summary className="muted">未採用／待審核的標籤 {a.dropped_tags.length} 個</summary>
                     <TagScores tags={a.dropped_tags} word={a.normalized} label="未通過的 AI 標籤" />
                   </details>}
                   <p className="muted" style={{ overflowWrap: 'anywhere' }}>{a.width} × {a.height} · {a.license_code} · {a.author?.slice(0, 80)} · <a href={a.page_url} target="_blank" rel="noreferrer">來源頁 ↗</a></p>

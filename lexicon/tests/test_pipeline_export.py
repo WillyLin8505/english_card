@@ -12,6 +12,32 @@ from app import models as m
 from conftest import apple_data
 
 
+def test_export_query_count_is_bounded_for_large_candidate_lists(session, fakes, tmp_path):
+    from sqlalchemy import event
+    apple_data(fakes)
+    pipeline.process_word(session, 'en', 'zh-TW', 'apple', None, 'fill_missing')
+    field = session.execute(select(m.FieldValue).where(
+        m.FieldValue.field == 'example_sentences')).scalar_one()
+    field.items = [*field.items, *[
+        {'text': f'An apple appears in sample {i}.', 'source': 'kaikki'}
+        for i in range(200)
+    ]]
+    session.flush()
+    queries = []
+    def record(conn, cursor, statement, parameters, context, executemany):
+        if statement.lstrip().upper().startswith('SELECT'):
+            queries.append(statement)
+    engine = session.get_bind()
+    event.listen(engine, 'before_cursor_execute', record)
+    try:
+        counts, *_ = exporter._build(session, tmp_path / 'pack.sqlite',
+                                     'en', 'zh-TW', None, False, tmp_path)
+    finally:
+        event.remove(engine, 'before_cursor_execute', record)
+    assert counts['lexemes'] == 1
+    assert len(queries) <= 12, f'{len(queries)} SELECTs for one headword'
+
+
 def test_pipeline_stores_candidates_values_and_provenance(session, fakes):
     apple_data(fakes)
     reports = {r.field: r for r in pipeline.process_word(session, "en", "zh-TW", "apple", None,
@@ -36,12 +62,47 @@ def test_pipeline_stores_candidates_values_and_provenance(session, fakes):
     assert [p.source for p in prov] == ["oewn", "kaikki"]
 
 
+def test_tts_fallback_is_projected_when_no_real_audio_exists(session, fakes):
+    apple_data(fakes)
+    fakes["system_tts"].data["tts_fallback"] = [
+        ({"tts": True, "text": "apple", "locale": "en-US"}, "tts:en-US", "")]
+
+    pipeline.process_word(session, "en", "zh-TW", "apple",
+                          ["pos", "tts_fallback"], "fill_missing")
+
+    row = session.execute(select(m.Pronunciation).where(
+        m.Pronunciation.kind == "tts")).scalar_one()
+    assert row.value == "en-US"
+    assert row.is_default is True
+
+
 def test_named_gaps(session, fakes):
     apple_data(fakes)
     pipeline.process_word(session, "en", "zh-TW", "apple", None, "fill_missing")
     msgs = [i["message"] for i in views.word(session, "en", "zh-TW", "apple")["issues"]]
     assert "例句 #2 缺翻譯" in msgs
     assert "同義詞 orchard apple 缺繁體中文詞義" in msgs
+
+
+def test_export_excludes_legacy_glossary_columns_without_deleting_master(session, fakes, tmp_path, monkeypatch):
+    from app.text import text_hash
+    monkeypatch.setattr(config, 'EXPORTS', tmp_path)
+    apple_data(fakes)
+    pipeline.process_word(session, 'en', 'zh-TW', 'apple', None, 'fill_missing')
+    field = session.execute(select(m.FieldValue).where(m.FieldValue.field == 'example_sentences')).scalar_one()
+    items = [dict(item) for item in field.items]
+    old_text = items[0]['text']
+    ex = session.execute(select(m.Example).where(m.Example.text_hash == text_hash(old_text))).scalars().first()
+    columns = 'custard apple\u2003\u2003\u2003 rose apple\u2003\u2003\u2003 thorn apple'
+    items[0]['text'] = columns
+    field.items = items
+    ex.text, ex.text_hash = columns, text_hash(columns)
+    session.flush()
+    release = exporter.export(session, 'en', 'zh-TW', include_audio=False)
+    assert release.status == 'ready', release.error
+    with sqlite3.connect(tmp_path / release.file_name / f'{release.file_name}.sqlite') as exported:
+        assert exported.execute('SELECT count(*) FROM examples WHERE text = ?', (columns,)).fetchone()[0] == 0
+    assert session.get(m.Example, ex.id).text == columns
 
 
 def test_reresolve_after_policy_change_uses_stored_candidates(session, fakes):
@@ -92,16 +153,16 @@ def test_export_sqlite_with_manifest(session, fakes, tmp_path, monkeypatch):
     manifest = json.loads((folder / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["database"]["sha256"] == hashlib.sha256(db_file.read_bytes()).hexdigest()
     assert manifest["target_language"] == "en" and manifest["native_language"] == "zh-TW"
-    assert manifest["schema_version"] == 4  # 4: approved sense pictures
+    assert manifest["schema_version"] == 5  # 5: per-sense register
     assert rel.file_name.startswith("language-data-en-zh-TW-")
     con = sqlite3.connect(db_file)
     lex = con.execute("SELECT id, pos FROM lexemes WHERE normalized = 'apple' AND pos = 'noun'"
                       " AND status = 'full'").fetchone()
     assert lex is not None
-    senses = con.execute("SELECT s.definition, t.text FROM senses s LEFT JOIN sense_translations t"
+    senses = con.execute("SELECT s.definition, t.text, s.register FROM senses s LEFT JOIN sense_translations t"
                          " ON t.sense_id = s.id WHERE s.lexeme_id = ? ORDER BY s.ordinal",
                          (lex[0],)).fetchall()
-    assert senses[0] == ("A round fruit.", "蘋果")
+    assert senses[0] == ("A round fruit.", "蘋果", "spoken")
     assert con.execute("SELECT form FROM forms WHERE normalized = 'apples'").fetchone() == ("apples",)
     assert con.execute("SELECT count(*) FROM examples").fetchone()[0] == 2
     assert con.execute("SELECT count(*) FROM example_translations").fetchone()[0] == 1
@@ -165,6 +226,67 @@ def test_reresolve_asks_again_only_for_slots_nothing_answered(session, fakes):
     tr = reports["example_translation"]
     assert {i["slot"]: i["source"] for i in tr.items} == {"ex1": "tatoeba", "ex2": "ai_translate"}
     assert asked == ["ex2"], "ex1 is translated already: never sent to AI again"
+
+
+def test_batched_reresolve_preserves_stored_ai_translations(session, fakes, monkeypatch):
+    """Regression for #155: an empty batch may not replace paid AI rows."""
+    from app.adapters import ADAPTERS
+    from app.adapters.ai import AITranslate
+
+    apple_data(fakes)
+    fakes["ai_translate"].data["synonyms_native"] = lambda ctx: [
+        ({"word": slot, "text": f"{slot}中文", "ai": True}, slot, slot)
+        for slot in ctx.memo.get(("missing_slots", "synonyms_native")) or []
+    ]
+    pipeline.process_word(session, "en", "zh-TW", "apple",
+                          ["synonyms", "synonyms_native"], "fill_missing")
+    before = session.execute(select(m.FieldCandidate).where(
+        m.FieldCandidate.field == "synonyms_native",
+        m.FieldCandidate.source == "ai_translate")).scalars().all()
+    assert len(before) == 2
+
+    adapter = AITranslate()
+    monkeypatch.setattr(adapter, "_reuse", lambda *args: {})
+    monkeypatch.setattr(adapter, "_call", lambda *args, **kwargs: (_ for _ in ()).throw(
+        AssertionError("complete stored slots must not call the model")))
+    monkeypatch.setitem(ADAPTERS, "ai_translate", adapter)
+    reports = {r.field: r for r in pipeline.process_word(
+        session, "en", "zh-TW", "apple", ["synonyms_native"], "reresolve")}
+
+    after = session.execute(select(m.FieldCandidate).where(
+        m.FieldCandidate.field == "synonyms_native",
+        m.FieldCandidate.source == "ai_translate")).scalars().all()
+    assert len(after) == len(before)
+    assert len(reports["synonyms_native"].items) == 2
+
+
+def test_reresolve_replaces_an_invalid_ai_translation(session, fakes):
+    apple_data(fakes)
+    fakes["ai_translate"].data["example_translation"] = lambda ctx: [
+        ({"example_key": slot, "text": "The apple is red.", "ai": True}, slot, slot)
+        for slot in ctx.memo.get(("missing_slots", "example_translation")) or []
+    ]
+    pipeline.process_word(session, "en", "zh-TW", "apple",
+                          ["example_sentences", "example_translation"], "fill_missing")
+    invalid = session.execute(select(m.FieldCandidate).where(
+        m.FieldCandidate.field == "example_translation",
+        m.FieldCandidate.source == "ai_translate",
+        m.FieldCandidate.valid.is_(False))).scalars().all()
+    assert invalid
+
+    fakes["ai_translate"].data["example_translation"] = lambda ctx: [
+        ({"example_key": slot, "text": "蘋果是紅色的。", "ai": True}, slot, slot)
+        for slot in ctx.memo.get(("missing_slots", "example_translation")) or []
+    ]
+    reports = {r.field: r for r in pipeline.process_word(
+        session, "en", "zh-TW", "apple", ["example_translation"], "reresolve")}
+
+    assert any(item["text"] == "蘋果是紅色的。"
+               for item in reports["example_translation"].items)
+    rows = session.execute(select(m.FieldCandidate).where(
+        m.FieldCandidate.field == "example_translation",
+        m.FieldCandidate.source == "ai_translate")).scalars().all()
+    assert all(row.valid for row in rows)
 
 
 def test_a_scene_phrase_no_dictionary_has_is_no_entry(session, fakes):
@@ -283,6 +405,26 @@ def test_an_ipa_tagged_us_and_uk_counts_as_british(session, fakes, tmp_path, mon
     assert materialize.main_accent(["AU", "CA", "US", "UK"]) == "UK"
 
 
+def test_pronunciations_are_projected_to_their_part_of_speech(session, fakes):
+    fakes["kaikki"].data = {
+        "pos": [({"pos": "noun"}, "noun", "noun"),
+                ({"pos": "verb"}, "verb", "verb")],
+        "definition": [
+            ({"pos": "noun", "gloss": "Moving air.", "sense_key": "n1"}, "n1", "noun"),
+            ({"pos": "verb", "gloss": "To turn around.", "sense_key": "v1"}, "v1", "verb")],
+        "ipa": [({"ipa": "/wɪnd/", "accent": ["UK"], "pos": "noun"}, "n", ""),
+                ({"ipa": "/waɪnd/", "accent": ["UK"], "pos": "verb"}, "v", "")],
+    }
+
+    pipeline.process_word(session, "en", "zh-TW", "wind", ["pos", "definition", "ipa"],
+                          "fill_missing")
+
+    rows = session.execute(select(m.Lexeme.pos, m.Pronunciation.value).join(
+        m.Pronunciation, m.Pronunciation.lexeme_id == m.Lexeme.id).where(
+            m.Lexeme.normalized == "wind", m.Pronunciation.kind == "ipa")).all()
+    assert set(rows) == {("noun", "/wɪnd/"), ("verb", "/waɪnd/")}
+
+
 def test_pronunciation_accent_label_prefers_british(session, fakes, tmp_path, monkeypatch):
     monkeypatch.setattr(config, "EXPORTS", tmp_path)
     apple_data(fakes)
@@ -316,6 +458,13 @@ def test_unfit_relation_words_are_not_exported():
     """問題回報 #89: no 「shit」 under grass, no 「p t」/「law day」 sound-alikes."""
     from app.exporter import unfit_relation
     assert unfit_relation("related", "shit", "grass")
+    assert unfit_relation("derived_terms", "fuckjuice", "juice")
+    assert unfit_relation("synonyms", "assfuck", "knife")
+    assert unfit_relation("synonyms", "chat shite", "libel")
+    assert unfit_relation("related", "bitchin'", "bad-mouth")
+    assert not unfit_relation("synonyms", "dicker", "barter")
+    assert not unfit_relation("near_homophones", "benedick", "benediction")
+    assert not unfit_relation("hyponyms", "bastardize", "subvert")
     assert unfit_relation("near_homophones", "p t", "patio")
     assert unfit_relation("near_homophones", "law day", "latte")
     assert unfit_relation("near_homophones", "natural high", "natural light")
@@ -333,7 +482,11 @@ def test_unfit_example_sentences_are_not_exported():
     from app.exporter import unfit_example
     assert unfit_example("Fucking hell, what idiot dare phone me?")
     assert unfit_example("Thanks God, Apple is dumping that Flash crap!")
+    assert unfit_example("those sons of bitches want to drive me crazy")
+    assert unfit_example("Does globalisation mean the disappearance of local sluts?")
+    assert not unfit_example("Does globalisation mean the disappearance of local sluts?", "slut")
     assert not unfit_example("Dick promised to come back by three o'clock.")
+    assert not unfit_example("Magnus and Big Dick are over in the bullpen.")
     assert not unfit_example("Kill two birds with one stone.")
 
 
@@ -358,3 +511,11 @@ def test_profane_chinese_is_left_out_of_meanings():
     assert clean_native("撕逼") is None
     assert clean_native("逼真") == "逼真"
     assert not offensive_native("逼近、朦朧地出現")
+
+
+def test_a_meaning_loses_the_ais_trailing_full_stop():
+    """問題回報 #171: the AI wrote 討價還價。 for a relation word's meaning."""
+    from app.text import clean_native
+    assert clean_native("討價還價。") == "討價還價"
+    assert clean_native("親友；熟人。") == "親友；熟人"
+    assert clean_native("。") == "。"

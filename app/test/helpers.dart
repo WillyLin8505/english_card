@@ -45,7 +45,7 @@ class TestApp {
   final AppNavigatorProxy navigator;
   final TaggingQueue queue;
   final WordEnricher enricher;
-  final SilentSpeaker speaker;
+  final Speaker speaker;
 
   TestApp(this.repository, this.settings, this.photoStore, this.navigator,
       this.queue, this.enricher, this.speaker);
@@ -58,10 +58,13 @@ Future<TestApp> pumpApp(
   WidgetTester tester, {
   AppTab initialTab = AppTab.camera,
   AppSettings? settings,
+  PhotoStore? photoStore,
+  Widget? home,
   WordDatabaseRepository? repository,
   TaggingService Function(Uri, String)? createTagger,
   Size size = const Size(402, 874),
   bool databaseLibrary = false,
+  Speaker? speaker,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -70,7 +73,7 @@ Future<TestApp> pumpApp(
 
   final repo = repository ?? testRepository();
   final s = settings ?? AppSettings.inMemory();
-  final photos = PhotoStore.inMemory();
+  final photos = photoStore ?? PhotoStore.inMemory();
   final nav = AppNavigatorProxy();
   final intake = PhotoIntake(
       repository: () => repo, photoStore: photos, createTagger: createTagger);
@@ -85,7 +88,7 @@ Future<TestApp> pumpApp(
       intake: intake,
       lexicon: testLexicon,
       queue: queue);
-  final speaker = SilentSpeaker();
+  final spk = speaker ?? SilentSpeaker();
   await tester.pumpWidget(AppScope(
     repository: repo,
     settings: s,
@@ -93,21 +96,22 @@ Future<TestApp> pumpApp(
     intake: intake,
     queue: queue,
     enricher: enricher,
-    speaker: speaker,
+    speaker: spk,
     lexicon: testLexicon(),
     navigator: nav,
     switchLanguage: (_) async {},
     clock: () => testNow,
     child: MaterialApp(
       theme: MobileTheme.light(),
-      home: AppShell(
-          initialTab: initialTab,
-          databaseLibrary: databaseLibrary,
-          onNavigatorReady: (n) => nav.target = n),
+      home: home ??
+          AppShell(
+              initialTab: initialTab,
+              databaseLibrary: databaseLibrary,
+              onNavigatorReady: (n) => nav.target = n),
     ),
   ));
   await tester.pump();
-  return TestApp(repo, s, photos, nav, queue, enricher, speaker);
+  return TestApp(repo, s, photos, nav, queue, enricher, spk);
 }
 
 /// Lets real async work (HTTP mocks, microtasks) finish between frames.

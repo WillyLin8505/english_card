@@ -8,12 +8,14 @@ without extra plumbing). Same rows, same stable lexeme ids.
 from __future__ import annotations
 
 import json
+from functools import lru_cache
 import math
 import shutil
 import sqlite3
 from pathlib import Path
 
 from . import catalog, config
+from .text import entry_type_of
 
 APP_ASSETS = config.REPO / "app" / "assets" / "lexicon"
 
@@ -27,14 +29,16 @@ def build(db_path: Path) -> dict:
     for r in q("SELECT * FROM lexemes ORDER BY id"):
         by_lex[r["id"]] = {"id": r["id"], "lemma": r["lemma"], "normalized": r["normalized"],
                            "pos": r["pos"], "status": r["status"], "cefr": r["cefr"],
-                           "zipf": r["zipf"], "senses": [], "forms": [], "pronunciations": [],
+                           "zipf": r["zipf"], "entry_type": entry_type_of(r["normalized"]),
+                           "senses": [], "forms": [], "pronunciations": [],
                            "examples": [], "relations": [], "morphemes": [], "missing": {}}
     for r in q("SELECT s.*, t.text AS native, t.is_ai FROM senses s LEFT JOIN sense_translations t"
                " ON t.sense_id = s.id ORDER BY s.lexeme_id, s.ordinal"):
         by_lex[r["lexeme_id"]]["senses"].append({
-            "id": r["id"], "definition": r["definition"], "language": r["definition_language"],
+            "id": r["id"], "ordinal": r["ordinal"], "definition": r["definition"],
+            "language": r["definition_language"],
             "labels": json.loads(r["labels"] or "[]"), "native": r["native"],
-            "native_ai": bool(r["is_ai"])})
+            "register": r["register"], "native_ai": bool(r["is_ai"])})
     for r in q("SELECT * FROM forms ORDER BY lexeme_id, field"):
         by_lex[r["lexeme_id"]]["forms"].append({"field": r["field"], "form": r["form"],
                                                 "normalized": r["normalized"], "label": r["label"]})
@@ -81,6 +85,7 @@ def build(db_path: Path) -> dict:
                " ('complete', 'user_override', 'none', 'not_applicable')"):
         by_lex[r["lexeme_id"]]["missing"][r["field"]] = r["status"]
     pack = {
+        "card_template": json.loads(meta.get("card_template", "null")),
         "schema_version": int(meta.get("schema_version", 0)),
         "target_language": meta.get("target_language"),
         "native_language": meta.get("native_language"),
@@ -88,11 +93,12 @@ def build(db_path: Path) -> dict:
         "labels": {r["key"]: r["text"] for r in q("SELECT * FROM labels")},
         "redirects": {str(r["old_id"]): r["new_id"] for r in q("SELECT * FROM lexeme_redirects")},
         "lexemes": [lx if lx["status"] == "full" else
-                    {k: lx[k] for k in ("id", "lemma", "normalized", "pos", "status")}
+                    {k: lx[k] for k in ("id", "lemma", "normalized", "pos", "status", "entry_type")}
                     for lx in by_lex.values()],
     }
     con.close()
     rank_usages(pack["lexemes"])
+    assign_cards(pack["lexemes"], pack["target_language"] or "en")
     # Each spelling's main part of speech first: the app takes a word's first
     # entry when it doesn't know the part of speech (sky 天空, not the verb
     # 「飲用不碰容器」). Stable, so the id order stays within a rank.
@@ -102,7 +108,44 @@ def build(db_path: Path) -> dict:
     from . import quality
     quality.apply_pack(pack)
     quality.apply_decisions(pack)  # owner decision #191
+    from .picture_need import assign_picture_ids
+    assign_picture_ids(pack["lexemes"])
     return pack
+
+
+def assign_cards(lexemes: list[dict], language: str) -> None:
+    """A form shares its word's card (問題回報 #51, owner 2026-10-14:
+    詞形變化跟原形共用同一張卡片): tethered, dried and lying get "card":
+    tether, dry, lie when that word is a full entry here, and the app files
+    the form's photos and saved word under that card. Words spelt like a
+    form but meaning something else (left, building) have none."""
+    from .adapters.base import card_base
+    full = {lx["normalized"] for lx in lexemes if lx.get("status") == "full"}
+    for lx in lexemes:
+        lx.pop("card", None)
+        lx.pop("card_form", None)
+        word = lx["normalized"]
+        if lx.get("status") != "full" or " " in word:
+            continue
+        base = card_base(word, language)
+        if base and base != word and base in full:
+            lx["card"] = base
+            if lx.get("pos") in _form_only_pos(word, language):
+                # dried the verb is only dry's form: no meaning of its own
+                # on dry's card (dried the adjective, 乾燥的, has one).
+                lx["card_form"] = True
+
+
+@lru_cache(maxsize=50_000)
+def _form_only_pos(word: str, language: str) -> frozenset[str]:
+    from . import kaikki_index
+    from .adapters.base import inflection_bases
+    from .adapters.kaikki import _pos, inflection_only_pos
+    entries = [e for e in kaikki_index.lookup(language, word) or []
+               if str(e.get("word", "")).lower() == word]
+    if inflection_bases(word, language):  # runs: every part of speech
+        return frozenset(p for e in entries if (p := _pos(e)))
+    return frozenset(inflection_only_pos(entries))
 
 
 _POS_ORDER = {"noun": 0, "verb": 1, "adj": 2, "adv": 3}
@@ -154,8 +197,14 @@ def rank_usages(lexemes: list[dict], cefr_by_pos: dict | None = None) -> None:
     words (railing is 欄杆, potted is 盆栽的 — not the verb forms).
 
     The headword's zipf is shared by all its parts of speech, so a rare
-    usage's share of the senses + examples scales it down (log10 share)."""
-    from .adapters.base import frequency_profile
+    usage's share of the senses + examples scales it down (log10 share).
+
+    Evidence counts senses/examples at full weight only when the sense is
+    not itself low-priority (問題回報 #216: frail's archaic/dated noun sense
+    is documented with more senses and examples in Kaikki than the common
+    adjective, so a raw count picked the noun as "main")."""
+    from . import quality
+    from .adapters.local import _family_cap, capped_frequency_level
 
     if cefr_by_pos is None:
         try:
@@ -168,10 +217,19 @@ def rank_usages(lexemes: list[dict], cefr_by_pos: dict | None = None) -> None:
     for lx in lexemes:
         if lx.get("status") == "full":
             groups.setdefault(lx["normalized"], []).append(lx)
+
+    def weighted_evidence(lx: dict) -> float:
+        senses = lx.get("senses") or []
+        stale = {id(s) for s in senses if quality.sense_is_low(s, False)}
+        stale_db_ids = {s.get("id") for s in senses if id(s) in stale and s.get("id") is not None}
+        sense_weight = sum(0.2 if id(s) in stale else 1.0 for s in senses)
+        example_weight = sum(0.2 if ex.get("sense_id") in stale_db_ids else 1.0
+                              for ex in lx.get("examples") or [])
+        return 1 + sense_weight + example_weight
+
     for word, group in groups.items():
         listed = {listed_pos.get(p, p): lv for p, lv in (cefr_by_pos.get(word) or {}).items()}
-        evidence = {id(lx): 1 + len(lx.get("senses") or []) + len(lx.get("examples") or [])
-                    for lx in group}
+        evidence = {id(lx): weighted_evidence(lx) for lx in group}
         participle = not listed and word.endswith(("ing", "ed"))
 
         def key(lx):
@@ -193,16 +251,34 @@ def rank_usages(lexemes: list[dict], cefr_by_pos: dict | None = None) -> None:
                 lx["rare_usage"] = False
                 if lv and lv != lx.get("cefr"):
                     lx["headword_cefr"], lx["cefr"], lx["cefr_source"] = lx.get("cefr"), lv, "cefr-j"
+                elif lv:
+                    lx["cefr_source"] = "cefr-j"
+                elif lx.get("cefr"):
+                    # Outside the list the level is a frequency estimate,
+                    # capped by the word-family rule above so it is never
+                    # far above the base's listed level (#214/#218); the
+                    # app says it is an estimate either way (#139 decision:
+                    # 標「估算」; #132 noodle).
+                    cap = _family_cap(word, "en")
+                    if cap is not None:
+                        lx["cefr"] = _LEVELS[min(_LEVELS.index(lx["cefr"]), cap)]
+                    lx["cefr_source"] = "frequency_estimate"
                 continue
             lx["rare_usage"] = True
             lx["headword_cefr"] = lx.get("cefr")
             if lx.get("zipf") is None:
                 continue
             share = evidence[id(lx)] / total
-            estimate = frequency_profile(lx["zipf"] + math.log10(share))["cefr"]
+            estimate = capped_frequency_level(word, lx["zipf"] + math.log10(share))
             floor = main.get("cefr") or lx.get("cefr")
             if floor in _LEVELS and _LEVELS.index(estimate) < _LEVELS.index(floor):
-                estimate = floor
+                # A rarer usage is never shown easier than the word's main
+                # one -- unless a word-family cap says the word itself
+                # should never show as hard as that main usage (standing
+                # adj <= stand A2 + 1, even though standing noun 「social
+                # standing」 is listed C2, 問題回報 #218).
+                cap = _family_cap(word, "en")
+                estimate = floor if cap is None or _LEVELS.index(floor) <= cap else _LEVELS[cap]
             lx["cefr"], lx["cefr_source"] = estimate, "frequency_estimate"
 
 

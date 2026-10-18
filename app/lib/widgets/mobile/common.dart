@@ -1,3 +1,5 @@
+import '../../l10n/ui_text.dart';
+import '../../models/word_entry.dart' show cefrLevels;
 import '../../services/learning_content.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -29,7 +31,7 @@ class Tap extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Semantics(
         button: onTap != null,
-        label: label,
+        label: label == null ? null : ui(context, label!),
         excludeSemantics: labelOnly && label != null,
         child: MouseRegion(
           cursor: onTap != null ? SystemMouseCursors.click : MouseCursor.defer,
@@ -46,11 +48,11 @@ class Tap extends StatelessWidget {
 void showToast(BuildContext context, String message) {
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(content: Text(message)));
+    ..showSnackBar(SnackBar(content: UiText(message)));
 }
 
 /// The square nav-bar buttons (back-btn / share-btn / star-btn-detail):
-/// 8px padding around a 20px icon, radius 12.
+/// A 48px target around a 20px icon, radius 12.
 class NavIconButton extends StatelessWidget {
   final Widget icon;
   final Color? background;
@@ -72,7 +74,7 @@ class NavIconButton extends StatelessWidget {
         onTap: onTap,
         label: label,
         child: Container(
-          padding: const EdgeInsets.all(MSpace.xs),
+          padding: const EdgeInsets.all(14),
           decoration: MDecor.softPanel(
             color: background ?? MColors.surfaceSoft,
             radius: MRadii.sm,
@@ -137,9 +139,9 @@ class MNavBar extends StatelessWidget {
       decoration: MDecor.listTileSurface(showDivider: divider),
       child: Row(
         children: [
-          SizedBox(width: 36, child: leading),
+          SizedBox(width: 48, child: leading),
           Expanded(
-            child: Text(
+            child: UiText(
               title,
               textAlign: TextAlign.center,
               maxLines: 1,
@@ -147,14 +149,14 @@ class MNavBar extends StatelessWidget {
               style: MFont.title,
             ),
           ),
-          SizedBox(width: 36, child: trailing),
+          SizedBox(width: 48, child: trailing),
         ],
       ),
     );
   }
 }
 
-/// The Inter top bar of 我的相片冊 / 選擇照片: 40px round buttons on
+/// The Inter top bar of 我的相片冊 / 選擇照片: 48px round buttons on
 /// #f5f8fc, title in Inter Bold 18.
 class AlbumTopBar extends StatelessWidget {
   final String title;
@@ -175,7 +177,7 @@ class AlbumTopBar extends StatelessWidget {
           children: [
             leading,
             Expanded(
-              child: Text(
+              child: UiText(
                 title,
                 textAlign: TextAlign.center,
                 style: MFont.inter(18, FontWeight.w700, MColors.albumInk),
@@ -200,8 +202,8 @@ class RoundIconButton extends StatelessWidget {
         onTap: onTap,
         label: label,
         child: Container(
-          width: 40,
-          height: 40,
+          width: 48,
+          height: 48,
           decoration: MDecor.softPanel(
             color: MColors.surfaceSoft,
             radius: MRadii.pill,
@@ -232,7 +234,7 @@ class FilterPill extends StatelessWidget {
           decoration: MDecor.chipSurface(active: active, radius: MRadii.md),
           child: Center(
             widthFactor: 1,
-            child: Text(
+            child: UiText(
               label,
               maxLines: 1,
               softWrap: false,
@@ -275,7 +277,7 @@ class MenuPill<T> extends StatelessWidget {
             PopupMenuItem(
               value: i,
               height: 40,
-              child: Text(
+              child: UiText(
                 text,
                 style: MFont.inter(
                   14,
@@ -293,8 +295,9 @@ class MenuPill<T> extends StatelessWidget {
 class TagChip extends StatelessWidget {
   final String label;
   final VoidCallback? onTap;
+  final bool localize;
 
-  const TagChip(this.label, {super.key, this.onTap});
+  const TagChip(this.label, {super.key, this.onTap, this.localize = true});
 
   @override
   Widget build(BuildContext context) => Tap(
@@ -302,7 +305,7 @@ class TagChip extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: MSpace.sm, vertical: 6),
           decoration: MDecor.chipSurface(active: true, radius: MRadii.sm),
-          child: Text(label,
+          child: Text(localize ? ui(context, label) : label,
               style: MFont.manrope(12, FontWeight.w700, MColors.primary)),
         ),
       );
@@ -328,7 +331,7 @@ class AlbumPill extends StatelessWidget {
           decoration: active
               ? MDecor.primaryPill(radius: MRadii.xl)
               : MDecor.softPanel(color: MColors.albumPill, radius: MRadii.xl),
-          child: Text(
+          child: UiText(
             label,
             style: active
                 ? MFont.inter(14, FontWeight.w700, Colors.white)
@@ -351,9 +354,74 @@ class LevelBadge extends StatelessWidget {
         decoration: MDecor.softPanel(color: MColors.primarySoft, radius: MRadii.sm),
         child: Center(
           widthFactor: 1,
-          child: Text(levelLabel(level),
+          child: UiText(levelLabel(level),
               style: MFont.inter(11, FontWeight.w700, MColors.primaryDeep,
                   height: 1.4)),
+        ),
+      );
+}
+
+/// The albums' 標籤程度 picker (問題回報 #113): a default view, then A1–C2.
+/// Choosing a level only filters which labels the photos show; it never
+/// changes a photo's saved words or its dial setting.
+class LabelLevelBar extends StatelessWidget {
+  /// The selected level, or null for the default view.
+  final String? level;
+
+  /// The default view's chip ("學習中", "全部").
+  final String defaultLabel;
+  final ValueChanged<String?> onChanged;
+
+  const LabelLevelBar({
+    super.key,
+    required this.level,
+    required this.defaultLabel,
+    required this.onChanged,
+  });
+
+  // Every option fits on a 320px phone without scrolling: the default
+  // chip takes two shares of the row, each level one.
+  @override
+  Widget build(BuildContext context) => SizedBox(
+        height: 28,
+        child: Row(
+          children: [
+            UiText('程度', style: MFont.inter(12, FontWeight.w600, MColors.gray500)),
+            const SizedBox(width: MSpace.xs),
+            for (final (i, l) in [null, ...cefrLevels].indexed) ...[
+              if (i > 0) const SizedBox(width: 4),
+              Expanded(
+                flex: l == null ? 2 : 1,
+                child: MergeSemantics(
+                  child: Semantics(
+                    selected: l == level,
+                    label: l == null ? null : '標籤程度 ${levelLabel(l)}',
+                    child: Tap(
+                      onTap: () => onChanged(l),
+                      child: Container(
+                        decoration: MDecor.chipSurface(
+                            active: l == level, radius: MRadii.md),
+                        alignment: Alignment.center,
+                        child: UiText(
+                          l ?? defaultLabel,
+                          maxLines: 1,
+                          softWrap: false,
+                          overflow: TextOverflow.clip,
+                          style: MFont.inter(
+                              12,
+                              FontWeight.w600,
+                              l == level
+                                  ? MColors.primaryDeep
+                                  : MColors.gray700,
+                              height: 1.4),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
         ),
       );
 }
@@ -366,7 +434,7 @@ class SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) =>
-      Text(text, style: MFont.caption.copyWith(fontSize: 13, fontWeight: FontWeight.w700));
+      UiText(text, style: MFont.caption.copyWith(fontSize: 13, fontWeight: FontWeight.w700));
 }
 
 TextStyle _sdsBody(Color color) =>
@@ -405,7 +473,7 @@ class SdsSearchField extends StatelessWidget {
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
-                hintText: hint,
+                hintText: ui(context, hint),
                 hintStyle: _sdsBody(MColors.sdsPlaceholder),
               ),
             ),
@@ -448,7 +516,7 @@ class SdsButton extends StatelessWidget {
               color: neutral ? MColors.sdsNeutral : MColors.sdsBrand),
           borderRadius: MRadii.rXs,
         ),
-        child: Text(label,
+        child: UiText(label,
             style: _sdsBody(neutral ? MColors.sdsText : MColors.sdsOnBrand)),
       ),
     );
@@ -467,7 +535,7 @@ class PrimaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Tap(
         onTap: onTap,
-        label: shortcut == null ? label : '$label（$shortcut）',
+        label: shortcut == null ? label : '${ui(context, label)}（${ui(context, shortcut!)}）',
         labelOnly: true,
         child: Container(
           height: 52,
@@ -481,11 +549,13 @@ class PrimaryButton extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              Text(label,
-                  style: MFont.manrope(16, FontWeight.w800, Colors.white)),
+              Flexible(child: UiText(label,
+                  textAlign: TextAlign.center,
+                  maxLines: 2, overflow: TextOverflow.ellipsis,
+                  style: MFont.manrope(16, FontWeight.w800, Colors.white))),
               if (shortcut != null) ...[
                 const SizedBox(width: 10),
-                Text(shortcut!,
+                UiText(shortcut!,
                     style: MFont.manrope(
                         11, FontWeight.w600, MColors.onOverlayMuted)),
               ],

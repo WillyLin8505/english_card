@@ -13,6 +13,7 @@ import 'package:photo_english_app/models/word_entry.dart';
 import 'package:photo_english_app/screens/flashcard_screen.dart';
 import 'package:photo_english_app/screens/onboarding_screen.dart';
 import 'package:photo_english_app/services/app_settings.dart';
+import 'package:photo_english_app/services/speaker.dart';
 import 'package:photo_english_app/services/tagging_service.dart';
 import 'package:photo_english_app/services/word_database_repository.dart';
 import 'package:photo_english_app/theme/mobile_theme.dart';
@@ -189,6 +190,8 @@ void main() {
       expect(find.text('等待 AI 辨識'), findsNothing);
       await tester.tap(find.text('前往設定'));
       await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(find.text('目前程度 入門（A1）'), 200,
+          scrollable: find.byType(Scrollable).last);
       expect(find.text('目前程度 入門（A1）'), findsOneWidget);
 
       // Set up but unreachable: waiting, with the reason.
@@ -282,7 +285,7 @@ void main() {
   });
 
   group('單字詳情', () {
-    testWidgets('all photos, examples, edit, 已學會 and review log',
+    testWidgets('all photos and dictionary content are expanded',
         (tester) async {
       final app = await pumpApp(tester,
           initialTab: AppTab.words, size: const Size(402, 1600));
@@ -297,15 +300,13 @@ void main() {
       expect(find.text('I eat an apple every day.'), findsOneWidget);
       expect(find.text('Fruit'),
           findsNothing); // untranslated legacy associations are not taught
-      await tester.tap(find.text('更多單字資訊'));
-      await tester.pumpAndSettle();
       expect(find.text('apples（複數）'), findsOneWidget);
-      expect(find.text('同音字'), findsNothing); // empty → no heading
-      expect(find.text('學習資訊'), findsOneWidget);
-      expect(find.text('吃力'), findsOneWidget); // the review log row
+      expect(find.text('更多單字資訊'), findsNothing);
+      expect(find.text('學習資訊'), findsNothing);
+      expect(find.text('同音詞'), findsNothing); // empty → no heading
 
       await tester.tap(find.bySemanticsLabel('播放發音').first);
-      expect(app.speaker.said, ['apple']);
+      expect((app.speaker as SilentSpeaker).said, ['apple']);
 
       await tester.tap(find.bySemanticsLabel('編輯單字'));
       await tester.pumpAndSettle();
@@ -354,7 +355,8 @@ void main() {
       repo.applyWordData(word.id,
           meaning: '尚未填寫的', status: WordDataStatus.complete);
       await tester.pump();
-      expect(find.text('想複習的時候就開始吧'), findsOneWidget);
+      // No photo, example or related word yet: review falls back to the
+      // traditional flip card instead of waiting (問題回報 #207 decision A).
       expect(find.text('開始複習'), findsOneWidget);
     });
 
@@ -376,24 +378,25 @@ void main() {
               .wordEntryId)!
           .word;
       expect(currentWord(), isNotEmpty);
-      // Front: hint, POS, meaning — no photo, no answer.
+      // Front: one of the five interactive exercises, without revealing the answer.
       expect(find.byType(FlashcardFront), findsOneWidget);
-      expect(find.byType(Image), findsNothing);
-      final hints = ['r _ _ _ _ _ _', 'c _ _ _ _ _'];
       expect(
-          hints.where((h) => find.text(h).evaluate().isNotEmpty), hasLength(1));
+          ['句子填空', '看圖選單字', '相似詞配對', '母語說明＋照片', '拖曳到圖片']
+              .where((label) => find.text(label).evaluate().isNotEmpty),
+          isEmpty);
       expect(find.text('Railing'), findsNothing);
       expect(find.text('Coffee'), findsNothing);
 
       await tester.tap(find.text('顯示答案'));
       await tester.pumpAndSettle();
       expect(find.byType(FlashcardBack), findsOneWidget);
-      expect(app.speaker.said, hasLength(1), reason: '翻到背面時自動播放');
+      expect((app.speaker as SilentSpeaker).said, hasLength(1),
+          reason: '翻到背面時自動播放');
       // Native-language grades with their next interval.
       expect(find.text('忘記'), findsOneWidget);
       expect(find.text('很容易'), findsOneWidget);
 
-      final first = app.speaker.said.single;
+      final first = (app.speaker as SilentSpeaker).said.single;
       await tester.tap(find.text('忘記'));
       await tester.pumpAndSettle();
       // Keyboard: Space flips, 3 = Good.
@@ -405,10 +408,11 @@ void main() {
       expect(find.byType(FlashcardFront), findsOneWidget);
       await tester.tap(find.text('顯示答案'));
       await tester.pumpAndSettle();
-      expect(app.speaker.said.last, first);
+      expect((app.speaker as SilentSpeaker).said.last, first);
       await tester.tap(find.text('記得'));
       await tester.pumpAndSettle();
-      expect(find.text('今天先到這裡'), findsOneWidget);
+      expect(find.text('自由加練，不更動下次複習時間'), findsNothing);
+      expect(find.bySemanticsLabel('刪除此卡片'), findsOneWidget);
       expect(find.textContaining('張'), findsNothing, reason: 'no card counts');
     });
 
@@ -490,16 +494,16 @@ void main() {
       expect(app.repository.profile.cefr, 'B1');
     });
 
-    testWidgets('unpublished languages are disabled; tagging address works',
+    testWidgets('unpublished learning languages stay disabled; native UI languages are available',
         (tester) async {
       final app = await pumpApp(tester,
           initialTab: AppTab.settings, size: const Size(402, 1600));
       final frenchLearning = tester.widget<ChoiceChip>(
           find.widgetWithText(ChoiceChip, '法文（Français） · 即將推出').first);
       final frenchNative = tester.widget<ChoiceChip>(
-          find.widgetWithText(ChoiceChip, '法文（Français） · 即將推出').last);
+          find.widgetWithText(ChoiceChip, '法文（Français）'));
       expect(frenchLearning.onSelected, isNull);
-      expect(frenchNative.onSelected, isNull);
+      expect(frenchNative.onSelected, isNotNull);
       expect(app.settings.learningLanguage, 'en');
       expect(app.settings.nativeLanguage, 'zh-TW');
       await tester.tap(find.text('進階設定：照片辨識連線'));

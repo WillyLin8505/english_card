@@ -1,0 +1,728 @@
+/// Traditional Chinese source keys are stable UI identifiers, never dictionary
+/// content. Missing keys/languages deliberately retain the original copy.
+const uiCatalog = <String, (String, String)>{
+  '結束複習': ('End review', 'Terminer la révision'),
+  '找不到這個單字': ('Word not found', 'Mot introuvable'),
+  '編輯單字': ('Edit word', 'Modifier le mot'),
+  '圖片與單字標籤': ('Photo and word labels', 'Photo et étiquettes'),
+  '圖片標籤': ('Photo labels', 'Étiquettes de la photo'),
+  '圖片資訊': ('Photo information', 'Informations sur la photo'),
+  '點標籤查看中文意思與例句。': (
+    'Tap a label for its Chinese meaning and examples.',
+    'Touchez une étiquette pour voir le sens chinois et les exemples.'
+  ),
+  '這張圖片已從資料庫移除': (
+    'This photo was removed from the database',
+    'Cette photo a été retirée du dictionnaire'
+  ),
+  '第一次學這張卡': ('First time learning this card', 'Première étude de cette carte'),
+  '學習資訊': ('Learning information', 'Informations d’apprentissage'),
+  '音標': ('Pronunciation', 'Prononciation'),
+  '例句翻譯': ('Example translation', 'Traduction de l’exemple'),
+  '相關字': ('Related words', 'Mots associés'),
+  '構詞與詞源': ('Word formation and etymology', 'Formation et étymologie'),
+  '來源': ('Source', 'Source'),
+  '後台詞庫': ('Dictionary service', 'Service de dictionnaire'),
+  '等級': ('Level', 'Niveau'),
+  '自訂': ('Custom', 'Personnalisé'),
+  '解釋': ('Explanation', 'Explication'),
+  'AI 估計': ('AI estimate', 'Estimation IA'),
+  '詞頻估計': ('Frequency estimate', 'Estimation de fréquence'),
+  '很簡單': ('Very easy', 'Très facile'),
+  '簡單': ('Easy', 'Facile'),
+  '符合程度': ('At your level', 'À votre niveau'),
+  '稍難': ('A little harder', 'Un peu plus difficile'),
+  '挑戰': ('Challenging', 'Un défi'),
+  '收起難度選單': ('Close difficulty menu', 'Fermer le menu de difficulté'),
+  '放開手指完成': ('Release to finish', 'Relâchez pour terminer'),
+  '顯示已學會單字': ('Show learned words', 'Afficher les mots acquis'),
+  '已學會與學習中的舊詞': (
+    'Previously learned and current words',
+    'Mots déjà acquis et en cours'
+  ),
+  '左滑單字表示已經會了；拖曳照片上的標籤可調整位置。\n離開這一頁時會自動保存。': (
+    'Swipe a word left if you know it; drag photo labels to reposition them.\nChanges are saved when you leave this page.',
+    'Balayez un mot à gauche si vous le connaissez ; faites glisser les étiquettes pour les déplacer.\nLes modifications sont enregistrées en quittant cette page.'
+  ),
+  '打開「顯示已學會單字」可以看到照片裡已經學過的詞。': (
+    'Turn on “Show learned words” to see familiar words in the photo.',
+    'Activez « Afficher les mots acquis » pour voir les mots déjà appris sur la photo.'
+  ),
+  '這張照片沒有新的單字': (
+    'No new words in this photo',
+    'Aucun nouveau mot sur cette photo'
+  ),
+  '可以用「難一點」或「更多動作」找找看其他的詞。': (
+    'Try a harder level or more actions to find other words.',
+    'Essayez un niveau plus difficile ou davantage d’actions pour trouver d’autres mots.'
+  ),
+  'AI 先從照片找出候選詞，再由這台裝置依程度、未知機率、圖片關聯、實用性與詞性多樣性打分，最多選 5 個；名詞最多 3 個，同義詞只留一個。': (
+    'AI proposes words from the photo. This device scores level, familiarity, relevance, usefulness and variety, choosing up to five words, at most three nouns, and one of each synonym group.',
+    'L’IA propose des mots. Cet appareil évalue le niveau, la familiarité, la pertinence, l’utilité et la variété pour choisir au plus cinq mots, dont trois noms et un seul mot par groupe de synonymes.'
+  ),
+  '拖曳調整順序；關閉的欄位不會出現在卡片背面。英文單字固定為標題。': (
+    'Drag to reorder. Hidden fields are omitted from the back. The English word remains the title.',
+    'Faites glisser pour réorganiser. Les champs masqués sont omis du verso. Le mot anglais reste le titre.'
+  ),
+  '等待 AI 辨識': ('Waiting for AI recognition', 'En attente de reconnaissance IA'),
+  'AI 辨識中…': ('AI recognition in progress…', 'Reconnaissance IA en cours…'),
+  'AI 辨識沒有成功': ('AI recognition failed', 'Échec de la reconnaissance IA'),
+  'AI 服務恢復連線後會自動處理，不用一直等在這裡。': (
+    'Processing resumes when AI reconnects. You can leave this page.',
+    'Le traitement reprendra à la reconnexion de l’IA. Vous pouvez quitter cette page.'
+  ),
+  '前往設定': ('Go to settings', 'Ouvrir les réglages'),
+  '尚未設定 AI 辨識服務': (
+    'AI recognition is not configured',
+    'Reconnaissance IA non configurée'
+  ),
+  '填好服務網址與 API Key 後，這張照片會自動開始辨識。': (
+    'Recognition starts automatically after you enter the service URL and API key.',
+    'La reconnaissance démarrera après la saisie de l’URL du service et de la clé API.'
+  ),
+  '尚未有可用相機或照片': (
+    'No camera or photo available yet',
+    'Aucun appareil photo ni photo disponible'
+  ),
+  '你可以按下方「選擇照片」，開始學單字。': (
+    'Choose a photo below to start learning words.',
+    'Choisissez une photo ci-dessous pour commencer.'
+  ),
+  '請稍後再試。': ('Please try again later.', 'Veuillez réessayer plus tard.'),
+  '還沒有照片': ('No photos yet', 'Aucune photo pour le moment'),
+  '找不到符合的照片': ('No matching photos', 'Aucune photo correspondante'),
+  '項目照片': ('Word photos', 'Photos du mot'),
+  'e.g. 陽台': ('e.g. balcony (in Chinese)', 'Ex. : balcon (en chinois)'),
+  '答對了': ('Correct', 'Bonne réponse'),
+  '答錯了': ('Incorrect', 'Mauvaise réponse'),
+  '查看完整單字': ('View full word details', 'Voir tous les détails'),
+  '正在連接詞庫…': ('Connecting to dictionary…', 'Connexion au dictionnaire…'),
+  '已連接詞庫 · 每 30 秒自動更新': (
+    'Dictionary connected · updates every 30 seconds',
+    'Dictionnaire connecté · actualisation toutes les 30 secondes'
+  ),
+  '暫時無法連線 · 使用已儲存的詞庫，稍後自動重試': (
+    'Offline · using saved dictionary; retrying later',
+    'Hors ligne · dictionnaire enregistré utilisé ; nouvel essai plus tard'
+  ),
+  '字母 A–Z': ('Alphabetical A–Z', 'Ordre alphabétique A–Z'),
+  '最近更新': ('Recently updated', 'Mise à jour récente'),
+  '下次出現': ('Next review', 'Prochaine révision'),
+  '新單字': ('New word', 'Nouveau mot'),
+  '複習中': ('Reviewing', 'En révision'),
+  '穩定': ('Stable', 'Stable'),
+  '未建卡': ('No card', 'Sans carte'),
+  '缺音標': ('Missing pronunciation', 'Prononciation manquante'),
+  '缺例句': ('Missing examples', 'Exemples manquants'),
+  '缺例句翻譯': (
+    'Missing example translations',
+    'Traductions d’exemples manquantes'
+  ),
+  '缺相關詞彙': ('Missing related words', 'Mots associés manquants'),
+  '資料取得失敗': ('Data unavailable', 'Données indisponibles'),
+  '名詞': ('Noun', 'Nom'),
+  '動詞': ('Verb', 'Verbe'),
+  '形容詞': ('Adjective', 'Adjectif'),
+  '副詞': ('Adverb', 'Adverbe'),
+  '代名詞': ('Pronoun', 'Pronom'),
+  '介系詞': ('Preposition', 'Préposition'),
+  '連接詞': ('Conjunction', 'Conjonction'),
+  '感嘆詞': ('Interjection', 'Interjection'),
+  '限定詞': ('Determiner', 'Déterminant'),
+  '數詞': ('Numeral', 'Numéral'),
+  '片語': ('Phrase', 'Expression'),
+  '專有名詞': ('Proper noun', 'Nom propre'),
+  '其他詞性': ('Other', 'Autre'),
+  '入門（A1）': ('Beginner (A1)', 'Débutant (A1)'),
+  '基礎（A2）': ('Elementary (A2)', 'Élémentaire (A2)'),
+  '中階（B1）': ('Intermediate (B1)', 'Intermédiaire (B1)'),
+  '中高階（B2）': ('Upper intermediate (B2)', 'Intermédiaire avancé (B2)'),
+  '進階（C1）': ('Advanced (C1)', 'Avancé (C1)'),
+  '精通（C2）': ('Proficient (C2)', 'Maîtrise (C2)'),
+  '歡迎使用拍照學單字': (
+    'Welcome to photo vocabulary',
+    'Bienvenue dans l’apprentissage par photos'
+  ),
+  '用喜歡的照片學單字。先選想學的語言和你的母語。': (
+    'Learn with your favourite photos. Choose your learning and native languages.',
+    'Apprenez avec vos photos préférées. Choisissez la langue étudiée et votre langue maternelle.'
+  ),
+  '我想學': ('I want to learn', 'Je veux apprendre'),
+  '我的母語（翻譯與提示會用這個語言）': (
+    'My native language (for translations and hints)',
+    'Ma langue maternelle (traductions et indices)'
+  ),
+  '第一階段尚未提供詞庫': (
+    'Dictionary not yet available',
+    'Dictionnaire pas encore disponible'
+  ),
+  '第一階段尚未提供翻譯資料': (
+    'Translations not yet available',
+    'Traductions pas encore disponibles'
+  ),
+  '下一步': ('Next', 'Suivant'),
+  '上一步': ('Previous', 'Précédent'),
+  '你對英文熟悉嗎？': (
+    'How well do you know English?',
+    'Quel est votre niveau d’anglais ?'
+  ),
+  '用來決定一開始建議的單字難度，之後會依你的使用情況慢慢調整。': (
+    'This sets your starting difficulty, which gradually adapts to your activity.',
+    'Cela définit votre difficulté initiale, qui s’adapte progressivement à votre activité.'
+  ),
+  '從未接觸': ('New to the language', 'Je découvre la langue'),
+  '幾乎沒學過': ('Little or no experience', 'Peu ou pas d’expérience'),
+  '會基礎單字': ('Know basic words', 'Je connais les bases'),
+  '認得日常生活的簡單單字': (
+    'Recognise simple everyday words',
+    'Je reconnais les mots simples du quotidien'
+  ),
+  '已學一段時間': ('Some experience', 'J’ai déjà étudié la langue'),
+  '能讀懂簡單的文章': ('Can read simple texts', 'Je comprends les textes simples'),
+  '熟練': ('Confident', 'À l’aise'),
+  '大部分內容都看得懂': (
+    'Understand most content',
+    'Je comprends la plupart des contenus'
+  ),
+  '從基礎開始': ('Start with the basics', 'Commencer par les bases'),
+  '開始使用': ('Get started', 'Commencer'),
+  '想測看看？試試單字程度（可略過）': (
+    'Try a vocabulary check (optional)',
+    'Tester mon vocabulaire (facultatif)'
+  ),
+  '試試你認得哪些單字': (
+    'Which words do you recognise?',
+    'Quels mots reconnaissez-vous ?'
+  ),
+  '一次只看 3 個字。認得就點一下，不認得也沒關係。': (
+    'Three words at a time. Tap the ones you know; it’s fine if you don’t.',
+    'Trois mots à la fois. Touchez ceux que vous connaissez ; sinon, aucun souci.'
+  ),
+  '繼續': ('Continue', 'Continuer'),
+  '都不認識，從基礎開始': ('Start with the basics', 'Commencer par les bases'),
+  '先到這裡，開始學習': (
+    'Finish check and start learning',
+    'Terminer le test et commencer'
+  ),
+  '你改過的欄位之後不會被自動更新覆蓋。': (
+    'Your edits will not be overwritten by automatic updates.',
+    'Vos modifications seront conservées lors des mises à jour automatiques.'
+  ),
+  '拍照': ('Camera', 'Photo'),
+  '相片冊': ('Albums', 'Albums'),
+  '複習': ('Review', 'Révision'),
+  '單字本': ('Words', 'Mots'),
+  '設定': ('Settings', 'Réglages'),
+  '返回': ('Back', 'Retour'),
+  '分享': ('Share', 'Partager'),
+  '關閉': ('Close', 'Fermer'),
+  '取消': ('Cancel', 'Annuler'),
+  '儲存': ('Save', 'Enregistrer'),
+  '完成': ('Done', 'Terminé'),
+  '好': ('OK', 'OK'),
+  '新增': ('Add', 'Ajouter'),
+  '復原': ('Restore', 'Rétablir'),
+  '重試': ('Retry', 'Réessayer'),
+  '全部': ('All', 'Tout'),
+  '收合': ('Collapse', 'Réduire'),
+  '收合項目': ('Collapse items', 'Réduire la liste'),
+  '顯示全部': ('Show all', 'Tout afficher'),
+  '語言': ('Languages', 'Langues'),
+  '學習語言': ('Learning language', 'Langue étudiée'),
+  '母語': ('Native language', 'Langue maternelle'),
+  '學習語言和母語不能相同': (
+    'Choose different learning and native languages',
+    'Choisissez deux langues différentes'
+  ),
+  '每個學習語言有自己的相片冊、單字、卡片與程度。': (
+    'Each learning language has its own albums, words, cards and level.',
+    'Chaque langue étudiée a ses albums, mots, cartes et niveau.'
+  ),
+  '介面隨母語切換；學習內容依已發布的詞庫提供。': (
+    'The interface follows your native language; learning content depends on published dictionaries.',
+    'L’interface suit votre langue maternelle ; le contenu dépend des dictionnaires publiés.'
+  ),
+  '英文（English）': ('English', 'Anglais (English)'),
+  '法文（Français）': ('French (Français)', 'Français'),
+  '繁體中文': ('Traditional Chinese', 'Chinois traditionnel'),
+  '發音腔調': ('Pronunciation accent', 'Accent'),
+  '英式（en-GB）': ('British (en-GB)', 'Britannique (en-GB)'),
+  '美式（en-US）': ('American (en-US)', 'Américain (en-US)'),
+  '單字難度': ('Word difficulty', 'Difficulté des mots'),
+  '快速詞彙檢查': ('Quick vocabulary check', 'Test rapide de vocabulaire'),
+  '依你的使用情況調整': ('Adjusted from your activity', 'Ajusté selon votre activité'),
+  '你設定的': ('Set by you', 'Défini par vous'),
+  '自評': ('Self-assessment', 'Autoévaluation'),
+  '累積足夠的使用紀錄後（至少 20 次），程度會依你的評分、左滑與轉盤慢慢自動調整，一次最多一級。': (
+    'After at least 20 interactions, your ratings, swipes and difficulty choices gradually adjust your level, one step at a time.',
+    'Après au moins 20 interactions, vos notes, balayages et choix de difficulté ajustent progressivement votre niveau, un palier à la fois.'
+  ),
+  '進階設定：照片辨識連線': (
+    'Advanced: photo recognition',
+    'Avancé : reconnaissance des photos'
+  ),
+  '網頁版會自動連接這台電腦的照片辨識服務，不用填網址或金鑰。只有使用其他服務時才需要修改。連不上時照片會先排隊，恢復連線後自動處理。': (
+    'The web app connects to this computer’s recognition service automatically. Only change these settings for another service. Photos wait offline and resume when connected.',
+    'L’application web se connecte automatiquement au service de cet ordinateur. Modifiez ces réglages pour un autre service. Les photos attendent hors ligne puis reprennent à la connexion.'
+  ),
+  '請填入照片辨識服務（Qwen）的網址與金鑰才能辨識照片內容。連不上時照片會先排隊，恢復連線後自動處理。': (
+    'Enter the photo recognition service (Qwen)’s address and key to recognise photo content. Photos wait offline and resume when connected.',
+    'Saisissez l’adresse et la clé du service de reconnaissance photo (Qwen) pour reconnaître le contenu des photos. Les photos attendent hors ligne puis reprennent à la connexion.'
+  ),
+  '服務網址': ('Service URL', 'URL du service'),
+  '連線金鑰（API Key）': ('API key', 'Clé API'),
+  '請先填寫服務網址': (
+    'Enter the service URL first',
+    'Saisissez d’abord l’URL du service'
+  ),
+  '測試中…': ('Testing…', 'Test en cours…'),
+  '測試連線': ('Test connection', 'Tester la connexion'),
+  '✕ 服務有回應，但 Ollama 沒有啟動': (
+    '✕ Service responded, but Ollama is not running',
+    '✕ Le service répond, mais Ollama est arrêté'
+  ),
+  '✕ 服務正常，但 API Key 不正確': (
+    '✕ Service is online, but the API key is incorrect',
+    '✕ Le service fonctionne, mais la clé API est incorrecte'
+  ),
+  '進階設定：複習安排': ('Advanced: review schedule', 'Avancé : calendrier de révision'),
+  '越高，單字越常出現。預設 90%。': (
+    'Higher values mean more frequent reviews. Default: 90%.',
+    'Une valeur élevée augmente la fréquence des révisions. Par défaut : 90 %.'
+  ),
+  '卡片背面順序': ('Card back order', 'Ordre du verso des cartes'),
+  '詞庫連線': ('Dictionary connection', 'Connexion au dictionnaire'),
+  '立即更新詞庫': ('Update dictionary now', 'Actualiser le dictionnaire'),
+  '資料': ('Data', 'Données'),
+  '字卡和複習紀錄保存在此瀏覽器。詞庫會從你的資料庫自動更新。': (
+    'Cards and review history are saved in this browser. The dictionary updates automatically from your database.',
+    'Les cartes et l’historique sont enregistrés dans ce navigateur. Le dictionnaire est actualisé automatiquement depuis votre base de données.'
+  ),
+  '字卡和複習紀錄保存在此裝置。詞庫會從你的資料庫自動更新。': (
+    'Cards and review history are saved on this device. The dictionary updates automatically from your database.',
+    'Les cartes et l’historique sont enregistrés sur cet appareil. Le dictionnaire est actualisé automatiquement depuis votre base de données.'
+  ),
+  '資料庫': ('Database', 'Base de données'),
+  '我的單字本': ('My words', 'Mes mots'),
+  '我的相片冊': ('My albums', 'Mes albums'),
+  '資料庫單字本': ('Database words', 'Mots du dictionnaire'),
+  '資料庫相片冊': ('Database photos', 'Photos du dictionnaire'),
+  '正在取得資料庫內容': ('Loading database content', 'Chargement du dictionnaire'),
+  '重新連線': ('Reconnect', 'Reconnecter'),
+  '搜尋英文或中文': (
+    'Search English or Chinese',
+    'Rechercher en anglais ou en chinois'
+  ),
+  '搜尋圖片上的英文或中文標籤': (
+    'Search photo labels in English or Chinese',
+    'Rechercher les étiquettes en anglais ou en chinois'
+  ),
+  '搜尋照片': ('Search photos', 'Rechercher des photos'),
+  '新增單字': ('Add word', 'Ajouter un mot'),
+  '新增單字標籤': ('Add word label', 'Ajouter une étiquette'),
+  '開始複習': ('Start review', 'Commencer la révision'),
+  '還在學': ('Learning', 'En cours'),
+  '學習中': ('Learning', 'En cours'),
+  '已學會': ('Learned', 'Acquis'),
+  '學習狀態': ('Learning status', 'État d’apprentissage'),
+  '全部狀態': ('All statuses', 'Tous les états'),
+  '全部詞性': ('All parts of speech', 'Toutes les catégories'),
+  '全部等級': ('All levels', 'Tous les niveaux'),
+  '等級篩選': ('Filter by level', 'Filtrer par niveau'),
+  '缺漏欄位': ('Missing fields', 'Champs manquants'),
+  '不限': ('Any', 'Tous'),
+  '進階篩選與排序': ('Filters and sorting', 'Filtres et tri'),
+  '沒有符合條件的單字': ('No matching words', 'Aucun mot correspondant'),
+  '沒有符合的單字': ('No matching words', 'Aucun mot correspondant'),
+  '沒有符合的圖片': ('No matching photos', 'Aucune photo correspondante'),
+  '請嘗試調整搜尋關鍵字或進階篩選條件': (
+    'Try changing your search or filters',
+    'Modifiez la recherche ou les filtres'
+  ),
+  '單字詳情': ('Word details', 'Détails du mot'),
+  '中文意思尚未補齊': ('Chinese meaning pending', 'Sens chinois en attente'),
+  '中文意思待補齊': ('Chinese meaning pending', 'Sens chinois en attente'),
+  '中文意思尚未補齊，連線後會自動更新。': (
+    'Chinese meaning pending; it will update when connected.',
+    'Le sens chinois sera ajouté à la connexion.'
+  ),
+  '部分內容待補齊': ('Some content is pending', 'Contenu partiellement en attente'),
+  '部分內容尚未補齊，詞庫更新後會自動補上。': (
+    'Some content is pending and will appear after a dictionary update.',
+    'Le contenu manquant apparaîtra après la mise à jour du dictionnaire.'
+  ),
+  '資料取得失敗，稍後自動重試': (
+    'Could not load data; retrying later',
+    'Chargement impossible ; nouvel essai plus tard'
+  ),
+  '加入我的單字本與複習': (
+    'Add to my words and review',
+    'Ajouter à mes mots et aux révisions'
+  ),
+  '已加入我的單字本與複習': (
+    'Added to my words and review',
+    'Ajouté à mes mots et aux révisions'
+  ),
+  '已加入我的單字本；中文意思補齊後會自動排進複習': (
+    'Added to my words; review starts when the Chinese meaning is ready',
+    'Ajouté à mes mots ; la révision commencera lorsque le sens chinois sera disponible'
+  ),
+  '這個單字已在我的單字本': (
+    'This word is already in my words',
+    'Ce mot est déjà dans mes mots'
+  ),
+  '這個單字已從資料庫移除': (
+    'This word was removed from the database',
+    'Ce mot a été retiré du dictionnaire'
+  ),
+  '資料庫尚未加入這個單字的圖片': (
+    'No database photo for this word yet',
+    'Aucune photo pour ce mot dans le dictionnaire'
+  ),
+  '管理這個單字': ('Manage this word', 'Gérer ce mot'),
+  '可查看意思、修改名稱或標為已學會。': (
+    'View the meaning, edit the name or mark as learned.',
+    'Consultez le sens, modifiez le nom ou marquez le mot comme acquis.'
+  ),
+  '標為已學會': ('Mark as learned', 'Marquer comme acquis'),
+  '我已經會了（移到已學會）': (
+    'I know this (mark as learned)',
+    'Je connais ce mot (marquer comme acquis)'
+  ),
+  '復原學習': ('Resume learning', 'Reprendre l’apprentissage'),
+  '已從「已學會」放回複習': ('Returned to review', 'Remis en révision'),
+  '播放發音': ('Play pronunciation', 'Écouter la prononciation'),
+  '聽發音': ('Listen', 'Écouter'),
+  '查看更多例句': ('More examples', 'Plus d’exemples'),
+  '更多單字資訊': ('More word information', 'Plus d’informations'),
+  '更多意思': ('More meanings', 'Autres sens'),
+  '實用例句': ('Useful examples', 'Exemples utiles'),
+  '例句與翻譯': ('Examples and translations', 'Exemples et traductions'),
+  '例句：AI 產生': ('Examples: AI-generated', 'Exemples générés par IA'),
+  '  AI 翻譯': ('  AI translation', '  Traduction IA'),
+  '中文': ('Chinese', 'Chinois'),
+  '英文': ('English', 'Anglais'),
+  '英文單字': ('English word', 'Mot anglais'),
+  '中文意思': ('Chinese meaning', 'Sens chinois'),
+  '中文釋義': ('Chinese definition', 'Définition chinoise'),
+  '釋義': ('Definition', 'Définition'),
+  '逐義釋義': ('Definitions by sense', 'Définitions par sens'),
+  '各詞性釋義': ('Definitions by part of speech', 'Définitions par catégorie'),
+  '詞性與意思': ('Parts of speech and meanings', 'Catégories et sens'),
+  '詞性': ('Part of speech', 'Catégorie grammaticale'),
+  '例句': ('Examples', 'Exemples'),
+  '近義詞': ('Synonyms', 'Synonymes'),
+  '反義詞': ('Antonyms', 'Antonymes'),
+  '同音詞': ('Homophones', 'Homophones'),
+  '近音詞': ('Similar-sounding words', 'Mots de sonorité proche'),
+  '拼寫相似詞': ('Similar spellings', 'Orthographes proches'),
+  '衍生詞': ('Derived words', 'Mots dérivés'),
+  '相關詞': ('Related words', 'Mots associés'),
+  '詞形變化': ('Inflections', 'Flexions'),
+  '詞形與衍生': ('Forms and derivatives', 'Formes et dérivés'),
+  '詞源': ('Etymology', 'Étymologie'),
+  '構詞': ('Word formation', 'Formation du mot'),
+  '資料來源': ('Sources', 'Sources'),
+  '意思相近的單字': ('Similar meanings', 'Sens proches'),
+  '意思相反的單字': ('Opposite meanings', 'Sens opposés'),
+  '中性／通用': ('Neutral / general', 'Neutre / courant'),
+  '口語': ('Informal', 'Familier'),
+  '書面語': ('Formal', 'Soutenu'),
+  '俚語': ('Slang', 'Argot'),
+  '未分級': ('Unrated', 'Sans niveau'),
+  '未收錄': ('Not listed', 'Non répertorié'),
+  '有你修改過的欄位': ('Contains your edits', 'Contient vos modifications'),
+  '刪除此卡片': ('Remove this card', 'Retirer cette carte'),
+  '想複習的時候就開始吧': ('Ready when you are', 'Révisez à votre rythme'),
+  '先想答案，再翻面；隨時可以結束。': (
+    'Think of the answer, then flip. Stop whenever you like.',
+    'Cherchez la réponse, puis retournez la carte. Arrêtez quand vous voulez.'
+  ),
+  '等待詞庫補齊': ('Waiting for dictionary content', 'En attente du dictionnaire'),
+  '現在沒有需要複習的卡片': (
+    'No cards to review right now',
+    'Aucune carte à réviser pour le moment'
+  ),
+  '單字的中文意思補齊後，會自動加入複習。': (
+    'Words enter review automatically when their Chinese meanings are ready.',
+    'Les mots seront ajoutés aux révisions lorsque leur sens chinois sera disponible.'
+  ),
+  '在照片詳情挑幾個單字，或從資料庫加入單字，就會變成卡片。': (
+    'Choose words from a photo or add them from the database to create cards.',
+    'Choisissez des mots sur une photo ou dans le dictionnaire pour créer des cartes.'
+  ),
+  '去拍照選單字': (
+    'Take a photo to find words',
+    'Photographier pour trouver des mots'
+  ),
+  '查看相片冊': ('View albums', 'Voir les albums'),
+  '今天先到這裡': ('That’s all for now', 'C’est tout pour le moment'),
+  '這次的練習先到這裡。\n想複習時，再回來就好。': (
+    'That’s all for this session.\nCome back whenever you want to review.',
+    'Cette séance est terminée.\nRevenez quand vous souhaitez réviser.'
+  ),
+  '顯示答案': ('Show answer', 'Afficher la réponse'),
+  '空白鍵': ('Space', 'Espace'),
+  '送出答案': ('Submit answer', 'Valider la réponse'),
+  '輸入缺少的單字': ('Enter the missing word', 'Saisissez le mot manquant'),
+  '需要提示': ('Need a hint', 'Besoin d’un indice'),
+  '顯示字首提示': ('Show first-letter hint', 'Afficher la première lettre'),
+  '字首提示': ('First-letter hint', 'Première lettre'),
+  '母語提示': ('Native-language hint', 'Indice en langue maternelle'),
+  '母語說明＋照片': ('Native meaning + photo', 'Sens + photo'),
+  '先在心裡想出這個字，再按「顯示答案」。': (
+    'Recall the word, then select “Show answer”.',
+    'Retrouvez le mot, puis sélectionnez « Afficher la réponse ».'
+  ),
+  '這一組不相符，再試一次。': (
+    'These do not match. Try again.',
+    'Ces éléments ne correspondent pas. Réessayez.'
+  ),
+  '句子填空': ('Fill in the blank', 'Phrase à compléter'),
+  '相似詞配對': ('Match related words', 'Associer les mots'),
+  '看圖選單字': (
+    'Choose the word for the photo',
+    'Choisir le mot correspondant à la photo'
+  ),
+  '稍後再出現': ('Appears again later', 'Réapparaît plus tard'),
+  '拍照學單字': ('Learn words with photos', 'Apprendre avec des photos'),
+  '即時辨識生活中的英文單字': (
+    'Discover English words around you',
+    'Découvrez les mots anglais autour de vous'
+  ),
+  '先選一張照片開始學習': (
+    'Choose a photo to start learning',
+    'Choisissez une photo pour commencer'
+  ),
+  '從相簿選擇': ('Choose from gallery', 'Choisir dans la galerie'),
+  '最近照片': ('Recent photos', 'Photos récentes'),
+  '最近的照片': ('Recent photos', 'Photos récentes'),
+  '查看最近照片的單字': (
+    'View words in recent photos',
+    'Voir les mots des photos récentes'
+  ),
+  '查看這張照片的單字': ('View words in this photo', 'Voir les mots de cette photo'),
+  '開啟最近的照片': ('Open recent photo', 'Ouvrir la photo récente'),
+  '正在讀取最近照片…': ('Loading recent photos…', 'Chargement des photos récentes…'),
+  '還沒有照片，先拍一張吧！': (
+    'No photos yet. Take your first one!',
+    'Aucune photo. Prenez la première !'
+  ),
+  '相機未啟用': ('Camera is off', 'Appareil photo désactivé'),
+  '正在開啟相機…': ('Opening camera…', 'Ouverture de l’appareil photo…'),
+  '目前無法使用相機': ('Camera is unavailable', 'Appareil photo indisponible'),
+  '找不到相機': ('No camera found', 'Aucun appareil photo trouvé'),
+  '重試相機': ('Retry camera', 'Réessayer l’appareil photo'),
+  '這台裝置不支援閃光燈': (
+    'Flash is not supported on this device',
+    'Cet appareil ne dispose pas de flash'
+  ),
+  '開啟閃光燈': ('Turn flash on', 'Activer le flash'),
+  '關閉閃光燈': ('Turn flash off', 'Désactiver le flash'),
+  'AI 辨識就緒': ('AI recognition ready', 'Reconnaissance IA prête'),
+  'AI 離線 · 照片會先排隊': (
+    'AI offline · photos will wait',
+    'IA hors ligne · photos en attente'
+  ),
+  '照片辨識尚未連線': (
+    'Photo recognition is offline',
+    'Reconnaissance des photos hors ligne'
+  ),
+  '設定辨識': ('Set up recognition', 'Configurer la reconnaissance'),
+  '照片詳情': ('Photo details', 'Détails de la photo'),
+  '照片名稱': ('Photo name', 'Nom de la photo'),
+  '照片情境': ('Photo context', 'Contexte de la photo'),
+  '選擇照片': ('Choose photos', 'Choisir des photos'),
+  '選擇新照片': ('Choose new photo', 'Choisir une nouvelle photo'),
+  '已選照片與範例': (
+    'Selected photos and examples',
+    'Photos sélectionnées et exemples'
+  ),
+  '範例照片': ('Example photos', 'Photos d’exemple'),
+  '存到相片冊': ('Save to album', 'Enregistrer dans un album'),
+  '這張照片已經加入過': ('This photo is already added', 'Cette photo est déjà ajoutée'),
+  '仍要再加入': ('Add anyway', 'Ajouter quand même'),
+  '打開原本的照片': ('Open the existing photo', 'Ouvrir la photo existante'),
+  '辛苦了。每張卡下次出現的時間已經排好，\n想複習時，再回來就好。': (
+    'Nice work. Each card\'s next time is scheduled;\ncome back whenever you like.',
+    'Bravo. La prochaine fois de chaque carte est planifiée ;\nrevenez quand vous voulez.'
+  ),
+  '相片冊名稱': ('Album name', 'Nom de l’album'),
+  '＋ 新相片冊': ('＋ New album', '＋ Nouvel album'),
+  '這個分類還沒有相片冊': (
+    'No albums in this category yet',
+    'Aucun album dans cette catégorie'
+  ),
+  '圖片暫時無法載入': ('Photo could not load', 'Impossible de charger la photo'),
+  '圖片暫時無法載入，稍後再試': (
+    'Photo could not load. Try again later.',
+    'Impossible de charger la photo. Réessayez plus tard.'
+  ),
+  '正在載入圖片…': ('Loading photo…', 'Chargement de la photo…'),
+  '重試圖片': ('Retry photo', 'Recharger la photo'),
+  '拖曳到圖片': ('Drag onto photo', 'Glisser sur la photo'),
+  '修改標籤': ('Edit label', 'Modifier l’étiquette'),
+  '查看單字': ('View word', 'Voir le mot'),
+  '程度': ('Level', 'Niveau'),
+  '簡單一點': ('Easier', 'Plus facile'),
+  '難一點': ('Harder', 'Plus difficile'),
+  '多看動詞': ('More verbs', 'Plus de verbes'),
+  '多看形容詞': ('More adjectives', 'Plus d’adjectifs'),
+  '為什麼是這些字？': ('Why these words?', 'Pourquoi ces mots ?'),
+  '取消鎖定': ('Unlock', 'Déverrouiller'),
+  '鎖定（調整難度時保留）': (
+    'Lock (keep when adjusting difficulty)',
+    'Verrouiller (conserver lors du réglage)'
+  ),
+  '處理中…': ('Processing…', 'Traitement…'),
+  '補充候選詞…': ('Finding more candidates…', 'Recherche d’autres mots…'),
+  '正在整理單字內容…': ('Preparing word content…', 'Préparation des mots…'),
+  '單字待補齊': ('Word content pending', 'Contenu du mot en attente'),
+  '可離開此頁，會繼續處理；請保持 App 開啟。': (
+    'You can leave this page; keep the app open to continue processing.',
+    'Vous pouvez quitter cette page ; gardez l’application ouverte pour poursuivre le traitement.'
+  ),
+  '等級（可不選）': ('Level (optional)', 'Niveau (facultatif)'),
+  '請填寫英文單字與中文釋義': (
+    'Enter an English word and Chinese definition',
+    'Saisissez un mot anglais et sa définition chinoise'
+  ),
+  '音標、例句與翻譯會在背景自動補上。': (
+    'Pronunciation, examples and translations are added in the background.',
+    'La prononciation, les exemples et les traductions sont ajoutés en arrière-plan.'
+  ),
+  '位置不正確，詞籤已回到原位，請再試一次。': (
+    'Invalid position. The label was restored; try again.',
+    'Position incorrecte. L’étiquette a été rétablie ; réessayez.'
+  ),
+  '這張照片已從相片冊移除。\n手機相簿裡的原始照片不受影響。': (
+    'This photo was removed from the album.\nThe original in your gallery is unchanged.',
+    'Cette photo a été retirée de l’album.\nL’original dans votre galerie est conservé.'
+  ),
+};
+
+String translateUi(String source, String language) {
+  if (language != 'en' && language != 'fr') return source;
+  final entry = uiCatalog[source];
+  if (entry != null) return language == 'fr' ? entry.$2 : entry.$1;
+  if (source.endsWith(' · 即將推出')) {
+    final name = translateUi(source.replaceFirst(' · 即將推出', ''), language);
+    return '$name · ${language == 'fr' ? 'Bientôt' : 'Coming soon'}';
+  }
+  for (final template in _templates) {
+    final match = template.pattern.firstMatch(source);
+    if (match == null) continue;
+    final translation = language == 'fr' ? template.fr : template.en;
+    return translation.replaceAllMapped(
+        RegExp(r'\{(\d+)\}'), (m) => match.group(int.parse(m[1]!) + 1)!);
+  }
+  return source;
+}
+
+// Anchored templates preserve interpolated values verbatim: names, answers,
+// server messages and counts must never be translated by substring replacement.
+final _templates = [
+  for (final e in _templateCopy.entries)
+    _UiTemplate(e.key, e.value.$1, e.value.$2),
+];
+
+class _UiTemplate {
+  final RegExp pattern;
+  final String en;
+  final String fr;
+  _UiTemplate(String source, this.en, this.fr)
+      : pattern = RegExp(
+            '^${source.split(RegExp(r'\{\d+\}')).map(RegExp.escape).join('(.*?)')}\$',
+            dotAll: true);
+}
+
+const _templateCopy = <String, (String, String)>{
+  '單字難度 {0} · {1}': ('Difficulty: {0} · {1}', 'Difficulté : {0} · {1}'),
+  '圖片來源：{0}': ('Photo source: {0}', 'Source de la photo : {0}'),
+  '這次複習了 {0} 張卡': ('You reviewed {0} cards', 'Vous avez révisé {0} cartes'),
+  '穩定度 {0} 天 · 已複習 {1} 次 · 忘記 {2} 次': (
+    'Stability: {0} days · {1} reviews · {2} lapses',
+    'Stabilité : {0} jours · {1} révisions · {2} oublis'
+  ),
+  '作者：{0}': ('Author: {0}', 'Auteur : {0}'),
+  '授權：{0}': ('License: {0}', 'Licence : {0}'),
+  '{0} 天後複習': ('Review in {0} days', 'Revoir dans {0} jours'),
+  '{0} 個月後複習': ('Review in {0} months', 'Revoir dans {0} mois'),
+  '{0} 年後複習': ('Review in {0} years', 'Revoir dans {0} ans'),
+  '{0} · 即將推出': ('{0} · Coming soon', '{0} · Bientôt'),
+  '目前程度 {0}': ('Current level: {0}', 'Niveau actuel : {0}'),
+  '來源：{0}。新照片的單字會以這個程度為中心挑選；照片詳情的難度轉盤只影響那一張照片。': (
+    'Source: {0}. New photos use this level; the photo difficulty dial affects only that photo.',
+    'Source : {0}. Les nouvelles photos utilisent ce niveau ; le réglage d’une photo ne concerne que celle-ci.'
+  ),
+  '你最近常把難度調高，要把預設程度改成 {0} 嗎？': (
+    'You often increase difficulty. Set the default to {0}?',
+    'Vous augmentez souvent la difficulté. Passer au niveau {0} par défaut ?'
+  ),
+  '你最近常把難度調低，要把預設程度改成 {0} 嗎？': (
+    'You often decrease difficulty. Set the default to {0}?',
+    'Vous réduisez souvent la difficulté. Passer au niveau {0} par défaut ?'
+  ),
+  '希望記住的比例 {0}%': ('Desired retention: {0}%', 'Mémorisation souhaitée : {0} %'),
+  '上次確認：{0}': ('Last checked: {0}', 'Dernière vérification : {0}'),
+  '✓ 已連線 · {0}': ('✓ Connected · {0}', '✓ Connecté · {0}'),
+  '⌛ 有 {0} 張照片等待 AI 辨識': (
+    '⌛ {0} photos waiting for AI',
+    '⌛ {0} photos en attente de l’IA'
+  ),
+  '⌛ 正在辨識照片（還有 {0} 張在排隊）': (
+    '⌛ Recognising photo ({0} waiting)',
+    '⌛ Reconnaissance en cours ({0} en attente)'
+  ),
+  '共 {0} 張圖片 · 每張都有單字標籤': (
+    '{0} photos · all with word labels',
+    '{0} photos · toutes avec étiquettes'
+  ),
+  '{0} 筆正式單字 · 與資料庫同步': (
+    '{0} published words · synced with database',
+    '{0} mots publiés · synchronisés avec le dictionnaire'
+  ),
+  '{0}：{1} 張圖片有這個程度的標籤': (
+    '{0}: {1} photos with labels at this level',
+    '{0} : {1} photos avec étiquettes de ce niveau'
+  ),
+  '包含待補齊單字（{0}）': (
+    'Include incomplete words ({0})',
+    'Inclure les mots incomplets ({0})'
+  ),
+  '第 {0} 個，共 {1} 個': ('{0} of {1}', '{0} sur {1}'),
+  '{0} 個單字': ('{0} words', '{0} mots'),
+  '{0} 張': ('{0} photos', '{0} photos'),
+  '資料庫圖片（{0}）': ('Database photos ({0})', 'Photos du dictionnaire ({0})'),
+  '出現這個單字的照片（{0}）': ('Photos with this word ({0})', 'Photos avec ce mot ({0})'),
+  '展開全部（{0}）': ('Show all ({0})', 'Tout afficher ({0})'),
+  '你的答案：{0}': ('Your answer: {0}', 'Votre réponse : {0}'),
+  '正確答案：{0}': ('Correct answer: {0}', 'Bonne réponse : {0}'),
+  '聽 {0} 的發音': ('Listen to {0}', 'Écouter {0}'),
+  '復原 {0}': ('Restore {0}', 'Rétablir {0}'),
+  '開啟照片「{0}」': ('Open photo “{0}”', 'Ouvrir la photo « {0} »'),
+  '拍照失敗：{0}': ('Could not take photo: {0}', 'Échec de la prise de photo : {0}'),
+  '儲存照片失敗：{0}': (
+    'Could not save photo: {0}',
+    'Échec de l’enregistrement : {0}'
+  ),
+  '無法開啟相簿：{0}': (
+    'Could not open gallery: {0}',
+    'Impossible d’ouvrir la galerie : {0}'
+  ),
+  '照片中：{0}': ('In the photo: {0}', 'Sur la photo : {0}'),
+  '待補：{0}': ('Pending: {0}', 'En attente : {0}'),
+  '尚缺：{0}。詞庫更新後會自動補上。': (
+    'Missing: {0}. Added automatically after a dictionary update.',
+    'Manquant : {0}. Ajout automatique après une mise à jour.'
+  ),
+  'AI 打標籤：{0}': ('AI labelling: {0}', 'Étiquetage IA : {0}'),
+  '已新增「{0}」，例句與翻譯會在背景補上。': (
+    'Added “{0}”; examples and translations will follow.',
+    '« {0} » ajouté ; exemples et traductions suivront.'
+  ),
+  '{0}：{1} 個單字 · {2} 張照片 · {3} 張卡片 · 已學會 {4} 個': (
+    '{0}: {1} words · {2} photos · {3} cards · {4} learned',
+    '{0} : {1} mots · {2} photos · {3} cartes · {4} acquis'
+  ),
+};

@@ -10,11 +10,13 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
+from functools import lru_cache
 from datetime import datetime, timezone
 from typing import Any
 
 from .. import catalog
-from ..text import CJK, fold, looks_simplified, normalize_lemma, taiwanize
+from ..text import (CJK, fold, looks_simplified, native_latin_issue, normalize_lemma, taiwanize,
+                    is_column_word_list)
 from .http import SourceError  # noqa: F401 — re-exported for adapters
 
 
@@ -172,6 +174,9 @@ def localize(c: Candidate, ctx: Context) -> None:
     if "zh-TW" not in (ctx.target, ctx.native, c.language):
         return
     c.value = taiwanize(c.value)
+    if c.field == "native_definition" and c.language == "zh-TW" and c.value.get("text"):
+        from ..text import normalize_native_gloss
+        c.value["text"] = normalize_native_gloss(c.value["text"])
     if CJK.search(c.key or ""):
         c.key = taiwanize(c.key)
     if CJK.search(c.slot or ""):
@@ -182,6 +187,110 @@ def localize(c: Candidate, ctx: Context) -> None:
 ARPABET = re.compile(r"^[A-Z]{1,2}[012]?( [A-Z]{1,2}[012]?)*( \| [A-Z]{1,2}[012]?( [A-Z]{1,2}[012]?)*)*$")
 IPA_CHARS = re.compile(r"[ˈˌəɪʊɛæɑɔʌθðʃʒŋɹɜɒɐɚɝ̃ːʁɥøœ]")
 WORDISH = re.compile(r"^[\w'’\- .]+$", re.UNICODE)
+
+
+@lru_cache(maxsize=50_000)
+def is_proper_noun(word: str, language: str) -> bool:
+    """Only a name in the dictionary: every Kaikki entry spelled this way
+    (any case) is a proper noun — people (brett, woolf), places (Antarctica,
+    Lake Victoria), brands. A capitalised common noun (Bengal tiger) or a
+    word that is also common (stein, toby) is not. False without the index."""
+    from .. import kaikki_index
+    entries = kaikki_index.lookup(language, word) or []
+    same = [e for e in entries if str(e.get("word", "")).lower() == word.lower()]
+    return bool(same) and all(e.get("pos") == "name" for e in same)
+
+
+# A sense like these doesn't make an inflected form a word of its own
+# (runs 「the runs」 slang for diarrhoea, eaten 「in compounds」).
+MINOR_SENSE_TAGS = {"obsolete", "archaic", "dated", "rare", "slang", "humorous", "nonstandard",
+                    "vulgar", "derogatory", "offensive", "euphemistic", "poetic", "dialectal",
+                    "in-compounds", "alt-of", "abbreviation", "clipping", "misspelling"}
+
+
+@lru_cache(maxsize=50_000)
+def inflection_bases(word: str, language: str) -> tuple[str, ...]:
+    """The words an inflected form belongs to, when the dictionary gives it
+    no meaning of its own: runs → run, children → child, leaves → leaf and
+    leave. Empty for a form that is also a word (lying 說謊的, spotted
+    有斑點的, tethered) and without the index (問題回報 #51)."""
+    from .. import kaikki_index
+    w = word.strip().lower()
+    entries = [e for e in kaikki_index.lookup(language, w) or []
+               if str(e.get("word", "")).lower() == w and e.get("pos") != "name"]
+    bases: list[str] = []
+    for e in entries:
+        for s in e.get("senses") or []:
+            if s.get("form_of"):
+                bases += [str(f.get("word") or "") for f in s["form_of"]]
+            elif (s.get("glosses") or [""])[0].strip() \
+                    and not MINOR_SENSE_TAGS & set(s.get("tags") or []):
+                return ()  # a meaning of its own
+    # Lower case (apples → apple, not the brand Apple) and in use (children
+    # → child, not the dialectal childer).
+    return tuple(b for b in dict.fromkeys(bases)
+                 if b and b == b.lower() and b != w and " " not in b and zipf(b, language) >= 2.5)
+
+
+ACT_NOUN = re.compile(r"^(the|an?)\s+(act|action|process|practice)\b", re.I)
+
+
+@lru_cache(maxsize=1)
+def _listed_levels() -> dict[str, int]:
+    """A word's easiest CEFR-J / Octanove level, as an index (A1 = 0)."""
+    from .local import LEVELS, cefr_list
+    return {w: min(LEVELS.index(lv) for lv in hit[1].values())
+            for w, hit in cefr_list().items() if hit and hit[1]}
+
+
+@lru_cache(maxsize=50_000)
+def card_base(word: str, language: str) -> str | None:
+    """The word whose card a form shares (問題回報 #51, owner 2026-10-14:
+    詞形變化跟原形共用同一張卡片): runs → run, and a form whose own meaning
+    is still the participle's — tethered 被拴住的 → tether, dried → dry,
+    lying 躺著的、說謊的 → lie (an adjective, an adverb or 「the act of …」 in
+    the same etymology as the form). Not another word spelt the same: left
+    左邊 (another etymology), building 建築物, glasses 眼鏡, painting 畫
+    (things of their own); nor a word learners study on its own (tired,
+    excited: listed at an easier level than tire, excite, so met first).
+    None without the index."""
+    from .. import kaikki_index
+    w = word.strip().lower()
+    pure = inflection_bases(w, language)
+    if pure:
+        return pure[0] if len(pure) == 1 else None  # leaves: leaf or leave
+    if " " in w:
+        return None
+    entries = [e for e in kaikki_index.lookup(language, w) or []
+               if str(e.get("word", "")).lower() == w and e.get("pos") != "name"]
+
+    def own(e):
+        return [s for s in e.get("senses") or [] if not s.get("form_of")
+                and (s.get("glosses") or [""])[0].strip()
+                and not MINOR_SENSE_TAGS & set(s.get("tags") or [])]
+
+    first = next((e for e in entries if own(e)), None)
+    if first is None:
+        return None
+    ety = first.get("etymology_number")
+    same = [e for e in entries if e.get("etymology_number") == ety]
+    for e in same:
+        for s in own(e):
+            if e.get("pos") not in ("adj", "adv") and not (
+                    e.get("pos") == "noun" and ACT_NOUN.match(s["glosses"][0])):
+                return None  # a thing of its own (building, glasses)
+    bases = [str(f.get("word") or "") for e in same for s in e.get("senses") or []
+             for f in s.get("form_of") or []]
+    bases = [b for b in dict.fromkeys(bases)
+             if b and b == b.lower() and b != w and zipf(b, language) >= 2.5]
+    if not bases:
+        return None
+    base = max(bases, key=lambda b: zipf(b, language))
+    if language == "en":
+        levels = _listed_levels()
+        if w in levels and levels[w] < levels.get(base, 99):
+            return None  # tired A1 before tire: a word of its own to learners
+    return base
 
 
 def validate(c: Candidate, ctx: Context) -> str | None:
@@ -221,15 +330,27 @@ def validate(c: Candidate, ctx: Context) -> str | None:
             return "空白釋義"
         if len(text) > 600:
             return "釋義過長"
+    elif f == "register":
+        if v.get("register") not in {"neutral", "written", "spoken", "slang"}:
+            return "語體必須是 neutral／written／spoken／slang"
+        if not v.get("sense_key"):
+            return "語體沒有對應詞義"
     elif f == "example_sentences":
         if not text:
             return "空白例句"
+        if is_column_word_list(text, ctx.lemma):
+            return "詞彙欄位清單，不是學習例句"
         if len(text) > 240:
             return "例句過長（> 240 字元）"
         if ctx.target == "en" and len(text.split()) < 3:
             return "少於 3 個字，不像完整句子"
         if ctx.target != "zh-TW" and len(text.split()) > catalog.MAX_EXAMPLE_WORDS:
             return f"超過 {catalog.MAX_EXAMPLE_WORDS} 個字"
+        if ctx.target == "en":
+            from ..quality import example_flags as _example_flags
+            from .local import word_forms as _word_forms
+            if "not_sentence" in _example_flags(text, ctx.lemma, "", list(_word_forms(ctx))):
+                return "不是完整句"
         if not ctx.target.startswith("zh"):
             # Import lazily: local imports Candidate from this module.
             from .local import word_forms
@@ -257,6 +378,9 @@ def validate(c: Candidate, ctx: Context) -> str | None:
                 return "不是中文"
             if looks_simplified(text):
                 return "簡體字（繁中資料包需繁體）"
+            latin = native_latin_issue(text)
+            if latin:
+                return f"夾雜拉丁字母／殘字：{latin}"
         if len(text) > 400:
             return "翻譯過長"
     elif f in catalog.RELATION_FIELDS or f == "derived_terms":
@@ -265,4 +389,7 @@ def validate(c: Candidate, ctx: Context) -> str | None:
             return "空白或過長的詞"
         if normalize_lemma(w, ctx.target) == ctx.lemma:
             return "和詞條本身相同"
+        # Spec: 排除人名、品牌…及其他專有名詞 (問題回報 #22).
+        if is_proper_noun(w, ctx.target):
+            return "專有名詞（人名、地名、品牌），不收為關係詞"
     return None

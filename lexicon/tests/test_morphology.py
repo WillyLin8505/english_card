@@ -134,6 +134,33 @@ def test_pipeline_breakdown_native_meanings_and_export(session, fakes, tmp_path,
                     ("-ior", "suffix", "較…的（比較級）")]
 
 
+def test_etymology_gloss_beats_the_modern_sense_of_a_part():
+    """nape inside napkin is 「布料」, not the neck; -ness still uses the table."""
+    from app.adapters.morph import MorphLocal
+    from app.morphology import etymology_part_glosses
+    zh = "源自中古英語，由 nape（布料）+ -kin（縮小後綴）構成。"
+    en = 'equivalent to nape (“cloth”) + -kin (diminutive suffix).'
+    assert etymology_part_glosses(zh, en) == {"nape": "布料", "kin": "縮小後綴"}
+    assert etymology_part_glosses("place（11 世紀）", "place (11th century)") == {}
+    ctx = Context("en", "zh-TW", "napkin", "napkin", resolved={
+        "morphemes": [{"parts": [
+            {"part": "nape", "text": "nape", "kind": "root", "free": True},
+            {"part": "-kin", "text": "kin", "kind": "suffix", "free": False},
+        ]}],
+        "etymology_text": [{"text": en}],
+        "etymology_native": [{"text": zh}],
+    })
+    got = {c.value["part"]: c.value["text"] for c in MorphLocal().normalize("morphemes_native", None, ctx)}
+    assert got == {"nape": "布料", "-kin": "縮小後綴"}
+    # The part that is the whole word keeps its own meaning (filled later).
+    whole = Context("en", "zh-TW", "bassinet", "bassinet", resolved={
+        "morphemes": [{"parts": [{"part": "bassinet", "text": "bassinet", "kind": "root", "free": True}]}],
+        "etymology_text": [{"text": 'From bassinet (“small basin”).'}],
+        "etymology_native": [{"text": "源自 bassinet（小盆）。"}],
+    })
+    assert MorphLocal().normalize("morphemes_native", None, whole) == []
+
+
 def test_surface_analysis_template_with_its_kind_first():
     # {{surf|+suf|en|nature|al}}: every argument one place later.
     assert parts_from_affix_template({"1": "+suf", "2": "en", "3": "nature", "4": "al"},

@@ -224,11 +224,16 @@ class LearningCard {
 
   static String idFor(String wordEntryId) => 'card:$wordEntryId';
 
+  /// [wordEntryId] moves the card, with its id and review history, to
+  /// another word (a form folded into its word, 問題回報 #51).
   LearningCard copyWith(
-          {bool? archived, FsrsState? fsrs, DateTime? updatedAt}) =>
+          {bool? archived,
+          FsrsState? fsrs,
+          DateTime? updatedAt,
+          String? wordEntryId}) =>
       LearningCard(
         id: id,
-        wordEntryId: wordEntryId,
+        wordEntryId: wordEntryId ?? this.wordEntryId,
         templateId: templateId,
         language: language,
         archived: archived ?? this.archived,
@@ -263,9 +268,17 @@ class LearningCard {
 /// One graded recall (spec section 3's ReviewLog): kept so states can be
 /// recomputed and, later, FSRS parameters personalised.
 class ReviewLog {
+  final String? usageId;
+  final String? senseId;
   final String cardId;
   final DateTime reviewedAt;
+
+  /// Effective rating used by FSRS.
   final Rating rating;
+
+  /// User's selected grade before exercise weighting. Null for legacy logs
+  /// whose original selection was never recorded; do not infer it from rating.
+  final Rating? requestedRating;
   final FsrsState before;
   final FsrsState after;
 
@@ -276,36 +289,66 @@ class ReviewLog {
   /// 作答耗時 — from the card front appearing to the grade.
   final int? durationMs;
 
+  /// Interactive exercise evidence. Older recall-only logs leave these
+  /// nullable/defaulted, so persisted databases remain readable.
+  final String? templateType;
+  final bool? correct;
+  final int hintCount;
+  final int attempts;
+
   const ReviewLog({
+    this.usageId,
+    this.senseId,
     required this.cardId,
     required this.reviewedAt,
     required this.rating,
+    this.requestedRating,
     required this.before,
     required this.after,
     required this.elapsedDays,
     required this.scheduledDays,
     this.durationMs,
+    this.templateType,
+    this.correct,
+    this.hintCount = 0,
+    this.attempts = 1,
   });
 
   factory ReviewLog.fromJson(Map<String, dynamic> j) => ReviewLog(
+        usageId: j['usage_id'] as String?,
+        senseId: j['sense_id'] as String?,
         cardId: j['cardId'] as String,
         reviewedAt: DateTime.parse(j['reviewedAt'] as String),
         rating: Rating.values.byName(j['rating'] as String),
+        requestedRating: j['requestedRating'] == null
+            ? null
+            : Rating.values.byName(j['requestedRating'] as String),
         before: FsrsState.fromJson(j['before'] as Map<String, dynamic>),
         after: FsrsState.fromJson(j['after'] as Map<String, dynamic>),
         elapsedDays: j['elapsedDays'] as int,
         scheduledDays: j['scheduledDays'] as int,
         durationMs: j['durationMs'] as int?,
+        templateType: j['templateType'] as String?,
+        correct: j['correct'] as bool?,
+        hintCount: j['hintCount'] as int? ?? 0,
+        attempts: j['attempts'] as int? ?? 1,
       );
 
   Map<String, dynamic> toJson() => {
+        'usage_id': usageId,
+        'sense_id': senseId,
         'cardId': cardId,
         'reviewedAt': reviewedAt.toIso8601String(),
         'rating': rating.name,
+        if (requestedRating != null) 'requestedRating': requestedRating!.name,
         'before': before.toJson(),
         'after': after.toJson(),
         'elapsedDays': elapsedDays,
         'scheduledDays': scheduledDays,
         'durationMs': durationMs,
+        if (templateType != null) 'templateType': templateType,
+        if (correct != null) 'correct': correct,
+        'hintCount': hintCount,
+        'attempts': attempts,
       };
 }

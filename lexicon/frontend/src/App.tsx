@@ -13,15 +13,16 @@ import Export from "./pages/Export";
 import CardWorkspace from "./pages/CardWorkspace";
 import Images from "./pages/Images";
 import Issues from "./pages/Issues";
+import Schedule from "./pages/Schedule";
 
 const NAV = [
   ["/", "總覽", "Dashboard"],
+  ["/schedule", "排程", "Schedule"],
   ["/issues", "問題回報", "Issue Reports"],
   ["/policies", "來源順位", "Source Policies"],
   ["/imports/new", "開始擷取", "Start Import Job"],
   ["/jobs", "工作佇列", "Jobs"],
-  ["/coverage", "單字覆蓋率", "Word Coverage"],
-  ["/card-data", "字卡資料檢查", "Card Data"],
+  ["/coverage", "單字資料庫", "Word Database"],
   ["/card-studio", "字卡工作室", "Card Studio"],
   ["/images", "圖片庫", "Image Library"],
   ["/snapshots", "來源快照", "Source Snapshots"],
@@ -114,9 +115,10 @@ export default function App() {
   else if (m) page = <JobDetail id={Number(m[1])} />;
   else if (route.startsWith("/coverage")) page = <Coverage />;
   else if (w) page = <Word target={w[1]} native={w[2]} lemma={decodeURIComponent(w[3])} />;
-  // Recordings are on each word's page (單字覆蓋率 → 單字).
+  // Recordings are on each word's page (單字資料庫 → 單字).
   else if (route === "/audio") page = <Coverage />;
   else if (route === "/images") page = <Images />;
+  else if (route === "/schedule") page = <Schedule />;
   else if (route === "/issues") page = <Issues />;
   else if (route === "/snapshots") page = <Snapshots />;
   else if (route === "/export") page = <Export />;
@@ -140,7 +142,7 @@ export default function App() {
         <div className="side-foot">API 127.0.0.1:8770 · PostgreSQL</div>
       </nav>
       <main className="main">
-        {route.startsWith('/card-data') || route.startsWith('/card-studio') ? (
+        {route.startsWith('/card-studio') ? (
           <CardWorkspace route={route} target={target} native={native} />
         ) : error && !meta ? (
           <div className="page">

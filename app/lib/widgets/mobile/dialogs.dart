@@ -1,3 +1,4 @@
+import '../../l10n/ui_text.dart';
 import 'package:flutter/material.dart';
 
 import '../../models/card_template.dart';
@@ -6,12 +7,13 @@ import '../../models/word_entry.dart';
 import '../../services/word_database_repository.dart';
 import '../../services/word_selector.dart';
 import '../../theme/mobile_theme.dart';
+import 'word_details_editor.dart';
 
-Text _title(String text) =>
-    Text(text, style: MFont.manrope(18, FontWeight.w800, MColors.ink));
+Widget _title(String text) =>
+    UiText(text, style: MFont.manrope(18, FontWeight.w800, MColors.ink));
 
-Text _fieldLabel(String text) =>
-    Text(text, style: MFont.manrope(13, FontWeight.w700, MColors.label));
+Widget _fieldLabel(String text) =>
+    UiText(text, style: MFont.manrope(13, FontWeight.w700, MColors.label));
 
 TextStyle get _input => MFont.inter(15, FontWeight.w500, MColors.gray900);
 
@@ -91,7 +93,7 @@ class _AddWordDialogState extends State<_AddWordDialog> {
             TextField(
               controller: _meaning,
               style: _input,
-              decoration: const InputDecoration(hintText: 'e.g. 陽台'),
+              decoration: InputDecoration(hintText: ui(context, 'e.g. 陽台')),
               onSubmitted: (_) => _submit(),
             ),
             const SizedBox(height: 14),
@@ -126,11 +128,11 @@ class _AddWordDialogState extends State<_AddWordDialog> {
             ),
             if (_error != null) ...[
               const SizedBox(height: 12),
-              Text(_error!,
+              UiText(_error!,
                   style: MFont.inter(13, FontWeight.w500, MColors.againFg)),
             ],
             const SizedBox(height: 12),
-            Text(
+            UiText(
               '音標、例句與翻譯會在背景自動補上。',
               style: MFont.inter(12, FontWeight.w400, MColors.gray500),
             ),
@@ -140,8 +142,8 @@ class _AddWordDialogState extends State<_AddWordDialog> {
       actions: [
         TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('取消')),
-        FilledButton(onPressed: _submit, child: const Text('新增')),
+            child: const UiText('取消')),
+        FilledButton(onPressed: _submit, child: const UiText('新增')),
       ],
     );
   }
@@ -207,8 +209,8 @@ class _LabelDialogState extends State<_LabelDialog> {
         actions: [
           TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('取消')),
-          FilledButton(onPressed: _submit, child: const Text('儲存')),
+              child: const UiText('取消')),
+          FilledButton(onPressed: _submit, child: const UiText('儲存')),
         ],
       );
 }
@@ -252,6 +254,8 @@ class _SaveToAlbumDialogState extends State<_SaveToAlbumDialog> {
   }
 
   void _submit() {
+    if (_creating && _newAlbum.text.trim().isEmpty) return;
+    if (!_creating && _albumId == null) return;
     var albumId = _albumId;
     if (_creating && _newAlbum.text.trim().isNotEmpty) {
       albumId = widget.repository.addAlbum(name: _newAlbum.text).id;
@@ -291,7 +295,7 @@ class _SaveToAlbumDialogState extends State<_SaveToAlbumDialog> {
                     }),
                   ),
                 ChoiceChip(
-                  label: const Text('＋ 新相片冊'),
+                  label: const UiText('＋ 新相片冊'),
                   selected: _creating,
                   onSelected: (_) => setState(() => _creating = true),
                 ),
@@ -303,7 +307,8 @@ class _SaveToAlbumDialogState extends State<_SaveToAlbumDialog> {
                 controller: _newAlbum,
                 autofocus: true,
                 style: _input,
-                decoration: const InputDecoration(hintText: '相片冊名稱'),
+                onChanged: (_) => setState(() {}),
+                decoration: InputDecoration(hintText: ui(context, '相片冊名稱')),
               ),
             ],
           ],
@@ -312,12 +317,71 @@ class _SaveToAlbumDialogState extends State<_SaveToAlbumDialog> {
       actions: [
         TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('取消')),
-        FilledButton(onPressed: _submit, child: const Text('儲存')),
+            child: const UiText('取消')),
+        FilledButton(
+          onPressed:
+              (_creating ? _newAlbum.text.trim().isNotEmpty : _albumId != null)
+                  ? _submit
+                  : null,
+          child: const UiText('儲存'),
+        ),
       ],
     );
   }
 }
+
+/// The picked picture is already in the 相片冊 (card #217, spec §7's
+/// deferred 重複加入同一照片). Returns false to open [existing] instead,
+/// true to add a second copy anyway, null if dismissed.
+Future<bool?> showDuplicatePhotoDialog(
+  BuildContext context, {
+  required Photo existing,
+  required WordDatabaseRepository repository,
+}) {
+  final album =
+      existing.albumId == null ? null : repository.album(existing.albumId!);
+  final where = album == null ? '' : '相片冊「${album.name}」的';
+  return showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: _title('這張照片已經加入過'),
+      content: UiText(
+        '它就是$where「${existing.title}」。要打開原本的照片，還是再加入一張？',
+        style: MFont.inter(14, FontWeight.w500, MColors.gray900),
+      ),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const UiText('仍要再加入')),
+        FilledButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const UiText('打開原本的照片')),
+      ],
+    ),
+  );
+}
+
+/// 複習畫面「刪除此卡片」誤觸就直接封存、沒有任何回饋（問題回報 #262）：
+/// 先二次確認，封存後才由呼叫端用 SnackBar + 復原 action 給回饋。
+Future<bool> showDeleteCardDialog(BuildContext context, String word) =>
+    showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: _title('移除「$word」？'),
+        content: UiText(
+          '這張卡片會從複習移除，並加入「已學會」。之後可以在單字本裡復原。',
+          style: MFont.inter(14, FontWeight.w500, MColors.gray900),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const UiText('取消')),
+          FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const UiText('移除')),
+        ],
+      ),
+    ).then((v) => v ?? false);
 
 /// 卡片背面順序: reorder and show/hide the card template's back fields
 /// (spec section 4: "使用者可拖曳調整…欄位順序，並選擇顯示、隱藏").
@@ -350,7 +414,7 @@ class _TemplateOrderDialogState extends State<_TemplateOrderDialog> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            UiText(
               '拖曳調整順序；關閉的欄位不會出現在卡片背面。英文單字固定為標題。',
               style: MFont.inter(13, FontWeight.w400, MColors.gray500),
             ),
@@ -396,11 +460,11 @@ class _TemplateOrderDialogState extends State<_TemplateOrderDialog> {
       actions: [
         TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('取消')),
+            child: const UiText('取消')),
         FilledButton(
           onPressed: () => Navigator.of(context)
               .pop(widget.template.copyWith(backFields: _fields)),
-          child: const Text('儲存'),
+          child: const UiText('儲存'),
         ),
       ],
     );
@@ -424,7 +488,7 @@ Future<void> showSelectionReasons(BuildContext context, Selection selection) {
         children: [
           _title('為什麼是這些字？'),
           const SizedBox(height: 6),
-          Text(
+          UiText(
             'AI 先從照片找出候選詞，再由這台裝置依程度、未知機率、圖片關聯、實用性與詞性多樣性打分，'
             '最多選 5 個；名詞最多 3 個，同義詞只留一個。',
             style: MFont.inter(13, FontWeight.w400, MColors.gray500),
@@ -466,7 +530,7 @@ Future<void> showSelectionReasons(BuildContext context, Selection selection) {
                                   : MColors.againFg),
                         ),
                         if (s.candidate.evidence.isNotEmpty)
-                          Text('照片中：${s.candidate.evidence}',
+                          UiText('照片中：${s.candidate.evidence}',
                               style: MFont.manrope(
                                   12, FontWeight.w500, MColors.label)),
                       ],
@@ -503,6 +567,7 @@ class _EditWordDialog extends StatefulWidget {
 }
 
 class _EditWordDialogState extends State<_EditWordDialog> {
+  late final _details = WordDetailsDraft(widget.entry);
   static const _posOptions = ['noun', 'verb', 'adj.', 'adv.', 'phrase'];
 
   late final _meaning = TextEditingController(text: widget.entry.meaning);
@@ -518,6 +583,7 @@ class _EditWordDialogState extends State<_EditWordDialog> {
 
   @override
   void dispose() {
+    _details.dispose();
     for (final c in [_meaning, _definition, _ipa, ..._translations]) {
       c.dispose();
     }
@@ -525,6 +591,10 @@ class _EditWordDialogState extends State<_EditWordDialog> {
   }
 
   void _submit() {
+    if (!_details.validate()) {
+      setState(() {});
+      return;
+    }
     final e = widget.entry;
     final fields = <String>{};
     String? blankToNull(String s) => s.trim().isEmpty ? null : s.trim();
@@ -552,12 +622,13 @@ class _EditWordDialogState extends State<_EditWordDialog> {
       if (!identical(x, e.examples[i])) examplesChanged = true;
     }
     if (examplesChanged) fields.add(WordField.examples);
+    final withDetails = _details.apply(e, fields);
     if (fields.isEmpty) {
       Navigator.of(context).pop();
       return;
     }
     Navigator.of(context).pop((
-      e.copyWith(
+      withDetails.copyWith(
         meaning: _meaning.text.trim(),
         definition: () => blankToNull(_definition.text),
         ipa: () => blankToNull(_ipa.text),
@@ -636,7 +707,9 @@ class _EditWordDialogState extends State<_EditWordDialog> {
                 ],
               ],
               const SizedBox(height: 12),
-              Text('你改過的欄位之後不會被自動更新覆蓋。',
+              WordDetailsEditor(draft: _details),
+              const SizedBox(height: 12),
+              UiText('你改過的欄位之後不會被自動更新覆蓋。',
                   style: MFont.inter(12, FontWeight.w400, MColors.gray500)),
             ],
           ),
@@ -645,8 +718,8 @@ class _EditWordDialogState extends State<_EditWordDialog> {
       actions: [
         TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('取消')),
-        FilledButton(onPressed: _submit, child: const Text('儲存')),
+            child: const UiText('取消')),
+        FilledButton(onPressed: _submit, child: const UiText('儲存')),
       ],
     );
   }

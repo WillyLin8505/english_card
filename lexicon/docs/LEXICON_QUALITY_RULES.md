@@ -62,3 +62,12 @@
 
     python lexicon/tools/lint_lexicon.py <pack.json 或 http://127.0.0.1:8123/api/lexicon>
     python lexicon/tools/quality_ai.py steep hinged rosemary ...   # 加 --dry-run 只看不改
+
+## 粗俗／冒犯詞：保留並標「粗俗」，不刪除（2026-10-15 使用者決定）
+
+- 英文詞（如 prick、bastard）不因為是髒話就移出詞庫或丟掉中文；保留並標成粗俗。
+- 義項標籤含 vulgar / offensive / derogatory / slang，而且中文是粗俗字（`text.ZH_OFFENSIVE`）時，輸出包**保留**該中文，義項加 `vulgar` 標籤，`register` 設為 `vulgar`，App 顯示「粗俗」。
+- 義項標籤含 vulgar / offensive 時一律 `register = vulgar`。
+- 中性義項的中文混進粗俗字（例如 underdog 的「屌絲」）仍照 #116 濾掉，只留下乾淨的部分。
+- 例句、相關詞的髒話過濾（#89／#92）不變：學習者不會在例句或相關詞裡意外看到髒話。
+- 實作在 `backend/app/text.py` 的 `sense_native()`（`COARSE_SENSE_LABELS`、`VULGAR_SENSE_LABELS`），由 `exporter.py` 呼叫；標籤顯示名稱是 `catalog.LABELS["register:vulgar"]`。

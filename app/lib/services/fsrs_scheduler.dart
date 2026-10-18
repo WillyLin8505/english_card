@@ -4,7 +4,7 @@ import '../models/learning_card.dart';
 
 /// FSRS-5 parameters. [defaults] are the published FSRS-5 defaults — spec
 /// section 3: "初期使用預設參數；累積足夠有效複習紀錄後，才啟用個人化參數
-/// 最佳化" (optimisation from ReviewLogs isn't built yet).
+/// 最佳化" (see FsrsOptimizer for local ReviewLog calibration).
 class FsrsParameters {
   final List<double> w;
 
@@ -24,6 +24,21 @@ class FsrsParameters {
     1.54575, 0.1192, 1.01925, 1.9395, 0.11, 0.29605, 2.2698, 0.2315, //
     2.9898, 0.51655, 0.6621,
   ];
+}
+
+/// Whole days from [from] to [to] on the learner's calendar — the way due
+/// dates work (a card due tomorrow is up from tomorrow 00:00). Reviewed at
+/// 20:00 and again at 08:00 the next morning is 1 day, not 0: counting
+/// 24-hour periods made that on-time review a same-day one (short-term
+/// stability instead of the recall formula) and dropped it from
+/// personalisation. FSRS's default weights come from day-based review data.
+int calendarDaysBetween(DateTime from, DateTime to) {
+  DateTime day(DateTime t) {
+    final local = t.toLocal();
+    return DateTime.utc(local.year, local.month, local.day); // no DST hours
+  }
+
+  return day(to).difference(day(from)).inDays;
 }
 
 class SchedulingResult {
@@ -140,7 +155,7 @@ class FsrsScheduler {
   }
 
   static int _elapsedDays(DateTime last, DateTime now) =>
-      math.max(0, now.difference(last).inDays);
+      math.max(0, calendarDaysBetween(last, now));
 
   double _forgettingCurve(double elapsedDays, double stability) =>
       math.pow(1 + _factor * elapsedDays / stability, _decay).toDouble();

@@ -115,6 +115,8 @@ def apple_data(fakes):
                        ({"pos": "noun", "gloss": "An apple tree.", "sense_key": "s2",
                          "gloss_language": "en"}, "s2", "noun")],
         "native_definition": [({"sense_key": "s1", "text": "蘋果"}, "s1", "s1")],
+        "register": [({"sense_key": "s1", "register": "spoken", "label": "口語"}, "s1", "s1"),
+                     ({"sense_key": "s2", "register": "neutral", "label": "中性／通用"}, "s2", "s2")],
         "ipa": [({"ipa": "/ˈæp.əl/", "accent": ["US"]}, "/ˈæp.əl/", "")],
         "noun_plural": [({"form": "apples"}, "apples", "")],
         "verb_past": [({"form": "appled"}, "appled", "")],

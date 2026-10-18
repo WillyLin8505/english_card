@@ -8,6 +8,9 @@ class FakeLexicon:
     def describe(self, word, lang="en"):
         return {"zipf": 4.0}
 
+    def is_lexical_phrase(self, phrase):
+        return phrase in {"butter knife", "traffic light"}
+
 
 def candidate(word, evidence):
     return {
@@ -31,11 +34,24 @@ def test_english_candidates_reject_foreign_words_and_brand_names():
     assert [item["word"] for item in out] == ["calendar", "logo", "cap"]
 
 
+def test_english_candidates_reject_unattested_scene_descriptions():
+    out = to_candidates([
+        candidate("vehicle ahead", "vehicle visible farther along the road"),
+        candidate("sunlit area", "bright sunlit part of the pavement"),
+        candidate("lebara mobile", "words printed on a sign"),
+        candidate("butter knife", "a butter knife on the table"),
+        candidate("traffic light", "traffic light above the road"),
+    ], FakeLexicon(), lang="en")
+
+    assert [item["word"] for item in out] == ["butter knife", "traffic light"]
+
+
 def test_prompt_explicitly_excludes_names_and_invalidates_old_cache():
     prompt = build_prompt("A2", "en", "zh-TW")
     assert "not company, product, model or person names" in prompt
     assert "Ignore words" in prompt and "logos" in prompt
-    assert PROMPT_VERSION == "photo-tags-context-v5"
+    assert "safe=false" in prompt and "explicit adult nudity" in prompt
+    assert PROMPT_VERSION == "photo-tags-context-v8-visible"
 
 
 def test_cefr_prompt_lists_visible_objects_level_from_lexicon():
@@ -51,7 +67,32 @@ def test_cefr_prompt_lists_visible_objects_level_from_lexicon():
     assert "- l:" not in prompt
     assert "safe=false" in prompt and "explicit adult nudity" in prompt
     assert "compact JSON keys" in prompt
-    assert CEFR_PROMPT_VERSION == "photo-tags-visible-v12-lexicon-level"
+    assert "precise, formal, literary or" in prompt
+    assert CEFR_PROMPT_VERSION == "photo-tags-visible-v14-no-quotas"
+
+
+def test_compact_cefr_candidates_decode_to_public_shape():
+    out = to_candidates([{
+        "w": "reflective", "p": "a", "l": "5",
+        "e": "shine on metal", "x": 700, "y": 250,
+    }])
+    assert out[0]["word"] == "reflective"
+    assert out[0]["pos"] == "adjective"
+    assert out[0]["cefr"] is None
+    assert out[0]["point"] == [0.7, 0.25]
+    assert out[0]["box"] is None
+
+
+def test_unsafe_image_is_rejected_before_candidates_are_cached(monkeypatch, tmp_path):
+    import pytest
+    import tagging_server as ts
+    monkeypatch.setattr(ts, "CACHE_DIR", str(tmp_path))
+    tagger = ts.Tagger("http://127.0.0.1:1", "test-model")
+    monkeypatch.setattr(tagger, "_chat",
+                        lambda *args, **kwargs: {"safe": False, "candidates": []})
+    with pytest.raises(ts.UnsafeImage):
+        tagger.candidates(b"not-an-image", "A1")
+    assert list(tmp_path.iterdir()) == []
 
 
 def test_merge_cefr_topup_fills_short_bands_without_inventing():
@@ -83,3 +124,145 @@ def test_merge_cefr_topup_fills_short_bands_without_inventing():
     assert short_cefr_bands(out, 3)  # other bands still short
     assert "ladle" not in {x["word"] for x in out}
 
+
+
+def test_cap_cefr_beginner_bands_drops_overflow():
+    from tagging_server import cap_cefr_beginner_bands, cefr_band_counts, merge_cefr_topup
+
+    def item(word, cefr, pos="noun"):
+        return {"word": word, "lemma": word, "pos": pos, "cefr": cefr,
+                "modelLevel": cefr, "evidence": word, "point": [0.5, 0.5],
+                "box": None, "visualConfidence": 0.7, "usefulness": 0.5,
+                "inferred": False, "meaning": ""}
+
+    raw = [
+        item("cup", "A1"), item("plate", "A1"), item("bowl", "A1"),
+        item("mug", "A1"),  # overflow A1
+        item("saucer", "A2"), item("napkin", "A2"), item("tray", "A2"),
+        item("ladle", "A2"),  # overflow A2
+        item("simmer", "B2", pos="verb"),
+        item("ornate", "C1", pos="adjective"),
+    ]
+    out = cap_cefr_beginner_bands(raw, beginner_max=3)
+    counts = cefr_band_counts(out)
+    assert counts["A1"] == 3
+    assert counts["A2"] == 3
+    assert counts["B2"] == 1 and counts["C1"] == 1
+    assert "mug" not in {x["word"] for x in out}
+    assert "ladle" not in {x["word"] for x in out}
+    assert {x["word"] for x in out} >= {"simmer", "ornate"}
+
+    # Top-up must not push beginners past the cap either.
+    existing = [item("cup", "A1"), item("plate", "A1"), item("bowl", "A1")]
+    extra = [item("mug", "A1"), item("whisk", "B2", pos="noun")]
+    merged = merge_cefr_topup(existing, extra, per_level=3, beginner_max=3)
+    assert cefr_band_counts(merged)["A1"] == 3
+    assert "mug" not in {x["word"] for x in merged}
+    assert "whisk" in {x["word"] for x in merged}
+
+
+def test_translation_bundle_keeps_each_items_task():
+    from tagging_server import translate
+
+    class FakeTagger:
+        def __init__(self):
+            self.prompt = ""
+
+        def _chat(self, prompt, schema, **kwargs):
+            self.prompt = prompt
+            return {"items": [{"id": "a", "text": "長椅"},
+                              {"id": "b", "text": "她坐下。"}]}
+
+    tagger = FakeTagger()
+    result = translate(tagger, {
+        "lang": "en", "native": "zh-TW", "kind": "bundle",
+        "items": [
+            {"id": "a", "task": "gloss", "text": "A long seat."},
+            {"id": "b", "task": "sentence", "text": "She sat down."},
+        ],
+    })
+
+    assert [item["id"] for item in result["items"]] == ["a", "b"]
+    assert '"task": "gloss"' in tagger.prompt
+    assert '"task": "sentence"' in tagger.prompt
+
+
+def test_translation_retries_english_echoes_one_item_at_a_time():
+    from tagging_server import translate
+
+    class FakeTagger:
+        def __init__(self):
+            self.calls = 0
+
+        def _chat(self, prompt, schema, **kwargs):
+            self.calls += 1
+            if self.calls == 1:
+                return {"items": [
+                    {"id": "a", "text": "Swallows build their nests from clay."},
+                    {"id": "b", "text": "The bowl is made of clay."},
+                ]}
+            if '"id": "a"' in prompt:
+                return {"items": [{"id": "a", "text": "燕子用黏土築巢。"}]}
+            return {"items": [{"id": "b", "text": "這個碗是陶土製成的。"}]}
+
+    tagger = FakeTagger()
+    result = translate(tagger, {
+        "lang": "en", "native": "zh-TW", "kind": "sentence",
+        "items": [
+            {"id": "a", "text": "Swallows build their nests from clay."},
+            {"id": "b", "text": "The bowl is made of clay."},
+        ],
+    })
+
+    assert tagger.calls == 3
+    assert [item["text"] for item in result["items"]] == [
+        "燕子用黏土築巢。", "這個碗是陶土製成的。"]
+
+
+def test_inference_slots_limit_concurrency_and_queue_same_key(monkeypatch, tmp_path):
+    import threading
+    import time
+    import tagging_server
+
+    monkeypatch.setattr(tagging_server, "INFERENCE_PARALLEL", 2)
+    monkeypatch.setattr(tagging_server, "CACHE_DIR", str(tmp_path))
+    tagger = tagging_server.Tagger("http://127.0.0.1:1", "test-model")
+    running, peak, same, same_peak = [0], [0], [0], [0]
+    guard = threading.Lock()
+
+    def work(key):
+        with tagger._inference(key):
+            with guard:
+                running[0] += 1
+                peak[0] = max(peak[0], running[0])
+                if key == "same":
+                    same[0] += 1
+                    same_peak[0] = max(same_peak[0], same[0])
+            time.sleep(0.05)
+            with guard:
+                running[0] -= 1
+                if key == "same":
+                    same[0] -= 1
+
+    threads = [threading.Thread(target=work, args=(key,))
+               for key in (None, None, None, None, "same", "same")]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert peak[0] == 2
+    assert same_peak[0] == 1, "identical requests wait for the cached reply"
+    assert tagger._key_locks == {}
+
+
+def test_compact_grammar_leaves_no_room_for_whitespace():
+    import tagging_server as ts
+    """llama-server gets a grammar for the CEFR label reply with every key in
+    schema order and no spaces; a schema with optional keys keeps json_schema."""
+    grammar = ts.compact_grammar(ts.CEFR_CANDIDATE_SCHEMA)
+    assert grammar.startswith('root ::= reply\n')
+    assert 'reply ::= "{\\"safe\\":" ("true" | "false") ",\\"candidates\\":"' in grammar
+    assert '"{\\"w\\":" string ",\\"p\\":" ("\\"n\\""' in grammar
+    assert '" "' not in grammar and "[ \t" not in grammar
+    assert ts.compact_grammar({'type': 'object', 'properties': {'a': {'type': 'string'}},
+                               'required': []}) is None

@@ -11,6 +11,20 @@ import 'package:photo_english_app/services/word_database_query.dart';
 import 'helpers.dart';
 
 void main() {
+  test('column glossary is kept in source data but excluded from learning', () {
+    final e=WordEntry.fromUserInput(id:'columns',word:'apple',pos:'noun',
+        language:'en',meaning:'蘋果',now:testNow).copyWith(examples:const [
+      WordExample(text:'custard apple\u2003\u2003\u2003 rose apple\u2003\u2003\u2003 thorn apple',translation:'詞彙清單'),
+      WordExample(text:'She eats an apple.',translation:'她吃蘋果。'),
+      WordExample(text:'I eat apple\tI cook apple',translation:'測試短對話'),
+    ]);
+    expect(e.examples,hasLength(3));
+    expect(learningExamples(e,'A1').map((x)=>x.text),
+        isNot(contains('custard apple\u2003\u2003\u2003 rose apple\u2003\u2003\u2003 thorn apple')));
+    expect(learningExamples(e,'A1'),hasLength(2));
+    expect(isColumnWordList('A bench.','bench'),isFalse);
+    expect(isColumnWordList('apple is green   apple is red','apple'),isFalse);
+  });
   test('the lexicon pack\'s short POS codes have labels', () {
     expect(posLabel('adj'), '形容詞');
     expect(posLabel('adv'), '副詞');
@@ -37,6 +51,36 @@ void main() {
     ]);
     expect([for (final x in learningExamples(e, 'A2')) x.difficulty], ['A2', 'A1', 'B1']);
     expect(learningExamples(e, 'B2').first.difficulty, 'B2');
+  });
+
+  test('a neutral sentence is preferred over a charged one (問題回報 #254)', () {
+    final e = WordEntry.fromUserInput(
+      id: 'outlaw',
+      word: 'outlaw',
+      pos: 'noun',
+      language: 'en',
+      meaning: '逃犯',
+      now: testNow,
+    ).copyWith(examples: const [
+      WordExample(
+          text: 'She fired her last bullet at the outlaw.',
+          translation: '她向逃犯射出最後一發子彈。',
+          difficulty: 'B1'),
+      WordExample(
+          text: 'He tracked the outlaw through the canyon.',
+          translation: '他追蹤逃犯穿過峽谷。',
+          difficulty: 'A2'),
+      WordExample(
+          text: 'Will the word "woman" be outlawed?',
+          translation: '「女人」這個詞會被禁止嗎？',
+          difficulty: 'A1'),
+    ]);
+    expect(learningExamples(e, 'B1').first.text, 'He tracked the outlaw through the canyon.');
+    expect(exampleIsCharged('The church is on the corner.', 'church'), isNull);
+    expect(exampleIsCharged('Oh my God, I forgot my keys.', 'forget'), isNull);
+    expect(exampleIsCharged('Modern man has moved far away from God and from nature.', 'move'),
+        'religion');
+    expect(exampleIsCharged("Don't kill the part of you that is cringe.", 'cringe'), 'violence');
   });
 
   testWidgets('Again says it comes back in this run; the others show days', (tester) async {

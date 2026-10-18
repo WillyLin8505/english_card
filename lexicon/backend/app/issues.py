@@ -67,11 +67,19 @@ def issue_dict(r: m.IssueReport) -> dict:
         "id", "kind", "status", "severity", "area", "title", "detail", "steps", "expected",
         "actual", "resolution", "options", "decision", "target_language", "native_language",
         "lemma", "code_ref", "spec_ref", "reporter", "history", "created_at", "updated_at",
-        "resolved_at")}
+        "resolved_at", "difficulty", "difficulty_reason")}
 
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def _status_after_decision(decision: str) -> str:
+    """Owner answers that start with 不做 close the issue. Any other answer
+    sends the work back to 待處理 so it can be picked up again."""
+    if decision.strip().startswith("不做"):
+        return "wont_fix"
+    return "open"
 
 
 def _apply(r: m.IssueReport, data: dict, note: str | None, by: str):
@@ -163,11 +171,14 @@ def register(app, auth):
 
     @app.post("/issues/{issue_id}/decide", dependencies=[auth])
     def decide_issue(issue_id: int, body: DecideBody, s: Session = DB):
-        """The owner's answer to a 待決定 question: the work goes back to 待處理."""
+        """The owner's answer. 「不做…」 closes the issue (不處理); anything else
+        goes back to 待處理. Leaving a decline as open put it back on the
+        schedule (問題回報 #246, card #204 re-checked #208)."""
         r = s.get(m.IssueReport, issue_id)
         if not r:
             raise HTTPException(404, "找不到這筆回報")
-        _apply(r, {"decision": body.decision, "status": "open"}, body.note, "owner")
+        _apply(r, {"decision": body.decision, "status": _status_after_decision(body.decision)},
+               body.note, "owner")
         s.flush()
         return issue_dict(r)
 

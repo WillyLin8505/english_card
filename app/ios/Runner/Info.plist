@@ -26,6 +26,21 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>拍下身邊的物品，辨識照片裡的英文單字。</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>從相簿選一張照片，辨識照片裡的英文單字。</string>
+	<key>PHPhotoLibraryPreventAutomaticLimitedAccessAlert</key>
+	<true/>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>連到你家裡電腦上的詞庫與照片辨識服務。</string>
+	<!-- Personal testing only: plain http to the home PC (192.168.x.x /
+	     Tailscale). Remove before any App Store submission. -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

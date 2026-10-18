@@ -1,4 +1,4 @@
-"""Photo-tagging API for 拍照學英文 — spec-01 sections 2 and 3:
+"""Photo-tagging API for 拍照學英文 - spec-01 sections 2 and 3:
 
     運算環境   Predator 上 Ollama + Qwen3-VL-4B（Q4）
     本機 API   127.0.0.1:8765
@@ -6,18 +6,18 @@
     請求格式   Web: raw JPEG body + X-API-Key；原生: 可使用 multipart
 
 This is stage 1 of the spec's two-stage recognition (第一階段 · 理解照片):
-the model looks at the photo and proposes 8-10 labels — nouns, verbs,
-adjectives, adverbs and phrases — each with its picture context.
+the model looks at the photo and proposes 8-10 labels - nouns, verbs,
+adjectives, adverbs and phrases - each with its picture context.
 Stage 2 (choosing at most 5 to learn, by level, personal vocabulary,
 relevance, usefulness and part-of-speech mix) runs in the app, because
 it needs the learner's own vocabulary state. "模型不得直接決定最後五個詞".
 
 POST /tag?level=B1&lang=en&native=zh-TW[&focus=harder][&exclude=cup,mug]\n        POST /tag?mode=cefr&lang=en[&per_level=3][&exclude=...]  (>=3 labels per A1-C2)
     Header  X-API-Key: <key>
-    Body    the image — raw (Content-Type: image/jpeg) or multipart/form-data
+    Body    the image - raw (Content-Type: image/jpeg) or multipart/form-data
             with an "image" part.
     level   the learner's CEFR level; candidates centre on it.
-    focus   harder | easier | actions | descriptions — a top-up call when
+    focus   harder | easier | actions | descriptions - a top-up call when
             the app's candidate pool runs short (候選不足才重新呼叫模型).
     exclude words already in the pool.
     Reply   {"candidates": [{"word": "mug", "lemma": "mug", "pos": "noun",
@@ -41,6 +41,8 @@ from __future__ import annotations
 
 import argparse
 import base64
+import collections
+import contextlib
 import hashlib
 import io
 import json
@@ -56,19 +58,35 @@ import urllib.request
 from email.parser import BytesParser
 from email.policy import default as email_policy
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, unquote, urlparse
+from inference_control import PrioritySlots, is_background, is_qwen_paused
+from repetition_guard import read_cefr_stream
+import tagger_config
+tagger_config.apply_defaults()  # card #70: bare start == start_tagger.bat
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 KEY_FILE = os.path.join(HERE, '.api_key')
 CMUDICT = os.path.join(ROOT, 'data', 'raw', 'cmudict.dict')
-DEFAULT_MODEL = 'qwen3-vl:4b-instruct-q4_K_M'
+DEFAULT_MODEL = 'qwen3.5:4b'
 MAX_BODY = 20 * 1024 * 1024
-PROMPT_VERSION = 'photo-tags-context-v5'
+PROMPT_VERSION = 'photo-tags-context-v8-visible'
 CACHE_DIR = os.path.join(HERE, 'cache')
 MODEL_CONTEXT = int(os.environ.get('TAGGER_NUM_CTX', '4096'))
-MODEL_MAX_TOKENS = int(os.environ.get('TAGGER_NUM_PREDICT', '600'))
+MODEL_MAX_TOKENS = int(os.environ.get('TAGGER_NUM_PREDICT', '1200'))
 TRANSLATE_MAX_TOKENS = int(os.environ.get('TAGGER_TRANSLATE_NUM_PREDICT', '2400'))
+# Model requests sent to Ollama at once. Match OLLAMA_NUM_PARALLEL: Ollama then
+# decodes them together, which raises total throughput on one GPU. 1 = serial.
+INFERENCE_PARALLEL = max(1, int(os.environ.get('TAGGER_PARALLEL', '1')))
+# 'ollama' (default) or 'llamacpp'. Ollama 0.35 runs qwen3.5 one request at a
+# time ("architecture does not currently support parallel requests"); the
+# llama-server it ships, started with -np N (start_llm.bat), decodes N at once.
+BACKEND = os.environ.get('TAGGER_BACKEND', 'ollama').strip().lower()
+LLAMACPP_URL = os.environ.get('TAGGER_LLAMACPP_URL', 'http://127.0.0.1:8790').rstrip('/')
+# Ollama's parameters for qwen3.5:4b (its params layer); without the presence
+# penalty llama-server lets word lists repeat until the token cap.
+LLAMACPP_SAMPLING = json.loads(os.environ.get(
+    'TAGGER_LLAMACPP_SAMPLING', '{"presence_penalty": 1.5, "top_k": 20, "top_p": 0.95}'))
 IMAGE_MAX_EDGE = int(os.environ.get('TAGGER_IMAGE_MAX_EDGE', '768'))
 IMAGE_JPEG_QUALITY = int(os.environ.get('TAGGER_JPEG_QUALITY', '70'))
 # -1 = keep model loaded (best for batch tagging on one GPU). Set TAGGER_KEEP_ALIVE=5m to unload.
@@ -107,6 +125,7 @@ NATIVE_RULE = {
 CANDIDATE_SCHEMA = {
     'type': 'object',
     'properties': {
+        'safe': {'type': 'boolean'},
         'candidates': {
             'type': 'array',
             'items': {
@@ -122,7 +141,7 @@ CANDIDATE_SCHEMA = {
             },
         }
     },
-    'required': ['candidates'],
+    'required': ['safe', 'candidates'],
 }
 
 ENRICH_SCHEMA = {
@@ -159,11 +178,16 @@ def build_prompt(level: str, lang: str = 'en', native: str = 'zh-TW',
     lang_name = LANGS[lang]
     lines = [
         f'Inspect this photo and return 6 to 8 useful {lang_name} labels.',
+        'First check content safety. Set safe=false and return no candidates for pornography, '
+        'sexual activity, exposed genitals, or explicit adult nudity. Otherwise set safe=true. '
+        'Ordinary family photos, swimwear, breastfeeding, art and medical contexts are safe '
+        'unless they are explicitly sexual.',
         'Only identify what the photo supports: objects, visible actions, visible qualities, '
         'spatial relations and short scene phrases. Do not translate, define, estimate CEFR, '
         'write example sentences, or provide pronunciation.',
-        'Mix concrete nouns, verbs, adjectives, adverbs and short phrases. At most half may '
-        'be nouns. Prefer one clear label for each distinct visual idea.',
+        'Use concrete nouns, verbs, adjectives, adverbs and short phrases only when directly '
+        'visible. There is no part-of-speech quota. Prefer one clear label for each distinct '
+        'visual idea; do not pad with synonyms or descriptions of the photograph itself.',
         'Use ordinary vocabulary, not company, product, model or person names. Ignore words '
         'that are only read from logos, packaging, watermarks or signs.',
     ]
@@ -184,31 +208,37 @@ def build_prompt(level: str, lang: str = 'en', native: str = 'zh-TW',
     return '\n'.join(lines)
 
 
-SCORE_PROMPT_VERSION = 'label-check-v1'
+SCORE_PROMPT_VERSION = 'label-check-v2'
 SCORE_MAX_LABELS = 24
-CEFR_PROMPT_VERSION = 'photo-tags-visible-v12-lexicon-level'
+CEFR_PROMPT_VERSION = 'photo-tags-visible-v14-no-quotas'
 CEFR_TAGS_PER_LEVEL = 3
-CEFR_MAX_TOKENS = int(os.environ.get('TAGGER_CEFR_NUM_PREDICT', '1000'))
+# A1/A2 may not exceed this many labels each (default = per_level) so beginners
+# cannot consume TAGS_MAX (~18) and leave B2-C2 with no slots.
+CEFR_BEGINNER_LEVELS = ('A1', 'A2')
+CEFR_BEGINNER_MAX_PER_LEVEL = int(os.environ.get(
+    'TAGGER_CEFR_BEGINNER_MAX', str(CEFR_TAGS_PER_LEVEL)))
+CEFR_MAX_TOKENS = int(os.environ.get('TAGGER_CEFR_NUM_PREDICT', '820'))
+# Experimental until the full golden-photo comparison passes (card44).
+CEFR_REPEAT_GUARD = os.environ.get('TAGGER_CEFR_REPEAT_GUARD', '0') == '1'
 CEFR_CANDIDATE_SCHEMA = {
     'type': 'object',
     'properties': {
+        'safe': {'type': 'boolean'},
         'candidates': {
             'type': 'array',
             'items': {
                 'type': 'object',
                 'properties': {
-                    'word': {'type': 'string'},
-                    'pos': {'type': 'string', 'enum': POS},
-                    'cefr': {'type': 'string', 'enum': LEVELS},
-                    'evidence': {'type': 'string'},
-                    'point': {'type': 'array', 'items': {'type': 'integer'}},
-                    'box': {'type': 'array', 'items': {'type': 'integer'}},
+                    'w': {'type': 'string'},
+                    'p': {'type': 'string', 'enum': ['n', 'v', 'a', 'd', 'p']},
+                    'x': {'type': 'integer'},
+                    'y': {'type': 'integer'},
                 },
-                'required': ['word', 'pos', 'cefr', 'evidence', 'point', 'box'],
+                'required': ['w', 'p', 'x', 'y'],
             },
         }
     },
-    'required': ['candidates'],
+    'required': ['safe', 'candidates'],
 }
 SCORE_SCHEMA = {
     'type': 'object',
@@ -241,11 +271,18 @@ def build_cefr_prompt(lang: str = 'en', exclude: list[str] | None = None,
         'sexual activity, exposed genitals, or explicit adult nudity. Otherwise set safe=true. '
         'Ordinary family photos, swimwear, breastfeeding, art and medical contexts are safe '
         'unless explicitly sexual.',
-        f'Return about {n} distinct labels for things that are clearly visible '
+        f'Return up to {n} distinct labels for things that are clearly visible '
         '(objects, parts, materials, actions, qualities). Do not invent CEFR levels; '
-        'do not pad the list to fill difficulty bands. Prefer concrete, pointable words.',
-        'Mix parts of speech: nouns, verbs (visible actions), adjectives (visible qualities), '
-        'adverbs and short phrases. At most half may be nouns. Avoid brand, product, model '
+        'do not pad the list to fill difficulty bands. Cover the same visible regions with '
+        'a useful vocabulary range: common everyday words plus precise, formal, literary or '
+        'technical nouns, verbs and adjectives whose meanings are directly visible. Examples: '
+        'wood / wooden / grain / rustic; glass / transparent / reflective. The lexicon assigns '
+        'the real level later, so never guess a level.',
+        'Mix parts of speech only when visible: nouns, verbs (visible actions), adjectives '
+        '(visible qualities), adverbs and short phrases. There is no part-of-speech quota. '
+        'Prefer a specific object or part to a generic category for the same region. '
+        'Do not repeat synonyms for the same visual idea, and return fewer labels when needed. '
+        'Avoid brand, product, model '
         'and person names. Ignore words only read from logos or watermarks. '
         'Do not invent objects that are not in the photo. Avoid meta labels that describe '
         'the photo itself (photo, image, background as "the picture", scene).',
@@ -273,42 +310,45 @@ def cefr_band_counts(items: list[dict]) -> dict[str, int]:
     return counts
 
 
-def short_cefr_bands(items: list[dict], per_level: int) -> list[str]:
-    """CEFR bands that still have fewer than ``per_level`` distinct labels."""
+def short_cefr_bands(items: list[dict], per_level: int,
+                    beginner_max: int | None = None) -> list[str]:
+    """CEFR bands that still have fewer than their target (beginners use beginner_max)."""
+    if beginner_max is None:
+        beginner_max = CEFR_BEGINNER_MAX_PER_LEVEL
+    beginner_max = max(1, min(int(beginner_max), per_level))
     counts = cefr_band_counts(items)
-    return [level for level in LEVELS if counts[level] < per_level]
+    short = []
+    for level in LEVELS:
+        target = beginner_max if level in CEFR_BEGINNER_LEVELS else per_level
+        # Beginners: fill up to min(per_level, beginner_max); never ask past beginner_max.
+        if level in CEFR_BEGINNER_LEVELS:
+            target = min(per_level, beginner_max)
+        if counts[level] < target:
+            short.append(level)
+    return short
 
 
 def build_cefr_topup_prompt(lang: str, short_levels: list[str], exclude: list[str],
-                            per_level: int, counts: dict[str, int]) -> str:
-    """Ask only for the missing labels in short CEFR bands — no invented objects."""
-    lang_name = LANGS[lang]
-    needs = [
-        f'{level}: need at least {per_level - counts.get(level, 0)} more'
-        for level in short_levels
-    ]
-    lines = [
-        f'Inspect this photo again. Some CEFR bands still need more {lang_name} labels.',
-        'Return ONLY new concrete noun or short noun-phrase labels for these short bands:',
-        '; '.join(needs) + '.',
-        'Only name what is clearly visible. Never invent objects that are not in the photo.',
-        'Do not repeat any word already listed. Prefer vocabulary that honestly matches each band.',
-        'For each candidate give:',
-        f'- word: dictionary form (singular noun), lowercase, in {lang_name}',
-        '- pos: prefer noun; phrase only for short visible compounds',
-        '- cefr: one of ' + ', '.join(short_levels) + ' for that label',
-        '- evidence: at most 8 English words describing its meaning in this photo',
-        '- point: [x, y] of that evidence, relative coordinates from 0 to 1000',
-        '- box: [x1, y1, x2, y2] around that evidence, relative coordinates from 0 to 1000',
-    ]
-    if exclude:
-        lines.append('Do not repeat these words: ' + ', '.join(exclude[:80]) + '.')
-    lines.append('Reply with JSON only.')
-    return '\n'.join(lines)
+                            per_level: int, counts: dict[str, int],
+                            beginner_max: int | None = None) -> str:
+    """Request new visible labels; only the caller's dictionary knows their bands."""
+    return build_cefr_prompt(lang, exclude, per_level) + (
+        '\nThis is an additional pass: return only new visible ideas not already listed. '
+        'Return candidates=[] if no additional useful labels are visible. '
+        'The dictionary will decide which difficulty bands these words belong to.')
 
 
-def merge_cefr_topup(existing: list[dict], extra: list[dict], per_level: int) -> list[dict]:
-    """Append top-up labels only into bands that are still short. No padding with fakes."""
+
+def merge_cefr_topup(existing: list[dict], extra: list[dict], per_level: int,
+                     beginner_max: int | None = None) -> list[dict]:
+    """Append top-up labels only into bands that are still short. No padding with fakes.
+
+    Beginner bands stop at ``beginner_max`` (default ``CEFR_BEGINNER_MAX_PER_LEVEL``);
+    other bands stop at ``per_level``.
+    """
+    if beginner_max is None:
+        beginner_max = CEFR_BEGINNER_MAX_PER_LEVEL
+    beginner_max = max(1, min(int(beginner_max), per_level))
     items = list(existing)
     seen = {str(item.get('word', '')).strip().lower() for item in items}
     for item in extra:
@@ -316,11 +356,30 @@ def merge_cefr_topup(existing: list[dict], extra: list[dict], per_level: int) ->
         level = str(item.get('cefr') or item.get('modelLevel') or '').strip().upper()
         if not word or word in seen or level not in LEVELS:
             continue
-        if cefr_band_counts(items)[level] >= per_level:
+        cap = beginner_max if level in CEFR_BEGINNER_LEVELS else per_level
+        if cefr_band_counts(items)[level] >= cap:
             continue
         seen.add(word)
         items.append(item)
     return items
+
+
+def cap_cefr_beginner_bands(items: list[dict], beginner_max: int | None = None) -> list[dict]:
+    """Drop excess A1/A2 labels (keep first-seen) so beginners cannot crowd higher bands."""
+    if beginner_max is None:
+        beginner_max = CEFR_BEGINNER_MAX_PER_LEVEL
+    beginner_max = max(1, int(beginner_max))
+    counts = {level: 0 for level in CEFR_BEGINNER_LEVELS}
+    out: list[dict] = []
+    for item in items:
+        level = str(item.get('cefr') or item.get('modelLevel') or '').strip().upper()
+        if level in counts:
+            if counts[level] >= beginner_max:
+                continue
+            counts[level] += 1
+        out.append(item)
+    return out
+
 
 
 
@@ -329,6 +388,8 @@ def build_score_prompt(labels: list[dict], lang: str = 'en') -> str:
         f'Check each {LANGS[lang]} label against this photo.',
         'For every label answer shown = true only if the photo clearly shows it (the object, '
         'the action, the quality or the spatial relation); otherwise shown = false.',
+        'Several different words may truthfully describe the same object or region. Judge each '
+        'word independently and accept a visible quality even when it is not a separate object.',
         'Keep the labels in this order and copy each word exactly. Labels:',
     ]
     lines += [f'{i}. {l["word"]}' + (f' ({l["pos"]})' if l.get('pos') else '')
@@ -407,24 +468,37 @@ def to_candidates(raw: list[dict], lexicon: 'Lexicon | None' = None,
     seen = {w.strip().lower() for w in exclude or []}
     out: list[dict] = []
     for c in raw:
-        word = _SPACE.sub(' ', str(c.get('word', '')).strip().lower()).strip(' .,"\'')
+        word = _SPACE.sub(
+            ' ', str(c.get('word') or c.get('w') or '').replace('_', ' ').strip().lower()
+        ).strip(' .,"\'')
         if not word or word in seen or len(word) > 40:
             continue
-        evidence = str(c.get('evidence', '')).strip()[:120]
+        evidence = str(c.get('evidence') or c.get('e') or '').strip()[:120]
+        # Reject descriptions of the photograph, not physical parts/materials.
+        # Ambiguous words such as display, pattern and handle remain valid.
+        if lang == 'en' and (word in {'close-up', 'close up', 'depict'} or
+                (word in {'photo', 'photograph', 'image', 'scene', 'background'} and
+                 (not evidence or re.search(r'\b(?:photo|picture|image) itself\b', evidence, re.I)))):
+            continue
         if lang == 'en' and lexicon is not None and lexicon.is_foreign(word):
+            continue
+        lexical_phrase = getattr(lexicon, 'is_lexical_phrase', None) if lexicon else None
+        if lang == 'en' and ' ' in word and callable(lexical_phrase) \
+                and not lexical_phrase(word):
             continue
         if _looks_like_name_label(word, evidence):
             continue
-        point = c.get('point') or []
+        point = c.get('point') or (
+            [c.get('x'), c.get('y')]
+            if c.get('x') is not None and c.get('y') is not None else [])
         if len(point) < 2:
             continue
         seen.add(word)
-        pos = str(c.get('pos', '')).strip().lower()
+        pos = str(c.get('pos') or c.get('p') or '').strip().lower()
+        pos = {'n': 'noun', 'v': 'verb', 'a': 'adjective',
+               'd': 'adverb', 'p': 'phrase'}.get(pos, pos)
         if pos not in POS:
             pos = 'phrase' if ' ' in word else 'noun'
-        model_cefr = str(c.get('cefr') or '').strip().upper()
-        if model_cefr not in LEVELS:
-            model_cefr = None
         item = {
             'word': word,
             'lemma': word,
@@ -432,13 +506,13 @@ def to_candidates(raw: list[dict], lexicon: 'Lexicon | None' = None,
             # Compatibility fields are intentionally empty. The Flutter app fills
             # them from its downloaded dictionary, never from the vision model.
             'meaning': '',
-            'cefr': model_cefr,
-            'modelLevel': model_cefr,
+            'cefr': None,
+            'modelLevel': None,
             'evidence': evidence,
             'point': [round(min(max(float(point[0]) / 1000, 0.0), 1.0), 4),
                       round(min(max(float(point[1]) / 1000, 0.0), 1.0), 4)],
             # The label's area (spec: 標籤座標／範圍), fractions x1, y1, x2, y2.
-            'box': _box(c.get('box')),
+            'box': _box(c.get('box') or c.get('b')),
             'visualConfidence': 0.7,
             'usefulness': 0.5,
             'inferred': False,
@@ -449,9 +523,125 @@ def to_candidates(raw: list[dict], lexicon: 'Lexicon | None' = None,
     return out
 
 
+# What the model is doing right now, for the admin's 排程 page (GET /activity):
+# every request from arrival to reply, with what the caller said it is for
+# (X-Activity header: the word, field or picture) and when it started.
+# Each entry also carries what went in (the sentences to translate, the
+# labels to score), the picture it is about (X-Activity-Ref: image:<id>) and,
+# once answered, what came out; the last finished ones stay in _RECENT.
+_ACTIVITY: dict[int, dict] = {}
+_ACTIVITY_LOCK = threading.Lock()
+_ACTIVITY_SEQ = [0]
+_RECENT: 'collections.deque[dict]' = collections.deque(maxlen=40)
+_CURRENT = threading.local()
+
+
+@contextlib.contextmanager
+def activity(kind: str, what: str, ref: str = '', inputs: list | None = None):
+    with _ACTIVITY_LOCK:
+        _ACTIVITY_SEQ[0] += 1
+        key = _ACTIVITY_SEQ[0]
+        entry = {'id': key, 'kind': kind, 'what': what[:200], 'ref': ref[:40] or None,
+                 'input': inputs or [], 'output': None, 'started': time.time()}
+        _ACTIVITY[key] = entry
+    _CURRENT.entry = entry
+    try:
+        yield entry
+    finally:
+        _CURRENT.entry = None
+        with _ACTIVITY_LOCK:
+            _ACTIVITY.pop(key, None)
+            entry['seconds'] = round(time.time() - entry['started'], 1)
+            entry['finished'] = time.time()
+            _RECENT.appendleft(entry)
+
+
+def record_output(result: dict) -> None:
+    """What the model answered, short, for the 排程 page."""
+    entry = getattr(_CURRENT, 'entry', None)
+    if entry is None or not isinstance(result, dict):
+        return
+    if entry['kind'] == 'translate':
+        src = {str(i.get('id')): i.get('text') for i in entry.get('input') or []}
+        entry['output'] = [{'text': src.get(str(i.get('id')), ''), 'out': str(i.get('text', ''))[:200]}
+                           for i in (result.get('items') or [])[:12]]
+    elif entry['kind'] == 'score':
+        entry['output'] = [{'word': str(x.get('word', '')), 'score': x.get('score')}
+                           for x in (result.get('scores') or [])[:30] if isinstance(x, dict)]
+    elif entry['kind'] == 'tag':
+        entry['output'] = [{'word': str(x.get('word', '')), 'cefr': x.get('cefr') or x.get('level'),
+                            'pos': x.get('pos'), 'point': x.get('point'), 'box': x.get('box')}
+                           for x in (result.get('candidates') or [])[:40] if isinstance(x, dict)]
+
+
+def activity_snapshot() -> dict:
+    now = time.time()
+    with _ACTIVITY_LOCK:
+        rows = [dict(r, seconds=round(now - r['started'], 1)) for r in _ACTIVITY.values()]
+        recent = [dict(r) for r in list(_RECENT)[:20]]
+    slots = None
+    if BACKEND == 'llamacpp':
+        try:
+            with urllib.request.urlopen(f'{LLAMACPP_URL}/slots', timeout=2) as resp:
+                got = json.loads(resp.read())
+            slots = {'total': len(got), 'busy': sum(1 for x in got if x.get('is_processing'))}
+        except (urllib.error.URLError, OSError, ValueError):
+            slots = {'total': None, 'busy': None, 'error': '模型伺服器沒有回應'}
+    return {'backend': BACKEND,
+            'parallel': INFERENCE_PARALLEL, 'slots': slots,
+            'requests': sorted(rows, key=lambda r: r['started']), 'recent': recent}
+
+
+# llama-server's json_schema grammar lets the model pretty-print (one number
+# per line): a CEFR label cost ~100 output tokens and replies were cut at the
+# limit. The same JSON with no whitespace costs ~55-60 (A/B 2026-10-14).
+COMPACT_JSON = os.environ.get('TAGGER_COMPACT_JSON', '1').strip().lower() in {
+    '1', 'true', 'yes', 'on'}
+_GBNF_BASE = (
+    'string ::= "\\"" ( [^"\\\\\\x7F\\x00-\\x1F] | "\\\\" (["\\\\/bfnrt] | "u" [0-9a-fA-F]{4}) )* "\\""\n'
+    'integer ::= "-"? [0-9]{1,7}\n'
+    'number ::= "-"? [0-9]{1,7} ("." [0-9]{1,7})?\n')
+
+
+def compact_grammar(schema: dict) -> str | None:
+    """A GBNF grammar for ``schema`` that allows no whitespace in the JSON, or
+    None for anything outside the subset these replies use (objects whose
+    properties are all required, non-empty arrays, enums, strings, numbers,
+    booleans)."""
+    rules: list[str] = []
+
+    def expr(node: dict, name: str) -> str | None:
+        if 'enum' in node:
+            return '(' + ' | '.join(json.dumps(json.dumps(v)) for v in node['enum']) + ')'
+        kind = node.get('type')
+        if kind in ('string', 'integer', 'number'):
+            return kind
+        if kind == 'boolean':
+            return '("true" | "false")'
+        if kind == 'array':
+            item = expr(node.get('items') or {}, name + '-item')
+            return item and f'("[" ({item} ("," {item})*)? "]")'
+        if kind == 'object':
+            props = node.get('properties') or {}
+            if set(node.get('required', [])) != set(props):
+                return None
+            parts = []
+            for i, (key, value) in enumerate(props.items()):
+                part = expr(value, f'{name}-{re.sub(r"[^a-zA-Z0-9]", "-", key)}')
+                if part is None:
+                    return None
+                parts.append(json.dumps(('{' if i == 0 else ',') + json.dumps(key) + ':') + ' ' + part)
+            rules.append(f'{name} ::= ' + (' '.join(parts) + ' "}"' if parts else '"{}"'))
+            return name
+        return None
+
+    top = expr(schema, 'reply')
+    return top and f'root ::= {top}\n' + '\n'.join(rules) + '\n' + _GBNF_BASE
+
+
 def loads_salvaging(text: str):
-    """The model's JSON, or — when the reply was cut off at the output token
-    limit — everything up to the last complete object in a list, closed
+    """The model's JSON, or - when the reply was cut off at the output token
+    limit - everything up to the last complete object in a list, closed
     properly. A cut-off reply used to fail the whole photo; its first
     complete candidates are still good."""
     try:
@@ -485,7 +675,7 @@ def loads_salvaging(text: str):
 
 
 class Lexicon:
-    """Optional local word data: frequency (wordfreq) and US IPA (CMUdict)."""
+    """Optional local word data: frequency, IPA and dictionary headwords."""
 
     def __init__(self, cmudict_path: str = CMUDICT):
         try:
@@ -494,6 +684,19 @@ class Lexicon:
         except ImportError:
             self._zipf = None
         self._ipa: dict[str, str] = {}
+        self._dictionary = None
+        kaikki = os.environ.get(
+            'TAGGER_KAIKKI_INDEX',
+            os.path.join(ROOT, 'lexicon', 'raw-data', 'kaikki-index.sqlite3'))
+        if os.path.isfile(kaikki):
+            try:
+                import sqlite3
+                self._dictionary = sqlite3.connect(
+                    f'file:{os.path.abspath(kaikki).replace(os.sep, "/")}?mode=ro',
+                    uri=True, check_same_thread=False)
+                self._dictionary.execute('PRAGMA query_only=ON')
+            except (OSError, sqlite3.Error):
+                self._dictionary = None
         if os.path.exists(cmudict_path):
             sys.path.insert(0, os.path.join(ROOT, 'pipeline'))
             try:
@@ -523,13 +726,29 @@ class Lexicon:
 
     def is_foreign(self, word: str) -> bool:
         """A single word that is rare in English but common in another
-        language — calendrier, fenêtre, fenster — not an English loanword
+        language - calendrier, fenêtre, fenster - not an English loanword
         (croissant, espresso, tortilla stay). Spec: 第一階段只產生英文詞條."""
         if self._zipf is None or ' ' in word:
             return False
         en = self._zipf(word, 'en')
         other = max(self._zipf(word, lang) for lang in self._OTHER_LANGS)
         return en < 2.0 and other >= en + 2.0
+
+    def is_lexical_phrase(self, phrase: str) -> bool:
+        """Whether a multiword label is an attested dictionary headword.
+
+        If the optional complete Kaikki index is unavailable, preserve the
+        old permissive behaviour instead of discarding valid labels.
+        """
+        if ' ' not in phrase or self._dictionary is None:
+            return True
+        try:
+            row = self._dictionary.execute(
+                "SELECT 1 FROM entries WHERE language = 'en' AND normalized = ? LIMIT 1",
+                (phrase.strip().lower(),)).fetchone()
+            return row is not None
+        except Exception:
+            return True
 
     def describe(self, word: str, lang: str = 'en') -> dict:
         out = {}
@@ -564,25 +783,68 @@ def prepare_image(image: bytes) -> tuple[bytes, dict]:
         return image, {'original': None, 'sent': None, 'bytes': len(image)}
 
 
+class UnsafeImage(ValueError):
+    """The vision model identified content that must not enter the app."""
+
+
 class Tagger:
     def __init__(self, ollama_url: str, model: str, lexicon: Lexicon | None = None):
         self.ollama_url = ollama_url.rstrip('/')
         self.model = model
         self.lexicon = lexicon
-        self._inference_lock = threading.Lock()
+        self._admission = PrioritySlots(INFERENCE_PARALLEL)
+        # Long import translations must not occupy every llama-server slot;
+        # keep one available for a learner waiting on a photo.
+        self._background_slots = threading.BoundedSemaphore(
+            max(1, INFERENCE_PARALLEL - 2))
+        self._key_locks: dict[str, list] = {}  # key -> [lock, users]
+        self._key_locks_guard = threading.Lock()
         os.makedirs(CACHE_DIR, exist_ok=True)
 
-    def ollama_ok(self) -> bool:
+    @contextlib.contextmanager
+    def _inference(self, key: str | None = None):
+        """One of the INFERENCE_PARALLEL model slots. Requests with the same
+        cache ``key`` wait for each other, so the second reads the first's
+        cached reply instead of running the model again."""
+        if key is None:
+            with self._admission.slot():
+                yield
+            return
+        with self._key_locks_guard:
+            entry = self._key_locks.setdefault(key, [threading.Lock(), 0])
+            entry[1] += 1
         try:
-            with urllib.request.urlopen(f'{self.ollama_url}/api/version', timeout=3):
+            with entry[0], self._admission.slot():
+                yield
+        finally:
+            with self._key_locks_guard:
+                entry[1] -= 1
+                if not entry[1]:
+                    self._key_locks.pop(key, None)
+
+    @contextlib.contextmanager
+    def _background_inference(self):
+        """Lower-concurrency lane for database import translations."""
+        with self._admission.request(background=True), self._background_slots, self._inference():
+            yield
+
+    def ollama_ok(self) -> bool:
+        url = (f'{LLAMACPP_URL}/health' if BACKEND == 'llamacpp'
+               else f'{self.ollama_url}/api/version')
+        try:
+            with urllib.request.urlopen(url, timeout=3):
                 return True
         except (urllib.error.URLError, OSError):
             return False
 
     def _chat(self, prompt: str, schema: dict, image: bytes | None = None,
               temperature: float = 0, max_tokens: int | None = None,
-              logprobs: bool = False):
-        """The model's JSON reply; with logprobs, (reply, per-token logprobs)."""
+              logprobs: bool = False, compact: bool = False):
+        """The model's JSON reply; with logprobs, (reply, per-token logprobs).
+        ``compact`` asks llama-server for JSON without whitespace."""
+        if BACKEND == 'llamacpp':
+            return self._chat_llamacpp(prompt, schema, image, temperature, max_tokens, logprobs,
+                                       compact)
         message = {'role': 'user', 'content': prompt}
         if image is not None:
             message['images'] = [base64.b64encode(image).decode()]
@@ -591,6 +853,10 @@ class Tagger:
             'messages': [message],
             'format': schema,
             'stream': False,
+            # Qwen3.5 enables a hidden reasoning channel by default. It is not
+            # useful for these tightly constrained extraction/translation calls
+            # and can consume the output budget before the JSON is complete.
+            'think': False,
             'keep_alive': KEEP_ALIVE,
             'options': {
                 'temperature': temperature,
@@ -610,10 +876,52 @@ class Tagger:
         content = loads_salvaging(reply['message']['content'])
         return (content, reply.get('logprobs') or []) if logprobs else content
 
+    def _chat_llamacpp(self, prompt, schema, image, temperature, max_tokens, logprobs,
+                       compact=False):
+        """The same request to llama-server's OpenAI-compatible chat API. The
+        context size is the server's per-slot -c / -np; Ollama's own sampling
+        defaults for the model are sent with every request."""
+        content = [{'type': 'text', 'text': prompt}]
+        if image is not None:
+            content.insert(0, {'type': 'image_url', 'image_url': {
+                'url': 'data:image/jpeg;base64,' + base64.b64encode(image).decode()}})
+        body = {
+            'messages': [{'role': 'user', 'content': content}],
+            'temperature': temperature,
+            'max_tokens': max_tokens or MODEL_MAX_TOKENS,
+            'chat_template_kwargs': {'enable_thinking': False},  # as 'think': False
+            **LLAMACPP_SAMPLING,
+        }
+        grammar = compact_grammar(schema) if compact else None
+        if grammar:
+            body['grammar'] = grammar
+        else:
+            body['response_format'] = {'type': 'json_schema',
+                                       'json_schema': {'name': 'reply', 'schema': schema}}
+        if logprobs:
+            body['logprobs'], body['top_logprobs'] = True, 5
+        stream_cefr = CEFR_REPEAT_GUARD and schema is CEFR_CANDIDATE_SCHEMA and not logprobs
+        if stream_cefr:
+            body['stream'] = True
+        req = urllib.request.Request(
+            f'{LLAMACPP_URL}/v1/chat/completions',
+            data=json.dumps(body).encode(),
+            headers={'Content-Type': 'application/json'},
+        )
+        with urllib.request.urlopen(req, timeout=300) as resp:
+            if stream_cefr:
+                return loads_salvaging(read_cefr_stream(resp))
+            reply = json.loads(resp.read())
+        choice = reply['choices'][0]
+        parsed = loads_salvaging(choice['message']['content'] or '')
+        if not logprobs:
+            return parsed
+        return parsed, (choice.get('logprobs') or {}).get('content') or []
+
     def score(self, image: bytes, labels: list[dict], lang: str = 'en') -> list[dict]:
         """Each label's recognition score: the model looks at the photo again
         and answers, label by label, whether it is shown; the score is its
-        probability of answering yes (0–1), read from the token logprobs."""
+        probability of answering yes (0-1), read from the token logprobs."""
         labels = [{'word': str(l.get('word', '')).strip().lower(), 'pos': l.get('pos')}
                   for l in labels if str(l.get('word', '')).strip()][:SCORE_MAX_LABELS]
         if not labels:
@@ -628,7 +936,7 @@ class Tagger:
                 return json.load(f)
         except (FileNotFoundError, OSError, ValueError):
             pass
-        with self._inference_lock:
+        with self._inference(cache_file):
             try:
                 with open(cache_file, encoding='utf-8') as f:
                     return json.load(f)
@@ -668,6 +976,7 @@ class Tagger:
             'image': hashlib.sha256(image).hexdigest(),
             'model': self.model,
             'prompt': PROMPT_VERSION,
+            'output_policy': 'dictionary-level-visible-v1',
             'lang': lang,
             'focus': focus,
             'exclude': sorted(w.strip().lower() for w in (exclude or []) if w.strip()),
@@ -684,7 +993,7 @@ class Tagger:
 
         # One inference at a time keeps the 8 GB GPU from allocating parallel KV
         # caches. Check the disk cache again after waiting for another request.
-        with self._inference_lock:
+        with self._inference(cache_file):
             try:
                 with open(cache_file, encoding='utf-8') as f:
                     cached = json.load(f)
@@ -695,6 +1004,8 @@ class Tagger:
             prepared, _ = prepare_image(image)
             content = self._chat(build_prompt(level, lang, native, focus, exclude),
                                  CANDIDATE_SCHEMA, prepared)
+            if content.get('safe') is not True:
+                raise UnsafeImage('explicit adult content')
             items = to_candidates(content.get('candidates', []), self.lexicon, exclude, lang)
             temporary = cache_file + f'.{os.getpid()}.tmp'
             try:
@@ -708,14 +1019,25 @@ class Tagger:
 
     def candidates_cefr(self, image: bytes, lang: str = 'en',
                         exclude: list[str] | None = None,
-                        per_level: int = CEFR_TAGS_PER_LEVEL) -> list[dict]:
-        """At least ``per_level`` visible noun/phrase labels for each CEFR band."""
+                        per_level: int = CEFR_TAGS_PER_LEVEL,
+                        target_levels: list[str] | None = None,
+                        existing_counts: dict[str, int] | None = None,
+                        internal_topup: bool = False) -> list[dict]:
+        """Return visible labels; the trusted backend assigns CEFR and requests retries."""
+        target_levels = list(dict.fromkeys(
+            level.upper() for level in (target_levels or []) if level.upper() in LEVELS))
+        existing_counts = {level: min(max(int((existing_counts or {}).get(level, 0)), 0),
+                                      per_level) for level in LEVELS}
         key_data = json.dumps({
             'image': hashlib.sha256(image).hexdigest(),
             'model': self.model,
             'prompt': CEFR_PROMPT_VERSION,
+            'output_policy': 'dictionary-level-visible-v1',
             'lang': lang,
             'per_level': per_level,
+            'target_levels': target_levels,
+            'existing_counts': existing_counts,
+            'internal_topup': internal_topup,
             'exclude': sorted(w.strip().lower() for w in (exclude or []) if w.strip()),
             'prep': IMAGE_PREP_VERSION},
             sort_keys=True).encode()
@@ -728,7 +1050,7 @@ class Tagger:
         except (FileNotFoundError, OSError, ValueError, TypeError):
             pass
 
-        with self._inference_lock:
+        with self._inference(cache_file):
             try:
                 with open(cache_file, encoding='utf-8') as f:
                     cached = json.load(f)
@@ -737,22 +1059,18 @@ class Tagger:
             except (FileNotFoundError, OSError, ValueError, TypeError):
                 pass
             prepared, _ = prepare_image(image)
-            content = self._chat(build_cefr_prompt(lang, exclude, per_level),
+            prompt = (build_cefr_topup_prompt(
+                lang, target_levels, exclude or [], per_level,
+                existing_counts) if target_levels
+                else build_cefr_prompt(lang, exclude, per_level))
+            content = self._chat(prompt,
                                  CEFR_CANDIDATE_SCHEMA, prepared,
-                                 max_tokens=CEFR_MAX_TOKENS)
+                                 max_tokens=CEFR_MAX_TOKENS, compact=COMPACT_JSON)
+            if content.get('safe') is not True:
+                raise UnsafeImage('explicit adult content')
             items = to_candidates(content.get('candidates', []), self.lexicon, exclude, lang)
-            # One top-up pass for bands still below per_level. Never invent filler words.
-            short = short_cefr_bands(items, per_level)
-            if short:
-                counts = cefr_band_counts(items)
-                known = list(dict.fromkeys(
-                    [*(exclude or []), *[str(i.get('word', '')) for i in items]]
-                ))
-                topup = self._chat(
-                    build_cefr_topup_prompt(lang, short, known, per_level, counts),
-                    CEFR_CANDIDATE_SCHEMA, prepared, max_tokens=CEFR_MAX_TOKENS)
-                extra = to_candidates(topup.get('candidates', []), self.lexicon, known, lang)
-                items = merge_cefr_topup(items, extra, per_level)
+            # Hard-cap A1/A2 so a noun-heavy first pass cannot fill TAGS_MAX alone.
+            items = cap_cefr_beginner_bands(items)
             # Do not cache empty CEFR-band replies: a truncated or weak answer
             # would permanently block enrich retries for that photo.
             if items:
@@ -811,7 +1129,7 @@ class Tagger:
         }
 
 
-TRANSLATE_PROMPT_VERSION = 'translate-v4'
+TRANSLATE_PROMPT_VERSION = 'translate-v5'
 TRANSLATE_SCHEMA = {
     'type': 'object',
     'properties': {'items': {'type': 'array', 'items': {
@@ -857,6 +1175,12 @@ TRANSLATE_KIND = {
                'topic, parts, uses, kinds), comma-separated, spread over those levels: everyday '
                'words for A1-A2, and rarer, technical or literary words for C1-C2. Real '
                'dictionary words only, never the word itself or its forms.',
+    'bundle': 'Each item has its own "task". Apply that task independently: gloss means return '
+              'a short {native} translation of the defined word; sentence means translate the '
+              'sentence naturally into {native}; word means return the short {native} meaning '
+              'matching its context; etymology means rewrite the note as one or two plain '
+              '{native} sentences; part means give the word-part meaning in {native} in 1-6 '
+              'words. Never merge, omit, or reorder items.',
 }
 # Kinds whose results are in the learning language, not the native one.
 TARGET_KINDS = {'define', 'example', 'synonyms', 'related'}
@@ -891,9 +1215,12 @@ def translate(tagger: 'Tagger', req: dict) -> dict:
     native = req.get('native') if req.get('native') in LANGS else 'zh-TW'
     kind = req.get('kind') if req.get('kind') in TRANSLATE_KIND or req.get('kind') == 'morphemes' \
         else 'word'
+    item_limit = 80 if kind == 'bundle' else 40
     items = [{'id': str(i.get('id', n)), 'text': str(i.get('text', ''))[:600],
-              **({'context': str(i['context'])[:200]} if i.get('context') else {})}
-             for n, i in enumerate(req.get('items') or []) if str(i.get('text', '')).strip()][:40]
+              **({'context': str(i['context'])[:200]} if i.get('context') else {}),
+              **({'task': str(i['task'])[:20]} if kind == 'bundle' and i.get('task') else {})}
+             for n, i in enumerate(req.get('items') or [])
+             if str(i.get('text', '')).strip()][:item_limit]
     if not items:
         return {'items': [], 'promptVersion': TRANSLATE_PROMPT_VERSION}
     if kind == 'morphemes':
@@ -911,22 +1238,46 @@ def translate(tagger: 'Tagger', req: dict) -> dict:
         return {'items': out, 'promptVersion': TRANSLATE_PROMPT_VERSION, 'kind': kind}
     in_target = kind in TARGET_KINDS
     out_lang = LANGS[lang] if in_target else LANGS[native]
-    prompt = '\n'.join([
-        TRANSLATE_KIND[kind].format(lang=LANGS[lang], native=LANGS[native]),
-        # Without this the small model echoes the English input back.
-        f'Return one result per item, with the same id, in JSON. "text" is the {out_lang} '
-        'result, never a copy of the input'
-        + (TARGET_EXAMPLE.get(kind, '.') if in_target else TRANSLATE_EXAMPLE.get(native, '.')),
-        NATIVE_RULE[native].replace('「meaning」', '所有輸出') if native == 'zh-TW' and not in_target else '',
-        'Items: ' + json.dumps(items, ensure_ascii=False),
-    ])
-    # Many sentences in one call run past the photo tagging's output cap.
-    content = tagger._chat(prompt, TRANSLATE_SCHEMA, temperature=0,
-                           max_tokens=TRANSLATE_MAX_TOKENS)
-    wanted = {i['id'] for i in items}
-    out = [{'id': str(r.get('id')), 'text': str(r.get('text', '')).strip()}
-           for r in content.get('items', []) if str(r.get('id')) in wanted
-           and str(r.get('text', '')).strip()]
+    def ask(batch, *, retry=False):
+        prompt = '\n'.join([
+            TRANSLATE_KIND[kind].format(lang=LANGS[lang], native=LANGS[native]),
+            # Without this the small model echoes the English input back.
+            f'Return one result per item, with the same id, in JSON. "text" is the {out_lang} '
+            'result, never a copy of the input'
+            + (TARGET_EXAMPLE.get(kind, '.') if in_target else TRANSLATE_EXAMPLE.get(native, '.')),
+            NATIVE_RULE[native].replace('「meaning」', '所有輸出')
+            if native == 'zh-TW' and not in_target else '',
+            ('The previous attempt was invalid because it copied the source language. '
+             f'Write the answer only in {out_lang}.' if retry else ''),
+            'Items: ' + json.dumps(batch, ensure_ascii=False),
+        ])
+        content = tagger._chat(prompt, TRANSLATE_SCHEMA, temperature=0,
+                               max_tokens=TRANSLATE_MAX_TOKENS)
+        wanted = {i['id'] for i in batch}
+        return {str(r.get('id')): str(r.get('text', '')).strip()
+                for r in content.get('items', []) if str(r.get('id')) in wanted
+                and str(r.get('text', '')).strip()}
+
+    def valid(item, text):
+        if not text or text.casefold() == item['text'].strip().casefold():
+            return False
+        if not in_target and native == 'zh-TW' and not re.search(r'[\u3400-\u9fff]', text):
+            return False
+        return True
+
+    got = ask(items)
+    invalid = [item for item in items if not valid(item, got.get(item['id'], ''))]
+    # qwen3.5 occasionally echoes an entire sentence batch in English.  A
+    # focused one-item retry is much more reliable and only runs for failures.
+    for item in invalid:
+        retry = ask([item], retry=True)
+        text = retry.get(item['id'], '')
+        if valid(item, text):
+            got[item['id']] = text
+        else:
+            got.pop(item['id'], None)
+    out = [{'id': item['id'], 'text': got[item['id']]}
+           for item in items if item['id'] in got]
     return {'items': out, 'promptVersion': TRANSLATE_PROMPT_VERSION, 'kind': kind}
 
 
@@ -973,6 +1324,12 @@ def make_handler(tagger: Tagger, api_key: str):
             self.end_headers()
 
         def do_GET(self):
+            if urlparse(self.path).path == '/activity':
+                if not secrets.compare_digest(self.headers.get('X-API-Key', ''), api_key):
+                    self._json(401, {'error': 'missing or wrong X-API-Key'})
+                    return
+                self._json(200, dict(activity_snapshot(), model=tagger.model))
+                return
             if urlparse(self.path).path == '/health':
                 sent = self.headers.get('X-API-Key')
                 key_ok = None if sent is None else secrets.compare_digest(sent, api_key)
@@ -980,7 +1337,9 @@ def make_handler(tagger: Tagger, api_key: str):
                                  'ollama': tagger.ollama_ok(), 'keyOk': key_ok,
                                  'prep': IMAGE_PREP_VERSION,
                                  'cefrNumPredict': CEFR_MAX_TOKENS,
-                                 'keepAlive': KEEP_ALIVE})
+                                 'keepAlive': KEEP_ALIVE,
+                                 'paused': is_qwen_paused(),
+                                 'config': tagger_config.effective_config()})
             else:
                 self._json(404, {'error': 'not found'})
 
@@ -995,6 +1354,10 @@ def make_handler(tagger: Tagger, api_key: str):
             started = time.time()
             try:
                 result = fn()
+            except UnsafeImage:
+                self._json(451, {'error': 'explicit adult content is not allowed',
+                                 'code': 'unsafe_image'})
+                return
             except urllib.error.URLError as e:
                 self._json(502, {'error': f'Ollama not reachable at {tagger.ollama_url}: {e.reason}'})
                 return
@@ -1004,6 +1367,7 @@ def make_handler(tagger: Tagger, api_key: str):
                 self._json(422, {'error': f'unexpected model reply: {e}'})
                 return
             result.update({'model': tagger.model, 'elapsedMs': int((time.time() - started) * 1000)})
+            record_output(result)
             self._json(200, result)
 
         def do_POST(self):
@@ -1014,9 +1378,39 @@ def make_handler(tagger: Tagger, api_key: str):
             if not secrets.compare_digest(self.headers.get('X-API-Key', ''), api_key):
                 self._json(401, {'error': 'missing or wrong X-API-Key'})
                 return
+            # New inference only: in-flight requests (already past this check) finish.
+            if is_qwen_paused():
+                self._json(503, {'error': 'Qwen 已暫停', 'code': 'qwen_paused'})
+                return
             body = self._body()
             if body is None:
                 return
+            kind = url.path.strip('/')
+            what = unquote(self.headers.get('X-Activity', ''))
+            ref = unquote(self.headers.get('X-Activity-Ref', ''))
+            inputs: list = []
+            if kind == 'translate':
+                try:
+                    req = json.loads(body.decode('utf-8') or '{}')
+                    inputs = [{'id': str(i.get('id', n)), 'text': str(i.get('text', ''))[:200]
+                               + (f"（{str(i.get('context') or i.get('task'))[:80]}）"
+                                  if i.get('context') or i.get('task') else '')}
+                              for n, i in enumerate(req.get('items') or []) if isinstance(i, dict)][:40]
+                    if not what:
+                        what = f"{req.get('kind', '')}: " + '、'.join(i['text'][:30] for i in inputs[:3])
+                except (UnicodeDecodeError, json.JSONDecodeError, AttributeError):
+                    pass
+            elif kind == 'score':
+                try:
+                    labels = json.loads((parse_qs(url.query).get('labels') or ['[]'])[0])
+                    inputs = [{'word': str(x.get('word', ''))} for x in labels if isinstance(x, dict)][:30]
+                except (ValueError, AttributeError):
+                    pass
+            with activity(kind, what, ref, inputs), tagger._admission.request(
+                    background=is_background(url.path, self.headers)):
+                self._post(url, body)
+
+        def _post(self, url, body):
             if url.path == '/enrich':
                 self._json(410, {
                     'error': 'AI word enrichment is disabled; use the downloaded word database',
@@ -1030,10 +1424,9 @@ def make_handler(tagger: Tagger, api_key: str):
                 except (UnicodeDecodeError, json.JSONDecodeError):
                     self._json(400, {'error': 'body must be JSON'})
                     return
-                # A single 8 GB GPU has one Ollama slot. Queue here so four
-                # import workers do not create overlapping Ollama requests
-                # whose client-side waits exceed the import timeout.
-                with tagger._inference_lock:
+                # At most TAGGER_PARALLEL requests reach Ollama; the rest
+                # queue here so import workers' waits stay within their timeout.
+                with tagger._background_inference():
                     self._model_call(lambda: translate(tagger, req))
                 return
             image = extract_image(self.headers.get('Content-Type', ''), body)
@@ -1066,10 +1459,29 @@ def make_handler(tagger: Tagger, api_key: str):
                     per_level = min(max(int((query.get('per_level') or [per_level])[0]), 1), 5)
                 except ValueError:
                     pass
+                target_levels = [level.strip().upper() for level in
+                                 (query.get('levels') or [''])[0].split(',')
+                                 if level.strip().upper() in LEVELS]
+                existing_counts = {level: 0 for level in LEVELS}
+                for part in (query.get('counts') or [''])[0].split(','):
+                    key, _, value = part.partition(':')
+                    key = key.strip().upper()
+                    if key in LEVELS:
+                        try:
+                            existing_counts[key] = int(value)
+                        except ValueError:
+                            pass
+                internal_topup = (query.get('topup') or ['0'])[0].strip().lower() not in {
+                    '0', 'false', 'no', 'off'}
                 self._model_call(lambda: {
-                    'candidates': tagger.candidates_cefr(image, lang, exclude, per_level),
+                    'candidates': tagger.candidates_cefr(
+                        image, lang, exclude, per_level, target_levels,
+                        existing_counts, internal_topup),
                     'level': level, 'lang': lang, 'native': native,
                     'mode': 'cefr', 'perLevel': per_level,
+                    'targetLevels': target_levels,
+                    'existingCounts': existing_counts,
+                    'internalTopup': internal_topup,
                     'prompt': CEFR_PROMPT_VERSION,
                 })
                 return
@@ -1106,17 +1518,20 @@ def main() -> None:
     parser.add_argument('--ollama', default=os.environ.get('OLLAMA_URL', 'http://127.0.0.1:11434'))
     parser.add_argument('--model', default=os.environ.get('TAGGER_MODEL', DEFAULT_MODEL))
     args = parser.parse_args()
+    tagger_config.check_backend()
+    print('Effective config:', tagger_config.effective_config(), flush=True)
 
     api_key = load_api_key()
     tagger = Tagger(args.ollama, args.model)
     server = ThreadingHTTPServer((args.host, args.port), make_handler(tagger, api_key))
     print(f'Tagging API on http://{args.host}:{args.port}/tag  (model {args.model})')
-    print(f'Ollama {"reachable" if tagger.ollama_ok() else "NOT reachable"} at {args.ollama}')
+    where = LLAMACPP_URL + ' (llama-server)' if BACKEND == 'llamacpp' else args.ollama
+    print(f'Model server {"reachable" if tagger.ollama_ok() else "NOT reachable"} at {where}')
     print(f'Vision input: max {IMAGE_MAX_EDGE}px JPEG quality {IMAGE_JPEG_QUALITY} ({IMAGE_PREP_VERSION}); '
           f'context {MODEL_CONTEXT}; max output {MODEL_MAX_TOKENS} tokens; '
           f'cefr max {CEFR_MAX_TOKENS}; keep_alive {KEEP_ALIVE!r}')
     print(f'Cache: {CACHE_DIR}; prompt {PROMPT_VERSION}; cefr {CEFR_PROMPT_VERSION}')
-    print('Serial inference lock on; OLLAMA_NUM_PARALLEL should stay 1 on one GPU.')
+    print(f'Model slots: {INFERENCE_PARALLEL} (match llama-server -np; Ollama runs qwen3.5 one at a time).')
     print('Model left as configured (no auto-swap); prefer TAGGER_* / OLLAMA_* tweaks for speed.')
     print(f'X-API-Key: {api_key}')
     try:

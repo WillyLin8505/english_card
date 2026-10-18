@@ -94,13 +94,27 @@ def review(pack: dict, golden: dict) -> str:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--pack", required=True)
+    ap.add_argument("--out", help="write here instead of the live quality/golden/ "
+                     "(use this for before/after QC comparisons; never point it at "
+                     "quality/golden/ itself)")
+    ap.add_argument("--force", action="store_true",
+                     help="required to (re)write the live quality/golden/v1.json; "
+                     "re-running the sampler reshuffles the owner-reviewed word/photo "
+                     "list, so this is for a deliberate rebuild, not a QC snapshot")
     a = ap.parse_args()
     pack = json.loads(Path(a.pack).read_text(encoding="utf-8"))
-    qc.GOLDEN.mkdir(parents=True, exist_ok=True)
+    out_dir = Path(a.out) if a.out else qc.GOLDEN
+    if out_dir == qc.GOLDEN and not a.force:
+        raise SystemExit(
+            "refusing to overwrite the live golden set at "
+            f"{qc.GOLDEN} (owner-reviewed; rebuilding reshuffles the sample). "
+            "Pass --out <scratch-dir> for a before/after QC snapshot, or --force "
+            "to deliberately rebuild the live set.")
+    out_dir.mkdir(parents=True, exist_ok=True)
     g = build(pack)
-    (qc.GOLDEN / "v1.json").write_text(json.dumps(g, ensure_ascii=False, indent=1), encoding="utf-8")
-    (qc.GOLDEN / "v1_review.md").write_text(review(pack, g), encoding="utf-8")
-    print(len(g["photos"]), "photos", len(g["words"]), "words ->", qc.GOLDEN)
+    (out_dir / "v1.json").write_text(json.dumps(g, ensure_ascii=False, indent=1), encoding="utf-8")
+    (out_dir / "v1_review.md").write_text(review(pack, g), encoding="utf-8")
+    print(len(g["photos"]), "photos", len(g["words"]), "words ->", out_dir)
 
 
 if __name__ == "__main__":

@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from . import catalog, config
 from . import models as m
 from .adapters import http
-from .text import example_key, normalize_lemma
+from .text import entry_type_of, example_key, normalize_lemma
 
 OK = catalog.DONE
 
@@ -35,8 +35,10 @@ def issues_for(t: str, n: str, fvs: dict) -> list[dict]:
 
     senses = items("definition")
     have = {i.get("sense_key") or i.get("slot") for i in items("native_definition")}
+    from .text import native_sense_keys
+    needed = native_sense_keys(senses)
     for k, sn in enumerate(senses, 1):
-        if sn.get("sense_key") not in have:
+        if sn.get("sense_key") in needed and sn.get("sense_key") not in have:
             add("native_definition", sn.get("sense_key"),
                 f"詞義 #{k}（{sn.get('pos', '')}：{sn.get('gloss', '')[:40]}）缺{nz}釋義")
     exs = items("example_sentences")
@@ -206,6 +208,7 @@ def word(s: Session, t: str, n: str, lemma_in: str) -> dict:
                                           + ("（來源已查遍）" if fv.status == catalog.SHORT else "")})
     return {
         "lemma": lemma, "display": lexemes[0].lemma if lexemes else lemma_in,
+        "entry_type": entry_type_of(lemma),
         "target_language": t, "native_language": n,
         "lexemes": [{"id": lx.id, "pos": lx.pos, "status": lx.status, "cefr": lx.cefr,
                      "zipf": lx.zipf} for lx in lexemes],
@@ -259,14 +262,30 @@ def coverage(s: Session, t: str, n: str, q: str | None = None, only: str | None 
              limit: int = 100, offset: int = 0) -> dict:
     rows = s.execute(select(m.FieldValue.lemma, m.FieldValue.field, m.FieldValue.status).where(
         m.FieldValue.target_language == t, m.FieldValue.native_language == n)).all()
+    # The inventory is the lexeme catalog, not the extraction history for one
+    # language pair. Relations create stub lexemes too; expose them honestly
+    # without promoting them to full entries or inventing field coverage.
     per_word: dict[str, dict] = {}
+
+    def entry(lemma):
+        return per_word.setdefault(lemma, {"lemma": lemma, "target": [0, 0],
+            "native": [0, 0], "failed": 0, "missing": 0, "override": 0,
+            "status": "fields_only", "has_fields": False})
+
+    for lemma, status in s.execute(select(m.Lexeme.normalized, m.Lexeme.status).where(
+            m.Lexeme.language == t)).all():
+        w = entry(lemma)
+        if status == "full":
+            w["status"] = "full"
+        elif w["status"] != "full":
+            w["status"] = "stub"
     per_field: dict[str, dict] = {}
     for lemma, f, st in rows:
         if f not in catalog.FIELD:
             continue
         scope = catalog.FIELD[f].scope
-        w = per_word.setdefault(lemma, {"lemma": lemma, "target": [0, 0], "native": [0, 0],
-                                        "failed": 0, "missing": 0, "override": 0})
+        w = entry(lemma)
+        w["has_fields"] = True
         pf = per_field.setdefault(f, {"field": f, "label": catalog.FIELD[f].label,
                                       "block": catalog.FIELD[f].block, "scope": scope,
                                       "counts": {}})
@@ -284,9 +303,15 @@ def coverage(s: Session, t: str, n: str, q: str | None = None, only: str | None 
         ql = q.lower()
         words = [w for w in words if ql in w["lemma"]]
     if only == "incomplete":
-        words = [w for w in words if w["failed"] or w["missing"]]
+        words = [w for w in words if w["failed"] or w["missing"] or not w["has_fields"]]
     elif only == "failed":
         words = [w for w in words if w["failed"]]
+    elif only == "full":
+        words = [w for w in words if w["status"] == "full"]
+    elif only == "stub":
+        words = [w for w in words if w["status"] == "stub"]
+    elif only == "not_run":
+        words = [w for w in words if not w["has_fields"]]
     for pf in per_field.values():
         c = pf["counts"]
         relevant = sum(v for k, v in c.items() if k not in ("unset", "unavailable"))
@@ -294,6 +319,10 @@ def coverage(s: Session, t: str, n: str, q: str | None = None, only: str | None 
     fields = sorted(per_field.values(), key=lambda x: [f.key for f in catalog.FIELDS].index(
         x["field"]))
     return {"target_language": t, "native_language": n, "total_words": len(per_word),
+            "full_words": sum(w["status"] == "full" for w in per_word.values()),
+            "stub_words": sum(w["status"] == "stub" for w in per_word.values()),
+            "fields_only_words": sum(w["status"] == "fields_only" for w in per_word.values()),
+            "resolved_words": sum(w["has_fields"] for w in per_word.values()),
             "words": words[offset: offset + limit], "matched": len(words), "fields": fields}
 
 

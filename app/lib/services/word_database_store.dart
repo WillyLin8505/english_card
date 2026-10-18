@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:hive/hive.dart';
 
 import '../models/card_template.dart';
+import 'fsrs_optimizer.dart';
 import '../models/learning_card.dart';
 import '../models/photo.dart';
 import '../models/vocabulary_profile.dart';
@@ -19,6 +20,7 @@ class WordDatabaseData {
   final List<ReviewLog> reviewLogs;
   final CardTemplate? template;
   final UserVocabularyProfile? profile;
+  final FsrsOptimization? fsrsOptimization;
 
   const WordDatabaseData({
     this.entries = const [],
@@ -29,6 +31,7 @@ class WordDatabaseData {
     this.reviewLogs = const [],
     this.template,
     this.profile,
+    this.fsrsOptimization,
   });
 }
 
@@ -57,7 +60,8 @@ abstract interface class WordDatabaseStore {
 /// Each learning language has its own boxes (spec section 7: 每個學習語言
 /// 分開保存相片冊、單字、已學會清單、能力分數、卡片、FSRS 與複習紀錄);
 /// English keeps the original `wd_` names.
-class HiveWordDatabaseStore implements WordDatabaseStore {
+class HiveWordDatabaseStore
+    implements WordDatabaseStore, FsrsOptimizationStore {
   /// Bump when the stored shape changes incompatibly.
   /// - 2: photo data moved from PhotoOccurrence onto Photo.
   /// - 3: one LearningCard per word (was one per photo occurrence), and
@@ -68,6 +72,24 @@ class HiveWordDatabaseStore implements WordDatabaseStore {
   static const _schemaKey = 'schema';
   static const _templateKey = 'template';
   static const _profileKey = 'profile';
+  static const _fsrsKey = 'fsrsOptimization';
+
+  @override
+  Future<void> putFsrsOptimization(FsrsOptimization? result) =>
+      _meta.put(_fsrsKey, jsonEncode(result?.toJson()));
+
+  FsrsOptimization? _loadFsrsOptimization() {
+    try {
+      final raw = _meta.get(_fsrsKey);
+      if (raw == null) return null;
+      final json = jsonDecode(raw);
+      return json is Map<String, dynamic>
+          ? FsrsOptimization.decode(json)
+          : null;
+    } catch (_) {
+      return null;
+    }
+  }
 
   final Box<String> _entries;
   final Box<String> _photos;
@@ -126,6 +148,7 @@ class HiveWordDatabaseStore implements WordDatabaseStore {
     final template = _meta.get(_templateKey);
     final profile = _meta.get(_profileKey);
     return WordDatabaseData(
+      fsrsOptimization: _loadFsrsOptimization(),
       entries: decode(_entries, WordEntry.fromJson)
         ..sort((a, b) => a.createdAt.compareTo(b.createdAt)),
       photos: decode(_photos, Photo.fromJson),

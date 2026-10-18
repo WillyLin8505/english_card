@@ -10,6 +10,10 @@ import 'word_candidate.dart';
 /// tagger is reachable again; nobody is notified.
 enum TaggingStatus { none, pending, tagging, done, failed }
 
+/// New user photos stay hidden until the combined safety and label pass
+/// accepts them. Legacy and bundled photos default to safe.
+enum PhotoSafetyStatus { unchecked, safe }
+
 /// Where a photo's pixels live. Exactly one of these is set, checked in
 /// this order by PhotoImage:
 /// - [assetPath]: a bundled sample photo;
@@ -47,6 +51,7 @@ class Photo {
   final DateTime createdAt;
 
   final TaggingStatus taggingStatus;
+  final PhotoSafetyStatus safetyStatus;
 
   /// Why the last tagging attempt failed, for the photo-detail screen.
   final String? taggingError;
@@ -64,6 +69,12 @@ class Photo {
   /// then the list is picked fresh from [candidates].
   final DateTime? wordsSavedAt;
 
+  /// Hash of the picture's bytes (see [PhotoIntake.hashBytes]), so adding
+  /// the same picture twice can be noticed (spec §7: 重複加入同一照片 was
+  /// deferred for MVP; card #217). Null for bundled samples and photos
+  /// saved before the hash existed — those are never reported as duplicates.
+  final String? contentHash;
+
   const Photo({
     required this.id,
     this.albumId,
@@ -79,10 +90,12 @@ class Photo {
     this.height,
     required this.createdAt,
     this.taggingStatus = TaggingStatus.none,
+    this.safetyStatus = PhotoSafetyStatus.safe,
     this.taggingError,
     this.candidates = const [],
     this.difficultyOffset = 0,
     this.wordsSavedAt,
+    this.contentHash,
   });
 
   bool get hasImage =>
@@ -98,6 +111,7 @@ class Photo {
     String? title,
     String? Function()? place,
     TaggingStatus? taggingStatus,
+    PhotoSafetyStatus? safetyStatus,
     String? Function()? taggingError,
     List<WordCandidate>? candidates,
     int? difficultyOffset,
@@ -112,15 +126,18 @@ class Photo {
         assetPath: assetPath,
         filePath: filePath,
         storedKey: storedKey,
+        networkUrl: networkUrl,
         placeholderColors: placeholderColors,
         width: width,
         height: height,
         createdAt: createdAt,
         taggingStatus: taggingStatus ?? this.taggingStatus,
+        safetyStatus: safetyStatus ?? this.safetyStatus,
         taggingError: taggingError != null ? taggingError() : this.taggingError,
         candidates: candidates ?? this.candidates,
         difficultyOffset: difficultyOffset ?? this.difficultyOffset,
         wordsSavedAt: wordsSavedAt ?? this.wordsSavedAt,
+        contentHash: contentHash,
       );
 
   factory Photo.fromJson(Map<String, dynamic> j) => Photo(
@@ -138,6 +155,9 @@ class Photo {
         createdAt: DateTime.parse(j['createdAt'] as String),
         taggingStatus: TaggingStatus.values.asNameMap()[j['taggingStatus']] ??
             TaggingStatus.none,
+        safetyStatus:
+            PhotoSafetyStatus.values.asNameMap()[j['safetyStatus']] ??
+                PhotoSafetyStatus.safe,
         taggingError: j['taggingError'] as String?,
         candidates: [
           for (final c in (j['candidates'] as List? ?? const []))
@@ -147,6 +167,7 @@ class Photo {
         wordsSavedAt: j['wordsSavedAt'] == null
             ? null
             : DateTime.parse(j['wordsSavedAt'] as String),
+        contentHash: j['contentHash'] as String?,
       );
 
   Map<String, dynamic> toJson() => {
@@ -163,10 +184,12 @@ class Photo {
         'height': height,
         'createdAt': createdAt.toIso8601String(),
         'taggingStatus': taggingStatus.name,
+        'safetyStatus': safetyStatus.name,
         'taggingError': taggingError,
         'candidates': [for (final c in candidates) c.toJson()],
         'difficultyOffset': difficultyOffset,
         'wordsSavedAt': wordsSavedAt?.toIso8601String(),
+        'contentHash': contentHash,
       };
 }
 

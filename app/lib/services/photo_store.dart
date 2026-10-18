@@ -13,10 +13,13 @@ import 'package:path_provider/path_provider.dart';
 class PhotoStore {
   static const _boxName = 'wd_photo_bytes';
 
-  final Box<Uint8List>? _box;
+  final LazyBox<Uint8List>? _box;
   final Directory? _dir;
 
   PhotoStore._(this._box, this._dir);
+
+  @visibleForTesting
+  PhotoStore.fromLazyBox(LazyBox<Uint8List> box) : this._(box, null);
 
   /// A store that keeps bytes in memory only — tests.
   PhotoStore.inMemory()
@@ -27,7 +30,8 @@ class PhotoStore {
 
   static Future<PhotoStore> open() async {
     if (kIsWeb) {
-      return PhotoStore._(await Hive.openBox<Uint8List>(_boxName), null);
+      // Keep the existing box/key format; only load keys at startup.
+      return PhotoStore._(await Hive.openLazyBox<Uint8List>(_boxName), null);
     }
     final docs = await getApplicationDocumentsDirectory();
     final dir =
@@ -57,5 +61,6 @@ class PhotoStore {
     return (filePath: null, storedKey: photoId);
   }
 
-  Uint8List? storedBytes(String key) => _box?.get(key) ?? _memory[key];
+  Future<Uint8List?> storedBytes(String key) async =>
+      _box == null ? _memory[key] : await _box.get(key);
 }

@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:photo_english_app/models/learning_card.dart';
 import 'package:photo_english_app/models/vocabulary_profile.dart';
+import 'package:photo_english_app/models/word_entry.dart';
 import 'package:photo_english_app/services/flashcard_session.dart';
 import 'package:photo_english_app/services/word_database_repository.dart';
 
@@ -14,7 +15,13 @@ void main() {
     final words = ['apple', 'banana', 'bus', 'cat', 'dog', 'egg', 'fish', 'goat', 'hat', 'ink',
                    'jam', 'kite', 'lamp', 'milk', 'nest', 'owl', 'pen', 'rice'];
     for (final w in words) {
-      repo.addWord(word: w, pos: 'n.', meaning: '意思$w', level: 'A1');
+      final entry = repo.addWord(
+          word: w, pos: 'n.', meaning: '意思$w', level: 'A1');
+      repo.applyWordData(entry.id,
+          newExamples: [
+            WordExample(text: 'This is $w.', translation: '這是 $w。')
+          ],
+          status: WordDataStatus.complete);
       now = now.add(const Duration(seconds: 3));
     }
     final s = FlashcardSession(repo);

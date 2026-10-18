@@ -12,3 +12,9 @@ App 啟動及使用中每 30 秒檢查 PostgreSQL 詞庫。後台完成來源擷
 網頁版未指定辨識網址時，會自動使用同一個 App 服務的 `/tag`。伺服器轉接本機 `127.0.0.1:8765`，從 `TAGGER_API_KEY` 或 `tagger/.api_key` 讀取金鑰；瀏覽器不需要保存金鑰。請保持 Ollama 與 `tagger/tagging_server.py` 啟動。自訂辨識網址仍優先使用；清空網址即可恢復自動連線。辨識服務離線時，照片保留在待處理佇列並定期重試。
 
 驗證：`flutter analyze`、`flutter test`（在 app 目錄）；`python -m pytest tests/test_app_server.py -q`（專案根目錄）；`python -m pytest tests/test_app_live_sync.py -q`（lexicon 目錄，使用獨立的 lexicon_test 資料庫）。
+
+## App 與字卡工作室一起啟動
+
+雙擊專案根目錄的 `start_app.bat`，會一起啟動 App（http://127.0.0.1:8123/）與字卡工作室（http://127.0.0.1:8772/）。已啟動的服務直接沿用，不會重複開啟；服務在背景執行，不必保留命令視窗。啟動失敗時會保留視窗提示，詳細紀錄位於 `.runtime/8123.log` 和 `.runtime/8772.log`。
+
+直接執行 `python serve_app.py --port 8123` 也會先嘗試啟動工作室。工作室仍只供本機使用；App 的 `--lan` 選項不會把工作室開放到網路。

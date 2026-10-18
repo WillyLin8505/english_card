@@ -1,3 +1,4 @@
+import '../l10n/ui_text.dart';
 import '../services/learning_content.dart';
 import 'dart:async';
 
@@ -17,7 +18,14 @@ import '../widgets/mobile/dialogs.dart';
 /// with search; tap a row for its photos, card, review log and FSRS
 /// changes. A word whose background data fetch failed is marked.
 class WordDatabaseScreen extends StatefulWidget {
-  const WordDatabaseScreen({super.key});
+  /// Overrides the top-bar 返回 action. Set when this screen is embedded
+  /// (e.g. inside DatabaseLibraryScreen's 我的單字本 toggle) so 返回 steps
+  /// back to the embedding context instead of leaving the tab — the same
+  /// issue as AlbumScreen's 返回 (問題回報 #258): `Navigator.canPop()` is
+  /// also false here, since embedding swaps this screen in without a push.
+  final VoidCallback? onBack;
+
+  const WordDatabaseScreen({super.key, this.onBack});
 
   @override
   State<WordDatabaseScreen> createState() => _WordDatabaseScreenState();
@@ -100,9 +108,10 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
                 MNavBar(
                   title: '我的單字本',
                   leading: BackNavButton(
-                    onTap: () => Navigator.of(context).canPop()
-                        ? Navigator.of(context).pop()
-                        : scope.navigator.selectTab(AppTab.camera),
+                    onTap: widget.onBack ??
+                        (() => Navigator.of(context).canPop()
+                            ? Navigator.of(context).pop()
+                            : scope.navigator.selectTab(AppTab.camera)),
                   ),
                   trailing: ShareNavButton(onTap: () => _share(rows)),
                 ),
@@ -125,7 +134,7 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
                                 onTap: _addWord,
                                 label: '新增單字',
                                 child: Container(
-                                  height: 44,
+                                  height: 48,
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: MSpace.md),
                                   decoration:
@@ -136,9 +145,11 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
                                       const Icon(Icons.add_rounded,
                                           color: Colors.white, size: 18),
                                       const SizedBox(width: MSpace.xxs),
-                                      Text('新增單字',
+                                      Flexible(child: UiText('新增單字',
+                                          textAlign: TextAlign.center,
+                                          maxLines: 2, overflow: TextOverflow.ellipsis,
                                           style: MFont.manrope(
-                                              14, FontWeight.w700, Colors.white)),
+                                              14, FontWeight.w700, Colors.white))),
                                     ],
                                   ),
                                 ),
@@ -151,7 +162,7 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
                                     scope.navigator.selectTab(AppTab.review),
                                 label: '開始複習',
                                 child: Container(
-                                  height: 44,
+                                  height: 48,
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: MSpace.md),
                                   decoration: MDecor.card(
@@ -166,9 +177,11 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
                                       const Icon(Icons.school_rounded,
                                           color: MColors.primary, size: 18),
                                       const SizedBox(width: MSpace.xxs),
-                                      Text('開始複習',
+                                      Flexible(child: UiText('開始複習',
+                                          textAlign: TextAlign.center,
+                                          maxLines: 2, overflow: TextOverflow.ellipsis,
                                           style: MFont.manrope(
-                                              14, FontWeight.w700, MColors.primary)),
+                                              14, FontWeight.w700, MColors.primary))),
                                     ],
                                   ),
                                 ),
@@ -207,7 +220,7 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
                                         vertical: MSpace.xs),
                                     decoration:
                                         MDecor.chipSurface(active: isSelected),
-                                    child: Text(
+                                    child: UiText(
                                       label,
                                       style: MFont.manrope(
                                         13,
@@ -232,7 +245,7 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
                           child: Material(
                             color: Colors.transparent,
                             child: ExpansionTile(
-                                title: Text('進階篩選與排序',
+                                title: UiText('進階篩選與排序',
                                     style: MFont.manrope(
                                         14, FontWeight.w700, MColors.ink)),
                                 collapsedBackgroundColor: Colors.transparent,
@@ -346,10 +359,10 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
                         size: 32, color: MColors.primary),
                   ),
                   const SizedBox(height: MSpace.md),
-                  Text('沒有符合條件的單字',
+                  UiText('沒有符合條件的單字',
                       style: MFont.titleSm.copyWith(color: MColors.ink)),
                   const SizedBox(height: MSpace.xxs),
-                  Text('請嘗試調整搜尋關鍵字或進階篩選條件',
+                  UiText('請嘗試調整搜尋關鍵字或進階篩選條件',
                       style: MFont.bodyMuted),
                 ],
               ),
@@ -359,6 +372,7 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
               key: ValueKey(row.id),
               word: row.entry.word,
               meaning: row.entry.meaning,
+              usageBadge: {if (row.entry.entryType != 'word') entryTypeLabel(row.entry.entryType), ...row.entry.partsOfSpeech.map(posLabel)}.join('・'),
               level: row.entry.level,
               learned: row.status == StudyStatus.learned,
               dataFailed: row.entry.dataStatus == WordDataStatus.failed,
@@ -372,7 +386,7 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
                 });
                 scope.navigator.openWord(row.entry.id);
               },
-              onToggle: () => scope.speaker.say(row.entry.word,
+              onToggle: () => scope.speak(context, row.entry.word,
                   language: scope.repository.language,
                   audioUrl: row.entry.audioUrl),
             ),
@@ -392,7 +406,7 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
       child: Row(
         children: [
           Expanded(
-            child: Text(
+            child: UiText(
               '第 $range 個，共 ${formatCount(slice.total)} 個',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -429,6 +443,7 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
 
 /// Figma "word-row" (54:436): 62px, marker / word / meaning / level.
 class _WordRow extends StatelessWidget {
+  final String usageBadge;
   final String word;
   final String meaning;
   final String? level;
@@ -441,6 +456,7 @@ class _WordRow extends StatelessWidget {
   const _WordRow({
     super.key,
     required this.word,
+    required this.usageBadge,
     required this.meaning,
     required this.level,
     this.learned = false,
@@ -470,11 +486,12 @@ class _WordRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  TagChip(usageBadge),
                   Text(word,
                       style: MFont.manrope(16, FontWeight.w800, MColors.ink)),
                   const SizedBox(height: MSpace.xxs),
                   Text(
-                    meaning.isEmpty ? '中文意思尚未補齊' : meaning,
+                    meaning.isEmpty ? ui(context, '中文意思尚未補齊') : meaning,
                     style: MFont.manrope(
                       14,
                       FontWeight.w600,
@@ -485,8 +502,8 @@ class _WordRow extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(top: MSpace.xxs),
                       child: Tooltip(
-                        message: '資料取得失敗，稍後自動重試',
-                        child: Text(
+                        message: ui(context, '資料取得失敗，稍後自動重試'),
+                        child: UiText(
                           missing.isEmpty
                               ? '部分內容待補齊'
                               : '待補：${missing.join('、')}',
@@ -509,7 +526,7 @@ class _WordRow extends StatelessWidget {
               const SizedBox(width: MSpace.xxs),
             ],
             IconButton(
-              tooltip: '聽 $word 的發音',
+              tooltip: ui(context, '聽 $word 的發音'),
               onPressed: onToggle,
               icon: const Icon(Icons.volume_up_outlined,
                   color: MColors.primary, size: 20),

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { api, newIdempotencyKey, type JobDetail as JD } from "../api";
-import { Chip, Empty, ErrorBox, Link, Loading, Progress, fmtTime, useApp, useLoad } from "../ui";
+import { Chip, Empty, ErrorBox, Link, Loading, Progress, fmtDuration, fmtTime, useApp, useLoad } from "../ui";
 import { JobActions } from "./Jobs";
 
 export default function JobDetail({ id }: { id: number }) {
@@ -36,6 +36,9 @@ export default function JobDetail({ id }: { id: number }) {
         <dl className="kv kv-inline">
           <dt>檢查點</dt><dd>{j.checkpoint} / {j.total}</dd>
           <dt>目前單字</dt><dd>{active && j.current_word ? j.current_word : "—"}</dd>
+          <dt>最近每字</dt><dd>{j.recent_word_ms === null ? "—" : fmtDuration(j.recent_word_ms / 1000)}</dd>
+          <dt>全程每字</dt><dd>{j.average_word_ms === null ? "—" : fmtDuration(j.average_word_ms / 1000)}</dd>
+          <dt>預估剩餘</dt><dd>{fmtDuration(j.eta_seconds)}</dd>
           <dt>欄位成功</dt><dd>{j.succeeded}</dd>
           <dt>部分</dt><dd className="warn">{j.partial}</dd>
           <dt>缺值</dt><dd className="warn">{j.missing}</dd>

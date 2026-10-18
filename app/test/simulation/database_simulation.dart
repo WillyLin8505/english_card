@@ -1,7 +1,7 @@
 // Database browsing simulation (not part of the regular suite).
 //
 // A learner opens 單字詳情 in the 資料庫 for every word of the pack (full and
-// still-missing ones) on a phone-sized screen and adds it to 我的收藏與複習.
+// still-missing ones) on a phone-sized screen and adds it to 我的單字本與複習.
 // Checked: no layout errors or "null" on screen, the add message matches
 // what happens (a word without Chinese waits — 問題回報 #44, #100), and a
 // review run afterwards shows every added word that has a meaning.
@@ -57,7 +57,7 @@ void main() {
         final s = t.data ?? t.textSpan?.toPlainText() ?? '';
         if (RegExp(r'\bnull\b').hasMatch(s)) f.add('畫面出現 null', '$current：$s');
       }
-      final button = find.text('加入我的收藏與複習');
+      final button = find.text('加入我的單字本與複習');
       if (button.evaluate().isEmpty) {
         f.add('沒有加入按鈕', current);
       } else {
@@ -65,9 +65,9 @@ void main() {
         await tester.tap(button);
         await tester.pump();
         final hasMeaning = (w.learnerMeaning ?? '').trim().isNotEmpty;
-        final saysWaiting = find.text('已加入我的收藏；中文意思補齊後會自動排進複習').evaluate().isNotEmpty;
-        final saysAdded = find.text('已加入我的收藏與複習字卡').evaluate().isNotEmpty;
-        final saysDup = find.textContaining('已在我的收藏').evaluate().isNotEmpty ||
+        final saysWaiting = find.text('已加入我的單字本；中文意思補齊後會自動排進複習').evaluate().isNotEmpty;
+        final saysAdded = find.text('已加入我的單字本與複習').evaluate().isNotEmpty;
+        final saysDup = find.textContaining('已在我的單字本').evaluate().isNotEmpty ||
             find.textContaining('放回複習').evaluate().isNotEmpty;
         if (saysDup) {
           // one card per spelling: another part of speech was added already

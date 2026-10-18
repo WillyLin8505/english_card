@@ -107,3 +107,23 @@ def test_a_second_recording_source_is_asked_only_for_the_missing_accent():
     assert r.missing() == {"UK"} and r.wants_more()
     r.add(2, "wikimedia_commons", [Candidate("audio", "en", {"url": "d"}, "d", slot="UK")])
     assert not r.missing() and not r.wants_more()
+
+
+def test_narrow_ipa_alone_asks_the_next_source():
+    """問題回報 #24: kaikki has only narrow [ˈspɒtɪ̈d]; CMUdict's /ˈspɑtɪd/ is
+    added, and a phonemic one survives the limit."""
+    def ipa(v, source):
+        return Candidate("ipa", "en", {"ipa": v}, v, source=source)
+
+    def phonemic(c):
+        return c.value["ipa"].startswith("/")
+
+    r = Resolver("FIRST_VALID", limit=2, enough=phonemic)
+    r.add(1, "kaikki", [ipa("[ˈspɒtɪ̈d]", "kaikki"), ipa("[ˈspɑɾɪ̈d]", "kaikki")])
+    assert r.wants_more()
+    r.add(2, "cmudict", [ipa("/ˈspɑtɪd/", "cmudict")])
+    assert not r.wants_more()
+    assert [a.candidate.key for a in r.result()] == ["/ˈspɑtɪd/", "[ˈspɒtɪ̈d]"]
+    r = Resolver("FIRST_VALID", enough=phonemic)
+    r.add(1, "kaikki", [ipa("/ˈnu.dəl/", "kaikki"), ipa("[ˈnuː.dl̩]", "kaikki")])
+    assert not r.wants_more()  # a phonemic one: later sources aren't asked

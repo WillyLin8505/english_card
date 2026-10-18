@@ -16,7 +16,7 @@ from __future__ import annotations
 from datetime import datetime
 
 from sqlalchemy import (JSON, BigInteger, Boolean, DateTime, Float, ForeignKey, Index, Integer,
-                        String, Text, UniqueConstraint, column, func, literal_column)
+                        SmallInteger, String, Text, UniqueConstraint, column, func, literal_column)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -513,6 +513,9 @@ class ImageAsset(Base):
     tag_status: Mapped[str] = mapped_column(String(16), default="pending")  # pending/done/failed
     tag_model: Mapped[str | None] = mapped_column(String(64))
     tagged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    tag_attempts: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    tag_error: Mapped[str | None] = mapped_column(Text)
+    tag_retry_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class ImageCandidate(Base):
@@ -671,6 +674,14 @@ class ImageFetchTask(Base):
     created_at: Mapped[datetime] = _now()
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Set when a source (Smithsonian 429/503) is still rate-limiting us after
+    # fetch()'s own retries; claim_fetch skips the row until this passes
+    # instead of a worker hammering the source again immediately (#99).
+    retry_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Set when every picture was rejected: the next claim searches this
+    # phrase instead of the bare lemma, up to picture_need.REJECTED_REFETCH_CAP.
+    search_query: Mapped[str | None] = mapped_column(Text)
+    rejected_retries: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     __table_args__ = (
         UniqueConstraint("target_language", "native_language", "lemma",
                          name="uq_image_fetch_task_word"),
@@ -816,4 +827,55 @@ class IssueReport(Base):
     created_at: Mapped[datetime] = _now()
     updated_at: Mapped[datetime] = _updated()
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # 1 簡單 · 2 中等 · 3 困難 · 4 極難 (card #156): which AI may take it as a board card.
+    difficulty: Mapped[int | None] = mapped_column(SmallInteger)
+    difficulty_reason: Mapped[str | None] = mapped_column(Text)
     __table_args__ = (Index("ix_issue_reports_status", "status", "kind"),)
+
+
+class AgentTask(Base):
+    """One piece of work on the 排程 page: a request the owner made (in chat
+    or on the page) and which AI is doing it — several Claude sessions, the
+    Codex app — with its progress.
+
+    status: queued · in_progress · waiting (等你回覆) · blocked · done · cancelled
+    """
+    __tablename__ = "agent_tasks"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(Text)
+    detail: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(16), default="queued")
+    agent: Mapped[str | None] = mapped_column(String(64))         # who is doing it
+    requested_by: Mapped[str] = mapped_column(String(64), default="owner")
+    progress: Mapped[str | None] = mapped_column(Text)            # the latest progress line
+    issue_ids: Mapped[list] = mapped_column(Json, default=list)   # 問題回報 numbers
+    history: Mapped[list] = mapped_column(Json, default=list)
+    created_at: Mapped[datetime] = _now()
+    updated_at: Mapped[datetime] = _updated()
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # once: a one-off request. recurring: a standing check (scan pictures,
+    # unfinished labels…) that comes back to the deck every interval_minutes;
+    # between runs its status is 「scheduled」.
+    kind: Mapped[str] = mapped_column(String(16), default="once")
+    interval_minutes: Mapped[int | None] = mapped_column(Integer)
+    next_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_result: Mapped[str | None] = mapped_column(Text)
+    metric: Mapped[str | None] = mapped_column(String(32))   # tasks.METRICS key shown on the card
+    position: Mapped[float] = mapped_column(Float, default=0.0)  # order in the deck (lower first)
+    # 1 簡單 · 2 中等 · 3 困難 · 4 極難 (card #156), matched against
+    # lexicon/tools/agent_capabilities.json when dispatching.
+    difficulty: Mapped[int | None] = mapped_column(SmallInteger)
+    difficulty_reason: Mapped[str | None] = mapped_column(Text)
+    __table_args__ = (Index("ix_agent_tasks_status", "status", "agent"),)
+
+
+class Agent(Base):
+    """An AI that pulls cards on the 排程 board (a Claude session, the Codex
+    app). Seen whenever it reports through the task API."""
+    __tablename__ = "agents"
+    name: Mapped[str] = mapped_column(String(64), primary_key=True)
+    kind: Mapped[str] = mapped_column(String(16), default="ai")
+    last_seen: Mapped[datetime] = _now()
+    note: Mapped[str | None] = mapped_column(Text)

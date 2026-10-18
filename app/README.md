@@ -124,15 +124,55 @@ lib/
 test/                       87 tests
 ```
 
+## Interface languages
+
+Navigation, settings, database controls, photo screens, dialogs and flashcard
+controls follow the native language (Traditional Chinese, English or French).
+Changing it updates retained tabs and open dialogs immediately; first-run setup
+previews the selection. Material controls use the same locale. Learning-language
+availability still depends on published dictionaries; selecting an interface
+language does not create missing dictionary translations.
+
+UI copy lives in `lib/l10n/ui_catalog.dart`, rendered with `UiText` or `ui(context,
+source)`. Keep dictionary content and learner-entered text as ordinary `Text`.
+Dynamic UI templates preserve their interpolated values. Missing UI keys retain
+their original text. Add both English and French entries when adding UI copy.
+
+Card #25 verification: `python tool/card25_verify.py` runs `flutter test` and
+`flutter analyze` from this directory and saves UTF-8 output to
+`card25-tests.txt` and `card25-analyze.txt`.
+
 ## Not done yet
 
-- **UI text in the native language** — translations, hints and grade
-  buttons follow the native language; the rest of the UI is still
-  Traditional Chinese.
 - **Word data for French / Chinese** comes from the AI only (no local
   word list or dictionary for them yet), and English examples are
   AI-written — Tatoeba (the spec's first source) isn't imported yet.
 - **Device photo library** in 選擇照片 (needs `photo_manager`), camera
-  on Windows desktop, FSRS parameter optimisation from the ReviewLog,
+  on Windows desktop,
   the album's recommendation score, and a first-run flow for the
   Predator address (the spec defers these).
+
+### Local FSRS calibration
+
+FSRS-5 keeps the published defaults until there are at least 400 valid next-day
+recalls across 20 complete card histories. Calibration holds out every fifth
+card and adopts weights only when validation log loss improves and RMSE does
+not increase. Hints, repeated attempts, first encounters and same-day reviews
+do not count toward this threshold. Parameters and validation metrics stay in
+the language-specific Hive metadata; loading revalidates them. New calibration
+runs after 100 more eligible recalls. Original ReviewLogs and existing due
+dates are preserved. See `lib/services/fsrs_optimizer.dart` and run
+`flutter test test/fsrs_optimizer_test.dart` for reproducible offline metrics.
+
+## 使用者行為分析（PostHog）
+
+`lib/services/analytics.dart` 把使用事件送到 PostHog；沒有金鑰時完全不送、不報錯。
+
+```
+flutter run --dart-define-from-file=posthog.local.json   # run_web.bat 會自動帶上
+# posthog.local.json：{"POSTHOG_API_KEY": "phc_…", "POSTHOG_HOST": "https://us.i.posthog.com"}（不進 git）
+```
+
+事件：`app_opened`、`$screen`（切換分頁）、`onboarding_completed`、`photo_added`、`word_added`、
+`review_started`／`review_finished`、`card_reviewed`（rating、題型、答對、提示數、作答毫秒、下次間隔天數）。
+每台裝置一個匿名 id（Hive `analytics` box），不送照片、單字內容或個人資料。

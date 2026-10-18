@@ -22,6 +22,29 @@ def test_person_name_flagged_but_word_with_common_sense_kept():
     assert "person_name" not in q.inclusion_flags("jane", "unknown", jane, CEFR)
 
 
+def test_gloss_fallback_and_pos_scoped_list():
+    """#213/#217: a tag-less gloss is still a form. #162: a level listed for
+    another pos does not keep a pure inflection, and a mixed pos is not redirected."""
+    scored = [k("verb", {"tags": [], "glosses": ["simple past and past participle of score"]})]
+    assert q.inflection_base("scored", "verb", scored, {"score": [5, {"verb": "B1"}, None]}) == "score"
+    based = [k("adj", {"tags": [], "glosses": [
+        "simple past and past participle of base", "Being derived from something"]})]
+    assert q.inflection_base("based", "adj", based, {}) is None
+    attached = [
+        k("adj", {"tags": [], "glosses": ["Fond of someone."]}),
+        k("verb", form("attach", "past", "participle")),
+    ]
+    listed = {"attached": [4.0, {"adj.": "B2"}, None], "attach": [4.5, {"verb": "A2"}, None]}
+    assert q.inflection_base("attached", "verb", attached, listed) == "attach"
+    assert q.inflection_base("attached", "adj", attached, listed) is None
+    shove = [k("verb", {"tags": [], "glosses": ["To push roughly."]}, form("shave", "past"))]
+    assert q.inflection_base("shove", "verb", shove, {"shave": [4, {"verb": "A2"}, None]}) is None
+    beans = [k("noun", form("coffee bean", "plural"))]
+    assert q.inclusion_flags("coffee beans", "noun", beans, {})["inflected_form"] == "coffee bean"
+    phrase = [k("verb", form("fool around", "gerund", "participle"))]
+    assert q.inclusion_flags("fooling around", "verb", phrase, {})["inflected_form"] == "fool around"
+
+
 def test_inflected_forms_point_to_their_lemma():
     tore = [k("adj", {"tags": ["obsolete"]}), k("verb", form("tear", "past")),
             k("noun", {"alt_of": [{"word": "torus"}], "tags": ["alt-of"]})]
@@ -75,6 +98,31 @@ def test_example_validator():
     assert q.example_flags("She tore the letter in half.", "tear", "verb", ["tore"]) == []
     assert "odd_name" in q.example_flags("Ziri planted heathers in clusters.", "cluster", "noun")
     assert q.example_flags("The cities are growing.", "city", "noun") == []
+    assert q.example_is_charged(
+        "Outlawing migration is like outlawing going to the bathroom.", "outlaw") == "politics"
+    assert q.example_is_charged('Will the word "woman" be outlawed?', "outlaw") == "politics"
+    assert q.example_is_charged(
+        "Modern man has moved far away from God and from nature.", "move") == "religion"
+    assert "charged" in q.example_flags(
+        "Don't kill the part of you that is cringe.", "cringe", "verb")
+    assert q.example_is_charged("They found the outlaw's tracks near the river.", "outlaw") is None
+    assert q.example_is_charged("The church is on the corner.", "church") is None
+    assert q.example_is_charged("Oh my God, I forgot my keys.", "forget") is None
+    assert q.example_is_charged("Ziri checked the stability of the balcony railing.", "balcony") is None
+    ranked = q.rank_examples(
+        [{"id": 1, "text": "She fired her last bullet at the outlaw."},
+         {"id": 2, "text": "He tracked the outlaw through the canyon."}],
+        "outlaw", "noun", ["outlaw"], set())
+    assert ranked[0]["text"].startswith("He tracked")
+    assert q.example_reject_reason("kinetic kill vehicle", "vehicle", "noun") == "不是完整句"
+    assert q.example_preference("Ziri drove the vehicle home.") > q.example_preference(
+        "She parked the vehicle outside.")
+    senses = [{"sense_key": "fruit", "gloss": "a sweet food you can eat", "ordinal": 0, "labels": []},
+              {"sense_key": "tree", "gloss": "a tall woody plant", "ordinal": 1, "labels": []}]
+    assert q.bind_example_sense("She ate the sweet food.", senses)["sense_key"] == "fruit"
+    assert q.bind_example_sense("The door is red.", senses) is None
+    only = [{"sense_key": "main", "gloss": "something else", "ordinal": 0, "labels": []}]
+    assert q.bind_example_sense("The door is red.", only)["sense_key"] == "main"
 
 
 def test_apply_pack_orders_and_attaches():

@@ -50,3 +50,21 @@ _backup/
 .claude/
 .DS_Store
 Thumbs.db
+
+# Agent scratch, one-off scripts, backups and machine-local state
+*.bak*
+backups/
+.runtime/
+Downloads/
+lexicon/state/
+lexicon/tools/_*
+lexicon/tools/card[0-9]*
+app/card[0-9]*
+_probe*.py
+_run_*.py
+*_tmp.json
+issue212_now.json
+lexicon/board.json
+lexicon/act.json
+tagger/last_benchmark.json
+tagger/ab-*.json

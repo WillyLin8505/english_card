@@ -2,7 +2,8 @@
 order, with one of the five strategies (spec section 08):
 
   FIRST_VALID     the first source with a valid value wins; later sources
-                  aren't asked.
+                  aren't asked (unless that value isn't `enough`: a narrow
+                  […] IPA only, then the next source's is added).
   MERGE_UNIQUE    every source, merged in order, duplicates removed.
   FILL_MISSING    item by item (a sense, an example, a word …): each slot
                   takes the first source that has it; later sources are
@@ -19,6 +20,7 @@ source, so short-circuiting strategies never touch later sources.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Callable
 
 STRATEGIES = ("FIRST_VALID", "MERGE_UNIQUE", "FILL_MISSING", "BEST_SCORE", "APPEND_LIMITED")
 
@@ -43,6 +45,10 @@ class Resolver:
     # Ask later sources only while a slot is still missing (recordings: a
     # second source only for the accent the first lacks).
     only_missing: bool = False
+    # FIRST_VALID: a value that settles the field. Until one is adopted the
+    # next source is still asked and its values are added (IPA: kaikki gives
+    # only narrow [ˈspɒtɪ̈d], CMUdict adds phonemic /ˈspɑtɪd/).
+    enough: Callable[[object], bool] | None = None
     adopted: list[Adopted] = field(default_factory=list)
     _keys: set = field(default_factory=set)
     _filled: set = field(default_factory=set)
@@ -59,7 +65,8 @@ class Resolver:
         if self.only_missing and self.expected is not None:
             return bool(self.missing())
         if s == "FIRST_VALID":
-            return not self.adopted
+            return not self.adopted or (self.enough is not None and not any(
+                self.enough(a.candidate) for a in self.adopted))
         if self.per_slot and self.expected is not None and s in ("MERGE_UNIQUE", "APPEND_LIMITED"):
             if kind == "ai":  # AI only for levels the other sources left short
                 return bool(self.missing())
@@ -91,7 +98,7 @@ class Resolver:
         s = self.strategy
         before = len(self.adopted)
         if s == "FIRST_VALID":
-            if not self.adopted and candidates:
+            if self.wants_more() and candidates:
                 for c in candidates:
                     self._take(c, position, source)
         elif s in ("MERGE_UNIQUE", "APPEND_LIMITED"):
@@ -140,6 +147,8 @@ class Resolver:
         items = self.adopted
         if self.strategy == "BEST_SCORE":
             items = sorted(items, key=lambda a: -a.candidate.confidence)
+        if self.enough is not None:  # the settling values survive the limit
+            items = sorted(items, key=lambda a: not self.enough(a.candidate))
         if not self.limit or len(items) <= self.limit:
             return list(items)
         if self.strategy == "FILL_MISSING":

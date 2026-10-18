@@ -1,6 +1,7 @@
 import '../models/learning_card.dart';
 import '../models/photo.dart';
 import '../models/word_entry.dart';
+import 'fsrs_scheduler.dart' show calendarDaysBetween;
 import 'lexicon_pack.dart';
 
 enum SortOrder {
@@ -75,9 +76,7 @@ String dueLabel(LearningCard? card, DateTime now) {
   if (card.archived) return '—';
   final due = card.fsrs.due;
   if (due == null || card.fsrs.state == FsrsCardState.newCard) return '尚未開始';
-  final days = DateTime(due.year, due.month, due.day)
-      .difference(DateTime(now.year, now.month, now.day))
-      .inDays;
+  final days = calendarDaysBetween(now, due);
   if (days <= 0) return '今天';
   if (days == 1) return '明天';
   return '$days 天後';
@@ -215,7 +214,11 @@ List<String> missingFieldNames(WordEntry e) => [
         '例句翻譯',
       // The admin's field status: the origin is known to exist but has not
       // been fetched or translated yet.
-      if (LexiconPack.instance.lookup(e.word, pos: e.pos)?.entry.missing.keys
+      if (LexiconPack.instance
+              .lookup(e.word, pos: e.pos)
+              ?.entry
+              .missing
+              .keys
               .any((f) => f.startsWith('etymology')) ??
           false)
         '詞源',

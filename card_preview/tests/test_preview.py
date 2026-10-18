@@ -1,3 +1,4 @@
+from owned_fixture import fixture_owned_ids
 """Synthetic fixtures are confined to tests; the shipped UI has no demo words."""
 import copy
 import json
@@ -11,7 +12,7 @@ from urllib.error import HTTPError
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from domain import KINDS, default_layout, validate_layout, prepare_exercise, quality, glosses_overlap, merge_usages, plausible_form
-from repository import image_allowed
+from repository import image_allowed, unambiguous_tag_choice
 from state import State
 from server import PreviewService, make_handler
 from http.server import ThreadingHTTPServer
@@ -33,7 +34,49 @@ def packet(kind='cloze'):
     return cards,bundle
 
 
+class ImageTagSenseTests(unittest.TestCase):
+    def test_ambiguous_tag_does_not_fall_back_to_first_sense(self):
+        choices = [dict(id=10, sense_id=101, pos='noun', translation='莖'),
+                   dict(id=10, sense_id=102, pos='noun', translation='詞幹')]
+        self.assertIsNone(unambiguous_tag_choice(choices, 'noun'))
+        self.assertEqual(unambiguous_tag_choice(choices, 'noun', 101)['translation'], '莖')
+
+    def test_pos_can_make_a_tag_unambiguous(self):
+        choices = [dict(id=10, sense_id=101, pos='noun'),
+                   dict(id=11, sense_id=201, pos='verb')]
+        self.assertEqual(unambiguous_tag_choice(choices, 'verb')['sense_id'], 201)
+
+    def test_missing_tag_pos_never_substitutes_another_pos(self):
+        choices = [dict(id=10, sense_id=101, pos='adj', translation='垂直')]
+        self.assertIsNone(unambiguous_tag_choice(choices, 'verb'))
+        self.assertIsNone(unambiguous_tag_choice(choices, 'verb', 101))
+
+    def test_unspecified_pos_can_still_use_a_single_verified_sense(self):
+        choices = [dict(id=10, sense_id=101, pos='noun')]
+        self.assertEqual(unambiguous_tag_choice(choices)['sense_id'], 101)
+
+
 class DomainTests(unittest.TestCase):
+    def test_cloze_still_rejects_an_unmasked_other_form(self):
+        from domain import live_exercise
+        w = word(1, 'wind')
+        w['forms'] = [dict(form='winds', field='plural')]
+        w['examples'] = [dict(id=1, sense_id=1, text='The wind blows and other winds follow.', translation='測試翻譯')]
+        result = live_exercise(w, 'cloze', 1, owned_lexeme_ids=fixture_owned_ids(w))
+        self.assertFalse(result['available'])
+        self.assertIn('遮罩後', result['reasons'][0])
+
+    def test_glossary_columns_are_reported_but_not_used_as_examples(self):
+        w=word()
+        text='custard apple\u2003\u2003\u2003 rose apple\u2003\u2003\u2003 thorn apple'
+        w['examples'].append(dict(id=6817,sense_id=1,text=text,translation='詞彙清單'))
+        original=copy.deepcopy(w)
+        merged=merge_usages([w])
+        self.assertEqual([e['id'] for e in merged['examples']],[1])
+        self.assertEqual(merged['rejected_examples'][0]['id'],6817)
+        self.assertTrue(any(i['field']=='example:6817' and '詞彙' in i['message'] for i in quality(merged)))
+        self.assertEqual(w,original)
+
     def test_default_layout_valid(self):
         self.assertEqual(validate_layout(default_layout()),default_layout())
 
@@ -63,7 +106,7 @@ class DomainTests(unittest.TestCase):
 
     def test_no_invented_options(self):
         for kind in ['cloze','photo_choice','similar','drag']:
-            self.assertFalse(prepare_exercise(word(),kind,1)['available'])
+            self.assertFalse(prepare_exercise(word(),kind,1, owned_lexeme_ids=fixture_owned_ids(word()))['available'])
 
     def test_image_requires_approval_license_and_ready(self):
         valid=dict(review_status='approved',status='ready',path='images/test.jpg',page_url='https://example.com',license_code='CC BY 4.0')
@@ -73,48 +116,48 @@ class DomainTests(unittest.TestCase):
 
     def test_photo_recall_requires_same_sense(self):
         w=word();w['images']=[dict(sense_id=2)]
-        self.assertFalse(prepare_exercise(w,'photo_recall',1)['available'])
+        self.assertFalse(prepare_exercise(w,'photo_recall',1, owned_lexeme_ids=fixture_owned_ids(w))['available'])
         w['images'][0]['sense_id']=1
-        self.assertTrue(prepare_exercise(w,'photo_recall',1)['available'])
+        self.assertTrue(prepare_exercise(w,'photo_recall',1, owned_lexeme_ids=fixture_owned_ids(w))['available'])
 
     def test_cloze_uses_real_example_and_hides_answer(self):
-        cards,bundle=packet();result=prepare_exercise(cards[1],'cloze',1,bundle,cards)
+        cards,bundle=packet();result=prepare_exercise(cards[1],'cloze',1,bundle,cards, owned_lexeme_ids=cards)
         self.assertTrue(result['available'],result['reasons']);self.assertNotIn('apple',result['prompt'])
         self.assertEqual(len(result['options']),3)
 
     def test_wrong_language_and_stale_packets_fail(self):
         for patch in [dict(native_language='fr'),dict(lexeme_updated_at='old'),dict(sense_id=99)]:
             cards,bundle=packet();bundle.update(patch)
-            self.assertFalse(prepare_exercise(cards[1],'cloze',1,bundle,cards)['available'])
+            self.assertFalse(prepare_exercise(cards[1],'cloze',1,bundle,cards, owned_lexeme_ids=cards)['available'])
 
     def test_stale_option_fails(self):
         cards,bundle=packet();cards[2]['updated_at']='new'
-        self.assertFalse(prepare_exercise(cards[1],'cloze',1,bundle,cards)['available'])
+        self.assertFalse(prepare_exercise(cards[1],'cloze',1,bundle,cards, owned_lexeme_ids=cards)['available'])
 
     def test_duplicate_or_wrong_pos_options_fail(self):
         cards,bundle=packet();cards[2]['pos']='verb'
-        self.assertFalse(prepare_exercise(cards[1],'cloze',1,bundle,cards)['available'])
+        self.assertFalse(prepare_exercise(cards[1],'cloze',1,bundle,cards, owned_lexeme_ids=cards)['available'])
         cards,bundle=packet();bundle['options'][1]=copy.deepcopy(bundle['options'][0])
-        self.assertFalse(prepare_exercise(cards[1],'cloze',1,bundle,cards)['available'])
+        self.assertFalse(prepare_exercise(cards[1],'cloze',1,bundle,cards, owned_lexeme_ids=cards)['available'])
 
     def test_unreviewed_packet_fails(self):
         cards,bundle=packet();bundle['validation']['status']='pending'
-        self.assertFalse(prepare_exercise(cards[1],'cloze',1,bundle,cards)['available'])
+        self.assertFalse(prepare_exercise(cards[1],'cloze',1,bundle,cards, owned_lexeme_ids=cards)['available'])
 
     def test_multiple_blanks_fail(self):
         cards,bundle=packet();cards[1]['examples'][0]['text']='apple apple'
-        self.assertFalse(prepare_exercise(cards[1],'cloze',1,bundle,cards)['available'])
+        self.assertFalse(prepare_exercise(cards[1],'cloze',1,bundle,cards, owned_lexeme_ids=cards)['available'])
 
     def test_cloze_rejects_answer_hidden_inside_another_word(self):
         cards,bundle=packet();cards[1]['examples'][0]['text']='An apple is not an applecart.'
-        self.assertFalse(prepare_exercise(cards[1],'cloze',1,bundle,cards)['available'])
+        self.assertFalse(prepare_exercise(cards[1],'cloze',1,bundle,cards, owned_lexeme_ids=cards)['available'])
 
     def test_similar_requires_relations(self):
         cards,bundle=packet('similar')
         for card,meaning in zip(cards.values(),['蘋果','書本','鞋子']):card['senses'][0]['translation']=meaning
-        self.assertFalse(prepare_exercise(cards[1],'similar',1,bundle,cards)['available'])
+        self.assertFalse(prepare_exercise(cards[1],'similar',1,bundle,cards, owned_lexeme_ids=cards)['available'])
         cards[1]['relations']=[dict(target_lexeme_id=2,relation='related'),dict(target_lexeme_id=3,relation='related')]
-        result=prepare_exercise(cards[1],'similar',1,bundle,cards)
+        result=prepare_exercise(cards[1],'similar',1,bundle,cards, owned_lexeme_ids=cards)
         self.assertTrue(result['available'],result['reasons']);self.assertEqual(result['mode'],'match')
         self.assertEqual(sorted(result['native_order']),[1,2,3]);self.assertEqual(sorted(result['target_order']),[1,2,3])
 
@@ -122,7 +165,7 @@ class DomainTests(unittest.TestCase):
         cards,bundle=packet('similar')
         cards[1]['relations']=[dict(target_lexeme_id=2),dict(target_lexeme_id=3)]
         # The fixture gives every option the same gloss, so the pairs cannot be matched uniquely.
-        self.assertFalse(prepare_exercise(cards[1],'similar',1,bundle,cards)['available'])
+        self.assertFalse(prepare_exercise(cards[1],'similar',1,bundle,cards, owned_lexeme_ids=cards)['available'])
 
     def test_gloss_overlap(self):
         self.assertTrue(glosses_overlap('慷慨、大方','慷慨'))
@@ -133,13 +176,13 @@ class DomainTests(unittest.TestCase):
     def test_drag_validates_boxes(self):
         cards,bundle=packet('drag');bundle['sense_image_id']=10;cards[1]['images']=[dict(sense_id=1,sense_image_id=10)]
         for i,o in enumerate(bundle['options']):o['box']=[i*.25,0,.2,.3]
-        self.assertTrue(prepare_exercise(cards[1],'drag',1,bundle,cards)['available'])
+        self.assertTrue(prepare_exercise(cards[1],'drag',1,bundle,cards, owned_lexeme_ids=cards)['available'])
         bundle['options'][0]['box']=[.9,0,.2,.3]
-        self.assertFalse(prepare_exercise(cards[1],'drag',1,bundle,cards)['available'])
+        self.assertFalse(prepare_exercise(cards[1],'drag',1,bundle,cards, owned_lexeme_ids=cards)['available'])
 
     def test_preview_is_pure(self):
         w=word();before=copy.deepcopy(w)
-        quality(w);prepare_exercise(w,'photo_recall',1)
+        quality(w);prepare_exercise(w,'photo_recall',1, owned_lexeme_ids=fixture_owned_ids(w))
         self.assertEqual(w,before)
 
 
@@ -156,10 +199,10 @@ class LiveExerciseTests(unittest.TestCase):
                         rel(3,'mottled','斑駁的','synonyms'),
                         rel(4,'patterned','有圖案的','hypernyms'),
                         rel(5,'marked','斑紋的','related')]
-        self.assertFalse(live_exercise(w,'photo_choice',1)['available'])
+        self.assertFalse(live_exercise(w,'photo_choice',1, owned_lexeme_ids=fixture_owned_ids(w))['available'])
         w['relations'] += [rel(6,'striped','條紋的','related'),
                            rel(7,'plain','素色的','antonyms')]
-        x=live_exercise(w,'photo_choice',1)
+        x=live_exercise(w,'photo_choice',1, owned_lexeme_ids=fixture_owned_ids(w))
         self.assertTrue(x['available'])
         self.assertEqual({o['label'] for o in x['options']},{'dappled','striped','plain'})
 
@@ -170,7 +213,7 @@ class LiveExerciseTests(unittest.TestCase):
             dict(target_lexeme_id=2,target_word='pear',translation='梨子',relation='related',pos='noun',cefr='A1',strength=.9,detail={}),
             dict(target_lexeme_id=3,target_word='peach',translation='桃子',relation='related',pos='noun',cefr='A1',strength=.8,detail={}),
             dict(target_lexeme_id=4,target_word='rare fruit',translation='罕見水果',relation='related',pos='noun',cefr='C2',strength=.7,detail={'hide_by_default':True})]
-        x=live_exercise(w,'photo_choice',1)
+        x=live_exercise(w,'photo_choice',1, owned_lexeme_ids=fixture_owned_ids(w))
         self.assertTrue(x['available']);self.assertEqual(len(x['options']),3)
         self.assertEqual(sum(o['id']==w['id'] for o in x['options']),1)
         self.assertEqual(x['image']['sense_image_id'],10)
@@ -179,25 +222,53 @@ class LiveExerciseTests(unittest.TestCase):
         from domain import live_exercise
         w=word();w['images']=[dict(sense_id=1,sense_image_id=10)]
         w['relations']=[dict(target_lexeme_id=2,target_word='pear',translation='梨子',relation='related',pos='noun',cefr='A1',strength=.9,detail={})]
-        self.assertFalse(live_exercise(w,'photo_choice',1)['available'])
+        self.assertFalse(live_exercise(w,'photo_choice',1, owned_lexeme_ids=fixture_owned_ids(w))['available'])
+
+    def test_photo_choice_does_not_mark_visible_image_labels_wrong(self):
+        from domain import live_exercise
+        w=word()
+        w['images']=[dict(sense_id=1,sense_image_id=10,
+                          tags=[dict(word='pears',cefrLemma='pear')]),
+                     dict(sense_id=1,sense_image_id=11,tags=[dict(word='peach')])]
+        w['relations']=[dict(target_lexeme_id=i,target_word=label,translation=translation,
+                             relation='related',pos='noun',cefr='A1',strength=.9,detail={})
+                        for i,label,translation in [(2,'pear','梨子'),(3,'peach','桃子'),(4,'plum','李子')]]
+        x=live_exercise(w,'photo_choice',1, owned_lexeme_ids=fixture_owned_ids(w))
+        self.assertTrue(x['available'])
+        self.assertEqual({o['label'] for o in x['options']},{'apple','peach','plum'})
+        self.assertEqual(x['image']['sense_image_id'],10)
+        w['images'][0]['tags'].append(dict(word='peach'))
+        x=live_exercise(w,'photo_choice',1, owned_lexeme_ids=fixture_owned_ids(w))
+        self.assertTrue(x['available'])
+        self.assertEqual(x['image']['sense_image_id'],11)
+        self.assertEqual({o['label'] for o in x['options']},{'apple','pear','plum'})
+        w['relations']=w['relations'][:2]
+        self.assertFalse(live_exercise(w,'photo_choice',1, owned_lexeme_ids=fixture_owned_ids(w))['available'])
 
     def test_cloze_uses_only_selected_sense_and_real_form(self):
         from domain import live_exercise
         w=word();w['examples']=[dict(id=1,sense_id=1,text='An apple is here.',translation='translation')]
-        x=live_exercise(w,'cloze',1)
+        x=live_exercise(w,'cloze',1, owned_lexeme_ids=fixture_owned_ids(w))
         self.assertTrue(x['available']);self.assertEqual(x['answer'],'apple')
         self.assertNotIn('apple',x['prompt'])
-        self.assertFalse(live_exercise(w,'cloze',2)['available'])
+        self.assertFalse(live_exercise(w,'cloze',2, owned_lexeme_ids=fixture_owned_ids(w))['available'])
         w['examples'][0]['text']='apple apple'
-        self.assertFalse(live_exercise(w,'cloze',1)['available'])
+        self.assertFalse(live_exercise(w,'cloze',1, owned_lexeme_ids=fixture_owned_ids(w))['available'])
 
     def test_live_cloze_skips_answer_substring_leaks(self):
         from domain import live_exercise
         w=word();w['examples']=[
             dict(id=1,sense_id=1,text='An apple is not an applecart.',translation='bad'),
             dict(id=2,sense_id=1,text='I ate an apple.',translation='good')]
-        x=live_exercise(w,'cloze',1)
+        x=live_exercise(w,'cloze',1, owned_lexeme_ids=fixture_owned_ids(w))
         self.assertTrue(x['available']);self.assertEqual(x['example']['id'],2)
+        w['examples'] = w['examples'][:1]
+        x = live_exercise(w, 'cloze', 1, owned_lexeme_ids=fixture_owned_ids(w))
+        self.assertFalse(x['available'])
+        self.assertIn('字母片段', x['reasons'][0])
+        self.assertNotIn('尚無', x['reasons'][0])
+        w['examples'][0]['text'] = 'apple apple'
+        self.assertIn('多個答案位置', live_exercise(w, 'cloze', 1, owned_lexeme_ids=fixture_owned_ids(w))['reasons'][0])
 
     def test_similar_uses_translated_context_and_three_related_options(self):
         from domain import live_exercise
@@ -206,15 +277,15 @@ class LiveExerciseTests(unittest.TestCase):
             dict(target_lexeme_id=5,target_word='produce',translation='成果',relation='related',pos='noun',cefr='A1',strength=.9,detail={}),
             dict(target_lexeme_id=3,target_word='pear',translation='梨子',relation='related',pos='noun',cefr='A1',strength=.8,detail={}),
             dict(target_lexeme_id=4,target_word='apply',translation='應用',relation='similar_spelling',pos='verb',cefr='A2',strength=.8,detail={})]
-        x=live_exercise(w,'similar',1)
+        x=live_exercise(w,'similar',1, owned_lexeme_ids=fixture_owned_ids(w))
         self.assertTrue(x['available']);self.assertEqual(x['mode'],'similar_choice')
         self.assertEqual(x['example']['translation'],'測試例句翻譯')
         self.assertNotIn('apple',x['prompt'].casefold())
         labels=[p['label'] for p in x['options']]
-        self.assertEqual(sorted(labels),['apple','fruit','pear'])
+        self.assertEqual(sorted(labels),['apple','apply','fruit'])
         self.assertEqual(sum(p['id']==x['correct_id'] for p in x['options']),1)
         w['relations']=w['relations'][:2]
-        self.assertFalse(live_exercise(w,'similar',1)['available'])
+        self.assertFalse(live_exercise(w,'similar',1, owned_lexeme_ids=fixture_owned_ids(w))['available'])
 
 
 class MergeUsageTests(unittest.TestCase):
@@ -330,7 +401,7 @@ class ServiceTests(unittest.TestCase):
 
     def test_drag_without_packet_uses_reviewed_image_tags(self):
         service=PreviewService(FakeRepository(),self.state)
-        result=service.exercise(service.card(1,'en','zh-TW'),'drag',1)
+        result=service.exercise(service.card(1,'en','zh-TW'),'drag',1, owned_lexeme_ids={1})
         self.assertTrue(result['available']);self.assertEqual(result['mode'],'drag')
 
     def test_exercise_route_uses_merged_card_example_filter(self):

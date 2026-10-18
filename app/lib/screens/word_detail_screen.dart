@@ -1,3 +1,4 @@
+import '../l10n/ui_text.dart';
 import '../services/learning_content.dart';
 import 'package:flutter/material.dart';
 
@@ -6,6 +7,7 @@ import '../models/learning_card.dart';
 import '../models/photo.dart';
 import '../models/word_entry.dart';
 import '../services/app_settings.dart';
+import '../services/lexicon_pack.dart';
 import '../services/word_database_query.dart';
 import '../theme/mobile_theme.dart';
 import '../widgets/mobile/common.dart';
@@ -39,7 +41,7 @@ class WordDetailScreen extends StatelessWidget {
       builder: (context, _) {
         final entry = repo.entry(wordEntryId);
         if (entry == null) {
-          return const Scaffold(body: Center(child: Text('找不到這個單字')));
+          return const Scaffold(body: Center(child: UiText('找不到這個單字')));
         }
         final card = repo.cardOf(entry.id);
 
@@ -69,8 +71,7 @@ class WordDetailScreen extends StatelessWidget {
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(MSpace.xl),
-                    child: _WordBody(
-                        entry: entry, card: card, occurrenceId: occurrenceId),
+                    child: _WordBody(entry: entry, occurrenceId: occurrenceId),
                   ),
                 ),
                 if (card != null)
@@ -93,19 +94,40 @@ class WordDetailScreen extends StatelessWidget {
 
 class _WordBody extends StatelessWidget {
   final WordEntry entry;
-  final LearningCard? card;
   final String? occurrenceId;
 
-  const _WordBody(
-      {required this.entry, required this.card, required this.occurrenceId});
+  const _WordBody({required this.entry, required this.occurrenceId});
 
   @override
   Widget build(BuildContext context) {
     final scope = AppScope.of(context);
     final repo = scope.repository;
+    final pack = LexiconPack.instance;
 
     Widget relatedSection(String label, String kind) {
-      final words = learningRelations(entry, repo.profile.cefr, kind);
+      final seen = <String>{};
+      final words = entry.userEdited.contains(WordField.related)
+          ? [
+              for (final r in entry.related)
+                if (r.type == relationTypeFromKey(kind) &&
+                    !r.hideByDefault &&
+                    seen.add(r.word.toLowerCase()))
+                  (word: r.word, meaning: r.native ?? ''),
+            ]
+          : [
+              for (final usage in entry.effectiveUsages)
+                for (final r in pack
+                        .lookup(entry.word, pos: usage.pos)
+                        ?.entry
+                        .relations ??
+                    const <LexRelation>[])
+                  if (r.relation == kind &&
+                      !r.hideByDefault &&
+                      (r.native ?? '').trim().isNotEmpty &&
+                      r.word.toLowerCase() != entry.word.toLowerCase() &&
+                      seen.add(r.word.toLowerCase()))
+                    (word: r.word, meaning: r.native!),
+            ];
       if (words.isEmpty) return const SizedBox.shrink();
       return _Section(
           label: label,
@@ -113,12 +135,38 @@ class _WordBody extends StatelessWidget {
             spacing: MSpace.xs,
             runSpacing: MSpace.xs,
             children: [
-              for (final w in words) TagChip('${w.word}　${w.meaning}')
+              for (final w in words)
+                TagChip('${w.word}　${w.meaning}'.trim(), localize: false)
             ],
           ));
     }
 
-    final examples = learningExamples(entry, repo.profile.cefr);
+    final seenExamples = <String>{};
+    final examples = [
+      ...entry.examples,
+      for (final usage in entry.effectiveUsages) ...usage.examples,
+    ]
+        .where((e) =>
+            (e.translation ?? '').trim().isNotEmpty &&
+            seenExamples.add(e.text.toLowerCase()))
+        .toList();
+    final forms = <String, Set<String>>{};
+    void addForm(String form, String label) {
+      if (form.trim().isEmpty) return;
+      (forms[form.trim()] ??= {}).add(formLabel(label));
+    }
+
+    for (final usage in entry.effectiveUsages) {
+      final source = pack.lookup(entry.word, pos: usage.pos)?.entry;
+      if (source != null) {
+        for (final form in pack.detailFor(source).inflections) {
+          addForm(form.form, form.label);
+        }
+      }
+    }
+    for (final form in entry.forms) {
+      addForm(form.form, form.label);
+    }
     // The photo the learner came from first, then the rest.
     final occurrences = repo.occurrencesOf(entry.id)
       ..sort((a, b) => (a.id == occurrenceId ? 0 : 1)
@@ -147,8 +195,18 @@ class _WordBody extends StatelessWidget {
                   spacing: MSpace.xxs + 2,
                   runSpacing: MSpace.xxs + 2,
                   children: [
+                    if (entry.entryType != 'word')
+                      TagChip(entryTypeLabel(entry.entryType)),
                     if (entry.pos.isNotEmpty) TagChip(posLabel(entry.pos)),
                     if (entry.level != null) LevelBadge(entry.level!),
+                    if (entry.register != null)
+                      TagChip(switch (entry.register) {
+                        'written' => '書面語',
+                        'spoken' => '口語',
+                        'slang' => '俚語',
+                        'vulgar' => '粗俗',
+                        _ => '中性／通用',
+                      }),
                   ],
                 ),
               ],
@@ -156,7 +214,7 @@ class _WordBody extends StatelessWidget {
           ),
           Tap(
             label: '播放發音',
-            onTap: () => scope.speaker.say(entry.word,
+            onTap: () => scope.speak(context, entry.word,
                 language: repo.language, audioUrl: entry.audioUrl),
             child: Container(
               width: 56,
@@ -174,7 +232,29 @@ class _WordBody extends StatelessWidget {
       ),
       if (entry.dataStatus != WordDataStatus.complete)
         _DataStatus(entry: entry),
-      if (entry.meaning.isNotEmpty)
+      if (entry.effectiveUsages.length > 1)
+        _Section(
+          label: '詞性與意思',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (final usage in entry.effectiveUsages) ...[
+                TagChip(posLabel(usage.pos)),
+                const SizedBox(height: MSpace.xxs),
+                for (final sense in usage.senses)
+                  if (sense.meaning.trim().isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: MSpace.xxs),
+                      child: Text(sense.meaning,
+                          style:
+                              MFont.manrope(17, FontWeight.w700, MColors.ink)),
+                    ),
+                const SizedBox(height: MSpace.xs),
+              ],
+            ],
+          ),
+        )
+      else if (entry.meaning.isNotEmpty)
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -182,7 +262,7 @@ class _WordBody extends StatelessWidget {
                 supportedLanguages[scope.settings.nativeLanguage] ?? '釋義'),
             const SizedBox(height: MSpace.xxs),
             Text(entry.meaning,
-                style: MFont.manrope(22, FontWeight.w800, MColors.primary)),
+                style: MFont.manrope(22, FontWeight.w800, MColors.ink)),
             if (entry.definition != null &&
                 entry.definition != entry.meaning) ...[
               const SizedBox(height: MSpace.xxs),
@@ -210,7 +290,8 @@ class _WordBody extends StatelessWidget {
                   },
                   child: Container(
                     width: contexts.length == 1 ? 354 : 220,
-                    decoration: MDecor.card(radius: MRadii.lg, shadow: MShadows.soft),
+                    decoration:
+                        MDecor.card(radius: MRadii.lg, shadow: MShadows.soft),
                     clipBehavior: Clip.antiAlias,
                     child: Stack(
                       fit: StackFit.expand,
@@ -239,38 +320,45 @@ class _WordBody extends StatelessWidget {
             ),
           ),
         ),
-      if (entry.meaning.isEmpty) const Text('中文意思尚未補齊，連線後會自動更新。'),
+      if (entry.meaning.isEmpty) const UiText('中文意思尚未補齊，連線後會自動更新。'),
       if (examples.isNotEmpty)
-        _Section(label: '實用例句', child: ExampleText(example: examples.first)),
-      if (examples.length > 1)
-        ExpansionTile(title: const Text('查看更多例句'), children: [
-          for (final x in examples.skip(1))
-            Padding(
-                padding: const EdgeInsets.all(12),
-                child: ExampleText(example: x)),
-        ]),
-      ExpansionTile(title: const Text('更多單字資訊'), children: [
-        relatedSection('意思相近的單字', 'synonyms'),
-        relatedSection('意思相反的單字', 'antonyms'),
-        if (entry.forms.isNotEmpty)
-          _Section(
-              label: '詞形變化',
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final f in entry.forms.take(4))
-                    TagChip('${f.form}（${formLabel(f.label)}）')
-                ],
-              )),
-        if (learningMorphology(entry) case final parts?)
-          _TextSection('構詞', parts),
-        if (learningEtymology(entry) case final origin?)
-          _TextSection('詞源', origin),
-        if (_sources(entry).isNotEmpty)
-          _TextSection('資料來源', _sources(entry).join('、')),
-      ]),
-      if (card != null) _CardInfo(card: card!),
+        _Section(
+          label: '例句',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (final example in examples)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: MSpace.sm),
+                  child: ExampleText(example: example),
+                ),
+            ],
+          ),
+        ),
+      relatedSection('近義詞', 'synonyms'),
+      relatedSection('反義詞', 'antonyms'),
+      relatedSection('同音詞', 'homophones'),
+      relatedSection('近音詞', 'near_homophones'),
+      relatedSection('拼寫相似詞', 'similar_spelling'),
+      relatedSection('衍生詞', 'derived_terms'),
+      relatedSection('相關詞', 'related'),
+      if (forms.isNotEmpty)
+        _Section(
+            label: '詞形變化',
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final form in forms.entries)
+                  TagChip(
+                      '${form.key}（${form.value.where((x) => x.isNotEmpty).join('；')}）',
+                      localize: false)
+              ],
+            )),
+      if (learningMorphology(entry) case final parts?)
+        _TextSection('構詞', parts),
+      if (learningEtymology(entry) case final origin?)
+        _TextSection('詞源', origin),
     ];
 
     return Column(
@@ -283,27 +371,6 @@ class _WordBody extends StatelessWidget {
       ],
     );
   }
-
-  static List<String> _sources(WordEntry e) => [
-        if (e.levelSource != null)
-          '等級：${switch (e.levelSource) {
-            'cefr-j' => 'CEFR-J 詞表',
-            'lexicon' => '後台詞庫',
-            'frequency' => '詞頻估計',
-            'user' => '自訂',
-            _ => 'AI 估計',
-          }}',
-        if (e.ipaSource != null)
-          '音標：${switch (e.ipaSource) {
-            'cmudict' => 'CMUdict',
-            'lexicon' => '後台詞庫',
-            'user' => '自訂',
-            'ai' => 'AI',
-            final s => s!,
-          }}',
-        if (e.examples.any((x) => x.aiGenerated)) '例句：AI 產生',
-        if (e.userEdited.isNotEmpty) '有你修改過的欄位',
-      ];
 }
 
 /// Background data fetch in progress, or failed (spec section 7: 失敗標記).
@@ -328,7 +395,7 @@ class _DataStatus extends StatelessWidget {
               size: 18, color: failed ? MColors.hardFg : MColors.primary),
           const SizedBox(width: MSpace.xs),
           Expanded(
-            child: Text(
+            child: UiText(
               failed
                   ? (missingFieldNames(entry).isEmpty
                       ? '部分內容尚未補齊，詞庫更新後會自動補上。'
@@ -344,7 +411,7 @@ class _DataStatus extends StatelessWidget {
                 scope.repository.retryWordData(entry.id);
                 scope.enricher.process();
               },
-              child: const Text('重試'),
+              child: const UiText('重試'),
             ),
         ],
       ),
@@ -355,84 +422,6 @@ class _DataStatus extends StatelessWidget {
 /// The word's one card: FSRS state and the complete review log with the
 /// state change each grade made (spec section 7: 完整 review log 與 FSRS
 /// 變化).
-class _CardInfo extends StatelessWidget {
-  final LearningCard card;
-
-  const _CardInfo({required this.card});
-
-  @override
-  Widget build(BuildContext context) {
-    final scope = AppScope.of(context);
-    final repo = scope.repository;
-    final f = card.fsrs;
-    final now = scope.clock();
-    final logs = repo.logsOf(card.id).reversed.toList();
-    String date(DateTime d) => '${d.year}/${d.month}/${d.day}';
-    final status = StudyStatus.of(card);
-    return _Section(
-      label: '學習資訊',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Wrap(
-            spacing: MSpace.xs,
-            runSpacing: MSpace.xs,
-            children: [
-              TagChip(status.label),
-              if (!card.archived) TagChip('下次：${dueLabel(card, now)}'),
-              if (f.state != FsrsCardState.newCard) ...[
-                TagChip('穩定度 ${f.stability.toStringAsFixed(1)} 天'),
-                TagChip('難度 ${f.difficulty.toStringAsFixed(1)}'),
-                TagChip('複習 ${f.reps} 次'),
-                TagChip('忘記 ${f.lapses} 次'),
-              ],
-            ],
-          ),
-          if (logs.isNotEmpty) ...[
-            const SizedBox(height: MSpace.sm),
-            for (final l in logs)
-              Padding(
-                padding: const EdgeInsets.only(bottom: MSpace.xxs + 2),
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 78,
-                      child: Text(date(l.reviewedAt),
-                          style: MFont.manrope(
-                              12, FontWeight.w600, MColors.muted)),
-                    ),
-                    Container(
-                      width: 54,
-                      padding: const EdgeInsets.symmetric(vertical: 2),
-                      decoration: MDecor.softPanel(
-                        color: RatingBar.colors(l.rating).bg,
-                        radius: MRadii.xs,
-                      ),
-                      child: Text(
-                          l.rating.labelIn(scope.settings.nativeLanguage),
-                          textAlign: TextAlign.center,
-                          style: MFont.manrope(11, FontWeight.w800,
-                              RatingBar.colors(l.rating).fg)),
-                    ),
-                    const SizedBox(width: MSpace.xs),
-                    Expanded(
-                      child: Text(
-                        '穩定度 ${l.before.stability.toStringAsFixed(1)} → '
-                        '${l.after.stability.toStringAsFixed(1)} · 間隔 ${intervalLabel(l.scheduledDays)}',
-                        style: MFont.manrope(12, FontWeight.w600, MColors.ink),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
 /// 出現這個單字的照片: the photo zoomed in around the word's label, keeping the
 /// label's object centred where the edges allow.
 class _ContextCrop extends StatelessWidget {
@@ -480,7 +469,11 @@ class _Section extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [SectionLabel(label), const SizedBox(height: MSpace.xs), child],
+        children: [
+          SectionLabel(label),
+          const SizedBox(height: MSpace.xs),
+          child
+        ],
       );
 }
 
@@ -513,7 +506,8 @@ class _ArchiveButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final bottom = MediaQuery.paddingOf(context).bottom;
     return Padding(
-      padding: EdgeInsets.fromLTRB(MSpace.xl, MSpace.md, MSpace.xl, MSpace.xl + bottom),
+      padding: EdgeInsets.fromLTRB(
+          MSpace.xl, MSpace.md, MSpace.xl, MSpace.xl + bottom),
       child: Tap(
         onTap: onTap,
         label: archived ? '復原學習' : '標為已學會',
@@ -528,7 +522,7 @@ class _ArchiveButton extends StatelessWidget {
               Icon(archived ? Icons.undo_rounded : Icons.check_rounded,
                   size: 20, color: archived ? Colors.white : MColors.success),
               const SizedBox(width: MSpace.xs),
-              Text(
+              UiText(
                 archived ? '復原學習' : '標為已學會',
                 style: MFont.manrope(16, FontWeight.w800,
                     archived ? Colors.white : MColors.success),

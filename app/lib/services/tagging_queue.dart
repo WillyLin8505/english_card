@@ -38,6 +38,57 @@ class TaggingQueue extends ChangeNotifier {
   bool _running = false;
   String? _current;
   bool _offline = false;
+  bool _disposed = false;
+  Timer? _progressTimer;
+  final Stopwatch _photoWatch = Stopwatch();
+  int _completed = 0;
+  int _total = 0;
+  int _samples = 0;
+  int _sampleMilliseconds = 0;
+  int _failed = 0;
+
+  int get failed => _failed;
+  int get pending => repository()
+      .allPhotos
+      .where((p) =>
+          p.taggingStatus == TaggingStatus.pending ||
+          p.taggingStatus == TaggingStatus.tagging)
+      .length;
+  bool get hasWork => _current != null || pending > 0;
+
+  int get completed => _completed;
+  int get total => _total;
+  int get position => _current == null ? _completed : _completed + 1;
+
+  /// Initially allow one minute per photo; adapt to this session's replies.
+  /// An overdue request remains an estimate, never a false zero-second promise.
+  Duration get estimatedRemaining {
+    if (!hasWork) return Duration.zero;
+    final average = _samples == 0 ? 60000 : _sampleMilliseconds ~/ _samples;
+    if (_current == null) return Duration(milliseconds: pending * average);
+    final currentLeft =
+        (average - _photoWatch.elapsedMilliseconds).clamp(10000, 1 << 40);
+    final queued = (_total - _completed - 1).clamp(0, 1 << 30);
+    return Duration(milliseconds: currentLeft + queued * average);
+  }
+
+  String get progressLabel {
+    if (_current == null) {
+      final reason =
+          settings.taggingConfigured ? '等待 AI 服務恢復，會自動重試' : '請先設定 AI 辨識服務';
+      return '已處理 $_completed/${_completed + pending} 張 · $reason';
+    }
+    final seconds = estimatedRemaining.inSeconds;
+    final time = seconds < 60
+        ? '${((seconds + 9) ~/ 10) * 10} 秒'
+        : '${(seconds / 60).ceil()} 分鐘';
+    return '第 $position/$_total 張 · 大約剩 $time';
+  }
+
+  @override
+  void notifyListeners() {
+    if (!_disposed) super.notifyListeners();
+  }
 
   /// The photo being tagged right now.
   String? get current => _current;
@@ -58,7 +109,7 @@ class TaggingQueue extends ChangeNotifier {
     if (config == _lastConfig) return;
     _lastConfig = config;
     // New address or key: failed photos get another chance.
-    for (final p in repository().photos) {
+    for (final p in repository().allPhotos) {
       if (p.taggingStatus == TaggingStatus.failed) {
         repository()
             .updatePhoto(p.copyWith(taggingStatus: TaggingStatus.pending));
@@ -69,7 +120,9 @@ class TaggingQueue extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
     _timer?.cancel();
+    _progressTimer?.cancel();
     settings.removeListener(_onSettings);
     super.dispose();
   }
@@ -88,39 +141,69 @@ class TaggingQueue extends ChangeNotifier {
   /// tagger can't be reached. A photo that fails on its own is marked
   /// failed and the queue goes on.
   Future<void> process() async {
-    if (_running) return;
+    if (_running || _disposed) return;
     _running = true;
+    // A temporary outage is still the same batch, including its completed
+    // photos. Start a fresh count only after the previous batch drained.
+    if (_completed >= _total) {
+      _completed = 0;
+      _failed = 0;
+    }
+    _total = _completed + pending;
     try {
-      while (true) {
+      while (!_disposed) {
         final repo = repository();
-        final waiting = repo.photos.reversed
+        final waiting = repo.allPhotos.reversed
             .where((p) =>
                 p.taggingStatus == TaggingStatus.pending ||
                 p.taggingStatus == TaggingStatus.tagging)
             .toList();
         if (waiting.isEmpty || !settings.taggingConfigured) break;
+        _total = _completed + waiting.length;
         final ok = await _tag(repo, waiting.first);
         if (!ok) break;
+        _completed++;
       }
     } finally {
       _running = false;
       _current = null;
+      _total = _completed + pending;
+      _progressTimer?.cancel();
       notifyListeners();
     }
   }
 
   Future<bool> _tag(WordDatabaseRepository repo, Photo photo) async {
     _current = photo.id;
+    _offline = false;
+    _photoWatch
+      ..reset()
+      ..start();
+    _progressTimer?.cancel();
+    _progressTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      final waiting = repository()
+          .allPhotos
+          .where((p) =>
+              p.taggingStatus == TaggingStatus.pending ||
+              p.taggingStatus == TaggingStatus.tagging)
+          .length;
+      _total = _completed + waiting.clamp(1, 1 << 30);
+      notifyListeners();
+    });
     notifyListeners();
     repo.updatePhoto(photo.copyWith(taggingStatus: TaggingStatus.tagging));
     try {
       final level = cefrLevels[(repo.profile.level + photo.difficultyOffset)
           .clamp(0, cefrLevels.length - 1)];
       final found = await _request(photo, level: level);
+      _samples++;
+      _sampleMilliseconds +=
+          _photoWatch.elapsedMilliseconds.clamp(1000, 1 << 40);
       final latest = repo.photo(photo.id);
       if (latest == null) return true;
       repo.updatePhoto(latest.copyWith(
         taggingStatus: TaggingStatus.done,
+        safetyStatus: PhotoSafetyStatus.safe,
         taggingError: () => null,
         candidates: _merge(latest.candidates, found),
       ));
@@ -128,8 +211,15 @@ class TaggingQueue extends ChangeNotifier {
       return true;
     } catch (e) {
       final latest = repo.photo(photo.id);
+      if (e is TaggingApiException && e.statusCode == 451) {
+        if (latest != null) repo.removePhoto(photo.id);
+        _offline = false;
+        debugPrint('Blocked unsafe photo ${photo.id}');
+        return true;
+      }
       final offline = isOffline(e) || e is TaggingNotConfigured;
       _offline = offline;
+      if (!offline) _failed++;
       if (latest != null) {
         repo.updatePhoto(latest.copyWith(
           taggingStatus: offline ? TaggingStatus.pending : TaggingStatus.failed,
@@ -141,6 +231,9 @@ class TaggingQueue extends ChangeNotifier {
       // failing (問題回報: one bad reply held back every later photo)
       // lets the next one be tagged.
       return !offline;
+    } finally {
+      _photoWatch.stop();
+      _progressTimer?.cancel();
     }
   }
 

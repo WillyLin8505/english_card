@@ -5,7 +5,7 @@ import os
 from dotenv import dotenv_values
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import URL
-from domain import merge_usages
+from domain import DRAG_OPTIONS, entry_type_of, merge_usages
 
 ROOT = Path(__file__).resolve().parents[1]
 # Most common usage of a spelling first: fully imported, translated, then most examples.
@@ -43,6 +43,30 @@ def image_allowed(row):
             and (license.startswith('CC0') or license == 'PUBLIC DOMAIN'
                  or license == 'CC BY' or license.startswith('CC BY '))
             and not any(x in license.split() for x in ('SA', 'NC', 'ND')))
+
+
+def unambiguous_tag_choice(choices, tag_pos=None, tag_sense_id=None):
+    """Return a tag's verified lexeme/sense row, or None when it would guess."""
+    if tag_pos:
+        # Missing that POS is missing evidence, not permission to use another.
+        choices = [item for item in choices if item.get('pos') == tag_pos]
+    if tag_sense_id is not None:
+        return next((item for item in choices if item.get('sense_id') == tag_sense_id), None)
+    unique = {(item.get('id'), item.get('sense_id')): item for item in choices}
+    return next(iter(unique.values())) if len(unique) == 1 else None
+
+
+def normalize_relation(relation):
+    """Use the same default visibility as the formal dictionary exporter."""
+    detail = relation.get('detail') or {}
+    zipf = relation.get('target_zipf')
+    if zipf is None:
+        zipf = detail.get('zipf')
+    return {**relation, 'target_zipf': zipf,
+            'cefr': relation.get('cefr') or detail.get('cefr'),
+            'hide_by_default': bool(relation.get('hide_by_default')
+                                    or detail.get('hide_by_default')
+                                    or (isinstance(zipf, (int, float)) and zipf < 2.5))}
 
 
 class Repository:
@@ -103,7 +127,8 @@ class Repository:
             items.append({'id': first['id'], 'lemma': first['lemma'], 'pos': first['pos'], 'cefr': first['cefr'],
                           'status': first['status'], 'meaning': first['meaning'],
                           'example_count': sum(u['example_count'] for u in group),
-                          'lexeme_ids': [u['id'] for u in group], 'pos_list': [u['pos'] for u in group]})
+                          'lexeme_ids': [u['id'] for u in group], 'pos_list': [u['pos'] for u in group],
+                          'entry_type': entry_type_of(first['normalized'])})
         return dict(items=items, total=total, offset=offset, limit=limit)
 
     def usage_ids(self, lexeme_id, target, native):
@@ -126,6 +151,7 @@ class Repository:
             if not found:
                 raise LookupError('找不到這個語言的詞條')
             word = found[0]
+            word['entry_type'] = entry_type_of(word['normalized'])
             args = dict(id=lexeme_id, native=native, target=target, lemma=word['normalized'])
             word['senses'] = rows(c, """SELECT s.*,d.text AS definition,d.source AS definition_source,
                 t.text AS translation,t.source AS translation_source,t.is_ai,t.is_override
@@ -139,10 +165,11 @@ class Repository:
             word['audio'] = rows(c, """SELECT DISTINCT a.* FROM audio_assets a JOIN pronunciations p ON p.audio_asset_id=a.id
                 WHERE p.lexeme_id=:id AND a.status='ready' AND a.path IS NOT NULL ORDER BY a.id""", **args)
             word['forms'] = rows(c, 'SELECT * FROM forms WHERE lexeme_id=:id ORDER BY field,id', **args)
-            word['relations'] = rows(c, """SELECT r.*,l.pos,l.cefr,t.text AS translation,t.source AS translation_source,t.is_ai
+            word['relations'] = rows(c, """SELECT r.*,l.pos,l.cefr,l.zipf AS target_zipf,t.text AS translation,t.source AS translation_source,t.is_ai
                 FROM lexeme_relations r JOIN lexemes l ON l.id=r.target_lexeme_id
                 LEFT JOIN relation_translations t ON t.relation_id=r.id AND t.native_language=:native
                 WHERE r.lexeme_id=:id ORDER BY r.relation,r.ordinal,r.id""", **args)
+            word['relations'] = [normalize_relation(r) for r in word['relations']]
             word['etymology'] = rows(c, """SELECT e.*,t.text AS translation,t.source AS translation_source,t.is_ai
                 FROM etymologies e LEFT JOIN etymology_translations t ON t.lexeme_id=e.lexeme_id AND t.native_language=:native
                 WHERE e.lexeme_id=:id""", **args)
@@ -194,14 +221,20 @@ class Repository:
         """Build a read-only drag exercise from reviewed image AI tag boxes.
 
         Tags are accepted only when their normalized word resolves to a full
-        lexeme and its first sense has a native translation. The image itself
-        has already passed ``image_allowed`` in ``card()``.
+        lexeme and the intended sense is unambiguous.  An explicit tag
+        ``sense_id`` disambiguates it. For the pictured word itself, the
+        approved picture/sense binding supplies that evidence. Other lexemes
+        with multiple translated senses are skipped instead of teaching their
+        first sense. The
+        image itself has already passed ``image_allowed`` in ``card()``.
         """
         images = [im for im in word.get('images', []) if im.get('sense_id') == sense_id]
         if not images:
             return {'kind': 'drag', 'sense_id': sense_id, 'available': False,
                     'reasons': ['目前義項沒有已核准且可用的圖片']}
         pos_alias = {'adjective': 'adj', 'adverb': 'adv'}
+        selected_sense = next((s for s in word.get('senses', []) if s['id'] == sense_id), None)
+        own_label = str(word.get('normalized') or word.get('lemma') or '').strip().casefold()
         for image in images:
             tags = []
             for tag in image.get('tags') or []:
@@ -213,14 +246,15 @@ class Repository:
                 x1, y1, x2, y2 = box
                 if min(box) < 0 or max(box) > 1 or x2 <= x1 or y2 <= y1:
                     continue
-                tags.append((label, pos_alias.get(str(tag.get('pos', '')), tag.get('pos')), [x1, y1, x2-x1, y2-y1]))
+                tags.append((label, pos_alias.get(str(tag.get('pos', '')), tag.get('pos')),
+                             tag.get('sense_id'), [x1, y1, x2-x1, y2-y1]))
             if not tags:
                 continue
-            labels = sorted({label for label, _, _ in tags})
+            labels = sorted({label for label, _, _, _ in tags})
             with self.read() as c:
                 found = rows(c, """SELECT l.id,l.normalized,l.lemma,l.pos,l.cefr,s.id AS sense_id,t.text AS translation
                     FROM lexemes l
-                    JOIN LATERAL (SELECT id FROM senses WHERE lexeme_id=l.id ORDER BY ordinal,id LIMIT 1) s ON true
+                    JOIN senses s ON s.lexeme_id=l.id
                     JOIN sense_translations t ON t.sense_id=s.id AND t.native_language=:native
                     WHERE l.language=:target AND l.status='full' AND l.normalized=ANY(:labels)
                       AND length(trim(t.text))>0 AND t.text NOT LIKE '%�%'
@@ -229,23 +263,37 @@ class Repository:
             for row in found:
                 by_label.setdefault(row['normalized'].casefold(), []).append(row)
             options, used = [], set()
-            for label, tag_pos, box in tags:
+            for label, tag_pos, tag_sense_id, box in tags:
+                if (label == own_label and selected_sense
+                        and image.get('review_status') == 'approved'):
+                    # The picture's reviewed sense is stronger evidence than
+                    # selecting the first meaning of the same spelling.
+                    bound_pos = selected_sense.get('usage_pos') or word.get('pos')
+                    bound_pos = pos_alias.get(bound_pos, bound_pos)
+                    if ((tag_sense_id is not None and tag_sense_id != sense_id)
+                            or (tag_pos and tag_pos != bound_pos)):
+                        continue
+                    tag_sense_id = sense_id
                 choices = by_label.get(label, [])
-                row = next((item for item in choices if item['pos'] == tag_pos), choices[0] if choices else None)
+                row = unambiguous_tag_choice(choices, tag_pos, tag_sense_id)
                 if not row or row['id'] in used:
                     continue
                 used.add(row['id'])
                 options.append({'id': row['id'], 'sense_id': row['sense_id'], 'label': row['lemma'],
                                 'translation': row['translation'], 'pos': row['pos'],
                                 'reason': '本機圖片辨識標籤與正式詞條相符', 'box': box})
-                if len(options) == 5:
-                    break
-            if options:
+            # Exactly DRAG_OPTIONS labels, this card's word among them
+            # (owner 2026-10-14: 拖曳題目固定為要拖曳 3 個項目).
+            own = [o for o in options if o['id'] == word['id'] and o['sense_id'] == sense_id]
+            if own and len(options) >= DRAG_OPTIONS:
+                chosen = own + [o for o in options if o is not own[0]][:DRAG_OPTIONS - 1]
                 return {'kind': 'drag', 'sense_id': sense_id, 'available': True,
-                        'mode': 'drag', 'image': image, 'options': options,
+                        'mode': 'drag', 'image': image,
+                        'options': sorted(chosen, key=lambda o: options.index(o)),
                         'instruction': '把每個單字拖到圖片中對應的位置。', 'reasons': []}
         return {'kind': 'drag', 'sense_id': sense_id, 'available': False,
-                'reasons': ['圖片標籤框無法對應到有母語翻譯的正式詞條']}
+                'reasons': [f'圖片上沒有 {DRAG_OPTIONS} 個詞性與詞義相符、且有母語翻譯的正式詞條'
+                            '（含本題單字）']}
 
     def templates(self, target, native):
         with self.read() as c:

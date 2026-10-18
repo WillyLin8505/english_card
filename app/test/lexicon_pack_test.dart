@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:photo_english_app/models/learning_card.dart';
 import 'package:photo_english_app/models/photo.dart';
+import 'package:photo_english_app/models/vocabulary_profile.dart';
 import 'package:photo_english_app/models/word_candidate.dart';
 import 'package:photo_english_app/models/word_entry.dart';
 import 'package:photo_english_app/services/lexicon_pack.dart';
@@ -28,6 +29,7 @@ Map<String, dynamic> _pack() => {
             {
               'id': 10,
               'definition': 'A round fruit.',
+              'register': 'spoken',
               'native': '蘋果',
               'native_ai': false
             },
@@ -130,6 +132,158 @@ void main() {
     expect(pack.size, 2);
   });
 
+  test('a form used as another part of speech finds its own word (#51)', () {
+    Map<String, dynamic> entry(int id, String lemma, String pos,
+            {List<String> forms = const []}) =>
+        {
+          'id': id,
+          'lemma': lemma,
+          'normalized': lemma,
+          'pos': pos,
+          'status': 'full',
+          'senses': const [],
+          'forms': [
+            for (final f in forms)
+              {'field': 'verb_present_participle', 'form': f, 'normalized': f}
+          ],
+        };
+    final p = LexiconPack()
+      ..loadJson({
+        'target_language': 'en',
+        'native_language': 'zh-TW',
+        'lexemes': [
+          entry(1, 'lie', 'verb', forms: ['lying']),
+          entry(2, 'lying', 'adj'),
+        ],
+      });
+    // A dog lying on the grass: lie, not lying 說謊的.
+    final verb = p.lookup('lying', pos: 'verb')!;
+    expect((verb.entry.lemma, verb.via), ('lie', 'form'));
+    expect(p.lookup('lying', pos: 'adj.')!.entry.id, 2);
+    expect(p.lookup('lying')!.entry.id, 2,
+        reason: 'no part of speech: the word itself');
+  });
+
+  test('a form that shares its word\'s card is that word on the card (#51)',
+      () {
+    final p = LexiconPack()
+      ..loadJson({
+        'target_language': 'en',
+        'native_language': 'zh-TW',
+        'lexemes': [
+          {
+            'id': 1,
+            'lemma': 'tether',
+            'normalized': 'tether',
+            'pos': 'verb',
+            'status': 'full',
+            'senses': [
+              {'id': 10, 'definition': 'To tie with a tether.', 'native': '拴住'}
+            ],
+            'forms': [
+              {
+                'field': 'verb_third_person',
+                'form': 'tethers',
+                'normalized': 'tethers'
+              },
+              {
+                'field': 'verb_past_participle',
+                'form': 'tethered',
+                'normalized': 'tethered'
+              },
+            ],
+          },
+          {
+            'id': 2,
+            'lemma': 'tethered',
+            'normalized': 'tethered',
+            'pos': 'adj',
+            'status': 'full',
+            'card': 'tether',
+            'senses': [
+              {'id': 20, 'definition': 'Tied.', 'native': '被拴住的'}
+            ],
+          },
+          {
+            'id': 4,
+            'lemma': 'tethered',
+            'normalized': 'tethered',
+            'pos': 'verb',
+            'status': 'full',
+            'card': 'tether',
+            'card_form': true,
+            'senses': [
+              {
+                'id': 40,
+                'definition': 'Past of tether.',
+                'native': 'tether 的過去式'
+              }
+            ],
+          },
+          {
+            'id': 3,
+            'lemma': 'left',
+            'normalized': 'left',
+            'pos': 'adj',
+            'status': 'full',
+            'senses': [
+              {'id': 30, 'definition': 'On the west side.', 'native': '左邊的'}
+            ],
+          },
+        ],
+      });
+    final hit = p.lookup('tethered', pos: 'adj.')!;
+    expect((hit.entry.lemma, hit.via), ('tether', 'family'));
+    expect(p.link(_cand('tethered', pos: 'adj.')).word, 'tether');
+    expect(p.lookup('left', pos: 'adj.')!.entry.id, 3,
+        reason: 'a word spelt like a form but meaning something else');
+    // tether's card shows what tethered means, first.
+    final forms = p.detailFor(hit.entry).inflections;
+    expect(
+        (forms.first.form, forms.first.label), ('tethered', '過去分詞・形容詞：被拴住的'));
+    expect((forms[1].form, forms[1].label), ('tethers', 'verb_third_person'));
+  });
+
+  test('a word saved under a form joins its word\'s card (#51)', () {
+    final repo = WordDatabaseRepository(clock: () => testNow);
+    repo.addPhoto(Photo(
+        id: 'p1',
+        title: 'fruit',
+        takenAt: testNow,
+        createdAt: testNow,
+        candidates: [_cand('apples')]));
+    // Saved under the form before it shared apple's card, and reviewed once.
+    repo.savePhotoWords(
+        'p1', [ListedWord(_cand('apples'), const LabelPoint(0.5, 0.5))],
+        difficultyOffset: 0);
+    final apples = repo.entryByWord('apples')!;
+    final reviewed = repo.cardOf(apples.id)!;
+    repo.review(reviewed.id, Rating.good);
+    final apple = repo.addWord(word: 'apple', pos: 'noun', meaning: '');
+
+    repo.linkLexicon(pack);
+    expect(repo.entryByWord('apples'), isNull);
+    expect(repo.occurrencesInPhoto('p1').single.wordEntryId, apple.id);
+    expect(repo.cardOf(apple.id)!.id, reviewed.id,
+        reason: 'the reviewed card stays, with its history');
+    expect(repo.logsOf(reviewed.id), hasLength(1));
+    expect(repo.cardCount, 1);
+    expect(repo.profile.familiarityOf('apple'), Familiarity.learning);
+    expect(repo.profile.familiarityOf('apples'), Familiarity.unknown);
+    expect(repo.linkLexicon(pack), 0, reason: 'folded once');
+  });
+
+  test('a form saved without its word becomes the word, card and all (#51)',
+      () {
+    final repo = WordDatabaseRepository(clock: () => testNow);
+    final apples = repo.addWord(word: 'apples', pos: 'noun', meaning: '');
+    final card = repo.cardOf(apples.id)!;
+    repo.linkLexicon(pack);
+    final now = repo.entry(apples.id)!;
+    expect((now.word, now.lexemeId, now.meaning), ('apple', 1, '蘋果'));
+    expect(repo.cardOf(apples.id)!.id, card.id);
+  });
+
   test(
       'linking gives recognized words their lexeme id, lemma and native meaning',
       () {
@@ -147,6 +301,7 @@ void main() {
 
   test('the pack entry becomes the word detail of a new word', () {
     final d = pack.detail('apple')!;
+    expect(d.definitions.single.register, 'spoken');
     expect(d.ipa, '/ˈæp.əl/');
     expect(d.wordAudioUrl, 'assets/lexicon/media/audio/en/abc.mp3');
     expect(d.exampleSentences.single.zh, '我吃了一顆蘋果。');
@@ -173,6 +328,7 @@ void main() {
     final linked = repo.entry(e.id)!;
     expect(linked.lexemeId, 1);
     expect(linked.meaning, '蘋果');
+    expect(linked.register, 'spoken');
     expect(linked.examples.first.translation, '我吃了一顆蘋果。');
     expect(linked.examples.first.difficulty, 'A2');
     expect(linked.related.single.hideByDefault, isTrue);
@@ -183,7 +339,9 @@ void main() {
         reason: 'nothing changes the second time');
   });
 
-  test('a newer pack updates the translation of a sentence the word already has', () {
+  test(
+      'a newer pack updates the translation of a sentence the word already has',
+      () {
     final repo = WordDatabaseRepository(clock: () => testNow);
     final e = repo.addWord(word: 'apple', pos: 'noun', meaning: '蘋果');
     const old = WordExample(text: 'I ate an apple.', translation: '我吃了一個苹果。');
@@ -200,6 +358,11 @@ void main() {
         ]),
         {WordField.examples});
     repo.linkLexicon(pack);
-    expect(repo.entry(mine.id)!.examples.single.translation, '我的翻譯');
+    // apples shares apple's card (#51); the learner's sentence comes along
+    // and stays theirs.
+    expect(repo.entry(mine.id), isNull);
+    final apple = repo.entry(e.id)!;
+    expect(apple.examples.single.translation, '我的翻譯');
+    expect(apple.userEdited, contains(WordField.examples));
   });
 }

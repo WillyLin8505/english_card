@@ -30,6 +30,11 @@ API_KEY = os.environ.get("LEXICON_API_KEY", "")
 AI_URL = os.environ.get("LEXICON_AI_URL", "http://127.0.0.1:8765")
 AI_KEY = os.environ.get("LEXICON_AI_KEY", "")
 
+# Smithsonian Open Access (問題回報 #3's second fallback image source).
+# DEMO_KEY is api.data.gov's public, documented testing key (very low rate
+# limit); set LEXICON_SMITHSONIAN_API_KEY to a real key for production use.
+SMITHSONIAN_API_KEY = os.environ.get("LEXICON_SMITHSONIAN_API_KEY", "DEMO_KEY")
+
 USER_AGENT = "EnglishCardLexicon/1.0 (personal vocabulary database)"
 
 

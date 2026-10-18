@@ -12,7 +12,8 @@ const supportedLanguages = {
 /// The data model already supports multiple languages, but the first
 /// published bilingual pack is English → Traditional Chinese only.
 const availableLearningLanguages = {'en'};
-const availableNativeLanguages = {'zh-TW'};
+// Interface languages are available independently of published learning packs.
+const availableNativeLanguages = {'zh-TW', 'en', 'fr'};
 
 bool learningLanguageAvailable(String language) =>
     availableLearningLanguages.contains(language);
@@ -43,6 +44,7 @@ class AppSettings extends ChangeNotifier {
   double _desiredRetention;
   String _learningLanguage;
   String _nativeLanguage;
+  String _englishAccent;
   bool _onboarded;
 
   /// Defaults for a build that knows where its tagger is:
@@ -64,6 +66,8 @@ class AppSettings extends ChangeNotifier {
             nativeLanguageAvailable(_box?.get('nativeLanguage') ?? 'zh-TW')
                 ? (_box?.get('nativeLanguage') ?? 'zh-TW')
                 : 'zh-TW',
+        _englishAccent =
+            _box?.get('englishAccent') == 'en-US' ? 'en-US' : 'en-GB',
         _onboarded = _box?.get('onboarded') == 'true';
 
   /// Settings that live only in memory — for tests and previews.
@@ -72,6 +76,7 @@ class AppSettings extends ChangeNotifier {
     String apiKey = '',
     String learningLanguage = 'en',
     String nativeLanguage = 'zh-TW',
+    String englishAccent = 'en-GB',
     bool onboarded = true,
   })  : _box = null,
         _taggingUrl = taggingUrl,
@@ -79,6 +84,7 @@ class AppSettings extends ChangeNotifier {
         _desiredRetention = 0.9,
         _learningLanguage = learningLanguage,
         _nativeLanguage = nativeLanguage,
+        _englishAccent = englishAccent,
         _onboarded = onboarded;
 
   static Future<AppSettings> open() async {
@@ -113,6 +119,10 @@ class AppSettings extends ChangeNotifier {
   /// Decides translations, hints and the grade buttons' wording.
   String get nativeLanguage => _nativeLanguage;
 
+  /// Which English accent 發音 and TTS use: "en-GB" (default, spec section
+  /// 7) or "en-US".
+  String get englishAccent => _englishAccent;
+
   /// Whether the first-run questions (languages, background) are done.
   bool get onboarded => _onboarded;
 
@@ -139,6 +149,11 @@ class AppSettings extends ChangeNotifier {
   set nativeLanguage(String v) {
     assert(supportedLanguages.containsKey(v));
     _save('nativeLanguage', _nativeLanguage = v);
+  }
+
+  set englishAccent(String v) {
+    assert(v == 'en-GB' || v == 'en-US');
+    _save('englishAccent', _englishAccent = v);
   }
 
   set onboarded(bool v) => _save('onboarded', '${_onboarded = v}');

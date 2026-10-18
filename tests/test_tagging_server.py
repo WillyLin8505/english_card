@@ -4,6 +4,7 @@ import json
 import os
 import sys
 import threading
+from contextlib import nullcontext
 import urllib.error
 import urllib.request
 from http.server import ThreadingHTTPServer
@@ -79,9 +80,16 @@ class _StubTagger:
 
     def __init__(self):
         self.calls = []
+        self._admission = ts.PrioritySlots(1)
+
+    def _background_inference(self):
+        return nullcontext()
 
     def ollama_ok(self):
         return True
+
+    def _inference(self, *_):
+        return nullcontext()
 
     def candidates(self, image, level, lang, native, focus, exclude):
         self.calls.append((image, level, lang, native, focus, exclude))
@@ -230,7 +238,7 @@ def test_cefr_prompt_lists_visible_objects_level_from_lexicon():
     assert "- l:" not in prompt
     assert "safe=false" in prompt and "explicit adult nudity" in prompt
     assert "compact JSON keys" in prompt
-    assert ts.CEFR_PROMPT_VERSION == "photo-tags-visible-v12-lexicon-level"
+    assert ts.CEFR_PROMPT_VERSION == "photo-tags-visible-v14-no-quotas"
 
 
 def test_merge_cefr_topup_fills_short_bands_without_inventing():
@@ -259,12 +267,62 @@ def test_merge_cefr_topup_fills_short_bands_without_inventing():
     assert "ladle" not in {x["word"] for x in out}
 
 
-def test_to_candidates_keeps_model_cefr_band():
+def test_to_candidates_ignores_model_cefr_band():
     out = ts.to_candidates([{
         "word": "chimney", "pos": "noun", "cefr": "B2",
         "evidence": "stone stack on roof", "point": [500, 400],
         "box": [400, 300, 600, 500],
     }])
-    assert out[0]["cefr"] == "B2"
-    assert out[0]["modelLevel"] == "B2"
+    assert out[0]["cefr"] is None
+    assert out[0]["modelLevel"] is None
 
+
+def test_legacy_model_levels_never_escape_and_compact_box_is_kept():
+    for field in ('cefr', 'l', 'modelLevel'):
+        out = ts.to_candidates([{'w': 'rock', 'p': 'n', field: 'C2',
+                                 'x': 500, 'y': 400, 'b': [100, 200, 800, 900]}])
+        assert out[0]['cefr'] is None and out[0]['modelLevel'] is None
+        assert out[0]['box'] == [0.1, 0.2, 0.8, 0.9]
+
+
+def test_topup_does_not_ask_vision_to_fill_cefr_or_pos_quotas():
+    prompt = ts.build_cefr_topup_prompt('en', ['C1', 'C2'], ['rock'], 3, {'C1': 0})
+    assert 'need at least' not in prompt and 'short bands' not in prompt
+    assert 'At most half' not in prompt and 'C1:' not in prompt
+    assert 'Do not repeat these words: rock' in prompt
+    assert 'safe=false' in prompt and 'candidates=[]' in prompt
+
+
+def test_meta_labels_are_filtered_without_blacklisting_physical_parts():
+    raw = [
+        {'w': 'close-up'}, {'w': 'depict'},
+        {'w': 'image', 'e': 'the photo itself'},
+        {'w': 'photograph', 'e': 'framed print on the desk'},
+        {'w': 'handle'}, {'w': 'display'}, {'w': 'pattern'},
+    ]
+    out = ts.to_candidates([dict(x, x=500, y=500) for x in raw])
+    assert {x['word'] for x in out} == {'photograph', 'handle', 'display', 'pattern'}
+
+
+
+def test_cap_cefr_beginner_bands_drops_overflow():
+    def item(word, cefr, pos="noun"):
+        return {"word": word, "lemma": word, "pos": pos, "cefr": cefr,
+                "modelLevel": cefr, "evidence": word, "point": [0.5, 0.5],
+                "box": None, "visualConfidence": 0.7, "usefulness": 0.5,
+                "inferred": False, "meaning": ""}
+
+    raw = [
+        item("cup", "A1"), item("plate", "A1"), item("bowl", "A1"),
+        item("mug", "A1"),
+        item("saucer", "A2"), item("napkin", "A2"), item("tray", "A2"),
+        item("ladle", "A2"),
+        item("simmer", "B2", pos="verb"),
+        item("ornate", "C1", pos="adjective"),
+    ]
+    out = ts.cap_cefr_beginner_bands(raw, beginner_max=3)
+    counts = ts.cefr_band_counts(out)
+    assert counts["A1"] == 3 and counts["A2"] == 3
+    assert counts["B2"] == 1 and counts["C1"] == 1
+    assert "mug" not in {x["word"] for x in out}
+    assert {"simmer", "ornate"} <= {x["word"] for x in out}

@@ -5,11 +5,34 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from simulate_learning import all_words, validate_exercise
+from simulate_learning import all_words, validate_exercise, cloze_suppression_candidates
 from simulate_concurrent_learning import percentile
 
 
 class SimulationTests(unittest.TestCase):
+    def test_unavailable_cloze_audit_flags_fragments_without_declaring_them_valid(self):
+        word = {'lemma': 'man', 'forms': [{'form': 'men'}], 'examples': [
+            {'id': 1, 'sense_id': 10, 'text': 'Women live longer than men.', 'translation': '女人比男人長壽。'},
+            {'id': 2, 'sense_id': 11, 'text': 'Women live longer than men.', 'translation': '其他義項'},
+            {'id': 3, 'sense_id': 10, 'text': 'Women live longer than men.', 'translation': None},
+            {'id': 4, 'sense_id': 10, 'text': 'Women and men greeted the man.', 'translation': '有別的詞形未遮罩'}]}
+        result = cloze_suppression_candidates(word, {'id': 10})
+        self.assertEqual([x['example_id'] for x in result], [1])
+        self.assertEqual(result[0]['remaining_fragments'], ['men'])
+        self.assertNotIn('available', result[0])
+        word = {'lemma': 'apple', 'forms': [], 'examples': [
+            {'id': 5, 'sense_id': 10, 'text': 'An apple is not an applecart.', 'translation': '複合字可能提示答案'}]}
+        self.assertEqual(cloze_suppression_candidates(word, {'id': 10})[0]['example_id'], 5)
+
+    def test_photo_choice_detects_wrong_option_already_tagged_on_picture(self):
+        exercise = {'kind': 'photo_choice', 'sense_id': 10, 'available': True,
+                    'correct_id': 1, 'image': {'tags': [
+                        {'word': 'pears', 'cefrLemma': 'pear'}, {'word': 'apple'}]},
+                    'options': [{'id': 1, 'label': 'apple'},
+                                {'id': 2, 'label': 'Pear'}, {'id': 3, 'label': 'peach'}]}
+        issues = validate_exercise({'id': 1, 'lemma': 'apple'}, {'id': 10},
+                                   'photo_choice', exercise)
+        self.assertIn('錯誤選項 Pear 同時是這張圖片的可見標籤', issues)
     def test_all_words_follows_api_pagination(self):
         calls = []
 

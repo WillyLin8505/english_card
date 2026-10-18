@@ -93,12 +93,37 @@ const STATUS: Record<string, [string, string]> = {
   retrying: ["重試中", "warn"],
 };
 
-export type ScoredTag = { word: string; pos?: string | null; score?: number | null };
+export type ScoredTag = { word: string; pos?: string | null; score?: number | null;
+  cefr?: string | null; modelLevel?: string | null; cefrSource?: string | null;
+  cefrLemma?: string | null; cefrCoreWord?: string | null; dropReason?: string | null };
 
 /** "99%": a label's recognition score — how sure the vision model is that the
  *  picture shows it (its probability of answering "shown" when it checks the
  *  label again). Labels pass at 80%. */
 export const scoreText = (s?: number | null) => (s == null ? "未評分" : `${Math.round(s * 100)}%`);
+
+/** A label's level from the CEFR-J / Octanove list (owner decision A);
+ *  a word-frequency estimate for words outside it says 「估算」. Never the
+ *  vision model's own level. */
+export const levelText = (t: { cefr?: string | null; cefrSource?: string | null }) =>
+  !t.cefr ? "未分級" : t.cefrSource === "estimate" ? `${t.cefr} 估算`
+    : t.cefrSource === "base" ? `${t.cefr} 衍生` : t.cefr;
+
+/** Why a label has its level, for a tooltip: 「衍生自 arch」, 「詞頻估算」. */
+export const levelWhy = (t: { cefrSource?: string | null; cefrLemma?: string | null;
+                              cefrCoreWord?: string | null }) =>
+  t.cefrSource === "base" ? `衍生自 ${t.cefrLemma ?? ""}（原形在 CEFR-J 詞表的等級）`
+    : t.cefrSource === "estimate" ? "詞表外：依詞頻估算"
+    : t.cefrSource === "phrase" ? `片語：取最難的字 ${t.cefrCoreWord ?? ""}`
+    : t.cefrSource === "cefrj" ? `CEFR-J 詞表${t.cefrLemma ? `（原形 ${t.cefrLemma}）` : ""}` : "";
+
+const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
+
+/** 「A1 3 · A2 2 缺漏 · …」: labels per level; under three is a gap. */
+export const cefrSummary = (tags: { cefr?: string | null }[]) => LEVELS.map((level) => {
+  const n = tags.filter((tag) => tag.cefr === level).length;
+  return `${level} ${n}${n < 3 ? " 缺漏" : ""}`;
+}).join(" · ");
 
 /** The AI labels of a picture with their recognition scores, best first. */
 export function TagScores({ tags, word, label = "AI 標籤與辨識分數" }: { tags?: ScoredTag[] | null; word: string; label?: string }) {
@@ -108,7 +133,10 @@ export function TagScores({ tags, word, label = "AI 標籤與辨識分數" }: { 
     {[...tags].sort((a, b) => (b.score ?? -1) - (a.score ?? -1)).map((t) => (
       <li key={t.word} className={`chip chip-${t.score == null ? "muted" : tone(t.score)}`}
           style={t.word.toLowerCase() === word ? { fontWeight: 700 } : undefined}>
-        {t.word}{t.pos ? <small> {t.pos}</small> : null} {scoreText(t.score)}
+        <b title={levelWhy(t)}>{levelText(t)}</b> {t.word}
+        {t.cefrSource === "base" && t.cefrLemma ? <small> ←{t.cefrLemma}</small> : null}
+        {t.pos ? <small> {t.pos}</small> : null} {scoreText(t.score)}
+        {t.dropReason ? <small> · {t.dropReason}</small> : null}
       </li>
     ))}
   </ul>;
@@ -243,6 +271,10 @@ export function PairPicker({ compact }: { compact?: boolean }) {
 export function summarize(v: Record<string, unknown> | null | undefined): string {
   if (!v) return "";
   const s = (k: string) => (v[k] === undefined || v[k] === null ? "" : String(v[k]));
+  if (v.register) {
+    const labels: Record<string, string> = { neutral: "中性／通用", written: "書面語", spoken: "口語", slang: "俚語" };
+    return `${labels[s("register")] || s("register")}${v.sense_key ? `（詞義 ${s("sense_key")}）` : ""}`;
+  }
   if (v.tts) return `系統 TTS（${s("locale")}）`;
   if (v.gloss) return `${v.pos ? `[${s("pos")}] ` : ""}${s("gloss")}`;
   if (v.url) return `${decodeURIComponent(s("url").split("/").pop() || "")}${Array.isArray(v.accent) && v.accent.length ? `（${(v.accent as string[]).join("、")}）` : ""}`;
@@ -271,6 +303,17 @@ export function fmtTime(t: string | null | undefined) {
   if (!t) return "—";
   const d = new Date(t);
   return d.toLocaleString("zh-TW", { hour12: false, month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" });
+}
+
+export function fmtDuration(seconds: number | null | undefined) {
+  if (seconds === null || seconds === undefined) return "—";
+  const value = Math.max(0, Math.round(seconds));
+  const hours = Math.floor(value / 3600);
+  const minutes = Math.floor((value % 3600) / 60);
+  const secs = value % 60;
+  if (hours) return `${hours} 小時 ${minutes} 分`;
+  if (minutes) return `${minutes} 分 ${secs} 秒`;
+  return `${secs} 秒`;
 }
 
 export function fmtBytes(n: number | null | undefined) {

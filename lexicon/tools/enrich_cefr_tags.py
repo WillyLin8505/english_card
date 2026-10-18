@@ -36,6 +36,9 @@ from app.images import (  # noqa: E402
 from sqlalchemy import select, text  # noqa: E402
 
 LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"]
+BEGINNER_LEVELS = ("A1", "A2")
+# Match tagger default: A1/A2 each stop at per_level so ~3x6 fits TAGS_MAX.
+BEGINNER_MAX_PER_LEVEL = 3
 
 
 def _cefr_for_word(s, word: str) -> str | None:
@@ -63,6 +66,85 @@ def band_counts(s, tags: list[dict]) -> dict[str, int]:
         if level in c:
             c[level] += 1
     return dict(c)
+
+
+def _tag_level(s, t: dict) -> str:
+    word = str(t.get("word", "")).strip()
+    level = (_cefr_for_word(s, word) if word else None) or str(
+        t.get("cefr") or t.get("modelLevel") or ""
+    ).upper()
+    return level if level in LEVELS else ""
+
+
+def pack_tags_with_beginner_cap(
+    s,
+    tags: list[dict],
+    tags_max: int = TAGS_MAX,
+    beginner_max: int = BEGINNER_MAX_PER_LEVEL,
+    per_level: int = 3,
+) -> list[dict]:
+    """Keep band diversity under TAGS_MAX; hard-cap A1/A2.
+
+    1) Dedup by word (keep highest score).
+    2) Reserve up to ``per_level`` (beginners: ``beginner_max``) from each band,
+       higher bands first so B2–C2 are not crowded out.
+    3) Fill remaining slots by score, still refusing extra A1/A2 past the cap.
+    """
+    beginner_max = max(1, int(beginner_max))
+    per_level = max(1, int(per_level))
+    best: dict[str, dict] = {}
+    for t in tags or []:
+        word = str(t.get("word", "")).strip().lower()
+        if not word:
+            continue
+        prev = best.get(word)
+        if prev is None or (t.get("score") or 0) >= (prev.get("score") or 0):
+            best[word] = dict(t)
+    items = sorted(best.values(), key=lambda x: -(x.get("score") or 0))
+
+    by_band: dict[str, list[dict]] = {lv: [] for lv in LEVELS}
+    unknown: list[dict] = []
+    for t in items:
+        lv = _tag_level(s, t)
+        if lv:
+            by_band[lv].append(t)
+        else:
+            unknown.append(t)
+
+    chosen: list[dict] = []
+    seen: set[str] = set()
+    beginner_counts = {lv: 0 for lv in BEGINNER_LEVELS}
+
+    def take(t: dict) -> bool:
+        word = str(t.get("word", "")).strip().lower()
+        if not word or word in seen or len(chosen) >= tags_max:
+            return False
+        lv = _tag_level(s, t)
+        if lv in beginner_counts:
+            if beginner_counts[lv] >= beginner_max:
+                return False
+            beginner_counts[lv] += 1
+        seen.add(word)
+        chosen.append(t)
+        return True
+
+    # Higher bands first so scarce B2–C2 seats are claimed before A1 padding.
+    for lv in reversed(LEVELS):
+        cap = beginner_max if lv in BEGINNER_LEVELS else per_level
+        for t in by_band[lv][:cap]:
+            take(t)
+
+    for t in items:
+        if len(chosen) >= tags_max:
+            break
+        take(t)
+    for t in unknown:
+        if len(chosen) >= tags_max:
+            break
+        take(t)
+
+    return chosen
+
 
 
 def catalog_asset_ids(s, limit: int | None = None) -> list[int]:
@@ -103,6 +185,7 @@ def ask_cefr(data: bytes, mime: str | None, exclude: list[str], per_level: int) 
         method="POST",
         headers={
             "X-API-Key": config.AI_KEY,
+            "X-Inference-Priority": "background",
             "Content-Type": mime or "image/jpeg",
         },
     )
@@ -161,21 +244,19 @@ def enrich_asset(s, asset_id: int, per_level: int = 3, dry_run: bool = False,
     passed_new = [t for t in new if (t.get("score") or 0) >= TAG_PASS]
     dropped_new = [t for t in new if (t.get("score") or 0) < TAG_PASS]
 
-    # Keep existing tags; append passing newcomers up to TAGS_MAX.
-    merged = []
+    # Keep existing + newcomers, but hard-cap A1/A2 and prefer higher bands
+    # so beginners cannot fill all TAGS_MAX seats.
+    combined = []
     for t in existing:
         item = dict(t)
         if item.get("score") is None:
             item["score"] = float(TAG_PASS)  # already on the picture; keep
-        merged.append(item)
-    for t in sorted(passed_new, key=lambda x: -(x.get("score") or 0)):
-        if len(merged) >= TAGS_MAX:
-            break
-        if str(t.get("word", "")).lower() in {
-            str(x.get("word", "")).lower() for x in merged
-        }:
-            continue
-        merged.append(t)
+        combined.append(item)
+    combined.extend(passed_new)
+    beginner_max = min(BEGINNER_MAX_PER_LEVEL, per_level)
+    merged = pack_tags_with_beginner_cap(
+        s, combined, tags_max=TAGS_MAX, beginner_max=beginner_max, per_level=per_level
+    )
 
     after_preview = band_counts(s, merged)
     result = {

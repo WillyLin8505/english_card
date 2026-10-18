@@ -41,8 +41,16 @@ POLICY = {
     "photo_tag.sense_missing": "deterministic",   # pack build fallback
     "sense.main_without_chinese": "model",        # P4: translate
     "sense.main_is_ai": "model",                  # P4: verify AI translation vs dictionaries
+    # 問題回報 #187: a dictionary meaning for the same slot, when there is one,
+    # is swapped in deterministically (tools/fix_native_quality.py apply);
+    # otherwise it needs a fresh translation (model, P4).
+    "sense.native_empty": "model",
+    "sense.native_has_latin": "model",
     "photo.fewer_than_3_tags": "model",           # P4: re-tag with the v12 prompt
     "entry.pos_unknown": "human",
+    "pronunciation.ipa_is_arpabet": "human",      # #188: needs a look, not a blind convert
+    "entry.full_without_ipa": "human",
+    "entry.full_without_audio": "human",
 }
 
 DDL = """
@@ -128,6 +136,72 @@ def fix_full_without_senses(s, run_id) -> int:
     return len(rows)
 
 
+def sense_fallback_updates(pack: dict) -> list[dict]:
+    """Tags whose pack already fell back to a main sense (fix_catalog_senses).
+
+    The learner-facing pack rewrites these in memory. The database row still
+    points at ``sense_id_before`` until a fixer writes the chosen sense back.
+    """
+    senses_by_id: dict = {}
+    for lx in pack.get("lexemes") or []:
+        for se in lx.get("senses") or []:
+            if se.get("id") is not None:
+                senses_by_id[se["id"]] = se
+    updates = []
+    for im in pack.get("catalog_images") or []:
+        for tag in im.get("tags") or []:
+            if not tag.get("sense_fallback"):
+                continue
+            new_id = tag.get("sense_id")
+            old_id = tag.get("sense_id_before")
+            if not new_id or new_id == old_id:
+                continue
+            before = senses_by_id.get(old_id)
+            if before is None:
+                rule = "photo_tag.sense_missing"
+            elif not (before.get("native") or "").strip():
+                rule = "photo_tag.sense_without_chinese"
+            else:
+                rule = "photo_tag.sense_low_priority"
+            updates.append({
+                "image_id": im["id"],
+                "old_sense_id": old_id,
+                "new_sense_id": new_id,
+                "lexeme_id": tag.get("lexeme_id"),
+                "rule": rule,
+            })
+    return updates
+
+
+def fix_sense_fallback_bindings(s, run_id, pack: dict) -> dict:
+    """Write each sense_fallback tag onto the main sense the pack already chose.
+
+    Same write as the other photo-tag rebinds: approved ``sense_images.sense_id``
+    only, logged in ``qc_changes``, skipped when that image is already bound to
+    the chosen sense. Does not change review status, notes, or delete a row.
+    """
+    done = {"rebound": 0, "skipped_duplicate": 0, "skipped_missing_row": 0}
+    for upd in sense_fallback_updates(pack):
+        row = s.execute(text(
+            "SELECT si.id, si.sense_id FROM sense_images si "
+            "WHERE si.image_asset_id = :i AND si.sense_id = :s "
+            "AND si.review_status = 'approved' ORDER BY si.id"),
+            {"i": upd["image_id"], "s": upd["old_sense_id"]}).first()
+        if not row or row[1] == upd["new_sense_id"]:
+            done["skipped_missing_row"] += 1
+            continue
+        dup = s.execute(text(
+            "SELECT 1 FROM sense_images WHERE image_asset_id = :i AND sense_id = :s AND id <> :id"),
+            {"i": upd["image_id"], "s": upd["new_sense_id"], "id": row[0]}).first()
+        if dup:
+            done["skipped_duplicate"] += 1
+            continue
+        _set(s, run_id, upd["rule"], "sense_images", row[0], "sense_id",
+             row[1], upd["new_sense_id"], "qc-deterministic")
+        done["rebound"] += 1
+    return done
+
+
 def fix_photo_tag_senses(s, run_id, pack: dict, violations: dict) -> dict:
     """Rebind a photo tag whose sense is low priority or has no Chinese to
     the sense that best fits the photo among the entry's main senses with
@@ -177,6 +251,8 @@ def apply_fixers(s, run_id, pack: dict, violations: dict) -> dict:
     out = {"db.stub_has_cefr": fix_stub_cefr(s, run_id),
            "db.full_without_senses": fix_full_without_senses(s, run_id)}
     out.update({f"photo_tag.senses.{k}": v for k, v in fix_photo_tag_senses(s, run_id, pack, violations).items()})
+    out.update({f"photo_tag.fallback.{k}": v
+                for k, v in fix_sense_fallback_bindings(s, run_id, pack).items()})
     return out
 
 

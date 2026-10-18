@@ -1,3 +1,4 @@
 @echo off
 cd /d "%~dp0"
-python serve_app.py --port 8123
+python start_services.py
+if errorlevel 1 pause

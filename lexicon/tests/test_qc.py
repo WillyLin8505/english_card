@@ -59,6 +59,21 @@ def test_compare_detects_regression():
     assert any("stub_in_pack" in x for x in bad) and any("word.present_full" in x for x in bad)
     assert qc.compare(before, before) == []
 
+def test_validate_flags_latin_and_empty_native_on_any_sense():
+    """問題回報 #187: every sense, not only the main one shown on the card."""
+    pack = {"lexemes": [
+        {"id": 1, "lemma": "table", "normalized": "table", "pos": "noun", "status": "full",
+         "senses": [{"id": 10, "native": "桌子", "priority": "main"},
+                    {"id": 11, "native": "背gammon遊戲"},
+                    {"id": 12, "native": ""},
+                    {"id": 13, "native": "家貓（Felis catus）"},   # 學名 note: exempt
+                    {"id": 14, "native": "DNA 檢測"}]},            # whitelisted abbreviation
+    ]}
+    v = qc.validate(pack)
+    assert v["sense.native_has_latin"] == [[1, "gammon"]]
+    assert v["sense.native_empty"] == [1]
+
+
 def test_compare_ignores_entries_added_during_a_run():
     before = {"metrics": {"full": 2, "v.sense.main_is_ai": 1}, "golden": {"rates": {}},
               "entry_ids": [1, 2], "v_ids": {"sense.main_is_ai": [1]}}

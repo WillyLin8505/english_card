@@ -1,0 +1,71 @@
+{
+  "_doc": "dispatch_tick.py settings (Grokbot token cut, 2026-10-18). Edit freely; read every tick.",
+  "agents_order": [
+    "Claude Code",
+    "Codex",
+    "Cursor CLI"
+  ],
+  "prefer": {
+    "Claude Code": [
+      216,
+      164,
+      217,
+      12,
+      166
+    ]
+  },
+  "reserved": {
+    "216": "Claude Code",
+    "164": "Claude Code",
+    "217": "Claude Code"
+  },
+  "_reserved_note": "??? 10/18?Claude Code ??? #216????? bug?? #164 ? #217????? #10?? #12???????Codex ????? #166????",
+  "multi_round_tasks": [
+    166,
+    167
+  ],
+  "unblock_after": {
+    "166": [
+      202
+    ]
+  },
+  "cooldown_hours": 12,
+  "night_last_launch": "06:15",
+  "night_safe_stop": "06:45",
+  "finish_grace_minutes": 10,
+  "alive_log_minutes": 45,
+  "limit_fallback_hours": {
+    "Claude Code": 5,
+    "Codex": 5,
+    "Cursor CLI": 6
+  },
+  "max_failures": 2,
+  "note_task": 13,
+  "note_refresh_minutes": 120,
+  "probe_cmd": {
+    "Claude Code": [
+      "C:\\Users\\USER\\AppData\\Roaming\\npm\\claude.cmd",
+      "-p",
+      "Reply with exactly: OK"
+    ],
+    "Codex": [
+      "C:\\Users\\USER\\AppData\\Roaming\\npm\\codex.cmd",
+      "exec",
+      "--skip-git-repo-check",
+      "Reply with exactly: OK"
+    ],
+    "Cursor CLI": [
+      "powershell",
+      "-NoProfile",
+      "-ExecutionPolicy",
+      "Bypass",
+      "-File",
+      "C:\\Users\\USER\\AppData\\Local\\cursor-agent\\cursor-agent.ps1",
+      "-p",
+      "--trust",
+      "Reply with exactly: OK"
+    ]
+  },
+  "_probe_note": "????????????? log ?? LIMIT ?????????????????????????",
+  "probe_interval_minutes": 60
+}

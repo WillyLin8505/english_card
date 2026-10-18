@@ -82,4 +82,103 @@ void main() {
     final anchors = [const Offset(100, 100), const Offset(110, 104), const Offset(250, 220)];
     expect([for (final p in place(anchors)) p.badge], [for (final p in place(anchors)) p.badge]);
   });
+
+  test('a label wider than the photo is narrowed to fit inside it (#61)', () {
+    const landscape = Size(343, 230);
+    final out = layoutPins([
+      const PinItem('long', Offset(170, 120), Size(420, 22)), // "semantic interpretations"
+      const PinItem('cup', Offset(60, 60), badge),
+    ], landscape);
+    final long = out.firstWhere((p) => p.id == 'long');
+    expect(long.badge.width, lessThanOrEqualTo(landscape.width - 12));
+    expect(long.badge.left, greaterThanOrEqualTo(0));
+    expect(long.badge.right, lessThanOrEqualTo(landscape.width));
+  });
+
+  test('wide labels on a short photo stay clear of every dot (#61)', () {
+    const landscape = Size(343, 230);
+    // Cache photos whose first five labels are wider than half the photo
+    // and whose dots share one column or sit on the bottom edge.
+    final cases = <List<PinItem>>[
+      // 45a5c580b2 橫式 — sunlit area used to sit on its own dot.
+      [
+        const PinItem('dirt', Offset(157, 44), Size(177, 22)),
+        const PinItem('rock', Offset(167, 97), Size(165, 22)),
+        const PinItem('post', Offset(305, 150), Size(189, 22)),
+        const PinItem('sunlit', Offset(171, 202), Size(189, 22)),
+        const PinItem('shadow', Offset(143, 115), Size(261, 22)),
+      ],
+      // 351a6f522a 橫式 — vestment covered itself, cross leader was 177px.
+      [
+        const PinItem('font', Offset(154, 143), Size(225, 22)),
+        const PinItem('robe', Offset(130, 71), Size(237, 22)),
+        const PinItem('incense', Offset(178, 104), Size(225, 22)),
+        const PinItem('cross', Offset(185, 14), Size(273, 22)),
+        const PinItem('vestment', Offset(247, 87), Size(285, 22)),
+      ],
+      // 02855cfd32 橫式 — five dots in the top-left corner, brown leader 146px.
+      [
+        const PinItem('wooden', Offset(86, 7), Size(149, 22)),
+        const PinItem('rustic', Offset(89, 9), Size(139, 22)),
+        const PinItem('weathered', Offset(93, 12), Size(165, 22)),
+        const PinItem('dark', Offset(96, 14), Size(145, 22)),
+        const PinItem('brown', Offset(100, 16), Size(117, 22)),
+      ],
+      // 2a9505d5d0 橫式 — one column of dots; badges cannot dodge them sideways.
+      [
+        const PinItem('undulating', Offset(172, 69), Size(177, 22)),
+        const PinItem('radiating', Offset(172, 92), Size(165, 22)),
+        const PinItem('concentric', Offset(172, 46), Size(177, 22)),
+        const PinItem('glistening', Offset(172, 138), Size(177, 22)),
+        const PinItem('textured', Offset(172, 23), Size(163, 22)),
+      ],
+      // 78f90762d1 橫式 — same column, wider badges. One cover is forced.
+      [
+        const PinItem('oxidation', Offset(172, 138), Size(165, 22)),
+        const PinItem('thermoluminescence', Offset(172, 92), Size(273, 22)),
+        const PinItem('chemiluminescence', Offset(172, 69), Size(261, 22)),
+        const PinItem('pyrolysis', Offset(172, 46), Size(165, 22)),
+        const PinItem('thermochromic', Offset(172, 23), Size(213, 22)),
+      ],
+    ];
+    final limit = landscape.shortestSide * 0.6;
+    for (final (caseIndex, items) in cases.indexed) {
+      final out = layoutPins(items, landscape);
+      expect(out, hasLength(items.length));
+      // The last case's badges are all too wide to sit beside the centre
+      // dots, and five of them do not fit in the four clear shelves.
+      final coverBudget = caseIndex == cases.length - 1 ? 1 : 0;
+      var covers = 0;
+      for (final p in out) {
+        expect(p.badge.left, greaterThanOrEqualTo(-0.5), reason: p.id);
+        expect(p.badge.top, greaterThanOrEqualTo(-0.5), reason: p.id);
+        expect(p.badge.right, lessThanOrEqualTo(landscape.width + 0.5), reason: p.id);
+        expect(p.badge.bottom, lessThanOrEqualTo(landscape.height + 0.5), reason: p.id);
+        expect(p.leaderLength, lessThanOrEqualTo(limit), reason: '${p.id} leader ${p.leaderLength}');
+        for (final it in items) {
+          if (p.badge.inflate(2).contains(it.anchor)) covers++;
+        }
+        for (final q in out) {
+          if (identical(p, q)) continue;
+          expect(p.badge.overlaps(q.badge), isFalse, reason: '${p.id} overlaps ${q.id}');
+        }
+      }
+      expect(covers, lessThanOrEqualTo(coverBudget), reason: 'case $caseIndex');
+    }
+  });
+
+  test('five crowded objects on a landscape photo keep every dot visible (#61)', () {
+    const landscape = Size(343, 230);
+    final anchors = [
+      const Offset(150, 110), const Offset(175, 118), const Offset(160, 140),
+      const Offset(190, 100), const Offset(140, 128),
+    ];
+    final out = layoutPins(
+        [for (final (i, a) in anchors.indexed) PinItem('p$i', a, const Size(104, 24))], landscape);
+    for (final p in out) {
+      for (final d in anchors) {
+        expect(p.badge.inflate(2).contains(d), isFalse, reason: '${p.id} covers a dot at $d');
+      }
+    }
+  });
 }

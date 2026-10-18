@@ -82,6 +82,7 @@ String describeTaggingError(Object e, String url) {
     return switch (e.statusCode) {
       401 => 'API Key 不正確（設定 → AI 辨識服務）',
       502 => 'AI 模型沒有回應，請確認 Ollama 已啟動',
+      451 => '這張照片含有成人內容，未加入相片冊',
       422 => '這張照片的辨識結果格式不完整，請稍後重新辨識',
       _ => e.message,
     };
@@ -97,7 +98,7 @@ String describeTaggingError(Object e, String url) {
 bool isOffline(Object e) =>
     e is http.ClientException ||
     e is TimeoutException ||
-    (e is TaggingApiException && e.statusCode == 502);
+    (e is TaggingApiException && (e.statusCode == 502 || e.statusCode == 503));
 
 class TaggingApiException implements Exception {
   final String message;

@@ -66,7 +66,7 @@ def commons_meta(file_name: str | None, url: str) -> dict:
         "action": "query", "titles": f"File:{file_name}", "prop": "imageinfo",
         "iiprop": "extmetadata|url", "format": "json"}))
     try:
-        data, _ = http.get("wikimedia", file_name, api, timeout=20, retries=1)
+        data, _ = http.get("wikimedia_commons", file_name, api, timeout=20, retries=1)
     except http.SourceError:
         return {"page": f"https://commons.wikimedia.org/wiki/File:{urllib.parse.quote(file_name)}"}
     pages = (data or {}).get("query", {}).get("pages", {})
@@ -99,11 +99,11 @@ def ensure_audio(s: Session, language: str, item: dict, source: str = "kaikki") 
     tmp = folder / f".tmp-{uuid.uuid4().hex}.part"
     try:
         try:
-            size, ctype = http.download("wikimedia", url, tmp)
+            size, ctype = http.download("wikimedia_commons", url, tmp)
         except http.SourceError:
             if not item.get("fallback_url"):
                 raise
-            size, ctype = http.download("wikimedia", item["fallback_url"], tmp)
+            size, ctype = http.download("wikimedia_commons", item["fallback_url"], tmp)
         if size == 0 or size > MAX_BYTES:
             raise ValueError(f"檔案大小異常（{size} bytes）")
         with open(tmp, "rb") as fh:

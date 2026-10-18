@@ -1,3 +1,4 @@
+import '../l10n/ui_text.dart';
 import 'dart:math' as math;
 import 'dart:async';
 
@@ -163,7 +164,8 @@ class _CameraScreenState extends State<CameraScreen>
     try {
       await c.setFlashMode(_torch ? FlashMode.off : FlashMode.torch);
       setState(() => _torch = !_torch);
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Flash toggle failed: $e');
       if (mounted) showToast(context, '這台裝置不支援閃光燈');
     }
   }
@@ -220,9 +222,9 @@ class _CameraScreenState extends State<CameraScreen>
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('拍照學單字', style: MFont.display),
+                              UiText('拍照學單字', style: MFont.display),
                               const SizedBox(height: MSpace.xxs),
-                              Text('即時辨識生活中的英文單字', style: MFont.caption),
+                              UiText('即時辨識生活中的英文單字', style: MFont.caption),
                             ],
                           ),
                         ),
@@ -329,12 +331,12 @@ class _CameraScreenState extends State<CameraScreen>
                                   TextButton.icon(
                                     onPressed: _openPicker,
                                     icon: const MSvg(MIcon.gallery20, size: 16),
-                                    label: const Text('選擇照片'),
+                                    label: const UiText('選擇照片'),
                                   ),
                                   TextButton.icon(
                                     onPressed: _starting ? null : _start,
                                     icon: const MSvg(MIcon.pulseDot, size: 16),
-                                    label: const Text('重試相機'),
+                                    label: const UiText('重試相機'),
                                   ),
                                 ],
                                 if (!scope.settings.taggingConfigured) ...[
@@ -342,7 +344,7 @@ class _CameraScreenState extends State<CameraScreen>
                                     onPressed: () => scope.navigator
                                         .selectTab(AppTab.settings),
                                     icon: const MSvg(MIcon.settings20, size: 16),
-                                    label: const Text('設定辨識'),
+                                    label: const UiText('設定辨識'),
                                   ),
                                 ],
                               ],
@@ -356,13 +358,15 @@ class _CameraScreenState extends State<CameraScreen>
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: MSpace.md, vertical: MSpace.xs + 2),
+                            constraints: const BoxConstraints(
+                                minWidth: 48, minHeight: 48),
                             decoration: MDecor.chipSurface(active: true),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 const MSvg(MIcon.chevronUp, size: 16),
                                 const SizedBox(width: MSpace.xs),
-                                Text(
+                                UiText(
                                     latest == null
                                         ? '先選一張照片開始學習'
                                         : '查看這張照片的單字',
@@ -474,6 +478,7 @@ class _Viewfinder extends StatelessWidget {
                   anchor: l.occ.anchor,
                   word: displayWord(l.entry.word),
                   zh: l.entry.meaning,
+                  entryType: l.entry.entryType,
                   linked:
                       l.entry.lexemeId != null || LexiconPack.instance.isEmpty),
           ],
@@ -483,7 +488,7 @@ class _Viewfinder extends StatelessWidget {
       content = ColoredBox(
         color: MColors.surfaceSoft,
         child: Center(
-          child: Text(
+          child: UiText(
             '尚未有可用相機或照片',
             style: MFont.manrope(14, FontWeight.w600, MColors.muted),
           ),
@@ -530,7 +535,7 @@ class _Viewfinder extends StatelessWidget {
                   radius: MRadii.md,
                   shadow: MShadows.card,
                 ),
-                child: Text(
+                child: UiText(
                   fallback != null
                       ? '${fallback!.assetPath != null ? '範例照片' : '最近的照片'}：點照片看單字，或按下方「選擇照片」。'
                       : '你可以按下方「選擇照片」，開始學單字。',

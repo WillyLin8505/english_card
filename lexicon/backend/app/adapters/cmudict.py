@@ -73,6 +73,11 @@ class CMUdict(SourceAdapter):
         self._load()
         parts = ctx.lemma.split()
         prons = [self._pron.get(p) for p in parts]
+        if not all(prons) and "-" in ctx.lemma:
+            # A hyphenated compound (cross-section, bad-mouth, 問題回報
+            # #209): not in cmudict as one token, but said as its parts.
+            parts = ctx.lemma.split("-")
+            prons = [self._pron.get(p) for p in parts]
         if not all(prons):
             return None
         return {"parts": parts, "prons": prons}

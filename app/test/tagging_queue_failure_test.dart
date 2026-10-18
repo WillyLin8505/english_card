@@ -69,4 +69,12 @@ void main() {
         reason: 'it waits in the queue and is retried later');
     expect(repo.photos.where((p) => p.taggingStatus == TaggingStatus.failed), isEmpty);
   });
+
+  test('adult content is removed and never blocks later photos', () async {
+    final (repo, calls) = await run(451);
+    expect(repo.photo('p0'), isNull);
+    expect(repo.photos.where((p) => p.taggingStatus == TaggingStatus.done),
+        hasLength(2));
+    expect(calls, 3);
+  });
 }

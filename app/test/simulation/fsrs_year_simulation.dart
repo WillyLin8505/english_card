@@ -11,6 +11,7 @@ import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:photo_english_app/models/learning_card.dart';
+import 'package:photo_english_app/models/word_entry.dart';
 import 'package:photo_english_app/services/flashcard_session.dart';
 import 'package:photo_english_app/services/fsrs_scheduler.dart';
 import 'package:photo_english_app/services/word_database_repository.dart';
@@ -19,7 +20,8 @@ import 'learner_simulation.dart' show allCards;
 
 void main() {
   test('a year of reviews keeps the desired retention', () {
-    final retention = double.parse(Platform.environment['SIM_RETENTION'] ?? '0.9');
+    final retention =
+        double.parse(Platform.environment['SIM_RETENTION'] ?? '0.9');
     final rnd = Random(3);
     var now = DateTime(2026, 1, 1, 20);
     final repo = WordDatabaseRepository(clock: () => now)
@@ -29,7 +31,18 @@ void main() {
     final intervals = <int>[];
     for (var day = 0; day < 365; day++) {
       for (var i = 0; i < 10 && day < 200; i++) {
-        repo.addWord(word: 'w${words++}', pos: 'noun', meaning: '意思', level: 'A2');
+        final w = 'w${words++}';
+        // A buildable cloze needs one real sentence; the words themselves are
+        // placeholders, so the content is irrelevant to the retention check.
+        final entry =
+            repo.addWord(word: w, pos: 'noun', meaning: '意思', level: 'A2');
+        repo.editEntry(
+          entry.copyWith(examples: [
+            WordExample(
+                text: 'I see a $w every day.', translation: '我每天看到一個$w。')
+          ]),
+          {WordField.examples},
+        );
       }
       final s = FlashcardSession(repo, random: rnd);
       var shown = 0;
@@ -41,7 +54,8 @@ void main() {
         if (c.fsrs.state == FsrsCardState.newCard) {
           newCards++;
           r = rnd.nextDouble() < 0.7 ? Rating.good : Rating.again;
-        } else if (c.fsrs.lastReview != null && now.difference(c.fsrs.lastReview!).inHours < 20) {
+        } else if (c.fsrs.lastReview != null &&
+            now.difference(c.fsrs.lastReview!).inHours < 20) {
           r = Rating.good; // the same-day Again repeat
         } else {
           reviews++;
@@ -51,7 +65,9 @@ void main() {
         }
         s.rate(r);
         final after = repo.card(c.id)!;
-        if (r == Rating.good && after.fsrs.scheduledDays > 0) intervals.add(after.fsrs.scheduledDays);
+        if (r == Rating.good && after.fsrs.scheduledDays > 0) {
+          intervals.add(after.fsrs.scheduledDays);
+        }
         shown++;
         now = now.add(const Duration(seconds: 10));
       }
@@ -61,13 +77,19 @@ void main() {
     final rate = remembered / reviews;
     intervals.sort();
     final report = {
-      'desired_retention': retention, 'observed_retention': rate, 'reviews': reviews,
-      'new_cards': newCards, 'cards': allCards(repo).length,
-      'median_interval': intervals[intervals.length ~/ 2], 'max_interval': intervals.last,
-      'busiest_day': perDay.reduce(max), 'last_month_avg': perDay.skip(335).reduce((a, b) => a + b) / 30,
+      'desired_retention': retention,
+      'observed_retention': rate,
+      'reviews': reviews,
+      'new_cards': newCards,
+      'cards': allCards(repo).length,
+      'median_interval': intervals[intervals.length ~/ 2],
+      'max_interval': intervals.last,
+      'busiest_day': perDay.reduce(max),
+      'last_month_avg': perDay.skip(335).reduce((a, b) => a + b) / 30,
     };
     // ignore: avoid_print
     print(const JsonEncoder.withIndent(' ').convert(report));
-    expect((rate - retention).abs(), lessThan(0.04), reason: 'FSRS should hit its target retention');
+    expect((rate - retention).abs(), lessThan(0.04),
+        reason: 'FSRS should hit its target retention');
   });
 }

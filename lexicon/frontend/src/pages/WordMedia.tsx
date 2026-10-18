@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { layoutPins } from "../pinLayout";
 import { api } from "../api";
-import { ErrorBox, Link, scoreText, TagScores } from "../ui";
+import { cefrSummary, ErrorBox, levelText, levelWhy, Link, scoreText, TagScores } from "../ui";
 
 export type WordAudio = {
   id: number; lexeme_id: number; pos: string; accent: string | null; default: boolean; status: string;
@@ -15,12 +15,15 @@ export type WordImage = {
   license_url: string | null; page_url: string | null; semantic_score: number | null; tag_status: string;
   tags: { word: string; pos: string | null; point: [number, number] | null;
           box: [number, number, number, number] | null; native: string | null;
-          score?: number | null }[];
+          score?: number | null; cefr?: string | null; modelLevel?: string | null;
+          cefrSource?: string | null; cefrLemma?: string | null; cefrCoreWord?: string | null }[];
   /** Labels under 80%: listed under the picture, never drawn on it. */
-  dropped_tags?: { word: string; pos: string | null; score?: number | null }[] | null;
+  dropped_tags?: { word: string; pos: string | null; score?: number | null;
+                   cefr?: string | null; modelLevel?: string | null; dropReason?: string | null }[] | null;
 };
 
 type Tag = WordImage["tags"][number];
+
 
 let measureCtx: CanvasRenderingContext2D | null = null;
 function textWidth(text: string, font: string) {
@@ -56,6 +59,7 @@ function TaggedImage({ im, lemma, alt }: { im: WordImage; lemma: string; alt: st
     return layoutPins(tags.map((t, i) => {
       const [x, y] = anchorOf(t)!;
       const w = 22 + textWidth(t.word, "600 12px sans-serif")
+        + 4 + textWidth(levelText(t), "700 10px sans-serif")
         + (t.native ? 4 + textWidth(t.native, "11px sans-serif") : 0)
         + 4 + textWidth(scoreText(t.score), "600 10px sans-serif");
       return { id: String(i), anchor: { x: x * size.w, y: y * size.h }, w, h: 22 };
@@ -86,6 +90,7 @@ function TaggedImage({ im, lemma, alt }: { im: WordImage; lemma: string; alt: st
           <span key={p.id} className={`img-tag ${self(t) ? "img-tag-self" : ""}`}
                 style={{ left: p.badge.l, top: p.badge.t, width: p.badge.r - p.badge.l }}>
             <b>{t.word}</b>
+            <em title={levelWhy(t)}>{levelText(t)}</em>
             {t.native && <small>{t.native}</small>}
             <i className="img-tag-score" title="辨識分數">{scoreText(t.score)}</i>
           </span>
@@ -183,15 +188,16 @@ export default function WordMedia({ lemma, display, audio, images, imagesPending
                 <small className="muted">
                   {im.tag_status === "done" ? `AI 標籤 ${im.tags.length} 個`
                     : im.tag_status === "failed" ? "AI 標籤失敗"
-                    : im.tags.length > 0 ? `AI 標籤 ${im.tags.length} 個（已評分；不足 8 個，稍後再補看）`
+                    : im.tags.length > 0 ? `AI 標籤 ${im.tags.length} 個（A1～C2 尚未各滿 3 個）`
                     : "AI 標籤處理中"}
+                  {im.tags.length > 0 && ` · ${cefrSummary(im.tags)}`}
                   {im.semantic_score != null && ` · 語意分數 ${im.semantic_score}`}
                   {" · "}{im.license_code}{im.author ? ` · ${im.author.slice(0, 60)}` : ""}
                   {im.page_url && <> · <a href={im.page_url} target="_blank" rel="noreferrer">來源 ↗</a></>}
                 </small>
                 <TagScores tags={im.tags} word={lemma} />
                 {(im.dropped_tags?.length ?? 0) > 0 && <details>
-                  <summary className="muted">未通過的標籤（辨識分數 &lt; 80%）{im.dropped_tags!.length} 個</summary>
+                  <summary className="muted">未採用／待審核的標籤 {im.dropped_tags!.length} 個</summary>
                   <TagScores tags={im.dropped_tags} word={lemma} label="未通過的 AI 標籤" />
                 </details>}
               </figcaption>

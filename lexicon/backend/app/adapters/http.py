@@ -202,23 +202,35 @@ def post_json(source: str, url: str, payload: dict, *, timeout: float = 60,
         raise SourceError("unavailable", f"連不上：{e.reason}") from e
 
 
-def download(source: str, url: str, dest, *, timeout: float = 60) -> tuple[int, str | None]:
-    """Stream a file to [dest] (a temp path). Returns (bytes, content-type)."""
-    _wait_turn(source)
-    started = time.time()
-    req = urllib.request.Request(url, headers={"User-Agent": config.USER_AGENT})
-    try:
-        with urllib.request.urlopen(req, timeout=timeout) as r, open(dest, "wb") as fh:
-            size = 0
-            while chunk := r.read(1 << 16):
-                fh.write(chunk)
-                size += len(chunk)
-            ctype = r.headers.get("Content-Type")
-        _account(source, started, ok=True)
-        return size, ctype
-    except urllib.error.HTTPError as e:
-        _account(source, started, ok=False)
-        raise SourceError("http", f"HTTP {e.code}", retryable=e.code >= 500) from e
-    except (urllib.error.URLError, TimeoutError, OSError) as e:
-        _account(source, started, ok=False)
-        raise SourceError("network", f"{type(e).__name__}: {e}") from e
+def download(source: str, url: str, dest, *, timeout: float = 60,
+             retries: int = 1) -> tuple[int, str | None]:
+    """Stream a file to [dest] (a temp path). Returns (bytes, content-type).
+    A 429 waits as long as the source asks and retries, same as get() —
+    a single rate-limit reply must not fail (and breaker-trip) the download."""
+    for attempt in range(retries + 1):
+        _wait_turn(source)
+        started = time.time()
+        req = urllib.request.Request(url, headers={"User-Agent": config.USER_AGENT})
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as r, open(dest, "wb") as fh:
+                size = 0
+                while chunk := r.read(1 << 16):
+                    fh.write(chunk)
+                    size += len(chunk)
+                ctype = r.headers.get("Content-Type")
+            _account(source, started, ok=True)
+            return size, ctype
+        except urllib.error.HTTPError as e:
+            _account(source, started, ok=False)
+            if e.code == 429 and attempt < retries:
+                try:
+                    time.sleep(min(30.0, float(e.headers.get("Retry-After") or 5)))
+                except ValueError:
+                    time.sleep(5)
+                continue
+            raise SourceError("http", f"HTTP {e.code}", retryable=e.code in (429, 500, 502,
+                                                                             503, 504)) from e
+        except (urllib.error.URLError, TimeoutError, OSError) as e:
+            _account(source, started, ok=False)
+            raise SourceError("network", f"{type(e).__name__}: {e}") from e
+    raise AssertionError("unreachable")

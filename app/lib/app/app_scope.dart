@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 
 import '../services/app_settings.dart';
 import '../services/cefr_lexicon.dart';
@@ -8,6 +8,7 @@ import '../services/speaker.dart';
 import '../services/tagging_queue.dart';
 import '../services/word_database_repository.dart';
 import '../services/word_enricher.dart';
+import '../widgets/mobile/common.dart';
 
 /// The bottom tabs: the Figma bar (拍照 / 相片冊 / 單字本 / 設定) plus the
 /// Flashcard entry spec section 7 adds (底部導覽增加 Flashcard 入口；五個
@@ -75,7 +76,7 @@ class ActiveTabScope extends InheritedWidget {
 /// App-wide services, provided above the shell. [repository] is the
 /// current learning language's word database; switching language swaps
 /// it (and everything below rebuilds).
-class AppScope extends InheritedWidget {
+class AppScope extends InheritedNotifier<AppSettings> {
   final WordDatabaseRepository repository;
   final AppSettings settings;
   final PhotoStore photoStore;
@@ -106,15 +107,28 @@ class AppScope extends InheritedWidget {
     required this.switchLanguage,
     this.clock = DateTime.now,
     required super.child,
-  });
+  }) : super(notifier: settings);
 
   static AppScope of(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<AppScope>()!;
 
+  /// Plays a word's pronunciation using 設定's chosen English accent, and
+  /// tells the learner when nothing could be heard (問題回報 #176: a
+  /// silent failure — e.g. Chrome blocking autoplay — used to only be
+  /// written to the debug log).
+  Future<void> speak(BuildContext context, String text,
+      {required String language, String? audioUrl}) async {
+    final ok = await speaker.say(text,
+        language: language, audioUrl: audioUrl, accent: settings.englishAccent);
+    if (!ok && context.mounted) {
+      showToast(context, '播放發音失敗，請檢查音量或稍後再試');
+    }
+  }
+
   @override
-  bool updateShouldNotify(AppScope old) =>
-      repository != old.repository ||
-      settings != old.settings ||
-      photoStore != old.photoStore ||
-      navigator != old.navigator;
+  bool updateShouldNotify(AppScope oldWidget) =>
+      repository != oldWidget.repository ||
+      settings != oldWidget.settings ||
+      photoStore != oldWidget.photoStore ||
+      navigator != oldWidget.navigator;
 }

@@ -14,15 +14,18 @@ library;
 class Definition {
   final String pos;
   final String gloss;
+  final String? register;
 
-  const Definition({required this.pos, required this.gloss});
+  const Definition({required this.pos, required this.gloss, this.register});
 
   factory Definition.fromJson(Map<String, dynamic> json) => Definition(
         pos: json['pos'] as String? ?? '',
         gloss: json['gloss'] as String? ?? '',
+        register: json['register'] as String?,
       );
 
-  Map<String, dynamic> toJson() => {'pos': pos, 'gloss': gloss};
+  Map<String, dynamic> toJson() =>
+      {'pos': pos, 'gloss': gloss, 'register': register};
 }
 
 class Inflection {
@@ -97,6 +100,7 @@ class ExampleSentence {
 /// One typed relation from the downloaded lexicon. Rarity metadata is
 /// preserved so the learner UI can hide obscure distractors by default.
 class RelatedTerm {
+  final String? native;
   final String word;
   final String relation;
   final String? cefr;
@@ -105,6 +109,7 @@ class RelatedTerm {
   final bool hideByDefault;
 
   const RelatedTerm({
+    this.native,
     required this.word,
     required this.relation,
     this.cefr,
@@ -114,6 +119,7 @@ class RelatedTerm {
   });
 
   factory RelatedTerm.fromJson(Map<String, dynamic> json) => RelatedTerm(
+        native: json['native'] as String?,
         word: json['word'] as String? ?? '',
         relation: json['relation'] as String? ?? 'related',
         cefr: json['cefr'] as String?,
@@ -125,6 +131,7 @@ class RelatedTerm {
   Map<String, dynamic> toJson() => {
         'word': word,
         'relation': relation,
+        'native': native,
         'cefr': cefr,
         'zipf': zipf,
         'rarity': rarity,
@@ -164,6 +171,8 @@ class WordDetail {
   final String? root;
   final List<String> affixes;
   final String? morphologySource;
+  final String? morphology;
+  final String? etymology;
 
   final List<ExampleSentence> exampleSentences;
   final List<RelatedTerm> relations;
@@ -191,6 +200,8 @@ class WordDetail {
     this.root,
     this.affixes = const [],
     this.morphologySource,
+    this.morphology,
+    this.etymology,
     this.exampleSentences = const [],
     this.relations = const [],
   });
@@ -234,6 +245,8 @@ class WordDetail {
       root: json['root'] as String?,
       affixes: strings('affixes'),
       morphologySource: json['morphology_source'] as String?,
+      morphology: json['morphology'] as String?,
+      etymology: json['etymology'] as String?,
       exampleSentences: list('example_sentences', ExampleSentence.fromJson),
       relations: list('relations', RelatedTerm.fromJson),
     );
@@ -262,6 +275,8 @@ class WordDetail {
         'root': root,
         'affixes': affixes,
         'morphology_source': morphologySource,
+        'morphology': morphology,
+        'etymology': etymology,
         'example_sentences': exampleSentences.map((e) => e.toJson()).toList(),
         'relations': relations.map((r) => r.toJson()).toList(),
       };

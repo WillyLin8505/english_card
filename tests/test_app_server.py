@@ -11,12 +11,15 @@ server_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(server_module)
 
 
-def test_http_versioning_and_local_access_guards(monkeypatch):
+def test_http_versioning_and_local_access_guards(monkeypatch, tmp_path):
     calls = []
     def pack(target, native):
         calls.append((target, native))
-        return json.dumps({'target_language': target}).encode(), '"version1"'
+        return json.dumps({'target_language': target, 'native_language': native,
+                           'created_at': 'version1', 'lexemes': []}).encode(), '"version1"'
     monkeypatch.setattr(server_module, 'live_pack', pack)
+    from lexicon_transport import SnapshotStore
+    monkeypatch.setattr(server_module, '_http_snapshots', SnapshotStore(pack, tmp_path))
     server = ThreadingHTTPServer(('127.0.0.1', 0), server_module.Handler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
@@ -76,6 +79,14 @@ def test_tagger_proxy_keeps_key_on_server_and_rejects_foreign_requests(monkeypat
             raise OSError('offline')
         monkeypatch.setattr(server_module, 'urlopen', offline)
         assert request('GET', '/health')[0] == 502
+        from urllib.error import URLError
+        for error in (TimeoutError('slow'), URLError(TimeoutError('slow'))):
+            def timed_out(*args, **kwargs):
+                raise error
+            monkeypatch.setattr(server_module, 'urlopen', timed_out)
+            status, body = request('POST', '/tag', b'photo')
+            assert status == 504
+            assert json.loads(body)['code'] == 'tagger_timeout'
     finally:
         server.shutdown()
         server.server_close()
@@ -131,3 +142,13 @@ def test_a_word_without_data_in_this_direction_is_a_stub():
     out = {w['id']: w for w in server_module.merge_catalog(exported, meta)}
     assert out[1]['status'] == 'full' and out[1]['senses']
     assert out[2]['status'] == 'stub' and 'senses' not in out[2]
+
+
+def test_pack_body_is_gzipped_once_per_version():
+    """問題回報 #140: the ~30 MB pack goes out gzipped."""
+    import gzip
+    import serve_app
+    body = b'{"lexemes": []}' * 1000
+    out = serve_app.gzipped('"v1"', body)
+    assert gzip.decompress(out) == body and len(out) < len(body)
+    assert serve_app.gzipped('"v1"', b'other') is out

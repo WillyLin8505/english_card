@@ -6,8 +6,36 @@ import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 
 import 'app_settings.dart';
+import 'background_errors.dart';
 import 'lexicon_pack.dart';
 import 'word_database_repository.dart';
+
+/// Reconstruct the exact next snapshot, including deletions and ordering.
+/// Never accept a patch for a different cached version.
+Map<String, dynamic> applyDictionaryDelta(
+    Map<String, dynamic> base, Map<String, dynamic> patch) {
+  if (patch['delta_version'] != 1 ||
+      patch['base_version'] != base['created_at'] ||
+      patch['metadata'] is! Map || patch['order'] is! List ||
+      patch['upserts'] is! List) {
+    throw const FormatException('Invalid dictionary delta');
+  }
+  final rows = <int, dynamic>{
+    for (final row in base['lexemes'] as List) row['id'] as int: row,
+  };
+  for (final row in patch['upserts'] as List) {
+    rows[row['id'] as int] = row;
+  }
+  final order = (patch['order'] as List).cast<int>();
+  if (order.toSet().length != order.length ||
+      order.any((id) => !rows.containsKey(id))) {
+    throw const FormatException('Incomplete dictionary delta');
+  }
+  return {
+    ...Map<String, dynamic>.from(patch['metadata'] as Map),
+    'lexemes': [for (final id in order) rows[id]],
+  };
+}
 
 /// Read-only master dictionary updates. Personal edits and review state remain
 /// in the learner repository. Never send admin credentials to the browser.
@@ -23,7 +51,13 @@ class DictionarySync extends ChangeNotifier {
   bool _disposed = false;
   String status = '正在連接詞庫…';
   DateTime? lastSuccess;
+  /// True only while [status] holds a failure message. Screens that show the
+  /// connecting/connected text as permanent chrome should hide it otherwise —
+  /// those two states are debugging noise, not something learners need
+  /// (問題回報 #260); the failure message is.
+  bool hasError = false;
   String? _activePair;
+  final _forceFull = <String>{};
 
   Uri endpoint(String target, String native) {
     const base = String.fromEnvironment('DICTIONARY_URL');
@@ -69,7 +103,8 @@ class DictionarySync extends ChangeNotifier {
   Future<void> _sendMissingQuietly() async {
     try {
       await sendMissing();
-    } catch (_) {
+    } catch (e) {
+      debugPrint('DictionarySync: sendMissing failed: $e');
       // Offline: try again on the next refresh.
     }
   }
@@ -89,6 +124,13 @@ class DictionarySync extends ChangeNotifier {
     unawaited(refresh());
   }
 
+  void _succeeded() {
+    lastSuccess = DateTime.now();
+    status = '已連接詞庫 · 每 30 秒自動更新';
+    hasError = false;
+    BackgroundErrors.instance.clear(this);
+  }
+
   Future<void> refresh() async {
     if (_disposed || _running || _settings == null || _repository == null) {
       return;
@@ -105,12 +147,18 @@ class DictionarySync extends ChangeNotifier {
       if (_activePair != pair) {
         final saved = _cache?.get(pair);
         if (saved != null) {
-          final candidate = LexiconPack()
-            ..loadJson(jsonDecode(saved) as Map<String, dynamic>);
-          if (candidate.target == target && candidate.native == native) {
-            LexiconPack.instance
-                .loadJson(jsonDecode(saved) as Map<String, dynamic>);
+          try {
+            final candidate = LexiconPack()
+              ..loadJson(jsonDecode(saved) as Map<String, dynamic>);
+            if (candidate.target != target || candidate.native != native) {
+              throw const FormatException('Wrong cached dictionary language');
+            }
+            LexiconPack.instance.replaceWith(candidate);
             repo.linkLexicon(LexiconPack.instance);
+          } catch (_) {
+            await _cache?.delete(pair);
+            await LexiconPack.instance.load(target: target, native: native);
+            if (current()) repo.linkLexicon(LexiconPack.instance);
           }
         } else {
           await LexiconPack.instance.load(target: target, native: native);
@@ -119,24 +167,43 @@ class DictionarySync extends ChangeNotifier {
         _activePair = pair;
       }
       final cachedVersion = LexiconPack.instance.version;
+      final saved = _cache?.get(pair);
+      final canReuse = !_forceFull.contains(pair) && saved != null &&
+          cachedVersion != null && LexiconPack.instance.target == target &&
+          LexiconPack.instance.native == native;
+      final uri = endpoint(target, native);
       final response = await client
-          .get(endpoint(target, native), headers: {
-            if (cachedVersion != null && _cache?.get(pair) != null)
+          .get(uri.replace(queryParameters: {
+            ...uri.queryParameters,
+            if (canReuse) 'since': cachedVersion,
+          }), headers: {
+            if (canReuse)
               'If-None-Match': '"$cachedVersion"',
           })
           .timeout(const Duration(seconds: 60));
       if (!current()) return;
-      if (response.statusCode == 304 && _cache?.get(pair) != null) {
-        lastSuccess = DateTime.now();
-        status = '已連接詞庫 · 每 30 秒自動更新';
+      if (response.statusCode == 304 && canReuse) {
+        _succeeded();
         await _sendMissingQuietly();
         return;
       }
       if (response.statusCode != 200) {
         throw StateError('Dictionary unavailable');
       }
-      final raw = utf8.decode(response.bodyBytes);
-      final json = jsonDecode(raw) as Map<String, dynamic>;
+      var raw = utf8.decode(response.bodyBytes);
+      var json = jsonDecode(raw) as Map<String, dynamic>;
+      if (json.containsKey('delta_version')) {
+        try {
+          if (!canReuse) throw const FormatException('No base for delta');
+          json = applyDictionaryDelta(
+              jsonDecode(saved) as Map<String, dynamic>, json);
+          raw = jsonEncode(json);
+        } catch (_) {
+          // Recover with a full request next time, preserving the last good data.
+          _forceFull.add(pair);
+          rethrow;
+        }
+      }
       // Parse fully before replacing the last good pack/cache.
       final candidate = LexiconPack()..loadJson(json);
       if (candidate.target != target ||
@@ -146,15 +213,20 @@ class DictionarySync extends ChangeNotifier {
       }
       if (LexiconPack.instance.version != candidate.version ||
           _cache?.get(pair) != raw) {
-        LexiconPack.instance.loadJson(json);
+        LexiconPack.instance.replaceWith(candidate);
         repo.linkLexicon(LexiconPack.instance);
         await _cache?.put(pair, raw);
       }
-      lastSuccess = DateTime.now();
-      status = '已連接詞庫 · 每 30 秒自動更新';
+      _forceFull.remove(pair);
+      _succeeded();
       await _sendMissingQuietly();
-    } catch (_) {
-      if (current()) status = '暫時無法連線 · 使用已儲存的詞庫，稍後自動重試';
+    } catch (e) {
+      debugPrint('DictionarySync: refresh failed: $e');
+      if (current()) {
+        status = '暫時無法連線 · 使用已儲存的詞庫，稍後自動重試';
+        hasError = true;
+        BackgroundErrors.instance.report(this, status, retry: refresh);
+      }
     } finally {
       _running = false;
       if (!_disposed) notifyListeners();
@@ -169,6 +241,7 @@ class DictionarySync extends ChangeNotifier {
     _timer?.cancel();
     _settings?.removeListener(_kick);
     client.close();
+    BackgroundErrors.instance.clear(this);
     super.dispose();
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_tts/flutter_tts.dart';
@@ -7,8 +9,12 @@ import 'package:flutter_tts/flutter_tts.dart';
 /// (移除例句整句發音).
 abstract interface class Speaker {
   /// Plays [audioUrl] if there is one, else speaks [text] in [language]
-  /// ("en", "fr", "zh-TW"). Never throws.
-  Future<void> say(String text, {required String language, String? audioUrl});
+  /// ("en", "fr", "zh-TW"), using [accent] ("en-GB" or "en-US") when
+  /// [language] is "en". Never throws; returns false when nothing could be
+  /// played (e.g. a browser blocking autoplay) so the caller can tell the
+  /// learner there was no sound.
+  Future<bool> say(String text,
+      {required String language, String? audioUrl, String accent = 'en-GB'});
 
   Future<void> stop();
 }
@@ -17,32 +23,51 @@ class DeviceSpeaker implements Speaker {
   FlutterTts? _tts;
   AudioPlayer? _player;
 
-  static String _locale(String language) => switch (language) {
+  static String _locale(String language, String accent) => switch (language) {
         'fr' => 'fr-FR',
         'zh-TW' => 'zh-TW',
-        // British English is the default playback (spec section 7).
-        _ => 'en-GB',
+        _ => accent,
       };
 
   @override
-  Future<void> say(String text,
-      {required String language, String? audioUrl}) async {
+  Future<bool> say(String text,
+      {required String language,
+      String? audioUrl,
+      String accent = 'en-GB'}) async {
     await stop();
     if (audioUrl != null && audioUrl.isNotEmpty) {
       try {
         await (_player ??= AudioPlayer()).play(UrlSource(audioUrl));
-        return;
+        return true;
       } catch (e) {
         debugPrint('Recording failed, using TTS: $e');
       }
     }
     try {
       final tts = _tts ??= FlutterTts();
-      await tts.setLanguage(_locale(language));
+      // speak()'s own future resolves before the utterance actually
+      // finishes on some platforms (notably web), so success/failure is
+      // tracked through these handlers instead — on Chrome, a blocked
+      // autoplay fires onError rather than rejecting speak() itself.
+      final done = Completer<bool>();
+      tts.setCompletionHandler(() {
+        if (!done.isCompleted) done.complete(true);
+      });
+      tts.setCancelHandler(() {
+        if (!done.isCompleted) done.complete(false);
+      });
+      tts.setErrorHandler((msg) {
+        debugPrint('TTS error: $msg');
+        if (!done.isCompleted) done.complete(false);
+      });
+      await tts.setLanguage(_locale(language, accent));
       await tts.setSpeechRate(kIsWeb ? 0.8 : 0.45);
       await tts.speak(text);
+      return await done.future.timeout(const Duration(seconds: 6),
+          onTimeout: () => true);
     } catch (e) {
       debugPrint('TTS unavailable: $e');
+      return false;
     }
   }
 
@@ -51,7 +76,9 @@ class DeviceSpeaker implements Speaker {
     try {
       await _player?.stop();
       await _tts?.stop();
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Speaker stop failed: $e');
+    }
   }
 }
 
@@ -60,9 +87,13 @@ class SilentSpeaker implements Speaker {
   final said = <String>[];
 
   @override
-  Future<void> say(String text,
-          {required String language, String? audioUrl}) async =>
-      said.add(text);
+  Future<bool> say(String text,
+      {required String language,
+      String? audioUrl,
+      String accent = 'en-GB'}) async {
+    said.add(text);
+    return true;
+  }
 
   @override
   Future<void> stop() async {}

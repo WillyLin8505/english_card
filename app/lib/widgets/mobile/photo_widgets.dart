@@ -1,11 +1,15 @@
+import '../../services/learning_content.dart';
 import 'dart:io';
+import 'dart:math' as math;
+import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, listEquals;
 import 'package:flutter/material.dart';
 
 import '../../app/app_scope.dart';
 import '../../models/learning_card.dart';
 import '../../models/photo.dart';
+import '../../services/photo_store.dart';
 import '../../theme/mobile_theme.dart';
 import 'common.dart';
 import 'm_icon.dart';
@@ -48,13 +52,34 @@ class PhotoImage extends StatelessWidget {
   final Photo photo;
   final BoxFit fit;
   final Alignment alignment;
+  final WidgetBuilder? imageErrorBuilder;
+  final ValueChanged<bool>? onImageState;
 
   const PhotoImage(
     this.photo, {
     super.key,
     this.fit = BoxFit.cover,
     this.alignment = Alignment.center,
+    this.imageErrorBuilder,
+    this.onImageState,
   });
+
+  void _report(bool ready) {
+    if (onImageState == null) return;
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => onImageState?.call(ready));
+  }
+
+  Widget _error(BuildContext context) {
+    _report(false);
+    return imageErrorBuilder?.call(context) ?? _placeholder();
+  }
+
+  Widget _frame(
+      BuildContext context, Widget child, int? frame, bool synchronous) {
+    if (synchronous || frame != null) _report(true);
+    return child;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -66,9 +91,14 @@ class PhotoImage extends StatelessWidget {
         alignment: alignment,
         width: double.infinity,
         height: double.infinity,
-        errorBuilder: (_, __, ___) => _placeholder(),
+        frameBuilder: _frame,
+        errorBuilder: (context, _, __) => _error(context),
       );
     }
+    if (photo.storedKey != null) {
+      return _StoredPhotoImage(photoImage: this);
+    }
+    _report(false);
     return _placeholder();
   }
 
@@ -77,11 +107,6 @@ class PhotoImage extends StatelessWidget {
     if (photo.networkUrl != null) return NetworkImage(photo.networkUrl!);
     if (photo.filePath != null && !kIsWeb) {
       return FileImage(File(photo.filePath!));
-    }
-    if (photo.storedKey != null) {
-      final bytes =
-          AppScope.of(context).photoStore.storedBytes(photo.storedKey!);
-      if (bytes != null) return MemoryImage(bytes);
     }
     return null;
   }
@@ -97,6 +122,70 @@ class PhotoImage extends StatelessWidget {
   }
 }
 
+/// Retain one read per mounted photo instead of rereading on every rebuild.
+class _StoredPhotoImage extends StatefulWidget {
+  final PhotoImage photoImage;
+  const _StoredPhotoImage({required this.photoImage});
+
+  @override
+  State<_StoredPhotoImage> createState() => _StoredPhotoImageState();
+}
+
+class _StoredPhotoImageState extends State<_StoredPhotoImage> {
+  PhotoStore? _store;
+  String? _key;
+  Future<Uint8List?>? _bytes;
+
+  void _load() {
+    final store = AppScope.of(context).photoStore;
+    final key = widget.photoImage.photo.storedKey!;
+    if (identical(store, _store) && key == _key) return;
+    _store = store;
+    _key = key;
+    _bytes = store.storedBytes(key);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _load();
+  }
+
+  @override
+  void didUpdateWidget(_StoredPhotoImage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _load();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final view = widget.photoImage;
+    return FutureBuilder<Uint8List?>(
+      future: _bytes,
+      builder: (context, snapshot) {
+        // FutureBuilder retains old data/errors while a replacement read is
+        // pending. Neither belongs to the new photo's load attempt.
+        if (snapshot.connectionState != ConnectionState.done) {
+          return view._placeholder();
+        }
+        if (snapshot.hasError) {
+          return view._error(context);
+        }
+        if (snapshot.data == null) return view._error(context);
+        return Image(
+          image: MemoryImage(snapshot.data!),
+          fit: view.fit,
+          alignment: view.alignment,
+          width: double.infinity,
+          height: double.infinity,
+          frameBuilder: view._frame,
+          errorBuilder: (context, _, __) => view._error(context),
+        );
+      },
+    );
+  }
+}
+
 /// One label badge (Figma "pin-Coffee"): the word and its native meaning
 /// on a white pill. [PinnedPhoto] draws the focal dot on the object and a
 /// leader line from the dot to the badge. [large] is the camera view's
@@ -106,19 +195,27 @@ class PhotoImage extends StatelessWidget {
 class WordPin extends StatelessWidget {
   final String word;
   final String zh;
+  final String entryType;
   final bool large;
   final bool muted;
   final bool lifted;
   final bool linked;
 
+  /// The widest the badge may be (the photo's width). A label that doesn't
+  /// fit on one line shows the word above its meaning, both wrapped in full
+  /// — never cut short with … (owner 2026-10-14: 標籤的單字跟說明展開).
+  final double? maxWidth;
+
   const WordPin({
     super.key,
     required this.word,
     required this.zh,
+    this.entryType = 'word',
     this.large = false,
     this.muted = false,
     this.lifted = false,
     this.linked = true,
+    this.maxWidth,
   });
 
   static TextStyle wordStyle(bool large) =>
@@ -130,58 +227,99 @@ class WordPin extends StatelessWidget {
   static String secondLine(String zh, bool linked) =>
       zh.isNotEmpty ? zh : (linked ? '' : '未收錄');
 
-  /// The badge's size, measured the way it will be laid out.
+  /// The badge's size, measured the way it will be laid out: one line, or
+  /// with [maxWidth] too narrow for that, the word above its meaning.
+  /// [base] is the surrounding DefaultTextStyle the badge's text inherits
+  /// (its line height).
   static Size badgeSize(String word, String zh, bool large, TextScaler scaler,
-      {bool linked = true}) {
+      {bool linked = true, double? maxWidth, TextStyle? base, String entryType = 'word'}) {
+    final second = secondLine(typedMeaning(zh, entryType), linked);
+    final line = _measure(word, second, large, scaler, null, base);
+    if (maxWidth == null || line.width <= maxWidth) return line;
+    return _measure(word, second, large, scaler, maxWidth, base);
+  }
+
+  // Padding 10 + 10, border 1 + 1.
+  static const _sides = 22.0;
+
+  static Size _measure(String word, String second, bool large,
+      TextScaler scaler, double? stackedWidth, TextStyle? base) {
+    final inner = stackedWidth == null
+        ? double.infinity
+        : math.max(stackedWidth - _sides, 1.0);
     TextPainter measure(String text, TextStyle style) => TextPainter(
-        text: TextSpan(text: text, style: style),
+        text: TextSpan(
+            text: text, style: (base ?? const TextStyle()).merge(style)),
         textDirection: TextDirection.ltr,
         textScaler: scaler)
-      ..layout();
-    final second = secondLine(zh, linked);
+      ..layout(maxWidth: inner);
     final w = measure(word, wordStyle(large));
     final z = second.isEmpty ? null : measure(second, zhStyle(large));
-    final width =
-        20 + w.width + (z == null ? 0 : (large ? 6 : 4) + z.width) + 2;
-    final height = (large ? 12 : 8) +
-        (z == null ? w.height : (w.height > z.height ? w.height : z.height)) +
-        2;
-    return Size(width, height);
+    final vertical = (large ? 12 : 8) + 2;
+    if (stackedWidth == null) {
+      // +1: rounding must not push the meaning onto a second line.
+      return Size(
+          _sides + w.width + (z == null ? 0 : (large ? 6 : 4) + z.width) + 1,
+          vertical + math.max(w.height, z?.height ?? 0));
+    }
+    return Size(_sides + math.max(w.width, z?.width ?? 0),
+        vertical + w.height + (z == null ? 0 : 2 + z.height));
   }
 
   @override
   Widget build(BuildContext context) {
-    final second = secondLine(zh, linked);
+    final second = secondLine(typedMeaning(zh, entryType), linked);
+    final zhText = zh.isEmpty && !linked
+        ? zhStyle(large).copyWith(fontStyle: FontStyle.italic)
+        : zhStyle(large);
+    final stacked = maxWidth != null &&
+        badgeSize(word, zh, large, MediaQuery.textScalerOf(context),
+                    linked: linked, entryType: entryType, base: DefaultTextStyle.of(context).style)
+                .width >
+            maxWidth!;
     final badge = Container(
       padding: EdgeInsets.symmetric(horizontal: 10, vertical: large ? 6 : 4),
       decoration: MDecor.card(
         radius: MRadii.xl,
         borderColor: lifted
             ? MColors.primary
-            : (linked ? MColors.hairline : MColors.muted.withValues(alpha: 0.45)),
+            : (linked
+                ? MColors.hairline
+                : MColors.muted.withValues(alpha: 0.45)),
         shadow: lifted
             ? MShadows.pinLifted
             : (large ? MShadows.pin : MShadows.soft),
       ).copyWith(
         border: lifted ? Border.all(color: MColors.primary, width: 1.5) : null,
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.baseline,
-        textBaseline: TextBaseline.alphabetic,
-        children: [
-          Text(word, style: wordStyle(large)),
-          if (second.isNotEmpty) ...[
-            SizedBox(width: large ? 6 : 4),
-            Text(second,
-                style: zh.isEmpty && !linked
-                    ? zhStyle(large).copyWith(fontStyle: FontStyle.italic)
-                    : zhStyle(large)),
-          ],
-        ],
-      ),
+      child: stacked
+          ? Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(word, style: wordStyle(large)),
+                if (second.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(second, style: zhText),
+                ],
+              ],
+            )
+          // One line; squeezed by a narrower parent, the meaning moves
+          // under the word rather than splitting it or overflowing.
+          : Wrap(
+              spacing: large ? 6 : 4,
+              crossAxisAlignment: WrapCrossAlignment.end,
+              children: [
+                Text(word, style: wordStyle(large)),
+                if (second.isNotEmpty) Text(second, style: zhText),
+              ],
+            ),
     );
-    return muted ? Opacity(opacity: 0.55, child: badge) : badge;
+    final sized = maxWidth == null
+        ? badge
+        : ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: maxWidth!), child: badge);
+    return muted ? Opacity(opacity: 0.55, child: sized) : sized;
   }
 }
 
@@ -190,6 +328,7 @@ class PinData {
   final LabelPoint anchor;
   final String word;
   final String zh;
+  final String entryType;
   final bool muted;
 
   /// In the downloaded language pack (has a lexeme id).
@@ -200,6 +339,7 @@ class PinData {
     required this.anchor,
     required this.word,
     required this.zh,
+    this.entryType = 'word',
     this.muted = false,
     this.linked = true,
   });
@@ -219,6 +359,8 @@ class PinnedPhoto extends StatefulWidget {
   final ValueChanged<PinData>? onPinTap;
   final void Function(PinData pin, LabelPoint to)? onPinMoved;
   final Widget? overlay;
+  final WidgetBuilder? imageErrorBuilder;
+  final ValueChanged<bool>? onImageState;
 
   /// Bands at the top / bottom that labels keep clear of (chips or
   /// notices drawn over the photo).
@@ -237,6 +379,8 @@ class PinnedPhoto extends StatefulWidget {
     this.onPinTap,
     this.onPinMoved,
     this.overlay,
+    this.imageErrorBuilder,
+    this.onImageState,
     this.reserveTop = 0,
     this.reserveBottom = 0,
     this.avoid = const [],
@@ -250,6 +394,30 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
   String? _dragging;
   Offset _dragBy = Offset.zero;
 
+  // layoutPins tries a few hundred spots per label (~10 ms a photo), so the
+  // result is kept until the labels, their dots or the photo's size change —
+  // not recomputed on every drag frame.
+  List<Object>? _layoutKey;
+  List<PinPlacement> _layout = const [];
+
+  List<PinPlacement> _placements(List<PinItem> items, Size box) {
+    final key = <Object>[
+      box,
+      widget.reserveTop,
+      widget.reserveBottom,
+      ...widget.avoid,
+      for (final it in items) ...[it.id, it.anchor, it.badge],
+    ];
+    if (_layoutKey == null || !listEquals(_layoutKey, key)) {
+      _layoutKey = key;
+      _layout = layoutPins(items, box,
+          reserveTop: widget.reserveTop,
+          reserveBottom: widget.reserveBottom,
+          avoid: widget.avoid);
+    }
+    return _layout;
+  }
+
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
@@ -260,17 +428,17 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
           final geo = CoverGeometry(box, widget.photo);
           final scaler = MediaQuery.textScalerOf(context);
           final byId = {for (final p in widget.pins) p.id: p};
-          final placed = layoutPins([
+          final placed = _placements([
             for (final p in widget.pins)
               PinItem(
                   p.id,
                   geo.toBox(p.anchor),
-                  WordPin.badgeSize(p.word, p.zh, widget.largePins, scaler,
-                      linked: p.linked)),
-          ], box,
-              reserveTop: widget.reserveTop,
-              reserveBottom: widget.reserveBottom,
-              avoid: widget.avoid);
+                  WordPin.badgeSize(p.word, p.zh, widget.largePins, scaler, entryType: p.entryType,
+                      linked: p.linked,
+                      // layoutPins' margin: a long label wraps in full.
+                      maxWidth: box.width - 12,
+                      base: DefaultTextStyle.of(context).style)),
+          ], box);
           // While a label is dragged, it and its dot move together.
           PinPlacement shown(PinPlacement pl) => pl.id == _dragging
               ? PinPlacement(
@@ -282,7 +450,10 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
           return Stack(
             clipBehavior: Clip.hardEdge,
             children: [
-              Positioned.fill(child: PhotoImage(widget.photo)),
+              Positioned.fill(
+                  child: PhotoImage(widget.photo,
+                      imageErrorBuilder: widget.imageErrorBuilder,
+                      onImageState: widget.onImageState)),
               Positioned.fill(
                 child: IgnorePointer(
                   child: CustomPaint(
@@ -332,10 +503,12 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
                       child: WordPin(
                         word: byId[pl.id]!.word,
                         zh: byId[pl.id]!.zh,
+                        entryType: byId[pl.id]!.entryType,
                         large: widget.largePins,
                         muted: byId[pl.id]!.muted,
                         lifted: _dragging == pl.id,
                         linked: byId[pl.id]!.linked,
+                        maxWidth: pl.badge.width,
                       ),
                     ),
                   ),

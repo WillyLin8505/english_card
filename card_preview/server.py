@@ -8,8 +8,9 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit, parse_qs
 from repository import Repository
-from domain import KINDS, SECTIONS, RELATIONS, LIMITS, quality, prepare_exercise, validate_layout
+from domain import KINDS, SECTIONS, RELATIONS, LIMITS, quality, prepare_exercise, validate_layout, owned_candidates
 from state import State
+from published_state import PublishedState
 
 BASE = Path(__file__).resolve().parent
 
@@ -18,21 +19,11 @@ class PreviewService:
     def __init__(self, repo=None, state=None):
         self.repo = repo or Repository()
         self.state = state or State(BASE / 'data/preview.sqlite')
+        self.template_state = state if state is not None else PublishedState()
         self.token = secrets.token_urlsafe(32)
 
     def templates(self, target, native, template_id='default'):
-        upstream = self.repo.templates(target, native)
-        for item in upstream:
-            try:
-                validate_layout(item['draft'])
-            except (ValueError, TypeError, KeyError):
-                item['draft'] = None
-            for version in item['versions']:
-                try:
-                    validate_layout(version['layout'])
-                except (ValueError, TypeError, KeyError):
-                    version['layout'] = None
-        return {**self.state.templates(target, native, template_id), 'upstream': upstream}
+        return self.template_state.templates(target, native, template_id)
 
     def card(self, id, target, native):
         word = self.repo.entry(id, target, native)
@@ -43,7 +34,7 @@ class PreviewService:
         word['export_note'] = '預覽不核發匯出資格；交由正式匯出流程驗證'
         return word
 
-    def exercise(self, word, kind, sense):
+    def exercise(self, word, kind, sense, *, owned_lexeme_ids=None):
         if kind not in [k['id'] for k in KINDS]:
             raise ValueError('不支援的模板')
         bundle = None
@@ -54,9 +45,15 @@ class PreviewService:
             bundle = json.loads(candidate.read_text(encoding='utf-8'))
         if not bundle and kind in ('cloze', 'similar', 'photo_choice'):
             from domain import live_exercise
-            return live_exercise(word, kind, sense)
+            return live_exercise(word, kind, sense, owned_lexeme_ids=owned_lexeme_ids)
         if not bundle and kind == 'drag':
-            return self.repo.drag_exercise(word, sense)
+            result = self.repo.drag_exercise(word, sense)
+            options = result.get('options', [])
+            if (not owned_candidates([word], owned_lexeme_ids)
+                    or len(owned_candidates(options, owned_lexeme_ids)) != len(options)):
+                return {'kind': kind, 'sense_id': sense, 'available': False,
+                        'reasons': ['這張照片的練習詞籤尚未全部加入你的單字庫，請選擇其他題型。']}
+            return result
         option_cards = {word['id']: word}
         if bundle:
             if not isinstance(bundle, dict) or not isinstance(bundle.get('options', []), list) or len(bundle.get('options', [])) > 5:
@@ -69,7 +66,8 @@ class PreviewService:
                         option_cards[o['lexeme_id']] = self.repo.card(o['lexeme_id'], word['language'], word['native_language'])
                     except LookupError:
                         pass
-        return prepare_exercise(word, kind, sense, bundle, option_cards)
+        return prepare_exercise(word, kind, sense, bundle, option_cards,
+                                owned_lexeme_ids=owned_lexeme_ids)
 
 
 def make_handler(service):
@@ -120,12 +118,21 @@ def make_handler(service):
                     if not 0 < length <= 100_000 or not self.headers.get('Content-Type', '').startswith('application/json'):
                         raise ValueError('請求內容過大或格式錯誤')
                     body = json.loads(self.rfile.read(length))
-                    if path == '/api/templates/create':
-                        result = service.state.create(target, native, body.get('name'), body.get('layout'))
+                    if path.startswith('/api/exercise/'):
+                        if not isinstance(body, dict):
+                            raise ValueError('題目請求需為物件')
+                        owned = body.get('owned_lexeme_ids')
+                        if not isinstance(owned, list) or any(type(i) is not int or i <= 0 for i in owned):
+                            raise ValueError('需提供使用者持有詞條 ID 清單')
+                        word = service.repo.entry(int(path.rsplit('/', 1)[1]), target, native)
+                        result = service.exercise(word, q.get('kind', KINDS[0]['id']), int(q.get('sense', 0)),
+                                                  owned_lexeme_ids=set(owned))
+                    elif path == '/api/templates/create':
+                        result = service.template_state.create(target, native, body.get('name'), body.get('layout'))
                     elif path == '/api/templates/save':
-                        result = service.state.save(target, native, body['layout'], False, q.get('template_id', 'default'))
+                        result = service.template_state.save(target, native, body['layout'], False, q.get('template_id', 'default'))
                     elif path == '/api/templates/publish':
-                        result = service.state.save(target, native, body['layout'], True, q.get('template_id', 'default'))
+                        result = service.template_state.save(target, native, body['layout'], True, q.get('template_id', 'default'))
                     elif path == '/api/issues':
                         word = service.repo.entry(int(body['lexeme_id']), target, native)
                         valid_fields = {'layout', 'pos', 'senses', 'examples', 'pronunciation', 'sources', 'etymology'}
@@ -159,7 +166,7 @@ def make_handler(service):
                     file = service.repo.media(kind, int(id))
                     self.send_bytes(file.read_bytes(), mimetypes.guess_type(file.name)[0] or 'application/octet-stream')
                     return
-                elif path in ('/', '/admin.html', '/app.js', '/style.css'):
+                elif path in ('/', '/app.js', '/style.css'):
                     file = BASE / 'static' / ('index.html' if path == '/' else path[1:])
                     self.send_bytes(file.read_bytes(), {'.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8'}[file.suffix])
                     return

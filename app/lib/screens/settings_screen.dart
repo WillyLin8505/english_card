@@ -1,5 +1,7 @@
+import '../l10n/ui_text.dart';
 import '../services/learning_content.dart';
 import '../services/dictionary_sync.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import '../app/app_scope.dart';
@@ -141,7 +143,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             children: [
                               for (final e in supportedLanguages.entries)
                                 ChoiceChip(
-                                  label: Text(languageOptionLabel(e.key,
+                                  label: UiText(languageOptionLabel(e.key,
                                       learning: true)),
                                   selected: e.key == settings.learningLanguage,
                                   onSelected: _switching ||
@@ -160,7 +162,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             children: [
                               for (final e in supportedLanguages.entries)
                                 ChoiceChip(
-                                  label: Text(languageOptionLabel(e.key,
+                                  label: UiText(languageOptionLabel(e.key,
                                       learning: false)),
                                   selected: e.key == settings.nativeLanguage,
                                   onSelected: !nativeLanguageAvailable(e.key)
@@ -177,19 +179,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 ),
                             ],
                           ),
-                          _note('第一階段提供英文學習與繁體中文提示；其他語言會在對應詞庫發布後開放。'),
+                          _note('介面隨母語切換；學習內容依已發布的詞庫提供。'),
+                          if (settings.learningLanguage == 'en') ...[
+                            const SizedBox(height: 12),
+                            _label('發音腔調'),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                for (final a in const {
+                                  'en-GB': '英式（en-GB）',
+                                  'en-US': '美式（en-US）',
+                                }.entries)
+                                  ChoiceChip(
+                                    label: UiText(a.value),
+                                    selected: a.key == settings.englishAccent,
+                                    onSelected: (_) =>
+                                        settings.englishAccent = a.key,
+                                  ),
+                              ],
+                            ),
+                          ],
                         ],
                       ),
                       _Card(
                         title: '單字難度',
                         children: [
-                          Text(
-                            '目前程度 ${levelLabel(profile.cefr)}',
+                          UiText(
+                            '目前程度 ${ui(context, levelLabel(profile.cefr))}',
                             style:
                                 MFont.manrope(15, FontWeight.w800, MColors.ink),
                           ),
                           _note(
-                              '來源：${_sourceLabel(profile.source)}。新照片的單字會以這個程度為中心挑選；'
+                              '來源：${ui(context, _sourceLabel(profile.source))}。新照片的單字會以這個程度為中心挑選；'
                               '照片詳情的難度轉盤只影響那一張照片。'),
                           if (shift != 0) ...[
                             const SizedBox(height: 10),
@@ -202,7 +224,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               child: Row(
                                 children: [
                                   Expanded(
-                                    child: Text(
+                                    child: UiText(
                                       shift > 0
                                           ? '你最近常把難度調高，要把預設程度改成 ${cefrLevels[profile.level + 1]} 嗎？'
                                           : '你最近常把難度調低，要把預設程度改成 ${cefrLevels[profile.level - 1]} 嗎？',
@@ -213,7 +235,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   TextButton(
                                     onPressed: () => repo.setLevel(
                                         cefrLevels[profile.level + shift]),
-                                    child: const Text('好'),
+                                    child: const UiText('好'),
                                   ),
                                 ],
                               ),
@@ -226,7 +248,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             children: [
                               for (final l in cefrLevels)
                                 ChoiceChip(
-                                  label: Text(levelLabel(l)),
+                                  label: UiText(levelLabel(l)),
                                   selected: l == profile.cefr,
                                   onSelected: (_) => repo.setLevel(l),
                                 ),
@@ -240,15 +262,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         title: '進階設定：照片辨識連線',
                         collapsed: true,
                         children: [
-                          _note(
-                              '網頁版會自動連接這台電腦的照片辨識服務，不用填網址或金鑰。只有使用其他服務時才需要修改。連不上時照片會先排隊，'
-                              '恢復連線後自動處理。'),
+                          _note(kIsWeb
+                              ? '網頁版會自動連接這台電腦的照片辨識服務，不用填網址或金鑰。只有使用其他服務時才需要修改。連不上時照片會先排隊，'
+                                  '恢復連線後自動處理。'
+                              : '請填入照片辨識服務（Qwen）的網址與金鑰才能辨識照片內容。連不上時照片會先排隊，'
+                                  '恢復連線後自動處理。'),
                           const SizedBox(height: 12),
                           TextField(
                             controller: _url,
                             keyboardType: TextInputType.url,
-                            decoration: const InputDecoration(
-                              labelText: '服務網址',
+                            decoration: InputDecoration(
+                              labelText: ui(context, '服務網址'),
                               hintText: 'http://127.0.0.1:8765/tag',
                             ),
                             onChanged: (v) => settings.taggingUrl = v,
@@ -257,8 +281,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           TextField(
                             controller: _key,
                             obscureText: true,
-                            decoration: const InputDecoration(
-                                labelText: '連線金鑰（API Key）'),
+                            decoration: InputDecoration(
+                                labelText: ui(context, '連線金鑰（API Key）')),
                             onChanged: (v) => settings.apiKey = v,
                           ),
                           const SizedBox(height: 12),
@@ -266,12 +290,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             children: [
                               OutlinedButton(
                                 onPressed: _checking ? null : _testConnection,
-                                child: Text(_checking ? '測試中…' : '測試連線'),
+                                child: UiText(_checking ? '測試中…' : '測試連線'),
                               ),
                               const SizedBox(width: 12),
                               if (_check != null)
                                 Expanded(
-                                  child: Text(
+                                  child: UiText(
                                     _check!,
                                     style: MFont.manrope(
                                         13,
@@ -285,7 +309,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                           if (waiting > 0) ...[
                             const SizedBox(height: 8),
-                            Text(
+                            UiText(
                               scope.queue.current != null
                                   ? '⌛ 正在辨識照片（還有 $waiting 張在排隊）'
                                   : '⌛ 有 $waiting 張照片等待 AI 辨識',
@@ -299,7 +323,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         title: '進階設定：複習安排',
                         collapsed: true,
                         children: [
-                          Text(
+                          UiText(
                             '希望記住的比例 ${(settings.desiredRetention * 100).round()}%',
                             style:
                                 MFont.manrope(15, FontWeight.w800, MColors.ink),
@@ -325,7 +349,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             child: Row(
                               children: [
                                 Expanded(
-                                  child: Text('卡片背面順序',
+                                  child: UiText('卡片背面順序',
                                       style: MFont.manrope(
                                           15, FontWeight.w800, MColors.ink)),
                                 ),
@@ -337,25 +361,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ],
                       ),
                       _Card(title: '詞庫連線', children: [
-                        Text(DictionarySync.instance.status),
+                        UiText(DictionarySync.instance.status),
                         if (DictionarySync.instance.lastSuccess
                             case final time?)
                           _note(
                               '上次確認：${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}'),
                         TextButton(
                             onPressed: DictionarySync.instance.refresh,
-                            child: const Text('立即更新詞庫')),
+                            child: const UiText('立即更新詞庫')),
                       ]),
                       _Card(
                         title: '資料',
                         children: [
-                          Text(
-                            '字卡和複習紀錄保存在此瀏覽器。詞庫會從你的資料庫自動更新。',
+                          UiText(
+                            '字卡和複習紀錄保存在${kIsWeb ? '此瀏覽器' : '此裝置'}。詞庫會從你的資料庫自動更新。',
                             style: MFont.manrope(
                                 14, FontWeight.w700, MColors.success),
                           ),
                           const SizedBox(height: 6),
-                          _note('${supportedLanguages[repo.language]}：'
+                          _note('${ui(context, supportedLanguages[repo.language]!)}：'
                               '${formatCount(repo.wordCount)} 個單字 · '
                               '${formatCount(repo.photoCount)} 張照片 · '
                               '${formatCount(repo.cardCount)} 張卡片 · '
@@ -376,12 +400,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _label(String text) => Padding(
         padding: const EdgeInsets.only(bottom: 8),
         child:
-            Text(text, style: MFont.manrope(14, FontWeight.w800, MColors.ink)),
+            UiText(text, style: MFont.manrope(14, FontWeight.w800, MColors.ink)),
       );
 
   Widget _note(String text) => Padding(
         padding: const EdgeInsets.only(top: 6),
-        child: Text(text,
+        child: UiText(text,
             style: MFont.manrope(12, FontWeight.w600, MColors.muted)),
       );
 }
@@ -407,7 +431,7 @@ class _Card extends StatelessWidget {
         child: collapsed
             ? Material(
                 color: Colors.transparent,
-                child: ExpansionTile(title: Text(title), children: children))
+                child: ExpansionTile(title: UiText(title), children: children))
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [

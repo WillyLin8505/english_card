@@ -1,3 +1,4 @@
+import '../l10n/ui_text.dart';
 import '../services/learning_content.dart';
 import 'dart:async';
 
@@ -15,6 +16,9 @@ import '../widgets/mobile/common.dart';
 import '../widgets/mobile/dialogs.dart';
 import '../widgets/mobile/m_icon.dart';
 import '../widgets/mobile/photo_widgets.dart';
+
+part '../widgets/photo_word_cards.dart';
+part '../widgets/photo_difficulty_controls.dart';
 
 /// The dial's wording next to the CEFR level (spec section 3: 輪盤中心
 /// 同時顯示文字與 CEFR 範圍，避免只靠顏色判斷).
@@ -145,22 +149,22 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
             ListTile(
               title: Text('${displayWord(w.word)}　${w.candidate.meaning}',
                   style: MFont.manrope(16, FontWeight.w800, MColors.ink)),
-              subtitle: const Text('可查看意思、修改名稱或標為已學會。'),
+              subtitle: const UiText('可查看意思、修改名稱或標為已學會。'),
             ),
             ListTile(
               leading: const Icon(Icons.menu_book_outlined),
-              title: const Text('查看單字'),
+              title: const UiText('查看單字'),
               onTap: () => Navigator.pop(context, 'open'),
             ),
             ListTile(
               leading: const Icon(Icons.edit_outlined),
-              title: const Text('修改標籤'),
+              title: const UiText('修改標籤'),
               onTap: () => Navigator.pop(context, 'edit'),
             ),
             ListTile(
               leading: const Icon(Icons.check_circle_outline,
                   color: MColors.success),
-              title: const Text('我已經會了（移到已學會）'),
+              title: const UiText('我已經會了（移到已學會）'),
               onTap: () => Navigator.pop(context, 'known'),
             ),
           ],
@@ -233,7 +237,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                     child: Center(
                       child: Padding(
                         padding: const EdgeInsets.all(MSpace.xxl),
-                        child: Text(
+                        child: UiText(
                           '這張照片已從相片冊移除。\n手機相簿裡的原始照片不受影響。',
                           textAlign: TextAlign.center,
                           style:
@@ -254,7 +258,13 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
               id: w.word,
               anchor: w.anchor,
               word: displayWord(w.word),
-              zh: w.candidate.meaning,
+              zh: typedMeaning(
+                  w.candidate.meaning,
+                  LexiconPack.instance
+                          .lookup(w.word, pos: w.candidate.pos)
+                          ?.entry
+                          .entryType ??
+                      'word'),
               linked: w.candidate.inDatabase || LexiconPack.instance.isEmpty,
             ),
           for (final o in old)
@@ -262,7 +272,13 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
               id: 'old:${o.word}',
               anchor: o.anchor,
               word: displayWord(o.word),
-              zh: o.candidate.meaning,
+              zh: typedMeaning(
+                  o.candidate.meaning,
+                  LexiconPack.instance
+                          .lookup(o.word, pos: o.candidate.pos)
+                          ?.entry
+                          .entryType ??
+                      'word'),
               muted: true,
             ),
         ];
@@ -297,7 +313,8 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                               padding: const EdgeInsets.all(MSpace.md),
                               child: Container(
                                 height: 320,
-                                decoration: MDecor.heroPhotoFrame(radius: MRadii.xxl),
+                                decoration:
+                                    MDecor.heroPhotoFrame(radius: MRadii.xxl),
                                 clipBehavior: Clip.antiAlias,
                                 child: PinnedPhoto(
                                   photo: photo,
@@ -425,10 +442,10 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
           Row(
             children: [
               Expanded(
-                child: Text('辨識單字列表 (${session.words.length})',
+                child: UiText('辨識單字列表 (${session.words.length})',
                     style: MFont.manrope(15, FontWeight.w800, MColors.muted)),
               ),
-              Text('顯示已學會單字',
+              UiText('顯示已學會單字',
                   style: MFont.manrope(12, FontWeight.w700, MColors.label)),
               Transform.scale(
                 scale: 0.75,
@@ -468,13 +485,19 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                 word: displayWord(w.word),
                 ipa: w.candidate.ipa ??
                     scope.repository.entryByWord(w.word)?.ipa,
-                zh: w.candidate.meaning,
+                zh: typedMeaning(
+                    w.candidate.meaning,
+                    LexiconPack.instance
+                            .lookup(w.word, pos: w.candidate.pos)
+                            ?.entry
+                            .entryType ??
+                        'word'),
                 level: w.candidate.level,
                 starred: w.starred,
                 onTap: () => _openWord(w),
                 onMore: () => _pinActions(w),
-                onAudio: () => scope.speaker
-                    .say(w.word, language: scope.repository.language),
+                onAudio: () => scope.speak(context, w.word,
+                    language: scope.repository.language),
                 onStar: () => session.toggleStar(w),
               ),
             ),
@@ -487,7 +510,13 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
             for (final o in old) ...[
               _OldWordRow(
                 word: displayWord(o.word),
-                zh: o.candidate.meaning,
+                zh: typedMeaning(
+                    o.candidate.meaning,
+                    LexiconPack.instance
+                            .lookup(o.word, pos: o.candidate.pos)
+                            ?.entry
+                            .entryType ??
+                        'word'),
                 learned: o.learned,
                 onRestore: o.learned
                     ? () {
@@ -500,7 +529,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
             ],
           ],
           const SizedBox(height: 4),
-          Text(
+          UiText(
             '左滑單字表示已經會了；拖曳照片上的標籤可調整位置。\n離開這一頁時會自動保存。',
             textAlign: TextAlign.center,
             style: MFont.manrope(12, FontWeight.w600, MColors.label),
@@ -510,7 +539,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
               child: TextButton(
                 onPressed: () =>
                     showSelectionReasons(context, session.selection!),
-                child: Text('為什麼是這些字？',
+                child: UiText('為什麼是這些字？',
                     style: MFont.manrope(12, FontWeight.w700, MColors.primary)),
               ),
             ),
@@ -531,7 +560,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
         body = '填好服務網址與 API Key 後，這張照片會自動開始辨識。';
         action = FilledButton(
           onPressed: () => scope.navigator.selectTab(AppTab.settings),
-          child: const Text('前往設定'),
+          child: const UiText('前往設定'),
         );
       case TaggingStatus.pending when photo.candidates.isEmpty:
         title = '等待 AI 辨識';
@@ -539,13 +568,13 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
             '${photo.taggingError == null ? '' : '\n（${photo.taggingError}）'}';
       case TaggingStatus.tagging when photo.candidates.isEmpty:
         title = 'AI 辨識中…';
-        body = '大約需要半分鐘。';
+        body = '${scope.queue.progressLabel}\n可離開此頁，背景會繼續處理；請保持 App 開啟。';
       case TaggingStatus.failed:
         title = 'AI 辨識沒有成功';
         body = photo.taggingError ?? '請稍後再試。';
         action = FilledButton(
           onPressed: () => scope.queue.enqueue(photo.id),
-          child: const Text('重試'),
+          child: const UiText('重試'),
         );
       default:
         title = '這張照片沒有新的單字';
@@ -556,10 +585,11 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
     return Container(
       margin: const EdgeInsets.only(bottom: MSpace.sm),
       padding: const EdgeInsets.all(MSpace.lg),
-      decoration: MDecor.softPanel(color: MColors.surfaceSoft, radius: MRadii.xl),
+      decoration:
+          MDecor.softPanel(color: MColors.surfaceSoft, radius: MRadii.xl),
       child: Column(
         children: [
-          Text(title, style: MFont.manrope(15, FontWeight.w800, MColors.ink)),
+          UiText(title, style: MFont.manrope(15, FontWeight.w800, MColors.ink)),
           const SizedBox(height: MSpace.xxs + 2),
           Text(body,
               textAlign: TextAlign.center,
@@ -573,444 +603,3 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
 
 /// The level line under the list title, with the spec's shortcuts:
 /// 「更多動作」「更多描述」「簡單一點」「難一點」.
-class _LevelRow extends StatelessWidget {
-  final String level;
-  final int offset;
-  final PosBias bias;
-  final bool busy;
-  final ValueChanged<PosBias> onBias;
-  final VoidCallback? onEasier;
-  final VoidCallback? onHarder;
-
-  const _LevelRow({
-    required this.level,
-    required this.offset,
-    required this.bias,
-    required this.busy,
-    required this.onBias,
-    required this.onEasier,
-    required this.onHarder,
-  });
-
-  @override
-  Widget build(BuildContext context) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text('單字難度 ${levelLabel(level)} · ${relativeDifficulty(offset)}',
-                  style: MFont.manrope(13, FontWeight.w700, MColors.dialBlue)),
-              if (busy) ...[
-                const SizedBox(width: MSpace.xs),
-                const SizedBox.square(
-                    dimension: 12,
-                    child: CircularProgressIndicator(strokeWidth: 1.6)),
-                const SizedBox(width: MSpace.xxs),
-                Text('補充候選詞…',
-                    style: MFont.manrope(12, FontWeight.w600, MColors.label)),
-              ],
-            ],
-          ),
-          const SizedBox(height: MSpace.xs),
-          Wrap(
-            spacing: MSpace.xs,
-            runSpacing: MSpace.xs,
-            children: [
-              FilterPill(
-                label: '多看動詞',
-                active: bias == PosBias.actions,
-                onTap: () => onBias(PosBias.actions),
-              ),
-              FilterPill(
-                label: '多看形容詞',
-                active: bias == PosBias.descriptions,
-                onTap: () => onBias(PosBias.descriptions),
-              ),
-              FilterPill(label: '簡單一點', onTap: onEasier),
-              FilterPill(label: '難一點', onTap: onHarder),
-            ],
-          ),
-        ],
-      );
-}
-
-class _KnownBackground extends StatelessWidget {
-  const _KnownBackground();
-
-  @override
-  Widget build(BuildContext context) => Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: MSpace.xl),
-        decoration: MDecor.insetCard(color: MColors.success, radius: MRadii.xl),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.check_rounded, color: Colors.white, size: 20),
-            const SizedBox(width: MSpace.xxs + 2),
-            Text('已學會',
-                style: MFont.manrope(15, FontWeight.w800, Colors.white)),
-          ],
-        ),
-      );
-}
-
-/// Figma word-card-Coffee (24:59).
-class _WordCard extends StatelessWidget {
-  final String word;
-  final String? ipa;
-  final String zh;
-  final String level;
-  final bool starred;
-  final VoidCallback onTap;
-  final VoidCallback onAudio;
-  final VoidCallback onStar;
-  final VoidCallback onMore;
-
-  const _WordCard({
-    required this.word,
-    required this.ipa,
-    required this.zh,
-    required this.level,
-    required this.starred,
-    required this.onTap,
-    required this.onAudio,
-    required this.onStar,
-    required this.onMore,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    Widget action(Color bg, Widget icon, String label, VoidCallback onTap) =>
-        Tap(
-          onTap: onTap,
-          label: label,
-          child: Container(
-            padding: const EdgeInsets.all(MSpace.sm - 2),
-            decoration: MDecor.iconWell(color: bg, radius: MRadii.sm),
-            child: SizedBox.square(dimension: 18, child: Center(child: icon)),
-          ),
-        );
-
-    return Tap(
-      onTap: onTap,
-      label: '$word $zh',
-      child: Container(
-        padding: const EdgeInsets.all(MSpace.md),
-        decoration: MDecor.card(
-          color: MColors.surface,
-          borderColor: MColors.borderSoft,
-          radius: MRadii.xl,
-          shadow: MShadows.soft,
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
-                    children: [
-                      Flexible(
-                        child: Text(word,
-                            overflow: TextOverflow.ellipsis,
-                            style: MFont.manrope(
-                                18, FontWeight.w800, MColors.ink)),
-                      ),
-                      if (ipa != null) ...[
-                        const SizedBox(width: 8),
-                        Flexible(
-                          child: Text(ipa!,
-                              overflow: TextOverflow.ellipsis,
-                              style: MFont.manrope(
-                                  13, FontWeight.w500, MColors.label)),
-                        ),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      if (zh.isNotEmpty)
-                        Flexible(
-                          child: Text(zh,
-                              overflow: TextOverflow.ellipsis,
-                              style: MFont.manrope(
-                                  15, FontWeight.w700, MColors.primary)),
-                        ),
-                      const SizedBox(width: 8),
-                      Text(levelLabel(level),
-                          style: MFont.manrope(
-                              11, FontWeight.w800, MColors.label)),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            IconButton(
-                tooltip: '管理這個單字',
-                onPressed: onMore,
-                icon: const Icon(Icons.more_horiz)),
-            action(MColors.primarySoft,
-                const MSvg(MIcon.audioWaveform, size: 18), '播放發音', onAudio),
-            const SizedBox(width: MSpace.sm - 2),
-            action(
-              starred ? MColors.successSoft : MColors.surfaceSoft,
-              MSvg(starred ? MIcon.star : MIcon.starOff, size: 18),
-              starred ? '取消鎖定' : '鎖定（調整難度時保留）',
-              onStar,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// A hidden word shown with 「顯示已學會單字」: 已學會 ones have a small
-/// 復原 button (spec: 每個封存詞旁提供小型復原按鈕).
-class _OldWordRow extends StatelessWidget {
-  final String word;
-  final String zh;
-  final bool learned;
-  final VoidCallback? onRestore;
-
-  const _OldWordRow({
-    required this.word,
-    required this.zh,
-    required this.learned,
-    required this.onRestore,
-  });
-
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: MSpace.md, vertical: MSpace.sm - 2),
-        decoration: MDecor.softPanel(color: MColors.surfaceSoft, radius: MRadii.lg),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text.rich(
-                TextSpan(children: [
-                  TextSpan(
-                      text: word,
-                      style: MFont.manrope(15, FontWeight.w800, MColors.muted)),
-                  TextSpan(
-                      text: '  $zh',
-                      style: MFont.manrope(13, FontWeight.w600, MColors.label)),
-                ]),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            Text(learned ? '已學會' : '學習中',
-                style: MFont.manrope(12, FontWeight.w700,
-                    learned ? MColors.success : MColors.primary)),
-            if (onRestore != null) ...[
-              const SizedBox(width: MSpace.xs),
-              Tap(
-                onTap: onRestore,
-                label: '復原 $word',
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: MSpace.sm - 2, vertical: MSpace.xxs),
-                  decoration: MDecor.card(
-                    color: MColors.surface,
-                    borderColor: MColors.borderSoft,
-                    radius: MRadii.sm,
-                    shadow: MShadows.none,
-                  ),
-                  child: Text('復原',
-                      style:
-                          MFont.manrope(12, FontWeight.w800, MColors.primary)),
-                ),
-              ),
-            ],
-          ],
-        ),
-      );
-}
-
-class _PhotoBadgeOverlay extends StatelessWidget {
-  final IconData? icon;
-  final String text;
-
-  const _PhotoBadgeOverlay({required this.icon, required this.text});
-
-  @override
-  Widget build(BuildContext context) => ColoredBox(
-        color: MColors.photoScrimLight,
-        child: Center(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: MSpace.md, vertical: MSpace.sm - 2),
-            decoration: MDecor.overlayPill(radius: MRadii.xl),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (icon == null)
-                  const SizedBox.square(
-                    dimension: 14,
-                    child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white),
-                  )
-                else
-                  Icon(icon, size: 16, color: Colors.white),
-                const SizedBox(width: MSpace.xs),
-                Text(text,
-                    style: MFont.manrope(13, FontWeight.w700, Colors.white)),
-              ],
-            ),
-          ),
-        ),
-      );
-}
-
-const _dialShadow = MShadows.soft;
-
-/// Figma "Difficulty Dial / Collapsed" (48:73): gauge, needle, level.
-/// Long-press to open it and drag to a level (like a camera's ISO dial);
-/// a tap opens it until a level is chosen.
-class _DifficultyDial extends StatelessWidget {
-  final String level;
-  final VoidCallback onTap;
-
-  const _DifficultyDial({required this.level, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    // The mock shows B1 with the needle at 40°; other levels step 40°.
-    final angle =
-        (-40 + cefrLevels.indexOf(level) * 40) * 3.141592653589793 / 180;
-    return Tap(
-      onTap: onTap,
-      label: '單字難度 ${levelLabel(level)}，點一下或長按調整',
-      child: Container(
-        width: 52,
-        height: 58,
-        decoration: MDecor.dialSurface(radius: 26, shadow: MShadows.card),
-        child: Stack(
-          children: [
-            // Gauge: a 30px box at (10, 6) whose arc starts 20.57% in.
-            const Positioned(
-              left: 10 + 30 * 0.2057,
-              top: 6,
-              child:
-                  MSvg.sized(MIcon.difficultyGauge, width: 23.8275, height: 30),
-            ),
-            // Needle: 10px, rotated about its centre; its 40° bounding box
-            // sits at (15, 21) in the mock, so its centre is (18.83, 24.21).
-            Positioned(
-              left: 18.83 - 5,
-              top: 24.21 - 1,
-              child: Transform.rotate(
-                angle: angle,
-                child:
-                    const MSvg.sized(MIcon.gaugeNeedle, width: 10, height: 2),
-              ),
-            ),
-            Positioned(
-              left: 0,
-              right: 0,
-              top: 43.5 - 6.5,
-              child: Text(
-                level,
-                textAlign: TextAlign.center,
-                style: MFont.inter(10, FontWeight.w600, MColors.dialBlue),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Figma difficulty-control-expanded (54:229).
-class _LevelCircle extends StatelessWidget {
-  final String level;
-  final VoidCallback onTap;
-
-  const _LevelCircle({required this.level, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) => Tap(
-        onTap: onTap,
-        label: '收起難度選單',
-        child: Container(
-          width: 36,
-          height: 36,
-          decoration: MDecor.dialSurface(radius: 18, shadow: _dialShadow),
-          child: Center(
-            child: Text(levelLabel(level),
-                style: MFont.manrope(12, FontWeight.w800, MColors.dialBlue)),
-          ),
-        ),
-      );
-}
-
-/// Figma difficulty-slider (54:231): A1–C2, the current one highlighted.
-class _DifficultySlider extends StatelessWidget {
-  final String level;
-  final ValueChanged<String> onSelect;
-
-  const _DifficultySlider(
-      {super.key, required this.level, required this.onSelect});
-
-  @override
-  Widget build(BuildContext context) => Container(
-        width: 36,
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: MSpace.sm),
-        decoration: MDecor.dialSurface(radius: 18, shadow: _dialShadow),
-        child: Column(
-          children: [
-            for (final (i, l) in cefrLevels.indexed) ...[
-              if (i > 0) const SizedBox(height: MSpace.xs),
-              Tap(
-                onTap: () => onSelect(l),
-                label: '難度 $l',
-                child: Container(
-                  height: 32,
-                  decoration: l == level
-                      ? MDecor.softPanel(
-                          color: MColors.primarySoft,
-                          radius: MRadii.lg,
-                        )
-                      : null,
-                  child: Center(
-                    child: Text(
-                      l,
-                      style: l == level
-                          ? MFont.manrope(12, FontWeight.w800, MColors.dialBlue)
-                          : MFont.manrope(12, FontWeight.w700, MColors.label),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-      );
-}
-
-/// The label beside the open dial: level and wording.
-class _DialBubble extends StatelessWidget {
-  final String text;
-  final String? hint;
-
-  const _DialBubble({required this.text, this.hint});
-
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: MSpace.sm - 2, vertical: MSpace.xxs + 2),
-        decoration: MDecor.overlayPill(radius: MRadii.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(text, style: MFont.manrope(12, FontWeight.w800, Colors.white)),
-            if (hint != null)
-              Text(hint!,
-                  style: MFont.manrope(
-                      10, FontWeight.w600, MColors.onOverlayMuted)),
-          ],
-        ),
-      );
-}

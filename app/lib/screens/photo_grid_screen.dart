@@ -1,3 +1,4 @@
+import '../l10n/ui_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:share_plus/share_plus.dart';
@@ -34,6 +35,9 @@ class PhotoGridScreen extends StatefulWidget {
 class _PhotoGridScreenState extends State<PhotoGridScreen> {
   final _query = TextEditingController();
 
+  /// The 標籤程度 picker; null shows the words being learned.
+  String? _level;
+
   @override
   void dispose() {
     _query.dispose();
@@ -69,6 +73,32 @@ class _PhotoGridScreenState extends State<PhotoGridScreen> {
           return {for (final w in words) w.id: w}.values.toList();
         }
 
+        // A chosen level shows the photo's candidate pool at that level
+        // (問題回報 #113) — read-only: the saved words and the photo's dial
+        // setting are left as they are. Learned words stay hidden here too.
+        final focusWord = wordId == null ? null : repo.entry(wordId)?.word;
+        List<(String, bool)> labelsOf(Photo p) {
+          final level = _level;
+          if (level == null) {
+            return [for (final w in wordsOf(p)) (w.word, w.id == wordId)];
+          }
+          final seen = <String>{};
+          final labels = <(String, bool)>[];
+          for (final c in p.candidates) {
+            final learned = repo.entryByWord(c.word);
+            if (c.level != level ||
+                !seen.add(c.word) ||
+                (learned != null && repo.isArchived(learned.id))) {
+              continue;
+            }
+            labels.add((c.word, c.word == focusWord));
+          }
+          return [
+            ...labels.where((l) => l.$2),
+            ...labels.where((l) => !l.$2),
+          ];
+        }
+
         final q = _query.text.trim().toLowerCase();
         final photos = [
           for (final p in all)
@@ -95,7 +125,7 @@ class _PhotoGridScreenState extends State<PhotoGridScreen> {
                     onTap: () => SharePlus.instance.share(ShareParams(
                       title: title,
                       text: '$title（${photos.length} 張）\n'
-                          '${photos.map((p) => '${p.title}：${wordsOf(p).map((w) => w.word).join(', ')}').join('\n')}',
+                          '${photos.map((p) => '${p.title}：${labelsOf(p).map((l) => l.$1).join(', ')}').join('\n')}',
                     )),
                   ),
                 ),
@@ -104,12 +134,20 @@ class _PhotoGridScreenState extends State<PhotoGridScreen> {
                   child: _SearchBar(
                       controller: _query, onChanged: (_) => setState(() {})),
                 ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 0, 0),
+                  child: LabelLevelBar(
+                    level: _level,
+                    defaultLabel: '學習中',
+                    onChanged: (l) => setState(() => _level = l),
+                  ),
+                ),
                 Expanded(
                   child: photos.isEmpty
                       ? Center(
                           child: Padding(
                             padding: const EdgeInsets.all(32),
-                            child: Text(
+                            child: UiText(
                               all.isEmpty ? '還沒有照片' : '找不到符合的照片',
                               style: MFont.inter(
                                   14, FontWeight.w500, MColors.gray500),
@@ -128,8 +166,9 @@ class _PhotoGridScreenState extends State<PhotoGridScreen> {
                           itemCount: photos.length,
                           itemBuilder: (context, i) => _PhotoCard(
                             photo: photos[i],
-                            words: wordsOf(photos[i]),
-                            focusWordId: wordId,
+                            labels: labelsOf(photos[i]),
+                            emptyText:
+                                _level == null ? null : '沒有 $_level 標籤',
                             onTap: () =>
                                 scope.navigator.openPhoto(photos[i].id),
                           ),
@@ -175,7 +214,7 @@ class _SearchBar extends StatelessWidget {
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
-                  hintText: '搜尋照片',
+                  hintText: ui(context, '搜尋照片'),
                   hintStyle:
                       MFont.manrope(16, FontWeight.w500, MColors.gray500),
                 ),
@@ -189,14 +228,18 @@ class _SearchBar extends StatelessWidget {
 /// Figma "Photo Card / 晨光陽台" (54:339).
 class _PhotoCard extends StatelessWidget {
   final Photo photo;
-  final List<WordEntry> words;
-  final String? focusWordId;
+
+  /// Each label and whether it is the focus word (highlighted).
+  final List<(String, bool)> labels;
+
+  /// Shown instead of the chips when [labels] is empty.
+  final String? emptyText;
   final VoidCallback onTap;
 
   const _PhotoCard({
     required this.photo,
-    required this.words,
-    required this.focusWordId,
+    required this.labels,
+    required this.emptyText,
     required this.onTap,
   });
 
@@ -253,15 +296,21 @@ class _PhotoCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     SizedBox(
                       height: 26,
-                      child: Wrap(
-                        spacing: 6,
-                        clipBehavior: Clip.hardEdge,
-                        children: [
-                          for (final w in words)
-                            FilterPill(
-                                label: w.word, active: w.id == focusWordId),
-                        ],
-                      ),
+                      child: labels.isEmpty && emptyText != null
+                          ? Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(emptyText!,
+                                  style: MFont.inter(
+                                      11, FontWeight.w500, MColors.gray500)),
+                            )
+                          : Wrap(
+                              spacing: 6,
+                              clipBehavior: Clip.hardEdge,
+                              children: [
+                                for (final (label, focus) in labels)
+                                  FilterPill(label: label, active: focus),
+                              ],
+                            ),
                     ),
                   ],
                 ),

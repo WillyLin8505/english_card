@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { api, newIdempotencyKey, type Job } from "../api";
-import { Chip, Empty, ErrorBox, Link, Loading, Progress, fmtTime, useApp, useLoad } from "../ui";
+import { Chip, Empty, ErrorBox, Link, Loading, Progress, fmtDuration, fmtTime, useApp, useLoad } from "../ui";
 
 export function JobActions({ job, onDone }: { job: Job; onDone: () => void }) {
   const [busy, setBusy] = useState(false);
@@ -77,7 +77,10 @@ export default function Jobs() {
                 <td>{langName(j.target_language)}→{langName(j.native_language)}</td>
                 <td>{j.mode_label}</td>
                 <td><Chip status={j.status} /></td>
-                <td className="progress-cell"><Progress value={j.progress} /> {j.checkpoint}/{j.total}</td>
+                <td className="progress-cell">
+                  <Progress value={j.progress} /> {j.checkpoint}/{j.total}
+                  {j.recent_word_ms !== null && <small className="muted">每字 {fmtDuration(j.recent_word_ms / 1000)} · 剩餘約 {fmtDuration(j.eta_seconds)}</small>}
+                </td>
                 <td>{j.succeeded}</td>
                 <td className={j.partial ? "warn" : ""}>{j.partial}</td>
                 <td className={j.missing ? "warn" : ""}>{j.missing}</td>

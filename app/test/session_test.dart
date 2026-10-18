@@ -215,6 +215,73 @@ void main() {
   });
 
   group('FlashcardSession (連續卡流)', () {
+    test('interactive reviews keep exercise evidence on the shared card log',
+        () {
+      const words = ['apple', 'banana', 'cherry', 'date', 'elder'];
+      final entries = [
+        for (var i = 0; i < words.length; i++)
+          WordEntry.fromUserInput(
+                  id: 'exercise-$i',
+                  word: words[i],
+                  pos: 'noun',
+                  meaning: '意思$i',
+                  level: 'A1',
+                  now: testNow)
+              .copyWith(examples: [
+            WordExample(text: 'This is ${words[i]}.', translation: '這是測試句。')
+          ], related: [
+            for (var j = 0; j < words.length; j++)
+              if (i != j) RelatedWord(words[j], RelationType.associated)
+          ]),
+      ];
+      final repo = WordDatabaseRepository(
+          clock: () => testNow,
+          entries: entries,
+          cards: [
+            for (final e in entries)
+              LearningCard(
+                  id: LearningCard.idFor(e.id),
+                  wordEntryId: e.id,
+                  templateId: 'interactive')
+          ],
+          photos: [
+            for (var i = 0; i < entries.length; i++)
+              Photo(
+                  id: 'exercise-photo-$i',
+                  title: 'exercise',
+                  takenAt: testNow,
+                  createdAt: testNow,
+                  assetPath: 'assets/photos/kitchen.jpg')
+          ],
+          occurrences: [
+            // Each photo shows its word and the next two: a drag question
+            // always places three labels.
+            for (var i = 0; i < entries.length; i++)
+              for (var k = 0; k < FlashcardSession.dragTargets; k++)
+                PhotoOccurrence(
+                    id: 'exercise-occ-$i-$k',
+                    photoId: 'exercise-photo-$i',
+                    wordEntryId: entries[(i + k) % entries.length].id,
+                    anchor: LabelPoint(.15 + k * .3, .5))
+          ]);
+      final session = FlashcardSession(repo, random: math.Random(7));
+      final types = <ReviewExerciseType>{};
+      while (!session.finished) {
+        types.add(session.exercise!.type);
+        session.showAnswer();
+        session.rate(Rating.good);
+      }
+      expect(types, containsAll(ReviewExerciseType.values));
+      final logs = [
+        for (final entry in repo.entries)
+          if (repo.cardOf(entry.id) case final card?) ...repo.logsOf(card.id),
+      ];
+      expect(logs, isNotEmpty);
+      expect(logs.every((log) => log.templateType != null), isTrue);
+      expect(logs.every((log) => log.attempts >= 1), isTrue);
+      session.dispose();
+    });
+
     test('runs until nothing is due; Again comes back later in the run', () {
       final repo = testRepository();
       final session = FlashcardSession(repo, random: math.Random(1));
@@ -235,14 +302,17 @@ void main() {
         shown++;
       }
       expect(session.finished, isTrue);
-      expect(shown, eligible + 1,
-          reason: 'every card once, the Again card twice');
+      expect(shown, eligible + 1);
+      expect(seen.toSet(), hasLength(shown - 1),
+          reason: 'every card once (even via the flip-card fallback when '
+              'it has no safe exercise), the Again card twice');
       final firstAgain = seen.indexOf(again!);
       final second = seen.lastIndexOf(again);
       expect(
           second - firstAgain, greaterThanOrEqualTo(FlashcardSession.againGap));
       expect(repo.logsOf(again), hasLength(2));
-      expect(repo.eligibleCards(), isEmpty);
+      expect(repo.eligibleCards(), isEmpty,
+          reason: 'the fallback card was reviewed and scheduled too');
     });
 
     test('a card answered Again forever only repeats twice in one run', () {

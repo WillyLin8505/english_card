@@ -20,6 +20,8 @@ def test_live_pack_updates_without_export_release(session, fakes):
     serve_app._cache.clear()
     body, etag = serve_app.live_pack('en', 'zh-TW')
     first = json.loads(body)
+    assert first['target_language'] == 'en'
+    assert first['native_language'] == 'zh-TW', 'sense translations must not overwrite the language code'
     assert any(s['native'] == '蘋果' for e in first['lexemes'] for s in e.get('senses', []))
     fv = session.execute(select(m.FieldValue).where(
         m.FieldValue.field == 'native_definition', m.FieldValue.lemma == 'apple')).scalar_one()
@@ -111,5 +113,10 @@ def test_catalog_only_publishes_approved_formal_labels(session, fakes):
     if band in {'A1', 'A2', 'B1', 'B2', 'C1', 'C2'}:
         expected_tag['cefr'] = band
         expected_label['cefr'] = band
+        # Levels outside CEFR-J / Octanove are frequency estimates (#132).
+        from app.adapters.local import cefr_list
+        hit = cefr_list().get(word.normalized)
+        source = 'cefr-j' if hit and band in hit[1].values() else 'estimate'
+        expected_tag['cefr_source'] = expected_label['cefr_source'] = source
     assert image['tags'] == [expected_tag]
     assert image['labels'] == [expected_label]

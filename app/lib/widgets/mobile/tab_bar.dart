@@ -1,3 +1,4 @@
+import '../../l10n/ui_text.dart';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -25,14 +26,14 @@ class MobileTabBar extends StatelessWidget {
     Widget tab(AppTab tab, String label, MIcon icon, MIcon activeIcon) {
       final active = tab == current;
       final needsTint = active && icon == activeIcon;
-      return Tap(
+      return Expanded(child: Tap(
         onTap: () => onSelect(tab),
         label: label,
         labelOnly: true,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOut,
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
           decoration: BoxDecoration(
             color: active ? MColors.primarySoft : Colors.transparent,
             borderRadius: MRadii.rSm,
@@ -43,15 +44,17 @@ class MobileTabBar extends StatelessWidget {
               MSvg(active ? activeIcon : icon,
                   size: 22, tint: needsTint ? MColors.primary : null),
               const SizedBox(height: 3),
-              Text(
+              UiText(
                 label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: MFont.manrope(11, FontWeight.w700,
                     active ? MColors.primary : MColors.label),
               ),
             ],
           ),
         ),
-      );
+      ));
     }
 
     return Container(
