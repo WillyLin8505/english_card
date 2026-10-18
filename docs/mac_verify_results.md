@@ -2,8 +2,8 @@
 
 依 `docs/mac_verify.md` 執行。嚴重度：高（擋住驗證或功能壞掉）・中（行為不對）・低（警告、外觀）。
 
-**通道（owner，2026-10-18）**：改用問題回報 API（見 `docs/mac_verify.md` 第 6 步）。
-這個檔只留第 1 輪的紀錄；之後的問題都開在問題回報頁，不再用 `docs/mac_inbox.md`。
+**通道（owner，2026-10-18）**：git ＋ 問題回報 API 兩條都用（見 `docs/mac_verify.md` 第 6 步）。
+Windows 的指令看 `docs/mac_inbox.md`；要 Windows 修的 bug 開 `[Mac]` 問題回報。
 
 ## 2026-10-18 第 1 輪（進行中）
 
