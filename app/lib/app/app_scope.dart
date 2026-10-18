@@ -90,6 +90,10 @@ class AppScope extends InheritedNotifier<AppSettings> {
   /// Opens another learning language's data (設定 → 學習語言).
   final Future<void> Function(String language) switchLanguage;
 
+  /// Reopens the current language's word database from the store, after
+  /// 從備份還原 replaced what is in it. Null in widget tests.
+  final Future<void> Function()? reloadData;
+
   /// Injectable for tests so 下次出現 labels are deterministic.
   final DateTime Function() clock;
 
@@ -105,6 +109,7 @@ class AppScope extends InheritedNotifier<AppSettings> {
     required this.lexicon,
     required this.navigator,
     required this.switchLanguage,
+    this.reloadData,
     this.clock = DateTime.now,
     required super.child,
   }) : super(notifier: settings);

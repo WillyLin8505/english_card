@@ -13,6 +13,7 @@ import '../theme/mobile_theme.dart';
 import '../widgets/mobile/common.dart';
 import '../widgets/mobile/dialogs.dart';
 import '../widgets/mobile/m_icon.dart';
+import '../services/photo_store.dart';
 import '../widgets/mobile/photo_widgets.dart';
 import 'flashcard_screen.dart';
 
@@ -185,7 +186,10 @@ class _WordBody extends StatelessWidget {
           .compareTo(b.id == occurrenceId ? 0 : 1));
     final contexts = [
       for (final o in occurrences)
-        if (repo.photo(o.photoId) case final p?) (photo: p, occ: o),
+        // A photo whose original file is gone is skipped (問題回報 #283).
+        if (repo.photo(o.photoId) case final p?
+            when !PhotoStore.lostOriginal(p))
+          (photo: p, occ: o),
     ];
     final sections = <Widget>[
       // pronounce-block

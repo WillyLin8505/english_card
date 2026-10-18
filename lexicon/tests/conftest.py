@@ -31,6 +31,14 @@ def _reachable() -> bool:
         return False
 
 
+@pytest.fixture(autouse=True)
+def _no_live_pos_exclusions(tmp_path, monkeypatch):
+    """Tests never read the real quality/excluded_pos.json (問題回報 #284)."""
+    from app import pos_exclusions
+    monkeypatch.setattr(pos_exclusions, "PATH", tmp_path / "excluded_pos.json")
+    monkeypatch.setattr(pos_exclusions, "_cache", None)
+
+
 @pytest.fixture(scope="session")
 def pg():
     """The migrated test database (migrated once per session)."""

@@ -145,8 +145,9 @@ void main() {
           databaseLibrary: true,
           size: const Size(360, 740));
       await tester.pumpAndSettle();
-      expect(
-          find.text('入門（A1）：apple · 蘋果 · 中階（B1）：cluster · 串'), findsOneWidget);
+      // One line per level (#179).
+      expect(find.text('入門（A1）：apple · 蘋果'), findsOneWidget);
+      expect(find.text('中階（B1）：cluster · 串'), findsOneWidget);
 
       await tester.tap(level('B1'));
       await tester.pumpAndSettle();

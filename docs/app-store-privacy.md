@@ -23,6 +23,6 @@ Data Used to Track You：無。不需 ATT。`app/ios/Runner/PrivacyInfo.xcprivac
 
 ## App Store Connect 要貼的網址
 
-1. 政策網址（owner 已決定）：`https://willylinai.com/privacy`，內容就是 `docs/privacy.html`，聯絡信箱已填 sssss971412@gmail.com。
-2. 放置方式：`serve_app.py` 回 `/privacy`（不需金鑰）；`~/.cloudflared/english-card.yml` 已加 `willylinai.com` 的 `/privacy` 規則。還差兩步才會通：(a) 根網域 willylinai.com 的 DNS 要指到這條 tunnel（目前由另一個 tunnel 提供，回 HTTP 530），(b) serve_app 的 `PUBLIC_HOSTS` 要加 `willylinai.com`，重啟 serve_app 與 cloudflared。備案：`https://api.willylinai.com/privacy` 重啟 serve_app 後立刻可用。
+1. 政策網址（owner 已決定）：`https://api.willylinai.com/privacy`，內容就是 `docs/privacy.html`，聯絡信箱已填 sssss971412@gmail.com。不動 willylinai.com 根網域與其 DNS。
+2. 放置方式：`serve_app.py` 回 `/privacy`（不需金鑰），走既有的 api.willylinai.com tunnel 規則，不需新增 DNS 或 tunnel 規則。serve_app 載入這版程式後（重啟一次）即生效。
 3. App Store Connect → App 資訊 → 隱私權政策 URL 貼上那個網址。App 內入口是設定頁「查看隱私權政策」（5.1.1(i)）；開關是「分享使用統計」，預設關（5.1.1(ii)）。

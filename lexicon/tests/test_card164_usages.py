@@ -131,3 +131,48 @@ def test_fix_catalog_senses_does_not_double_tag_a_sister_already_on_the_photo():
     brick_adj = im["tags"][1]
     assert brick_adj["lexeme_id"] == 21 and brick_adj["sense_id"] == 210  # left for review
     assert sum(1 for t in im["tags"] if t["lexeme_id"] == 20) == 1
+
+
+def test_dictionaries_outrank_the_participle_rule():
+    """underlying: an adjective to WordNet and ECDICT; Wiktionary alone has a
+    noun. The -ing rule (noun before adjective) applies only when the
+    dictionaries do not separate them (railing)."""
+    adj, noun, verb = (_lx(1, "underlying", "adj", _senses(3), 15), _lx(2, "underlying", "noun", _senses(1)),
+                       _lx(3, "underlying", "verb", _senses(2)))
+    rank_usages([adj, noun, verb], {}, pos_votes=lambda w: (2, {"adj": 2, "verb": 1}))
+    assert adj["usage_rank"] == 0 and noun["rare_usage"] and verb["usage_rank"] == 2
+    rail_a, rail_n = _lx(4, "railing", "adj", _senses(3), 2), _lx(5, "railing", "noun", _senses(1))
+    rank_usages([rail_a, rail_n], {}, pos_votes=lambda w: (0, {}))
+    assert rail_n["usage_rank"] == 0
+
+
+def test_register_senses_come_back_before_other_etymologies():
+    """meth: the dictionary's informal 冰毒 is the meaning; the clean sense
+    under etymology-4 (梅酒) is another word."""
+    senses = [{"id": 1, "native": "冰毒", "labels": ["informal"]},
+              {"id": 2, "native": "美沙酮", "native_ai": True, "labels": ["informal", "etymology-2"]},
+              {"id": 3, "native": "流浪漢", "native_ai": True, "labels": ["derogatory", "etymology-3"]},
+              {"id": 4, "native": "梅酒", "native_ai": True, "labels": ["etymology-4"]}]
+    ranked = q.rank_senses(senses)
+    assert ranked[0]["id"] == 1 and ranked[0]["priority"] == "main"
+    assert [s["id"] for s in ranked if s["priority"] == "low"] == [2, 3, 4]
+
+
+def test_last_resort_keeps_a_chinese_sense_main():
+    senses = [{"id": 1, "native": "", "labels": []},
+              {"id": 2, "native": "古義", "labels": ["obsolete"]}]
+    ranked = q.rank_senses(senses)
+    assert ranked[0]["id"] == 1 and ranked[1]["priority"] == "main"
+
+
+def test_offensive_senses_never_become_the_meaning():
+    """chimp: the only translated sense is the offensive one — show nothing
+    rather than that; moron's derogatory 白痴 is the word's meaning."""
+    senses = [{"id": 1, "native": "", "labels": []}, {"id": 2, "native": "黑人", "labels": ["offensive", "vulgar"]}]
+    assert [s["priority"] for s in q.rank_senses(senses)] == ["main", "low"]
+    # … and when nothing is main, the offensive sense is at least not the first one shown.
+    senses = [{"id": 2, "native": "黑人", "labels": ["offensive"]}, {"id": 1, "native": "", "labels": ["obsolete"]}]
+    assert [s["id"] for s in q.rank_senses(senses)] == [1, 2]
+    senses = [{"id": 1, "native": "白痴", "labels": ["derogatory"]},
+              {"id": 2, "native": "假想粒子", "native_ai": True, "labels": ["etymology-2"]}]
+    assert q.rank_senses(senses)[0]["id"] == 1

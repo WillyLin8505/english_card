@@ -1,118 +1,64 @@
 # Mac / iPhone 模擬器驗證結果
 
-照 `docs/mac_verify.md` 做的驗證紀錄。每一輪往下追加。
+依 `docs/mac_verify.md` 執行。嚴重度：高（擋住驗證或功能壞掉）・中（行為不對）・低（警告、外觀）。
 
----
+**通道（owner，2026-10-18）**：git ＋ 問題回報 API 兩條都用（見 `docs/mac_verify.md` 第 6 步）。
+Windows 的指令看 `docs/mac_inbox.md`；要 Windows 修的 bug 開 `[Mac]` 問題回報。
 
-## 2026-10-18 · 第 1 輪（雲端 Linux session，非 Mac）
+## 2026-10-18 第 1 輪（進行中）
 
-執行者：Claude Code（cloud session，分支 `claude/serene-mccarthy-8dysdu`）
-Repo commit：`ae1d773`（與 `origin/main` 同一個 commit，已是最新）
-工具版本：Flutter 3.47.7 stable · Dart 3.13.5（repo 沒有釘版本，Mac 上 `brew install --cask flutter` 也會拿到同一個 stable）
+環境：MacBook（Apple Silicon，macOS 26.6.2），repo commit `ae1d773`。
 
-### 這一輪的範圍（重要）
+| # | 步驟 | 預期 | 實際 | 截圖 | 嚴重度 |
+|---|------|------|------|------|--------|
+| 1 | 1. git pull | 取得最新 | 已是最新（ae1d773） | — | — |
+| 2 | 2. 環境 | Xcode、Flutter、CocoaPods 齊全 | 原本三樣都沒有。已用 brew 安裝 Flutter 3.47.7、CocoaPods 1.17.0；Xcode 由 owner 從 App Store 安裝中，裝好前無法開 iPhone 模擬器 | — | 高（擋住第 4、5 步） |
+| 3 | 2. flutter doctor | 無問題 | Xcode 安裝不完整（只有 Command Line Tools）；Android SDK 沒裝（Mac 驗證不需要） | — | 高（Xcode）／低（Android） |
+| 4 | 3. flutter analyze | 0 issues | 4 issues：`lib/screens/settings_screen.dart:7` 未使用的 import `../models/vocabulary_profile.dart`（warning）；`test/card38_redirect_scope_test.dart:28` if 未加大括號、`:57` 使用 print；`test/simulation/settings_simulation.dart:67` 不必要的字串插值（info） | — | 低 |
+| 5 | 3. flutter test | 全部通過 | 351 通過、1 略過、4 失敗（見下） | — | 中 |
+| 6 | 4. run_ios_sim.sh | App 在 iPhone 模擬器啟動 | 尚未執行（等 Xcode） | — | — |
+| 7 | 5. 學習者流程 | — | 尚未執行（等 Xcode） | — | — |
 
-這個 session 跑在**雲端 Linux 容器（Ubuntu 24.04）**，不是 Mac。
-`docs/mac_verify.md` 的步驟 4、5（`./run_ios_sim.sh`、iPhone 模擬器實機走查與截圖）**無法執行**，
-因為 `run_ios_sim.sh` 需要 macOS 專屬的 `open -a Simulator` 與 `xcrun simctl`，
-而 `flutter doctor` 在 Linux 上連 Xcode / iOS 這一段都不會出現。
+### flutter test 失敗明細
 
-所以：
-- **已完成**：步驟 1（取最新 code）、步驟 2（`flutter doctor`）、步驟 3（`flutter analyze` + `flutter test`）。
-- **未完成**：步驟 4、5 全部 — 新手引導、設定頁、詞庫同步、拍照打標、複習正反面、學習洞察（#277）、
-  備份還原（#278）、原圖遺失（#279）、隱私權（#268）、資料來源（#269）、照片載入速度（#252）、
-  原生 iOS 音檔與圖片（#270），**一項都沒有在 iPhone 上驗證過**。
-- **沒有截圖**（`docs/mac_verify_shots/` 這一輪是空的）。
+1. `test/album_level_test.dart:148`「資料庫相片冊 the picker filters tiles and the opened picture」
+   找不到文字 `入門（A1）：apple · 蘋果 · 中階（B1）：cluster · 串`（0 個，預期 1 個）。
+2. `test/screens_test.dart:454`「設定 測試連線: connected」找不到 `✓ 已連線 · qwen3-vl`。
+3. `test/screens_test.dart:463`「設定 測試連線: wrong key / not running」找不到 `✕ 服務正常，但 API Key 不正確`。
+4. `test/screens_test.dart:468`「設定 測試連線: service not running」找不到
+   `✕ 連不到 AI\n辨識服務（http://127.0.0.1:8765/tag），請確認服務已啟動`。
 
-下面 1–5 是這一輪真的驗到的東西。**步驟 5 的清單還是要在 Mac 上跑一次**，這一輪不能當成替代。
+2–4 都在 `check()`（`screens_test.dart:446`）按下「測試連線」後找不到結果文字，可能是設定頁的連線測試文案或流程改了，測試沒跟著更新。
 
-看板 127.0.0.1:5173 與 8770 從這個容器連不到（預期如此，看板只在 Windows 上），所以這一輪沒有進板。
+## 2026-10-18 重跑 analyze／test（commit cfb76db，M1 第 4 點、M2 前置）
 
----
+| # | 步驟 | 預期 | 實際 | 截圖 | 嚴重度 |
+|---|------|------|------|------|--------|
+| 1 | flutter analyze | 0 issues | No issues found | — | — |
+| 2 | flutter test | 全部通過 | 369 通過、1 略過、0 失敗（第 1 輪的 4 個失敗在 Mac 上也已消失） | — | — |
+| 3 | M2 iPhone 模擬器逐卡驗證 | — | 尚未執行（Mac 還在裝 Xcode） | — | — |
 
-### 問題 1：`設定` → `測試連線` 三個測試都失敗（按鈕被擠出測試畫面）
+## 2026-10-18 M3（commit 79070ad）
 
-| 項目 | 內容 |
-|---|---|
-| 步驟 | `cd app && flutter test test/screens_test.dart` |
-| 預期 | `設定 測試連線: connected` / `wrong key / not running` / `service not running` 三個測試通過 |
-| 實際 | 三個都失敗 |
-| 嚴重度 | **低**（補驗後下修，見下方「補充」） |
-| 截圖 | `mac_verify_shots/2026-10-18-web-07-advanced-testconn.png` |
+| 卡 | 結果 | 原因 | 截圖 |
+|----|------|------|------|
+| #291（問題回報 #294） | 通過 | Mac 上 flutter analyze：No issues found；flutter test：369 通過、1 略過、0 失敗（在 cfb76db 跑；之後到 79070ad 沒有改到 app/）。這張卡只改測試，不需要模擬器操作 | — |
 
-`screens_test.dart` 用 `size: const Size(402, 1600)` 開設定頁，展開「進階設定：照片辨識連線」後，
-`測試連線` 這顆按鈕算出來的位置是 `Offset(290.2, 1614.0)`，已經掉在測試畫面 `Size(402.0, 1600.0)` 外面 14px：
+## 2026-10-18 雲端 Linux session（非 Mac，commit `ffa3aea` 合併後重跑）
 
-```
-Warning: A call to tap() with finder "Found 1 widget with text "測試連線"" derived an
-Offset (Offset(290.2, 1614.0)) that would not hit test on the specified widget.
-Indeed, Offset(290.2, 1614.0) is outside the bounds of the root of the render tree, Size(402.0, 1600.0).
-```
+執行者：Claude Code 雲端 session（Ubuntu 24.04 容器，**沒有 macOS／Xcode**），Flutter 3.47.7 · Dart 3.13.5。
+這個 session 接到「照 `docs/mac_verify.md` 做一輪 iPhone 模擬器驗證」，但環境跑不了 iOS 模擬器
+（`run_ios_sim.sh` 需要 `open -a Simulator` 與 `xcrun simctl`），所以**步驟 4、5 一項都沒做到**。
+以下只有在 Linux 上做得到的部分，以及一個 Mac 端還沒碰到的新問題。
 
-`tap()` 因此沒點到任何東西，接著 `expect(find.text(expected), findsOneWidget)`
-在 `screens_test.dart:446` 找不到 `✓ 已連線 · qwen3-vl` / `✕ 服務正常，但 API Key 不正確` /
-`✕ 連不到 AI 辨識服務（http://127.0.0.1:8765/tag），請確認服務已啟動` 而失敗。
+| # | 步驟 | 預期 | 實際 | 嚴重度 |
+|---|------|------|------|--------|
+| 1 | flutter analyze | 0 issues | No issues found（與 Mac 端一致） | — |
+| 2 | flutter test | 全部通過 | **369 通過、1 略過、0 失敗**（與 Mac 端一致） | — |
+| 3 | flutter build web | 編譯成功 | **編不過**，見下 | 中 |
+| 4 | 4./5. iPhone 模擬器 | — | 未執行（這台沒有 macOS） | — |
 
-測試**已經有**呼叫 `await tester.ensureVisible(find.text('測試連線'))`（`screens_test.dart:443`），
-但捲動沒有生效（位置仍是 1614）。兩種可能，**需要 Mac / Windows 端確認是哪一種**：
-
-- **只是測試壞了**：`ensureVisible` 後少一次 `pumpAndSettle()`，捲動動畫還沒跑完就 `tap()`。
-  真機上設定頁可以捲動，使用者不會遇到。
-- **是 App 的問題**：設定頁最近長高了（`settings_screen.dart` 在 `ae1d773` 這個 snapshot 有改），
-  把按鈕推出可視範圍。若那一段其實不在 `Scrollable` 裡，真機上在小螢幕 iPhone（SE 之類）就會點不到。
-
-**補充（同一輪稍晚，用 Flutter web 在 Chromium 以 390×844 實際操作）**：
-設定頁**捲得到**「測試連線」，按下去也**真的會跑**並顯示結果（見
-`2026-10-18-web-07-advanced-testconn.png`、`2026-10-18-web-08-testconn-result.png`）。
-所以這比較像**只是測試壞了**（`ensureVisible` 後少一次 `pumpAndSettle()`），不是 App 在小螢幕點不到。
-嚴重度因此從「中」下修為「低」。
-
-但這是 **Flutter web 不是原生 iOS**，版面度量不完全相同，
-Mac 那一輪還是順手確認一下 iPhone SE 尺寸即可，不必再當成優先項。
-
-另外：截圖裡「測試連線」回的是「✕ 連不到 AI 辨識服務」，**這是瀏覽器 CORS 造成的，不是 App 的問題**。
-`https://api.willylinai.com/health` 實際回 401，而 `describeTaggingError()`
-（`tagging_service.dart:116`）對 401 是回「API Key 不正確」。
-web 版跨網域被擋，才走到 `http.ClientException` 那條分支。原生 iOS 沒有 CORS，不會這樣。
-
----
-
-### 問題 2：`album_level_test` —「資料庫相片冊」縮圖說明文字對不上
-
-| 項目 | 內容 |
-|---|---|
-| 步驟 | `cd app && flutter test test/album_level_test.dart` |
-| 預期 | `資料庫相片冊 the picker filters tiles and the opened picture` 通過 |
-| 實際 | 失敗於 `album_level_test.dart:148` |
-| 嚴重度 | **低**（看起來是測試沒跟上實作） |
-| 截圖 | 無 |
-
-```
-Expected: exactly one matching candidate
-  Actual: _TextWidgetFinder:<Found 0 widgets with text "入門（A1）：apple · 蘋果 · 中階（B1）：cluster · 串": []>
-```
-
-測試期望**一個** Text 同時包含 A1 與 B1 兩組，中間用 ` · ` 接起來。
-但現在 `lib/widgets/database_tag_sections.dart` 在 compact 模式下是**每個等級各自一個 Text**
-（`_compactTagLabels()` 回傳 `'$head：${words.join('、')}'`，在 build 的 `if (widget.compact)` 分支逐組 `out.add(Text(...))`），
-所以不會有任何一個 widget 同時帶兩組字。
-
-同一個測試後面那句 `find.text('中階（B1）：cluster · 串')`（篩成 B1 之後）格式是對得上的 —
-失敗只發生在「沒篩等級、兩組並存」的第一個 expect。
-
-從學習者角度看，一個等級一行其實不算壞，所以**比較可能是測試的期望字串過期**，
-而不是 UI 退步。但這要 Mac 上實際看一眼縮圖說明才能確定，這一輪沒看到畫面。
-
----
-
-### 問題 2.5：`flutter build web` 編不過 — `run_web.bat` 這條開發路線是壞的
-
-| 項目 | 內容 |
-|---|---|
-| 步驟 | `cd app && flutter build web --dart-define-from-file=iphone.json` |
-| 預期 | 編譯成功（repo 有 `app/web/` 與 `app/run_web.bat`，web 是支援的開發路線） |
-| 實際 | `Error: Compilation failed.` |
-| 嚴重度 | **中**（擋掉整條 web 開發／除錯路線） |
+### 問題：`flutter build web` 編不過 — `run_web.bat` 這條開發路線是壞的
 
 ```
 lib/services/photo_intake.dart:45:13:
@@ -122,85 +68,23 @@ Error: The integer literal 0xFFFFFFFFFFFFFFFF can't be represented exactly in Ja
 ```
 
 `hashBytes()` 的 64-bit FNV-1a 常數在 dart2js 下無法表示（JS 的 number 是 double）。
-原生 iOS／Android 不受影響（Dart native 有真正的 64-bit int），**只有 web 會編不過**。
+在 `ffa3aea` 上仍然如此。**原生 iOS／Android 不受影響**（Dart native 有真正的 64-bit int），
+只有 web 編不過，所以 repo 裡的 `app/run_web.bat` 現在跑不起來。
 
-修的方向（這一輪沒有改 App 程式碼，交給 Windows 端決定）：
-改成 32-bit FNV-1a（`0x811c9dc5` / `0x01000193` / `& 0xFFFFFFFF`），或用 `BigInt`，
-或把 `hashBytes` 拆成 web / native 兩個實作。注意改了會變更既有照片指紋值，
-要想清楚 `findDuplicate()` 對舊資料的相容性。
+修的方向（這個 session 沒有改 App 程式碼）：改 32-bit FNV-1a、改用 `BigInt`，
+或把 `hashBytes` 拆成 web／native 兩個實作。注意換演算法會改變既有照片指紋，
+要顧 `findDuplicate()` 對舊資料的相容性。
 
-> 這一輪的截圖就是**暫時**改成 32-bit FNV-1a 編出來的；該檔案已還原，
-> `git status` 乾淨，這個暫改**沒有**進任何 commit。
+### 補充
 
----
-
-### 問題 3：`flutter analyze` 有一個 warning
-
-| 項目 | 內容 |
-|---|---|
-| 步驟 | `cd app && flutter analyze` |
-| 預期 | 沒有 warning |
-| 實際 | `lib/screens/settings_screen.dart:7:8` · `unused_import`：`'../models/vocabulary_profile.dart'` 沒用到 |
-| 嚴重度 | **低** |
-
-（刪掉這行 import 就好，但照 `mac_verify.md` 的規則這一輪不動 App 程式碼。）
-
----
-
-### 問題 4：`flutter analyze` 三個 info（都在測試／模擬輔助檔）
-
-| 檔案 | 規則 |
-|---|---|
-| `test/card38_redirect_scope_test.dart:28:57` | `curly_braces_in_flow_control_structures` |
-| `test/card38_redirect_scope_test.dart:57:5` | `avoid_print` |
-| `test/simulation/settings_simulation.dart:67:25` | `unnecessary_string_interpolations` |
-
-嚴重度 **低**。
-
----
-
-### 問題 5：`mac_verify.md` 這張卡被派給了非 Mac 的 agent
-
-| 項目 | 內容 |
-|---|---|
-| 預期 | 這張卡只派給 Mac 上的 session |
-| 實際 | 被雲端 Linux session 接走，步驟 4、5（也就是這張卡的重點）做不到 |
-| 嚴重度 | **資訊**（流程問題，不是 App 問題） |
-
-建議在 `lexicon/tools/agent_capabilities.json` 或 dispatch 設定裡，把這張卡限定給 Mac 的 agent，
-或在 `mac_verify.md` 開頭加一句「非 macOS 環境請直接回報不適用」，省掉一輪空轉。
-
----
-
-### 順手確認（沒問題，記錄備查）
-
-- **後端 tunnel 是通的**（2026-10-18 從雲端測）：
-  - `GET https://api.willylinai.com/api/lexicon` → **401**，符合 `e4638fe` 加的 public-host 金鑰防護。
-  - `GET https://api.willylinai.com/tag` → **404**，正常：`tagger/tagging_server.py` 只在 `do_POST` 處理 `/tag`。
-  - 兩個都在 ~1.2 秒內回應。沒有讀或送任何金鑰。
-- **測試整體**：`flutter test` → **351 passed · 1 skipped · 4 failed**（失敗的 4 個就是問題 1、2）。
-  跳過的那個是 `card38_redirect_scope_test.dart`，條件是 `../lexicon/logs/agents/card123.resume.pack.json` 不存在，屬預期。
-- **`flutter pub get` 乾淨**：沒有改到 `pubspec.lock`（28 個套件有新版但受 constraint 限制，與這一輪無關）。
-- **`flutter doctor`**：Flutter 本身 ✓、Network resources ✓；Android SDK / Chrome / Linux GTK ✗ —
-  都是這個 Linux 容器沒裝，與 iOS 驗證無關。
-
----
-
-### 補充：用 Flutter web 看 UI（**不能取代 iPhone 模擬器**）
-
-因為跑不了 iOS 模擬器，這一輪改用 **Flutter web + Chromium，視窗 390×844（iPhone 尺寸）**
-把 App 的樣子抓下來，至少讓 owner 看得到畫面。截圖在 `docs/mac_verify_shots/`，檔名都有 `web` 字樣。
-
-**這不是原生 iOS，下面幾項一定不同，不要拿來當步驟 5 的結論：**
-
-- 相機、相片庫、`photo_manager`、`mobile_scanner`（QR code，卡 #280）在無頭瀏覽器中不能用 —
-  首頁顯示「目前無法使用相機」「尚未有可用相機或照片」，所以**拍照／選照片 → 打標整條流程沒有驗到**。
-- 跨網域被 CORS 擋，詞庫同步與 `/health` 都連不到，所以畫面上一直掛著
-  「暫時無法連線 · 使用已儲存的詞庫」的紅色橫幅（這其實也等於看到 #175 的背景錯誤橫幅有在運作）。
-- 原生 iOS 的字體度量、捲動手感、發音（`flutter_tts`）、音檔播放（`audioplayers`）都沒有驗到（#270 仍未驗）。
-- 詞庫沒同步成功，所以 `相片冊` / `複習` / `單字本` 都是空狀態，
-  #277 學習洞察只看得到空的骨架，#252 / #278 / #279 / #268 / #269 完全沒驗到。
-
-**有看到而且正常的**：新手引導兩頁（選語言 → 程度自評）、五個分頁切換、
-設定頁（語言／母語／發音腔調／單字難度／學習洞察骨架／進階設定展開／詞庫連線／資料）、
-複習的空狀態文案、整體版面在 390 寬沒有破版或橫向捲動。
+- 第 1 輪（`ae1d773`）在這台看到的 4 個測試失敗（`screens_test` 測試連線 ×3、`album_level_test` ×1）
+  與 1 個 analyze warning，**在 `ffa3aea` 上都已經修掉**，與 Mac 端「369 通過、0 失敗」的紀錄一致。
+  這幾項不需要再追。
+- 後端 tunnel 通：`/api/lexicon` → 401（金鑰防護正常）、`/health` → 401、`/tag` → 404（只收 POST，正常）。
+  沒有讀或送任何金鑰。
+- 因為看不到模擬器，另外用 **Flutter web + Chromium 390×844** 抓了 UI 截圖放在 `docs/mac_verify_shots/`
+  （檔名有 `web`，是在暫時改掉上述 hash 常數後編出來的，該暫改已還原、沒有進 commit）。
+  **這不能取代步驟 5**：無頭瀏覽器沒有相機、相片庫、QR 掃描、TTS、音檔，詞庫也被 CORS 擋住，
+  所以拍照→打標整條流程與 #252 / #270 / #277 / #278 / #279 / #268 / #269 都還沒驗到。
+  截圖中「測試連線」顯示「連不到 AI 辨識服務」是瀏覽器 CORS，不是 App 的問題。
+- 流程建議：這張卡被派給了非 Mac 的 agent，重點步驟做不到；建議在 dispatch 設定裡限定只派給 Mac。

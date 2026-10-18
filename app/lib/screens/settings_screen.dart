@@ -4,7 +4,6 @@ import '../screens/data_sources_screen.dart';
 import '../screens/privacy_policy_screen.dart';
 import '../services/learning_content.dart';
 import '../services/learning_insights.dart';
-import '../models/vocabulary_profile.dart';
 import '../services/dictionary_sync.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -18,6 +17,7 @@ import '../services/word_database_query.dart';
 import '../theme/mobile_theme.dart';
 import '../widgets/mobile/common.dart';
 import '../widgets/mobile/dialogs.dart';
+import '../widgets/backup_buttons.dart';
 
 /// 設定 — the fifth tab. The Figma file has no frame for it, so it uses
 /// the other screens' nav bar and card style. It holds spec section 4's
@@ -54,7 +54,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _testConnection() async {
     final scope = AppScope.of(context);
     final settings = scope.settings;
-    if (!settings.taggingConfigured) {
+    if (settings.taggingUrl.isEmpty) {
       setState(() => _check = '請先填寫服務網址');
       return;
     }
@@ -68,7 +68,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     try {
       final h = await tagger.checkHealth();
       result = !h.ollama
-          ? '✕ 服務有回應，但 Ollama 沒有啟動'
+          ? '✕ 服務有回應，但 AI 模型沒有啟動'
           : h.keyOk == false
               ? '✕ 服務正常，但 API Key 不正確'
               : '✓ 已連線 · ${h.model}';
@@ -279,74 +279,98 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ],
                       ),
                       _insightsCard(repo.insights()),
-                      _Card(
-                        title: '進階設定：照片辨識連線',
-                        collapsed: true,
-                        children: [
-                          _note(kIsWeb
-                              ? '網頁版會自動連接這台電腦的照片辨識服務，不用填網址或金鑰。只有使用其他服務時才需要修改。連不上時照片會先排隊，'
-                                  '恢復連線後自動處理。'
-                              : '請填入照片辨識服務（Qwen）的網址與金鑰才能辨識照片內容。連不上時照片會先排隊，'
-                                  '恢復連線後自動處理。'),
-                          const SizedBox(height: 12),
-                          TextField(
-                            controller: _url,
-                            keyboardType: TextInputType.url,
-                            decoration: InputDecoration(
-                              labelText: ui(context, '服務網址'),
-                              hintText: 'http://127.0.0.1:8765/tag',
+                      // The store build has no server to point at (問題回報
+                      // #265): photos are recognized on the phone, so the
+                      // address / key fields are a developer and web thing.
+                      if (!settings.showsTaggingServer)
+                        _Card(
+                          title: '照片辨識',
+                          children: [
+                            _note(settings.usesLocalRecognition
+                                ? '照片在這支手機上辨識，不會上傳到任何伺服器。'
+                                : '這台裝置沒有本機照片辨識，照片會先留在相片冊。'),
+                            if (waiting > 0) ...[
+                              const SizedBox(height: 8),
+                              UiText(
+                                scope.queue.current != null
+                                    ? '⌛ 正在辨識照片（還有 $waiting 張在排隊）'
+                                    : '⌛ 有 $waiting 張照片等待 AI 辨識',
+                                style: MFont.manrope(
+                                    12, FontWeight.w700, MColors.muted),
+                              ),
+                            ],
+                          ],
+                        )
+                      else
+                        _Card(
+                          title: '進階設定：照片辨識連線',
+                          collapsed: true,
+                          children: [
+                            _note(kIsWeb
+                                ? '網頁版會自動連接這台電腦的照片辨識服務，不用填網址或金鑰。只有使用其他服務時才需要修改。連不上時照片會先排隊，'
+                                    '恢復連線後自動處理。'
+                                : '留空時用手機本機辨識照片；填入服務網址與金鑰則改用該服務。連不上時照片會先排隊，'
+                                    '恢復連線後自動處理。'),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _url,
+                              keyboardType: TextInputType.url,
+                              decoration: InputDecoration(
+                                labelText: ui(context, '服務網址'),
+                                hintText: 'http://127.0.0.1:8765/tag',
+                              ),
+                              onChanged: (v) => settings.taggingUrl = v,
                             ),
-                            onChanged: (v) => settings.taggingUrl = v,
-                          ),
-                          const SizedBox(height: 10),
-                          TextField(
-                            controller: _key,
-                            obscureText: true,
-                            decoration: InputDecoration(
-                                labelText: ui(context, '連線金鑰（API Key）')),
-                            onChanged: (v) => settings.apiKey = v,
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              if (!kIsWeb) ...[
+                            const SizedBox(height: 10),
+                            TextField(
+                              controller: _key,
+                              obscureText: true,
+                              decoration: InputDecoration(
+                                  labelText: ui(context, '連線金鑰（API Key）')),
+                              onChanged: (v) => settings.apiKey = v,
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                if (!kIsWeb) ...[
+                                  OutlinedButton(
+                                    onPressed:
+                                        _checking ? null : _scanConnection,
+                                    child: const UiText('掃描 QR code'),
+                                  ),
+                                  const SizedBox(width: 12),
+                                ],
                                 OutlinedButton(
-                                  onPressed: _checking ? null : _scanConnection,
-                                  child: const UiText('掃描 QR code'),
+                                  onPressed: _checking ? null : _testConnection,
+                                  child: UiText(_checking ? '測試中…' : '測試連線'),
                                 ),
                                 const SizedBox(width: 12),
-                              ],
-                              OutlinedButton(
-                                onPressed: _checking ? null : _testConnection,
-                                child: UiText(_checking ? '測試中…' : '測試連線'),
-                              ),
-                              const SizedBox(width: 12),
-                              if (_check != null)
-                                Expanded(
-                                  child: UiText(
-                                    _check!,
-                                    style: MFont.manrope(
-                                        13,
-                                        FontWeight.w700,
-                                        _check!.startsWith('✓')
-                                            ? MColors.success
-                                            : MColors.againFg),
+                                if (_check != null)
+                                  Expanded(
+                                    child: UiText(
+                                      _check!,
+                                      style: MFont.manrope(
+                                          13,
+                                          FontWeight.w700,
+                                          _check!.startsWith('✓')
+                                              ? MColors.success
+                                              : MColors.againFg),
+                                    ),
                                   ),
-                                ),
-                            ],
-                          ),
-                          if (waiting > 0) ...[
-                            const SizedBox(height: 8),
-                            UiText(
-                              scope.queue.current != null
-                                  ? '⌛ 正在辨識照片（還有 $waiting 張在排隊）'
-                                  : '⌛ 有 $waiting 張照片等待 AI 辨識',
-                              style: MFont.manrope(
-                                  12, FontWeight.w700, MColors.muted),
+                              ],
                             ),
+                            if (waiting > 0) ...[
+                              const SizedBox(height: 8),
+                              UiText(
+                                scope.queue.current != null
+                                    ? '⌛ 正在辨識照片（還有 $waiting 張在排隊）'
+                                    : '⌛ 有 $waiting 張照片等待 AI 辨識',
+                                style: MFont.manrope(
+                                    12, FontWeight.w700, MColors.muted),
+                              ),
+                            ],
                           ],
-                        ],
-                      ),
+                        ),
                       _Card(
                         title: '進階設定：複習安排',
                         collapsed: true,
@@ -413,6 +437,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               '${formatCount(repo.photoCount)} 張照片 · '
                               '${formatCount(repo.cardCount)} 張卡片 · '
                               '已學會 ${formatCount(profile.learned.length)} 個'),
+                          const SizedBox(height: 6),
+                          const BackupButtons(),
                         ],
                       ),
                       _Card(

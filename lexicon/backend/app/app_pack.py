@@ -185,38 +185,53 @@ def share_forms(by_lex: dict[int, dict]) -> None:
 
 
 _CORE_POS = ("noun", "verb", "adj", "adv")
+# How much one example sentence weighs against one sense when the list and
+# the dictionaries tie. Card #164 simulated 0 / 0.25 / 0.5 / 1.0 and a cap of
+# 2–3 examples per sense on 1,787 spellings: anything below full weight
+# flipped buoy / burrow / hose / stain / tamper to the verb, so examples keep
+# full weight; the known misses are cast / lift (one noun sense carrying 16
+# examples), charter, nudge (this ECDICT has no verb line), outcast, reek.
+_EXAMPLE_WEIGHT = 1.0
 
 
 @lru_cache(maxsize=50_000)
-def dictionary_pos(word: str) -> tuple[int, dict[str, int]]:
-    """How many general dictionaries know ``word`` and which parts of speech
-    each lists: (known, {pos: votes}). Sources: Open English WordNet and
-    ECDICT — both compact dictionaries that leave out the archaic / dialect
-    senses Wiktionary documents at length (card #164). A source that does
-    not have the word at all is not counted, and a failure (package or
-    index missing) is neutral: (0, {})."""
+def dictionary_pos(word: str) -> tuple[int, dict[str, int], dict[str, int]]:
+    """How many general dictionaries know ``word``, which parts of speech
+    each lists, and how much they say under each: (known, {pos: votes},
+    {pos: weight}). Sources: Open English WordNet (weight = synsets) and
+    ECDICT (weight = meanings) — both compact dictionaries that leave out
+    the archaic / dialect senses Wiktionary documents at length (card
+    #164). A source that does not have the word at all is not counted, and
+    a failure (package or index missing) is neutral: (0, {}, {})."""
     known = 0
     votes: dict[str, int] = {}
+    weight: dict[str, int] = {}
     try:
         from .adapters import oewn
-        poses = oewn._thread.submit(oewn._pos_of, word).result(timeout=30)
+        poses = oewn._thread.submit(
+            lambda: [oewn.POS.get(ss.pos, ss.pos) for ss in oewn._wordnet().synsets(word)]
+        ).result(timeout=30)
         if poses:
             known += 1
             for p in set(poses):
                 votes[p] = votes.get(p, 0) + 1
+            for p in poses:
+                weight[p] = weight.get(p, 0) + 1
     except Exception:  # noqa: BLE001 — wn not installed / no data
         pass
     try:
         from .adapters import ecdict
         translation = ecdict.ECDict().translation(word)
-        poses = {p for p, _ in ecdict.meanings(translation)} if translation else set()
-        if poses:
+        meanings = ecdict.meanings(translation) if translation else []
+        if meanings:
             known += 1
-            for p in poses:
+            for p in {p for p, _ in meanings}:
                 votes[p] = votes.get(p, 0) + 1
+            for p, words in meanings:
+                weight[p] = weight.get(p, 0) + len(words)
     except Exception:  # noqa: BLE001 — no ecdict.csv
         pass
-    return known, votes
+    return known, votes, weight
 
 
 def rank_usages(lexemes: list[dict], cefr_by_pos: dict | None = None,
@@ -244,8 +259,13 @@ def rank_usages(lexemes: list[dict], cefr_by_pos: dict | None = None,
     least two of them know the word, a core part of speech that fewer of
     them list ranks after one they all list (archaic / vulgar are only
     adjectives there, preen / snuggle only verbs — however many Wiktionary
-    senses the noun has). ``pos_votes(word) -> (known, {pos: votes})`` is
-    injectable for tests; default :func:`dictionary_pos`."""
+    senses the noun has); among parts of speech they all list, the one
+    they say more about comes first (cast / lift / reek: more WordNet
+    synsets and ECDICT meanings for the verb than for the noun). The
+    dictionaries also outrank the -ing / -ed rule (underlying is an
+    adjective to both; the noun is Wiktionary's only). ``pos_votes(word) ->
+    (known, {pos: votes}[, {pos: weight}])`` is injectable for tests;
+    default :func:`dictionary_pos`."""
     from . import quality
     from .adapters.local import _family_cap, capped_frequency_level
 
@@ -263,23 +283,26 @@ def rank_usages(lexemes: list[dict], cefr_by_pos: dict | None = None,
         if lx.get("status") == "full":
             groups.setdefault(lx["normalized"], []).append(lx)
 
-    def weighted_evidence(lx: dict) -> float:
+    def weighted_evidence(lx: dict, example_weight: float) -> float:
         senses = lx.get("senses") or []
         stale = {id(s) for s in senses if quality.sense_is_low(s, False)}
         stale_db_ids = {s.get("id") for s in senses if id(s) in stale and s.get("id") is not None}
         sense_weight = sum(0.2 if id(s) in stale else 1.0 for s in senses)
-        example_weight = sum(0.2 if ex.get("sense_id") in stale_db_ids else 1.0
-                              for ex in lx.get("examples") or [])
-        return 1 + sense_weight + example_weight
+        examples = sum(0.2 if ex.get("sense_id") in stale_db_ids else 1.0
+                       for ex in lx.get("examples") or [])
+        return 1 + sense_weight + example_weight * examples
 
     for word, group in groups.items():
         listed = {listed_pos.get(p, p): lv for p, lv in (cefr_by_pos.get(word) or {}).items()}
-        evidence = {id(lx): weighted_evidence(lx) for lx in group}
+        evidence = {id(lx): weighted_evidence(lx, _EXAMPLE_WEIGHT) for lx in group}
+        # The rare usages' level comes from their share of everything the
+        # dictionary records, examples included (問題回報 #16).
+        share_of = {id(lx): weighted_evidence(lx, 1.0) for lx in group}
         participle = not listed and word.endswith(("ing", "ed"))
-        known, votes = (0, {})
-        if sum(1 for lx in group if lx["pos"] not in listed) > 1:
+        known, votes = 0, {}
+        if len(group) > 1:
             try:
-                known, votes = pos_votes(word)
+                known, votes, *_ = pos_votes(word)
             except Exception:  # noqa: BLE001 — neutral when a source breaks
                 known, votes = 0, {}
 
@@ -297,14 +320,17 @@ def rank_usages(lexemes: list[dict], cefr_by_pos: dict | None = None,
             lv = listed.get(lx["pos"])
             return (0 if lv else 1,
                     _LEVELS.index(lv) if lv in _LEVELS else 9,
-                    # -ing / -ed words not in the list: the noun, then the
-                    # adjective (potted 盆栽的), before the verb form.
-                    {"noun": 0, "adj": 1}.get(lx["pos"], 2) if participle else 0,
+                    # -ing / -ed words not in the list: the verb form comes
+                    # after the noun and the adjective (potted 盆栽的) …
+                    1 if participle and lx["pos"] == "verb" else 0,
                     dictionary_tier(lx["pos"]),
+                    # … and, when the dictionaries do not separate them,
+                    # the noun before the adjective (railing).
+                    {"noun": 0, "adj": 1}.get(lx["pos"], 2) if participle else 0,
                     -evidence[id(lx)], _POS_ORDER.get(lx["pos"], 9), lx["id"])
 
         group.sort(key=key)
-        total = sum(evidence.values())
+        total = sum(share_of.values())
         main = group[0]
         for rank, lx in enumerate(group):
             lx["usage_rank"] = rank
@@ -330,7 +356,7 @@ def rank_usages(lexemes: list[dict], cefr_by_pos: dict | None = None,
             lx["headword_cefr"] = lx.get("cefr")
             if lx.get("zipf") is None:
                 continue
-            share = evidence[id(lx)] / total
+            share = share_of[id(lx)] / total
             estimate = capped_frequency_level(word, lx["zipf"] + math.log10(share))
             floor = main.get("cefr") or lx.get("cefr")
             if floor in _LEVELS and _LEVELS.index(estimate) < _LEVELS.index(floor):

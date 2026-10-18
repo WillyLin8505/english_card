@@ -25,6 +25,7 @@ import threading
 import time
 from pathlib import Path
 
+_LOADED_AT = time.time()  # before app.* is imported (#285)
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
 
 from sqlalchemy import text  # noqa: E402
@@ -107,6 +108,38 @@ def _tag_images(worker_id: str) -> bool:
 
 
 ROOT = Path(__file__).resolve().parents[2]
+CODE_DIR = Path(__file__).resolve().parents[1] / "backend" / "app"
+CODE_CHANGED_EXIT = 3  # run_worker.bat starts the worker again on this code
+CODE_CHECK_S = 15
+_code = {"checked": 0.0}
+
+
+def _code_files():
+    yield Path(__file__)
+    yield from CODE_DIR.rglob("*.py")
+
+
+def _code_changed(loaded_at: float | None = None) -> str | None:
+    """A code file edited after this process loaded app.* (checked at most
+    every CODE_CHECK_S s), else None. Modules load once, some lazily, so an
+    old worker mixes old and new code after an edit and every word fails
+    (#285). A file dated in the future does not count, or the worker would
+    restart forever."""
+    now = time.monotonic()
+    if loaded_at is None and now - _code["checked"] < CODE_CHECK_S:
+        return None
+    _code["checked"] = now
+    loaded_at = _LOADED_AT if loaded_at is None else loaded_at
+    wall = time.time()
+    for path in _code_files():
+        try:
+            mtime = path.stat().st_mtime
+        except OSError:
+            continue
+        if loaded_at < mtime <= wall:
+            return str(path.relative_to(ROOT))
+    return None
+
 
 def _qwen_paused() -> bool:
     """Owner paused Qwen on the board: tags lane must not call the model."""
@@ -255,6 +288,12 @@ def main():
           flush=True)
     last_work = time.monotonic()
     while not _stop.is_set():
+        changed = _code_changed()
+        if changed:
+            # Between work units, so no job is cut mid-word.
+            print(f"[{worker_id}] 程式已更新（{changed}），結束讓 run_worker.bat 用新程式重開",
+                  flush=True)
+            sys.exit(CODE_CHANGED_EXIT)
         _hold_awake(time.monotonic() - last_work < AWAKE_IDLE_S)
         try:
             did = work_once(worker_id, args.lane)

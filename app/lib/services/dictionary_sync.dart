@@ -16,7 +16,8 @@ Map<String, dynamic> applyDictionaryDelta(
     Map<String, dynamic> base, Map<String, dynamic> patch) {
   if (patch['delta_version'] != 1 ||
       patch['base_version'] != base['created_at'] ||
-      patch['metadata'] is! Map || patch['order'] is! List ||
+      patch['metadata'] is! Map ||
+      patch['order'] is! List ||
       patch['upserts'] is! List) {
     throw const FormatException('Invalid dictionary delta');
   }
@@ -42,7 +43,30 @@ Map<String, dynamic> applyDictionaryDelta(
 class DictionarySync extends ChangeNotifier {
   static final instance = DictionarySync();
   final http.Client client;
-  DictionarySync({http.Client? client}) : client = client ?? http.Client();
+
+  /// Whether this build has a dictionary server to poll: the web page's own
+  /// server, or a build with DICTIONARY_URL. The store build has none and
+  /// reads only the bundled pack (問題回報 #265, owner decision 2026-10-18).
+  static const hasServer =
+      kIsWeb || String.fromEnvironment('DICTIONARY_URL') != '';
+
+  /// The owner's backend (Cloudflare Tunnel today, Cloudflare later: change
+  /// only this). The dictionary there is read-only, keyless and rate-limited,
+  /// so every build (store builds too) polls it and the bundled pack is just
+  /// the offline fallback (問題回報 #287). A key from 設定 is still sent.
+  static const defaultServer = 'https://api.willylinai.com/api/lexicon';
+
+  final bool? _remoteOverride;
+
+  /// Polls a server (true) or serves the bundled pack (false).
+  /// Tests switch this off so widget tests never reach the network.
+  static bool defaultRemote = true;
+
+  bool get remote => _remoteOverride ?? defaultRemote;
+
+  DictionarySync({http.Client? client, bool? remote})
+      : client = client ?? http.Client(),
+        _remoteOverride = remote;
   Timer? _timer;
   Box<String>? _cache;
   AppSettings? _settings;
@@ -51,6 +75,7 @@ class DictionarySync extends ChangeNotifier {
   bool _disposed = false;
   String status = '正在連接詞庫…';
   DateTime? lastSuccess;
+
   /// True only while [status] holds a failure message. Screens that show the
   /// connecting/connected text as permanent chrome should hide it otherwise —
   /// those two states are debugging noise, not something learners need
@@ -65,14 +90,14 @@ class DictionarySync extends ChangeNotifier {
         ? Uri.parse(base)
         : kIsWeb
             ? Uri.base.resolve('/api/lexicon')
-            : Uri.parse('http://127.0.0.1:8123/api/lexicon');
+            : Uri.parse(defaultServer);
     return uri.replace(queryParameters: {'target': target, 'native': native});
   }
 
   /// Where 缺詞條 go (spec section 7): the same local server, which saves
   /// them in the admin's missing_lexeme / missing_localization requests.
-  Uri get missingEndpoint =>
-      endpoint('en', 'zh-TW').replace(path: '/api/missing', queryParameters: {});
+  Uri get missingEndpoint => endpoint('en', 'zh-TW')
+      .replace(path: '/api/missing', queryParameters: {});
 
   /// The tagger key from 設定: a server reached over the internet
   /// (serve_app.py --public-host) needs it for the dictionary too.
@@ -86,6 +111,7 @@ class DictionarySync extends ChangeNotifier {
   /// Sends the words the pack lacked since the last call. Returns how many
   /// were sent; failures are retried on the next refresh.
   Future<int> sendMissing() async {
+    if (!remote) return 0;
     final pending = {
       for (final e in LexiconPack.instance.requests.entries)
         if (!_sentMissing.contains(e.key)) e.key: e.value,
@@ -120,15 +146,55 @@ class DictionarySync extends ChangeNotifier {
       WordDatabaseRepository Function() repository) async {
     _settings = settings;
     _repository = repository;
-    _cache = await Hive.openBox<String>('dictionary_cache_v1');
-    if (_disposed) return;
     settings.addListener(_kick);
-    _timer = Timer.periodic(const Duration(seconds: 30), (_) => refresh());
+    if (!remote) {
+      await _useBundled();
+      return;
+    }
+    await _startPolling();
     await refresh();
+  }
+
+  /// Opens the cache and the 30 s timer once; also runs when a tagger key is
+  /// added later and a bundled-only build starts to qualify for updates.
+  Future<void> _startPolling() async {
+    if (_timer != null) return;
+    _cache ??= await Hive.openBox<String>('dictionary_cache_v1');
+    if (_disposed) return;
+    _timer ??= Timer.periodic(const Duration(seconds: 30), (_) => refresh());
   }
 
   void _kick() {
     unawaited(refresh());
+  }
+
+  /// The pack shipped in the app for the current language pair; a language
+  /// switch loads the other direction's pack. No polling, nothing sent.
+  Future<void> _useBundled() async {
+    if (_disposed || _running || _settings == null || _repository == null) {
+      return;
+    }
+    _running = true;
+    try {
+      final repo = _repository!();
+      final target = repo.language, native = _settings!.nativeLanguage;
+      final pair = '$target-$native';
+      if (_activePair != pair) {
+        await LexiconPack.instance.load(target: target, native: native);
+        if (_disposed) return;
+        if (identical(repo, _repository!()) &&
+            native == _settings!.nativeLanguage) {
+          repo.linkLexicon(LexiconPack.instance);
+          _activePair = pair;
+        }
+      }
+      lastSuccess = DateTime.now();
+      status = '使用內建詞庫';
+      hasError = false;
+    } finally {
+      _running = false;
+      if (!_disposed) notifyListeners();
+    }
   }
 
   void _succeeded() {
@@ -139,6 +205,8 @@ class DictionarySync extends ChangeNotifier {
   }
 
   Future<void> refresh() async {
+    if (!remote) return _useBundled();
+    if (_timer == null && _settings != null) await _startPolling();
     if (_disposed || _running || _settings == null || _repository == null) {
       return;
     }
@@ -175,20 +243,21 @@ class DictionarySync extends ChangeNotifier {
       }
       final cachedVersion = LexiconPack.instance.version;
       final saved = _cache?.get(pair);
-      final canReuse = !_forceFull.contains(pair) && saved != null &&
-          cachedVersion != null && LexiconPack.instance.target == target &&
+      final canReuse = !_forceFull.contains(pair) &&
+          saved != null &&
+          cachedVersion != null &&
+          LexiconPack.instance.target == target &&
           LexiconPack.instance.native == native;
       final uri = endpoint(target, native);
-      final response = await client
-          .get(uri.replace(queryParameters: {
+      final response = await client.get(
+          uri.replace(queryParameters: {
             ...uri.queryParameters,
             if (canReuse) 'since': cachedVersion,
-          }), headers: {
+          }),
+          headers: {
             ..._keyHeader,
-            if (canReuse)
-              'If-None-Match': '"$cachedVersion"',
-          })
-          .timeout(const Duration(seconds: 60));
+            if (canReuse) 'If-None-Match': '"$cachedVersion"',
+          }).timeout(const Duration(seconds: 60));
       if (!current()) return;
       if (response.statusCode == 304 && canReuse) {
         _succeeded();

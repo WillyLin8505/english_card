@@ -426,7 +426,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
           ? const _PhotoBadgeOverlay(
               icon: Icons.hourglass_top_rounded, text: '等待 AI 辨識')
           : const _PhotoBadgeOverlay(
-              icon: Icons.link_off_rounded, text: '尚未設定 AI 辨識服務');
+              icon: Icons.link_off_rounded, text: '這台裝置沒有照片辨識');
     }
     return null;
   }
@@ -453,6 +453,19 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                   value: session.showLearned,
                   onChanged: session.setShowLearned,
                 ),
+              ),
+            ],
+          ),
+          // 問題回報 #276: the "no 建立 button, leaving saves" rule used to sit
+          // under all five words; say it next to the list title instead.
+          Row(
+            children: [
+              const Icon(Icons.check_circle_outline_rounded,
+                  size: 14, color: MColors.label),
+              const SizedBox(width: 4),
+              Expanded(
+                child: UiText('返回時自動保存，不用再按建立。',
+                    style: MFont.manrope(12, FontWeight.w600, MColors.label)),
               ),
             ],
           ),
@@ -530,7 +543,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
           ],
           const SizedBox(height: 4),
           UiText(
-            '左滑單字表示已經會了；拖曳照片上的標籤可調整位置。\n離開這一頁時會自動保存。',
+            '左滑單字表示已經會了；拖曳照片上的標籤可調整位置。',
             textAlign: TextAlign.center,
             style: MFont.manrope(12, FontWeight.w600, MColors.label),
           ),
@@ -556,8 +569,8 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
     switch (photo.taggingStatus) {
       case TaggingStatus.pending
           when photo.candidates.isEmpty && !scope.settings.taggingConfigured:
-        title = '尚未設定 AI 辨識服務';
-        body = '填好服務網址與 API Key 後，這張照片會自動開始辨識。';
+        title = '這台裝置沒有照片辨識';
+        body = '這台裝置目前無法辨識照片，照片會先留在相片冊。';
         action = FilledButton(
           onPressed: () => scope.navigator.selectTab(AppTab.settings),
           child: const UiText('前往設定'),

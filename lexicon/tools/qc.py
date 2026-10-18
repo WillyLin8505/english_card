@@ -153,6 +153,13 @@ def check_pack(source: str | None, out: str, before: str | None, live: bool) -> 
     else:
         pack = json.loads(Path(source).read_text(encoding='utf-8'))
     snapshot = qc.snapshot(pack, qc.load_golden())
+    if live:
+        # Values vs lexemes drift is only visible in the database (#281).
+        from app import db, qc_drift
+        with db.session_scope() as s:
+            counts, samples = qc_drift.metrics(s)
+        snapshot["metrics"].update(counts)
+        snapshot["samples"].update(samples)
     bad = qc.compare(json.loads(Path(before).read_text(encoding='utf-8')), snapshot) if before else []
     Path(out).write_text(json.dumps(snapshot, ensure_ascii=False, indent=1), encoding='utf-8')
     print(json.dumps({'metrics': snapshot['metrics'], 'golden': snapshot['golden']['rates'],

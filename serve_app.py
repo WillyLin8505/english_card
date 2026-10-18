@@ -6,12 +6,14 @@ dictionary content, never admin credentials. Personal learning stays local.
 from __future__ import annotations
 
 import argparse
+import collections
 import hashlib
 import ipaddress
 import json
 import logging
 import mimetypes
 import os
+import re
 import secrets
 import sys
 import tempfile
@@ -30,6 +32,13 @@ from lexicon_transport import SnapshotStore, accepts_gzip, matches_etag
 
 _lock = threading.Lock()
 _cache = {}
+
+
+# Requests per minute per client on the public name (the app polls every ~30 s
+# and downloads a pack's images/audio in bursts).
+RATE_LIMITS = {'/api/lexicon': 30, '/api/image': 600, '/api/audio': 600}
+RATE_HITS: dict = {}
+RATE_LOCK = threading.Lock()
 
 
 def snapshot_directory():
@@ -283,10 +292,33 @@ class Handler(SimpleHTTPRequestHandler):
         name = (urlsplit('//' + self.headers.get('Host', '')).hostname or '').lower()
         return name in getattr(self.server, 'public_hosts', set())
 
+    def within_rate(self, path: str) -> bool:
+        """The read-only dictionary (/api/lexicon, images, audio) needs no key so a
+        store build can update its word list; a per-client limit stops bulk
+        downloads. Only the public name is limited (the LAN and loopback aren't)."""
+        if not self.public_request() or path not in RATE_LIMITS:
+            return True
+        # The Cloudflare tunnel connects from loopback; the real client is in this header.
+        client = self.headers.get('CF-Connecting-IP') or self.client_address[0]
+        limit = RATE_LIMITS[path]
+        now = time.monotonic()
+        with RATE_LOCK:
+            hits = RATE_HITS.setdefault((path, client), collections.deque())
+            while hits and now - hits[0] > 60:
+                hits.popleft()
+            if len(hits) >= limit:
+                self.send_response(429)
+                self.send_header('Retry-After', '30')
+                self.send_header('Content-Length', '0')
+                self.end_headers()
+                return False
+            hits.append(now)
+        return True
+
     def key_ok(self) -> bool:
         """--lan / --public-host: photo recognition, missing-word reports and the
-        dictionary from another device need the tagger's X-API-Key, so the LAN
-        or the internet can't use the GPU or read the database freely."""
+        health check from another device need the tagger's X-API-Key, so the LAN
+        or the internet can't use the GPU freely. The dictionary is public read-only."""
         if not self.public_request() and (
                 not getattr(self.server, 'lan', False) or self.from_loopback()):
             return True
@@ -414,10 +446,58 @@ class Handler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
+    ISSUES_PATH = re.compile(r'^/api/issues(/\d+)?$')
+
+    def proxy_issues(self, method: str):
+        """問題回報 for the Mac / iPhone session (owner, 2026-10-18): GET/POST/PUT
+        /api/issues[/id] go to the admin API through the board proxy (5173,
+        which adds the admin key). From the internet the tagger's X-API-Key
+        is required, like tagging."""
+        if not self.key_ok():
+            self.send_error(401, 'X-API-Key required from another device')
+            return
+        try:
+            length = int(self.headers.get('Content-Length', '0') or 0)
+        except ValueError:
+            self.send_error(400)
+            return
+        if length > 256 * 1024:
+            self.send_error(413)
+            return
+        body = self.rfile.read(length) if length else None
+        request = Request('http://127.0.0.1:5173' + self.path, data=body, method=method,
+                          headers={'Content-Type': 'application/json'})
+        try:
+            upstream = urlopen(request, timeout=30)
+        except HTTPError as error:
+            upstream = error
+        except (OSError, URLError):
+            self.send_error(502, 'Issue list unavailable')
+            return
+        with upstream:
+            status, data = upstream.code, upstream.read()
+        self.send_response(status)
+        self.send_header('Content-Type', 'application/json; charset=utf-8')
+        self.send_header('Cache-Control', 'no-store')
+        self.send_header('Content-Length', str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+    def do_PUT(self):
+        if not self.allowed_request():
+            return
+        if not self.ISSUES_PATH.match(urlsplit(self.path).path):
+            self.send_error(404)
+            return
+        self.proxy_issues('PUT')
+
     def do_POST(self):
         if not self.allowed_request():
             return
         path = urlsplit(self.path).path
+        if self.ISSUES_PATH.match(path):
+            self.proxy_issues('POST')
+            return
         if path not in ('/tag', '/api/missing'):
             self.send_error(404)
             return
@@ -444,6 +524,11 @@ class Handler(SimpleHTTPRequestHandler):
         if not self.allowed_request():
             return
         url = urlsplit(self.path)
+        if self.ISSUES_PATH.match(url.path):
+            self.proxy_issues('GET')
+            return
+        if not self.within_rate(url.path):
+            return
         if url.path == '/api/image':
             from app import models as m
             try:
@@ -476,7 +561,7 @@ class Handler(SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(body)
             return
-        if url.path in ('/health', '/api/lexicon') and not self.key_ok():
+        if url.path == '/health' and not self.key_ok():
             self.send_error(401, 'X-API-Key required from another device')
             return
         if url.path == '/health':
@@ -537,7 +622,7 @@ if __name__ == '__main__':
                              '(testing on a Mac or iPhone); photo recognition then needs X-API-Key')
     parser.add_argument('--public-host', action='append', default=[],
                         help='internet name served through a tunnel (e.g. api.willylinai.com); '
-                             'repeatable, or PUBLIC_HOSTS=a,b. Tagging and the dictionary then need X-API-Key')
+                             'repeatable, or PUBLIC_HOSTS=a,b. Tagging needs X-API-Key; the read-only dictionary is open but rate-limited')
     args = parser.parse_args()
     if args.warm_only:
         snapshot = http_snapshot('en', 'zh-TW')

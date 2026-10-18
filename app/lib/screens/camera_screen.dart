@@ -13,6 +13,7 @@ import '../theme/mobile_theme.dart';
 import '../widgets/mobile/common.dart';
 import '../widgets/mobile/dialogs.dart';
 import '../widgets/mobile/m_icon.dart';
+import '../services/photo_store.dart';
 import '../widgets/mobile/photo_widgets.dart';
 import 'photo_picker_screen.dart';
 
@@ -185,7 +186,7 @@ class _CameraScreenState extends State<CameraScreen>
     return ListenableBuilder(
       listenable: Listenable.merge([repo, scope.settings, scope.queue]),
       builder: (context, _) {
-        final latest = repo.photos.where((p) => p.hasImage).firstOrNull;
+        final latest = repo.photos.where(PhotoStore.canShow).firstOrNull;
         final String badge;
         if (_busy) {
           badge = '處理中…';
@@ -224,7 +225,7 @@ class _CameraScreenState extends State<CameraScreen>
                             children: [
                               UiText('拍照學單字', style: MFont.display),
                               const SizedBox(height: MSpace.xxs),
-                              UiText('即時辨識生活中的英文單字', style: MFont.caption),
+                              UiText('拍照或選一張照片，找出生活中的英文單字', style: MFont.caption),
                             ],
                           ),
                         ),

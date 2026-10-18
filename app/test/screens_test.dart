@@ -141,6 +141,20 @@ void main() {
       expect(app.repository.cardOf(apple.id), isNotNull);
     });
 
+    testWidgets('自動保存提示在列表標題旁，不在所有單字之後（問題回報 #276）',
+        (tester) async {
+      await openBreakfast(tester);
+      final hint = find.text('返回時自動保存，不用再按建立。');
+      expect(hint, findsOneWidget);
+      final titleY = tester.getTopLeft(find.text('辨識單字列表 (5)')).dy;
+      final hintY = tester.getTopLeft(hint).dy;
+      final firstWordY = tester.getTopLeft(find.byType(Dismissible).first).dy;
+      expect(hintY, greaterThan(titleY));
+      expect(hintY, lessThan(firstWordY), reason: 'visible before any word');
+      expect(find.textContaining('離開這一頁時會自動保存'), findsNothing,
+          reason: 'the bottom hint no longer repeats the save rule');
+    });
+
     testWidgets('swipe left → 已學會; 顯示已學會單字 shows 復原', (tester) async {
       final app = await openBreakfast(tester);
       await tester.drag(
@@ -186,7 +200,7 @@ void main() {
       app.navigator.openPhoto('p-wait');
       await tester.pumpAndSettle();
       // Not set up is said plainly — not an hourglass that looks like progress.
-      expect(find.text('尚未設定 AI 辨識服務'), findsNWidgets(2)); // photo badge + list
+      expect(find.text('這台裝置沒有照片辨識'), findsNWidgets(2)); // photo badge + list
       expect(find.text('等待 AI 辨識'), findsNothing);
       await tester.tap(find.text('前往設定'));
       await tester.pumpAndSettle();
@@ -441,6 +455,7 @@ void main() {
       await tester.tap(find.text('進階設定：照片辨識連線'));
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('測試連線'));
+      await tester.pump();
       await tester.tap(find.text('測試連線'));
       await settle(tester, rounds: 1);
       expect(find.text(expected), findsOneWidget);
@@ -507,11 +522,10 @@ void main() {
       expect(frenchNative.onSelected, isNotNull);
       expect(app.settings.learningLanguage, 'en');
       expect(app.settings.nativeLanguage, 'zh-TW');
-      await tester.tap(find.text('進階設定：照片辨識連線'));
-      await tester.pumpAndSettle();
-      await tester.enterText(
-          find.byType(TextField).first, 'http://127.0.0.1:8765/tag');
-      expect(app.settings.taggingConfigured, isTrue);
+      // Store build without a server: no address / key fields (問題回報 #265).
+      expect(app.settings.showsTaggingServer, isFalse);
+      expect(find.text('進階設定：照片辨識連線'), findsNothing);
+      expect(find.text('照片辨識'), findsOneWidget);
     });
   });
 

@@ -22,7 +22,9 @@
   "_reserved_note": "??? 10/18?Claude Code ??? #216????? bug?? #164 ? #217????? #10?? #12???????Codex ????? #166????",
   "multi_round_tasks": [
     166,
-    167
+    167,
+    244,
+    267
   ],
   "unblock_after": {
     "166": [
@@ -70,7 +72,16 @@
   "probe_interval_minutes": 60,
   "issue_swarm": {
     "enabled": true,
-    "max_parallel": 15
+    "max_parallel": 15,
+    "cover_for": [
+      "Cursor CLI",
+      "Codex"
+    ]
   },
-  "_issue_swarm_note": "owner 10/18：每個問題回報一出現就開一個新的 Claude CLI（Claude CLI 1..max_parallel），共用 Claude Code 額度；max_parallel 防止一次把額度用光。"
+  "_issue_swarm_note": "owner 10/18：每個問題回報一出現就開一個新的 Claude CLI（Claude CLI 1..max_parallel），共用 Claude Code 額度；max_parallel 防止一次把額度用光。 cover_for：那個 AI 額度用完或暫停時，它會接的卡（含常態掃描）由 Claude CLI 接手（owner 10/18）。",
+  "_multi_round_note": "多輪卡做完一輪排回待辦；result.md 第一行寫「全部完成」才收成 done。",
+  "mac_sync": {
+    "enabled": true
+  },
+  "_mac_sync_note": "owner 10/18：每張改到 App 的卡都要在 Mac 的 iPhone 模擬器／實機驗證。每輪巡檢後跑 mac_sync.py：flutter analyze＋test 過了才 commit/push，並在 docs/mac_inbox.md 加 M 項。"
 }

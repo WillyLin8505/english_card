@@ -5,7 +5,7 @@ import '../theme/mobile_theme.dart';
 import '../widgets/mobile/common.dart';
 
 /// In-app privacy policy (App Store guideline 5.1.1(i)).
-/// The same text is published at https://willylinai.com/privacy
+/// The same text is published at https://api.willylinai.com/privacy
 /// (`docs/privacy.html`, served by serve_app.py).
 class PrivacyPolicyScreen extends StatelessWidget {
   const PrivacyPolicyScreen({super.key});
@@ -36,7 +36,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
     ),
     (
       '聯絡與政策網頁',
-      '公開網址：https://willylinai.com/privacy（與 App Store 頁面相同內容）。'
+      '公開網址：https://api.willylinai.com/privacy（與 App Store 頁面相同內容）。'
           '要詢問本政策，或要求刪除已送到 PostHog 的匿名統計，請寫信到 sssss971412@gmail.com。',
     ),
   ];

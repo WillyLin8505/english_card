@@ -603,7 +603,7 @@ class ExportBody(BaseModel):
     target_language: str
     native_language: str
     include_audio: bool = True
-    store_safe: bool = False  # App Store build: drop vulgar/offensive senses (#271)
+    store_safe: bool = False  # App Store build: drop vulgar/offensive/derogatory senses (#271)
     fields: list[str] | None = None
 
 

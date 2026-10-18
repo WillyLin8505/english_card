@@ -59,7 +59,9 @@ class LexiconPack extends ChangeNotifier {
     try {
       final raw =
           await (bundle ?? rootBundle).loadString(assetFor(target, native));
-      loadJson(jsonDecode(raw) as Map<String, dynamic>);
+      // The bundled pack is tens of MB (問題回報 #265): parse it off the
+      // UI thread (compute runs inline on the web).
+      loadJson(await compute(jsonDecode, raw) as Map<String, dynamic>);
     } catch (e) {
       debugPrint('No language pack for $target-$native: $e');
       clear();

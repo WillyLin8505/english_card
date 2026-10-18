@@ -64,7 +64,7 @@ void main() {
       await tester.pump(const Duration(seconds: 3));
     }
     if (settings.nativeLanguage != 'zh-TW') {
-      f.add('提示後母語被誤改', '${settings.nativeLanguage}');
+      f.add('提示後母語被誤改', settings.nativeLanguage);
     }
 
     // --- 語言：切母語為法文（介面語言，不受已發布詞庫限制）生效 ---

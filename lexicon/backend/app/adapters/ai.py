@@ -69,13 +69,14 @@ class AITranslate(SourceAdapter):
             return missing is None or slot in missing
 
         if f == "native_definition":
-            from ..text import main_native_sense_key, sense_skipped_for_native
+            from ..text import main_native_sense_key, main_native_sense_keys, sense_skipped_for_native
             defs = [s for s in ctx.items("definition") if want(s.get("sense_key"))]
             main_key = main_native_sense_key(defs)
             # The main sense is requested first. Obscure non-main senses are
             # left without a forced translation.
             defs.sort(key=lambda s: s.get("sense_key") != main_key)
-            defs = [s for s in defs if not sense_skipped_for_native(s, main_key)]
+            mains = main_native_sense_keys(defs)
+            defs = [s for s in defs if not sense_skipped_for_native(s, mains)]
             return "gloss", [{"id": s["sense_key"], "text": s.get("gloss", ""),
                               "context": f"{ctx.display or ctx.lemma} ({s.get('pos', '')})"}
                              for s in defs]

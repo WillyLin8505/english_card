@@ -8,6 +8,7 @@ import '../models/photo.dart';
 import '../models/word_entry.dart';
 import '../theme/mobile_theme.dart';
 import '../widgets/mobile/common.dart';
+import '../services/photo_store.dart';
 import '../widgets/mobile/photo_widgets.dart';
 
 /// 項目照片 — Figma "Project Photos · Mobile" (39:65): a searchable grid
@@ -59,7 +60,13 @@ class _PhotoGridScreenState extends State<PhotoGridScreen> {
                 ? (repo.album(albumId)?.name ?? '相片冊')
                 : '搜尋照片';
         final all = wordId != null
-            ? repo.photosOfWord(wordId)
+            // The word's photos skip ones whose original file is gone
+            // (問題回報 #283); an album still lists them so they can be
+            // deleted, drawn as their placeholder.
+            ? [
+                for (final p in repo.photosOfWord(wordId))
+                  if (!PhotoStore.lostOriginal(p)) p
+              ]
             : albumId != null
                 ? repo.photosInAlbum(albumId)
                 : repo.photos;

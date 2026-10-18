@@ -119,7 +119,7 @@ _PER_LEVEL = {"synonyms", "related"}
 _PER_LEVEL_MAX = 3
 
 
-from .text import VULGAR_SENSE_LABELS, clean_native, offensive_native, repair_learner_gloss, sense_native  # noqa: E402
+from .text import STORE_UNSAFE_LABELS, clean_native, offensive_native, repair_learner_gloss, sense_native  # noqa: E402
 
 
 # Whole-token swears the exact OFFENSIVE list misses (bitches, shite,
@@ -383,10 +383,10 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_saf
             reg = registers.get(sk) or {}
             tr = native_def.get(sk)
             labels = list(it.get("labels") or [])
-            # App Store build (問題回報 #271): drop vulgar/offensive senses. Their
+            # App Store build (問題回報 #271): drop vulgar/offensive/derogatory senses. Their
             # examples vanish too, since an example without a sense is skipped.
-            if store_safe and (set(labels) & VULGAR_SENSE_LABELS
-                               or reg.get("register") in VULGAR_SENSE_LABELS):
+            if store_safe and (set(labels) & STORE_UNSAFE_LABELS
+                               or reg.get("register") in STORE_UNSAFE_LABELS):
                 counts["senses_filtered"] = counts.get("senses_filtered", 0) + 1
                 continue
             gloss_zh = repair_learner_gloss(it.get("gloss") or "", tr.get("text") if tr else None)

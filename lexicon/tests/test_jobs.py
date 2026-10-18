@@ -205,3 +205,87 @@ def test_missing_word_requests_are_a_word_list(session):
     assert "apples" not in jobs.missing_words(session, "en")
     assert jobs.resolve_words(session, "en", ["kettle"], jobs.MISSING_LIST) == [
         "texture", "pebble", "stained glass", "kettle"]
+
+
+def test_glued_labels_ask_for_their_words(session, monkeypatch):
+    """問題回報 #51 / 卡 #241: the recognition service's labels 「wooden table」,
+    「in the kitchen」 and 「shoeinsole」 are not dictionary words; the request
+    list asks for the words the dictionary has (table is already full)."""
+    from app import jobs, kaikki_index
+    from app import models as m
+    words = {"wooden", "table", "kitchen", "shoe", "insole", "traffic light", "heads", "head"}
+
+    def fake_lookup(language, word, path=None):
+        if word not in words:
+            return []
+        if word == "heads":
+            return [{"word": "heads", "pos": "noun", "senses": [{"form_of": [{"word": "head"}]}]}]
+        return [{"word": word, "pos": "noun", "senses": [{"glosses": ["a thing"]}]}]
+    monkeypatch.setattr(kaikki_index, "lookup", fake_lookup)
+    session.add(m.Lexeme(language="en", lemma="table", normalized="table", pos="noun", status="full"))
+    session.add_all([m.MissingLexemeRequest(target_language="en", lemma=w, pos="noun", count=c)
+                     for c, w in enumerate(["shoeinsole", "seed heads", "in the kitchen",
+                                            "traffic light", "wooden table"], start=1)])
+    session.flush()
+    assert jobs.missing_words(session, "en") == [
+        "wooden", "traffic light", "kitchen", "head", "shoe", "insole"]
+    # Without the Kaikki index nothing is guessed: the request stays as it is.
+    monkeypatch.setattr(kaikki_index, "lookup", lambda language, word, path=None: None)
+    assert "wooden table" in jobs.missing_words(session, "en")
+    assert "shoeinsole" in jobs.missing_words(session, "en")
+
+
+def test_pause_sent_while_a_word_runs_is_not_lost(session, monkeypatch):
+    """問題回報 #285: the worker slice used to write status 'queued' over a
+    'pausing' set during the word, so the job went straight back to running."""
+    from app import pipeline
+    jid = _job(session, ["apple", "pear", "plum"])
+    with db.SessionLocal() as s:
+        jobs.claim(s, "w1")
+        s.commit()
+
+    def word_while_owner_pauses(s, *args, **kwargs):
+        with db.SessionLocal() as other:
+            jobs.control(other, jid, "pause")
+            other.commit()
+        return []
+    monkeypatch.setattr(pipeline, "process_word", word_while_owner_pauses)
+    assert jobs.run(db.SessionLocal, jid, "w1", max_words=1) == "paused"
+    with db.SessionLocal() as s:
+        job = s.get(m.ImportJob, jid)
+        assert (job.checkpoint, job.status) == (1, "paused")
+        assert jobs.claim(s, "w2") is None
+
+
+def test_the_same_exception_word_after_word_pauses_the_job(session, monkeypatch):
+    """問題回報 #285: stale worker code failed every word with one
+    AttributeError; the job now pauses after a few instead of running out."""
+    from app import pipeline
+    jid = _job(session, [f"w{i}" for i in range(9)])
+    with db.SessionLocal() as s:
+        jobs.claim(s, "w1")
+        s.commit()
+
+    def broken(*args, **kwargs):
+        raise AttributeError("module 'app.images' has no attribute 'ensure_picture_fetch'")
+    monkeypatch.setattr(pipeline, "process_word", broken)
+    assert jobs.run(db.SessionLocal, jid, "w1") == "paused"
+    with db.SessionLocal() as s:
+        job = s.get(m.ImportJob, jid)
+        assert job.checkpoint == jobs.EXCEPTION_STREAK_PAUSE
+        assert job.counts["words_failed"] == jobs.EXCEPTION_STREAK_PAUSE
+        assert jobs.control(s, jid, "resume").status == "queued"
+
+
+def test_different_exceptions_do_not_pause_the_job(session, monkeypatch):
+    from app import pipeline
+    words = [f"w{i}" for i in range(jobs.EXCEPTION_STREAK_PAUSE + 2)]
+    jid = _job(session, words)
+    with db.SessionLocal() as s:
+        jobs.claim(s, "w1")
+        s.commit()
+
+    def broken(s, t, n, word, *args, **kwargs):
+        raise ValueError(f"bad word {word}")
+    monkeypatch.setattr(pipeline, "process_word", broken)
+    assert jobs.run(db.SessionLocal, jid, "w1") == "failed"

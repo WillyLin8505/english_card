@@ -191,3 +191,9 @@ def test_issue_swarm_slots_share_claude_quota():
     assert d.quota_agent("Claude CLI 7") == "Claude Code" and d.quota_agent("Codex") == "Codex"
     assert d.free_slot({"Claude CLI 1", "Claude CLI 2"}, 3) == "Claude CLI 3"
     assert d.free_slot({"Claude CLI 1"}, 1) is None
+
+
+def test_all_done_marker_ends_a_multi_round_card():
+    import dispatch_tick as d
+    assert d.ALL_DONE_RE.search("全部完成：5,552 槽補完")
+    assert not d.ALL_DONE_RE.search("第 2 輪：補了 800 槽，還剩 4,752")

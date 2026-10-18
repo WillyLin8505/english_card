@@ -69,14 +69,19 @@ class PhotoStore {
   /// Whether [photo]'s picture can be shown now. A photo whose original
   /// file is gone (deleted, or no permission to read it) cannot: callers
   /// show another picture of the word instead of a broken one (問題回報 #279).
-  static bool canShow(Photo photo) {
-    if (!photo.hasImage) return false;
+  static bool canShow(Photo photo) =>
+      photo.hasImage && !lostOriginal(photo);
+
+  /// Whether [photo] points at an original file that is gone. Photos that
+  /// never had a picture are not "lost": lists keep drawing their
+  /// placeholder, and only lost ones are skipped (問題回報 #283).
+  static bool lostOriginal(Photo photo) {
     final path = photo.filePath;
-    if (path == null || kIsWeb) return true;
+    if (path == null || kIsWeb) return false;
     try {
-      return File(path).existsSync();
+      return !File(path).existsSync();
     } on FileSystemException {
-      return false;
+      return true;
     }
   }
 }

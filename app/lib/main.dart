@@ -171,6 +171,18 @@ class _PhotoEnglishAppState extends State<PhotoEnglishApp> {
     _enricher.process();
   }
 
+  /// After 從備份還原: the store holds new data (and maybe another
+  /// learning language), so open it again.
+  Future<void> _reloadData() async {
+    final open = widget.openRepository;
+    if (open == null) return;
+    final next = await open(widget.settings.learningLanguage);
+    setState(() => _repository = next);
+    _applyRetention();
+    _queue.process();
+    _enricher.process();
+  }
+
   Future<void> _finishOnboarding(OnboardingResult r) async {
     final settings = widget.settings;
     settings.nativeLanguage = r.nativeLanguage;
@@ -198,6 +210,7 @@ class _PhotoEnglishAppState extends State<PhotoEnglishApp> {
       lexicon: widget.lexicon,
       navigator: _navigator,
       switchLanguage: _switchLanguage,
+      reloadData: _reloadData,
       clock: widget.clock,
       child: ListenableBuilder(
         listenable: widget.settings,
