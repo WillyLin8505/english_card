@@ -2,8 +2,8 @@
 
 依 `docs/mac_verify.md` 執行。嚴重度：高（擋住驗證或功能壞掉）・中（行為不對）・低（警告、外觀）。
 
-**通道（owner，2026-10-18）**：Mac 連不到 5173 看板。Mac 把結果 push 到這個檔；
-Windows 端要給 Mac 的指令請寫進 `docs/mac_inbox.md` 並 push 到 main，Mac 端每幾分鐘 `git fetch` 檢查並照做。
+**通道（owner，2026-10-18）**：改用問題回報 API（見 `docs/mac_verify.md` 第 6 步）。
+這個檔只留第 1 輪的紀錄；之後的問題都開在問題回報頁，不再用 `docs/mac_inbox.md`。
 
 ## 2026-10-18 第 1 輪（進行中）
 
