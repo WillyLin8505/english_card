@@ -110,3 +110,8 @@ commit `99ba0fa`（Windows：flutter analyze 無 error、01:32 +370: All tests p
 commit `270dac5`（Windows：flutter analyze 無 error、02:35 +370: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #166：系統修正：例句選取與重寫（義項不對齊、非完整句、Tatoeba 罕見人名、缺例句）
   結果：全部完成：alfred 照片解綁並排除（決定 B），照片字缺例句 0、oddname 1,503→0、notsentence 827→2、missinglemma 235→0（validator）；另有 #292 進行中的重新 materialize 新增 5 個 A1–B1 缺口，已開問題回報 #295。
+
+## M5（2026-10-19 01:23）狀態：待做
+commit `6cfa872`（Windows：flutter analyze 無 error、01:01 +370: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #295：問題回報 #298：looks_simplified 把台灣正體常用字（峰、卷、祕／秘、夸、里）當簡體字退回：聖母峰、十
+  結果：本輪完成：lookssimplified 不再把 峰／秘／夸（夸克）／里／巨 判為簡體，#298 的 11 個候選值全部通過驗證；補寫 peak／bound 缺漏的 20 個義項＋1 句例句（AI 翻譯，台灣用語）。
