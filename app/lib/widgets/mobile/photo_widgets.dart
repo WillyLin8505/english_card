@@ -1,19 +1,19 @@
 import '../../services/learning_content.dart';
-import 'dart:io';
 import 'dart:math' as math;
-import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart' show kIsWeb, listEquals;
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 
 import '../../app/app_scope.dart';
 import '../../models/learning_card.dart';
 import '../../models/photo.dart';
-import '../../services/photo_store.dart';
 import '../../theme/mobile_theme.dart';
 import 'common.dart';
 import 'm_icon.dart';
+import 'photo_cache.dart';
 import 'pin_layout.dart';
+
+export 'photo_cache.dart' show precachePhoto;
 
 /// Where a label anchor (a fraction of the ORIGINAL image) lands in a box
 /// that shows the photo with [BoxFit.cover], and back. Photos without a
@@ -77,38 +77,48 @@ class PhotoImage extends StatelessWidget {
 
   Widget _frame(
       BuildContext context, Widget child, int? frame, bool synchronous) {
-    if (synchronous || frame != null) _report(true);
-    return child;
+    if (synchronous || frame != null) {
+      _report(true);
+      return child;
+    }
+    // Still loading: the placeholder holds the photo's place.
+    return Stack(fit: StackFit.expand, children: [_placeholder(), child]);
   }
 
   @override
   Widget build(BuildContext context) {
-    final image = _provider(context);
-    if (image != null) {
-      return Image(
-        image: image,
-        fit: fit,
-        alignment: alignment,
-        width: double.infinity,
-        height: double.infinity,
-        frameBuilder: _frame,
-        errorBuilder: (context, _, __) => _error(context),
+    // Decoded at the size it is shown, not the original's (card #252).
+    return LayoutBuilder(builder: (context, c) {
+      final screen = MediaQuery.maybeSizeOf(context) ?? Size.zero;
+      final box = Size(c.hasBoundedWidth ? c.maxWidth : screen.width,
+          c.hasBoundedHeight ? c.maxHeight : screen.height);
+      final image = photoProvider(
+          photo,
+          context.dependOnInheritedWidgetOfExactType<AppScope>()?.photoStore,
+          box,
+          MediaQuery.maybeDevicePixelRatioOf(context) ?? 1,
+          fit: fit);
+      if (image == null) {
+        _report(false);
+        return _placeholder();
+      }
+      // Another photo starts from its placeholder (no stale pixels); the
+      // same photo at a new decode size keeps showing until it is ready.
+      return KeyedSubtree(
+        key: ValueKey((photo.id, photo.assetPath, photo.networkUrl,
+            photo.filePath, photo.storedKey)),
+        child: Image(
+          image: image,
+          fit: fit,
+          alignment: alignment,
+          width: double.infinity,
+          height: double.infinity,
+          gaplessPlayback: true,
+          frameBuilder: _frame,
+          errorBuilder: (context, _, __) => _error(context),
+        ),
       );
-    }
-    if (photo.storedKey != null) {
-      return _StoredPhotoImage(photoImage: this);
-    }
-    _report(false);
-    return _placeholder();
-  }
-
-  ImageProvider? _provider(BuildContext context) {
-    if (photo.assetPath != null) return AssetImage(photo.assetPath!);
-    if (photo.networkUrl != null) return NetworkImage(photo.networkUrl!);
-    if (photo.filePath != null && !kIsWeb) {
-      return FileImage(File(photo.filePath!));
-    }
-    return null;
+    });
   }
 
   Widget _placeholder() {
@@ -118,70 +128,6 @@ class PhotoImage extends StatelessWidget {
         gradient: LinearGradient(colors: [Color(c[0]), Color(c[1])]),
       ),
       child: const SizedBox.expand(),
-    );
-  }
-}
-
-/// Retain one read per mounted photo instead of rereading on every rebuild.
-class _StoredPhotoImage extends StatefulWidget {
-  final PhotoImage photoImage;
-  const _StoredPhotoImage({required this.photoImage});
-
-  @override
-  State<_StoredPhotoImage> createState() => _StoredPhotoImageState();
-}
-
-class _StoredPhotoImageState extends State<_StoredPhotoImage> {
-  PhotoStore? _store;
-  String? _key;
-  Future<Uint8List?>? _bytes;
-
-  void _load() {
-    final store = AppScope.of(context).photoStore;
-    final key = widget.photoImage.photo.storedKey!;
-    if (identical(store, _store) && key == _key) return;
-    _store = store;
-    _key = key;
-    _bytes = store.storedBytes(key);
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _load();
-  }
-
-  @override
-  void didUpdateWidget(_StoredPhotoImage oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    _load();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final view = widget.photoImage;
-    return FutureBuilder<Uint8List?>(
-      future: _bytes,
-      builder: (context, snapshot) {
-        // FutureBuilder retains old data/errors while a replacement read is
-        // pending. Neither belongs to the new photo's load attempt.
-        if (snapshot.connectionState != ConnectionState.done) {
-          return view._placeholder();
-        }
-        if (snapshot.hasError) {
-          return view._error(context);
-        }
-        if (snapshot.data == null) return view._error(context);
-        return Image(
-          image: MemoryImage(snapshot.data!),
-          fit: view.fit,
-          alignment: view.alignment,
-          width: double.infinity,
-          height: double.infinity,
-          frameBuilder: view._frame,
-          errorBuilder: (context, _, __) => view._error(context),
-        );
-      },
     );
   }
 }
@@ -569,23 +515,51 @@ class TargetRing extends StatelessWidget {
   final Photo photo;
   final LabelPoint anchor;
 
-  const TargetRing({super.key, required this.photo, required this.anchor});
+  /// The word's box (0–1 of the original image), outlined when known.
+  final Rect? box;
+
+  const TargetRing(
+      {super.key, required this.photo, required this.anchor, this.box});
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
         builder: (context, c) => Stack(
           children: [
+            if (box case final b?)
+              if (CoverGeometry(c.biggest, photo) case final geo)
+                Positioned.fromRect(
+                  rect: Rect.fromPoints(
+                      geo.toBox(LabelPoint(b.left, b.top)),
+                      geo.toBox(LabelPoint(b.right, b.bottom))),
+                  child: IgnorePointer(
+                    child: Container(
+                      key: const ValueKey('target-box'),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.white, width: 2.5),
+                      ),
+                      // A thin primary line inside the white one, so the
+                      // outline reads on light and dark photos alike.
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: MColors.primary, width: 1.5),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
             if (CoverGeometry(c.biggest, photo).toBox(anchor) case final at)
               Positioned(
                 left: at.dx - 28,
                 top: at.dy - 28,
                 child: Container(
+                  key: const ValueKey('target-ring'),
                   width: 56,
                   height: 56,
-                  decoration: MDecor.softPanel(
+                  // A circle cannot also have softPanel's border radius.
+                  decoration: BoxDecoration(
                     color: MColors.primary.withValues(alpha: 0.18),
-                    radius: 28,
-                  ).copyWith(
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white, width: 3),
                     boxShadow: MShadows.pin,

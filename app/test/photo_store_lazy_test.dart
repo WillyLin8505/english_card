@@ -65,24 +65,36 @@ void main() {
             width: 200, height: 200, child: PhotoImage(storedPhoto(key)));
       },
     ));
+    // Pixels shown, or null while the placeholder holds the place.
+    Object? pixels() => tester.widget<RawImage>(find.byType(RawImage)).image;
+    Future<void> decode() async {
+      await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 200)));
+      await tester.pump();
+    }
+
     expect(store.reads, ['first']);
-    expect(find.byType(Image), findsNothing);
+    expect(pixels(), isNull);
     rebuild(() {});
     await tester.pump();
     expect(store.reads, ['first']);
     final data = await rootBundle.load('assets/sample/photo_kitchen.jpg');
     store.pending['first']!.complete(data.buffer.asUint8List());
-    await tester.pump();
-    await tester.pump();
-    expect(find.byType(Image), findsOneWidget);
+    await decode();
+    expect(pixels(), isNotNull);
     rebuild(() => key = 'second');
     await tester.pump();
     expect(store.reads, ['first', 'second']);
-    expect(find.byType(Image), findsNothing);
+    expect(pixels(), isNull);
     store.pending['second']!.complete(data.buffer.asUint8List());
+    await decode();
+    expect(pixels(), isNotNull);
+    // Back to the first photo: decoded once, kept in the ImageCache — no
+    // second read (card #252: it used to be reread and decoded every mount).
+    rebuild(() => key = 'first');
     await tester.pump();
-    await tester.pump();
-    expect(find.byType(Image), findsOneWidget);
+    expect(store.reads, ['first', 'second']);
+    expect(pixels(), isNotNull);
     expect(tester.takeException(), isNull);
   });
 

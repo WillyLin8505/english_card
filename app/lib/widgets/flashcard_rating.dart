@@ -4,15 +4,26 @@ class ExampleText extends StatelessWidget {
   final WordExample example;
   final bool showTranslation;
 
+  /// With [links], words in the learner's database open their details
+  /// (card #251 item 9).
+  final WordLinks? links;
+  final ValueChanged<String>? onOpenWord;
+
   const ExampleText(
-      {super.key, required this.example, this.showTranslation = true});
+      {super.key,
+      required this.example,
+      this.showTranslation = true,
+      this.links,
+      this.onOpenWord});
 
   @override
   Widget build(BuildContext context) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(example.text,
-              style: MFont.manrope(15, FontWeight.w800, MColors.ink)),
+          LinkedText(example.text,
+              style: MFont.manrope(15, FontWeight.w800, MColors.ink),
+              links: links,
+              onOpenWord: onOpenWord),
           if (showTranslation && example.translation != null) ...[
             const SizedBox(height: 2),
             Text.rich(TextSpan(children: [

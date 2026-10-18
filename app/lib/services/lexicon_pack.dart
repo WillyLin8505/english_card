@@ -354,7 +354,14 @@ class LexMorpheme {
   final String? meaning;
   final String? native;
 
-  const LexMorpheme(this.part, this.kind, this.meaning, this.native);
+  /// A root that is a word on its own (flap in flapping): 單字, not 字根.
+  final bool free;
+
+  /// [native] was written by the AI (shown with an AI mark, as in the admin).
+  final bool nativeAi;
+
+  const LexMorpheme(this.part, this.kind, this.meaning, this.native,
+      {this.free = false, this.nativeAi = false});
 }
 
 class LexRelation {
@@ -629,7 +636,8 @@ class LexEntry {
       morphemes: [
         for (final m in list('morphemes'))
           LexMorpheme(m['part'] as String, m['kind'] as String,
-              m['meaning'] as String?, m['native'] as String?),
+              m['meaning'] as String?, m['native'] as String?,
+              free: m['free'] == true, nativeAi: m['native_ai'] == true),
       ],
       etymology: etyText.isEmpty && etyNative.isEmpty
           ? null

@@ -1,5 +1,10 @@
 import '../l10n/ui_text.dart';
+import '../screens/connection_scan_screen.dart';
+import '../screens/data_sources_screen.dart';
+import '../screens/privacy_policy_screen.dart';
 import '../services/learning_content.dart';
+import '../services/learning_insights.dart';
+import '../models/vocabulary_profile.dart';
 import '../services/dictionary_sync.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -7,6 +12,7 @@ import 'package:flutter/material.dart';
 import '../app/app_scope.dart';
 import '../models/word_entry.dart';
 import '../services/app_settings.dart';
+import '../services/connection_qr.dart';
 import '../services/tagging_service.dart';
 import '../services/word_database_query.dart';
 import '../theme/mobile_theme.dart';
@@ -30,6 +36,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String? _check;
   bool _checking = false;
   bool _switching = false;
+
+  /// 掃描後台 QR code，帶入網址與金鑰後直接測試連線（手動輸入仍可用）。
+  Future<void> _scanConnection() async {
+    final found = await Navigator.of(context).push<ConnectionQr>(
+        MaterialPageRoute<ConnectionQr>(
+            builder: (_) => const ConnectionScanScreen()));
+    if (found == null || !mounted) return;
+    _url!.text = found.taggingUrl;
+    _key!.text = found.apiKey;
+    final settings = AppScope.of(context).settings;
+    settings.taggingUrl = found.taggingUrl;
+    settings.apiKey = found.apiKey;
+    await _testConnection();
+  }
 
   Future<void> _testConnection() async {
     final scope = AppScope.of(context);
@@ -258,6 +278,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               '累積足夠的使用紀錄後（至少 20 次），程度會依你的評分、左滑與轉盤慢慢自動調整，一次最多一級。'),
                         ],
                       ),
+                      _insightsCard(repo.insights()),
                       _Card(
                         title: '進階設定：照片辨識連線',
                         collapsed: true,
@@ -288,6 +309,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           const SizedBox(height: 12),
                           Row(
                             children: [
+                              if (!kIsWeb) ...[
+                                OutlinedButton(
+                                  onPressed: _checking ? null : _scanConnection,
+                                  child: const UiText('掃描 QR code'),
+                                ),
+                                const SizedBox(width: 12),
+                              ],
                               OutlinedButton(
                                 onPressed: _checking ? null : _testConnection,
                                 child: UiText(_checking ? '測試中…' : '測試連線'),
@@ -379,11 +407,56 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 14, FontWeight.w700, MColors.success),
                           ),
                           const SizedBox(height: 6),
-                          _note('${ui(context, supportedLanguages[repo.language]!)}：'
+                          _note(
+                              '${ui(context, supportedLanguages[repo.language]!)}：'
                               '${formatCount(repo.wordCount)} 個單字 · '
                               '${formatCount(repo.photoCount)} 張照片 · '
                               '${formatCount(repo.cardCount)} 張卡片 · '
                               '已學會 ${formatCount(profile.learned.length)} 個'),
+                        ],
+                      ),
+                      _Card(
+                        title: '隱私',
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: UiText('分享使用統計',
+                                    style: MFont.manrope(
+                                        15, FontWeight.w800, MColors.ink)),
+                              ),
+                              Switch(
+                                value: settings.shareUsageStats,
+                                onChanged: (v) => settings.shareUsageStats = v,
+                              ),
+                            ],
+                          ),
+                          _note('關閉時不會送出使用統計。打開後只送匿名的操作紀錄，用來了解功能好不好用，不影響任何功能。'),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton(
+                              onPressed: () => Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                      builder: (_) =>
+                                          const PrivacyPolicyScreen())),
+                              child: const UiText('查看隱私權政策'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      _Card(
+                        title: '關於',
+                        children: [
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton(
+                              onPressed: () => Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                      builder: (_) =>
+                                          const DataSourcesScreen())),
+                              child: const UiText('資料來源與授權'),
+                            ),
+                          ),
                         ],
                       ),
                     ],
@@ -397,10 +470,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  Widget _insightsCard(LearningInsights ins) {
+    String bars(List<int> v) => v.join(' · ');
+    return _Card(title: '學習洞察', children: [
+      _label('複習次數'),
+      if (ins.total == 0)
+        _note('還沒有複習紀錄。')
+      else ...[
+        UiText('最近 7 天（每日）：${bars(ins.daily)}',
+            style: MFont.manrope(13, FontWeight.w600, MColors.ink)),
+        const SizedBox(height: 4),
+        UiText('最近 4 週（每週）：${bars(ins.weekly)}',
+            style: MFont.manrope(13, FontWeight.w600, MColors.ink)),
+        _note('共 ${ins.total} 次複習。'),
+      ],
+      const SizedBox(height: 12),
+      _label('CEFR 等級變化'),
+      if (ins.levelChanges.isEmpty)
+        _note('目前程度還沒有變動。')
+      else
+        for (final c in ins.levelChanges.reversed.take(5))
+          UiText(
+              '${c.at.toLocal().toString().substring(0, 10)}　'
+              '${cefrLevels[c.from]} → ${cefrLevels[c.to]}'
+              '（${_sourceLabel(c.source)}）',
+              style: MFont.manrope(13, FontWeight.w600, MColors.ink)),
+      const SizedBox(height: 12),
+      _label('弱項單字'),
+      if (ins.weakWords.isEmpty)
+        _note('還沒有常按「忘記」或「吃力」的字。')
+      else
+        for (final w in ins.weakWords)
+          UiText('${w.word}　忘記 ${w.again}・吃力 ${w.hard}／${w.reviews} 次',
+              style: MFont.manrope(13, FontWeight.w600, MColors.ink)),
+    ]);
+  }
+
   Widget _label(String text) => Padding(
         padding: const EdgeInsets.only(bottom: 8),
-        child:
-            UiText(text, style: MFont.manrope(14, FontWeight.w800, MColors.ink)),
+        child: UiText(text,
+            style: MFont.manrope(14, FontWeight.w800, MColors.ink)),
       );
 
   Widget _note(String text) => Padding(

@@ -213,6 +213,38 @@ const uiCatalog = <String, (String, String)>{
   '複習': ('Review', 'Révision'),
   '單字本': ('Words', 'Mots'),
   '設定': ('Settings', 'Réglages'),
+  '隱私': ('Privacy', 'Confidentialité'),
+  '分享使用統計': ('Share usage statistics', 'Partager les statistiques d’usage'),
+  '關閉時不會送出使用統計。打開後只送匿名的操作紀錄，用來了解功能好不好用，不影響任何功能。': (
+    'When this is off, usage statistics are not sent. When on, only anonymous activity is sent so we can see which features help. It does not change any feature.',
+    'Désactivé, aucune statistique n’est envoyée. Activé, seules des activités anonymes partent, pour voir quelles fonctions aident. Aucune fonction ne change.'
+  ),
+  '查看隱私權政策': ('View privacy policy', 'Voir la politique de confidentialité'),
+  '隱私權政策': ('Privacy policy', 'Politique de confidentialité'),
+  '本政策說明「拍照學單字」如何處理資料。分享使用統計預設是關閉的。': (
+    'This policy explains how 拍照學單字 handles data. Sharing usage statistics is off by default.',
+    'Cette politique explique comment 拍照學單字 traite les données. Le partage des statistiques est désactivé par défaut.'
+  ),
+  '使用統計': ('Usage statistics', 'Statistiques d’usage'),
+  '打開「分享使用統計」之後，操作紀錄會送到 PostHog（主機 us.i.posthog.com）。送出的只有：這次安裝產生的隨機代號、開啟 App、所在分頁、學習語言、母語、程度與程度來源、有沒有加入照片或單字（不含照片和單字本身）、複習開始與結束，以及單次作答的評分、題型、對錯、提示次數、作答時間與下次間隔天數。不送姓名、帳號、電子郵件或廣告識別碼。隨時可以在設定裡關掉；還沒送出的紀錄會一併捨棄。': (
+    'After you turn on Share usage statistics, activity is sent to PostHog (host us.i.posthog.com). We send only: a random id created for this install, app opens, the current tab, learning language, native language, level and how the level was chosen, whether a photo or word was added (not the photo or the word), review start and finish, and for each answer the rating, exercise type, right or wrong, hint count, time spent and the next interval in days. We do not send your name, account, email or advertising id. You can turn this off in Settings at any time; events not yet sent are discarded.',
+    'Après avoir activé le partage, l’activité est envoyée à PostHog (hôte us.i.posthog.com). Nous envoyons seulement : un identifiant aléatoire créé pour cette installation, les ouvertures, l’onglet affiché, la langue étudiée, la langue maternelle, le niveau et son origine, l’ajout d’une photo ou d’un mot (sans la photo ni le mot), le début et la fin d’une révision, et pour chaque réponse la note, le type d’exercice, juste ou faux, le nombre d’indices, le temps et le prochain intervalle en jours. Pas de nom, de compte, d’e-mail ni d’identifiant publicitaire. Vous pouvez désactiver cela dans Réglages ; ce qui n’est pas encore envoyé est effacé.'
+  ),
+  '照片與辨識': ('Photos and recognition', 'Photos et reconnaissance'),
+  '照片和字卡保存在這台裝置。使用辨識時，照片會傳到你設定的辨識伺服器，只在記憶體裡即時辨識，不會存成照片檔。伺服器可能留下辨識結果的文字快取（單字與分數，不含照片），以免同一張照片重複運算。照片不會送到分析服務。': (
+    'Photos and cards stay on this device. When you use recognition, the photo is sent to the recognition server you configured, processed in memory at that moment, and not saved as a photo file. The server may keep a text cache of the result (words and scores, not the photo) so the same photo is not processed twice. Photos are not sent to the analytics service.',
+    'Les photos et les cartes restent sur cet appareil. Pour la reconnaissance, la photo est envoyée au serveur que vous avez indiqué, traitée en mémoire sur le moment, et n’est pas enregistrée comme fichier photo. Le serveur peut garder un cache texte du résultat (mots et scores, pas la photo) pour ne pas retraiter la même photo. Les photos ne vont pas au service d’analyse.'
+  ),
+  '不做跨 App 追蹤': ('No cross-app tracking', 'Pas de suivi entre applications'),
+  '本 App 只做自己的使用統計，不把資料拿去跟其他 App 或網站比對，也不使用廣告識別碼，所以不會跳出「允許追蹤」的詢問。': (
+    'This app only measures its own use. It does not combine that data with other companies’ apps or websites, and it does not use an advertising id, so it does not ask for permission to track.',
+    'Cette app ne mesure que son propre usage. Elle ne recoupe pas ces données avec les apps ou sites d’autres sociétés, et n’utilise pas d’identifiant publicitaire, donc elle ne demande pas l’autorisation de suivi.'
+  ),
+  '政策網頁': ('Policy page', 'Page de la politique'),
+  '政策網頁還沒有公開網址。這份說明就是目前的隱私權政策；公開後，App Store 會連到同一個內容。': (
+    'The policy page does not have a public address yet. This screen is the privacy policy for now; once it is published, the App Store will link to the same text.',
+    'La page n’a pas encore d’adresse publique. Cet écran est la politique pour l’instant ; une fois publiée, l’App Store pointera vers le même texte.'
+  ),
   '返回': ('Back', 'Retour'),
   '分享': ('Share', 'Partager'),
   '關閉': ('Close', 'Fermer'),

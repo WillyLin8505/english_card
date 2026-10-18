@@ -183,3 +183,11 @@ def test_stale_panel_limit_cleared_by_probe(monkeypatch):
     monkeypatch.setattr(dt, "run_probe", lambda cmd: calls.append(cmd) or False)
     assert tk.limited("Claude Code") is False          # cached OK within the hour, no new probe
     assert len(calls) == 1
+
+
+def test_issue_swarm_slots_share_claude_quota():
+    import dispatch_tick as d
+    assert d.is_swarm("Claude CLI 3") and not d.is_swarm("Claude Code") and not d.is_swarm("Claude CLI x")
+    assert d.quota_agent("Claude CLI 7") == "Claude Code" and d.quota_agent("Codex") == "Codex"
+    assert d.free_slot({"Claude CLI 1", "Claude CLI 2"}, 3) == "Claude CLI 3"
+    assert d.free_slot({"Claude CLI 1"}, 1) is None

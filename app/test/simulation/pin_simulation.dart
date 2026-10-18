@@ -6,6 +6,8 @@
 // object's dot, and stay inside the photo.
 //
 //   flutter test test/simulation/pin_simulation.dart
+// Optional bounded runs: SIM_PIN_FILES is a JSON array of cache file paths;
+// SIM_PIN_START/SIM_PIN_COUNT select a slice, and SIM_OUT isolates its report.
 
 import 'dart:convert';
 import 'dart:io';
@@ -23,15 +25,24 @@ void main() {
     final pack = LexiconPack.instance
       ..loadJson(jsonDecode(File(Platform.environment['SIM_PACK'] ?? 'assets/lexicon/en-zh-TW.json')
           .readAsStringSync()) as Map<String, dynamic>);
-    final files = Directory('../tagger/cache')
-        .listSync()
-        .whereType<File>()
-        .where((f) => !f.uri.pathSegments.last.startsWith('score-'))
-        .toList();
+    final env = Platform.environment;
+    // A fixed manifest keeps chunk boundaries stable while the tagger adds files.
+    final manifest = env['SIM_PIN_FILES'];
+    final files = manifest != null
+        ? (jsonDecode(File(manifest).readAsStringSync()) as List)
+            .map((path) => File(path as String))
+            .toList()
+        : Directory('../tagger/cache')
+            .listSync()
+            .whereType<File>()
+            .where((f) => !f.uri.pathSegments.last.startsWith('score-'))
+            .toList();
     const shapes = {'直式': Size(343, 460), '方形': Size(343, 343), '橫式': Size(343, 230)};
     final f = Findings();
     var photos = 0, layouts = 0;
-    for (final file in files) {
+    final start = int.parse(env['SIM_PIN_START'] ?? '0');
+    final count = int.parse(env['SIM_PIN_COUNT'] ?? '${files.length}');
+    for (final file in files.skip(start).take(count)) {
       final Object? raw;
       try {
         raw = jsonDecode(file.readAsStringSync());
@@ -84,7 +95,7 @@ void main() {
       }
     }
     final report = {'photos': photos, 'layouts': layouts, 'findings': f.toJson()};
-    File('build/pin_simulation.json')
+    File(env['SIM_OUT'] ?? 'build/pin_simulation.json')
       ..createSync(recursive: true)
       ..writeAsStringSync(const JsonEncoder.withIndent(' ').convert(report));
     // ignore: avoid_print

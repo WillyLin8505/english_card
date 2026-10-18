@@ -106,11 +106,11 @@ void main() {
   }
 
   testWidgets(
-      'lemma forms are complete despite template limits; metadata and lookalikes omitted',
+      'lemma forms are complete despite template limits; metadata omitted; lookalikes shown (card #251)',
       (tester) async {
     await pumpBack(tester, RecordingSpeaker());
     for (final form in ['goes', 'going', 'went', 'gone']) {
-      expect(find.textContaining('$form（'), findsOneWidget);
+      expect(find.textContaining(form), findsOneWidget);
     }
     for (final text in [
       '來源',
@@ -118,11 +118,18 @@ void main() {
       'CEFR-J 詞表',
       'private-id',
       '6.123',
+    ]) {
+      expect(find.textContaining(RegExp(RegExp.escape(text), caseSensitive: false)), findsNothing);
+    }
+    // Card #251 item 6: 近音字 and 拼字相近 are shown when the pack has them.
+    expect(find.text('近音字'), findsOneWidget);
+    expect(find.text('容易混淆的字'), findsOneWidget);
+    for (final text in [
       'hidden-homophones',
       'hidden-near_homophones',
       'hidden-similar_spelling'
     ]) {
-      expect(find.textContaining(RegExp(RegExp.escape(text), caseSensitive: false)), findsNothing);
+      expect(find.textContaining(text), findsOneWidget);
     }
     expect(find.text('/ɡəʊ/'), findsOneWidget);
     expect(find.text('/ɡoʊ/'), findsNothing);

@@ -18,6 +18,9 @@ Each tick (owner, 2026-10-18 — cut Grokbot's token use to <= 1/5):
     lists, never another AI's card) + reserved/prefer lists + 12 h cooldown for standing cards +
     no night card after night_last_launch → claim → prompt from dispatch_prompt_template.md →
     launch_agent.py.
+ 6b. Issue swarm (owner, 2026-10-18): every new 問題回報 card gets its own new Claude CLI
+    ("Claude CLI <slot>", one card each, at most issue_swarm.max_parallel at once, sharing
+    Claude Code's quota/limit). A finished issue card also marks its issues fixed.
  7. Heartbeats for the four bots; card #13 progress gets one line (only when it changes / every 2 h).
  Notable events only → lexicon/state/dispatch_events.jsonl (read by dispatch_digest.py).
  State: lexicon/state/dispatch_state.json · log: lexicon/logs/dispatch_tick.log · lock: dispatch_tick.lock.
@@ -51,6 +54,23 @@ TEMPLATE_FILE = TOOLS / "dispatch_prompt_template.md"
 API = "http://127.0.0.1:5173/api"
 TAIPEI = timezone(timedelta(hours=8))
 AGENTS = ["Claude Code", "Codex", "Cursor CLI"]
+SWARM_PREFIX = "Claude CLI "
+
+
+def is_swarm(agent: str | None) -> bool:
+    """An issue-swarm Claude CLI ("Claude CLI 3"); shares Claude Code's quota."""
+    return bool(agent) and agent.startswith(SWARM_PREFIX) and agent[len(SWARM_PREFIX):].isdigit()
+
+
+def quota_agent(agent: str) -> str:
+    return "Claude Code" if is_swarm(agent) else agent
+
+
+def free_slot(used: set[str], limit: int) -> str | None:
+    for n in range(1, limit + 1):
+        if f"{SWARM_PREFIX}{n}" not in used:
+            return f"{SWARM_PREFIX}{n}"
+    return None
 NO_WINDOW = 0x08000000
 BREAKAWAY = 0x01000000
 LOG_CAP = 1_000_000
@@ -439,7 +459,7 @@ class Tick:
         changed = False
         running = {}
         for b in board.get("bots", []):
-            if b.get("agent") in AGENTS:
+            if b.get("agent") in AGENTS or is_swarm(b.get("agent")):
                 for t in b.get("doing", []):
                     if t.get("status") == "in_progress":
                         running[str(t["id"])] = (b["agent"], t)
@@ -478,7 +498,7 @@ class Tick:
             elif verdict == "limit":
                 self.write("PUT", f"/tasks/{card_id}", {"by": "Grokbot", "status": "queued", "agent": None,
                            "progress": f"{agent} 額度用完（dispatch_tick {hm(self.now)}），卡片排回待辦"}, "limit → queued")
-                self.set_limit(agent, None, limit_line)
+                self.set_limit(quota_agent(agent), None, limit_line)
                 self.state["runs"].pop(cid, None)
                 changed = True
             elif verdict == "failed":
@@ -527,12 +547,26 @@ class Tick:
         else:
             action = "done"
             self.write("PUT", f"/tasks/{card_id}", {"by": "Grokbot", "status": "done", "progress": progress}, "done")
+            self.close_issues(fresh, outcome, rel)
         kind = {"waiting": "decision", "blocked": "blocker"}.get(action, "finished")
         self.event(kind, card=card_id, agent=agent, title=(t.get("title") or fresh.get("title") or "")[:60], action=action,
                    outcome=outcome, summary=re.sub(r"\s+", " ", text[:600]), result=rel)
         self.summary.append(f"#{card_id} 收卡→{action}")
         self.state["runs"].pop(str(card_id), None)
         self.state["failures"].pop(str(card_id), None)
+
+    def close_issues(self, task: dict, outcome: str, rel: str):
+        """A finished one-off card fixes its 問題回報 (agents are told not to change statuses)."""
+        for iid in task.get("issue_ids") or []:
+            try:
+                i = http("GET", f"/issues/{int(iid)}")
+            except Exception as e:  # noqa: BLE001
+                log(f"issue #{iid}: GET failed ({e})")
+                continue
+            if i.get("status") in ("fixed", "wont_fix", "needs_decision"):
+                continue
+            self.write("PUT", f"/issues/{int(iid)}", {"status": "fixed", "by": "Grokbot",
+                       "resolution": f"卡 #{task.get('id')}：{outcome}（{rel}）"[:600]}, "issue fixed")
 
     # 3. dependencies
     def unblock(self, board: dict) -> bool:
@@ -649,6 +683,54 @@ class Tick:
             taken.add(c["key"])
             self.launch(agent, c)
 
+    def swarm(self, board: dict) -> set:
+        """Each open 問題回報 card → its own new Claude CLI (owner, 2026-10-18)."""
+        cfg = self.cfg.get("issue_swarm") or {}
+        if not cfg.get("enabled"):
+            return set()
+        if self.limited("Claude Code"):
+            log("issue swarm: Claude quota exhausted → wait")
+            return set()
+        from pick_card import candidates
+        bots = {b.get("agent"): b for b in board.get("bots", [])}
+        used = {r["agent"] for r in self.state["runs"].values() if is_swarm(r["agent"])}
+        used |= {a for a, b in bots.items() if is_swarm(a) and (b.get("paused") or any(
+            t.get("status") == "in_progress" for t in b.get("doing", [])))}
+        limit = int(cfg.get("max_parallel", 8))
+        diff_state = load_json(STATE_DIR / "card_difficulty.json", {})
+        cands = candidates(board, "Claude Code", self.caps, state=diff_state, now=self.now)
+        # new 問題回報 cards, and queued unassigned cards made from one
+        free_tasks = {t.get("id") for t in board.get("deck", [])
+                      if t.get("card", "task") == "task" and not t.get("agent") and t.get("issue_ids")
+                      and t.get("kind") != "recurring"}
+        issues = [c for c in cands if (c.get("issue_id") and not c.get("task_id"))
+                  or c.get("task_id") in free_tasks]
+        # decisions the owner has answered: carrying them out is an issue card too
+        seen = {c.get("issue_id") for c in issues}
+        try:
+            open_issues = http("GET", "/issues").get("items", [])
+        except Exception as e:  # noqa: BLE001
+            log(f"issue swarm: /issues failed ({e})")
+            open_issues = []
+        working = {i for t in board.get("deck", []) + [t for b in board.get("bots", []) for t in b.get("doing", [])]
+                   if t.get("card", "task") == "task" for i in (t.get("issue_ids") or [])}
+        skip_i = set(self.caps.get("skip_issues", []))
+        for i in open_issues:
+            if (i.get("kind") == "decision" and i.get("decision") and i.get("status") in ("open", "in_progress")
+                    and i["id"] not in seen and i["id"] not in working and i["id"] not in skip_i):
+                issues.append({"key": f"i{i['id']}", "issue_id": i["id"], "task_id": None,
+                               "difficulty": i.get("difficulty") or 3, "title": i.get("title")})
+        taken = set()
+        for c in issues:
+            agent = free_slot(used, limit)
+            if not agent:
+                log(f"issue swarm: {limit} Claude CLIs busy, {len(issues) - len(taken)} issue(s) wait")
+                break
+            used.add(agent)
+            taken.add(c["key"])
+            self.launch(agent, c)
+        return taken
+
     def launch(self, agent: str, c: dict):
         label = f"#{c['task_id']}" if c.get("task_id") else f"問題回報 #{c['issue_id']}"
         log(f"{agent}: pick {label} d{c['difficulty']} {(c.get('title') or '')[:50]}")
@@ -748,6 +830,9 @@ class Tick:
         if changed and not self.dry:
             board = http("GET", "/schedule/board")
         self.grade_if_needed(board)
+        swarmed = self.swarm(board)
+        if swarmed and not self.dry:
+            board = http("GET", "/schedule/board")
         self.dispatch(board)
         self.heartbeats(board)
         self.save()

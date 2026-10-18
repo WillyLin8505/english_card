@@ -184,7 +184,43 @@ def share_forms(by_lex: dict[int, dict]) -> None:
             lex["forms"] = [dict(f) for f in shared if own(lex, f)]
 
 
-def rank_usages(lexemes: list[dict], cefr_by_pos: dict | None = None) -> None:
+_CORE_POS = ("noun", "verb", "adj", "adv")
+
+
+@lru_cache(maxsize=50_000)
+def dictionary_pos(word: str) -> tuple[int, dict[str, int]]:
+    """How many general dictionaries know ``word`` and which parts of speech
+    each lists: (known, {pos: votes}). Sources: Open English WordNet and
+    ECDICT — both compact dictionaries that leave out the archaic / dialect
+    senses Wiktionary documents at length (card #164). A source that does
+    not have the word at all is not counted, and a failure (package or
+    index missing) is neutral: (0, {})."""
+    known = 0
+    votes: dict[str, int] = {}
+    try:
+        from .adapters import oewn
+        poses = oewn._thread.submit(oewn._pos_of, word).result(timeout=30)
+        if poses:
+            known += 1
+            for p in set(poses):
+                votes[p] = votes.get(p, 0) + 1
+    except Exception:  # noqa: BLE001 — wn not installed / no data
+        pass
+    try:
+        from .adapters import ecdict
+        translation = ecdict.ECDict().translation(word)
+        poses = {p for p, _ in ecdict.meanings(translation)} if translation else set()
+        if poses:
+            known += 1
+            for p in poses:
+                votes[p] = votes.get(p, 0) + 1
+    except Exception:  # noqa: BLE001 — no ecdict.csv
+        pass
+    return known, votes
+
+
+def rank_usages(lexemes: list[dict], cefr_by_pos: dict | None = None,
+                pos_votes=None) -> None:
     """Owner decision 2026-09-30 (問題回報 #16): until the usage layer
     exists, each part of speech of a spelling is its own entry; the main
     ones keep their CEFR, the rare ones are marked ``rare_usage`` with a
@@ -202,7 +238,14 @@ def rank_usages(lexemes: list[dict], cefr_by_pos: dict | None = None) -> None:
     Evidence counts senses/examples at full weight only when the sense is
     not itself low-priority (問題回報 #216: frail's archaic/dated noun sense
     is documented with more senses and examples in Kaikki than the common
-    adjective, so a raw count picked the noun as "main")."""
+    adjective, so a raw count picked the noun as "main").
+
+    Before the evidence, the general dictionaries vote (card #164): when at
+    least two of them know the word, a core part of speech that fewer of
+    them list ranks after one they all list (archaic / vulgar are only
+    adjectives there, preen / snuggle only verbs — however many Wiktionary
+    senses the noun has). ``pos_votes(word) -> (known, {pos: votes})`` is
+    injectable for tests; default :func:`dictionary_pos`."""
     from . import quality
     from .adapters.local import _family_cap, capped_frequency_level
 
@@ -212,6 +255,8 @@ def rank_usages(lexemes: list[dict], cefr_by_pos: dict | None = None) -> None:
             cefr_by_pos = {w: v[1] for w, v in cefr_list().items()}
         except Exception:  # noqa: BLE001 — no list: senses and examples only
             cefr_by_pos = {}
+    if pos_votes is None:
+        pos_votes = dictionary_pos
     listed_pos = {"adj.": "adj", "adv.": "adv"}
     groups: dict[str, list[dict]] = {}
     for lx in lexemes:
@@ -231,6 +276,22 @@ def rank_usages(lexemes: list[dict], cefr_by_pos: dict | None = None) -> None:
         listed = {listed_pos.get(p, p): lv for p, lv in (cefr_by_pos.get(word) or {}).items()}
         evidence = {id(lx): weighted_evidence(lx) for lx in group}
         participle = not listed and word.endswith(("ing", "ed"))
+        known, votes = (0, {})
+        if sum(1 for lx in group if lx["pos"] not in listed) > 1:
+            try:
+                known, votes = pos_votes(word)
+            except Exception:  # noqa: BLE001 — neutral when a source breaks
+                known, votes = 0, {}
+
+        def dictionary_tier(pos: str) -> int:
+            # 0 = every dictionary that knows the word lists this part of
+            # speech … known = none does. Only with two or more sources, so
+            # one dictionary's gap (ECDICT has backlight only as a verb)
+            # cannot flip a word by itself; other parts of speech (phrase,
+            # intj) are neutral.
+            if known < 2 or pos not in _CORE_POS:
+                return 0
+            return known - votes.get(pos, 0)
 
         def key(lx):
             lv = listed.get(lx["pos"])
@@ -239,6 +300,7 @@ def rank_usages(lexemes: list[dict], cefr_by_pos: dict | None = None) -> None:
                     # -ing / -ed words not in the list: the noun, then the
                     # adjective (potted 盆栽的), before the verb form.
                     {"noun": 0, "adj": 1}.get(lx["pos"], 2) if participle else 0,
+                    dictionary_tier(lx["pos"]),
                     -evidence[id(lx)], _POS_ORDER.get(lx["pos"], 9), lx["id"])
 
         group.sort(key=key)

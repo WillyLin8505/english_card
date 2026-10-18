@@ -120,6 +120,27 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('compact image tile keeps each level on its own line',
+      (tester) async {
+    await pumpApp(tester,
+        home: Scaffold(
+            body: SizedBox(
+                width: 175,
+                height: 280,
+                child: DatabaseImageTile(image: imageTags(count: 2)))));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('A1-word1'), findsOneWidget);
+    expect(find.textContaining('B1-word1'), findsOneWidget);
+    final joined = find.textContaining('A1-word1').evaluate().any((element) {
+      final widget = element.widget;
+      return widget is Text &&
+          widget.data != null &&
+          widget.data!.contains('B1');
+    });
+    expect(joined, isFalse);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('compact image tile expands without overflow or navigation',
       (tester) async {
     await pumpApp(tester,

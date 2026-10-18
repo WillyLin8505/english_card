@@ -1,0 +1,1599 @@
+{
+"source": "The Oxford 5000 (Oxford University Press), words absent from CEFR-J/Octanove",
+"words": {
+"abortion": {
+"noun": "C1"
+},
+"accelerate": {
+"verb": "C1"
+},
+"accommodate": {
+"verb": "B2"
+},
+"accomplishment": {
+"noun": "C1"
+},
+"accordance": {
+"noun": "C1"
+},
+"accountable": {
+"adj.": "C1"
+},
+"accumulation": {
+"noun": "C1"
+},
+"accused": {
+"noun": "C1"
+},
+"activate": {
+"verb": "B2"
+},
+"activation": {
+"noun": "C1"
+},
+"activist": {
+"noun": "C1"
+},
+"adaptation": {
+"noun": "C1"
+},
+"adjacent": {
+"adj.": "C1"
+},
+"administer": {
+"verb": "C1"
+},
+"administrator": {
+"noun": "C1"
+},
+"adolescent": {
+"noun": "C1"
+},
+"advocate": {
+"noun": "C1",
+"verb": "C1"
+},
+"aftermath": {
+"noun": "C1"
+},
+"aggression": {
+"noun": "C1"
+},
+"aide": {
+"noun": "C1"
+},
+"albeit": {
+"conjunction": "C1"
+},
+"algorithm": {
+"noun": "C1"
+},
+"allegedly": {
+"adv.": "C1"
+},
+"allocate": {
+"verb": "C1"
+},
+"allocation": {
+"noun": "C1"
+},
+"all-time": {
+"adj.": "C1"
+},
+"amend": {
+"verb": "C1"
+},
+"amendment": {
+"noun": "C1"
+},
+"analytics": {
+"noun": "C1"
+},
+"appealing": {
+"adj.": "C1"
+},
+"applicable": {
+"adj.": "C1"
+},
+"architectural": {
+"adj.": "C1"
+},
+"archive": {
+"noun": "C1"
+},
+"arguably": {
+"adv.": "C1"
+},
+"array": {
+"noun": "C1"
+},
+"artwork": {
+"noun": "B2"
+},
+"assassination": {
+"noun": "C1"
+},
+"asset": {
+"noun": "B2"
+},
+"asylum": {
+"noun": "C1"
+},
+"attorney": {
+"noun": "C1"
+},
+"auction": {
+"noun": "B2"
+},
+"authentic": {
+"adj.": "C1"
+},
+"auto": {
+"noun": "C1"
+},
+"autonomy": {
+"noun": "C1"
+},
+"backdrop": {
+"noun": "C1"
+},
+"backing": {
+"noun": "C1"
+},
+"bail": {
+"noun": "C1"
+},
+"banner": {
+"noun": "C1"
+},
+"benchmark": {
+"noun": "C1"
+},
+"bias": {
+"noun": "B2"
+},
+"billionaire": {
+"noun": "B2"
+},
+"bolster": {
+"verb": "C1"
+},
+"boundary": {
+"noun": "C1"
+},
+"breach": {
+"noun": "C1",
+"verb": "C1"
+},
+"brutal": {
+"adj.": "C1"
+},
+"buck": {
+"noun": "C1"
+},
+"cancellation": {
+"noun": "C1"
+},
+"canvas": {
+"noun": "C1"
+},
+"capitalism": {
+"noun": "C1"
+},
+"capitalist": {
+"adj.": "C1"
+},
+"cargo": {
+"noun": "C1"
+},
+"casino": {
+"noun": "C1"
+},
+"casualty": {
+"noun": "C1"
+},
+"cater": {
+"verb": "C1"
+},
+"chamber": {
+"noun": "C1"
+},
+"chronic": {
+"adj.": "C1"
+},
+"civic": {
+"adj.": "C1"
+},
+"civilian": {
+"noun": "C1",
+"adj.": "C1"
+},
+"clarity": {
+"noun": "C1"
+},
+"clash": {
+"noun": "C1"
+},
+"cling": {
+"verb": "C1"
+},
+"cluster": {
+"noun": "C1"
+},
+"collective": {
+"adj.": "C1"
+},
+"collision": {
+"noun": "C1"
+},
+"colony": {
+"noun": "B2"
+},
+"combat": {
+"noun": "C1",
+"verb": "C1"
+},
+"comeback": {
+"noun": "C1"
+},
+"commence": {
+"verb": "C1"
+},
+"commentary": {
+"noun": "C1"
+},
+"commentator": {
+"noun": "C1"
+},
+"commissioner": {
+"noun": "C1"
+},
+"communist": {
+"adj.": "C1"
+},
+"comparable": {
+"adj.": "C1"
+},
+"compelling": {
+"adj.": "C1"
+},
+"complication": {
+"noun": "C1"
+},
+"configuration": {
+"noun": "C1"
+},
+"confrontation": {
+"noun": "C1"
+},
+"congregation": {
+"noun": "C1"
+},
+"congressional": {
+"adj.": "C1"
+},
+"connectivity": {
+"noun": "C1"
+},
+"consecutive": {
+"adj.": "C1"
+},
+"consistency": {
+"noun": "C1"
+},
+"consistently": {
+"adv.": "B2"
+},
+"consolidate": {
+"verb": "C1"
+},
+"conspiracy": {
+"noun": "B2"
+},
+"constituency": {
+"noun": "C1"
+},
+"constitutional": {
+"adj.": "C1"
+},
+"contemplate": {
+"verb": "C1"
+},
+"contend": {
+"verb": "C1"
+},
+"contender": {
+"noun": "C1"
+},
+"contention": {
+"noun": "C1"
+},
+"contributor": {
+"noun": "C1"
+},
+"convincing": {
+"adj.": "B2"
+},
+"coordinate": {
+"verb": "C1"
+},
+"coordination": {
+"noun": "C1"
+},
+"coordinator": {
+"noun": "C1"
+},
+"councillor": {
+"noun": "C1"
+},
+"counsellor": {
+"noun": "C1"
+},
+"counterpart": {
+"noun": "C1"
+},
+"coup": {
+"noun": "C1"
+},
+"creep": {
+"verb": "C1"
+},
+"critique": {
+"noun": "C1"
+},
+"cryptocurrency": {
+"noun": "C1"
+},
+"crystal": {
+"noun": "C1"
+},
+"cue": {
+"noun": "B2"
+},
+"cult": {
+"noun": "C1",
+"adj.": "C1"
+},
+"custody": {
+"noun": "C1"
+},
+"dairy": {
+"noun": "B2",
+"adj.": "B2"
+},
+"damaging": {
+"adj.": "C1"
+},
+"decision-making": {
+"noun": "C1"
+},
+"dedicated": {
+"adj.": "C1"
+},
+"default": {
+"noun": "C1"
+},
+"defect": {
+"noun": "C1"
+},
+"defensive": {
+"adj.": "C1"
+},
+"delegation": {
+"noun": "C1"
+},
+"demon": {
+"noun": "C1"
+},
+"denial": {
+"noun": "C1"
+},
+"density": {
+"noun": "C1"
+},
+"dependence": {
+"noun": "C1"
+},
+"deploy": {
+"verb": "C1"
+},
+"deployment": {
+"noun": "C1"
+},
+"designate": {
+"verb": "C1"
+},
+"detain": {
+"verb": "C1"
+},
+"detection": {
+"noun": "C1"
+},
+"detention": {
+"noun": "C1"
+},
+"deteriorate": {
+"verb": "C1"
+},
+"devise": {
+"verb": "C1"
+},
+"diabetes": {
+"noun": "B2"
+},
+"diagnose": {
+"verb": "C1"
+},
+"diagnosis": {
+"noun": "C1"
+},
+"dictate": {
+"verb": "C1"
+},
+"differentiate": {
+"verb": "C1"
+},
+"diplomatic": {
+"noun": "C1"
+},
+"disclose": {
+"verb": "C1"
+},
+"disclosure": {
+"noun": "C1"
+},
+"discretion": {
+"noun": "C1"
+},
+"dismissal": {
+"noun": "C1"
+},
+"dispose": {
+"verb": "C1"
+},
+"disruption": {
+"noun": "C1"
+},
+"distinct": {
+"adj.": "B2"
+},
+"distinctive": {
+"adj.": "C1"
+},
+"distress": {
+"noun": "C1"
+},
+"disturbing": {
+"adj.": "C1"
+},
+"dividend": {
+"noun": "C1"
+},
+"doctrine": {
+"noun": "C1"
+},
+"documentation": {
+"noun": "C1"
+},
+"domain": {
+"noun": "C1"
+},
+"dominance": {
+"noun": "C1"
+},
+"donor": {
+"noun": "C1"
+},
+"drift": {
+"verb": "C1"
+},
+"driving": {
+"adj.": "C1"
+},
+"drone": {
+"noun": "C1"
+},
+"dual": {
+"adj.": "C1"
+},
+"dub": {
+"verb": "C1"
+},
+"duo": {
+"noun": "C1"
+},
+"e-commerce": {
+"noun": "C1"
+},
+"efficiently": {
+"adv.": "B2"
+},
+"electoral": {
+"adj.": "C1"
+},
+"emission": {
+"noun": "B2"
+},
+"empower": {
+"verb": "C1"
+},
+"enact": {
+"verb": "C1"
+},
+"enforcement": {
+"noun": "C1"
+},
+"engaging": {
+"adj.": "C1"
+},
+"ensue": {
+"verb": "C1"
+},
+"entity": {
+"noun": "C1"
+},
+"epidemic": {
+"noun": "C1"
+},
+"equivalent": {
+"noun": "B2",
+"adj.": "B2"
+},
+"escalate": {
+"verb": "C1"
+},
+"evolutionary": {
+"adj.": "C1"
+},
+"expenditure": {
+"noun": "C1"
+},
+"experimental": {
+"adj.": "C1"
+},
+"expertise": {
+"noun": "B2"
+},
+"explicit": {
+"adj.": "C1"
+},
+"exposure": {
+"noun": "B2"
+},
+"extremist": {
+"noun": "C1"
+},
+"fairness": {
+"noun": "C1"
+},
+"feminist": {
+"adj.": "C1"
+},
+"flawed": {
+"adj.": "C1"
+},
+"follow-up": {
+"adj.": "C1",
+"noun": "C1"
+},
+"footage": {
+"noun": "C1"
+},
+"footprint": {
+"noun": "B2"
+},
+"forge": {
+"verb": "C1"
+},
+"forum": {
+"noun": "B2"
+},
+"foster": {
+"verb": "C1"
+},
+"founder": {
+"noun": "B2"
+},
+"fragile": {
+"adj.": "C1"
+},
+"framework": {
+"noun": "B2"
+},
+"franchise": {
+"noun": "C1"
+},
+"frustrating": {
+"adj.": "C1"
+},
+"fundraising": {
+"noun": "C1"
+},
+"gaming": {
+"noun": "B2"
+},
+"gathering": {
+"noun": "C1"
+},
+"generic": {
+"adj.": "C1"
+},
+"genocide": {
+"noun": "C1"
+},
+"globalization": {
+"noun": "B2"
+},
+"governance": {
+"noun": "C1"
+},
+"gravity": {
+"noun": "C1"
+},
+"grid": {
+"noun": "C1"
+},
+"grind": {
+"verb": "C1"
+},
+"grocery": {
+"noun": "B2"
+},
+"gut": {
+"noun": "C1"
+},
+"halfway": {
+"adv.": "C1"
+},
+"halt": {
+"verb": "C1"
+},
+"handful": {
+"noun": "C1"
+},
+"handling": {
+"noun": "C1"
+},
+"harsh": {
+"adj.": "C1"
+},
+"healthcare": {
+"noun": "B2"
+},
+"hierarchy": {
+"noun": "C1"
+},
+"high-profile": {
+"adj.": "C1"
+},
+"homeland": {
+"noun": "C1"
+},
+"hostage": {
+"noun": "C1"
+},
+"hub": {
+"noun": "C1"
+},
+"humanitarian": {
+"adj.": "C1"
+},
+"hydrogen": {
+"noun": "C1"
+},
+"illusion": {
+"noun": "B2"
+},
+"imminent": {
+"adj.": "C1"
+},
+"immune": {
+"adj.": "B2"
+},
+"immunity": {
+"noun": "C1"
+},
+"implementation": {
+"noun": "C1"
+},
+"inability": {
+"noun": "C1"
+},
+"inappropriate": {
+"adj.": "C1"
+},
+"incidence": {
+"noun": "C1"
+},
+"inclined": {
+"adj.": "C1"
+},
+"incorporate": {
+"verb": "B2"
+},
+"indication": {
+"noun": "B2"
+},
+"indicator": {
+"noun": "C1"
+},
+"indictment": {
+"noun": "C1"
+},
+"indigenous": {
+"adj.": "C1"
+},
+"inequality": {
+"noun": "C1"
+},
+"infamous": {
+"adj.": "C1"
+},
+"inflict": {
+"verb": "C1"
+},
+"info": {
+"noun": "B2"
+},
+"infrastructure": {
+"noun": "B2"
+},
+"inhibit": {
+"verb": "C1"
+},
+"initiate": {
+"verb": "C1"
+},
+"inmate": {
+"noun": "C1"
+},
+"insert": {
+"verb": "B2"
+},
+"insider": {
+"noun": "C1"
+},
+"installation": {
+"noun": "B2"
+},
+"institutional": {
+"adj.": "C1"
+},
+"instrumental": {
+"adj.": "C1"
+},
+"intact": {
+"adj.": "C1"
+},
+"intake": {
+"noun": "C1"
+},
+"integrated": {
+"adj.": "C1"
+},
+"integrity": {
+"noun": "C1"
+},
+"intensify": {
+"verb": "C1"
+},
+"intensity": {
+"noun": "C1"
+},
+"interface": {
+"noun": "C1"
+},
+"interference": {
+"noun": "C1"
+},
+"interim": {
+"adj.": "C1"
+},
+"intervene": {
+"verb": "C1"
+},
+"intervention": {
+"noun": "C1"
+},
+"intriguing": {
+"adj.": "C1"
+},
+"irrelevant": {
+"adj.": "C1"
+},
+"judicial": {
+"adj.": "C1"
+},
+"junction": {
+"noun": "C1"
+},
+"justification": {
+"noun": "C1"
+},
+"kidnap": {
+"verb": "C1"
+},
+"kidney": {
+"noun": "C1"
+},
+"lad": {
+"noun": "C1"
+},
+"landmark": {
+"noun": "C1"
+},
+"large-scale": {
+"adj.": "C1"
+},
+"layout": {
+"noun": "C1"
+},
+"lens": {
+"noun": "B2"
+},
+"lesbian": {
+"adj.": "C1"
+},
+"lesser": {
+"adj.": "C1"
+},
+"lethal": {
+"adj.": "C1"
+},
+"levy": {
+"noun": "C1",
+"verb": "C1"
+},
+"liable": {
+"adj.": "C1"
+},
+"line-up": {
+"noun": "C1"
+},
+"listing": {
+"noun": "C1"
+},
+"literacy": {
+"noun": "C1"
+},
+"long-standing": {
+"adj.": "C1"
+},
+"long-time": {
+"adj.": "C1"
+},
+"loop": {
+"noun": "C1"
+},
+"machinery": {
+"noun": "C1"
+},
+"magistrate": {
+"noun": "C1"
+},
+"magnitude": {
+"noun": "C1"
+},
+"mainland": {
+"noun": "C1"
+},
+"mainstream": {
+"noun": "C1",
+"adj.": "C1"
+},
+"making": {
+"noun": "B2"
+},
+"mandate": {
+"noun": "C1"
+},
+"mandatory": {
+"adj.": "C1"
+},
+"manifest": {
+"verb": "C1"
+},
+"marker": {
+"noun": "B2"
+},
+"marketplace": {
+"noun": "C1"
+},
+"maximize": {
+"verb": "C1"
+},
+"meantime": {
+"noun": "C1"
+},
+"memo": {
+"noun": "C1"
+},
+"memoir": {
+"noun": "C1"
+},
+"migrant": {
+"noun": "C1",
+"adj.": "C1"
+},
+"milestone": {
+"noun": "C1"
+},
+"militant": {
+"noun": "C1",
+"adj.": "C1"
+},
+"militia": {
+"noun": "C1"
+},
+"mindset": {
+"noun": "C1"
+},
+"miner": {
+"noun": "B2"
+},
+"minimal": {
+"adj.": "C1"
+},
+"mining": {
+"noun": "C1"
+},
+"ministry": {
+"noun": "C1"
+},
+"mitigate": {
+"verb": "C1"
+},
+"mob": {
+"noun": "C1"
+},
+"mobilize": {
+"verb": "C1"
+},
+"mode": {
+"noun": "B2"
+},
+"momentum": {
+"noun": "C1"
+},
+"monopoly": {
+"noun": "C1"
+},
+"municipal": {
+"adj.": "C1"
+},
+"namely": {
+"adv.": "C1"
+},
+"nest": {
+"noun": "C1"
+},
+"newsletter": {
+"noun": "C1"
+},
+"nominate": {
+"verb": "C1"
+},
+"non-profit": {
+"adj.": "C1"
+},
+"norm": {
+"noun": "B2"
+},
+"notably": {
+"adv.": "C1"
+},
+"notification": {
+"noun": "C1"
+},
+"notify": {
+"verb": "C1"
+},
+"nursing": {
+"adj.": "B2"
+},
+"obesity": {
+"noun": "B2"
+},
+"occurrence": {
+"noun": "C1"
+},
+"odds": {
+"noun": "C1"
+},
+"offering": {
+"noun": "C1"
+},
+"offset": {
+"verb": "C1"
+},
+"ongoing": {
+"adj.": "B2"
+},
+"operational": {
+"adj.": "C1"
+},
+"opt": {
+"verb": "C1"
+},
+"optical": {
+"adj.": "C1"
+},
+"orientation": {
+"noun": "C1"
+},
+"ownership": {
+"noun": "B2"
+},
+"parallel": {
+"adj.": "B2",
+"noun": "B2"
+},
+"parish": {
+"noun": "C1"
+},
+"parliamentary": {
+"adj.": "C1"
+},
+"partially": {
+"adv.": "C1"
+},
+"passing": {
+"noun": "C1"
+},
+"patent": {
+"noun": "C1"
+},
+"pathway": {
+"noun": "C1"
+},
+"petition": {
+"noun": "C1"
+},
+"pharmaceutical": {
+"adj.": "C1",
+"noun": "C1"
+},
+"pipeline": {
+"noun": "C1"
+},
+"placement": {
+"noun": "B2"
+},
+"plea": {
+"noun": "C1"
+},
+"pledge": {
+"verb": "C1",
+"noun": "C1"
+},
+"poll": {
+"noun": "C1"
+},
+"portfolio": {
+"noun": "C1"
+},
+"precedent": {
+"noun": "C1"
+},
+"predator": {
+"noun": "C1"
+},
+"predominantly": {
+"adv.": "C1"
+},
+"pregnancy": {
+"noun": "C1"
+},
+"premium": {
+"noun": "C1"
+},
+"presently": {
+"adv.": "C1"
+},
+"preside": {
+"verb": "C1"
+},
+"presume": {
+"verb": "C1"
+},
+"prevalence": {
+"noun": "C1"
+},
+"preview": {
+"noun": "B2",
+"verb": "B2"
+},
+"prey": {
+"noun": "C1"
+},
+"prioritize": {
+"verb": "C1"
+},
+"problematic": {
+"adj.": "C1"
+},
+"proceedings": {
+"noun": "C1"
+},
+"proceeds": {
+"noun": "C1"
+},
+"processing": {
+"noun": "C1"
+},
+"processor": {
+"noun": "C1"
+},
+"productivity": {
+"noun": "C1"
+},
+"promising": {
+"adj.": "B2"
+},
+"pronounced": {
+"adj.": "C1"
+},
+"propaganda": {
+"noun": "C1"
+},
+"prosecution": {
+"noun": "C1"
+},
+"prosecutor": {
+"noun": "C1"
+},
+"protein": {
+"noun": "B2"
+},
+"protester": {
+"noun": "B2"
+},
+"protocol": {
+"noun": "C1"
+},
+"publishing": {
+"noun": "B2"
+},
+"punk": {
+"noun": "B2"
+},
+"purely": {
+"adv.": "C1"
+},
+"quota": {
+"noun": "C1"
+},
+"raid": {
+"noun": "C1"
+},
+"random": {
+"adj.": "B2"
+},
+"ranking": {
+"noun": "C1"
+},
+"ratio": {
+"noun": "C1"
+},
+"realm": {
+"noun": "C1"
+},
+"reasoning": {
+"noun": "C1"
+},
+"rebellion": {
+"noun": "C1"
+},
+"receiver": {
+"noun": "B2"
+},
+"recipient": {
+"noun": "C1"
+},
+"reconstruction": {
+"noun": "C1"
+},
+"recruitment": {
+"noun": "B2"
+},
+"referendum": {
+"noun": "C1"
+},
+"regulator": {
+"noun": "C1"
+},
+"rehabilitation": {
+"noun": "C1"
+},
+"reign": {
+"noun": "C1"
+},
+"relevance": {
+"noun": "C1"
+},
+"reliability": {
+"noun": "C1"
+},
+"removal": {
+"noun": "C1"
+},
+"renowned": {
+"adj.": "C1"
+},
+"reportedly": {
+"adv.": "C1"
+},
+"reporting": {
+"noun": "B2"
+},
+"representation": {
+"noun": "C1"
+},
+"reside": {
+"verb": "C1"
+},
+"respective": {
+"adj.": "C1"
+},
+"respectively": {
+"adv.": "C1"
+},
+"restraint": {
+"noun": "C1"
+},
+"rifle": {
+"noun": "C1"
+},
+"riot": {
+"noun": "C1"
+},
+"rotation": {
+"noun": "C1"
+},
+"ruling": {
+"noun": "C1"
+},
+"sanction": {
+"noun": "C1"
+},
+"scam": {
+"noun": "C1",
+"verb": "C1"
+},
+"scattered": {
+"adj.": "C1"
+},
+"sceptical": {
+"adj.": "C1"
+},
+"scrap": {
+"verb": "C1",
+"noun": "C1"
+},
+"screening": {
+"noun": "B2"
+},
+"seeker": {
+"noun": "B2"
+},
+"seemingly": {
+"adv.": "C1"
+},
+"selective": {
+"adj.": "C1"
+},
+"sensitivity": {
+"noun": "C1"
+},
+"sensor": {
+"noun": "B2"
+},
+"set-up": {
+"noun": "C1"
+},
+"sexuality": {
+"noun": "C1"
+},
+"shaped": {
+"adj.": "B2"
+},
+"shareholder": {
+"noun": "C1"
+},
+"sibling": {
+"noun": "B2"
+},
+"simulation": {
+"noun": "C1"
+},
+"sin": {
+"noun": "C1"
+},
+"situated": {
+"adj.": "C1"
+},
+"skull": {
+"noun": "B2"
+},
+"socialist": {
+"adj.": "C1"
+},
+"sole": {
+"adj.": "C1"
+},
+"solely": {
+"adv.": "C1"
+},
+"solicitor": {
+"noun": "C1"
+},
+"solidarity": {
+"noun": "C1"
+},
+"sovereignty": {
+"noun": "C1"
+},
+"specialized": {
+"adj.": "C1"
+},
+"spectrum": {
+"noun": "C1"
+},
+"spine": {
+"noun": "C1"
+},
+"spokesperson": {
+"noun": "B2"
+},
+"sporting": {
+"adj.": "B2"
+},
+"spotlight": {
+"noun": "C1"
+},
+"spouse": {
+"noun": "C1"
+},
+"stance": {
+"noun": "B2"
+},
+"stark": {
+"adj.": "C1"
+},
+"start-up": {
+"noun": "C1",
+"adj.": "C1"
+},
+"statistical": {
+"adj.": "C1"
+},
+"stimulus": {
+"noun": "C1"
+},
+"streaming": {
+"noun": "C1"
+},
+"submission": {
+"noun": "C1"
+},
+"subscribe": {
+"verb": "C1"
+},
+"subscriber": {
+"noun": "C1"
+},
+"subscription": {
+"noun": "C1"
+},
+"subsequent": {
+"adj.": "B2"
+},
+"subsequently": {
+"adv.": "B2"
+},
+"substitution": {
+"noun": "C1"
+},
+"successor": {
+"noun": "C1"
+},
+"suite": {
+"noun": "C1"
+},
+"surgical": {
+"adj.": "C1"
+},
+"surpass": {
+"verb": "C1"
+},
+"surplus": {
+"noun": "C1"
+},
+"sustainability": {
+"noun": "C1"
+},
+"taxpayer": {
+"noun": "C1"
+},
+"teens": {
+"noun": "B2"
+},
+"tenant": {
+"noun": "C1"
+},
+"tenure": {
+"noun": "C1"
+},
+"terminate": {
+"verb": "C1"
+},
+"terms": {
+"noun": "B2"
+},
+"testing": {
+"noun": "B2"
+},
+"texture": {
+"noun": "C1"
+},
+"thankfully": {
+"adv.": "C1"
+},
+"theoretical": {
+"adj.": "C1"
+},
+"threshold": {
+"noun": "C1"
+},
+"thrive": {
+"verb": "C1"
+},
+"timber": {
+"noun": "C1"
+},
+"timeline": {
+"noun": "B2"
+},
+"tolerance": {
+"noun": "C1"
+},
+"tonne": {
+"noun": "B2"
+},
+"trademark": {
+"noun": "C1"
+},
+"trading": {
+"noun": "B2"
+},
+"trafficking": {
+"noun": "C1"
+},
+"trans": {
+"adj.": "C1"
+},
+"transaction": {
+"noun": "C1"
+},
+"transparency": {
+"noun": "C1"
+},
+"tribal": {
+"adj.": "C1"
+},
+"tribunal": {
+"noun": "C1"
+},
+"tribute": {
+"noun": "C1"
+},
+"troubled": {
+"adj.": "C1"
+},
+"trustee": {
+"noun": "C1"
+},
+"tsunami": {
+"noun": "B2"
+},
+"turnout": {
+"noun": "C1"
+},
+"turnover": {
+"noun": "C1"
+},
+"underlying": {
+"adj.": "C1"
+},
+"undermine": {
+"verb": "C1"
+},
+"unity": {
+"noun": "B2"
+},
+"unprecedented": {
+"adj.": "C1"
+},
+"unveil": {
+"verb": "C1"
+},
+"upcoming": {
+"adj.": "C1"
+},
+"uphold": {
+"verb": "C1"
+},
+"vaccinate": {
+"verb": "B2"
+},
+"vaccination": {
+"noun": "B2"
+},
+"vacuum": {
+"noun": "C1"
+},
+"variable": {
+"noun": "C1",
+"adj.": "C1"
+},
+"vegan": {
+"noun": "C1",
+"adj.": "C1"
+},
+"vendor": {
+"noun": "C1"
+},
+"verify": {
+"verb": "C1"
+},
+"vibrant": {
+"adj.": "C1"
+},
+"villain": {
+"noun": "B2"
+},
+"violation": {
+"noun": "C1"
+},
+"viral": {
+"adj.": "C1"
+},
+"vocal": {
+"adj.": "C1"
+},
+"voting": {
+"noun": "B2"
+},
+"vulnerability": {
+"noun": "C1"
+},
+"vulnerable": {
+"adj.": "C1"
+},
+"warehouse": {
+"noun": "C1"
+},
+"warfare": {
+"noun": "C1"
+},
+"warming": {
+"noun": "B2"
+},
+"warrant": {
+"noun": "C1",
+"verb": "C1"
+},
+"whatsoever": {
+"adv.": "C1"
+},
+"wildfire": {
+"noun": "C1"
+},
+"workforce": {
+"noun": "B2"
+},
+"youngster": {
+"noun": "C1"
+}
+}
+}

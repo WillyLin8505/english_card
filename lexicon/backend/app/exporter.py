@@ -119,7 +119,7 @@ _PER_LEVEL = {"synonyms", "related"}
 _PER_LEVEL_MAX = 3
 
 
-from .text import clean_native, offensive_native, repair_outlaw_gloss, sense_native  # noqa: E402
+from .text import VULGAR_SENSE_LABELS, clean_native, offensive_native, repair_learner_gloss, sense_native  # noqa: E402
 
 
 # Whole-token swears the exact OFFENSIVE list misses (bitches, shite,
@@ -221,7 +221,8 @@ def per_level(found: list[tuple]) -> list[tuple]:
 
 
 def export(s: Session, target: str, native: str, *, include_audio: bool = True,
-           fields: list[str] | None = None, idempotency_key: str | None = None) -> m.DictionaryRelease:
+           fields: list[str] | None = None, idempotency_key: str | None = None,
+           store_safe: bool = False) -> m.DictionaryRelease:
     if idempotency_key:
         found = s.execute(select(m.DictionaryRelease).where(
             m.DictionaryRelease.idempotency_key == idempotency_key)).scalar_one_or_none()
@@ -247,7 +248,7 @@ def export(s: Session, target: str, native: str, *, include_audio: bool = True,
     try:
         db_path = tmp_dir / f"{base}.sqlite"
         counts, completeness, used_sources, audio_files = _build(
-            s, db_path, target, native, fields, include_audio, tmp_dir)
+            s, db_path, target, native, fields, include_audio, tmp_dir, store_safe)
         checks = _check(db_path, tmp_dir, include_audio)
         failed = [c for c in checks if c["level"] == "error"]
         rel.checks = checks
@@ -300,7 +301,7 @@ def _values(s, target, native):
     return out
 
 
-def _build(s, db_path, target, native, fields, include_audio, tmp_dir):
+def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_safe=False):
     con = sqlite3.connect(db_path)
     con.executescript(DDL)  # foreign keys are checked after the build (PRAGMA foreign_key_check)
     values = _values(s, target, native)
@@ -382,7 +383,13 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir):
             reg = registers.get(sk) or {}
             tr = native_def.get(sk)
             labels = list(it.get("labels") or [])
-            gloss_zh = repair_outlaw_gloss(it.get("gloss") or "", tr.get("text") if tr else None)
+            # App Store build (問題回報 #271): drop vulgar/offensive senses. Their
+            # examples vanish too, since an example without a sense is skipped.
+            if store_safe and (set(labels) & VULGAR_SENSE_LABELS
+                               or reg.get("register") in VULGAR_SENSE_LABELS):
+                counts["senses_filtered"] = counts.get("senses_filtered", 0) + 1
+                continue
+            gloss_zh = repair_learner_gloss(it.get("gloss") or "", tr.get("text") if tr else None)
             native_text, vulgar = sense_native(gloss_zh, labels)
             register = reg.get("register")
             if vulgar:  # keep coarse words, flag them 粗俗 (never drop)
@@ -495,7 +502,7 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir):
             counts["examples"] += 1
             tr = ex_tr.get(k)
             if tr and tr.get("text"):
-                zh = repair_outlaw_gloss(it.get("text") or "", tr["text"]) or tr["text"]
+                zh = repair_learner_gloss(it.get("text") or "", tr["text"]) or tr["text"]
                 con.execute("INSERT INTO example_translations VALUES (?,?,?,?)",
                             (ex.id, zh, tr.get("source", ""), int(bool(tr.get("ai")))))
                 used(tr.get("source"))
@@ -540,7 +547,7 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir):
                              row.source_sense_id if row.source_sense_id in sense_id_by_key.values()
                              else None, row.strength, json.dumps(row.detail or {},
                                                                  ensure_ascii=False),
-                             clean_native(repair_outlaw_gloss(
+                             clean_native(repair_learner_gloss(
                                  row.target_word or w, mean.get("text"))) if mean else None,
                              mean.get("source") if mean else None,
                              int(bool(mean and mean.get("ai"))), it.get("source", ""), n,
@@ -560,7 +567,7 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir):
                     con.execute("INSERT INTO morphemes VALUES (?,?,?,?,?,?,?,?,?,?)",
                                 (lx.id, n, p.get("part", ""), p.get("kind", "root"),
                                  p.get("meaning"), int(bool(p.get("free"))),
-                                 clean_native(repair_outlaw_gloss(
+                                 clean_native(repair_learner_gloss(
                                      " ".join(x for x in (p.get("part"), p.get("meaning")) if x),
                                      tr.get("text"))) if tr else None,
                                  tr.get("source") if tr else None,
@@ -580,7 +587,7 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir):
                             (lx.id, json.dumps(ety["root"], ensure_ascii=False),
                              json.dumps(ety["prefix"], ensure_ascii=False),
                              json.dumps(ety["suffix"], ensure_ascii=False), origin, orig_form,
-                             text, repair_outlaw_gloss(text, nat.get("text")),
+                             text, repair_learner_gloss(text, nat.get("text")),
                              nat.get("source"), int(bool(nat.get("ai")))))
                 counts["etymologies"] += 1
     # Stub lexemes that relations point to (not exported as full entries)

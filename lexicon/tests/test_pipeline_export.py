@@ -519,3 +519,20 @@ def test_a_meaning_loses_the_ais_trailing_full_stop():
     assert clean_native("討價還價。") == "討價還價"
     assert clean_native("親友；熟人。") == "親友；熟人"
     assert clean_native("。") == "。"
+
+
+def test_store_safe_export_drops_vulgar_senses(session, fakes, tmp_path, monkeypatch):
+    monkeypatch.setattr(config, 'EXPORTS', tmp_path)
+    apple_data(fakes)
+    pipeline.process_word(session, 'en', 'zh-TW', 'apple', None, 'fill_missing')
+    field = session.execute(select(m.FieldValue).where(m.FieldValue.field == 'definition')).scalar_one()
+    items = [dict(i) for i in field.items]
+    items[0]['labels'] = ['vulgar']
+    field.items = items
+    session.flush()
+    def n_senses(**kw):
+        rel = exporter.export(session, 'en', 'zh-TW', include_audio=False, **kw)
+        assert rel.status == 'ready', rel.error
+        with sqlite3.connect(tmp_path / rel.file_name / f'{rel.file_name}.sqlite') as con:
+            return con.execute('SELECT count(*) FROM senses').fetchone()[0]
+    assert n_senses() == n_senses(store_safe=True) + 1

@@ -4,6 +4,8 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
+import 'pack_media.dart';
+
 /// Word pronunciation (spec section 7: 翻到背面時自動播放單字真人發音；所有
 /// 順位皆無音檔時才使用系統 TTS). Example sentences are never read aloud
 /// (移除例句整句發音).
@@ -37,7 +39,18 @@ class DeviceSpeaker implements Speaker {
     await stop();
     if (audioUrl != null && audioUrl.isNotEmpty) {
       try {
-        await (_player ??= AudioPlayer()).play(UrlSource(audioUrl));
+        final player = _player ??= AudioPlayer();
+        // Wait for the clip to end so two accents played in a row (card
+        // #251: 英式、美式各一次) do not cut each other off; a clip that
+        // never reports completion gives up after a few seconds.
+        final finished = player.onPlayerComplete.first;
+        // UrlSource only plays http/file URLs. Bundled clips are Flutter
+        // assets; AssetSource's cache already prefixes `assets/`.
+        final source = packMediaIsAsset(audioUrl)
+            ? AssetSource(audioUrl.substring('assets/'.length))
+            : UrlSource(audioUrl);
+        await player.play(source);
+        await finished.timeout(const Duration(seconds: 6), onTimeout: () {});
         return true;
       } catch (e) {
         debugPrint('Recording failed, using TTS: $e');

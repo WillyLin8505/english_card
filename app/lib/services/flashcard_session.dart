@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui' show Offset, Rect;
 
 import 'package:flutter/foundation.dart';
 
@@ -6,10 +7,16 @@ import '../models/learning_card.dart';
 import '../models/photo.dart';
 import '../models/word_entry.dart';
 import 'learning_content.dart';
+import 'license_links.dart';
 import 'fsrs_scheduler.dart';
 import 'word_database_repository.dart';
 import 'lexicon_pack.dart';
 import 'dictionary_sync.dart';
+import 'photo_store.dart';
+
+/// One photo the card back can show: the photo, where the word is on it
+/// (null when unknown) and a learner-facing credit for the pack's pictures.
+typedef CardPhoto = (Photo, LabelPoint?, String?);
 
 enum ReviewExerciseType {
   sentenceCloze,
@@ -156,6 +163,7 @@ class FlashcardSession extends ChangeNotifier {
   String? _senseId;
   Photo? _photo;
   LabelPoint? _anchor;
+  Rect? _box;
   String? _photoCredit;
   bool _back = false;
   ReviewExercise? _exercise;
@@ -185,6 +193,10 @@ class FlashcardSession extends ChangeNotifier {
   /// ones shown recently (多張相關照片在背面隨機輪流顯示，避免連續重複).
   Photo? get photo => _photo;
   LabelPoint? get anchor => _anchor;
+
+  /// The tagger's box around this word in [photo] (0–1 of the image), when
+  /// it has a real one; the front draws it around the dot (卡 #253).
+  Rect? get box => _box;
   String? get photoCredit => _photoCredit;
 
   int get reviewed => _reviewed;
@@ -301,6 +313,7 @@ class FlashcardSession extends ChangeNotifier {
     } else {
       _photo = null;
       _anchor = null;
+      _box = null;
       _photoCredit = null;
     }
     _watch
@@ -598,18 +611,44 @@ class FlashcardSession extends ChangeNotifier {
     return eligible.first.id;
   }
 
+  /// Every photo of the card's word — the learner's own first, then the
+  /// language pack's approved pictures — so the back can swipe between
+  /// them (card #251). Empty when the word has no photo.
+  List<CardPhoto> get photoOptions => _photoOptions;
+  List<CardPhoto> _photoOptions = const [];
+
+  /// The learner swiped to another of the word's photos on the back.
+  void selectPhoto(int index) {
+    if (index < 0 || index >= _photoOptions.length) return;
+    final chosen = _photoOptions[index];
+    if (chosen.$1.id == _photo?.id) return;
+    _photo = chosen.$1;
+    _anchor = chosen.$2;
+    _box = _boxes[chosen.$1.id];
+    _photoCredit = chosen.$3;
+    _lastPhoto = chosen.$1.id;
+    notifyListeners();
+  }
+
   void _choosePhoto() {
     final c = card;
     if (c == null) return;
-    final options = [
-      for (final o in repo.occurrencesOf(c.wordEntryId))
-        if (repo.photo(o.photoId) case final p? when p.hasImage)
-          (p, o.anchor as LabelPoint?, null as String?),
-      ..._databasePhotos(c.wordEntryId),
+    final seenIds = <String>{};
+    final options = _photoOptions = [
+      for (final o in [
+        for (final o in repo.occurrencesOf(c.wordEntryId))
+          // A learner's photo whose original file is gone is skipped, so the
+          // card shows another picture of the word (問題回報 #279).
+          if (repo.photo(o.photoId) case final p? when PhotoStore.canShow(p))
+            (p, o.anchor as LabelPoint?, null as String?),
+        ..._databasePhotos(c.wordEntryId),
+      ])
+        if (seenIds.add(o.$1.id)) o,
     ];
     if (options.isEmpty) {
       _photo = null;
       _anchor = null;
+      _box = null;
       _photoCredit = null;
       return;
     }
@@ -619,13 +658,17 @@ class FlashcardSession extends ChangeNotifier {
     final chosen = pickFrom[_random.nextInt(pickFrom.length)];
     _photo = chosen.$1;
     _anchor = chosen.$2;
+    _box = _boxes[chosen.$1.id];
     _photoCredit = chosen.$3;
     _lastPhoto = chosen.$1.id;
     _recentPhotos.add(chosen.$1.id);
     if (_recentPhotos.length > 3) _recentPhotos.removeAt(0);
   }
 
-  List<(Photo, LabelPoint?, String?)> _databasePhotos(String wordId) {
+  /// Database photos' label boxes, by photo id (see [box]).
+  final _boxes = <String, Rect>{};
+
+  List<CardPhoto> _databasePhotos(String wordId) {
     final entry = repo.entry(wordId);
     final lexemeId = entry?.lexemeId;
     if (entry == null ||
@@ -660,6 +703,29 @@ class FlashcardSession extends ChangeNotifier {
             point.every((p) => p is num && p.isFinite && p >= 0 && p <= 1)) {
           anchor = LabelPoint(
               (point[0] as num).toDouble(), (point[1] as num).toDouble());
+          final b = label['box'];
+          if (b is List &&
+              b.length == 4 &&
+              b.every((v) => v is num && v.isFinite && v >= 0 && v <= 1)) {
+            final r = Rect.fromLTRB(
+                (b[0] as num).toDouble(),
+                (b[1] as num).toDouble(),
+                (b[2] as num).toDouble(),
+                (b[3] as num).toDouble());
+            // The model's "middle of the picture" means the middle of its
+            // box (as database_image_data.dart does).
+            if (anchor.x == 0.5 && anchor.y == 0.5) {
+              anchor = LabelPoint(r.center.dx, r.center.dy);
+            }
+            // A box around (nearly) the whole picture, or one the dot is
+            // not in, says nothing: the dot alone is shown.
+            if (r.width > 0 &&
+                r.height > 0 &&
+                r.width * r.height <= 0.9 &&
+                r.inflate(0.02).contains(Offset(anchor.x, anchor.y))) {
+              _boxes[id] = r;
+            }
+          }
           break;
         }
       }
@@ -680,7 +746,20 @@ class FlashcardSession extends ChangeNotifier {
         }
         creditParts.add(s);
       }
-      final credit = creditParts.join(' · ');
+      // Card #259: the license text and the picture's Commons/source page.
+      final licenseRaw = image['license'];
+      final licenseUrl = image['license_url'];
+      final links = [
+        licenseUrl is String && licenseUrl.trim().isNotEmpty
+            ? licenseUrl.trim()
+            : licenseUrlFor(licenseRaw is String ? licenseRaw : null),
+        image['page_url'],
+      ];
+      final credit = [
+        creditParts.join(' · '),
+        for (final l in links)
+          if (l is String && l.trim().isNotEmpty) l.trim(),
+      ].join('\n');
       found.add((
         Photo(
             id: id,

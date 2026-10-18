@@ -175,6 +175,8 @@ class _CardView extends StatelessWidget {
                       photo: session.photo,
                       anchor: session.anchor,
                       photoCredit: session.photoCredit,
+                      photos: session.photoOptions,
+                      onPhotoSelected: session.selectPhoto,
                       answerCorrect: session.answerCorrect,
                       submittedAnswer: session.submittedAnswer,
                       correctAnswer: session.exercise?.answer,

@@ -45,17 +45,29 @@ class DatabaseImage extends StatelessWidget {
   final Map<String, dynamic> image;
   const DatabaseImage({super.key, required this.image});
   @override
-  Widget build(BuildContext context) => Image.network(
-        Uri.base.resolve(image['url'] as String).toString(),
+  Widget build(BuildContext context) {
+    final resolved = resolvePackMedia(image['url'] as String);
+    final label = databaseImageLabels(image, LexiconPack.instance);
+    final missing = Center(child: UiText('圖片暫時無法載入', style: MFont.bodyMuted));
+    if (packMediaIsAsset(resolved)) {
+      return Image.asset(
+        resolved,
         fit: BoxFit.contain,
-        semanticLabel: databaseImageLabels(image, LexiconPack.instance),
-        loadingBuilder: (_, child, progress) => progress == null
-            ? child
-            : const Center(
-                child: CircularProgressIndicator(color: MColors.primary)),
-        errorBuilder: (context, error, stack) =>
-            Center(child: UiText('圖片暫時無法載入', style: MFont.bodyMuted)),
+        semanticLabel: label,
+        errorBuilder: (context, error, stack) => missing,
       );
+    }
+    return Image.network(
+      resolved,
+      fit: BoxFit.contain,
+      semanticLabel: label,
+      loadingBuilder: (_, child, progress) => progress == null
+          ? child
+          : const Center(
+              child: CircularProgressIndicator(color: MColors.primary)),
+      errorBuilder: (context, error, stack) => missing,
+    );
+  }
 }
 
 /// Learner-facing credit lines. Raw source codes stay off the page;
@@ -82,8 +94,16 @@ List<Widget> _imageInfoLines(Map<String, dynamic> image) {
   if (author != null) add(UiText('作者：$author', style: MFont.caption));
   final license = visible(image['license']);
   if (license != null) add(UiText('授權：$license', style: MFont.caption));
+  final licenseUrl = visible(image['license_url']) ?? licenseUrlFor(license);
+  if (licenseUrl != null) {
+    add(SelectableText('授權條文：$licenseUrl', style: MFont.caption));
+  }
   final attribution = visible(image['attribution']);
   if (attribution != null) add(Text(attribution, style: MFont.caption));
+  final pageUrl = visible(image['page_url']);
+  if (pageUrl != null) {
+    add(SelectableText('來源頁：$pageUrl', style: MFont.caption));
+  }
   return lines;
 }
 

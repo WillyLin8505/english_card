@@ -2,7 +2,7 @@
 
 {kind_line}｜難度 {difficulty}｜相關問題回報：{issue_ids}
 
-先讀 `GET http://127.0.0.1:5173/api/tasks/{id}`（只讀這張卡，不要讀整個看板）。{prev_result_line}
+先讀 `GET http://127.0.0.1:5173/api/tasks/{id}`（只讀這張卡，不要讀整個看板），再讀每個相關問題回報 `GET http://127.0.0.1:5173/api/issues/<id>`：`decision` 欄位有值就是 owner 已經決定，照它做，不要再問。{prev_result_line}
 
 ## 卡片內容
 {detail}

@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import csv
 import io
+import re
 import time
 from datetime import datetime, timedelta, timezone
 
@@ -72,11 +73,60 @@ def missing_words(s: Session, target: str) -> list[str]:
     for w in words:
         if not w or w in have or _foreign(w, target):
             continue
-        # A form with no meaning of its own asks for its word: runs → run,
-        # leaves → leaf and leave (問題回報 #51).
-        bases = inflection_bases(w, target) if " " not in w else ()
-        out += [b for b in bases if b not in have] if bases else [w]
+        # The recognition service's label is not always one word: 「wooden
+        # table」 is two words the dictionary has separately, 「shoeinsole」
+        # two words without the space (問題回報 #51, 卡 #241).
+        for part in _phrase_words(w, target) if " " in w else _unglued(w, target):
+            if part in have:
+                continue
+            # A form with no meaning of its own asks for its word: runs → run,
+            # leaves → leaf and leave (問題回報 #51).
+            bases = inflection_bases(part, target) if " " not in part else ()
+            out += [b for b in bases if b not in have] if bases else [part]
     return list(dict.fromkeys(out))
+
+
+# Function words a glued label carries along (in the kitchen, pour coffee).
+_FUNCTION_WORDS = {"a", "an", "the", "in", "on", "at", "of", "to", "and", "or", "with",
+                   "for", "from", "by", "into", "onto", "over", "under", "some"}
+
+
+def _headword(word: str, target: str) -> bool | None:
+    """Whether the dictionary has an entry for the word (names do not count);
+    None without the Kaikki index, so callers keep the request as it is."""
+    from . import kaikki_index
+    entries = kaikki_index.lookup(target, word)
+    if entries is None:
+        return None
+    return any(e.get("pos") != "name" for e in entries)
+
+
+def _phrase_words(phrase: str, target: str) -> list[str]:
+    """A phrase the dictionary knows (traffic light, whipped cream) is one
+    missing word. One it does not (wooden table, in the kitchen, red object)
+    is two labels glued together: ask for its words instead."""
+    if _headword(phrase, target) is not False:
+        return [phrase]
+    parts = [p for p in re.split(r"[\s\-]+", phrase.lower())
+             if p.isalpha() and p not in _FUNCTION_WORDS]
+    return [p for p in parts if _headword(p, target)]
+
+
+def _unglued(word: str, target: str) -> list[str]:
+    """shoeinsole → shoe, insole; woodenblock → wooden, block: a label whose
+    space got lost. Only for a string that is no word itself, split where
+    both halves are words, at the split whose rarer half is most common."""
+    from .adapters.base import zipf
+    if len(word) < 6 or zipf(word, target) >= 1.5 or _headword(word, target) is not False:
+        return [word]
+    best: tuple[float, list[str]] | None = None
+    for i in range(3, len(word) - 2):
+        a, b = word[:i], word[i:]
+        if _headword(a, target) and _headword(b, target):
+            score = min(zipf(a, target), zipf(b, target))
+            if score >= 2.0 and (best is None or score > best[0]):
+                best = (score, [a, b])
+    return best[1] if best else [word]
 
 
 def _foreign(word: str, target: str) -> bool:

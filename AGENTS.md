@@ -68,6 +68,9 @@ launches a card for each idle AI (pick_card rules + `lexicon/tools/dispatch_conf
 - Grokbot reads only `python lexicon/tools/dispatch_digest.py` (unread notable events, ≤ 15 lines) and acts
   on ❓/⚠/✖ lines; it does not re-run heartbeats, quota checks or pick_card by hand.
 - Pause: board Grokbot ⏸, or `schtasks /change /tn EnglishCard_DispatchTick /disable` (`/enable` to resume).
+- **Issue swarm** (owner, 2026-10-18): every new 問題回報 card (and every decision the owner has answered) gets its
+  own new Claude CLI (`Claude CLI 1..N`, `issue_swarm.max_parallel` in dispatch_config.json, Claude Code's quota);
+  a finished card marks its issues fixed. Agents read the issue's `decision` field and follow it.
 - Dry run: `python lexicon/tools/dispatch_tick.py --dry-run`. Tests: `lexicon/tests/test_dispatch_tick.py`.
 
 ## Standing preamble (auto-attached on every launch)

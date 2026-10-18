@@ -19,6 +19,39 @@ import 'cefr_lexicon.dart';
 /// The service is `tagger/tagging_server.py` in this repo. `/tag` is
 /// stage 1 of the spec's recognition (labels with picture context).
 /// Meanings, IPA, examples and translations come from the offline database.
+///
+/// The published app does not reach that server (問題回報 #265): on a phone
+/// stage 1 runs on the device (`local_vision.dart`), and this client is the
+/// developer / web option.
+
+/// What the tagging queue needs from a recognizer: the server client
+/// [TaggingService] or the on-device [LocalVisionTagger].
+abstract class PhotoTagger {
+  Future<List<WordCandidate>> candidates(
+    Uint8List jpeg, {
+    required String level,
+    required CefrLexicon lexicon,
+    String lang = 'en',
+    String native = 'zh-TW',
+    String? focus,
+    List<String> exclude = const [],
+    bool? asWeb,
+  });
+
+  Future<EnrichResult> enrich({
+    required String word,
+    String? pos,
+    String? meaning,
+    String lang = 'en',
+    String native = 'zh-TW',
+    int examples = 6,
+    List<String> translate = const [],
+  });
+
+  Future<TaggerHealth> checkHealth();
+
+  void close();
+}
 
 /// What GET /health says.
 class TaggerHealth {
@@ -80,8 +113,8 @@ class EnrichResult {
 String describeTaggingError(Object e, String url) {
   if (e is TaggingApiException) {
     return switch (e.statusCode) {
-      401 => 'API Key 不正確（設定 → AI 辨識服務）',
-      502 => 'AI 模型沒有回應，請確認 Ollama 已啟動',
+      401 => 'API Key 不正確（設定 → 照片辨識連線）',
+      502 => 'AI 模型沒有回應，稍後會自動重試',
       451 => '這張照片含有成人內容，未加入相片冊',
       422 => '這張照片的辨識結果格式不完整，請稍後重新辨識',
       _ => e.message,
@@ -183,7 +216,7 @@ List<WordCandidate> parseCandidates(
   return out;
 }
 
-class TaggingService {
+class TaggingService implements PhotoTagger {
   /// e.g. http://127.0.0.1:8765/tag on this PC, or the Cloudflare Tunnel
   /// URL when the phone isn't on the same network as "Predator".
   final Uri endpoint;
@@ -205,6 +238,7 @@ class TaggingService {
   /// Stage 1 for one JPEG: the candidate pool, centred on [level].
   /// [focus] and [exclude] ask for more candidates of a kind the pool is
   /// short of.
+  @override
   Future<List<WordCandidate>> candidates(
     Uint8List jpeg, {
     required String level,
@@ -246,6 +280,7 @@ class TaggingService {
 
   /// Word data for [word]: native meaning, a definition, IPA, [examples]
   /// new example sentences, and translations of [translate].
+  @override
   Future<EnrichResult> enrich({
     required String word,
     String? pos,
@@ -290,6 +325,7 @@ class TaggingService {
 
   /// GET /health next to the tag endpoint, sending the key so the server
   /// can say whether it's right.
+  @override
   Future<TaggerHealth> checkHealth() async {
     final uri = endpoint.resolve('/health');
     final response = await _client.get(uri, headers: {'X-API-Key': apiKey});
@@ -306,5 +342,6 @@ class TaggingService {
     );
   }
 
+  @override
   void close() => _client.close();
 }

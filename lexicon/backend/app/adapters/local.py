@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import re
 from functools import lru_cache
+from pathlib import Path
 
 from sqlalchemy import func, select
 
@@ -14,6 +15,7 @@ from ..text import example_key, fold, tokens
 from .base import Candidate, Context, SourceAdapter
 
 CEFR_FILE = config.REPO / "app" / "assets" / "cefr_en.json"
+OXFORD_EXTRA = Path(__file__).resolve().parents[1] / "oxford5000_extra.json"
 LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"]
 WF_LANG = {"en": "en", "fr": "fr", "zh-TW": "zh"}
 # British English is the default playback (spec section 7).
@@ -22,7 +24,13 @@ TTS_LOCALE = {"en": "en-GB", "fr": "fr-FR", "zh-TW": "zh-TW"}
 
 @lru_cache(maxsize=1)
 def cefr_list() -> dict:
-    return json.loads(CEFR_FILE.read_text(encoding="utf-8"))["words"]
+    """CEFR-J/Octanove, plus the Oxford 5000 additions (B2-C1) it does not
+    list, so e.g. adjacent is C1 instead of a B1 frequency guess (#220)."""
+    words = json.loads(CEFR_FILE.read_text(encoding="utf-8"))["words"]
+    if OXFORD_EXTRA.exists():
+        for w, pos in json.loads(OXFORD_EXTRA.read_text(encoding="utf-8"))["words"].items():
+            words.setdefault(w, [round(_zipf(w, "en"), 2), pos, ""])
+    return words
 
 
 def _zipf(word: str, lang: str) -> float:
@@ -521,8 +529,8 @@ def derived_adjective_ipa(word: str) -> list[dict]:
 
 @lru_cache(maxsize=20_000)
 def _family_cap(word: str, language: str) -> int | None:
-    """One level above the word's base's listed level (potted <= pot B1 +
-    1, striped <= stripe B1 + 1 -- 問題回報 #214/#218), whether or not
+    """One level above the word's base's listed level (sunny <= sun + 1;
+    -ed forms: the base's level, striped <= stripe B1 -- 問題回報 #214/#218/#221), whether or not
     [word] itself has some other listed part of speech. None when no
     listed base spelling is found. Candidate bases reuse images.py's
     morphology (suffix, prefix and spelling repairs already used to level
@@ -533,10 +541,13 @@ def _family_cap(word: str, language: str) -> int | None:
     from .base import _listed_levels
     levels = _listed_levels()
     best = None
+    # -ed forms (striped, potted) just describe "having/with" the base, so
+    # they sit at the base's level (問題回報 #221: striped <= stripe B1)
+    bump = 0 if word.endswith("ed") else 1
     for stem in images._base_candidates(word):
         lv = levels.get(stem)
         if lv is not None:
-            best = lv + 1 if best is None else min(best, lv + 1)
+            best = lv + bump if best is None else min(best, lv + bump)
     return best
 
 

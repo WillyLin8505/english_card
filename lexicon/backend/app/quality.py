@@ -237,19 +237,41 @@ def sense_is_low(sense: dict, has_dictionary_before: bool, *, count_etymology: b
     return bool(sense.get("native_ai")) and has_dictionary_before
 
 
+def _label_low(sense: dict) -> bool:
+    labels = {str(x).lower() for x in sense.get("labels") or []}
+    return bool(labels & LOW_SENSE_LABELS) or "low_priority" in labels
+
+
+def _etymology_tagged(sense: dict) -> bool:
+    return any(str(x).lower().startswith("etymology-") for x in sense.get("labels") or [])
+
+
 def rank_senses(senses: list[dict], low_keys: set[str] | None = None) -> list[dict]:
-    """Main senses first (original order kept), low ones marked and after."""
-    count_etymology = any(
-        not any(str(x).lower().startswith("etymology-") for x in (s.get("labels") or []))
-        for s in senses)
+    """Main senses first (original order kept), low ones marked and after.
+
+    etymology-N senses are demoted only when some sense outside them is a
+    usable main sense by its labels (card #164: monogram's only
+    non-etymology sense is obsolete, so its real meaning 花押字 under
+    etymology-3 stays main). An entry whose main senses all lack Chinese
+    keeps its Chinese senses main instead (stanch: the one translated
+    sense is tagged poetic) — the card would otherwise show nothing."""
+    low_keys = low_keys or set()
+    count_etymology = any(not _etymology_tagged(s) and not _label_low(s) for s in senses)
     seen_dict = False
     for s in senses:
-        low = sense_is_low(s, seen_dict, count_etymology=count_etymology) or _sense_key(s) in (low_keys or set())
+        low = sense_is_low(s, seen_dict, count_etymology=count_etymology) or _sense_key(s) in low_keys
         s["priority"] = "low" if low else "main"
-        if low and "low_priority" not in s.setdefault("labels", []):
-            s["labels"] = [*s["labels"], "low_priority"]
         if not low and s.get("native") and not s.get("native_ai"):
             seen_dict = True
+    has_zh = [bool((s.get("native") or "").strip()) for s in senses]
+    if not any(z for s, z in zip(senses, has_zh) if s["priority"] == "main") and any(has_zh):
+        for s, z in zip(senses, has_zh):
+            if z and _sense_key(s) not in low_keys:
+                s["priority"] = "main"
+    for s in senses:
+        labels = s.setdefault("labels", [])
+        if s["priority"] == "low" and "low_priority" not in labels:
+            s["labels"] = [*labels, "low_priority"]
     return sorted(senses, key=lambda s: s["priority"] == "low")
 
 
@@ -596,12 +618,41 @@ def choose_sense(candidates: list[dict], context: set[str], current_id=None,
     return best, score(best), (score(ranked[1]) if len(ranked) > 1 else float("-inf"))
 
 
+def _publishable(senses: list[dict]) -> list[dict]:
+    return [s for s in senses if (s.get("native") or "").strip() and s.get("priority") != "low"]
+
+
+def photo_sense_candidates(lexemes: list[dict]) -> list[dict]:
+    """choose_sense candidates for every publishable sense of ``lexemes``,
+    carrying the lexeme id so a tag can move to a sister part of speech."""
+    out = []
+    for lx in lexemes:
+        for n, se in enumerate(lx.get("senses") or []):
+            if (se.get("native") or "").strip() and se.get("priority") != "low":
+                out.append({"id": se["id"], "lexeme_id": lx["id"], "lexeme_pos": lx.get("pos"),
+                            "ordinal": n, "definition": se.get("definition") or "",
+                            "native": se.get("native"), "native_ai": se.get("native_ai"),
+                            "labels": se.get("labels") or [], "low": False})
+    return out
+
+
 def fix_catalog_senses(pack: dict) -> int:
     """Pack-time guard (#195): a photo tag never shows a low-priority or
-    Chinese-less sense; it falls back to the lexeme's best main sense with
-    Chinese. Tags on a redirected lexeme follow the redirect. Idempotent."""
+    Chinese-less sense. Tags on a redirected lexeme follow the redirect.
+
+    Card #164: the replacement is chosen the way a fresh tag is — by the
+    other words on the same photo, concreteness and the dictionary order
+    (:func:`choose_sense`), not the lexeme's first main sense. When the
+    tag's lexeme has no publishable sense at all (brick the adjective 極冷,
+    natural the adverb), the sister parts of speech of the same spelling
+    compete too, the main usage preferred, and the tag and its label move
+    to that lexeme (``lexeme_id_before`` kept). Idempotent."""
     by_id = {lx["id"]: lx for lx in pack.get("lexemes", [])}
     redirects = {int(k): v for k, v in (pack.get("redirects") or {}).items()}
+    sisters: dict[str, list[dict]] = {}
+    for lx in pack.get("lexemes", []):
+        if lx.get("status", "full") == "full" and lx.get("normalized"):
+            sisters.setdefault(lx["normalized"], []).append(lx)
     changed = 0
     for im in pack.get("catalog_images") or []:
         for coll in (im.get("tags") or [], im.get("labels") or []):
@@ -609,18 +660,43 @@ def fix_catalog_senses(pack: dict) -> int:
                 lid = t.get("lexeme_id")
                 if lid in redirects and redirects[lid] in by_id:
                     t["lexeme_id"] = redirects[lid]
-        for t in im.get("tags") or []:
+        tags = im.get("tags") or []
+        for t in tags:
             lx = by_id.get(t.get("lexeme_id")) or {}
             senses = lx.get("senses") or []
             cur = next((s for s in senses if s.get("id") == t.get("sense_id")), None)
             if cur and (cur.get("native") or "").strip() and cur.get("priority") != "low":
                 continue
-            best = next((s for s in senses if (s.get("native") or "").strip()
-                         and s.get("priority") != "low"), None) or next(
-                (s for s in senses if (s.get("native") or "").strip()), None)
+            tagged_here = {o.get("lexeme_id") for o in tags if o is not t}
+            pool = [lx] if _publishable(senses) else sorted(
+                (s for s in sisters.get(lx.get("normalized") or "", [])
+                 if s is not lx and s["id"] not in tagged_here),
+                key=lambda s: (s.get("usage_rank") if s.get("usage_rank") is not None else 9, s["id"]))
+            cands = photo_sense_candidates(pool)
+            if not cands:
+                # Nothing publishable anywhere under this spelling: keep the
+                # tag on a sense with Chinese so the album still names it.
+                best = next((s for s in senses if (s.get("native") or "").strip()), None)
+                best_lx = lx if best else None
+            else:
+                context = set()
+                for o in tags:
+                    other = by_id.get(o.get("lexeme_id"))
+                    if other and other is not lx:
+                        context |= tokens(other.get("lemma"))
+                tag_pos = pool[0].get("pos") if pool and pool[0] is not lx else lx.get("pos")
+                best, _, _ = choose_sense(cands, context, t.get("sense_id"), tag_pos)
+                best_lx = by_id.get(best["lexeme_id"]) if best else None
             if best and best.get("id") != t.get("sense_id"):
                 t.setdefault("sense_id_before", t.get("sense_id"))
                 t["sense_id"], t["sense_fallback"] = best["id"], True
+                if best_lx is not None and best_lx["id"] != t.get("lexeme_id"):
+                    t.setdefault("lexeme_id_before", t.get("lexeme_id"))
+                    for lb in im.get("labels") or []:
+                        if lb.get("lexeme_id") == t["lexeme_id"]:
+                            lb["lexeme_id"] = best_lx["id"]
+                            lb["word"], lb["pos"] = best_lx.get("lemma"), best_lx.get("pos")
+                    t["lexeme_id"] = best_lx["id"]
                 changed += 1
         # P2: a photo tag's level is the card's level (after the pack's
         # CEFR decisions), never a separate value.

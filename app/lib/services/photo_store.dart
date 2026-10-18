@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../models/photo.dart';
+
 /// Keeps the pixels of photos the user adds. Spec: "原圖留裝置" — the
 /// original stays on this device and Photo records only reference it.
 ///
@@ -63,4 +65,18 @@ class PhotoStore {
 
   Future<Uint8List?> storedBytes(String key) async =>
       _box == null ? _memory[key] : await _box.get(key);
+
+  /// Whether [photo]'s picture can be shown now. A photo whose original
+  /// file is gone (deleted, or no permission to read it) cannot: callers
+  /// show another picture of the word instead of a broken one (問題回報 #279).
+  static bool canShow(Photo photo) {
+    if (!photo.hasImage) return false;
+    final path = photo.filePath;
+    if (path == null || kIsWeb) return true;
+    try {
+      return File(path).existsSync();
+    } on FileSystemException {
+      return false;
+    }
+  }
 }

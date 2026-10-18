@@ -8,12 +8,14 @@ import '../models/card_template.dart';
 import '../models/learning_card.dart';
 import '../models/photo.dart';
 import '../models/vocabulary_profile.dart';
+import 'learning_insights.dart';
 import '../models/word_candidate.dart';
 import '../models/word_detail.dart';
 import '../models/word_entry.dart';
 import 'fsrs_scheduler.dart';
 import 'fsrs_optimizer.dart';
 import 'lexicon_pack.dart';
+import 'pack_media.dart';
 import 'word_database_query.dart';
 import 'word_database_store.dart';
 import 'word_selector.dart';
@@ -444,6 +446,20 @@ class WordDatabaseRepository extends ChangeNotifier {
   /// The cover shown on an album card: the newest photo with an image.
   Photo? albumCoverPhoto(String albumId) =>
       photosInAlbum(albumId).where((p) => p.hasImage).firstOrNull;
+
+  /// 學習洞察: review counts, level changes and weak words.
+  LearningInsights insights() {
+    final wordOfCard = {for (final c in _cards) c.id: c.wordEntryId};
+    return LearningInsights.compute(
+      logs: _reviewLogs,
+      profile: _profile,
+      now: clock(),
+      wordOf: (cardId) {
+        final id = wordOfCard[cardId];
+        return id == null ? null : entry(id)?.word;
+      },
+    );
+  }
 
   List<ReviewLog> logsOf(String cardId) => [
         for (final l in _reviewLogs)
@@ -881,9 +897,7 @@ class WordDatabaseRepository extends ChangeNotifier {
       if (pack.mediaBase != null) {
         merged['audioUrl'] = x.audio == null
             ? null
-            : Uri.base
-                .resolve(pack.mediaBase!)
-                .replace(queryParameters: {'path': x.audio!}).toString();
+            : packRecordingUrl(pack.mediaBase, x.audio!);
       }
       merged['translatedFor'] = pack.native;
       // A dictionary gap is explicit, not an endless background loading state.

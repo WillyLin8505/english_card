@@ -83,15 +83,20 @@ List<MapEntry<String?, List<Map<String, dynamic>>>> groupedDatabaseImageTags(
 }
 
 /// A database picture as a photo the pinned view can show.
-Photo databasePhoto(Map<String, dynamic> image) => Photo(
+Photo databasePhoto(Map<String, dynamic> image) {
+  final resolved = resolvePackMedia(image['url'] as String);
+  final asset = packMediaIsAsset(resolved);
+  return Photo(
       id: 'db-${image['id']}',
       title: '',
       takenAt: DateTime(2000),
       createdAt: DateTime(2000),
-      networkUrl: Uri.base.resolve(image['url'] as String).toString(),
+      assetPath: asset ? resolved : null,
+      networkUrl: asset ? null : resolved,
       width: (image['width'] as num?)?.toInt(),
       height: (image['height'] as num?)?.toInt(),
     );
+}
 
 /// The vision model's labels on a database picture, as photo pins where it
 /// saw them: words in the lexicon first, with their Chinese. With [level],

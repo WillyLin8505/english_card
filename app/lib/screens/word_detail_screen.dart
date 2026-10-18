@@ -104,7 +104,8 @@ class _WordBody extends StatelessWidget {
     final repo = scope.repository;
     final pack = LexiconPack.instance;
 
-    Widget relatedSection(String label, String kind) {
+    // Owner decision (issue #252): three per section, the rest behind 更多.
+    List<({String word, String meaning})> relatedWords(String kind) {
       final seen = <String>{};
       final words = entry.userEdited.contains(WordField.related)
           ? [
@@ -128,12 +129,23 @@ class _WordBody extends StatelessWidget {
                       seen.add(r.word.toLowerCase()))
                     (word: r.word, meaning: r.native!),
             ];
+      return words;
+    }
+
+    Widget relatedSection(String label, List<String> kinds,
+        {bool collapsed = false}) {
+      final seen = <String>{};
+      final words = [
+        for (final kind in kinds)
+          for (final w in relatedWords(kind))
+            if (seen.add(w.word.toLowerCase())) w
+      ];
       if (words.isEmpty) return const SizedBox.shrink();
       return _Section(
           label: label,
-          child: Wrap(
-            spacing: MSpace.xs,
-            runSpacing: MSpace.xs,
+          child: _MoreList(
+            initial: collapsed ? 0 : 3,
+            wrap: true,
             children: [
               for (final w in words)
                 TagChip('${w.word}　${w.meaning}'.trim(), localize: false)
@@ -241,14 +253,19 @@ class _WordBody extends StatelessWidget {
               for (final usage in entry.effectiveUsages) ...[
                 TagChip(posLabel(usage.pos)),
                 const SizedBox(height: MSpace.xxs),
-                for (final sense in usage.senses)
-                  if (sense.meaning.trim().isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: MSpace.xxs),
-                      child: Text(sense.meaning,
-                          style:
-                              MFont.manrope(17, FontWeight.w700, MColors.ink)),
-                    ),
+                _MoreList(
+                  initial: 2,
+                  children: [
+                    for (final sense in usage.senses)
+                      if (sense.meaning.trim().isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: MSpace.xxs),
+                          child: Text(sense.meaning,
+                              style: MFont.manrope(
+                                  17, FontWeight.w700, MColors.ink)),
+                        ),
+                  ],
+                ),
                 const SizedBox(height: MSpace.xs),
               ],
             ],
@@ -324,8 +341,8 @@ class _WordBody extends StatelessWidget {
       if (examples.isNotEmpty)
         _Section(
           label: '例句',
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: _MoreList(
+            initial: 3,
             children: [
               for (final example in examples)
                 Padding(
@@ -335,13 +352,13 @@ class _WordBody extends StatelessWidget {
             ],
           ),
         ),
-      relatedSection('近義詞', 'synonyms'),
-      relatedSection('反義詞', 'antonyms'),
-      relatedSection('同音詞', 'homophones'),
-      relatedSection('近音詞', 'near_homophones'),
-      relatedSection('拼寫相似詞', 'similar_spelling'),
-      relatedSection('衍生詞', 'derived_terms'),
-      relatedSection('相關詞', 'related'),
+      relatedSection('近義詞', ['synonyms']),
+      relatedSection('反義詞', ['antonyms']),
+      relatedSection('同音詞', ['homophones']),
+      relatedSection('衍生詞', ['derived_terms']),
+      relatedSection('相關詞', ['related']),
+      relatedSection('容易混淆的字', ['near_homophones', 'similar_spelling'],
+          collapsed: true),
       if (forms.isNotEmpty)
         _Section(
             label: '詞形變化',
@@ -458,6 +475,51 @@ class _ContextCrop extends StatelessWidget {
           );
         },
       );
+}
+
+/// Shows the first [initial] children and a 更多 / 收起 toggle for the rest
+/// ([initial] 0 starts fully collapsed).
+class _MoreList extends StatefulWidget {
+  final int initial;
+  final bool wrap;
+  final List<Widget> children;
+
+  const _MoreList(
+      {required this.initial, required this.children, this.wrap = false});
+
+  @override
+  State<_MoreList> createState() => _MoreListState();
+}
+
+class _MoreListState extends State<_MoreList> {
+  bool _open = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final all = widget.children;
+    final hidden = all.length - widget.initial;
+    final shown = _open || hidden <= 0 ? all : all.take(widget.initial).toList();
+    final body = widget.wrap
+        ? Wrap(spacing: MSpace.xs, runSpacing: MSpace.xs, children: shown)
+        : Column(
+            crossAxisAlignment: CrossAxisAlignment.start, children: shown);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (shown.isNotEmpty) body,
+        if (hidden > 0)
+          Tap(
+            label: _open ? '收起' : '更多',
+            onTap: () => setState(() => _open = !_open),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: MSpace.xxs),
+              child: UiText(_open ? '收起' : '更多（$hidden）',
+                  style: MFont.manrope(14, FontWeight.w800, MColors.primary)),
+            ),
+          ),
+      ],
+    );
+  }
 }
 
 class _Section extends StatelessWidget {

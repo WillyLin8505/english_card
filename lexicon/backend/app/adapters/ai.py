@@ -10,7 +10,7 @@ from __future__ import annotations
 import re
 
 from .. import catalog, config
-from ..text import example_key, repair_outlaw_gloss
+from ..text import example_key, repair_learner_gloss
 from . import http
 from .base import Candidate, Context, SourceAdapter
 
@@ -253,11 +253,11 @@ class AITranslate(SourceAdapter):
 
     @staticmethod
     def _repair_outlaw(items: list[dict], got: dict) -> dict:
-        """Stop a fresh model call from storing outlaw as 通姦者 again."""
+        """Stop a fresh model call from storing outlaw as 通姦者, or Icelandic as 愛爾蘭語."""
         english = {i.get("id"): i.get("text") or "" for i in items}
         out = {}
         for key, text in got.items():
-            fixed = repair_outlaw_gloss(english.get(key) or english.get(str(key), ""), text)
+            fixed = repair_learner_gloss(english.get(key) or english.get(str(key), ""), text)
             out[key] = fixed if fixed is not None else text
         return out
 

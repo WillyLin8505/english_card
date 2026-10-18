@@ -2,12 +2,14 @@ import '../l10n/ui_text.dart';
 import 'dart:math' as math;
 
 import '../services/learning_content.dart';
+import 'package:flutter/gestures.dart' show TapGestureRecognizer;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../app/app_scope.dart';
 import '../models/card_template.dart';
 import '../services/lexicon_pack.dart';
+import '../services/pack_media.dart';
 import '../models/learning_card.dart';
 import '../models/photo.dart';
 import '../models/word_entry.dart';
@@ -111,6 +113,28 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
       _wasBack = false;
     });
     scope.navigator.setReviewing(true);
+    _precacheBackPhoto();
+  }
+
+  final _precached = <String>{};
+
+  /// Loads the card back's photo, and the next ones a swipe shows, while
+  /// the front is still up, so they are there when the card turns (card
+  /// #252). The size matches the back's 200-high photo closely enough to
+  /// share its decode width.
+  void _precacheBackPhoto() {
+    final s = _session;
+    final p = s?.photo;
+    if (s == null || p == null) return;
+    final options = [for (final o in s.photoOptions) o.$1];
+    final at = options.indexWhere((o) => o.id == p.id);
+    final width = MediaQuery.sizeOf(context).width;
+    if (_precached.length > 60) _precached.clear();
+    for (final photo in [p, ...options.skip(at + 1).take(2)]) {
+      if (!_precached.add(photo.id)) continue;
+      precachePhoto(context, photo, AppScope.of(context).photoStore,
+          Size(math.max(width - 64, 200), 200));
+    }
   }
 
   /// Ends the run. With [summary], a run in which at least one card was
@@ -160,11 +184,17 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
       final e =
           s.card == null ? null : scope.repository.entry(s.card!.wordEntryId);
       if (e != null) {
-        scope.speak(context, e.word,
-            language: scope.repository.language, audioUrl: e.audioUrl);
+        if (scope.repository.language == 'en') {
+          // Card #251: both accents, one after the other (英式、美式各一次).
+          playBothAccents(context, e);
+        } else {
+          scope.speak(context, e.word,
+              language: scope.repository.language, audioUrl: e.audioUrl);
+        }
       }
     }
     _wasBack = s.showingBack;
+    _precacheBackPhoto();
     // The run is over (今天先到這裡): the tab bar comes back.
     if (s.finished) AppScope.of(context).navigator.setReviewing(false);
     setState(() {});

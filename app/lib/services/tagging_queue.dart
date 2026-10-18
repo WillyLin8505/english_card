@@ -74,8 +74,9 @@ class TaggingQueue extends ChangeNotifier {
 
   String get progressLabel {
     if (_current == null) {
-      final reason =
-          settings.taggingConfigured ? '等待 AI 服務恢復，會自動重試' : '請先設定 AI 辨識服務';
+      final reason = settings.taggingConfigured
+          ? '等待 AI 服務恢復，會自動重試'
+          : '這台裝置沒有照片辨識';
       return '已處理 $_completed/${_completed + pending} 張 · $reason';
     }
     final seconds = estimatedRemaining.inSeconds;
@@ -246,8 +247,11 @@ class TaggingQueue extends ChangeNotifier {
     if (!settings.taggingConfigured) throw TaggingNotConfigured();
     final bytes = await intake.bytesOf(photo);
     if (bytes == null) throw TaggingApiException('這張照片沒有影像可以辨識');
-    final tagger =
-        intake.createTagger(Uri.parse(settings.taggingUrl), settings.apiKey);
+    // The phone's own classifier unless a server address is set (問題回報
+    // #265: the store build has no server).
+    final tagger = settings.usesLocalRecognition
+        ? intake.createLocalTagger()
+        : intake.createTagger(Uri.parse(settings.taggingUrl), settings.apiKey);
     try {
       return LexiconPack.instance.linkAll(await tagger.candidates(
         bytes,

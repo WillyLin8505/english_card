@@ -603,6 +603,7 @@ class ExportBody(BaseModel):
     target_language: str
     native_language: str
     include_audio: bool = True
+    store_safe: bool = False  # App Store build: drop vulgar/offensive senses (#271)
     fields: list[str] | None = None
 
 
@@ -625,7 +626,7 @@ def release_dict(r: m.DictionaryRelease) -> dict:
 def export_sqlite(body: ExportBody, s: Session = DB,
                   idempotency_key: str | None = Header(default=None)):
     rel = exporter.export(s, body.target_language, body.native_language,
-                          include_audio=body.include_audio, fields=body.fields,
+                          include_audio=body.include_audio, fields=body.fields, store_safe=body.store_safe,
                           idempotency_key=idempotency_key)
     return release_dict(rel)
 

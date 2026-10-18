@@ -390,13 +390,14 @@ void main() {
       await tester.tap(find.text('顯示答案'));
       await tester.pumpAndSettle();
       expect(find.byType(FlashcardBack), findsOneWidget);
-      expect((app.speaker as SilentSpeaker).said, hasLength(1),
-          reason: '翻到背面時自動播放');
+      // Card #251: both accents in a row, so the word is said twice.
+      expect((app.speaker as SilentSpeaker).said, hasLength(2),
+          reason: '翻到背面時自動播放英式、美式各一次');
       // Native-language grades with their next interval.
       expect(find.text('忘記'), findsOneWidget);
       expect(find.text('很容易'), findsOneWidget);
 
-      final first = (app.speaker as SilentSpeaker).said.single;
+      final first = (app.speaker as SilentSpeaker).said.first;
       await tester.tap(find.text('忘記'));
       await tester.pumpAndSettle();
       // Keyboard: Space flips, 3 = Good.

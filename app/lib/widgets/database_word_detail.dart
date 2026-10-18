@@ -114,12 +114,9 @@ class DatabaseWordScreen extends StatelessWidget {
                 child: Tap(
                   onTap: () => scope.speak(context, word.lemma,
                       language: pack.target ?? 'en',
-                      audioUrl: word.audio == null || pack.mediaBase == null
+                      audioUrl: word.audio == null
                           ? null
-                          : Uri.base.resolve(pack.mediaBase!).replace(
-                              queryParameters: {
-                                  'path': word.audio!
-                                }).toString()),
+                          : packRecordingUrl(pack.mediaBase, word.audio!)),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: MSpace.sm, vertical: 6),

@@ -32,11 +32,16 @@ class _InteractiveExerciseState extends State<_InteractiveExercise> {
     super.dispose();
   }
 
-  Widget _photo() {
+  /// The exercise photo. With [mark], the word's spot is ringed (spec
+  /// section 7: 正面「照片與目標區域」; 卡 #253) — a ring, and the tagger's
+  /// box when it has one, but no word: the front must not give it away.
+  /// A photo without the word's coordinates shows no mark.
+  Widget _photo({bool mark = true}) {
     final s = widget.session;
     final photo = s.photo;
     if (photo == null) return const SizedBox.shrink();
     final attempt = s.photoAttempt;
+    final anchor = s.anchor;
     return SizedBox(
       height: 260,
       child: Stack(fit: StackFit.expand, children: [
@@ -45,6 +50,11 @@ class _InteractiveExerciseState extends State<_InteractiveExercise> {
           photo: photo,
           radius: 18,
           pins: const [],
+          overlay: mark && anchor != null && !s.photoFailed
+              ? Semantics(
+                  label: ui(context, '照片中標出的位置'),
+                  child: TargetRing(photo: photo, anchor: anchor, box: s.box))
+              : null,
           onImageState: (ready) => s.reportPhotoState(attempt, ready),
           imageErrorBuilder: (_) => const Center(child: UiText('圖片暫時無法載入')),
         ),
@@ -242,7 +252,7 @@ class _InteractiveExerciseState extends State<_InteractiveExercise> {
         aspectRatio: 4 / 3,
         child: LayoutBuilder(builder: (context, box) {
           return Stack(children: [
-            Positioned.fill(child: _photo()),
+            Positioned.fill(child: _photo(mark: false)),
             for (final target
                 in widget.session.canAnswer ? x.targets : <ExerciseTarget>[])
               Positioned(

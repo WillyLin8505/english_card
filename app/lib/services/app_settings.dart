@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 
+import 'analytics.dart';
+
 /// The languages the MVP supports, as learning or native language (spec
 /// section 7: 英文、法文、繁體中文).
 const supportedLanguages = {
@@ -46,12 +48,25 @@ class AppSettings extends ChangeNotifier {
   String _nativeLanguage;
   String _englishAccent;
   bool _onboarded;
+  bool _shareUsageStats;
 
   /// Defaults for a build that knows where its tagger is:
   /// `flutter run --dart-define-from-file=tagging.local.json` (see
   /// tagger/README.md). Anything typed in 設定 wins over these.
   static const defaultTaggingUrl = String.fromEnvironment('TAGGING_URL');
   static const defaultApiKey = String.fromEnvironment('TAGGING_API_KEY');
+
+  /// The phone can recognize photos itself (Apple Vision; `LocalVision.probe()`
+  /// at start-up). Owner decision 2026-10-18 (問題回報 #265): the published
+  /// app recognizes on the device and ships its dictionary; a tagging server
+  /// is a developer option, so the store build has no address or key to set.
+  static bool localRecognition = false;
+
+  /// Builds that may talk to a tagging server show its address and key in
+  /// 設定: the web page (its own server), a build with TAGGING_URL, or
+  /// `--dart-define=DEV_TOOLS=true`.
+  static const developerTools =
+      bool.fromEnvironment('DEV_TOOLS') || defaultTaggingUrl != '';
 
   AppSettings._(this._box)
       : _taggingUrl = _box?.get('taggingUrl') ?? defaultTaggingUrl,
@@ -68,7 +83,9 @@ class AppSettings extends ChangeNotifier {
                 : 'zh-TW',
         _englishAccent =
             _box?.get('englishAccent') == 'en-US' ? 'en-US' : 'en-GB',
-        _onboarded = _box?.get('onboarded') == 'true';
+        _onboarded = _box?.get('onboarded') == 'true',
+        // Absent means off: existing installs stop sending until they opt in.
+        _shareUsageStats = _box?.get('shareUsageStats') == 'true';
 
   /// Settings that live only in memory — for tests and previews.
   AppSettings.inMemory({
@@ -78,6 +95,7 @@ class AppSettings extends ChangeNotifier {
     String nativeLanguage = 'zh-TW',
     String englishAccent = 'en-GB',
     bool onboarded = true,
+    bool shareUsageStats = false,
   })  : _box = null,
         _taggingUrl = taggingUrl,
         _apiKey = apiKey,
@@ -85,7 +103,8 @@ class AppSettings extends ChangeNotifier {
         _learningLanguage = learningLanguage,
         _nativeLanguage = nativeLanguage,
         _englishAccent = englishAccent,
-        _onboarded = onboarded;
+        _onboarded = onboarded,
+        _shareUsageStats = shareUsageStats;
 
   static Future<AppSettings> open() async {
     final box = await Hive.openBox<String>(_boxName);
@@ -107,7 +126,18 @@ class AppSettings extends ChangeNotifier {
           ? Uri.base.resolve('/tag').toString()
           : '';
   String get apiKey => _taggingUrl.trim().isEmpty && kIsWeb ? '' : _apiKey;
-  bool get taggingConfigured => taggingUrl.isNotEmpty;
+
+  /// No server address and the device can classify: photos are recognized
+  /// on the phone and never uploaded.
+  bool get usesLocalRecognition =>
+      !kIsWeb && _taggingUrl.trim().isEmpty && localRecognition;
+
+  /// Whether 設定 offers the server address / key fields at all.
+  bool get showsTaggingServer =>
+      kIsWeb || developerTools || _taggingUrl.trim().isNotEmpty;
+
+  /// Something can recognize photos: the device itself or a server.
+  bool get taggingConfigured => usesLocalRecognition || taggingUrl.isNotEmpty;
 
   /// 期望記憶率 for FSRS.
   double get desiredRetention => _desiredRetention;
@@ -125,6 +155,9 @@ class AppSettings extends ChangeNotifier {
 
   /// Whether the first-run questions (languages, background) are done.
   bool get onboarded => _onboarded;
+
+  /// 設定 → 分享使用統計. Default off; PostHog sends nothing until this is on.
+  bool get shareUsageStats => _shareUsageStats;
 
   /// The level chosen in an older version's settings, used once to start
   /// the learner's profile.
@@ -157,4 +190,10 @@ class AppSettings extends ChangeNotifier {
   }
 
   set onboarded(bool v) => _save('onboarded', '${_onboarded = v}');
+
+  set shareUsageStats(bool v) {
+    _shareUsageStats = v;
+    _save('shareUsageStats', '$v');
+    Analytics.instance.sharing = v;
+  }
 }

@@ -1,5 +1,200 @@
 part of '../screens/flashcard_screen.dart';
 
+/// The language pack's recording of [entry] in [accent] ("en-GB" /
+/// "en-US"), or the entry's own audio when it is in that accent; null
+/// means the speaker falls back to TTS in that accent.
+String? accentAudioUrl(WordEntry entry, String accent) {
+  final pack = LexiconPack.instance;
+  final source =
+      (entry.lexemeId == null ? null : pack.byId(entry.lexemeId!)) ??
+          pack.lookup(entry.word, pos: entry.pos)?.entry;
+  final aliases = accent == 'en-GB' ? {'uk', 'gb', 'en-gb'} : {'us', 'en-us'};
+  final recording = source?.recordings
+      .where((r) => aliases.contains(r.accent?.toLowerCase()))
+      .firstOrNull;
+  if (recording != null) {
+    return packRecordingUrl(pack.mediaBase, recording.path);
+  }
+  if (aliases.contains(entry.accent?.toLowerCase())) return entry.audioUrl;
+  return null;
+}
+
+/// Plays [entry] in one accent; tells the learner when nothing was heard.
+Future<bool> playAccent(
+    BuildContext context, WordEntry entry, String accent) async {
+  final speaker = AppScope.of(context).speaker;
+  final ok = await speaker.say(entry.word,
+      language: entry.language,
+      accent: accent,
+      audioUrl: accentAudioUrl(entry, accent));
+  if (!ok && context.mounted) {
+    showToast(context, '播放發音失敗，請檢查音量或稍後再試');
+  }
+  return ok;
+}
+
+/// Card #251: when the card turns, the word is heard in both accents,
+/// British first and then American, one after the other.
+Future<void> playBothAccents(BuildContext context, WordEntry entry) async {
+  for (final accent in const ['en-GB', 'en-US']) {
+    if (!context.mounted) return;
+    if (!await playAccent(context, entry, accent)) return;
+  }
+}
+
+/// Which English words on the card back are in the learner's own word
+/// database (card #251 item 9): tapping one opens that word's details; a
+/// word that is not there is plain text. Headwords and their forms, with
+/// the pack's forms for linked entries (went → go), phrases included.
+class WordLinks {
+  final Map<String, String> _idByText;
+  final int _maxWords;
+
+  WordLinks._(this._idByText, this._maxWords);
+
+  factory WordLinks.of(WordDatabaseRepository repo) {
+    final pack = LexiconPack.instance;
+    final byText = <String, String>{};
+    var maxWords = 1;
+    void add(String text, String id) {
+      final key = text.trim().toLowerCase();
+      if (key.isEmpty) return;
+      byText.putIfAbsent(key, () => id);
+      final n = key.split(' ').length;
+      if (n > maxWords) maxWords = n;
+    }
+
+    for (final e in repo.entries) {
+      if (repo.isArchived(e.id)) continue;
+      add(e.word, e.id);
+      for (final f in e.forms) {
+        add(f.form, e.id);
+      }
+      final source = e.lexemeId == null ? null : pack.byId(e.lexemeId!);
+      for (final f in source?.forms ?? const <LexForm>[]) {
+        add(f.form, e.id);
+      }
+    }
+    return WordLinks._(byText, maxWords.clamp(1, 5));
+  }
+
+  static final _token = RegExp(r"[A-Za-z]+(?:['’-][A-Za-z]+)*");
+
+  /// The entry spelled [text] (a word or phrase), if any.
+  String? idFor(String text) {
+    final key = text.trim().toLowerCase();
+    return _idByText[key] ??
+        (key.endsWith("'s") || key.endsWith('’s')
+            ? _idByText[key.substring(0, key.length - 2)]
+            : null);
+  }
+
+  /// [text] cut into runs: plain text, and linked words with the entry
+  /// each one opens. The longest phrase in the database wins at each spot.
+  List<({String text, String? id})> segments(String text) {
+    final tokens = _token.allMatches(text).toList();
+    final out = <({String text, String? id})>[];
+    var cursor = 0;
+    void plain(int end) {
+      if (end > cursor) out.add((text: text.substring(cursor, end), id: null));
+      cursor = end;
+    }
+
+    var i = 0;
+    while (i < tokens.length) {
+      String? id;
+      var n = 0;
+      for (var len = math.min(_maxWords, tokens.length - i); len >= 1; len--) {
+        final span = text.substring(tokens[i].start, tokens[i + len - 1].end);
+        // A phrase is its words joined by single spaces only.
+        if (len > 1 && span.contains(RegExp(r'[^A-Za-z\x27’\- ]'))) continue;
+        final hit = idFor(span.replaceAll(RegExp(r'\s+'), ' '));
+        if (hit != null) {
+          id = hit;
+          n = len;
+          break;
+        }
+      }
+      if (id == null) {
+        i++;
+        continue;
+      }
+      plain(tokens[i].start);
+      final end = tokens[i + n - 1].end;
+      out.add((text: text.substring(cursor, end), id: id));
+      cursor = end;
+      i += n;
+    }
+    plain(text.length);
+    return out;
+  }
+}
+
+/// Text in which every English word that is in the learner's database is a
+/// link to its details (card #251 item 9).
+class LinkedText extends StatefulWidget {
+  final String text;
+  final TextStyle style;
+  final WordLinks? links;
+  final ValueChanged<String>? onOpenWord;
+
+  const LinkedText(this.text,
+      {super.key, required this.style, this.links, this.onOpenWord});
+
+  @override
+  State<LinkedText> createState() => _LinkedTextState();
+}
+
+class _LinkedTextState extends State<LinkedText> {
+  final _recognizers = <TapGestureRecognizer>[];
+
+  void _clear() {
+    for (final r in _recognizers) {
+      r.dispose();
+    }
+    _recognizers.clear();
+  }
+
+  @override
+  void dispose() {
+    _clear();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    _clear();
+    final links = widget.links;
+    if (links == null) return Text(widget.text, style: widget.style);
+    final linkStyle = widget.style.copyWith(
+      color: MColors.primaryDeep,
+      decoration: TextDecoration.underline,
+      decorationColor: MColors.primary.withValues(alpha: 0.45),
+      decorationThickness: 1.5,
+    );
+    final spans = <InlineSpan>[];
+    for (final s in links.segments(widget.text)) {
+      final id = s.id;
+      if (id == null) {
+        spans.add(TextSpan(text: s.text));
+        continue;
+      }
+      final recognizer = TapGestureRecognizer()
+        ..onTap = () {
+          final open = widget.onOpenWord;
+          if (open != null) {
+            open(id);
+          } else {
+            AppScope.of(context).navigator.openWord(id);
+          }
+        };
+      _recognizers.add(recognizer);
+      spans.add(TextSpan(text: s.text, style: linkStyle, recognizer: recognizer));
+    }
+    return Text.rich(TextSpan(style: widget.style, children: spans));
+  }
+}
+
 class FlashcardBack extends StatelessWidget {
   final WordEntry entry;
   // The usage/sense this exercise actually tested; overrides entry.pos and
@@ -12,6 +207,11 @@ class FlashcardBack extends StatelessWidget {
   final Photo? photo;
   final LabelPoint? anchor;
   final String? photoCredit;
+
+  /// Every photo of the word, for swiping between them (card #251 item 8).
+  /// Empty: only [photo] is shown.
+  final List<CardPhoto> photos;
+  final ValueChanged<int>? onPhotoSelected;
   final bool? answerCorrect;
   final String? submittedAnswer;
   final String? correctAnswer;
@@ -19,6 +219,10 @@ class FlashcardBack extends StatelessWidget {
   final String learnerLevel;
   final VoidCallback onPlay;
   final VoidCallback onOpen;
+
+  /// Opens another word's details from a tapped word (item 9); the app
+  /// navigator when null.
+  final ValueChanged<String>? onOpenWord;
 
   const FlashcardBack({
     super.key,
@@ -30,6 +234,8 @@ class FlashcardBack extends StatelessWidget {
     required this.photo,
     required this.anchor,
     this.photoCredit,
+    this.photos = const [],
+    this.onPhotoSelected,
     this.answerCorrect,
     this.submittedAnswer,
     this.correctAnswer,
@@ -37,26 +243,73 @@ class FlashcardBack extends StatelessWidget {
     required this.learnerLevel,
     required this.onPlay,
     required this.onOpen,
+    this.onOpenWord,
   });
 
-  // Related words and word forms are not proper nouns: keep their original
-  // casing rather than title-casing every word (問題回報 #255).
-  Widget _chips(List<String> words) => Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: [for (final w in words) TagChip(w, localize: false)],
-      );
+  LexEntry? get _source {
+    final pack = LexiconPack.instance;
+    return (entry.lexemeId == null ? null : pack.byId(entry.lexemeId!)) ??
+        pack.lookup(entry.word, pos: entry.pos)?.entry;
+  }
 
   Widget _items(CardBackField field, List<Widget> items) =>
       Column(crossAxisAlignment: CrossAxisAlignment.start, children: items);
 
-  Widget? _configuredField(TemplateField setting) {
-    final block = _field(setting.field);
+  Widget? _configuredField(TemplateField setting, WordLinks links) {
+    final block = _field(setting.field, links);
     if (block is _Block) return _Block(block.label, block.child);
     return block;
   }
 
-  Widget? _field(CardBackField field) {
+  /// Related words of [kinds] with their native meaning: the learner's own
+  /// edits when there are any, else the pack's (very rare ones stay hidden).
+  List<({String word, String meaning})> _relations(List<String> kinds,
+      {required int maxItems}) {
+    final seen = <String>{entry.word.toLowerCase()};
+    final out = <({String word, String meaning, int level})>[];
+    if (entry.userEdited.contains(WordField.related)) {
+      final types = {for (final k in kinds) relationTypeFromKey(k)};
+      for (final r in entry.related) {
+        if (types.contains(r.type) &&
+            !r.hideByDefault &&
+            seen.add(r.word.toLowerCase())) {
+          out.add((word: r.word, meaning: r.native ?? '', level: 0));
+        }
+      }
+    } else {
+      final source = _source;
+      if (source != null) {
+        for (final r in source.relations) {
+          if (kinds.contains(r.relation) &&
+              !r.hideByDefault &&
+              r.word.trim().isNotEmpty &&
+              seen.add(r.word.toLowerCase())) {
+            out.add((
+              word: r.word,
+              meaning: (r.native ?? '').trim(),
+              // Easier words first; ones without a meaning last.
+              level: (r.native ?? '').trim().isEmpty
+                  ? 99
+                  : r.cefr == null
+                      ? 50
+                      : levelIndex(r.cefr),
+            ));
+          }
+        }
+      }
+    }
+    final order = out.indexed.toList()
+      ..sort((a, b) {
+        final c = a.$2.level.compareTo(b.$2.level);
+        return c != 0 ? c : a.$1.compareTo(b.$1);
+      });
+    return [
+      for (final (_, r) in order.take(maxItems))
+        (word: r.word, meaning: r.meaning)
+    ];
+  }
+
+  Widget? _field(CardBackField field, WordLinks links) {
     switch (field) {
       case CardBackField.word:
       case CardBackField.pronunciation:
@@ -79,107 +332,69 @@ class FlashcardBack extends StatelessWidget {
                   for (final sense in meanings) Text(sense.native!),
               ]));
         }
+        // Card #251 item 2: the part of speech only — no CEFR level chip.
         return _Block(
           '中文意思',
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  if (pos.isNotEmpty) ...[
-                    TagChip(posLabel(pos)),
-                    const SizedBox(width: 8)
-                  ],
-                  if (entry.level != null) TagChip(levelLabel(entry.level!)),
-                ],
-              ),
-              const SizedBox(height: 6),
+              if (pos.isNotEmpty) ...[
+                Row(children: [TagChip(posLabel(pos))]),
+                const SizedBox(height: 6),
+              ],
               Text(meaning,
                   style: MFont.manrope(22, FontWeight.w800, MColors.primary)),
               if (definition != null)
-                Text(definition,
-                    style: MFont.manrope(14, FontWeight.w600, MColors.muted)),
+                LinkedText(definition,
+                    style: MFont.manrope(14, FontWeight.w600, MColors.muted),
+                    links: links,
+                    onOpenWord: onOpenWord),
             ],
           ),
         );
       case CardBackField.photoContext:
-        final p = photo;
-        if (p == null) return null;
-        // Attribution stays off the card back (learner glanceability).
-        // Long-press the photo to read license/author when needed.
-        return _Block(
-          '照片情境',
-          Builder(builder: (context) {
-            final photoWidget = SizedBox(
-              height: 200,
-              child: PinnedPhoto(
-                photo: p,
-                radius: 16,
-                imageErrorBuilder: p.networkUrl == null
-                    ? null
-                    : (_) => const Center(child: UiText('圖片暫時無法載入，稍後再試')),
-                // Only this word's label (其他英文標籤全部隱藏).
-                pins: [
-                  if (anchor != null)
-                    PinData(
-                        id: entry.id,
-                        anchor: anchor!,
-                        word: displayWord(entry.word),
-                        zh: entry.meaning,
-                        entryType: entry.entryType),
-                ],
-              ),
-            );
-            final credit = photoCredit?.trim();
-            if (credit == null || credit.isEmpty) return photoWidget;
-            return GestureDetector(
-              onLongPress: () {
-                showDialog<void>(
-                  context: context,
-                  builder: (ctx) => AlertDialog(
-                    title: const UiText('圖片來源'),
-                    content: Text(credit),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(ctx).pop(),
-                        child: const UiText('關閉'),
-                      ),
-                    ],
-                  ),
-                );
-              },
-              child: photoWidget,
-            );
-          }),
-        );
+        final all = photos.isNotEmpty
+            ? photos
+            : [if (photo case final p?) (p, anchor, photoCredit)];
+        if (all.isEmpty) return null;
+        // Card #251 item 3: no 「照片情境」 title and no word label over the
+        // photo; item 8: swipe between the word's photos.
+        var initial = all.indexWhere((o) => o.$1.id == photo?.id);
+        if (initial < 0) initial = 0;
+        return _PhotoPager(
+            photos: all, initialIndex: initial, onSelected: onPhotoSelected);
       case CardBackField.example:
         // Spec sections 4 and 7: 3–5 examples at the learner's level.
         final recommended = learningExamples(entry, learnerLevel,
-            maxItems: template.publishedLayout == null ? 5 : 10000);
+            maxItems: template.publishedLayout == null ? 2 : 10000);
         if (recommended.isEmpty) return null;
         return _Block(
           '例句與翻譯',
           _items(field, [
+            // Item 4: the sentences sit close together.
             for (final x in recommended)
               Container(
-                margin: const EdgeInsets.only(bottom: MSpace.xs),
-                padding: const EdgeInsets.all(MSpace.sm),
+                margin: const EdgeInsets.only(bottom: MSpace.xxs),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: MSpace.sm, vertical: MSpace.xs),
                 decoration: MDecor.softPanel(
                   color: MColors.surfaceSoft,
                   radius: MRadii.md,
                 ),
                 child: ExampleText(
                     example: x,
+                    links: links,
+                    onOpenWord: onOpenWord,
                     showTranslation:
                         template.publishedLayout?['show_translation'] != false),
               ),
           ]),
         );
       case CardBackField.formsAndDerivations:
+        // Item 5: every form the pack and the entry know, each listed once
+        // with all its labels (複數、過去式、分詞、比較級…).
         final pack = LexiconPack.instance;
-        final source =
-            (entry.lexemeId == null ? null : pack.byId(entry.lexemeId!)) ??
-                pack.lookup(entry.word, pos: entry.pos)?.entry;
+        final source = _source;
         final forms = <String, Set<String>>{};
         void add(String form, String label) {
           if (form.trim().isEmpty) return;
@@ -197,57 +412,81 @@ class FlashcardBack extends StatelessWidget {
             ? null
             : _Block(
                 '詞形變化',
-                _chips([
-                  for (final f in forms.entries)
-                    '${f.key}（${f.value.where((s) => s.isNotEmpty).join('；')}）',
-                ]),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final f in forms.entries)
+                      _WordChip(f.key,
+                          meaning:
+                              f.value.where((s) => s.isNotEmpty).join('；'),
+                          links: links,
+                          onOpenWord: onOpenWord),
+                  ],
+                ),
               );
       case CardBackField.related:
-        // Every related word with its native meaning (spec section 08).
-        final words = {
-          for (final kind in const [
-            'synonyms',
-            'antonyms',
-            'derived_terms',
-            'related',
-          ])
-            for (final r in learningRelations(entry, learnerLevel, kind,
-                maxItems: (template.publishedLayout?['relation_limits']
-                        as Map?)?[kind] as int? ??
-                    5))
-              '${r.word} ${r.meaning}',
-        }.toList();
-        return words.isEmpty
-            ? null
-            : _Block(
-                '相關字',
-                _items(field, [
-                  for (final w in words) _chips([w])
-                ]),
-                collapsed: true);
+        // Item 6: one block per relation type, each filling the width;
+        // blocks without data are left out.
+        final limits = template.publishedLayout?['relation_limits'] as Map?;
+        int limit(String kind) => limits?[kind] as int? ?? 4;
+        final blocks = <Widget>[];
+        for (final (label, kinds) in const [
+          ('同義詞', ['synonyms']),
+          ('反義詞', ['antonyms']),
+          ('相關詞', ['related', 'derived_terms']),
+          ('近音字', ['homophones']),
+          ('容易混淆的字', ['near_homophones', 'similar_spelling']),
+        ]) {
+          final words = _relations(kinds, maxItems: limit(kinds.first));
+          if (words.isEmpty) continue;
+          blocks.add(_Block(
+            label,
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final w in words)
+                  _WordChip(w.word,
+                      meaning: w.meaning, links: links, onOpenWord: onOpenWord),
+              ],
+            ),
+          ));
+        }
+        if (blocks.isEmpty) return null;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (final (i, b) in blocks.indexed) ...[
+              if (i > 0) const SizedBox(height: 16),
+              b,
+            ],
+          ],
+        );
       case CardBackField.morphology:
-        final parts = learningMorphology(entry);
+        // Item 7: the admin's 構詞拆解 look — one rounded box per part,
+        // joined by 「+」.
+        final parts = _morphemes();
         final origin = learningEtymology(entry);
-        return parts == null && origin == null
+        return parts.isEmpty && origin == null
             ? null
             : _Block(
-                '構詞與詞源',
+                '構詞拆解',
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (parts != null)
-                      Text(parts,
-                          style:
-                              MFont.manrope(15, FontWeight.w600, MColors.ink)),
-                    if (parts != null && origin != null)
-                      const SizedBox(height: 6),
+                    if (parts.isNotEmpty)
+                      _MorphologyParts(
+                          parts: parts, links: links, onOpenWord: onOpenWord),
+                    if (parts.isNotEmpty && origin != null)
+                      const SizedBox(height: 8),
                     if (origin != null)
                       Text(origin,
                           style: MFont.manrope(
                               13, FontWeight.w600, MColors.muted)),
                   ],
                 ),
-                collapsed: true);
+              );
       case CardBackField.source:
         return null; // Back cards omit provenance for every template.
       case CardBackField.learningInfo:
@@ -255,38 +494,42 @@ class FlashcardBack extends StatelessWidget {
     }
   }
 
-  Future<void> _playAccent(BuildContext context, String accent) async {
-    final pack = LexiconPack.instance;
-    final source =
-        (entry.lexemeId == null ? null : pack.byId(entry.lexemeId!)) ??
-            pack.lookup(entry.word, pos: entry.pos)?.entry;
-    final aliases = accent == 'en-GB' ? {'uk', 'gb', 'en-gb'} : {'us', 'en-us'};
-    final recording = source?.recordings
-        .where((r) => aliases.contains(r.accent?.toLowerCase()))
-        .firstOrNull;
-    String? url;
-    if (recording != null) {
-      url = pack.mediaBase == null
-          ? 'assets/lexicon/media/${recording.path}'
-          : Uri.base
-              .resolve(pack.mediaBase!)
-              .replace(queryParameters: {'path': recording.path}).toString();
-    } else if (aliases.contains(entry.accent?.toLowerCase())) {
-      url = entry.audioUrl;
+  /// The parts of the word: the pack's, or the learner's own edit / the
+  /// stored root and affixes read as prefix (ends with -), root, suffix.
+  List<LexMorpheme> _morphemes() {
+    List<LexMorpheme> fromText(String text) => [
+          for (final raw in text.split(RegExp(r'\s*[＋+]\s*')))
+            if (raw.trim().isNotEmpty)
+              () {
+                final m = RegExp(r'^(.*?)(?:[（(](.*)[）)])?$')
+                    .firstMatch(raw.trim())!;
+                final part = m.group(1)!.trim();
+                return LexMorpheme(
+                    part,
+                    part.endsWith('-')
+                        ? 'prefix'
+                        : part.startsWith('-')
+                            ? 'suffix'
+                            : 'root',
+                    null,
+                    m.group(2)?.trim());
+              }(),
+        ];
+    if (entry.userEdited.contains(WordField.morphology)) {
+      final parts = fromText(entry.morphology ?? '');
+      return parts.length > 1 ? parts : const [];
     }
-    final ok = await AppScope.of(context).speaker.say(entry.word,
-        language: entry.language, accent: accent, audioUrl: url);
-    if (!ok && context.mounted) {
-      showToast(context, '播放發音失敗，請檢查音量或稍後再試');
+    final source = _source;
+    if (source != null) {
+      return source.morphemes.length > 1 ? source.morphemes : const [];
     }
+    final stored = [if (entry.root != null) entry.root!, ...entry.affixes];
+    return stored.length > 1 ? fromText(stored.join(' ＋ ')) : const [];
   }
 
   @override
   Widget build(BuildContext context) {
-    final pack = LexiconPack.instance;
-    final source =
-        (entry.lexemeId == null ? null : pack.byId(entry.lexemeId!)) ??
-            pack.lookup(entry.word, pos: entry.pos)?.entry;
+    final source = _source;
     final ipa =
         (entry.ipa?.trim().isNotEmpty ?? false) ? entry.ipa : source?.ipa;
     // 發音與 IPA sits in the header; switched off in 卡片背面順序, the IPA
@@ -294,11 +537,12 @@ class FlashcardBack extends StatelessWidget {
     final showPronunciation = template.backFields
         .where((f) => f.field == CardBackField.pronunciation)
         .every((f) => f.visible);
+    final links = WordLinks.of(AppScope.of(context).repository);
     // Every visible template field that has data (spec: 可用時一併顯示；
     // 欄位沒有內容時自動省略).
     final fields = [
       for (final f in template.backFields)
-        if (f.visible) _configuredField(f),
+        if (f.visible) _configuredField(f, links),
     ].whereType<Widget>();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -354,7 +598,7 @@ class FlashcardBack extends StatelessWidget {
               for (final accent in const ['en-GB', 'en-US'])
                 IconButton(
                   tooltip: accent == 'en-GB' ? '播放英式發音' : '播放美式發音',
-                  onPressed: () => _playAccent(context, accent),
+                  onPressed: () => playAccent(context, entry, accent),
                   icon: Column(mainAxisSize: MainAxisSize.min, children: [
                     const Icon(Icons.volume_up_outlined),
                     UiText(accent == 'en-GB' ? '英式' : '美式',
@@ -370,5 +614,291 @@ class FlashcardBack extends StatelessWidget {
   }
 }
 
-/// An example sentence with its translation; an AI-written translation is
-/// marked 「AI 翻譯」 (spec section 7).
+/// A word with its meaning in one chip (forms, related words); tapping a
+/// word that is in the learner's database opens it (item 9).
+class _WordChip extends StatelessWidget {
+  final String word;
+  final String meaning;
+  final WordLinks links;
+  final ValueChanged<String>? onOpenWord;
+
+  const _WordChip(this.word,
+      {required this.meaning, required this.links, this.onOpenWord});
+
+  @override
+  Widget build(BuildContext context) {
+    final id = links.idFor(word);
+    return Tap(
+      label: id == null ? null : '$word，查看單字',
+      onTap: id == null
+          ? null
+          : () => (onOpenWord ?? AppScope.of(context).navigator.openWord)(id),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: MSpace.sm, vertical: 6),
+        decoration: MDecor.chipSurface(active: true, radius: MRadii.sm),
+        child: Text.rich(TextSpan(children: [
+          TextSpan(
+              text: word,
+              style: MFont.manrope(13, FontWeight.w800, MColors.primary)
+                  .copyWith(
+                      decoration:
+                          id == null ? null : TextDecoration.underline,
+                      decorationColor: MColors.primary.withValues(alpha: 0.45))),
+          if (meaning.isNotEmpty)
+            TextSpan(
+                text: '  $meaning',
+                style: MFont.manrope(12, FontWeight.w600, MColors.muted)),
+        ])),
+      ),
+    );
+  }
+}
+
+/// 構詞拆解 as in the admin's word page: a rounded box per morpheme (the
+/// part in bold, its kind, its native meaning with an AI mark when the AI
+/// wrote it), the boxes joined by 「+」.
+class _MorphologyParts extends StatelessWidget {
+  final List<LexMorpheme> parts;
+  final WordLinks links;
+  final ValueChanged<String>? onOpenWord;
+
+  const _MorphologyParts(
+      {required this.parts, required this.links, this.onOpenWord});
+
+  static String kindLabel(LexMorpheme m) => switch (m.kind) {
+        'prefix' => '字首',
+        'suffix' => '字尾',
+        _ => m.free ? '單字' : '字根',
+      };
+
+  static ({Color bg, Color border}) colors(String kind) => switch (kind) {
+        'prefix' => (
+            bg: MColors.primarySoft,
+            border: MColors.primary.withValues(alpha: 0.35)
+          ),
+        'suffix' => (
+            bg: MColors.hardBg,
+            border: MColors.hardFg.withValues(alpha: 0.35)
+          ),
+        _ => (bg: MColors.successSoft, border: MColors.success.withValues(alpha: 0.4)),
+      };
+
+  @override
+  Widget build(BuildContext context) => Wrap(
+        spacing: 6,
+        runSpacing: 6,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          for (final (i, m) in parts.indexed) ...[
+            if (i > 0)
+              Text('+',
+                  style: MFont.manrope(16, FontWeight.w800, MColors.muted)),
+            _MorphemeBox(m, links: links, onOpenWord: onOpenWord),
+          ],
+        ],
+      );
+}
+
+class _MorphemeBox extends StatelessWidget {
+  final LexMorpheme m;
+  final WordLinks links;
+  final ValueChanged<String>? onOpenWord;
+
+  const _MorphemeBox(this.m, {required this.links, this.onOpenWord});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = _MorphologyParts.colors(m.kind);
+    final native = (m.native ?? '').trim();
+    final id = links.idFor(m.part.replaceAll('-', ''));
+    return Tap(
+      label: id == null ? null : '${m.part}，查看單字',
+      onTap: id == null
+          ? null
+          : () => (onOpenWord ?? AppScope.of(context).navigator.openWord)(id),
+      child: Container(
+        constraints: const BoxConstraints(minWidth: 72),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: c.bg,
+          borderRadius: BorderRadius.circular(MRadii.xs),
+          border: Border.all(color: c.border),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(m.part,
+                style: MFont.manrope(18, FontWeight.w800, MColors.ink).copyWith(
+                    decoration: id == null ? null : TextDecoration.underline,
+                    decorationColor: MColors.primary.withValues(alpha: 0.45))),
+            UiText(_MorphologyParts.kindLabel(m),
+                style: MFont.manrope(11, FontWeight.w600, MColors.muted)),
+            if (native.isNotEmpty)
+              Row(mainAxisSize: MainAxisSize.min, children: [
+                Text(native,
+                    style: MFont.manrope(13, FontWeight.w700, MColors.ink)),
+                if (m.nativeAi) ...[
+                  const SizedBox(width: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 4, vertical: 1),
+                    decoration: BoxDecoration(
+                        color: MColors.primary,
+                        borderRadius: BorderRadius.circular(4)),
+                    child: Text('AI',
+                        style: MFont.manrope(
+                            9, FontWeight.w800, Colors.white)),
+                  ),
+                ],
+              ]),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A dot where the word is in the photo, without its label (item 3).
+class _AnchorDot extends StatelessWidget {
+  final Photo photo;
+  final LabelPoint anchor;
+
+  const _AnchorDot({required this.photo, required this.anchor});
+
+  @override
+  Widget build(BuildContext context) => IgnorePointer(
+        child: LayoutBuilder(builder: (context, c) {
+          final at = CoverGeometry(Size(c.maxWidth, c.maxHeight), photo)
+              .toBox(anchor);
+          return Stack(children: [
+            Positioned(
+              left: at.dx - 7,
+              top: at.dy - 7,
+              child: Container(
+                key: const ValueKey('back-anchor-dot'),
+                width: 14,
+                height: 14,
+                decoration: BoxDecoration(
+                  color: MColors.primary,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2.5),
+                  boxShadow: MShadows.soft,
+                ),
+              ),
+            ),
+          ]);
+        }),
+      );
+}
+
+/// The word's photos, swiped left and right (card #251 item 8), each
+/// without a word label (item 3); long-press shows a pack picture's
+/// author / license.
+class _PhotoPager extends StatefulWidget {
+  final List<CardPhoto> photos;
+  final int initialIndex;
+  final ValueChanged<int>? onSelected;
+
+  const _PhotoPager(
+      {required this.photos, required this.initialIndex, this.onSelected});
+
+  @override
+  State<_PhotoPager> createState() => _PhotoPagerState();
+}
+
+class _PhotoPagerState extends State<_PhotoPager> {
+  late final PageController _controller =
+      PageController(initialPage: widget.initialIndex);
+  late int _index = widget.initialIndex;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Widget _photo(BuildContext context, CardPhoto o) {
+    final p = o.$1;
+    final a = o.$2;
+    final photoWidget = PinnedPhoto(
+      photo: p,
+      radius: 16,
+      imageErrorBuilder: p.networkUrl == null
+          ? null
+          : (_) => const Center(child: UiText('圖片暫時無法載入，稍後再試')),
+      // No word label on the photo (item 3); the word's spot is still
+      // marked with a dot so the learner sees where it was.
+      pins: const [],
+      overlay: a == null ? null : _AnchorDot(photo: p, anchor: a),
+    );
+    final credit = o.$3?.trim();
+    if (credit == null || credit.isEmpty) return photoWidget;
+    return GestureDetector(
+      onLongPress: () {
+        showDialog<void>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const UiText('圖片來源'),
+            content: Text(credit),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const UiText('關閉'),
+              ),
+            ],
+          ),
+        );
+      },
+      child: photoWidget,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final photos = widget.photos;
+    if (photos.length == 1) {
+      return SizedBox(height: 200, child: _photo(context, photos.single));
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          height: 200,
+          child: PageView.builder(
+            controller: _controller,
+            itemCount: photos.length,
+            onPageChanged: (i) {
+              setState(() => _index = i);
+              widget.onSelected?.call(i);
+            },
+            itemBuilder: (context, i) => Padding(
+              padding: EdgeInsets.only(
+                  left: i == 0 ? 0 : 4, right: i == photos.length - 1 ? 0 : 4),
+              child: _photo(context, photos[i]),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Semantics(
+          label: '第 ${_index + 1} 張，共 ${photos.length} 張，左右滑動切換照片',
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              for (var i = 0; i < photos.length; i++)
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: i == _index ? 16 : 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: i == _index ? MColors.primary : MColors.border,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}

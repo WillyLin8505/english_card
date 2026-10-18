@@ -8,7 +8,9 @@ import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 
 /// Usage analytics sent to PostHog (使用者習慣). Best effort only: with no
-/// key it does nothing, and a failed send never throws or blocks the UI.
+/// key, or while 設定 → 分享使用統計 is off, it does nothing. A failed send
+/// never throws or blocks the UI. The switch defaults to off (no consent,
+/// no send).
 ///
 /// Build with the key:
 /// `flutter run --dart-define=POSTHOG_API_KEY=phc_xxx`
@@ -35,8 +37,31 @@ class Analytics {
   AppLifecycleListener? _lifecycle;
   http.Client? _client;
   bool _sending = false;
+  bool _sharing = false;
+  bool _debugTreatAsEnabled = false;
 
-  bool get enabled => apiKey.isNotEmpty;
+  /// True only when a PostHog key was compiled in. Tests can pretend.
+  bool get enabled => apiKey.isNotEmpty || _debugTreatAsEnabled;
+
+  /// 設定 → 分享使用統計. Off until the learner turns it on.
+  bool get sharing => _sharing;
+
+  set sharing(bool value) {
+    if (_sharing == value) return;
+    _sharing = value;
+    if (!value) {
+      _queue.clear();
+      return;
+    }
+    // Already running: the opt-in itself is the first consented event.
+    if (_timer != null) capture('app_opened');
+  }
+
+  @visibleForTesting
+  set debugTreatAsEnabled(bool value) => _debugTreatAsEnabled = value;
+
+  @visibleForTesting
+  int get pendingCount => _queue.length;
 
   /// Simulations (test/flutter_test_config.dart) collect events here
   /// instead of sending them; run_round.py uploads them marked simulated.
@@ -57,7 +82,7 @@ class Analytics {
     _timer ??= Timer.periodic(_flushEvery, (_) => unawaited(flush()));
     // Send what is queued when the app goes to the background.
     _lifecycle ??= AppLifecycleListener(onHide: () => unawaited(flush()));
-    capture('app_opened');
+    if (_sharing) capture('app_opened');
   }
 
   /// Records [event], at [at] (the app's clock) or now. Never throws.
@@ -78,6 +103,7 @@ class Analytics {
       };
       final rec = recorder;
       if (rec != null) return rec(e);
+      if (!_sharing) return;
       _queue.add(e);
       if (_queue.length >= _batchSize) unawaited(flush());
     } catch (_) {}
@@ -89,7 +115,8 @@ class Analytics {
 
   /// Sends the queued events to PostHog's batch endpoint.
   Future<void> flush() async {
-    if (!enabled || _sending || _queue.isEmpty) return;
+    // apiKey, not [enabled]: tests may pretend the key exists without posting.
+    if (apiKey.isEmpty || !_sharing || _sending || _queue.isEmpty) return;
     _sending = true;
     final batch = List.of(_queue.take(_batchSize));
     try {

@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
 import '../models/photo.dart';
+import 'local_vision.dart';
 import 'photo_store.dart';
 import 'tagging_service.dart';
 import 'word_database_repository.dart';
@@ -12,7 +13,7 @@ import 'analytics.dart';
 
 class TaggingNotConfigured implements Exception {
   @override
-  String toString() => '尚未設定 AI 辨識服務（設定 → AI 辨識服務）';
+  String toString() => '這台裝置沒有照片辨識（設定 → 照片辨識）';
 }
 
 /// The spec's core loop, step 1 (選喜歡的照片): stores a picked or
@@ -21,15 +22,21 @@ class TaggingNotConfigured implements Exception {
 class PhotoIntake {
   final WordDatabaseRepository Function() repository;
   final PhotoStore photoStore;
-  final TaggingService Function(Uri endpoint, String apiKey) createTagger;
+  /// The server client (developer / web builds, 設定 → 照片辨識連線).
+  final PhotoTagger Function(Uri endpoint, String apiKey) createTagger;
+
+  /// The device's own recognizer (the published app, 問題回報 #265).
+  final PhotoTagger Function() createLocalTagger;
 
   PhotoIntake({
     required this.repository,
     required this.photoStore,
-    TaggingService Function(Uri endpoint, String apiKey)? createTagger,
-  }) : createTagger = createTagger ??
+    PhotoTagger Function(Uri endpoint, String apiKey)? createTagger,
+    PhotoTagger Function()? createLocalTagger,
+  })  : createTagger = createTagger ??
             ((endpoint, apiKey) =>
-                TaggingService(endpoint: endpoint, apiKey: apiKey));
+                TaggingService(endpoint: endpoint, apiKey: apiKey)),
+        createLocalTagger = createLocalTagger ?? LocalVisionTagger.new;
 
   /// A stable fingerprint of a picture's bytes: 64-bit FNV-1a, hex. Not
   /// cryptographic — it only has to tell "the same file again" from a new

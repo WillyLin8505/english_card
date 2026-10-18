@@ -167,6 +167,8 @@ dates are preserved. See `lib/services/fsrs_optimizer.dart` and run
 ## 使用者行為分析（PostHog）
 
 `lib/services/analytics.dart` 把使用事件送到 PostHog；沒有金鑰時完全不送、不報錯。
+設定 → 分享使用統計預設關閉，關閉時同樣不送。隱私權政策在 App 內（設定 → 查看隱私權政策），
+公開網址 https://willylinai.com/privacy（內容 `docs/privacy.html`，由 `serve_app.py` 提供）。
 
 ```
 flutter run --dart-define-from-file=posthog.local.json   # run_web.bat 會自動帶上

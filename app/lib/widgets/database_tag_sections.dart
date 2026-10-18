@@ -24,14 +24,6 @@ class DatabaseTagSections extends StatelessWidget {
     final groups = groupedDatabaseImageTags(image, pack)
         .where((g) => level == null || g.key == level)
         .toList();
-    if (compact &&
-        groups.isNotEmpty &&
-        groups.every((g) => g.value.length <= 3)) {
-      return [
-        Text(groups.map((g) => _compactTagLabels(g, pack, g.value)).join(' · '),
-            style: MFont.inter(11, FontWeight.w500, MColors.muted))
-      ];
-    }
     if (groups.isEmpty) {
       return [
         Container(

@@ -3,9 +3,9 @@
     "short_name": "拍照學單字",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#F7F9FC",
+    "theme_color": "#4A90D9",
+    "description": "拍照學英文 — 用喜歡的個人照片學英文，建立本機英文相簿。",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

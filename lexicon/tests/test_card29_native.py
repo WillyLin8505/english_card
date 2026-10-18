@@ -1,5 +1,6 @@
 from app.text import (accept_native_gloss, main_native_sense_key, native_latin_issue,
-                       native_sense_keys, normalize_native_gloss, repair_outlaw_gloss,
+                       native_sense_keys, normalize_native_gloss, repair_icelandic_gloss,
+                       repair_learner_gloss, repair_outlaw_gloss,
                        sense_skipped_for_native)
 from app.adapters.base import Candidate, Context, localize, validate
 
@@ -21,6 +22,19 @@ def test_outlaw_is_not_stored_as_adultery():
     again = repair_outlaw_gloss(
         "They found the outlaw's tracks near the river.", "他們在河邊發現了逃犯的蹤跡。")
     assert again == "他們在河邊發現了逃犯的蹤跡。"
+
+
+def test_icelandic_is_not_stored_as_irish():
+    en = 'Compare Norwegian lendeklede, Icelandic lendarklæði (“loincloth”).'
+    zh = "與挪威語 lendeklede、愛爾蘭語 lendarklæði 同源。"
+    fixed = repair_icelandic_gloss(en, zh)
+    assert fixed == "與挪威語 lendeklede、冰島語 lendarklæði 同源。"
+    assert repair_icelandic_gloss(en, fixed) == fixed
+    assert repair_icelandic_gloss(
+        "except possibly Irish sríab", "除愛爾蘭語 sríab 外") == "除愛爾蘭語 sríab 外"
+    assert repair_icelandic_gloss(
+        "Compare Old Irish X and Icelandic Y.", "愛爾蘭語 X") == "愛爾蘭語 X"
+    assert repair_learner_gloss(en, zh) == fixed
 
 
 def test_context_exceptions_do_not_hide_fragments():

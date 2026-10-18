@@ -62,6 +62,26 @@ class RecallSignal extends AbilitySignal {
 /// Dial moves use a small K, active recall a larger one. The level only
 /// changes after 20 valid signals, once a moving average has crossed the
 /// next level's threshold by 0.2, and by one level at a time.
+/// One change of the overall level: [from] and [to] index [cefrLevels];
+/// [source] is how it happened ('elo', 'user', 'check', 'self').
+class LevelChange {
+  final DateTime at;
+  final int from;
+  final int to;
+  final String source;
+
+  const LevelChange(this.at, this.from, this.to, this.source);
+
+  factory LevelChange.fromJson(Map<String, dynamic> j) => LevelChange(
+      DateTime.parse(j['at'] as String),
+      j['from'] as int,
+      j['to'] as int,
+      j['source'] as String? ?? 'self');
+
+  Map<String, dynamic> toJson() =>
+      {'at': at.toIso8601String(), 'from': from, 'to': to, 'source': source};
+}
+
 class UserVocabularyProfile {
   static const minEvents = 20;
   static const buffer = 0.2;
@@ -99,6 +119,9 @@ class UserVocabularyProfile {
   /// default level when the learner keeps turning the dial one way.
   final List<int> dialHistory;
 
+  /// Every change of the overall level, oldest first (學習洞察的等級變化).
+  final List<LevelChange> levelHistory;
+
   final DateTime updatedAt;
 
   const UserVocabularyProfile({
@@ -111,6 +134,7 @@ class UserVocabularyProfile {
     this.exposure = const {},
     this.posPreference = const {},
     this.dialHistory = const [],
+    this.levelHistory = const [],
     required this.updatedAt,
   });
 
@@ -185,6 +209,9 @@ class UserVocabularyProfile {
       events: nextEvents,
       source: nextLevel != level ? 'elo' : source,
       dialHistory: signal is DialSignal ? dialHistory : null,
+      levelHistory: nextLevel != level
+          ? [...levelHistory, LevelChange(now, level, nextLevel, 'elo')]
+          : null,
       updatedAt: now,
     );
   }
@@ -201,6 +228,9 @@ class UserVocabularyProfile {
         // The dial offsets were relative to the old level: after 改成 B1 the
         // same history would at once suggest B2 as well.
         dialHistory: const [],
+        levelHistory: i != level
+            ? [...levelHistory, LevelChange(now, level, i, source)]
+            : null,
         updatedAt: now);
   }
 
@@ -261,6 +291,7 @@ class UserVocabularyProfile {
     Map<String, Exposure>? exposure,
     Map<String, int>? posPreference,
     List<int>? dialHistory,
+    List<LevelChange>? levelHistory,
     required DateTime updatedAt,
   }) =>
       UserVocabularyProfile(
@@ -273,6 +304,7 @@ class UserVocabularyProfile {
         exposure: exposure ?? this.exposure,
         posPreference: posPreference ?? this.posPreference,
         dialHistory: dialHistory ?? this.dialHistory,
+        levelHistory: levelHistory ?? this.levelHistory,
         updatedAt: updatedAt,
       );
 
@@ -298,6 +330,10 @@ class UserVocabularyProfile {
         dialHistory: [
           for (final o in (j['dialHistory'] as List? ?? const [])) o as int
         ],
+        levelHistory: [
+          for (final o in (j['levelHistory'] as List? ?? const []))
+            LevelChange.fromJson(o as Map<String, dynamic>)
+        ],
         updatedAt: DateTime.parse(j['updatedAt'] as String),
       );
 
@@ -313,6 +349,7 @@ class UserVocabularyProfile {
         'exposure': {for (final e in exposure.entries) e.key: e.value.toJson()},
         'posPreference': posPreference,
         'dialHistory': dialHistory,
+        'levelHistory': [for (final c in levelHistory) c.toJson()],
         'updatedAt': updatedAt.toIso8601String(),
       };
 }

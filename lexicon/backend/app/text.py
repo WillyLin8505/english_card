@@ -419,6 +419,8 @@ def native_sense_keys(items: list[dict]) -> set[str]:
 
 _OUTLAW_WORD = re.compile(r"\boutlaw", re.I)
 _ADULTERY_WORD = re.compile(r"adulter|fornicat|extramarital|cuckold", re.I)
+_ICELANDIC_WORD = re.compile(r"\bIcelandic\b", re.I)
+_IRISH_WORD = re.compile(r"\bIrish\b", re.I)
 
 
 def repair_outlaw_gloss(english: str | None, chinese: str | None) -> str | None:
@@ -443,6 +445,49 @@ def repair_outlaw_gloss(english: str | None, chinese: str | None) -> str | None:
     if "Icelandic" in english and "冰島" not in text:
         text = text.replace("愛爾蘭語", "冰島語")
     return text
+
+
+def repair_icelandic_gloss(english: str | None, chinese: str | None) -> str | None:
+    """Repair Icelandic language-name mistranslations (#264, #273).
+
+    Preserve real Irish/Estonian mentions independently. Idempotent.
+    """
+    if not chinese or not english:
+        return chinese
+    if not _ICELANDIC_WORD.search(english):
+        return chinese
+    if not _IRISH_WORD.search(english):
+        chinese = chinese.replace("愛爾蘭語", "冰島語")
+    if not re.search(r"\bEstonian\b", english, re.I):
+        chinese = chinese.replace("愛沙尼亞語", "冰島語")
+    return chinese.replace("愛斯蘭尼亞語", "冰島語")
+
+
+_LANGUAGE_NAME_FIXES = (
+    ("舊法國語", "古法語"),
+    ("低地德國語", "低地德語"),
+    ("德國語", "德語"),
+    ("法國語", "法語"),
+)
+
+
+def repair_language_names(chinese: str | None) -> str | None:
+    """German/French rendered as 德國語/法國語 (問題回報 #274); the right terms are 德語/法語.
+
+    Neither 德國語 nor 法國語 is ever correct Taiwan usage, so no English check is needed.
+    Idempotent.
+    """
+    if not chinese:
+        return chinese
+    for wrong, right in _LANGUAGE_NAME_FIXES:
+        chinese = chinese.replace(wrong, right)
+    return chinese
+
+
+def repair_learner_gloss(english: str | None, chinese: str | None) -> str | None:
+    """Stored-gloss repairs applied on the way into the learner pack."""
+    return repair_language_names(
+        repair_icelandic_gloss(english, repair_outlaw_gloss(english, chinese)))
 
 
 def accept_native_gloss(text: str | None, *, short: bool = True) -> str | None:

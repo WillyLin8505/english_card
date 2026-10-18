@@ -2188,6 +2188,30 @@ def _synonym_loser(tags) -> set[str]:
     return {right for left, right in SYNONYM_PAIRS if left in words and right in words}
 
 
+def _tag_sense_rows(s, lexeme) -> list[dict]:
+    """choose_sense candidates for a lexeme's senses, ``low`` decided by the
+    same quality.rank_senses the pack uses (card #164: the earlier per-sense
+    check ignored that an AI translation after a dictionary one is a
+    sub-sense, so tags landed on senses the pack then had to replace)."""
+    from app import quality as _q
+    rows = []
+    for se in s.scalars(select(m.Sense).where(m.Sense.lexeme_id == lexeme.id)
+                        .order_by(m.Sense.ordinal)):
+        tr = s.scalars(select(m.SenseTranslation).where(
+            m.SenseTranslation.sense_id == se.id,
+            m.SenseTranslation.native_language == "zh-TW")).first()
+        df = s.scalars(select(m.Definition).where(m.Definition.sense_id == se.id)).first()
+        rows.append({"id": se.id, "lexeme_pos": lexeme.pos, "ordinal": se.ordinal,
+                     "definition": df.text if df else "", "native": tr.text if tr else None,
+                     "native_ai": bool(tr and tr.is_ai), "labels": list(se.labels or [])})
+    ranked = _q.rank_senses([{"id": r["id"], "native": r["native"], "native_ai": r["native_ai"],
+                              "labels": list(r["labels"])} for r in rows])
+    priority = {r["id"]: r["priority"] for r in ranked}
+    for r in rows:
+        r["low"] = priority.get(r["id"]) == "low"
+    return rows
+
+
 def share(s, asset, only_lemma=None, require_publishable: bool = False) -> int:
     """Put a picture under every word its AI labels name (a bench picture
     labelled gravel also shows gravel). A picture a reviewer already approved
@@ -2242,24 +2266,25 @@ def share(s, asset, only_lemma=None, require_publishable: bool = False) -> int:
         # Context = the other AI labels on this photo (#195 / P2).
         context = _q.tokens(" ".join(
             str(t.get("word", "")) for t in (asset.tags or []) if tag_word(t) != word))
-        sense_rows = []
-        for se in s.scalars(select(m.Sense).where(m.Sense.lexeme_id == lexeme.id)
-                            .order_by(m.Sense.ordinal)):
-            tr = s.scalars(select(m.SenseTranslation).where(
-                m.SenseTranslation.sense_id == se.id,
-                m.SenseTranslation.native_language == "zh-TW")).first()
-            df = s.scalars(select(m.Definition).where(m.Definition.sense_id == se.id)).first()
-            labels = se.labels or []
-            low = _q.sense_is_low({"labels": labels, "native": tr.text if tr else None,
-                                   "native_ai": bool(tr and tr.is_ai)}, False)
-            sense_rows.append({"id": se.id, "lexeme_pos": lexeme.pos, "ordinal": se.ordinal,
-                               "definition": df.text if df else "", "native": tr.text if tr else None,
-                               "native_ai": bool(tr and tr.is_ai), "labels": labels, "low": low})
+        sense_rows = _tag_sense_rows(s, lexeme)
         if not sense_rows:
             skips[word] = '詞條沒有義項'
             continue
         publishable = [row for row in sense_rows
                        if (row.get('native') or '').strip() and not row.get('low')]
+        if require_publishable and not publishable:
+            # Card #164: the resolved part of speech may be a rare usage
+            # whose only senses are colloquial (brick the adjective 極冷):
+            # a sister entry of the same spelling with a publishable sense
+            # takes the label instead (the album checks by spelling).
+            for sister in s.scalars(select(m.Lexeme).where(
+                    m.Lexeme.language == 'en', m.Lexeme.normalized == lexeme.normalized,
+                    m.Lexeme.status == 'full', m.Lexeme.id != lexeme.id).order_by(m.Lexeme.id)):
+                rows = _tag_sense_rows(s, sister)
+                pub = [row for row in rows if (row.get('native') or '').strip() and not row.get('low')]
+                if pub:
+                    lexeme, sense_rows, publishable = sister, rows, pub
+                    break
         if require_publishable and not publishable:
             # A low-priority or Chinese-less sense must not become a learner
             # label (#195). Leave the word unbound and say why.

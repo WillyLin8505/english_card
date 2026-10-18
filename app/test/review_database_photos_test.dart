@@ -325,8 +325,9 @@ void main() {
     expect(find.byType(PinnedPhoto), findsOneWidget);
     session.dispose();
     final view = tester.widget<PinnedPhoto>(find.byType(PinnedPhoto));
-    expect(view.pins, hasLength(1));
-    expect(view.pins.single.word, 'Apple');
+    // Card #251 item 3: no word label over the photo, no 「照片情境」 title.
+    expect(view.pins, isEmpty);
+    expect(find.text('照片情境'), findsNothing);
     expect(find.textContaining('Test author'), findsNothing);
     expect(find.textContaining('Own work'), findsNothing);
     expect(find.textContaining('CC0'), findsNothing);
@@ -422,9 +423,11 @@ void main() {
     session.dispose();
     expect(find.byType(PinnedPhoto), findsOneWidget);
     final view = tester.widget<PinnedPhoto>(find.byType(PinnedPhoto));
-    expect(view.pins, hasLength(1), reason: '背面只標出正確單字在圖片中的位置');
-    expect(view.pins.single.word, 'Apple');
-    expect((view.pins.single.anchor.x, view.pins.single.anchor.y), (0.25, 0.4));
+    // Card #251 item 3: a dot marks the word's spot, with no word label.
+    expect(view.pins, isEmpty, reason: '背面照片上不疊單字標籤');
+    expect(find.byKey(const ValueKey('back-anchor-dot')), findsOneWidget,
+        reason: '背面仍標出正確單字在圖片中的位置');
+    expect((session.anchor!.x, session.anchor!.y), (0.25, 0.4));
   });
 
   testWidgets(
@@ -454,8 +457,9 @@ void main() {
     session.dispose();
     expect(find.byType(PinnedPhoto), findsOneWidget);
     final view = tester.widget<PinnedPhoto>(find.byType(PinnedPhoto));
-    expect(view.pins, hasLength(1), reason: '背面只標出正確單字在圖片中的位置');
-    expect(view.pins.single.word, 'Apple');
-    expect((view.pins.single.anchor.x, view.pins.single.anchor.y), (0.25, 0.4));
+    expect(view.pins, isEmpty, reason: '背面照片上不疊單字標籤');
+    expect(find.byKey(const ValueKey('back-anchor-dot')), findsOneWidget,
+        reason: '背面仍標出正確單字在圖片中的位置');
+    expect((session.anchor!.x, session.anchor!.y), (0.25, 0.4));
   });
 }
