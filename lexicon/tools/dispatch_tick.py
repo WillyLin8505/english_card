@@ -55,6 +55,7 @@ API = "http://127.0.0.1:5173/api"
 TAIPEI = timezone(timedelta(hours=8))
 AGENTS = ["Claude Code", "Codex", "Cursor CLI"]
 SWARM_PREFIX = "Claude CLI "
+MAC_PREFIX = "[給 Mac]"
 
 
 def is_swarm(agent: str | None) -> bool:
@@ -76,6 +77,7 @@ BREAKAWAY = 0x01000000
 LOG_CAP = 1_000_000
 LOCK_STALE_S = 15 * 60
 DECISION_RE = re.compile(r"需要你決定|待你決定|請你決定|需使用者決定|需要使用者決定|decision needed|needs owner", re.I)
+ALL_DONE_RE = re.compile(r"^\s*(全部完成|ALL DONE)", re.I | re.M)
 BLOCKER_RE = re.compile(r"^\s*(BLOCKED|卡住|無法完成)", re.I | re.M)
 
 DEFAULT_CFG = {
@@ -540,6 +542,11 @@ class Tick:
         elif fresh.get("kind") == "recurring":
             action = "scheduled"
             self.write("PUT", f"/tasks/{card_id}", {"by": "Grokbot", "status": "done", "progress": progress}, "recurring done")
+        elif card_id in set(self.cfg["multi_round_tasks"]) and ALL_DONE_RE.search(text[:200]):
+            action = "done"
+            self.write("PUT", f"/tasks/{card_id}", {"by": "Grokbot", "status": "done", "progress": progress},
+                       "multi-round finished")
+            self.close_issues(fresh, outcome, rel)
         elif card_id in set(self.cfg["multi_round_tasks"]):
             action = "queued"
             self.write("PUT", f"/tasks/{card_id}", {"by": "Grokbot", "status": "queued", "agent": None,
@@ -720,6 +727,23 @@ class Tick:
                     and i["id"] not in seen and i["id"] not in working and i["id"] not in skip_i):
                 issues.append({"key": f"i{i['id']}", "issue_id": i["id"], "task_id": None,
                                "difficulty": i.get("difficulty") or 3, "title": i.get("title")})
+        # cover_for (owner, 2026-10-18): while that AI is out of quota or paused, Claude CLIs take
+        # the cards it would have taken (standing scans included, same cooldown rules).
+        full = {c["id"]: c for c in board.get("deck", []) + board.get("recurring", [])
+                if c.get("card", "task") == "task" and c.get("id")}
+        keys = {c["key"] for c in issues}
+        for other in cfg.get("cover_for") or []:
+            if not (self.limited(other) or (bots.get(other) or {}).get("paused")):
+                continue
+            for c in order_candidates(candidates(board, other, self.caps, state=diff_state, now=self.now),
+                                      other, self.cfg, self.now, keys, self.night_tasks, full):
+                if (c.get("task_id") and (full.get(c["task_id"]) or {}).get("agent") not in (None, other)):
+                    continue
+                keys.add(c["key"])
+                issues.append(c)
+        # 「[給 Mac]」 requests are for the Claude session on the owner's Mac, not for a CLI here
+        issues = [c for c in issues if not str(c.get("title") or "").lstrip("問題回報 #0123456789：").startswith(MAC_PREFIX)
+                  and MAC_PREFIX not in str(c.get("title") or "")[:40]]
         taken = set()
         for c in issues:
             agent = free_slot(used, limit)
