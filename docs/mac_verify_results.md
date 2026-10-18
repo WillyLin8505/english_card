@@ -29,3 +29,11 @@ Windows 的指令看 `docs/mac_inbox.md`；要 Windows 修的 bug 開 `[Mac]` �
    `✕ 連不到 AI\n辨識服務（http://127.0.0.1:8765/tag），請確認服務已啟動`。
 
 2–4 都在 `check()`（`screens_test.dart:446`）按下「測試連線」後找不到結果文字，可能是設定頁的連線測試文案或流程改了，測試沒跟著更新。
+
+## 2026-10-18 重跑 analyze／test（commit cfb76db，M1 第 4 點、M2 前置）
+
+| # | 步驟 | 預期 | 實際 | 截圖 | 嚴重度 |
+|---|------|------|------|------|--------|
+| 1 | flutter analyze | 0 issues | No issues found | — | — |
+| 2 | flutter test | 全部通過 | 369 通過、1 略過、0 失敗（第 1 輪的 4 個失敗在 Mac 上也已消失） | — | — |
+| 3 | M2 iPhone 模擬器逐卡驗證 | — | 尚未執行（Mac 還在裝 Xcode） | — | — |
