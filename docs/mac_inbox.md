@@ -115,3 +115,12 @@ commit `270dac5`（Windows：flutter analyze 無 error、02:35 +370: All tests p
 commit `6cfa872`（Windows：flutter analyze 無 error、01:01 +370: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #295：問題回報 #298：looks_simplified 把台灣正體常用字（峰、卷、祕／秘、夸、里）當簡體字退回：聖母峰、十
   結果：本輪完成：lookssimplified 不再把 峰／秘／夸（夸克）／里／巨 判為簡體，#298 的 11 個候選值全部通過驗證；補寫 peak／bound 缺漏的 20 個義項＋1 句例句（AI 翻譯，台灣用語）。
+
+## M6（2026-10-19 02:45）狀態：待做
+commit `d0bc371`（Windows：flutter analyze 無 error、01:57 +372: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #227：模擬使用者・單字本
+  結果：第 68 輪：database,detail 2/2 通過；第 70 輪（補模擬覆蓋後）2/2 通過；新問題 #303；UX 建議 #304（已直接修）、#206 補充。
+- 卡 #296：問題回報 #229：每圖 ≤10 秒：選擇完整品質流程或先出可用標籤再補強，並安排小樣本硬體驗證
+  結果：全部完成：照 owner 決定（保留完整品質、≤10 秒只是待驗證目標）加了分段計時；正式負載實測 25 張每圖中位 33.9 秒、≤10 秒 0 張，cefr 17.6 秒＋score 15.4 秒各佔約一半，單輪（rounds=1）已確認。
+- 卡 #228：模擬使用者・設定
+  結果：第 2 輪：1/1 通過（runround 第 74 輪，findings 3→0）、修 1 個真錯（複習比例超出滑桿範圍會壞畫面）、新問題 #306 #307、UX 建議 #306 #307＋#277 補一句。
