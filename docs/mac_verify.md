@@ -32,6 +32,14 @@
    - 先 GET 再 PUT，只在要改狀態時送 status（Windows 端的 AI 也在改同一份清單）。
    - 截圖放 `docs/mac_verify_shots/`，commit 並 push（只 commit 截圖，不要改 App 程式碼），在問題的 detail 寫檔名。
 
+## 每張卡都要在 iPhone 上驗證（owner 10/18）
+- Windows 每完成一批改到 App 的卡，`mac_sync.py` 會在 Windows 跑過 flutter analyze＋test 後 push，並在
+  `docs/mac_inbox.md` 加一項 M<n>，列出要驗的卡。每一項都要：`git pull` → iPhone 模擬器跑 → 每張卡照它的結果實際操作 →
+  results 檔每張卡一列（通過／不通過＋原因＋截圖），不通過的開 `[Mac]` 問題回報（標題寫卡號）→ 把 M 項狀態改「完成」並 push。
+- 實機：owner 把 iPhone 接上 Mac 時，也用 `flutter run -d <iPhone>`（`flutter devices` 找 id）跑一次。第一次要在 Xcode
+  打開 `app/ios/Runner.xcworkspace`，Runner → Signing & Capabilities 選 owner 的 Apple ID Team（Bundle ID
+  `com.willylinai.photoflashcard`），iPhone 上「設定 → 一般 → VPN 與裝置管理」信任開發者。簽章要 owner 本人登入，不要代填密碼。
+
 ## 規則
 - 不要修 App 程式碼（Windows 上的 CLI 同時在改，會衝突）；只驗證與回報。
 - 不讀、不寫任何金鑰（*.local.json、.api_key）。

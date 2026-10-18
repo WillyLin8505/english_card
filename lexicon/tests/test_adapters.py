@@ -847,3 +847,27 @@ def test_taiwan_quotes_and_platform():
     assert to_taiwan("火車從3號站臺出發。") == "火車從3號月臺出發。"
     assert to_taiwan('"滾石"很好') == "「滾石」很好"
     assert to_taiwan('He said "hi".') == 'He said "hi".'
+
+
+def test_interjection_needs_the_word_said_on_its_own():
+    """問題回報 #286: an interjection is the word said as its own utterance."""
+    from app.adapters.local import matches_lexeme_pos
+    assert matches_lexeme_pos(
+        '"Cheese!" said the photographer.', "cheese", "intj", {"cheese"}, frozenset())
+    assert matches_lexeme_pos("Fire! Everyone get out now.", "fire", "intj", {"fire"}, frozenset())
+    assert matches_lexeme_pos(
+        'The director shouted "Cut!" and the actors stopped.', "cut", "intj", {"cut"}, frozenset())
+    assert not matches_lexeme_pos("The fire was warm.", "fire", "intj", {"fire"}, frozenset())
+    assert not matches_lexeme_pos(
+        "I like cheese on my bread.", "cheese", "intj", {"cheese"}, frozenset())
+
+
+def test_compound_noun_is_matched_as_a_phrase():
+    """卡 #166: the single-word noun frames never matched "raised bed"."""
+    from app.adapters.local import matches_lexeme_pos
+    assert matches_lexeme_pos("We grow tomatoes in a raised bed.", "raised bed", "noun",
+                              {"raised bed"}, frozenset())
+    assert matches_lexeme_pos("Our galaxy has several spiral arms.", "spiral arms", "noun",
+                              {"spiral arms"}, frozenset())
+    assert not matches_lexeme_pos("The bed was raised off the floor.", "raised bed", "noun",
+                                  {"raised bed"}, frozenset())

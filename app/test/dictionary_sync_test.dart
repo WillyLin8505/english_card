@@ -100,7 +100,7 @@ void main() {
     await directory.delete(recursive: true);
   });
   DictionarySync service(http.Client client) {
-    final s = DictionarySync(client: client);
+    final s = DictionarySync(client: client, remote: true);
     services.add(s);
     return s;
   }

@@ -30,6 +30,7 @@ from .text import normalize_lemma
 
 STALE_AFTER = timedelta(minutes=5)  # a running job whose worker stopped beating
 TERMINAL = {"cancelled", "completed", "completed_with_errors", "failed"}
+EXCEPTION_STREAK_PAUSE = 5  # this many words in a row with the same exception → pause (#285)
 
 
 class JobError(ValueError):
@@ -428,6 +429,7 @@ def run(session_factory, job_id: int, worker_id: str, stop=lambda: False,
             s.commit()
         # One word, one transaction (data + attempts + checkpoint).
         started = time.time()
+        streak_hit = None
         with session_factory() as s:
             job = s.get(m.ImportJob, job_id)
             rec = JobRecorder(s, job)
@@ -440,6 +442,7 @@ def run(session_factory, job_id: int, worker_id: str, stop=lambda: False,
                     k = f"fields_{r.status}"
                     counts[k] = counts.get(k, 0) + 1
                 counts["words_done"] = counts.get("words_done", 0) + 1
+                counts.pop("exception_streak", None)
                 rec.flush_steps(run_policies)
                 flush_usage(s)
             except Exception as e:  # noqa: BLE001 — record, roll back this word, move on
@@ -451,6 +454,17 @@ def run(session_factory, job_id: int, worker_id: str, stop=lambda: False,
                                      source="*", error_type="exception",
                                      message=f"{type(e).__name__}: {e}"[:2000]))
                 log(s, job_id, f"「{word}」處理失敗：{type(e).__name__}: {e}", "error")
+                # #285: the same exception on word after word is a code or
+                # setup fault, not a bad word. Stop instead of running it out.
+                sig = f"{type(e).__name__}: {e}"[:200]
+                streak = counts.get("exception_streak") or {}
+                n_same = int(streak.get("n", 0)) + 1 if streak.get("sig") == sig else 1
+                counts["exception_streak"] = {"sig": sig, "n": n_same}
+                if n_same >= EXCEPTION_STREAK_PAUSE:
+                    streak_hit = (n_same, sig)
+            # The row may have changed while the word ran (pause / cancel from
+            # the admin, #285): lock and re-read it before writing it back.
+            s.refresh(job, with_for_update=True)
             elapsed_ms = int((time.time() - started) * 1000)
             recent = [int(value) for value in (counts.get("recent_word_ms") or [])[-9:]
                       if isinstance(value, (int, float))]
@@ -462,7 +476,14 @@ def run(session_factory, job_id: int, worker_id: str, stop=lambda: False,
             job.counts = counts
             job.heartbeat_at = now()
             processed += 1
-            yielded = bool(max_words and processed >= max_words and job.checkpoint < job.total)
+            if streak_hit and job.status == "running" and job.checkpoint < job.total:
+                job.status = "pausing"
+                log(s, job.id, f"連續 {streak_hit[0]} 個字都因同一個錯誤失敗，自動暫停：{streak_hit[1]}"
+                    "（修好後按繼續；已失敗的字用「重試失敗項目」重跑）", "error")
+            # Only a running job yields; pausing / cancelling are settled at
+            # the top of the loop, so a pause sent mid-word is not lost.
+            yielded = bool(max_words and processed >= max_words and job.checkpoint < job.total
+                           and job.status == "running")
             if yielded:
                 # Give another worker a chance to take this shard. A short slice
                 # also lets the same worker alternate text and deferred images.

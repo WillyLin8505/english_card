@@ -24,7 +24,7 @@ void main() {
     LexiconPack.instance.link(c('apple'));
     final bodies = <Map<String, dynamic>>[];
     var fail = true;
-    final s = DictionarySync(client: MockClient((r) async {
+    final s = DictionarySync(remote: true, client: MockClient((r) async {
       expect(r.url.path, '/api/missing');
       if (fail) return http.Response('down', 503);
       bodies.add(jsonDecode(r.body) as Map<String, dynamic>);

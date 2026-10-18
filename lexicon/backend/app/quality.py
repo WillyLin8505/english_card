@@ -246,33 +246,71 @@ def _etymology_tagged(sense: dict) -> bool:
     return any(str(x).lower().startswith("etymology-") for x in sense.get("labels") or [])
 
 
+# Labels about register, not about time or rarity: a sense carrying only
+# these is still a current meaning (meth 冰毒 is informal, stanch 使止血
+# poetic) and is the first to come back when an entry has no main sense.
+REGISTER_LABELS = {"informal", "colloquial", "slang", "humorous", "euphemistic", "poetic",
+                   "nonstandard", "dialectal", "derogatory"}  # moron 白痴 is the meaning
+# Never the meaning a card shows, even when nothing else has Chinese (chimp:
+# the only translated sense was the offensive one).
+NEVER_MAIN_LABELS = {"offensive", "vulgar"}
+
+
+def _has_zh(s: dict) -> bool:
+    return bool((s.get("native") or "").strip())
+
+
 def rank_senses(senses: list[dict], low_keys: set[str] | None = None) -> list[dict]:
     """Main senses first (original order kept), low ones marked and after.
 
-    etymology-N senses are demoted only when some sense outside them is a
-    usable main sense by its labels (card #164: monogram's only
-    non-etymology sense is obsolete, so its real meaning 花押字 under
-    etymology-3 stays main). An entry whose main senses all lack Chinese
-    keeps its Chinese senses main instead (stanch: the one translated
-    sense is tagged poetic) — the card would otherwise show nothing."""
+    When that leaves no main sense with Chinese, the card would show
+    nothing, so senses come back in stages until one with Chinese is main
+    (card #164) — a reviewed demotion (``low_keys``) never comes back:
+      1. senses whose only low labels are about register (meth 冰毒 is
+         informal; stanch's one translated sense is poetic), not senses
+         filed under another etymology;
+      2. etymology-N senses without a low label (monogram: the only
+         non-etymology sense is obsolete, so 花押字 under etymology-3 is
+         the meaning; frail the noun: 籮筐 rather than the dated 少女);
+      3. any sense with Chinese (the translation worker fills the real main
+         sense later, and this one goes back to low on its own).
+    Offensive / vulgar / derogatory senses never come back. Etymology-N
+    senses next to a plain main sense stay demoted."""
     low_keys = low_keys or set()
-    count_etymology = any(not _etymology_tagged(s) and not _label_low(s) for s in senses)
+    count_etymology = any(not _etymology_tagged(s) for s in senses)
     seen_dict = False
     for s in senses:
         low = sense_is_low(s, seen_dict, count_etymology=count_etymology) or _sense_key(s) in low_keys
         s["priority"] = "low" if low else "main"
         if not low and s.get("native") and not s.get("native_ai"):
             seen_dict = True
-    has_zh = [bool((s.get("native") or "").strip()) for s in senses]
-    if not any(z for s, z in zip(senses, has_zh) if s["priority"] == "main") and any(has_zh):
-        for s, z in zip(senses, has_zh):
-            if z and _sense_key(s) not in low_keys:
+
+    def main_with_zh() -> bool:
+        return any(s["priority"] == "main" and _has_zh(s) for s in senses)
+
+    def labels_of(s: dict) -> set[str]:
+        return {str(x).lower() for x in s.get("labels") or []}
+
+    stages = (
+        lambda s: (labels_of(s) & LOW_SENSE_LABELS) <= REGISTER_LABELS
+        and not (count_etymology and _etymology_tagged(s)),
+        lambda s: _etymology_tagged(s) and not (labels_of(s) & LOW_SENSE_LABELS),
+        lambda s: True,
+    )
+    for keep in stages:
+        if main_with_zh():
+            break
+        for s in senses:
+            if _has_zh(s) and _sense_key(s) not in low_keys and keep(s) \
+                    and not labels_of(s) & (NEVER_MAIN_LABELS | {"low_priority"}):
                 s["priority"] = "main"
     for s in senses:
         labels = s.setdefault("labels", [])
         if s["priority"] == "low" and "low_priority" not in labels:
             s["labels"] = [*labels, "low_priority"]
-    return sorted(senses, key=lambda s: s["priority"] == "low")
+    # An entry with no main sense at all shows its first sense; never let that
+    # be the offensive one (chimp: 黑猩猩 untranslated, 黑人 first).
+    return sorted(senses, key=lambda s: (s["priority"] == "low", bool(labels_of(s) & NEVER_MAIN_LABELS)))
 
 
 def _sense_key(s: dict) -> str:

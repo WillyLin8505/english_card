@@ -16,6 +16,7 @@ import 'fsrs_scheduler.dart';
 import 'fsrs_optimizer.dart';
 import 'lexicon_pack.dart';
 import 'pack_media.dart';
+import 'photo_store.dart';
 import 'word_database_query.dart';
 import 'word_database_store.dart';
 import 'word_selector.dart';
@@ -443,9 +444,10 @@ class WordDatabaseRepository extends ChangeNotifier {
     }.length;
   }
 
-  /// The cover shown on an album card: the newest photo with an image.
+  /// The cover shown on an album card: the newest photo that can be shown
+  /// (a photo whose original file is gone is skipped, 問題回報 #283).
   Photo? albumCoverPhoto(String albumId) =>
-      photosInAlbum(albumId).where((p) => p.hasImage).firstOrNull;
+      photosInAlbum(albumId).where(PhotoStore.canShow).firstOrNull;
 
   /// 學習洞察: review counts, level changes and weak words.
   LearningInsights insights() {

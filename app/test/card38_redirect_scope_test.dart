@@ -25,7 +25,9 @@ void main() {
       final destination = pack.byId(pointer['id'] as int);
       expect(destination, isNotNull);
       if (destination!.lemma == form || {'coat', 'goat'}.contains(form) ||
-          {'coat', 'goat'}.contains(destination.lemma)) continue;
+          {'coat', 'goat'}.contains(destination.lemma)) {
+        continue;
+      }
       for (final photo in [false, true]) {
         final entries = [
           for (final (word, meaning) in [('coat', '外套'), ('goat', '山羊'), (form, '測試持有詞')])
@@ -54,7 +56,7 @@ void main() {
       }
     }
     expect(checked, greaterThan(1000));
-    print('card38 snapshot pointer exercises: $checked; unowned replacements: 0');
+    stdout.writeln('card38 snapshot pointer exercises: $checked; unowned replacements: 0');
   }, skip: !File('../lexicon/logs/agents/card123.resume.pack.json').existsSync()
       ? 'Requires the local card123 04:48 audit snapshot' : false);
 

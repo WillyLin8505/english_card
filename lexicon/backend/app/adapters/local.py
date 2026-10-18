@@ -459,12 +459,20 @@ def _closed_compound_bases(word: str) -> list[str]:
     return found
 
 
-def _cmudict_ipa(phrase: str) -> str | None:
-    """US IPA for a word or a phrase CMUdict only lists in parts."""
-    from ..arpabet import arpabet_to_ipa
+@lru_cache(maxsize=1)
+def _cmudict_source():
+    """One loaded CMUdict for every rule here (a fresh one re-read the whole
+    file on each call, which made a library audit crawl)."""
     from .cmudict import CMUdict
     source = CMUdict()
     source._load()
+    return source
+
+
+def _cmudict_ipa(phrase: str) -> str | None:
+    """US IPA for a word or a phrase CMUdict only lists in parts."""
+    from ..arpabet import arpabet_to_ipa
+    source = _cmudict_source()
     text = phrase.strip()
     parts = text.split()
     if len(parts) == 1 and "-" in text:
@@ -524,6 +532,237 @@ def derived_adjective_ipa(word: str) -> list[dict]:
                    "composed": True, "base": base}
             if value not in {item["ipa"] for item in out}:
                 out.append(row)
+    return out[:3]
+
+
+# ── Word parts (問題回報 #291) ───────────────────────────────────────
+# A rare derivative no dictionary pronounces (frother, attester, loungey)
+# is its base word's IPA plus the sound of a suffix that keeps the base's
+# stress. Suffixes that move the stress (-ation, -ity, -ic) are left out on
+# purpose: a wrong stress is worse than no IPA. (UK, US) pairs where the
+# accents differ; one string where they agree.
+_AFFIX_SUFFIX = {
+    "er": ("ə", "ɚ"), "or": ("ə", "ɚ"), "ers": ("əz", "ɚz"), "ory": ("əɹi", "ɚi"),
+    "y": "i", "ey": "i", "ie": "i", "ies": "iz",
+    "ness": "nəs", "less": "ləs", "ly": "li", "ish": "ɪʃ", "ful": "fəl",
+    "ment": "mənt", "ize": "aɪz", "ise": "aɪz", "ist": "ɪst", "ism": "ɪzəm",
+    "able": "əbəl", "hood": "hʊd", "ship": "ʃɪp", "dom": "dəm", "like": "laɪk",
+    "en": "ən", "ery": ("əɹi", "ɚi"), "ward": ("wəd", "wɚd"), "wards": ("wədz", "wɚdz"),
+    "some": "səm", "fold": "fəʊld", "ling": "lɪŋ", "let": "lət", "ette": "ɛt",
+}
+_AFFIX_PREFIX = {
+    "un": "ʌn", "non": ("nɒn", "nɑn"), "re": "ɹiː", "pre": "pɹiː", "de": "diː",
+    "mis": "mɪs", "dis": "dɪs", "out": "aʊt", "over": ("əʊvə", "oʊvɚ"),
+    "under": ("ʌndə", "ʌndɚ"), "anti": "ænti", "sub": "sʌb", "co": ("kəʊ", "koʊ"),
+    "super": ("suːpə", "suːpɚ"), "inter": ("ɪntə", "ɪntɚ"), "multi": "mʌlti",
+    "semi": "sɛmi", "micro": ("maɪkɹəʊ", "maɪkɹoʊ"), "mini": "mɪni", "ex": "ɛks",
+    "counter": ("kaʊntə", "kaʊntɚ"), "self": "sɛlf", "step": "stɛp",
+}
+_AFFIX_TEMPLATES = {"suffix", "prefix", "affix", "af", "compound", "com", "ety"}
+_IPA_VOWELS = set("aeiouæɑɒɔəɚɛɜɪʊʌ")
+
+
+def _affix_sound(table: dict, part: str, accent: str) -> str | None:
+    snd = table.get(part)
+    if isinstance(snd, tuple):
+        return snd[1] if accent == "US" else snd[0]
+    return snd
+
+
+def _template_parts(word: str) -> list[list[tuple[str, str]]]:
+    """Word parts Wiktionary's etymology names, as (kind, spelling) lists:
+    attester = suffix(attest, er), frother = ety(:af, froth, -er<id:agent noun>),
+    stepdad = ety(:af, step-, dad). Only parts that spell the word qualify."""
+    from .. import kaikki_index
+    found: list[list[tuple[str, str]]] = []
+    for entry in kaikki_index.lookup("en", word.lower()) or []:
+        for t in entry.get("etymology_templates") or []:
+            name, args = t.get("name"), t.get("args") or {}
+            if name not in _AFFIX_TEMPLATES or str(args.get("1", "en")) != "en":
+                continue
+            raw = [str(args.get(str(i)) or "") for i in range(2, 7)]
+            if name == "ety":
+                if not raw[0].startswith(":af"):
+                    continue
+                raw = raw[1:]
+            parts: list[tuple[str, str]] = []
+            for i, text in enumerate(raw):
+                text = re.sub(r"<[^>]*>", "", text).strip().lower()
+                if not text:
+                    continue
+                if not re.fullmatch(r"-?[a-z][a-z']*-?", text):
+                    parts = []
+                    break
+                if name == "suffix" and i == 1 or text.startswith("-"):
+                    parts.append(("suffix", text.strip("-")))
+                elif name == "prefix" and i == 0 or text.endswith("-"):
+                    parts.append(("prefix", text.strip("-")))
+                else:
+                    parts.append(("word", text))
+            if len(parts) >= 2 and _spells(parts, word) and parts not in found:
+                found.append(parts)
+    return found
+
+
+def _spelling_variants(parts: list[tuple[str, str]]) -> set[str]:
+    """Spellings the parts can take side by side: lounge+y → loungey,
+    thug+y → thuggy, happy+ness → happiness, plane+ar+ize: e dropped."""
+    out = {""}
+    for i, (kind, text) in enumerate(parts):
+        nxt = parts[i + 1][1][:1] if i + 1 < len(parts) else ""
+        forms = {text}
+        if kind == "word" and nxt:
+            if nxt in "aeiouy":
+                if text.endswith("e"):
+                    forms.add(text[:-1])
+                if re.search(r"[aeiou][bdfglmnprstz]$", text):
+                    forms.add(text + text[-1])
+            if text.endswith("y") and nxt != "i":
+                forms.add(text[:-1] + "i")
+            if text.endswith("e") and nxt == "y":
+                forms.add(text)
+        out = {a + b for a in out for b in forms}
+    return out
+
+
+def _spells(parts: list[tuple[str, str]], word: str) -> bool:
+    return re.sub(r"[\s-]+", "", word.lower()) in _spelling_variants(parts)
+
+
+def _guess_parts(word: str) -> list[list[tuple[str, str]]]:
+    """Parts by spelling alone when Wiktionary names none (loungey, thuggy):
+    one known suffix or prefix, and a base that has to be a dictionary
+    headword with phonemic IPA. Longer affixes first (-ness before -s)."""
+    w = word.lower()
+    out: list[list[tuple[str, str]]] = []
+    for suffix in sorted(_AFFIX_SUFFIX, key=len, reverse=True):
+        stem = w[: -len(suffix)] if w.endswith(suffix) else ""
+        if len(stem) < 3:
+            continue
+        bases = [stem]
+        if suffix[0] in "aeiouy":
+            bases.append(stem + "e")
+            if len(stem) > 3 and stem[-1] == stem[-2] and stem[-1] in "bdfglmnprstz":
+                bases.append(stem[:-1])
+        if stem.endswith("i"):
+            bases.append(stem[:-1] + "y")
+        for base in bases:
+            if base != w and _base_phonemic(base) and [("word", base), ("suffix", suffix)] not in out:
+                out.append([("word", base), ("suffix", suffix)])
+        if out:
+            return out
+    for prefix in sorted(_AFFIX_PREFIX, key=len, reverse=True):
+        base = w[len(prefix):].lstrip("-") if w.startswith(prefix) else ""
+        if len(base) >= 3 and _base_phonemic(base):
+            out.append([("prefix", prefix), ("word", base)])
+            return out
+    return out
+
+
+def _part_body(kind: str, text: str, accent: str) -> tuple[str, bool, bool] | None:
+    """IPA body (no slashes) of one part in one accent: (body, from CMUdict
+    phonemes, specific to this accent). A prefix not in the table (step-) is
+    a word."""
+    if kind == "suffix":
+        snd = _affix_sound(_AFFIX_SUFFIX, text, accent)
+        return (snd, False, isinstance(_AFFIX_SUFFIX.get(text), tuple)) if snd else None
+    if kind == "prefix":
+        snd = _affix_sound(_AFFIX_PREFIX, text, accent)
+        if snd:
+            return (snd, False, isinstance(_AFFIX_PREFIX.get(text), tuple))
+    for row in _base_phonemic(text):
+        if not row["accent"] or accent in row["accent"]:
+            return (row["ipa"].strip("/"), False, bool(row["accent"]))
+    if accent == "US":
+        ipa = _cmudict_ipa(text)
+        if ipa:
+            return (ipa.strip("/"), True, True)
+    return None
+
+
+# Prefixes that never take a noun's main stress (unbelief, nonbeliever).
+_UNSTRESSED_PREFIXES = {"un", "non", "re", "pre", "de", "mis", "dis", "a", "be", "en", "em"}
+
+
+def _join_parts(body: str, kind: str, part: str, spelling: str, prev_kind: str,
+                noun: bool = False) -> str:
+    """Attach one part's sound: froth+er → ˈfɹɒθə, water+y (UK) → ˈwɔːtəɹi
+    (linking r), un+happy → ˌʌnˈhæpi, step+dad → ˈstɛpˌdæd. A noun's
+    prefix takes the main stress (outgroup ˈaʊtˌɡɹuːp) unless it is one that
+    never does; a verb's or adjective's base keeps it (outrun ˌaʊtˈɹʌn)."""
+    stressed = "ˈ" in body
+    if kind == "suffix":
+        base = body if stressed else "ˈ" + body
+        if part[:1] in _IPA_VOWELS:
+            if base.endswith("ɚ"):
+                base = base[:-1] + "əɹ"
+            elif spelling.rstrip("e").endswith("r") and base[-1:] not in "ɹr":
+                base += "ɹ"
+            elif base.endswith("əl") and spelling.endswith("le"):
+                base = base[:-2] + "l"  # crumble + y → ˈkɹʌmbli, settle + er → ˈsɛtlə
+        if part[:1] == "l" and base.endswith("l"):
+            part = part[1:]
+        return base + part
+    if prev_kind == "prefix":
+        prefix = re.sub("[ˈˌ]", "", body)  # a word used as a prefix (auto-) drops its own
+        base = part if "ˈ" in part else "ˈ" + part
+        if noun and spelling in _AFFIX_PREFIX and spelling not in _UNSTRESSED_PREFIXES:
+            return "ˈ" + prefix + base.replace("ˈ", "ˌ")
+        return "ˌ" + prefix + base
+    second = part.replace("ˈ", "ˌ")  # a compound: first part stressed
+    return (body if stressed else "ˈ" + body) + ("" if "ˌ" in second else "ˌ") + second
+
+
+def derived_affix_ipa(word: str) -> list[dict]:
+    """IPA for a derivative or compound from its parts (問題回報 #291):
+    Wiktionary's named parts first (attest + -er), a spelling guess only
+    when it names none and ECDICT has no IPA either (loungey). Every base
+    must already have phonemic IPA; the value is an estimate and says so."""
+    w = word.lower()
+    if " " in w or not re.fullmatch(r"[a-z][a-z'-]*", w):
+        return []
+    from .. import kaikki_index
+    guessed = False
+    options = _template_parts(w)
+    if not options:
+        from .ecdict import ECDict
+        if ECDict().ipa(w):
+            return []  # a dictionary's own IPA is next in line
+        options, guessed = _guess_parts(w), True
+    pos = {str(e.get("pos") or "") for e in kaikki_index.lookup("en", w) or []}
+    noun = bool(pos) and pos <= {"noun", "name"}
+    out: list[dict] = []
+    for parts in options:
+        for accent in ("UK", "US"):
+            body, phonemes, specific, prev_kind, ok = "", False, False, "", True
+            for i, (kind, text) in enumerate(parts):
+                got = _part_body(kind, text, accent)
+                if got is None:
+                    ok = False
+                    break
+                snd, from_phonemes, this_accent = got
+                phonemes, specific = phonemes or from_phonemes, specific or this_accent
+                body = snd if i == 0 else _join_parts(body, kind, snd, parts[i - 1][1], prev_kind,
+                                                      noun)
+                prev_kind = kind
+            if not ok:
+                continue
+            ipa = f"/{body}/"
+            same = next((item for item in out if item["ipa"] == ipa), None)
+            if same is not None:  # said the same way in both accents
+                if same["accent"] and accent not in same["accent"]:
+                    same["accent"].append(accent)
+                continue
+            row = {"ipa": ipa, "accent": [accent] if specific else [], "composed": True,
+                   "estimate": True,
+                   "base": " + ".join(("-" if k == "suffix" else "") + t + ("-" if k == "prefix" else "")
+                                      for k, t in parts),
+                   "derived": "spelling" if guessed else "wiktionary"}
+            if phonemes:
+                row["from_phonemes"] = True
+            out.append(row)
+        if out:
+            break
     return out[:3]
 
 
@@ -661,10 +900,12 @@ class LocalCalc(SourceAdapter):
                                    confidence=0.6, source_record_id=ctx.lemma))
         elif f == "ipa" and ctx.target == "en":
             # A regular inflection (drizzled, crinkled): its base word's IPA
-            # with the suffix's sound.
+            # with the suffix's sound; else a derivative's parts (frother,
+            # 問題回報 #291), an estimate with a lower confidence.
             for v in (inflected_ipa(ctx.lemma) or derived_adjective_ipa(ctx.lemma)
-                      or linked_base_ipa(ctx.lemma)):
-                C.append(Candidate(f, "en", v, v["ipa"], confidence=0.6,
+                      or linked_base_ipa(ctx.lemma) or derived_affix_ipa(ctx.lemma)):
+                C.append(Candidate(f, "en", v, v["ipa"],
+                                   confidence=0.5 if v.get("estimate") else 0.6,
                                    source_record_id=ctx.lemma))
         elif f == "noun_plural" and ctx.target == "en":
             plural = regular_plural(ctx.lemma)
@@ -1067,6 +1308,13 @@ def matches_lexeme_pos(text: str, lemma: str, pos: str, forms, verb_only=()) -> 
     """
     bag = {str(f).lower() for f in forms if f and _form_of_lemma(lemma, str(f))}
     bag.add(lemma.lower())
+    if pos == "intj":
+        return _intj_frame(text, bag)
+    if pos == "noun" and " " in lemma:
+        # "raised bed", "spiral arms": the single-word frames never match a
+        # compound, so every sentence was rejected (卡 #166).
+        joined = " " + " ".join(tokens(text)) + " "
+        return any(" " + " ".join(tokens(f)) + " " in joined for f in bag if " " in f)
     only = frozenset(str(f).lower() for f in verb_only if _form_of_lemma(lemma, str(f))
                      and str(f).lower() != lemma.lower())
     use = _usage_pos(text, bag, only, lemma)
@@ -1083,6 +1331,17 @@ def matches_lexeme_pos(text: str, lemma: str, pos: str, forms, verb_only=()) -> 
     if pos == "phrase" and " " in lemma:
         return lemma.lower() in " ".join(tokens(text))
     return False
+
+
+def _intj_frame(text: str, forms) -> bool:
+    """The word is said on its own: ``"Cheese!" said the photographer.``
+
+    It opens the sentence or a quote and is followed by ``!`` (or ``,``),
+    so ``The fire was warm.`` is not the interjection (問題回報 #286)."""
+    alts = "|".join(re.escape(f) for f in sorted(forms, key=len, reverse=True))
+    return bool(re.search(
+        r"(?:^|[.!?]\s+|[\"“‘(]\s*)(?:" + alts + r")[\"”’]?\s*[!,]",
+        text.strip(), re.I))
 
 
 def _verb_frame(text: str, lemma: str, verb_only: frozenset) -> bool:

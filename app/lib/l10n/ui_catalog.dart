@@ -40,9 +40,13 @@ const uiCatalog = <String, (String, String)>{
     'Previously learned and current words',
     'Mots déjà acquis et en cours'
   ),
-  '左滑單字表示已經會了；拖曳照片上的標籤可調整位置。\n離開這一頁時會自動保存。': (
-    'Swipe a word left if you know it; drag photo labels to reposition them.\nChanges are saved when you leave this page.',
-    'Balayez un mot à gauche si vous le connaissez ; faites glisser les étiquettes pour les déplacer.\nLes modifications sont enregistrées en quittant cette page.'
+  '返回時自動保存，不用再按建立。': (
+    'Saved automatically when you go back; no Create button needed.',
+    'Enregistré automatiquement en revenant en arrière ; pas de bouton Créer.'
+  ),
+  '左滑單字表示已經會了；拖曳照片上的標籤可調整位置。': (
+    'Swipe a word left if you know it; drag photo labels to reposition them.',
+    'Balayez un mot à gauche si vous le connaissez ; faites glisser les étiquettes pour les déplacer.'
   ),
   '打開「顯示已學會單字」可以看到照片裡已經學過的詞。': (
     'Turn on “Show learned words” to see familiar words in the photo.',
@@ -72,13 +76,22 @@ const uiCatalog = <String, (String, String)>{
     'Le traitement reprendra à la reconnexion de l’IA. Vous pouvez quitter cette page.'
   ),
   '前往設定': ('Go to settings', 'Ouvrir les réglages'),
-  '尚未設定 AI 辨識服務': (
-    'AI recognition is not configured',
-    'Reconnaissance IA non configurée'
+  '這台裝置沒有照片辨識': (
+    'This device cannot recognise photos',
+    'Cet appareil ne peut pas reconnaître les photos'
   ),
-  '填好服務網址與 API Key 後，這張照片會自動開始辨識。': (
-    'Recognition starts automatically after you enter the service URL and API key.',
-    'La reconnaissance démarrera après la saisie de l’URL du service et de la clé API.'
+  '這台裝置目前無法辨識照片，照片會先留在相片冊。': (
+    'This device cannot recognise photos yet; the photo stays in the album.',
+    'Cet appareil ne peut pas encore reconnaître les photos ; la photo reste dans l’album.'
+  ),
+  '照片辨識': ('Photo recognition', 'Reconnaissance photo'),
+  '照片在這支手機上辨識，不會上傳到任何伺服器。': (
+    'Photos are recognised on this phone and never uploaded to a server.',
+    'Les photos sont reconnues sur ce téléphone et ne sont jamais envoyées à un serveur.'
+  ),
+  '這台裝置沒有本機照片辨識，照片會先留在相片冊。': (
+    'This device has no on-device photo recognition; photos stay in the album.',
+    'Cet appareil n’a pas de reconnaissance photo locale ; les photos restent dans l’album.'
   ),
   '尚未有可用相機或照片': (
     'No camera or photo available yet',
@@ -297,9 +310,9 @@ const uiCatalog = <String, (String, String)>{
     'The web app connects to this computer’s recognition service automatically. Only change these settings for another service. Photos wait offline and resume when connected.',
     'L’application web se connecte automatiquement au service de cet ordinateur. Modifiez ces réglages pour un autre service. Les photos attendent hors ligne puis reprennent à la connexion.'
   ),
-  '請填入照片辨識服務（Qwen）的網址與金鑰才能辨識照片內容。連不上時照片會先排隊，恢復連線後自動處理。': (
-    'Enter the photo recognition service (Qwen)’s address and key to recognise photo content. Photos wait offline and resume when connected.',
-    'Saisissez l’adresse et la clé du service de reconnaissance photo (Qwen) pour reconnaître le contenu des photos. Les photos attendent hors ligne puis reprennent à la connexion.'
+  '留空時用手機本機辨識照片；填入服務網址與金鑰則改用該服務。連不上時照片會先排隊，恢復連線後自動處理。': (
+    'Leave empty to recognise photos on the phone; enter a service address and key to use that service instead. Photos wait offline and resume when connected.',
+    'Laissez vide pour reconnaître les photos sur le téléphone ; saisissez l’adresse et la clé d’un service pour l’utiliser. Les photos attendent hors ligne puis reprennent à la connexion.'
   ),
   '服務網址': ('Service URL', 'URL du service'),
   '連線金鑰（API Key）': ('API key', 'Clé API'),
@@ -309,9 +322,9 @@ const uiCatalog = <String, (String, String)>{
   ),
   '測試中…': ('Testing…', 'Test en cours…'),
   '測試連線': ('Test connection', 'Tester la connexion'),
-  '✕ 服務有回應，但 Ollama 沒有啟動': (
-    '✕ Service responded, but Ollama is not running',
-    '✕ Le service répond, mais Ollama est arrêté'
+  '✕ 服務有回應，但 AI 模型沒有啟動': (
+    '✕ Service responded, but the AI model is not running',
+    '✕ Le service répond, mais le modèle IA est arrêté'
   ),
   '✕ 服務正常，但 API Key 不正確': (
     '✕ Service is online, but the API key is incorrect',
@@ -518,9 +531,9 @@ const uiCatalog = <String, (String, String)>{
   ),
   '稍後再出現': ('Appears again later', 'Réapparaît plus tard'),
   '拍照學單字': ('Learn words with photos', 'Apprendre avec des photos'),
-  '即時辨識生活中的英文單字': (
-    'Discover English words around you',
-    'Découvrez les mots anglais autour de vous'
+  '拍照或選一張照片，找出生活中的英文單字': (
+    'Take or choose a photo to find English words around you',
+    'Prenez ou choisissez une photo pour trouver les mots anglais autour de vous'
   ),
   '先選一張照片開始學習': (
     'Choose a photo to start learning',
@@ -756,5 +769,35 @@ const _templateCopy = <String, (String, String)>{
   '{0}：{1} 個單字 · {2} 張照片 · {3} 張卡片 · 已學會 {4} 個': (
     '{0}: {1} words · {2} photos · {3} cards · {4} learned',
     '{0} : {1} mots · {2} photos · {3} cartes · {4} acquis'
+  ),
+  // 備份與還原 (問題回報 #278)
+  '匯出備份': ('Export backup', 'Exporter une sauvegarde'),
+  '從備份還原': ('Restore from backup', 'Restaurer une sauvegarde'),
+  '從備份還原？': ('Restore from backup?', 'Restaurer une sauvegarde ?'),
+  '選擇備份檔': ('Choose backup file', 'Choisir le fichier'),
+  '正在建立備份…': ('Creating backup…', 'Création de la sauvegarde…'),
+  '正在還原…': ('Restoring…', 'Restauration…'),
+  '還原會用備份檔取代目前所有的單字、照片、相片冊、複習紀錄與設定。想保留目前的資料，請先匯出備份。': (
+    'Restoring replaces all your current words, photos, albums, review history and settings with the backup. To keep your current data, export a backup first.',
+    'La restauration remplace tous vos mots, photos, albums, historique de révision et réglages actuels. Pour garder vos données actuelles, exportez d’abord une sauvegarde.'
+  ),
+  '備份檔包含單字、照片、相片冊、複習紀錄與設定（不含照片辨識的連線金鑰）。': (
+    'A backup holds your words, photos, albums, review history and settings (not the photo-recognition API key).',
+    'Une sauvegarde contient vos mots, photos, albums, historique de révision et réglages (sans la clé API de reconnaissance).'
+  ),
+  '這不是拍照學單字的備份檔': ('This is not a 拍照學單字 backup file', 'Ce fichier n’est pas une sauvegarde de 拍照學單字'),
+  '這個備份來自較新版本的 App，請先更新 App 再還原': (
+    'This backup comes from a newer version of the app. Update the app, then restore.',
+    'Cette sauvegarde vient d’une version plus récente de l’app. Mettez l’app à jour, puis restaurez.'
+  ),
+  '備份檔已損壞，無法讀取': ('The backup file is damaged and cannot be read', 'Le fichier de sauvegarde est endommagé'),
+  '備份檔不完整，可能沒有存完': ('The backup file is incomplete; it may not have finished saving', 'Le fichier de sauvegarde est incomplet'),
+  '已建立備份：{0} 個單字、{1} 張照片、{2} 筆複習紀錄（照片 {3}）': (
+    'Backup created: {0} words, {1} photos, {2} reviews (photos {3})',
+    'Sauvegarde créée : {0} mots, {1} photos, {2} révisions (photos {3})'
+  ),
+  '已還原：{0} 個單字、{1} 張照片、{2} 筆複習紀錄': (
+    'Restored: {0} words, {1} photos, {2} reviews',
+    'Restauré : {0} mots, {1} photos, {2} révisions'
   ),
 };

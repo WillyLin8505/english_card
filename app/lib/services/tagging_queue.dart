@@ -74,9 +74,8 @@ class TaggingQueue extends ChangeNotifier {
 
   String get progressLabel {
     if (_current == null) {
-      final reason = settings.taggingConfigured
-          ? '等待 AI 服務恢復，會自動重試'
-          : '這台裝置沒有照片辨識';
+      final reason =
+          settings.taggingConfigured ? '等待 AI 服務恢復，會自動重試' : '這台裝置沒有照片辨識';
       return '已處理 $_completed/${_completed + pending} 張 · $reason';
     }
     final seconds = estimatedRemaining.inSeconds;

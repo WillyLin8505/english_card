@@ -86,6 +86,14 @@ def test_fill_missing_limit_keeps_one_item_per_slot_first():
     assert keys(r) == ["n1", "n2", "v1"]
 
 
+def test_per_slot_cap_lets_each_part_of_speech_keep_its_first_senses():
+    # #292: the nouns come first in the source; the verb still keeps its first two.
+    r = Resolver("FILL_MISSING", limit=2, expected={"noun", "verb"}, cap_per_slot=True)
+    r.add(1000, "kaikki", [C("n1", "noun"), C("n2", "noun"), C("n3", "noun"),
+                           C("v1", "verb"), C("v2", "verb"), C("v3", "verb")])
+    assert keys(r) == ["n1", "n2", "v1", "v2"]
+
+
 def test_per_level_slots_keep_three_to_five_and_ai_only_fills_short_levels():
     r = Resolver("APPEND_LIMITED", limit=30, expected={"A1", "A2", "C2"}, per_slot=(3, 5))
     r.add(1000, "tatoeba", [C(f"a{i}", "A1") for i in range(7)] + [C("b1", "A2")])

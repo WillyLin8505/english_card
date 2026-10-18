@@ -859,8 +859,22 @@ class Tick:
             board = http("GET", "/schedule/board")
         self.dispatch(board)
         self.heartbeats(board)
+        self.mac_sync()
         self.save()
         return 0
+
+    def mac_sync(self):
+        """Finished app cards → tested, pushed and listed for the Mac (mac_sync.py, own lock)."""
+        if self.dry or not (self.cfg.get("mac_sync") or {}).get("enabled"):
+            return
+        flags = NO_WINDOW if os.name == "nt" else 0
+        try:
+            subprocess.Popen([python_exe(), str(TOOLS / "mac_sync.py")], cwd=ROOT,
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                             creationflags=flags | BREAKAWAY)
+        except OSError:
+            subprocess.Popen([python_exe(), str(TOOLS / "mac_sync.py")], cwd=ROOT,
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=flags)
 
     def save(self):
         if self.dry:

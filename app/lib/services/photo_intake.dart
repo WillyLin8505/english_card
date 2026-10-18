@@ -22,6 +22,7 @@ class TaggingNotConfigured implements Exception {
 class PhotoIntake {
   final WordDatabaseRepository Function() repository;
   final PhotoStore photoStore;
+
   /// The server client (developer / web builds, 設定 → 照片辨識連線).
   final PhotoTagger Function(Uri endpoint, String apiKey) createTagger;
 
@@ -88,7 +89,8 @@ class PhotoIntake {
       contentHash: hashBytes(bytes),
     );
     repo.addPhoto(photo);
-    Analytics.instance.capture('photo_added', {'in_album': albumId != null}, now);
+    Analytics.instance
+        .capture('photo_added', {'in_album': albumId != null}, now);
     return photo;
   }
 

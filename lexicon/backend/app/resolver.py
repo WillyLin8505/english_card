@@ -49,6 +49,9 @@ class Resolver:
     # next source is still asked and its values are added (IPA: kaikki gives
     # only narrow [ˈspɒtɪ̈d], CMUdict adds phonemic /ˈspɑtɪd/).
     enough: Callable[[object], bool] | None = None
+    # FILL_MISSING: the limit counts per slot (per part of speech) instead of
+    # per field, so a noun's senses can't use up a verb's places (#292).
+    cap_per_slot: bool = False
     adopted: list[Adopted] = field(default_factory=list)
     _keys: set = field(default_factory=set)
     _filled: set = field(default_factory=set)
@@ -149,6 +152,13 @@ class Resolver:
             items = sorted(items, key=lambda a: -a.candidate.confidence)
         if self.enough is not None:  # the settling values survive the limit
             items = sorted(items, key=lambda a: not self.enough(a.candidate))
+        if self.cap_per_slot and self.limit:
+            count, kept = {}, []
+            for a in items:
+                if count.get(a.candidate.slot, 0) < self.limit:
+                    count[a.candidate.slot] = count.get(a.candidate.slot, 0) + 1
+                    kept.append(a)
+            return kept
         if not self.limit or len(items) <= self.limit:
             return list(items)
         if self.strategy == "FILL_MISSING":

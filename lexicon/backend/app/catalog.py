@@ -387,6 +387,8 @@ SETTLED = DONE + (SHORT,)
 AUDIO_ACCENTS = ("UK", "US")
 # Fields with a target per slot: at least / at most items each slot keeps.
 TARGETED = {**LEVELED, "audio": (1, 1)}
+# FILL_MISSING fields whose limit is per slot (per part of speech), not per field.
+PER_SLOT_CAP = {"definition"}
 # Fields a word may simply not have.
 MAY_BE_EMPTY = {"antonyms", "hypernyms", "hyponyms", "homophones", "near_homophones",
                 "similar_spelling", "derived_terms", "usage_labels", "accent_labels",

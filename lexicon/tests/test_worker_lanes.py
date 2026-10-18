@@ -65,3 +65,25 @@ def test_text_lane_never_takes_picture_work(session, monkeypatch):
     # Even after three text words (when the "all" lane interleaves pictures).
     worker._text_slices["w-text"] = 3
     assert worker.work_once("w-text", "text") is False
+
+
+def test_worker_notices_backend_code_newer_than_its_start(tmp_path, monkeypatch):
+    """問題回報 #285: a worker started before a backend edit mixed old and new
+    modules; it now exits between units so run_worker.bat restarts it."""
+    import os
+    import time
+    worker = _worker_module()
+    code = tmp_path / "app"
+    code.mkdir()
+    module = code / "images.py"
+    module.write_text("x = 1\n")
+    monkeypatch.setattr(worker, "CODE_DIR", code)
+    monkeypatch.setattr(worker, "ROOT", tmp_path)
+    monkeypatch.setattr(worker, "_code_files", lambda: iter([module]))
+    now = time.time()
+    os.utime(module, (now - 100, now - 100))
+    assert worker._code_changed(loaded_at=now - 50) is None
+    os.utime(module, (now - 10, now - 10))
+    assert worker._code_changed(loaded_at=now - 50) == os.path.join("app", "images.py")
+    os.utime(module, (now + 3600, now + 3600))  # a future date must not loop restarts
+    assert worker._code_changed(loaded_at=now - 50) is None

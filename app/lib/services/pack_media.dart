@@ -15,7 +15,7 @@ String resolvePackMedia(String path) {
   const configured = String.fromEnvironment('DICTIONARY_URL');
   final origin = configured.isNotEmpty
       ? Uri.parse(configured)
-      : Uri.parse('http://127.0.0.1:8123/');
+      : Uri.parse('https://api.willylinai.com/');
   return origin.resolve(path).toString();
 }
 

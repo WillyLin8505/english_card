@@ -152,3 +152,32 @@ def test_pack_body_is_gzipped_once_per_version():
     out = serve_app.gzipped('"v1"', body)
     assert gzip.decompress(out) == body and len(out) < len(body)
     assert serve_app.gzipped('"v1"', b'other') is out
+
+
+def test_public_host_dictionary_is_keyless_but_rate_limited(monkeypatch, tmp_path):
+    def pack(target, native):
+        return json.dumps({'target_language': target, 'native_language': native,
+                           'created_at': 'v1', 'lexemes': []}).encode(), '"v1"'
+    from lexicon_transport import SnapshotStore
+    monkeypatch.setattr(server_module, '_http_snapshots', SnapshotStore(pack, tmp_path))
+    monkeypatch.setenv('TAGGER_API_KEY', 'server-only-test-key')
+    monkeypatch.setitem(server_module.RATE_LIMITS, '/api/lexicon', 3)
+    server_module.RATE_HITS.clear()
+    server = ThreadingHTTPServer(('127.0.0.1', 0), server_module.Handler)
+    server.public_hosts = {'api.example.test'}
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        def get(path, ip='1.1.1.1'):
+            conn = HTTPConnection('127.0.0.1', server.server_port)
+            conn.request('GET', path, headers={'Host': 'api.example.test', 'CF-Connecting-IP': ip})
+            status = conn.getresponse().status
+            conn.close()
+            return status
+        assert [get('/api/lexicon') for _ in range(4)] == [200, 200, 200, 429]
+        assert get('/api/lexicon', ip='2.2.2.2') == 200
+        assert get('/health') == 401
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join()

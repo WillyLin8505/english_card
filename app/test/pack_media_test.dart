@@ -6,11 +6,11 @@ void main() {
     // flutter test runs as a VM: kIsWeb is false, Uri.base is not http.
     expect(
       resolvePackMedia('/api/image?id=9'),
-      'http://127.0.0.1:8123/api/image?id=9',
+      'https://api.willylinai.com/api/image?id=9',
     );
     expect(
       packRecordingUrl('/api/audio', 'audio/en/go.mp3'),
-      'http://127.0.0.1:8123/api/audio?path=audio%2Fen%2Fgo.mp3',
+      'https://api.willylinai.com/api/audio?path=audio%2Fen%2Fgo.mp3',
     );
   });
 

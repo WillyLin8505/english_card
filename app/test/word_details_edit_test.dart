@@ -82,6 +82,7 @@ void main() {
       final id = repo.addWord(word: 'help', pos: 'verb', meaning: '').id;
       var version = 1;
       DictionarySync makeSync() => DictionarySync(
+          remote: true,
           client: MockClient((_) async => http.Response.bytes(
               utf8.encode(jsonEncode(dictionary(version))), 200)));
       var sync = makeSync();

@@ -29,7 +29,7 @@ from sqlalchemy.orm import Session
 
 from . import catalog
 from . import models as m
-from . import policies
+from . import policies, pos_exclusions
 from .adapters import ADAPTERS, Candidate, Context, SourceError
 from .adapters.base import inflection_bases, localize
 from .adapters.local import LEVELS, sentence_level, word_forms, word_level
@@ -419,6 +419,7 @@ def resolve_field(s: Session, ctx: Context, field_key: str, policy, steps, *, mo
     res = Resolver(policy.strategy, policy.max_items, expected,
                    per_slot=catalog.TARGETED.get(field_key) if expected is not None else None,
                    only_missing=field_key == "audio",
+                   cap_per_slot=field_key in catalog.PER_SLOT_CAP,
                    # Learners read phonemic /…/ IPA: narrow […] alone asks on (#24).
                    enough=_phonemic if field_key == "ipa" else None)
     rep = FieldReport(field_key, "missing", strategy=policy.strategy)
@@ -520,6 +521,8 @@ def resolve_field(s: Session, ctx: Context, field_key: str, policy, steps, *, mo
         step.ms = int((time.time() - started) * 1000)
         if field_key in catalog.LEVELED:
             level_candidates(cands, field_key, ctx)
+        # An excluded part of speech (問題回報 #284) is never adopted again.
+        pos_exclusions.drop_candidates(cands, ctx.target, ctx.lemma, field_key)
         valid = [c for c in cands if c.valid and c.confidence >= st.min_confidence]
         if st.max_results:
             valid = valid[: st.max_results]
@@ -585,6 +588,87 @@ def _save_value(s: Session, ctx: Context, field_key: str, rep: FieldReport, poli
                                 source=a.source, item_key=a.candidate.key[:500],
                                 snapshot_id=a.candidate.snapshot_id,
                                 strategy=policy.strategy if policy else "", position=a.position))
+
+
+def item_slot(field_key: str, item: dict) -> str | None:
+    """The slot a stored value item fills (item_of writes ``slot``; older or
+    tool-written rows carry only the field's own key)."""
+    if item.get("slot"):
+        return str(item["slot"])
+    if field_key == "definition":
+        return item.get("pos") or None
+    for k in ("example_key", "sense_key", "key"):
+        if item.get(k):
+            return str(item[k])
+    if item.get("word"):
+        return str(item["word"]).lower()
+    return None
+
+
+def stale_missing(field_key: str, ctx: Context, status: str, missing: list, items: list):
+    """A stored value whose ``missing`` names slots the word no longer has (a
+    sense re-fetched under a new key, an example sentence dropped) — problem
+    report #288. Returns ``(status, missing, stale)`` recomputed from the
+    current expected slots, or None when nothing is stale / the field has no
+    per-slot targets. Per-level fields (example sentences, audio) keep their
+    own 「缺漏」 bookkeeping and are left alone."""
+    if status not in ("partial", "missing") or not missing or field_key in catalog.TARGETED:
+        return None
+    expected = expected_slots(field_key, ctx)
+    if expected is None:
+        return None
+    stale = sorted(set(missing) - expected)
+    if not stale:
+        return None
+    have = {item_slot(field_key, i) for i in (items or [])}
+    now_missing = sorted(expected - have)
+    if not items:
+        new_status = "complete" if not expected else status
+    else:
+        new_status = status_of(items, set(now_missing), expected, 0, 1)
+    return new_status, now_missing, stale
+
+
+def drop_filled_missing(field_key: str, status: str, missing: list, items: list):
+    """A tool that rewrites ``items`` outside resolve_field (card166_reselect
+    binding examples to senses) must not leave the slots it filled in
+    ``missing`` — problem report #289. Returns ``(status, missing)`` with every
+    slot an item fills removed (status_of's rule for what is left); unchanged
+    for per-level fields, whose slots need several items each."""
+    if status not in ("partial", "missing") or not missing or field_key in catalog.TARGETED:
+        return status, list(missing or [])
+    have = {item_slot(field_key, i) for i in (items or [])}
+    left = [k for k in missing if k not in have]
+    if not items:
+        return status, left
+    return ("partial" if left else "complete"), left
+
+
+def refresh_dependents(s: Session, ctx: Context, resolved: set[str], write: bool) -> list[str]:
+    """After a run that resolved only some fields, drop stale slots from the
+    ``missing`` lists of the fields that depend on them (and transitively on
+    those) but were not resolved this run; returns the fields refreshed."""
+    touched = set(resolved)
+    out = []
+    for f in field_order(ctx.target):
+        if f in resolved or f not in ctx.resolved:  # resolved this run / no stored value
+            continue
+        if not any(d in touched for d in DEPENDS.get(f, [])):
+            continue
+        touched.add(f)
+        row = s.execute(select(m.FieldValue).where(
+            m.FieldValue.target_language == ctx.target, m.FieldValue.lemma == ctx.lemma,
+            m.FieldValue.native_language == ctx.native, m.FieldValue.field == f)
+        ).scalar_one_or_none()
+        if row is None:
+            continue
+        got = stale_missing(f, ctx, row.status, list(row.missing or []), list(row.items or []))
+        if got is None:
+            continue
+        out.append(f)
+        if write:
+            row.status, row.missing = got[0], got[1]
+    return out
 
 
 def _validate_only(s, ctx, field_key, existing, policy) -> FieldReport:
@@ -719,6 +803,11 @@ def process_word(s: Session, target: str, native: str, word: str, fields: list[s
             recorder.attempt(lemma, "pos", "rule", "skipped", 0, 0,
                              "不是字典詞條（情境片語），不建立", "not_lexical")
         return reports
+    if fields and mode != "validate_only":
+        # A partial run (definition only, examples only…) changes what its
+        # dependents should fill; their stored 「缺」 lists must not keep
+        # naming slots that no longer exist (問題回報 #288).
+        refresh_dependents(s, ctx, set(ordered), write)
     if write and mode != "validate_only" and materialize_after:
         from .materialize import materialize
         # Parallel word shards may create the same related-word stubs. Keep the

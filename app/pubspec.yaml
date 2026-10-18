@@ -39,6 +39,7 @@ flutter:
     - assets/cefr_en.json
     - assets/lexicon/
     - assets/lexicon/media/audio/en/
+    - assets/lexicon/media/images/
     - assets/figma/
     - assets/figma/mobile/
     - assets/sample/

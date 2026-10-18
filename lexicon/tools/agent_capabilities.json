@@ -52,7 +52,8 @@
       "dispatchable": false
     }
   },
-  "night_only_tasks": [166, 167],
+  "night_only_tasks": [167],
+  "_night_166_note": "owner 10/18 晚：Qwen 暫停期間 #166 改由 Claude 直接寫例句，不再限夜間。",
   "night_window": {"start": "01:00", "end": "07:00", "tz": "Asia/Taipei"},
   "_night_note": "使用者 10/17 決定：吃 Qwen 的卡（#166 例句重寫、#167 照片標籤綁定）只在夜間 01:00–07:00（台北）派；其他時間 pick_card.py 跳過，手動派工前用 pick_card.py --check-task <id> 確認（卡 #172）。",
   "skip_tasks": [13, 27],

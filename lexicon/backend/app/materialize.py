@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 
 from . import catalog
 from . import models as m
+from . import pos_exclusions
 from .audio import ensure_audio
 from .text import example_key, normalize_lemma, text_hash
 
@@ -141,18 +142,32 @@ def _upgrade(s: Session, language: str, lemma: str, display: str, poses: list[st
     return out
 
 
+def _stub_excluded(s: Session, language: str, lemma: str, gone: set[str]) -> None:
+    """Nothing left to build because every part of speech is excluded (a
+    proper noun such as alfred, card #166): those full lexemes become stubs,
+    so the word is no longer a full entry but stays a link target."""
+    if gone:
+        s.execute(m.Lexeme.__table__.update().where(
+            m.Lexeme.language == language, m.Lexeme.normalized == lemma,
+            m.Lexeme.status == "full", m.Lexeme.pos.in_(sorted(gone))).values(status="stub"))
+        s.flush()
+
+
 def materialize(s: Session, target: str, lemma: str, display: str | None = None) -> list[int]:
     values = _values(s, target, lemma)
+    gone = pos_exclusions.excluded(target, lemma)  # 問題回報 #284
     if not values:
+        _stub_excluded(s, target, lemma, gone)
         return []
     display = display or lemma
     u = lambda f: _union(values, f)  # noqa: E731
-    senses_items = u("definition")
-    poses = [i["pos"] for i in u("pos") if i.get("pos")]
+    senses_items = [i for i in u("definition") if i.get("pos") not in gone]
+    poses = [i["pos"] for i in u("pos") if i.get("pos") and i["pos"] not in gone]
     for it in senses_items:
         if it.get("pos") and it["pos"] not in poses:
             poses.append(it["pos"])
     if not poses:
+        _stub_excluded(s, target, lemma, gone)
         return []
     lexemes = _upgrade(s, target, lemma, display, poses)
     main = lexemes[poses[0]]

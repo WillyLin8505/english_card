@@ -51,6 +51,11 @@ def text_hash(text: str) -> str:
 
 
 def sense_key(pos: str, gloss: str) -> str:
+    """Content hash of (pos, gloss): stable across re-fetches of the same
+    sense, but NOT unique across headwords — "Money." on bread, cheese and
+    brass share one key (問題回報 #288). It is unique only within a lexeme
+    (senses: UniqueConstraint(lexeme_id, sense_key)); always scope a lookup
+    by lexeme / lemma, and write sense rows back by sense_id."""
     return hashlib.sha1(f"{pos}|{fold(gloss)}".encode("utf-8")).hexdigest()[:12]
 
 
@@ -547,6 +552,8 @@ def clean_native(text: str | None) -> str | None:
 # or left without Chinese (user decision 2026-10-15, LEXICON_QUALITY_RULES).
 COARSE_SENSE_LABELS = {"vulgar", "offensive", "derogatory", "slang"}
 VULGAR_SENSE_LABELS = {"vulgar", "offensive"}
+# App Store build drops these too (owner 2026-10-18, 問題回報 #271: incl. derogatory)
+STORE_UNSAFE_LABELS = VULGAR_SENSE_LABELS | {"derogatory"}
 
 
 def sense_native(text: str | None, labels) -> tuple[str | None, bool]:
