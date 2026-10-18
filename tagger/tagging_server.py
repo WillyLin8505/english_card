@@ -534,6 +534,33 @@ _ACTIVITY_LOCK = threading.Lock()
 _ACTIVITY_SEQ = [0]
 _RECENT: 'collections.deque[dict]' = collections.deque(maxlen=40)
 _CURRENT = threading.local()
+_STAGES = threading.local()
+
+
+def stages_reset() -> dict:
+    """Start this request's stage timings (問題回報 #229): where the seconds go."""
+    _STAGES.data = {'queueMs': 0, 'prepMs': 0, 'modelMs': 0, 'modelCalls': 0, 'cacheHit': False}
+    return _STAGES.data
+
+
+def stage_add(name: str, value) -> None:
+    data = getattr(_STAGES, 'data', None)
+    if data is None:
+        return
+    if isinstance(value, bool):
+        data[name] = data.get(name) or value
+    else:
+        data[name] = data.get(name, 0) + value
+
+
+def note_llama_timings(timings) -> None:
+    """llama-server's own split of the model time: prompt (image + text) vs decode."""
+    if not isinstance(timings, dict):
+        return
+    for src, dst in (('prompt_ms', 'promptMs'), ('predicted_ms', 'decodeMs'),
+                     ('prompt_n', 'promptTokens'), ('predicted_n', 'decodeTokens')):
+        if isinstance(timings.get(src), (int, float)):
+            stage_add(dst, round(timings[src]) if dst.endswith('Ms') else int(timings[src]))
 
 
 @contextlib.contextmanager
@@ -561,6 +588,8 @@ def record_output(result: dict) -> None:
     entry = getattr(_CURRENT, 'entry', None)
     if entry is None or not isinstance(result, dict):
         return
+    if isinstance(result.get('stages'), dict):
+        entry['stages'] = result['stages']
     if entry['kind'] == 'translate':
         src = {str(i.get('id')): i.get('text') for i in entry.get('input') or []}
         entry['output'] = [{'text': src.get(str(i.get('id')), ''), 'out': str(i.get('text', ''))[:200]}
@@ -760,6 +789,14 @@ class Lexicon:
 
 
 def prepare_image(image: bytes) -> tuple[bytes, dict]:
+    started = time.perf_counter()
+    try:
+        return _prepare_image(image)
+    finally:
+        stage_add('prepMs', round((time.perf_counter() - started) * 1000))
+
+
+def _prepare_image(image: bytes) -> tuple[bytes, dict]:
     """Normalize orientation and cap image size before vision inference.
 
     Pillow is optional so the service still runs in a minimal environment. The
@@ -806,8 +843,10 @@ class Tagger:
         """One of the INFERENCE_PARALLEL model slots. Requests with the same
         cache ``key`` wait for each other, so the second reads the first's
         cached reply instead of running the model again."""
+        waited = time.perf_counter()
         if key is None:
             with self._admission.slot():
+                stage_add('queueMs', round((time.perf_counter() - waited) * 1000))
                 yield
             return
         with self._key_locks_guard:
@@ -815,6 +854,7 @@ class Tagger:
             entry[1] += 1
         try:
             with entry[0], self._admission.slot():
+                stage_add('queueMs', round((time.perf_counter() - waited) * 1000))
                 yield
         finally:
             with self._key_locks_guard:
@@ -825,8 +865,11 @@ class Tagger:
     @contextlib.contextmanager
     def _background_inference(self):
         """Lower-concurrency lane for database import translations."""
-        with self._admission.request(background=True), self._background_slots, self._inference():
-            yield
+        waited = time.perf_counter()
+        with self._admission.request(background=True), self._background_slots:
+            stage_add('queueMs', round((time.perf_counter() - waited) * 1000))
+            with self._inference():
+                yield
 
     def ollama_ok(self) -> bool:
         url = (f'{LLAMACPP_URL}/health' if BACKEND == 'llamacpp'
@@ -842,6 +885,15 @@ class Tagger:
               logprobs: bool = False, compact: bool = False):
         """The model's JSON reply; with logprobs, (reply, per-token logprobs).
         ``compact`` asks llama-server for JSON without whitespace."""
+        started = time.perf_counter()
+        try:
+            return self._chat_backend(prompt, schema, image, temperature, max_tokens,
+                                      logprobs, compact)
+        finally:
+            stage_add('modelMs', round((time.perf_counter() - started) * 1000))
+            stage_add('modelCalls', 1)
+
+    def _chat_backend(self, prompt, schema, image, temperature, max_tokens, logprobs, compact):
         if BACKEND == 'llamacpp':
             return self._chat_llamacpp(prompt, schema, image, temperature, max_tokens, logprobs,
                                        compact)
@@ -910,8 +962,9 @@ class Tagger:
         )
         with urllib.request.urlopen(req, timeout=300) as resp:
             if stream_cefr:
-                return loads_salvaging(read_cefr_stream(resp))
+                return loads_salvaging(read_cefr_stream(resp, on_timings=note_llama_timings))
             reply = json.loads(resp.read())
+        note_llama_timings(reply.get('timings'))
         choice = reply['choices'][0]
         parsed = loads_salvaging(choice['message']['content'] or '')
         if not logprobs:
@@ -1352,6 +1405,7 @@ def make_handler(tagger: Tagger, api_key: str):
 
         def _model_call(self, fn):
             started = time.time()
+            stages = stages_reset()
             try:
                 result = fn()
             except UnsafeImage:
@@ -1366,7 +1420,9 @@ def make_handler(tagger: Tagger, api_key: str):
                 # not 502, so the app fails this photo and tags the next one.
                 self._json(422, {'error': f'unexpected model reply: {e}'})
                 return
-            result.update({'model': tagger.model, 'elapsedMs': int((time.time() - started) * 1000)})
+            stages['cacheHit'] = not stages['modelCalls']
+            result.update({'model': tagger.model, 'elapsedMs': int((time.time() - started) * 1000),
+                           'stages': dict(stages)})
             record_output(result)
             self._json(200, result)
 

@@ -72,7 +72,8 @@ class AppSettings extends ChangeNotifier {
       : _taggingUrl = _box?.get('taggingUrl') ?? defaultTaggingUrl,
         _apiKey = _box?.get('apiKey') ?? defaultApiKey,
         _desiredRetention =
-            double.tryParse(_box?.get('desiredRetention') ?? '') ?? 0.9,
+            (double.tryParse(_box?.get('desiredRetention') ?? '') ?? 0.9)
+                .clamp(minRetention, maxRetention),
         _learningLanguage =
             learningLanguageAvailable(_box?.get('learningLanguage') ?? 'en')
                 ? (_box?.get('learningLanguage') ?? 'en')
@@ -139,6 +140,10 @@ class AppSettings extends ChangeNotifier {
   /// Something can recognize photos: the device itself or a server.
   bool get taggingConfigured => usesLocalRecognition || taggingUrl.isNotEmpty;
 
+  /// The range 設定's slider offers; a stored or restored value outside it
+  /// would break the slider (card #228), so it is clamped to the same range.
+  static const minRetention = 0.8, maxRetention = 0.95;
+
   /// 期望記憶率 for FSRS.
   double get desiredRetention => _desiredRetention;
 
@@ -171,8 +176,8 @@ class AppSettings extends ChangeNotifier {
   set taggingUrl(String v) => _save('taggingUrl', _taggingUrl = v.trim());
   set apiKey(String v) => _save('apiKey', _apiKey = v.trim());
 
-  set desiredRetention(double v) =>
-      _save('desiredRetention', '${_desiredRetention = v.clamp(0.7, 0.97)}');
+  set desiredRetention(double v) => _save('desiredRetention',
+      '${_desiredRetention = v.clamp(minRetention, maxRetention)}');
 
   set learningLanguage(String v) {
     assert(supportedLanguages.containsKey(v));

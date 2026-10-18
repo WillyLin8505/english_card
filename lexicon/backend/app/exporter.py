@@ -350,8 +350,16 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_saf
         if src:
             used_sources[src] = used_sources.get(src, 0) + n
 
+    has_sense = {lexeme_id for lexeme_id, _ in senses_index}
     for lemma, fvs in sorted(values.items()):
         lexemes = lexemes_by_lemma.get(lemma, [])
+        # 問題回報 #303: a full lexeme without any sense (a part of speech whose
+        # senses were all filtered) is a blank row in the app. Leave it out;
+        # a relation that points at it still gets a stub link target below.
+        blank = [lx for lx in lexemes if lx.id not in has_sense]
+        if blank:
+            counts["lexemes_without_senses"] = counts.get("lexemes_without_senses", 0) + len(blank)
+            lexemes = [lx for lx in lexemes if lx.id in has_sense]
         if not lexemes:
             continue
         by_pos = {lx.pos: lx for lx in lexemes}

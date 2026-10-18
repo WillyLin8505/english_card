@@ -383,8 +383,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           _note('越高，單字越常出現。預設 90%。'),
                           Slider(
                             value: settings.desiredRetention,
-                            min: 0.8,
-                            max: 0.95,
+                            min: AppSettings.minRetention,
+                            max: AppSettings.maxRetention,
                             divisions: 15,
                             label:
                                 '${(settings.desiredRetention * 100).round()}%',
@@ -412,21 +412,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                         ],
                       ),
-                      _Card(title: '詞庫連線', children: [
-                        UiText(DictionarySync.instance.status),
-                        if (DictionarySync.instance.lastSuccess
-                            case final time?)
-                          _note(
-                              '上次確認：${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}'),
-                        TextButton(
-                            onPressed: DictionarySync.instance.refresh,
-                            child: const UiText('立即更新詞庫')),
-                      ]),
+                      // Connecting/connected and the polling interval are
+                      // debug chrome; learners only need to know when the
+                      // dictionary can't update (問題回報 #260, #306).
+                      if (DictionarySync.instance.hasError)
+                        _Card(title: '詞庫連線', children: [
+                          UiText(DictionarySync.instance.status),
+                          TextButton(
+                              onPressed: DictionarySync.instance.refresh,
+                              child: const UiText('重新連線')),
+                        ]),
                       _Card(
                         title: '資料',
                         children: [
                           UiText(
-                            '字卡和複習紀錄保存在${kIsWeb ? '此瀏覽器' : '此裝置'}。詞庫會從你的資料庫自動更新。',
+                            '字卡和複習紀錄保存在${kIsWeb ? '此瀏覽器' : '此裝置'}。',
                             style: MFont.manrope(
                                 14, FontWeight.w700, MColors.success),
                           ),
@@ -525,11 +525,59 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _label('弱項單字'),
       if (ins.weakWords.isEmpty)
         _note('還沒有常按「忘記」或「吃力」的字。')
-      else
-        for (final w in ins.weakWords)
-          UiText('${w.word}　忘記 ${w.again}・吃力 ${w.hard}／${w.reviews} 次',
-              style: MFont.manrope(13, FontWeight.w600, MColors.ink)),
+      else ...[
+        // 問題回報 #307: each word opens its details, and the list can be
+        // practised straight away instead of searching 單字本 for each.
+        for (final w in ins.weakWords) _weakWordRow(w),
+        const SizedBox(height: 4),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: () => AppScope.of(context)
+                .navigator
+                .reviewCards([for (final w in ins.weakWords) w.cardId]),
+            icon: const Icon(Icons.replay_rounded, size: 18),
+            label: const UiText('複習這些字'),
+          ),
+        ),
+      ],
     ]);
+  }
+
+  /// 「複習 5 次，忘了 2 次」— how often it was forgotten is the message, not
+  /// the rating names (問題回報 #307).
+  static String _weakWordNote(WeakWord w) {
+    final parts = [
+      if (w.again > 0) '忘了 ${w.again} 次',
+      if (w.hard > 0) '吃力 ${w.hard} 次',
+    ];
+    return '複習 ${w.reviews} 次，${parts.join('、')}';
+  }
+
+  Widget _weakWordRow(WeakWord w) {
+    final scope = AppScope.of(context);
+    final entryId = scope.repository.card(w.cardId)?.wordEntryId;
+    return InkWell(
+      onTap: entryId == null ? null : () => scope.navigator.openWord(entryId),
+      borderRadius: BorderRadius.circular(MRadii.md),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            UiText(w.word,
+                style: MFont.manrope(14, FontWeight.w800, MColors.ink)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: UiText(_weakWordNote(w),
+                  style: MFont.manrope(12, FontWeight.w600, MColors.muted)),
+            ),
+            if (entryId != null)
+              const Icon(Icons.chevron_right_rounded,
+                  size: 20, color: MColors.muted),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _label(String text) => Padding(

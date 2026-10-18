@@ -108,6 +108,21 @@ void main() {
     }
     checkNoNull();
 
+    // --- 商店版（問題回報 #265）：沒有伺服器可填，設定只說明照片在手機上
+    // 辨識，不該出現網址／金鑰欄位 ---
+    current = '商店版照片辨識說明';
+    if (!settings.showsTaggingServer) {
+      if (find.text('照片辨識').evaluate().isEmpty) {
+        f.add('商店版找不到照片辨識說明', current);
+      }
+      if (find.widgetWithText(TextField, '服務網址').evaluate().isNotEmpty) {
+        f.add('商店版仍顯示服務網址欄位', current);
+      }
+      // 開發者已填過網址的情境：網址／金鑰區塊才會出現。
+      settings.taggingUrl = 'http://127.0.0.1:19999/tag';
+      await tester.pumpAndSettle();
+    }
+
     // --- 進階設定：展開照片辨識區塊（flutter test 以 VM 執行，kIsWeb 為
     // false，說明文字不該再講「網頁版會自動連接」—— card228 修正）---
     current = '展開辨識連線';
@@ -123,14 +138,14 @@ void main() {
       }
     }
 
-    // --- 測試連線：沒填網址時的提示 ---
+    // --- 測試連線：沒填網址時的提示（只有開發版／網頁版清空網址後區塊還在）---
     current = '沒填網址就測試連線';
-    settings.taggingUrl = '';
-    await tester.pump();
     final testBtn = find.widgetWithText(OutlinedButton, '測試連線');
     if (testBtn.evaluate().isEmpty) {
       f.add('找不到測試連線按鈕', current);
-    } else {
+    } else if (AppSettings.developerTools) {
+      settings.taggingUrl = '';
+      await tester.pump();
       await tester.ensureVisible(testBtn);
       await tester.tap(testBtn);
       await tester.pump();
@@ -213,13 +228,24 @@ void main() {
     }
     checkNoNull();
 
-    // --- 詞庫連線狀態：顯示、不崩潰（不主動按「立即更新詞庫」，避免真的打網路）---
+    // --- 詞庫連線：只在失敗時出現（問題回報 #306）；正常時不該有輪詢頻率、
+    // 上次確認時間或「你的資料庫」這類除錯文字 ---
     current = '詞庫連線狀態';
-    if (find.text(DictionarySync.instance.status).evaluate().isEmpty) {
-      f.add('詞庫連線狀態沒有顯示', current);
+    if (DictionarySync.instance.hasError) {
+      if (find.text(DictionarySync.instance.status).evaluate().isEmpty) {
+        f.add('詞庫連線失敗但設定頁沒有顯示', current);
+      }
+    } else {
+      if (find.text('詞庫連線').evaluate().isNotEmpty) {
+        f.add('詞庫正常時仍顯示「詞庫連線」卡', current);
+      }
+      if (find.textContaining('每 30 秒').evaluate().isNotEmpty ||
+          find.textContaining('上次確認').evaluate().isNotEmpty) {
+        f.add('詞庫正常時仍顯示輪詢頻率或上次確認時間', current);
+      }
     }
-    if (find.text('立即更新詞庫').evaluate().isEmpty) {
-      f.add('找不到立即更新詞庫按鈕', current);
+    if (find.textContaining('你的資料庫').evaluate().isNotEmpty) {
+      f.add('資料卡仍寫「你的資料庫」', current);
     }
 
     // --- 資料卡：統計數字、裝置用詞（flutter test 以 VM 執行，kIsWeb 為
@@ -230,6 +256,12 @@ void main() {
     }
     if (find.textContaining('此瀏覽器').evaluate().isNotEmpty) {
       f.add('非網頁版仍顯示「此瀏覽器」', current);
+    }
+
+    // --- 資料備份與還原（問題回報 #278）：按鈕在、說明在；不真的開檔案選擇器 ---
+    current = '資料備份與還原';
+    for (final label in ['匯出備份', '從備份還原']) {
+      if (find.text(label).evaluate().isEmpty) f.add('找不到「$label」按鈕', current);
     }
     checkNoNull();
 

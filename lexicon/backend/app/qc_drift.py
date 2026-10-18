@@ -21,13 +21,20 @@ def pos_without_lexeme(s: Session, language: str = "en") -> dict[str, list[str]]
 
     Only words that already have a full lexeme count (a word not yet
     materialized at all is an import gap, not drift)."""
-    want: dict[str, set[str]] = defaultdict(set)
-    for lemma, items in s.execute(select(m.FieldValue.lemma, m.FieldValue.items).where(
+    from .materialize import poses_with_senses
+    values: dict[str, dict[str, list]] = defaultdict(lambda: {"pos": [], "definition": []})
+    for lemma, field, items in s.execute(select(
+            m.FieldValue.lemma, m.FieldValue.field, m.FieldValue.items).where(
             m.FieldValue.target_language == language,
             m.FieldValue.field.in_(("pos", "definition")))):
-        want[lemma].update(i["pos"] for i in items or [] if isinstance(i, dict) and i.get("pos"))
-    for lemma in want:  # materialize skips excluded parts of speech (#284)
-        want[lemma] -= pos_exclusions.excluded(language, lemma)
+        values[lemma][field].extend(i for i in items or [] if isinstance(i, dict))
+    want: dict[str, set[str]] = {}
+    for lemma, by_field in values.items():
+        gone = pos_exclusions.excluded(language, lemma)  # materialize skips them (#284)
+        # … and builds no lexeme for a part of speech without senses (#303)
+        want[lemma] = set(poses_with_senses(
+            [i for i in by_field["pos"] if i.get("pos") not in gone],
+            [i for i in by_field["definition"] if i.get("pos") not in gone]))
     have: dict[str, set[str]] = defaultdict(set)
     for norm, pos in s.execute(select(m.Lexeme.normalized, m.Lexeme.pos).where(
             m.Lexeme.language == language, m.Lexeme.status == "full")):

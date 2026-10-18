@@ -32,6 +32,10 @@ abstract interface class AppNavigator {
   /// A review run is going on: the tab bar hides so a stray tap can't
   /// switch tabs mid-card (owner decision 問題回報 #101).
   void setReviewing(bool reviewing);
+
+  /// Switches to the 複習 tab and starts a run that shows [cardIds] first
+  /// (學習洞察 → 弱項單字「複習這些字」, 問題回報 #307).
+  void reviewCards(List<String> cardIds);
 }
 
 /// Forwards to the shell once it exists — [AppScope] sits above the shell,
@@ -56,6 +60,9 @@ class AppNavigatorProxy implements AppNavigator {
 
   @override
   void setReviewing(bool reviewing) => target?.setReviewing(reviewing);
+
+  @override
+  void reviewCards(List<String> cardIds) => _t.reviewCards(cardIds);
 }
 
 /// Which tab is showing, for screens that must pause when hidden (the

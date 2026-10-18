@@ -142,6 +142,30 @@ def _upgrade(s: Session, language: str, lemma: str, display: str, poses: list[st
     return out
 
 
+def poses_with_senses(pos_items, sense_items) -> list[str]:
+    """The parts of speech that become full lexemes, main one first.
+
+    A part of speech the `pos` value names but no definition uses (shack
+    adj, hollow intj: Kaikki lists the entry, every sense was filtered)
+    would be a full lexeme with nothing to learn — a blank row in the app
+    (問題回報 #303). Only parts of speech with at least one sense are built;
+    senses without a part of speech go to the first listed one. A word with
+    no definitions at all (a partial run before they are fetched) keeps its
+    listed parts of speech so pronunciations and links have a home; the
+    exporter leaves such placeholder entries out of the pack."""
+    listed = list(dict.fromkeys(i["pos"] for i in pos_items if isinstance(i, dict) and i.get("pos")))
+    sense_pos = [i.get("pos") for i in sense_items if isinstance(i, dict)]
+    if not sense_pos:
+        return listed
+    poses = [p for p in listed if p in sense_pos]
+    for p in sense_pos:
+        if p and p not in poses:
+            poses.append(p)
+    if listed and any(not p for p in sense_pos) and listed[0] not in poses:
+        poses.insert(0, listed[0])
+    return poses
+
+
 def _stub_excluded(s: Session, language: str, lemma: str, gone: set[str]) -> None:
     """Nothing left to build because every part of speech is excluded (a
     proper noun such as alfred, card #166): those full lexemes become stubs,
@@ -162,10 +186,7 @@ def materialize(s: Session, target: str, lemma: str, display: str | None = None)
     display = display or lemma
     u = lambda f: _union(values, f)  # noqa: E731
     senses_items = [i for i in u("definition") if i.get("pos") not in gone]
-    poses = [i["pos"] for i in u("pos") if i.get("pos") and i["pos"] not in gone]
-    for it in senses_items:
-        if it.get("pos") and it["pos"] not in poses:
-            poses.append(it["pos"])
+    poses = poses_with_senses([i for i in u("pos") if i.get("pos") not in gone], senses_items)
     if not poses:
         _stub_excluded(s, target, lemma, gone)
         return []

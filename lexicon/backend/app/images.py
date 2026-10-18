@@ -1580,6 +1580,7 @@ def expand_visible_vocabulary(s, data: bytes, mime: str | None, passed: list[dic
             output = json.loads(response.read())
     except (urllib.error.URLError, OSError):
         return [], []  # optional fast expansion; ordinary vision labels remain valid
+    note_tagger_stages(output)
 
     by_id = {str(item.get('id')): str(item.get('text') or '')
              for item in output.get('items', [])}
@@ -1654,6 +1655,49 @@ def _cap_beginner_tags(tags: list[dict], beginner_max: int | None = None):
 # The picture being labelled, so score_tags' request can name it on the 排程 page.
 PICTURE: contextvars.ContextVar[int | None] = contextvars.ContextVar('picture', default=None)
 
+# Stage timing per labelling run (問題回報 #229): one JSONL line per picture, so the
+# ≤10 s target is measured stage by stage before anything is tuned.
+TAG_TIMING_LOG = Path(os.environ.get('LEXICON_TAG_TIMING_LOG',
+                                     config.HOME / 'logs' / 'tag_timing.jsonl'))
+TAG_TIMING: contextvars.ContextVar[list | None] = contextvars.ContextVar('tag_timing', default=None)
+
+
+class tag_stage:
+    """``with tag_stage('cefr'):`` adds {'stage', 'ms', 'tagger': [...]} to the run."""
+
+    def __init__(self, name: str):
+        self.entry = {'stage': name, 'ms': 0, 'tagger': []}
+
+    def __enter__(self):
+        stages = TAG_TIMING.get()
+        if stages is not None:
+            stages.append(self.entry)
+        self.started = time.perf_counter()
+        return self.entry
+
+    def __exit__(self, *exc):
+        self.entry['ms'] = round((time.perf_counter() - self.started) * 1000)
+        return False
+
+
+def note_tagger_stages(payload) -> None:
+    """The tagger's own split (queue / prep / model / prompt / decode) for the open stage."""
+    stages = TAG_TIMING.get()
+    if stages and isinstance(payload, dict) and isinstance(payload.get('stages'), dict):
+        stages[-1]['tagger'].append(payload['stages'])
+
+
+def _write_tag_timing(asset_id, stages: list, seconds: float, outcome: str) -> None:
+    line = {'at': datetime.now(timezone.utc).isoformat(timespec='seconds'),
+            'asset': asset_id, 'outcome': outcome, 'totalMs': round(seconds * 1000),
+            'rounds': CEFR_TAG_ROUNDS, 'mode': TAG_MODE, 'stages': stages}
+    try:
+        TAG_TIMING_LOG.parent.mkdir(parents=True, exist_ok=True)
+        with open(TAG_TIMING_LOG, 'a', encoding='utf-8') as f:
+            f.write(json.dumps(line, ensure_ascii=False, separators=(',', ':')) + '\n')
+    except OSError:
+        pass  # timing is diagnostic only; never fail a picture over it
+
 
 TAG_MAX_ATTEMPTS = 3
 
@@ -1717,7 +1761,16 @@ def tag_asset(s, asset_id):
     asset = s.get(m.ImageAsset, asset_id)
     if asset is None:
         raise ValueError('圖片不存在')
-    return _tag_attempt(asset, lambda: _tag_asset(s, asset_id))
+    stages: list = []
+    token = TAG_TIMING.set(stages)
+    started, outcome = time.perf_counter(), 'error'
+    try:
+        result = _tag_attempt(asset, lambda: _tag_asset(s, asset_id))
+        outcome = 'ok'
+        return result
+    finally:
+        TAG_TIMING.reset(token)
+        _write_tag_timing(asset_id, stages, time.perf_counter() - started, outcome)
 
 
 def _tag_asset(s, asset_id):
@@ -1758,14 +1811,17 @@ def _tag_asset(s, asset_id):
                      'X-Activity-Ref': f'image:{asset_id}',
                      'Content-Type': asset.mime or 'image/jpeg'})
         with urllib.request.urlopen(request, timeout=600) as response:
-            return _tag_response(json.loads(response.read()))
+            payload = json.loads(response.read())
+        note_tagger_stages(payload)
+        return _tag_response(payload)
 
     keep = own_words(s, asset)
     if asset.safety_status == 'safe':
         existing = [classify_tag_cefr(s, tag) for tag in (asset.tags or [])]
         # A deferred 0.80 is only a placeholder from fast imports. Before it can
         # count toward the six-band requirement, replace it with a real score.
-        score_tags(data, existing, asset.mime, defer=False)
+        with tag_stage('rescore-existing'):
+            score_tags(data, existing, asset.mime, defer=False)
         passed = [tag for tag in existing
                   if tag_level(tag) and (tag.get('score') or 0) >= TAG_PASS]
         passed, old_overflow = _select_cefr_tags(passed, keep)
@@ -1784,7 +1840,8 @@ def _tag_asset(s, asset_id):
                 if not gaps:
                     break
                 passed_before = len(passed)
-                out = ask_cefr(seen, gaps, cefr_counts(passed))
+                with tag_stage(f'cefr-{_round + 1}'):
+                    out = ask_cefr(seen, gaps, cefr_counts(passed))
                 model = model or str(out.get('model', ''))
                 new = []
                 known = {w.lower() for w in seen}
@@ -1803,7 +1860,8 @@ def _tag_asset(s, asset_id):
                 new, aside = split_made_up(s, new, seen)
                 dropped.extend(aside)
                 seen.extend(t['word'] for t in new if t.get('splitFrom'))
-                score_tags(data, new, asset.mime, defer=DEFER_TAG_SCORE)
+                with tag_stage(f'score-{_round + 1}'):
+                    score_tags(data, new, asset.mime, defer=DEFER_TAG_SCORE)
                 for tag in new:
                     if tag_level(tag) and (tag.get('score') or 0) >= TAG_PASS:
                         passed.append(tag)
@@ -1818,8 +1876,9 @@ def _tag_asset(s, asset_id):
                 stalled_rounds = stalled_rounds + 1 if len(passed) == passed_before else 0
                 if stalled_rounds >= 2:
                     break
-            expanded, rejected = expand_visible_vocabulary(
-                s, data, asset.mime, passed, seen)
+            with tag_stage('expand'):
+                expanded, rejected = expand_visible_vocabulary(
+                    s, data, asset.mime, passed, seen)
             passed.extend(expanded)
             dropped.extend(rejected)
             passed, overflow = _select_cefr_tags(passed, keep)
@@ -2598,6 +2657,7 @@ def score_tags(data: bytes, tags: list[dict], mime: str | None = None,
                      + ('…' if len(pending) > 4 else ''))})
     with urllib.request.urlopen(request, timeout=300) as response:
         out = json.loads(response.read())
+    note_tagger_stages(out)
     scores = {str(x.get('word', '')).lower(): x.get('score') for x in out.get('scores', [])}
     for t in pending:
         t['score'] = scores.get(str(t['word']).strip().lower())

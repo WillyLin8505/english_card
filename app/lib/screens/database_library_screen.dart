@@ -194,7 +194,11 @@ class _DatabaseLibraryScreenState extends State<DatabaseLibraryScreen> {
                                                   onChanged: (l) => setState(
                                                       () => _level = l)),
                                             ],
-                                            if (!widget.photos)
+                                            // Stubs in the pack are form
+                                            // pointers (tore → tear), not list
+                                            // rows: a 「（0）」 box does nothing.
+                                            if (!widget.photos &&
+                                                allWords.any((w) => !w.full))
                                               CheckboxListTile(
                                                   contentPadding:
                                                       EdgeInsets.zero,
