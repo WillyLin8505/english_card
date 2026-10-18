@@ -16,7 +16,10 @@
    - 學習洞察（#277）、備份還原（#278）、原圖遺失改用同字其他圖（#279）、隱私權設定與政策頁（#268）、資料來源頁（#269）。
    - 照片載入速度（#252）：捲動相片冊、翻卡是否卡頓。
    - 音檔與詞庫圖片在原生 iOS 能載入（#270）。
-6. **跟 Windows 溝通一律用問題回報頁的 API**（owner 10/18）：
+6. **跟 Windows 溝通：git ＋ 問題回報 API 兩條都用**（owner 10/18）：
+   - git：結果寫 `docs/mac_verify_results.md` 並 push；Windows 的指令在 `docs/mac_inbox.md`，每幾分鐘 `git fetch` 檢查，
+     做完把該項狀態改成「完成」並 push。
+   - 問題回報 API（下面）：要 Windows 修的 bug 直接開 `[Mac]` 問題回報，會自動派工。
    - 網址 `https://api.willylinai.com/api/issues`，每個請求帶標頭 `X-API-Key: $ENGLISH_CARD_KEY`
      （owner 在 Mac 的終端機設環境變數 `ENGLISH_CARD_KEY`，不要寫進檔案或 commit）。
    - 開問題：`POST /api/issues`，JSON：`{"kind":"bug"|"todo"|"decision","severity":"high|medium|low","area":"app",
