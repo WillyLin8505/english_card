@@ -117,7 +117,10 @@ def _script_chars() -> tuple[frozenset, frozenset] | None:
 # them that way too (工作台, 岩壁, 染污, 排泄, 折痕, 家具, 和弦, 雇用).
 # 群 and 床 are Taiwan-standard too; STCharacters also lists historical
 # variants (羣/牀), which does not make these two characters Simplified.
-WRITTEN_IN_TAIWAN = "台岩污泄托睾卷折布注弦胡拐克回同扣彩欲蒙栗雇檐痹家具群床"
+# 峰 秘 夸 (夸克) 里 巨 are Taiwan-standard too (聖母峰, 便秘, 夸克, 希思里奇,
+# 巨著); OpenCC's phrase table respells 里 and 巨 in some words. 夸 still
+# becomes 誇 in other words (夸獎 → 誇獎, see to_taiwan).
+WRITTEN_IN_TAIWAN = "台岩污泄托睾卷折布注弦胡拐克回同扣彩欲蒙栗雇檐痹家具群床峰秘夸里巨"
 
 
 def looks_simplified(text: str) -> bool:
@@ -238,7 +241,9 @@ def to_taiwan(text: str) -> str:
     if looks_simplified(text):
         text = opencc("s2twp", text) or text
     variants, words, longest = _tw()
-    text = "".join(variants.get(ch, ch) for ch in text)
+    # 夸克 (quark) keeps 夸; only the other 夸 words take 誇.
+    text = re.sub("夸克|.", lambda m: m.group() if m.group() == "夸克"
+                  else variants.get(m.group(), m.group()), text, flags=re.S)
     out, i = [], 0
     while i < len(text):
         for n in range(min(longest, len(text) - i), 1, -1):
@@ -356,9 +361,10 @@ def mark_scientific_names(text: str) -> str:
     return _GENUS_BEFORE.sub(lambda m: f"（{m.group(1)}）", text)
 
 
-def _low_native_label(item: dict) -> bool:
+def _low_native_label(item: dict, etymology: bool = True) -> bool:
     labels = {str(x).lower() for x in item.get("labels") or []}
-    return bool(labels & _LOW_NATIVE_LABELS or any(x.startswith("etymology-") for x in labels))
+    return bool(labels & _LOW_NATIVE_LABELS
+                or (etymology and any(x.startswith("etymology-") for x in labels)))
 
 
 _POINTER_PAREN = re.compile(r"\(([^)]*)\)")
@@ -406,10 +412,32 @@ def main_native_sense_key(items: list[dict]) -> str | None:
     return None
 
 
-def sense_skipped_for_native(item: dict, main_key: str | None) -> bool:
+def main_native_sense_keys(items: list[dict]) -> set[str]:
+    """One main sense per part of speech. Kaikki files a word's second
+    part of speech under etymology-2/3, which says nothing about how common
+    it is (heat verb, show noun), so that label does not demote a main sense."""
+    keys: set[str] = set()
+    seen: set[str | None] = set()
+    for item in items:
+        pos = item.get("pos")
+        if not item.get("sense_key") or pos in seen or _low_native_label(item, False):
+            continue
+        seen.add(pos)
+        keys.add(item["sense_key"])
+    main = main_native_sense_key(items)
+    if main:
+        keys.add(main)
+    return keys
+
+
+def sense_skipped_for_native(item: dict, main_key: "str | set[str] | None") -> bool:
     """Obscure senses (low priority, biological taxonomy, terminology, mere
-    forms) are not given a forced Chinese gloss. The main sense always is."""
-    if main_key and item.get("sense_key") == main_key:
+    forms) are not given a forced Chinese gloss. The main sense of each part
+    of speech always is."""
+    if isinstance(main_key, (set, frozenset)):
+        if item.get("sense_key") in main_key:
+            return False
+    elif main_key and item.get("sense_key") == main_key:
         return False
     if _low_native_label(item):
         return True
@@ -417,7 +445,7 @@ def sense_skipped_for_native(item: dict, main_key: str | None) -> bool:
 
 
 def native_sense_keys(items: list[dict]) -> set[str]:
-    main = main_native_sense_key(items)
+    main = main_native_sense_keys(items)
     return {i["sense_key"] for i in items
             if i.get("sense_key") and not sense_skipped_for_native(i, main)}
 

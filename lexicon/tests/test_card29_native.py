@@ -106,3 +106,14 @@ def test_main_sense_is_required_and_obscure_senses_are_not():
     assert native_sense_keys(senses) == {'tree'}
     assert sense_skipped_for_native(senses[1], 'tree')
     assert not sense_skipped_for_native(senses[0], 'tree')
+
+
+def test_second_etymology_pos_keeps_its_main_sense():
+    from app.text import main_native_sense_keys
+    senses = [
+        {'sense_key': 'h1', 'pos': 'noun', 'gloss': 'Warmth.'},
+        {'sense_key': 'h2', 'pos': 'verb', 'labels': ['etymology-2'], 'gloss': 'To make hot.'},
+        {'sense_key': 'h3', 'pos': 'verb', 'labels': ['etymology-2'], 'gloss': 'To excite.'},
+    ]
+    assert main_native_sense_keys(senses) == {'h1', 'h2'}
+    assert native_sense_keys(senses) == {'h1', 'h2'}
