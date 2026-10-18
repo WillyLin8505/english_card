@@ -37,8 +37,8 @@ Repo commit：`ae1d773`（與 `origin/main` 同一個 commit，已是最新）
 | 步驟 | `cd app && flutter test test/screens_test.dart` |
 | 預期 | `設定 測試連線: connected` / `wrong key / not running` / `service not running` 三個測試通過 |
 | 實際 | 三個都失敗 |
-| 嚴重度 | **中** |
-| 截圖 | 無（無法跑模擬器） |
+| 嚴重度 | **低**（補驗後下修，見下方「補充」） |
+| 截圖 | `mac_verify_shots/2026-10-18-web-07-advanced-testconn.png` |
 
 `screens_test.dart` 用 `size: const Size(402, 1600)` 開設定頁，展開「進階設定：照片辨識連線」後，
 `測試連線` 這顆按鈕算出來的位置是 `Offset(290.2, 1614.0)`，已經掉在測試畫面 `Size(402.0, 1600.0)` 外面 14px：
@@ -61,8 +61,19 @@ Indeed, Offset(290.2, 1614.0) is outside the bounds of the root of the render tr
 - **是 App 的問題**：設定頁最近長高了（`settings_screen.dart` 在 `ae1d773` 這個 snapshot 有改），
   把按鈕推出可視範圍。若那一段其實不在 `Scrollable` 裡，真機上在小螢幕 iPhone（SE 之類）就會點不到。
 
-後者會直接打到 `mac_verify.md` 步驟 4「打標金鑰由 owner 在 App 的設定輸入」這條路，
-所以 **Mac 那一輪請優先在 iPhone SE 尺寸的模擬器上，確認設定頁真的捲得到「測試連線」**。
+**補充（同一輪稍晚，用 Flutter web 在 Chromium 以 390×844 實際操作）**：
+設定頁**捲得到**「測試連線」，按下去也**真的會跑**並顯示結果（見
+`2026-10-18-web-07-advanced-testconn.png`、`2026-10-18-web-08-testconn-result.png`）。
+所以這比較像**只是測試壞了**（`ensureVisible` 後少一次 `pumpAndSettle()`），不是 App 在小螢幕點不到。
+嚴重度因此從「中」下修為「低」。
+
+但這是 **Flutter web 不是原生 iOS**，版面度量不完全相同，
+Mac 那一輪還是順手確認一下 iPhone SE 尺寸即可，不必再當成優先項。
+
+另外：截圖裡「測試連線」回的是「✕ 連不到 AI 辨識服務」，**這是瀏覽器 CORS 造成的，不是 App 的問題**。
+`https://api.willylinai.com/health` 實際回 401，而 `describeTaggingError()`
+（`tagging_service.dart:116`）對 401 是回「API Key 不正確」。
+web 版跨網域被擋，才走到 `http.ClientException` 那條分支。原生 iOS 沒有 CORS，不會這樣。
 
 ---
 
@@ -91,6 +102,35 @@ Expected: exactly one matching candidate
 
 從學習者角度看，一個等級一行其實不算壞，所以**比較可能是測試的期望字串過期**，
 而不是 UI 退步。但這要 Mac 上實際看一眼縮圖說明才能確定，這一輪沒看到畫面。
+
+---
+
+### 問題 2.5：`flutter build web` 編不過 — `run_web.bat` 這條開發路線是壞的
+
+| 項目 | 內容 |
+|---|---|
+| 步驟 | `cd app && flutter build web --dart-define-from-file=iphone.json` |
+| 預期 | 編譯成功（repo 有 `app/web/` 與 `app/run_web.bat`，web 是支援的開發路線） |
+| 實際 | `Error: Compilation failed.` |
+| 嚴重度 | **中**（擋掉整條 web 開發／除錯路線） |
+
+```
+lib/services/photo_intake.dart:45:13:
+Error: The integer literal 0xcbf29ce484222325 can't be represented exactly in JavaScript.
+lib/services/photo_intake.dart:47:39:
+Error: The integer literal 0xFFFFFFFFFFFFFFFF can't be represented exactly in JavaScript.
+```
+
+`hashBytes()` 的 64-bit FNV-1a 常數在 dart2js 下無法表示（JS 的 number 是 double）。
+原生 iOS／Android 不受影響（Dart native 有真正的 64-bit int），**只有 web 會編不過**。
+
+修的方向（這一輪沒有改 App 程式碼，交給 Windows 端決定）：
+改成 32-bit FNV-1a（`0x811c9dc5` / `0x01000193` / `& 0xFFFFFFFF`），或用 `BigInt`，
+或把 `hashBytes` 拆成 web / native 兩個實作。注意改了會變更既有照片指紋值，
+要想清楚 `findDuplicate()` 對舊資料的相容性。
+
+> 這一輪的截圖就是**暫時**改成 32-bit FNV-1a 編出來的；該檔案已還原，
+> `git status` 乾淨，這個暫改**沒有**進任何 commit。
 
 ---
 
@@ -143,3 +183,24 @@ Expected: exactly one matching candidate
 - **`flutter pub get` 乾淨**：沒有改到 `pubspec.lock`（28 個套件有新版但受 constraint 限制，與這一輪無關）。
 - **`flutter doctor`**：Flutter 本身 ✓、Network resources ✓；Android SDK / Chrome / Linux GTK ✗ —
   都是這個 Linux 容器沒裝，與 iOS 驗證無關。
+
+---
+
+### 補充：用 Flutter web 看 UI（**不能取代 iPhone 模擬器**）
+
+因為跑不了 iOS 模擬器，這一輪改用 **Flutter web + Chromium，視窗 390×844（iPhone 尺寸）**
+把 App 的樣子抓下來，至少讓 owner 看得到畫面。截圖在 `docs/mac_verify_shots/`，檔名都有 `web` 字樣。
+
+**這不是原生 iOS，下面幾項一定不同，不要拿來當步驟 5 的結論：**
+
+- 相機、相片庫、`photo_manager`、`mobile_scanner`（QR code，卡 #280）在無頭瀏覽器中不能用 —
+  首頁顯示「目前無法使用相機」「尚未有可用相機或照片」，所以**拍照／選照片 → 打標整條流程沒有驗到**。
+- 跨網域被 CORS 擋，詞庫同步與 `/health` 都連不到，所以畫面上一直掛著
+  「暫時無法連線 · 使用已儲存的詞庫」的紅色橫幅（這其實也等於看到 #175 的背景錯誤橫幅有在運作）。
+- 原生 iOS 的字體度量、捲動手感、發音（`flutter_tts`）、音檔播放（`audioplayers`）都沒有驗到（#270 仍未驗）。
+- 詞庫沒同步成功，所以 `相片冊` / `複習` / `單字本` 都是空狀態，
+  #277 學習洞察只看得到空的骨架，#252 / #278 / #279 / #268 / #269 完全沒驗到。
+
+**有看到而且正常的**：新手引導兩頁（選語言 → 程度自評）、五個分頁切換、
+設定頁（語言／母語／發音腔調／單字難度／學習洞察骨架／進階設定展開／詞庫連線／資料）、
+複習的空狀態文案、整體版面在 390 寬沒有破版或橫向捲動。
