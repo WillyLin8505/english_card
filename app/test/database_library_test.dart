@@ -162,6 +162,20 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('no 包含待補齊單字（0） box when the pack has no listable stub',
+      (tester) async {
+    // The live pack's stubs are all form pointers (redirect_to), which never
+    // become list rows (card #227 round 68).
+    final data = catalog();
+    ((data['lexemes'] as List)[1] as Map)['redirect_to'] = 1;
+    LexiconPack.instance.loadJson(data);
+    await pumpApp(tester, initialTab: AppTab.words, databaseLibrary: true);
+    expect(find.text('apple'), findsOneWidget);
+    expect(find.byType(CheckboxListTile), findsNothing);
+    expect(find.textContaining('包含待補齊單字'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
       '我的單字本 返回 steps back to 資料庫 instead of leaving the tab (問題回報 #258)',
       (tester) async {

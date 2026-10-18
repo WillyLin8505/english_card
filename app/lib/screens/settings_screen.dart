@@ -383,8 +383,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           _note('越高，單字越常出現。預設 90%。'),
                           Slider(
                             value: settings.desiredRetention,
-                            min: 0.8,
-                            max: 0.95,
+                            min: AppSettings.minRetention,
+                            max: AppSettings.maxRetention,
                             divisions: 15,
                             label:
                                 '${(settings.desiredRetention * 100).round()}%',
@@ -412,21 +412,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                         ],
                       ),
-                      _Card(title: '詞庫連線', children: [
-                        UiText(DictionarySync.instance.status),
-                        if (DictionarySync.instance.lastSuccess
-                            case final time?)
-                          _note(
-                              '上次確認：${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}'),
-                        TextButton(
-                            onPressed: DictionarySync.instance.refresh,
-                            child: const UiText('立即更新詞庫')),
-                      ]),
+                      // Connecting/connected and the polling interval are
+                      // debug chrome; learners only need to know when the
+                      // dictionary can't update (問題回報 #260, #306).
+                      if (DictionarySync.instance.hasError)
+                        _Card(title: '詞庫連線', children: [
+                          UiText(DictionarySync.instance.status),
+                          TextButton(
+                              onPressed: DictionarySync.instance.refresh,
+                              child: const UiText('重新連線')),
+                        ]),
                       _Card(
                         title: '資料',
                         children: [
                           UiText(
-                            '字卡和複習紀錄保存在${kIsWeb ? '此瀏覽器' : '此裝置'}。詞庫會從你的資料庫自動更新。',
+                            '字卡和複習紀錄保存在${kIsWeb ? '此瀏覽器' : '此裝置'}。',
                             style: MFont.manrope(
                                 14, FontWeight.w700, MColors.success),
                           ),

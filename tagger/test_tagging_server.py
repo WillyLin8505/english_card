@@ -95,6 +95,37 @@ def test_unsafe_image_is_rejected_before_candidates_are_cached(monkeypatch, tmp_
     assert list(tmp_path.iterdir()) == []
 
 
+def test_stage_timings_split_queue_prep_model_and_llama_decode(monkeypatch, tmp_path):
+    """問題回報 #229: each request reports where its seconds went; a cache hit makes no model call."""
+    import io
+    import tagging_server as ts
+    from repetition_guard import read_cefr_stream
+    monkeypatch.setattr(ts, "CACHE_DIR", str(tmp_path))
+    tagger = ts.Tagger("http://127.0.0.1:1", "test-model")
+
+    def fake_backend(*args, **kwargs):
+        ts.note_llama_timings({"prompt_ms": 410.4, "predicted_ms": 7200.6,
+                               "prompt_n": 300, "predicted_n": 180})
+        return {"safe": True, "candidates": [{"word": "cup", "pos": "noun"}]}
+
+    monkeypatch.setattr(tagger, "_chat_backend", fake_backend)
+    stages = ts.stages_reset()
+    tagger.candidates(b"not-an-image", "A1")
+    assert stages["modelCalls"] == 1 and stages["decodeMs"] == 7201
+    assert stages["promptTokens"] == 300 and stages["decodeTokens"] == 180
+    assert {"queueMs", "prepMs", "modelMs"} <= set(stages)
+    again = ts.stages_reset()
+    tagger.candidates(b"not-an-image", "A1")
+    assert again["modelCalls"] == 0
+
+    seen = []
+    stream = io.BytesIO(b'data: {"choices":[{"delta":{"content":"{}"}}]}\n'
+                        b'data: {"choices":[],"timings":{"predicted_ms":5}}\n'
+                        b'data: [DONE]\n')
+    assert read_cefr_stream(stream, on_timings=seen.append) == "{}"
+    assert seen == [{"predicted_ms": 5}]
+
+
 def test_merge_cefr_topup_fills_short_bands_without_inventing():
     from tagging_server import merge_cefr_topup, cefr_band_counts, short_cefr_bands
 

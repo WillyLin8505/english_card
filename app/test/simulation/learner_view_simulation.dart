@@ -55,6 +55,11 @@ List<String> screenTexts(WidgetTester tester) {
   return out;
 }
 
+/// A stringified Dart null that leaked onto a screen: the whole text is
+/// "null", or it sits in a field slot (": null", "null" beside Chinese).
+/// English "null" in a lemma, example or "non-null" is real content.
+final _leakedNull = RegExp(r'^null$|[：:]\s*null$|^null\s*[：:]|[一-鿿]null|null[一-鿿]');
+
 void main() {
   testWidgets('a learner reviews and opens every added word', (tester) async {
     final pack = LexiconPack.instance
@@ -172,6 +177,10 @@ void main() {
     // ignore: avoid_print
     print('added ${added.length}, reviewed $n, opened ${words.length}, '
         '${errors.length} errors, ${nulls.length} nulls');
+    // Put the real handler back first: with the collecting one still
+    // installed a failing expect() trips binding.dart's
+    // _pendingExceptionDetails assertion and hides the original failure.
+    FlutterError.onError = original;
     expect(errors, isEmpty);
     expect(nulls, isEmpty);
   }, timeout: const Timeout(Duration(minutes: 20)));

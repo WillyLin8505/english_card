@@ -13,6 +13,7 @@ import 'package:photo_english_app/models/word_entry.dart';
 import 'package:photo_english_app/screens/flashcard_screen.dart';
 import 'package:photo_english_app/screens/onboarding_screen.dart';
 import 'package:photo_english_app/services/app_settings.dart';
+import 'package:photo_english_app/services/dictionary_sync.dart';
 import 'package:photo_english_app/services/speaker.dart';
 import 'package:photo_english_app/services/tagging_service.dart';
 import 'package:photo_english_app/services/word_database_repository.dart';
@@ -526,6 +527,48 @@ void main() {
       expect(app.settings.showsTaggingServer, isFalse);
       expect(find.text('進階設定：照片辨識連線'), findsNothing);
       expect(find.text('照片辨識'), findsOneWidget);
+    });
+
+    testWidgets('a restored retention outside the slider is clamped (card #228)',
+        (tester) async {
+      final settings = AppSettings.inMemory()..desiredRetention = 0.97;
+      expect(settings.desiredRetention, AppSettings.maxRetention);
+      settings.desiredRetention = 0.7;
+      expect(settings.desiredRetention, AppSettings.minRetention);
+      await pumpApp(tester,
+          initialTab: AppTab.settings,
+          settings: settings,
+          size: const Size(402, 1600));
+      await tester.tap(find.text('進階設定：複習安排'));
+      await tester.pumpAndSettle();
+      expect(find.byType(Slider), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('dictionary connection card shows only on failure (問題回報 #306)',
+        (tester) async {
+      final sync = DictionarySync.instance;
+      final saved = (sync.status, sync.hasError);
+      addTearDown(() => (sync.status, sync.hasError) = saved);
+      sync
+        ..status = '已連接詞庫 · 每 30 秒自動更新'
+        ..hasError = false;
+      await pumpApp(tester,
+          initialTab: AppTab.settings, size: const Size(402, 1600));
+      expect(find.text('詞庫連線'), findsNothing);
+      expect(find.textContaining('每 30 秒'), findsNothing);
+      expect(find.textContaining('上次確認'), findsNothing);
+      expect(find.textContaining('你的資料庫'), findsNothing);
+      expect(find.text('字卡和複習紀錄保存在此裝置。'), findsOneWidget);
+
+      sync
+        ..status = '暫時無法連線 · 使用已儲存的詞庫，稍後自動重試'
+        ..hasError = true;
+      await pumpApp(tester,
+          initialTab: AppTab.settings, size: const Size(402, 1600));
+      expect(find.text('詞庫連線'), findsOneWidget);
+      expect(find.text(sync.status), findsOneWidget);
+      expect(find.text('重新連線'), findsOneWidget);
     });
   });
 

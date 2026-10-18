@@ -37,6 +37,9 @@ def _no_live_pos_exclusions(tmp_path, monkeypatch):
     from app import pos_exclusions
     monkeypatch.setattr(pos_exclusions, "PATH", tmp_path / "excluded_pos.json")
     monkeypatch.setattr(pos_exclusions, "_cache", None)
+    # Nor append to the real per-picture timing log (問題回報 #229).
+    from app import images
+    monkeypatch.setattr(images, "TAG_TIMING_LOG", tmp_path / "tag_timing.jsonl")
 
 
 @pytest.fixture(scope="session")

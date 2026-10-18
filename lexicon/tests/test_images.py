@@ -230,7 +230,8 @@ def test_tag_asset_defaults_to_cefr_mode(session, tmp_path, monkeypatch):
                     if word not in excluded:
                         candidates.append({"word": word, "pos": "noun", "cefr": level,
                                            "point": [0.4, 0.5]})
-            body = {"model": "vision", "candidates": candidates}
+            body = {"model": "vision", "candidates": candidates,
+                    "stages": {"queueMs": 5, "modelMs": 900, "modelCalls": 1}}
         return io.BytesIO(json.dumps(body).encode())
 
     monkeypatch.setattr(images.urllib.request, "urlopen", fake_urlopen)
@@ -242,6 +243,12 @@ def test_tag_asset_defaults_to_cefr_mode(session, tmp_path, monkeypatch):
     assert seen_modes == ["cefr"]
     assert images.cefr_counts(asset.tags) == {level: 3 for level in images.CEFR_LEVELS}
     assert asset.tag_status == "done"
+    # 問題回報 #229: one timing line per picture, stage by stage, with the tagger's split.
+    line = json.loads(images.TAG_TIMING_LOG.read_text(encoding="utf-8").splitlines()[-1])
+    assert (line["asset"], line["outcome"]) == (asset.id, "ok")
+    by_stage = {st["stage"]: st for st in line["stages"]}
+    assert {"cefr-1", "score-1"} <= set(by_stage)
+    assert by_stage["cefr-1"]["tagger"] == [{"queueMs": 5, "modelMs": 900, "modelCalls": 1}]
 
 
 def test_cefr_picture_stays_pending_when_any_band_has_fewer_than_three():

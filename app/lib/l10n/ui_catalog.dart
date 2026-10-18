@@ -337,15 +337,14 @@ const uiCatalog = <String, (String, String)>{
   ),
   '卡片背面順序': ('Card back order', 'Ordre du verso des cartes'),
   '詞庫連線': ('Dictionary connection', 'Connexion au dictionnaire'),
-  '立即更新詞庫': ('Update dictionary now', 'Actualiser le dictionnaire'),
   '資料': ('Data', 'Données'),
-  '字卡和複習紀錄保存在此瀏覽器。詞庫會從你的資料庫自動更新。': (
-    'Cards and review history are saved in this browser. The dictionary updates automatically from your database.',
-    'Les cartes et l’historique sont enregistrés dans ce navigateur. Le dictionnaire est actualisé automatiquement depuis votre base de données.'
+  '字卡和複習紀錄保存在此瀏覽器。': (
+    'Cards and review history are saved in this browser.',
+    'Les cartes et l’historique sont enregistrés dans ce navigateur.'
   ),
-  '字卡和複習紀錄保存在此裝置。詞庫會從你的資料庫自動更新。': (
-    'Cards and review history are saved on this device. The dictionary updates automatically from your database.',
-    'Les cartes et l’historique sont enregistrés sur cet appareil. Le dictionnaire est actualisé automatiquement depuis votre base de données.'
+  '字卡和複習紀錄保存在此裝置。': (
+    'Cards and review history are saved on this device.',
+    'Les cartes et l’historique sont enregistrés sur cet appareil.'
   ),
   '資料庫': ('Database', 'Base de données'),
   '我的單字本': ('My words', 'Mes mots'),

@@ -69,7 +69,12 @@ String intervalLabel(int days) {
 ///
 /// Keyboard: Space / Enter shows the answer, 1–4 grade.
 class FlashcardScreen extends StatefulWidget {
-  const FlashcardScreen({super.key});
+  /// Set by the shell when another screen asks for a run that starts with
+  /// particular cards (學習洞察「複習這些字」); this screen starts the run
+  /// and clears it.
+  final ValueNotifier<List<String>?>? reviewRequest;
+
+  const FlashcardScreen({super.key, this.reviewRequest});
 
   @override
   State<FlashcardScreen> createState() => _FlashcardScreenState();
@@ -94,21 +99,55 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
       _repo = repo;
       _end();
     }
+    // A request made before this screen was built.
+    if (widget.reviewRequest?.value != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _takeReviewRequest());
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    widget.reviewRequest?.addListener(_takeReviewRequest);
+  }
+
+  @override
+  void didUpdateWidget(FlashcardScreen old) {
+    super.didUpdateWidget(old);
+    if (old.reviewRequest != widget.reviewRequest) {
+      old.reviewRequest?.removeListener(_takeReviewRequest);
+      widget.reviewRequest?.addListener(_takeReviewRequest);
+    }
   }
 
   @override
   void dispose() {
+    widget.reviewRequest?.removeListener(_takeReviewRequest);
     _session?.dispose();
     super.dispose();
   }
 
-  void _start() {
+  void _takeReviewRequest() {
+    final request = widget.reviewRequest;
+    final ids = request?.value;
+    if (request == null || ids == null || !mounted || _repo == null) return;
+    // Clear before starting so the notification doesn't come back here.
+    request.value = null;
+    _session?.removeListener(_changed);
+    _session?.dispose();
+    _session = null;
+    _lastRunReviewed = null;
+    _start(focus: ids);
+  }
+
+  void _start({List<String> focus = const []}) {
     final scope = AppScope.of(context);
     // A message from another tab (資料庫「已加入…」) would sit on the
     // grade buttons (問題回報 #97).
     ScaffoldMessenger.maybeOf(context)?.removeCurrentSnackBar();
     setState(() {
-      _session = FlashcardSession(scope.repository, continuous: true)
+      _session = FlashcardSession(scope.repository,
+          continuous: true, focus: focus)
         ..addListener(_changed);
       _wasBack = false;
     });

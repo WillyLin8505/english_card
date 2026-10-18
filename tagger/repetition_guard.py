@@ -54,7 +54,8 @@ class RepetitionGuard:
         return False
 
 
-def read_cefr_stream(response):
+def read_cefr_stream(response, on_timings=None):
+    """``on_timings`` gets llama-server's final ``timings`` (absent if the guard stops early)."""
     guard = RepetitionGuard()
     for line in response:
         if not line.startswith(b'data:'):
@@ -65,6 +66,8 @@ def read_cefr_stream(response):
         event = json.loads(payload)
         if event.get('error'):
             raise ValueError(f"model stream failed: {event['error']}")
+        if on_timings is not None and event.get('timings'):
+            on_timings(event['timings'])
         choices = event.get('choices') or []
         if choices and guard.feed(choices[0].get('delta', {}).get('content') or ''):
             break  # closing the HTTP response cancels the remaining generation

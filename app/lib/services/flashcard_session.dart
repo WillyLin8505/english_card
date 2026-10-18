@@ -74,12 +74,20 @@ class FlashcardSession extends ChangeNotifier {
   final math.Random _random;
   final LexiconPack _lexicon;
   final bool continuous;
+
+  /// Cards to show first, in this order, before the usual pick — the
+  /// learner asked to practise these (學習洞察「複習這些字」, 問題回報 #307).
+  /// A focus card that is not due is extra practice like any future card.
+  final List<String> focus;
   final Set<String> _scheduledThisRun = {};
   bool _practice = false;
   bool get isExtraPractice => _practice;
 
   FlashcardSession(this.repo,
-      {math.Random? random, LexiconPack? lexicon, this.continuous = false})
+      {math.Random? random,
+      LexiconPack? lexicon,
+      this.continuous = false,
+      this.focus = const []})
       : _random = random ?? math.Random(),
         _lexicon = lexicon ?? LexiconPack.instance {
     repo.addListener(_repositoryChanged);
@@ -573,6 +581,13 @@ class FlashcardSession extends ChangeNotifier {
     if (back.isNotEmpty) {
       _again.remove(back.first.key);
       if (repo.card(back.first.key) case final c? when !c.archived) return c.id;
+    }
+    for (final id in focus) {
+      if (_shownAt.containsKey(id) || _again.containsKey(id)) continue;
+      final c = repo.card(id);
+      if (c != null && !c.archived && repo.entry(c.wordEntryId) != null) {
+        return id;
+      }
     }
     final now = repo.clock();
     final eligible = [

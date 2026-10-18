@@ -377,5 +377,9 @@ void main() {
       ..writeAsStringSync(const JsonEncoder.withIndent(' ').convert(report));
     // ignore: avoid_print
     print('rendered $n cards, ${errors.length} layout errors');
+    // Restore the real handler first so a failing expect() reports itself
+    // instead of tripping the binding's pending-exception assertion.
+    FlutterError.onError = original;
+    expect(errors.toSet(), isEmpty, reason: '複習畫面有版面／渲染錯誤');
   });
 }

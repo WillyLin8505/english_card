@@ -41,10 +41,13 @@ void main() {
     addTearDown(() => FlutterError.onError = original);
     await pumpApp(tester, initialTab: AppTab.words, repository: repo, size: const Size(390, 844));
 
-    // Full words first, then some still-missing (stub) ones.
+    // Full words first, then some still waiting for a meaning: stubs, and
+    // full entries with no Chinese yet (the live pack's stubs are all form
+    // pointers, so without these the waiting path went untested — round 68).
+    bool noMeaning(LexEntry w) => (w.learnerMeaning ?? '').trim().isEmpty;
     final words = [
-      ...pack.catalogWords.where((w) => w.full).take(limit ~/ 2),
-      ...pack.catalogWords.where((w) => !w.full).take(limit ~/ 2),
+      ...pack.catalogWords.where((w) => w.full && !noMeaning(w)).take(limit ~/ 2),
+      ...pack.catalogWords.where((w) => !w.full || noMeaning(w)).take(limit ~/ 2),
     ];
     var added = 0, waiting = 0, opened = 0;
     for (final w in words) {

@@ -94,6 +94,24 @@ class AppShellState extends State<AppShell> implements AppNavigator {
     setState(() => _reviewing = reviewing);
   }
 
+  /// Cards the 複習 tab should start a run with; it clears the value once
+  /// the run has started.
+  final _reviewRequest = ValueNotifier<List<String>?>(null);
+
+  @override
+  void dispose() {
+    _reviewRequest.dispose();
+    super.dispose();
+  }
+
+  @override
+  void reviewCards(List<String> cardIds) {
+    if (cardIds.isEmpty) return;
+    _nav(AppTab.review)?.popUntil((r) => r.isFirst);
+    selectTab(AppTab.review);
+    _reviewRequest.value = List.unmodifiable(cardIds);
+  }
+
   @override
   void openWord(String wordEntryId, {String? occurrenceId}) {
     Navigator.of(context, rootNavigator: true).push(MaterialPageRoute<void>(
@@ -107,7 +125,7 @@ class AppShellState extends State<AppShell> implements AppNavigator {
         AppTab.album => widget.databaseLibrary
             ? const DatabaseLibraryScreen(photos: true)
             : const AlbumScreen(),
-        AppTab.review => const FlashcardScreen(),
+        AppTab.review => FlashcardScreen(reviewRequest: _reviewRequest),
         AppTab.words => widget.databaseLibrary
             ? const DatabaseLibraryScreen(photos: false)
             : const WordDatabaseScreen(),
