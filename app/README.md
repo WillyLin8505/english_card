@@ -176,3 +176,15 @@ flutter run --dart-define-from-file=posthog.local.json   # run_web.bat 會自動
 事件：`app_opened`、`$screen`（切換分頁）、`onboarding_completed`、`photo_added`、`word_added`、
 `review_started`／`review_finished`、`card_reviewed`（rating、題型、答對、提示數、作答毫秒、下次間隔天數）。
 每台裝置一個匿名 id（Hive `analytics` box），不送照片、單字內容或個人資料。
+
+## 在 Mac 用 iPhone 模擬器跑
+
+需要 Xcode（App Store）、Flutter（`brew install --cask flutter`）、CocoaPods（`brew install cocoapods`）。
+從 Windows 複製 `app/posthog.local.json`（以及要打標時的 `tagging.local.json`）到 Mac 的 `app/`，然後：
+
+```
+cd app && ./run_ios_sim.sh
+```
+
+模擬器上的操作會以 `platform=iOS` 送進 PostHog。照片打標服務在 Windows 那台（Predator）上，
+Mac 要打標得把 `tagging.local.json` 的網址改成那台電腦的區網 IP。
