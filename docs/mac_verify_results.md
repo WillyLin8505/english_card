@@ -61,3 +61,46 @@ Mac 環境：Flutter 3.47.7、Dart 3.13.5。Windows 回報 analyze 無 error、3
 | 1 | flutter analyze | 無 error | 0 error、0 warning、1 info（`test/simulation/card226_review_audit.dart:16` 多餘的 `dart:typed_data` import）。M6 的 `screens_test.dart:552` 編譯錯誤已修好 | — | 低 |
 | 2 | flutter test | 全部通過 | 374 通過、1 略過、0 失敗 | — | — |
 | 3 | M7 卡 #297、#300、#301 iPhone 模擬器驗證 | — | 尚未執行（Mac 還在裝 Xcode） | — | — |
+
+## 2026-10-19 雲端 Linux session（非 Mac，commit `ac0ae50`）— `flutter build web` 編不過
+
+執行者：Claude Code 雲端 session（Ubuntu 24.04 容器，**沒有 macOS／Xcode**），Flutter 3.47.7 · Dart 3.13.5。
+接到「照 `docs/mac_verify.md` 做一輪 iPhone 模擬器驗證」，但這台跑不了 iOS 模擬器
+（`run_ios_sim.sh` 需要 `open -a Simulator` 與 `xcrun simctl`），**步驟 4、5 一項都沒做到**。
+
+| # | 步驟 | 預期 | 實際 | 嚴重度 |
+|---|------|------|------|--------|
+| 1 | flutter analyze | 無 error | 0 error、1 info（`test/simulation/card226_review_audit.dart:16` 多餘 import）— **與 Mac M7 完全一致** | 低 |
+| 2 | flutter test | 全部通過 | **374 通過、1 略過、0 失敗** — **與 Mac M7 完全一致** | — |
+| 3 | flutter build web | 編譯成功 | **編不過**，見下 | 中 |
+| 4 | 4./5. iPhone 模擬器 | — | 未執行（這台沒有 macOS） | — |
+
+### 問題：`flutter build web` 編不過 — `app/run_web.bat` 跑不起來
+
+```
+lib/services/photo_intake.dart:45:13:
+Error: The integer literal 0xcbf29ce484222325 can't be represented exactly in JavaScript.
+lib/services/photo_intake.dart:47:39:
+Error: The integer literal 0xFFFFFFFFFFFFFFFF can't be represented exactly in JavaScript.
+```
+
+`hashBytes()` 的 64-bit FNV-1a 常數在 dart2js 下無法表示（JS 的 number 是 double）。
+`ae1d773`、`ffa3aea`、`ac0ae50` 三個 commit 上都一樣。
+**原生 iOS／Android 不受影響**（Dart native 有真正的 64-bit int），只有 web 編不過。
+Mac 端只跑 analyze／test，不會碰到這一項，所以之前的輪次都沒記到。
+
+修的方向（這個 session 沒有改 App 程式碼）：改 32-bit FNV-1a、改用 `BigInt`，
+或把 `hashBytes` 拆成 web／native 兩個實作。
+注意換演算法會改變既有照片指紋，要顧 `findDuplicate()` 對舊資料的相容性。
+
+### 補充
+
+- 後端 tunnel 通：`/api/lexicon` → 401（金鑰防護正常）、`/health` → 401、`/tag` → 404（只收 POST，正常）。
+  沒有讀或送任何金鑰。
+- `docs/mac_verify_shots/` 有四張 Flutter web + Chromium 390×844 的 UI 截圖（檔名有 `web`），
+  是在**暫時**改掉上述 hash 常數後編出來的，該暫改已還原、沒有進任何 commit。
+  **不能取代步驟 5**：無頭瀏覽器沒有相機、相片庫、QR 掃描、TTS、音檔，詞庫也被 CORS 擋住，
+  所以拍照→打標整條流程與 #252 / #270 / #277 / #278 / #279 / #268 / #269 都還沒驗到。
+  截圖中「測試連線」顯示「連不到 AI 辨識服務」是瀏覽器 CORS，不是 App 的問題
+  （`/health` 實際回 401，程式碼對 401 是回「API Key 不正確」）。
+- 流程建議：這張卡被派給了非 Mac 的 agent，重點步驟做不到；建議在 dispatch 設定裡限定只派給 Mac。
