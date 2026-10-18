@@ -105,3 +105,8 @@ commit `e91339e`（Windows：flutter analyze 無 error、01:08 +370: All tests p
 commit `99ba0fa`（Windows：flutter analyze 無 error、01:32 +370: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #291：問題回報 #294：[Mac] flutter test 失敗與 analyze 警告（Mac 第 1 輪，Window
   結果：全部完成：flutter analyze 3→0 個問題、flutter test 6 失敗→0（370 全過）；6 個失敗都是測試過時，程式本身沒錯，只改了測試檔。
+
+## M4（2026-10-19 00:05）狀態：待做
+commit `270dac5`（Windows：flutter analyze 無 error、02:35 +370: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #166：系統修正：例句選取與重寫（義項不對齊、非完整句、Tatoeba 罕見人名、缺例句）
+  結果：全部完成：alfred 照片解綁並排除（決定 B），照片字缺例句 0、oddname 1,503→0、notsentence 827→2、missinglemma 235→0（validator）；另有 #292 進行中的重新 materialize 新增 5 個 A1–B1 缺口，已開問題回報 #295。
