@@ -276,10 +276,19 @@ class Handler(SimpleHTTPRequestHandler):
             return False
         return ip.is_private or ip.is_loopback or ip in ipaddress.ip_network('100.64.0.0/10')
 
+    def public_request(self) -> bool:
+        """--public-host: a request for the internet name (e.g. a Cloudflare
+        Tunnel to api.willylinai.com). The tunnel connects from loopback, so
+        these are never trusted as local."""
+        name = (urlsplit('//' + self.headers.get('Host', '')).hostname or '').lower()
+        return name in getattr(self.server, 'public_hosts', set())
+
     def key_ok(self) -> bool:
-        """--lan: photo recognition / missing-word reports from another device
-        need the tagger's X-API-Key, so the LAN can't use the GPU freely."""
-        if not getattr(self.server, 'lan', False) or self.from_loopback():
+        """--lan / --public-host: photo recognition, missing-word reports and the
+        dictionary from another device need the tagger's X-API-Key, so the LAN
+        or the internet can't use the GPU or read the database freely."""
+        if not self.public_request() and (
+                not getattr(self.server, 'lan', False) or self.from_loopback()):
             return True
         try:
             key = os.environ.get('TAGGER_API_KEY', '').strip() or                 (ROOT / 'tagger' / '.api_key').read_text().strip()
@@ -301,11 +310,11 @@ class Handler(SimpleHTTPRequestHandler):
                     or peer in ipaddress.ip_network('100.64.0.0/10')):
                 self.send_error(403)
                 return False
-        if host not in allowed and not (lan and self.lan_host(host)):
+        if host not in allowed and not (lan and self.lan_host(host)) and not self.public_request():
             self.send_error(403)
             return False
         origin = self.headers.get('Origin')
-        if origin and origin != f'http://{host}':
+        if origin and origin not in (f'http://{host}', f'https://{host}'):
             # flutter run -d chrome uses a random localhost port; allow that
             # loopback origin so DictionarySync can call this server directly.
             from urllib.parse import urlparse
@@ -459,6 +468,9 @@ class Handler(SimpleHTTPRequestHandler):
                 with path.open('rb') as image_file:
                     self.copyfile(image_file, self.wfile)
             return
+        if url.path in ('/health', '/api/lexicon') and not self.key_ok():
+            self.send_error(401, 'X-API-Key required from another device')
+            return
         if url.path == '/health':
             self.proxy_tagger()
             return
@@ -515,6 +527,9 @@ if __name__ == '__main__':
     parser.add_argument('--lan', action='store_true',
                         help='also serve devices on the home network / Tailscale '
                              '(testing on a Mac or iPhone); photo recognition then needs X-API-Key')
+    parser.add_argument('--public-host', action='append', default=[],
+                        help='internet name served through a tunnel (e.g. api.willylinai.com); '
+                             'repeatable, or PUBLIC_HOSTS=a,b. Tagging and the dictionary then need X-API-Key')
     args = parser.parse_args()
     if args.warm_only:
         snapshot = http_snapshot('en', 'zh-TW')
@@ -527,4 +542,6 @@ if __name__ == '__main__':
         logging.warning('Card studio could not start: %s', error)
     server = ThreadingHTTPServer(('0.0.0.0' if args.lan else '127.0.0.1', args.port), Handler)
     server.lan = args.lan
+    server.public_hosts = {h.strip().lower() for h in
+                           args.public_host + os.environ.get('PUBLIC_HOSTS', '').split(',') if h.strip()}
     server.serve_forever()

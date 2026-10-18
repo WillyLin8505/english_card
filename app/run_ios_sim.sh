@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# Runs the app in the iOS Simulator on a Mac (an iPhone, with the same
-# local key files as run_web.bat: tagging.local.json, posthog.local.json).
+# Runs the app in the iOS Simulator on a Mac (an iPhone). It reaches the
+# backend on the owner's laptop through https://api.willylinai.com
+# (iphone.json); type the tagger key in the app's 設定. posthog.local.json
+# is added when present.
 #   cd app && ./run_ios_sim.sh
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -19,7 +21,6 @@ DEVICE=$(xcrun simctl list devices booted | grep -m1 iPhone | sed -E 's/.*\(([0-
 [ -n "$DEVICE" ] || { echo "沒有開機中的 iPhone 模擬器：在 Simulator 選單 File → Open Simulator 選一台"; exit 1; }
 
 flutter pub get
-DEFINES=()
-[ -f tagging.local.json ] && DEFINES+=(--dart-define-from-file=tagging.local.json)
+DEFINES=(--dart-define-from-file=iphone.json)
 [ -f posthog.local.json ] && DEFINES+=(--dart-define-from-file=posthog.local.json)
 flutter run -d "$DEVICE" ${DEFINES[@]+"${DEFINES[@]}"} "$@"

@@ -74,6 +74,13 @@ class DictionarySync extends ChangeNotifier {
   Uri get missingEndpoint =>
       endpoint('en', 'zh-TW').replace(path: '/api/missing', queryParameters: {});
 
+  /// The tagger key from 設定: a server reached over the internet
+  /// (serve_app.py --public-host) needs it for the dictionary too.
+  Map<String, String> get _keyHeader {
+    final key = _settings?.apiKey.trim() ?? '';
+    return key.isEmpty ? const {} : {'X-API-Key': key};
+  }
+
   final _sentMissing = <String>{};
 
   /// Sends the words the pack lacked since the last call. Returns how many
@@ -86,7 +93,7 @@ class DictionarySync extends ChangeNotifier {
     if (pending.isEmpty) return 0;
     final response = await client
         .post(missingEndpoint,
-            headers: {'Content-Type': 'application/json'},
+            headers: {'Content-Type': 'application/json', ..._keyHeader},
             body: jsonEncode({
               'requests': [
                 for (final r in pending.values.take(500))
@@ -177,6 +184,7 @@ class DictionarySync extends ChangeNotifier {
             ...uri.queryParameters,
             if (canReuse) 'since': cachedVersion,
           }), headers: {
+            ..._keyHeader,
             if (canReuse)
               'If-None-Match': '"$cachedVersion"',
           })
