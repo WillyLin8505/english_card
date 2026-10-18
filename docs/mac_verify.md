@@ -16,9 +16,18 @@
    - 學習洞察（#277）、備份還原（#278）、原圖遺失改用同字其他圖（#279）、隱私權設定與政策頁（#268）、資料來源頁（#269）。
    - 照片載入速度（#252）：捲動相片冊、翻卡是否卡頓。
    - 音檔與詞庫圖片在原生 iOS 能載入（#270）。
-6. 每個問題寫進 `docs/mac_verify_results.md`（日期、步驟、預期、實際、截圖檔名、嚴重度），commit 並 push
-   （只 commit 這個檔與截圖資料夾 `docs/mac_verify_shots/`，不要改 App 程式碼）。
-   Windows 端的 manager 會把它轉成問題回報並派工。看板 127.0.0.1:5173 只在 Windows 上，Mac 連不到。
+6. **跟 Windows 溝通一律用問題回報頁的 API**（owner 10/18）：
+   - 網址 `https://api.willylinai.com/api/issues`，每個請求帶標頭 `X-API-Key: $ENGLISH_CARD_KEY`
+     （owner 在 Mac 的終端機設環境變數 `ENGLISH_CARD_KEY`，不要寫進檔案或 commit）。
+   - 開問題：`POST /api/issues`，JSON：`{"kind":"bug"|"todo"|"decision","severity":"high|medium|low","area":"app",
+     "title":"[Mac] …","detail":"步驟／預期／實際／iOS 版本與模擬器機型","reporter":"Mac Claude"}`。
+     開了就會自動派給 Windows 上的一個 Claude CLI 修，不用另外通知。
+   - 看回覆：`GET /api/issues/<id>`，看 `status`（fixed＝已修）、`resolution`、`history`；修好後 `git pull` 再驗一次，
+     沒修好就 `PUT /api/issues/<id>` 加 `{"status":"open","note":"[Mac] 重驗仍失敗：…","by":"Mac Claude"}`。
+   - Windows 給 Mac 的請求：標題開頭是「[給 Mac]」、reporter 是「Claude · Manager」；先 `GET /api/issues` 找
+     `status` 不是 fixed 的「[給 Mac]」項目來做，做完 `PUT` `{"status":"fixed","resolution":"[Mac] …","by":"Mac Claude"}`。
+   - 先 GET 再 PUT，只在要改狀態時送 status（Windows 端的 AI 也在改同一份清單）。
+   - 截圖放 `docs/mac_verify_shots/`，commit 並 push（只 commit 截圖，不要改 App 程式碼），在問題的 detail 寫檔名。
 
 ## 規則
 - 不要修 App 程式碼（Windows 上的 CLI 同時在改，會衝突）；只驗證與回報。
