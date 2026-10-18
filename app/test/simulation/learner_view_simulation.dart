@@ -165,7 +165,7 @@ void main() {
       for (final w in words.values)
         for (final part in ['front', 'back', 'detail'])
           for (final t in (w[part] as List<String>? ?? const <String>[]))
-            if (RegExp(r'\bnull\b').hasMatch(t)) '${w['word']} $part：$t'
+            if (_leakedNull.hasMatch(t.trim())) '${w['word']} $part：$t'
     ];
     final report = {
       'level': level, 'added': added.length, 'reviewed': n,

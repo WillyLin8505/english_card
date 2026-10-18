@@ -548,18 +548,22 @@ void main() {
     testWidgets('dictionary connection card shows only on failure (問題回報 #306)',
         (tester) async {
       final sync = DictionarySync.instance;
-      final saved = (sync.status, sync.hasError);
-      addTearDown(() => (sync.status, sync.hasError) = saved);
+      final (savedStatus, savedError) = (sync.status, sync.hasError);
+      addTearDown(() => sync
+        ..status = savedStatus
+        ..hasError = savedError);
       sync
         ..status = '已連接詞庫 · 每 30 秒自動更新'
         ..hasError = false;
       await pumpApp(tester,
           initialTab: AppTab.settings, size: const Size(402, 1600));
+      await tester.scrollUntilVisible(
+          find.text('字卡和複習紀錄保存在此裝置。'), 300,
+          scrollable: find.byType(Scrollable).first);
       expect(find.text('詞庫連線'), findsNothing);
       expect(find.textContaining('每 30 秒'), findsNothing);
       expect(find.textContaining('上次確認'), findsNothing);
       expect(find.textContaining('你的資料庫'), findsNothing);
-      expect(find.text('字卡和複習紀錄保存在此裝置。'), findsOneWidget);
 
       sync
         ..status = '暫時無法連線 · 使用已儲存的詞庫，稍後自動重試'

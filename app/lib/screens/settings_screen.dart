@@ -525,11 +525,59 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _label('弱項單字'),
       if (ins.weakWords.isEmpty)
         _note('還沒有常按「忘記」或「吃力」的字。')
-      else
-        for (final w in ins.weakWords)
-          UiText('${w.word}　忘記 ${w.again}・吃力 ${w.hard}／${w.reviews} 次',
-              style: MFont.manrope(13, FontWeight.w600, MColors.ink)),
+      else ...[
+        // 問題回報 #307: each word opens its details, and the list can be
+        // practised straight away instead of searching 單字本 for each.
+        for (final w in ins.weakWords) _weakWordRow(w),
+        const SizedBox(height: 4),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: () => AppScope.of(context)
+                .navigator
+                .reviewCards([for (final w in ins.weakWords) w.cardId]),
+            icon: const Icon(Icons.replay_rounded, size: 18),
+            label: const UiText('複習這些字'),
+          ),
+        ),
+      ],
     ]);
+  }
+
+  /// 「複習 5 次，忘了 2 次」— how often it was forgotten is the message, not
+  /// the rating names (問題回報 #307).
+  static String _weakWordNote(WeakWord w) {
+    final parts = [
+      if (w.again > 0) '忘了 ${w.again} 次',
+      if (w.hard > 0) '吃力 ${w.hard} 次',
+    ];
+    return '複習 ${w.reviews} 次，${parts.join('、')}';
+  }
+
+  Widget _weakWordRow(WeakWord w) {
+    final scope = AppScope.of(context);
+    final entryId = scope.repository.card(w.cardId)?.wordEntryId;
+    return InkWell(
+      onTap: entryId == null ? null : () => scope.navigator.openWord(entryId),
+      borderRadius: BorderRadius.circular(MRadii.md),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            UiText(w.word,
+                style: MFont.manrope(14, FontWeight.w800, MColors.ink)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: UiText(_weakWordNote(w),
+                  style: MFont.manrope(12, FontWeight.w600, MColors.muted)),
+            ),
+            if (entryId != null)
+              const Icon(Icons.chevron_right_rounded,
+                  size: 20, color: MColors.muted),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _label(String text) => Padding(
