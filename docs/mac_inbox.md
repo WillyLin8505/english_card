@@ -297,7 +297,7 @@ commit `751d1c5`（Windows：flutter analyze 無 error、01:12 +444 ~1: All test
 - 卡 #392：問題回報 #386：[Mac] 2026-10-20 M25（iPhone 模擬器）：iPhone 首次同步詞庫的下載量
   結果：全部完成：無需改碼——/api/lexicon 已支援 gzip／ETag 304／since 差異；Mac 量到的 238 MB 是「未帶 Accept-Encoding」的未壓縮大小，實際壓縮傳輸約 34 MB。
 
-## M29（2026-10-20 00:29）狀態：待做
+## M29（2026-10-20 00:29）狀態：完成
 commit `71a4685`（Windows：flutter analyze 無 error、01:27 +444 ~1: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #381：問題回報 #341：A1 字的正面中文意思錯或用冷門義項：moment「力矩」、train「拖裾」、top「頂、主動、一
   結果：卡 #381 完成（英文 A1/A2 範圍）：兩個根因都修了——字典翻譯表配錯義項（全庫 67 字）＋常用義沒排前面（A1/A2 3,211 詞位逐一審過，44 個詞位修正）；A1/A2 字卡正面意思改變 84 字，抽查都是改善；golden 不變、QC 沒有退步。另開 #388、#389。

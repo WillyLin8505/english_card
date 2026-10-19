@@ -318,3 +318,13 @@ iPhone 18 Pro 模擬器（iOS 27.0），新安裝；跑兩次：帶 iphone.json�
 |----|----|----|----|----|
 | analyze／test（commit 751d1c5） | 通過 | flutter analyze 0 error、0 warning；flutter test 443 通過、2 略過 | — | — |
 | #392 | 通過 | 從 Mac 帶 Accept-Encoding: gzip 抓 /api/lexicon：回 content-encoding gzip、有 ETag，實際傳輸 34,096,632 bytes（約 34 MB，15 秒）。App 用 http.Client（iOS 上會自動要 gzip），所以 M25 那列的 238 MB 是未壓縮大小，是 Mac 量法的問題 | — | — |
+
+## 2026-10-20 M29（iPhone 模擬器）
+
+iPhone 18 Pro 模擬器新安裝、帶 iphone.json，等伺服器詞庫同步進 App 後讀每個詞性的 CEFR 與中文意思。
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #381 moment、train、top | 通過 | 新安裝、同步伺服器詞庫後：train 名詞變成「火車、列車」（不再是「拖裾」），moment 名詞是「刻；瞬間」，top 名詞「頂」、形容詞「最高的」（B1） | mac_verify_shots/2026-10-19/m29_381_moment_detail.png | — |
+| #381 冷門詞性被標成 A1 | 不通過 | 同步後的詞庫仍把冷門詞性標成 A1，這些就會變成 A1 字卡：bright 動詞 A1「照亮」、sunshine 形容詞 A1「公開開放」、out 名詞 A1「出路；脫身之計；（棒球）出局」、out 動詞 A1「驅逐；趕出…」、out 感嘆詞 A1「滾」。入門學習者看到「滾」很不妥。建議冷門詞性的 CEFR 不要沿用主詞性的 A1 | — | 中 |
+| #381 其他觀察 | 不通過 | top 動詞（A2）中文是「蓋、加以頂」，讀起來不通順；out 介系詞（A2）沒有中文意思 | — | 低 |
