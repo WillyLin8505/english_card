@@ -287,3 +287,14 @@ iPhone 18 Pro 模擬器（iOS 27.0），新安裝；跑兩次：帶 iphone.json�
 |----|----|----|----|----|
 | analyze／test（commit fb73166） | 通過 | flutter analyze 0 error、0 warning；flutter test 441 通過、2 略過 | — | — |
 | #362 | 通過 | 不需 iPhone 操作（後端／資料） | — | — |
+
+## 2026-10-20 M25（iPhone 模擬器）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| analyze／test（commit 3fd8a4f） | 通過 | flutter analyze 0 error、0 warning；flutter test 442 通過、2 略過 | — | — |
+| #380 | 通過 | 從 Mac 經公開網址抓 /api/lexicon 兩次都回 200，用時 34 秒、31 秒（沒有被 Cloudflare 切斷）；重啟後第一次的情況要在 Windows 重啟才量得到 | — | — |
+| iPhone 首次同步詞庫的下載量 | 不通過 | /api/lexicon 一次回 237,872,038 bytes（約 238 MB），iPhone 用行動網路第一次同步就要下載這麼多；建議分片、壓縮（gzip）或只送差異 | — | 低 |
+| #382 | 通過 | 後端圖片來源順序調整，iPhone 上不需另驗 | — | — |
+| #309 B 樣式沒有照片的字（上一輪 M23 不通過） | 通過 | 新安裝（預設 B 圖片沉浸）複習沒有照片的 sunshine、drop、butter knife：標題字改成深色（亮度 0.01），清楚可讀，音標完整 | mac_verify_shots/2026-10-19/m25_309_no_photo_sunshine.png、m25_309_no_photo_butter_knife.png | — |
+| 詞庫：sunshine 的主要義項 | 不通過 | sunshine（A1）卡片背面中文意思是形容詞「公開開放」（Open to and permitting public access…，陽光法案的意思），學習者要的是名詞「陽光」；例句卻是「You're my sunshine.」，義項和例句對不上 | mac_verify_shots/2026-10-19/m25_309_no_photo_sunshine.png | 低 |
