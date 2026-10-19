@@ -14,6 +14,7 @@ def old(senses):
     usable=[s for s in ss if (s[1] or "").strip() and not any(l.lower() in L.RARE or l.startswith("etymology-") for l in s[2] or [])]
     dic=[s for s in usable if not s[3]]
     common=(dic or usable)[:2]; seen=set(); parts=[]
+    if not common: return next(((s[1] or '').strip() for s in ss if (s[1] or '').strip()), '')
     for s in common:
         ws=[w.strip() for w in re.split(r"[、；;，,]", s[1]) if w.strip()]
         ws=[w for w in ws if w not in seen and not seen.add(w)]

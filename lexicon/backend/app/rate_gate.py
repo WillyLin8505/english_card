@@ -179,8 +179,13 @@ class Gate:
 SMITHSONIAN = Gate("smithsonian", ("api.si.edu",), min_interval=4.0, max_interval=60.0,
                    backoff_base=600.0, backoff_max=86400.0, calm_s=600.0, skip_when_paused=True)
 # Openverse anonymous: 20/min burst, 200/day sustained (headers measured 2026-10-19).
-OPENVERSE = Gate("openverse", ("api.openverse.org",), min_interval=3.5, max_interval=60.0,
-                 backoff_base=300.0, backoff_max=86400.0, calm_s=600.0, skip_when_paused=True)
+# With LEXICON_OPENVERSE_CLIENT_ID/SECRET (問題回報 #380, app.openverse_auth)
+# a registered client gets 10,000/day: one request a second, shorter first pause.
+OPENVERSE_KEYED = bool(config.OPENVERSE_CLIENT_ID and config.OPENVERSE_CLIENT_SECRET)
+OPENVERSE = Gate("openverse", ("api.openverse.org",),
+                 min_interval=1.0 if OPENVERSE_KEYED else 3.5, max_interval=60.0,
+                 backoff_base=60.0 if OPENVERSE_KEYED else 300.0, backoff_max=86400.0,
+                 calm_s=600.0, skip_when_paused=True)
 
 GATES: tuple[Gate, ...] = (SMITHSONIAN, OPENVERSE)
 

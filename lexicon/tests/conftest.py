@@ -51,6 +51,11 @@ def _no_live_pos_exclusions(tmp_path, monkeypatch):
         monkeypatch.setattr(gate, "state", tmp_path / f"{gate.name}_gate.json")
         monkeypatch.setattr(gate, "min_interval", 0.0)
         monkeypatch.setattr(gate, "backoff_base", 0.0)
+    # Nor trade the owner's Openverse client for a token (問題回報 #380).
+    from app import config, openverse_auth
+    monkeypatch.setattr(config, "OPENVERSE_CLIENT_ID", "")
+    monkeypatch.setattr(config, "OPENVERSE_CLIENT_SECRET", "")
+    monkeypatch.setattr(openverse_auth, "_cache", {"token": None, "expires_at": 0.0, "retry_at": 0.0})
 
 
 @pytest.fixture(scope="session")

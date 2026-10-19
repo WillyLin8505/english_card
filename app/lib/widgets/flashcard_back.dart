@@ -603,7 +603,12 @@ class FlashcardBack extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (hero == null)
-                    Text(displayWord(entry.word), style: look.headword),
+                    // 圖片沉浸 without a photo: the headword is white (made for
+                    // the dark scrim), so it needs the dark ink on the canvas.
+                    Text(displayWord(entry.word),
+                        style: look.photoHero
+                            ? look.headword.copyWith(color: look.meaning.color)
+                            : look.headword),
                   if (ipa != null && showPronunciation)
                     Text(ipa, style: look.ipa),
                 ],

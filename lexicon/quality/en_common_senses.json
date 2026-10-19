@@ -36,7 +36,7 @@
     "exhibition|noun": {"first": ["A large-scale public showing"]},
     "film|noun": {"first": ["The sequence of still images itself", "A medium used to capture images"],
                   "zh": {"The sequence of still images itself": "電影", "A medium used to capture images": "軟片、膠捲"}},
-    "fire truck|noun": {"zh_ai": {"A motor truck that serves as firefighting apparatus": "消防車"}},
+    "fire truck|noun": {"zh": {"A motor truck that serves as firefighting apparatus": "救火車"}},
     "football|noun": {"first": ["Association football"], "zh": {"A sport played on foot": "足球、橄欖球"}},
     "host|noun": {"zh": {"One which receives or entertains a guest": "主人"}},
     "interest|noun": {"first": ["A great attention and concern"]},

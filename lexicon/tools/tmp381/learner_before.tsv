@@ -1,7 +1,7 @@
-a	adv	
-a	det	
+a	adv	橫
+a	det	累加器
 a	noun	誒
-a	prep	
+a	prep	在……裡；進入
 ability	noun	能力
 about	adj	活動的、走動的；存在的、可見的、流行的
 about	adv	大約；大概
@@ -49,7 +49,7 @@ adult	verb
 advantage	noun	利益、優點、好處；佔有優勢的
 advantage	verb	有助於
 adventure	noun	冒險；奇遇
-adventure	verb	
+adventure	verb	冒險
 advertisement	noun	廣告
 advertising	noun	廣告；廣告業
 advertising	verb	廣告
@@ -105,17 +105,17 @@ among	adv
 among	prep	其中、之間
 ancient	adj	古代、古老、古舊
 and	conj	和、與、及
-and	noun	
+and	noun	呼吸（古語）
 and	verb	（邏輯）用且運算結合（數值）
 angry	adj	惱怒的、憤怒的、生氣的；發炎且疼痛的
 angry	noun	
-animal	adj	
+animal	adj	動物的
 animal	noun	動物
 another	adj	另外的
 another	det	再；另一、別的
 another	pron	又一個
 answer	noun	回答、對答、回復；解答、答案
-answer	verb	
+answer	verb	回答、答應、答覆
 anxious	adj	緊張；焦慮、擔心
 any	adj	任何的
 any	adv	不再、一點
@@ -124,7 +124,7 @@ any	pron	誰
 anybody	pron	任何人
 anymore	adv	再也不
 anyone	pron	何人
-anything	adv	
+anything	adv	在任何方面；在任何程度上
 anything	noun	重要的人或事物
 anything	pron	什麼
 anything	verb	
@@ -141,7 +141,7 @@ appear	verb	出現；露面
 appearance	noun	出現；外貌、模樣、樣子
 apple	noun	蘋果
 apple	verb	使看似蘋果；變得像蘋果
-apply	adj	
+apply	adj	蘋果
 apply	verb	應用、用；申請
 appointment	noun	任命、任用；約會
 appreciate	verb	感謝；欣賞、贊賞、重視
@@ -229,7 +229,7 @@ bank	verb	存入銀行、存放；為……提供銀行服務
 bar	adv	
 bar	noun	酒吧、酒館、飯店；吧檯
 bar	prep	
-base	adj	
+base	adj	卑鄙的
 base	noun	基礎
 basic	adj	基本的；基礎的
 basic	noun	基本原理
@@ -308,10 +308,10 @@ bird	noun	鳥、雀
 bird	verb	觀鳥；捕鳥、獵鳥
 birth	adj	
 birth	noun	出生；誕生
-birth	verb	
+birth	verb	生出
 biscuit	noun	餅乾
 biscuit	verb	燒製陶器；乘坐內胎順流而下（管狀滑水）
-bit	adj	
+bit	adj	被咬過的
 bit	noun	少量；馬銜
 bit	verb	給馬上嚼子
 bite	noun	咬、一口
@@ -322,7 +322,7 @@ black-and-white	adj	黑白
 black-and-white	noun	黑白
 black square	noun	黑方塊
 blame	adj	
-blame	verb	
+blame	verb	責備、責怪、怪
 blanket	adj	普遍的、涵蓋一切。
 blanket	noun	毯子
 blanket	verb	毯子
@@ -342,7 +342,7 @@ boat	verb	乘船
 body	noun	身體
 body	verb	賦以形體
 boil	noun	疔瘡、疔
-boil	verb	
+boil	verb	煮沸、煮、沸騰
 bone	adj	
 bone	adv	
 bone	noun	骨質、骨頭、骨
@@ -382,11 +382,11 @@ breeze	verb	隨意行動；輕吹
 bridge	noun	橋、橋樑；鼻樑
 bridge	verb	架橋於
 bright	adj	亮、明、明亮
-bright	verb	
+bright	verb	照亮
 brilliant	adj	光輝的
 brilliant	noun	
 brilliant	verb	
-bring	intj	
+bring	intj	（電話鈴聲）鈴鈴
 bring	verb	帶來、帶去
 broken	adj	壞掉的；破碎、打破的、壞
 brother	intj	
@@ -410,22 +410,22 @@ bury	verb	掩埋、埋藏
 bus	noun	公車、巴士；總線、匯流排
 bus	verb	搭乘公車；接送學生
 bus stop	noun	汽車站、車站、公車站
-bush	adj	
-bush	adv	
+bush	adj	業餘的
+bush	adv	往內地
 bush	noun	灌木
 bush	verb	叢生；在……上插灌木以支撐
 business	adj	商業的、業務的；專業的、公事公辦的
 business	noun	事業、企業；商業
 busy	adj	忙、繁忙
 busy	noun	
-busy	verb	
+busy	verb	使忙
 but	adv	僅僅
 but	conj	可是、但是、不過
 but	prep	除了
 butter knife	noun	奶油刀
 buttery	adj	塗用奶油的
 button	noun	釦子；按鈕
-button	verb	
+button	verb	扣
 buy	noun	購買
 buy	verb	買
 by	adj	偏僻的、在旁邊的；附屬的、次要的
@@ -441,7 +441,7 @@ camp	adj
 camp	noun	安營、露營、營；營地
 camp	verb	露營
 can	intj	好、可以（表示同意）；沒問題（表示安心）
-can	noun	
+can	noun	金屬容器、罐頭
 can	verb	裝罐；會、能、能夠
 candy	noun	糖果；糖
 candy	verb	用糖煮
@@ -459,7 +459,7 @@ carry	noun	進位
 carry	verb	攜帶、攜、帶；進位
 case	adj	
 case	noun	事件
-case	verb	
+case	verb	裝箱
 cash	adj	
 cash	noun	現錢、現金、現款
 cash	verb	兌現
@@ -492,7 +492,7 @@ challenge	noun	挑戰；難題
 championship	noun	錦標賽；冠軍
 chance	adj	偶然的
 chance	noun	機會；幾率、機率、可能性
-chance	verb	
+chance	verb	偶然發生
 change	noun	變化；零錢、輔幣
 change	verb	變為、成為、變化；改變、轉變
 chapter	noun	章、章節；支部
@@ -504,12 +504,12 @@ chat	verb	聊天、攀談、談天
 cheap	adj	便宜、賤、卑鄙；低級的
 cheap	noun	
 cheap	verb	
-check	intj	
+check	intj	（表示已完成某項要求）好；沒問題
 check	noun	檢查、校驗；將軍
-check	verb	
+check	verb	檢查
 cheek	noun	臉頰、腮、腮幫子
 cheek	verb	
-cheese	intj	
+cheese	intj	茄子
 cheese	noun	酪、乾酪、乳酪；起司
 cheese	verb	製乳酪；在電路圖案中挖孔以降低圖案密度
 chef	noun	廚師
@@ -525,7 +525,7 @@ childhood	noun	童年、幼年、兒童期
 children	noun	小孩們
 chocolate	adj	巧克力；巧克力色
 chocolate	noun	巧克力
-choice	adj	
+choice	adj	精選的
 choice	intj	
 choice	noun	選擇
 choose	conj	
@@ -554,8 +554,8 @@ climb	noun	攀登
 climb	verb	攀登；登
 clock	noun	鐘、時鐘、鐘錶
 clock	verb	測量時間長度；測量速度
-close	adj	
-close	adv	
+close	adj	近
+close	adv	接近地
 close	noun	結束
 close	verb	關、關上、閉；關閉
 close-up	adj	近距離
@@ -578,8 +578,8 @@ coffee	verb	喝咖啡；給咖啡
 coin	noun	硬幣、銅錢
 coin	verb	鑄幣
 cold	adj	冷、寒、寒冷；冷漠、冰冷
-cold	adv	
-cold	noun	
+cold	adv	完全地
+cold	noun	寒冷、感冒
 collect	adj	由收到者付款的
 collect	adv	由收到者付款地
 collect	noun	
@@ -614,7 +614,7 @@ complete	noun	已完成的問卷
 computer	noun	電腦、計算機；計算者、計算員
 computer	verb	
 concentrate	adj	
-concentrate	noun	
+concentrate	noun	濃縮
 concentrate	verb	集中；濃縮
 concern	noun	關心；康采恩
 concert	noun	音樂會；合奏
@@ -626,14 +626,14 @@ confuse	verb	讓……困惑；混淆
 consequence	noun	後果、結果
 consequence	verb	
 consider	verb	考慮、熟慮、思考；認為
-consist	noun	
-consist	verb	
+consist	noun	編組
+consist	verb	由 ...) 組成、由 ...) 構成
 contact	noun	接觸；聯繫、交往、通訊
 contact	verb	接觸；聯繫
 container	noun	容器；集裝箱、貨櫃
 contest	noun	爭論、競賽、比賽；競爭
 context	noun	場合、情況、背景；上下文、語境、前後文
-continent	adj	
+continent	adj	自我克制；在身體需求或慾望（特別是性）方面控制有度。
 continent	noun	大陸
 continue	noun	
 continue	verb	繼續、持續
@@ -643,7 +643,7 @@ contrasted	adj	相對照的、形成對比的；對比鮮明的
 control	noun	控制、監督、監察
 conversation	noun	會話、談話、對話
 cook	noun	廚師、庖丁、庖人
-cook	verb	
+cook	verb	做飯、做菜、烹調
 cookie	noun	餅乾、餅乾餅
 cookie	verb	傳送餅乾
 cool	adj	涼快、清涼、平息；酷
@@ -651,7 +651,7 @@ cool	noun	涼爽
 cooling	adj	冷卻的
 cooling	noun	冷卻
 copy	noun	摹本、副本、拷貝；剽竊
-copy	verb	
+copy	verb	複製、收到、抄收
 corn	noun	玉蜀黍
 corn	verb	使成顆粒
 corner	intj	
@@ -661,7 +661,7 @@ correct	adj	正確、對
 correct	adv	
 correct	intj	
 correct	noun	
-cost	noun	
+cost	noun	費用、成本、花費
 cost	verb	花費
 could	noun	可能發生的事、可能性
 could	verb	（假設語氣、與事實相反）能、可以；（禮貌地請求允許）可以……嗎
@@ -684,7 +684,7 @@ cover	noun	蓋子、蓋、罩；書皮、封面
 cover	verb	覆蓋、覆
 covered	adj	覆蓋或包圍；已處理某事
 cow	noun	母牛、賤女人
-cow	verb	
+cow	verb	恐嚇
 crazy	adj	瘋狂、瘋
 crazy	adv	
 crazy	noun	
@@ -700,7 +700,7 @@ crime	noun	罪、罪行、刑事犯罪
 crime	verb	
 crisp	adj	質地堅硬卻易碎、容易碎裂的。；不軟塌、堅實、挺括、不乾枯或萎蔫、新鮮的。
 crisp	noun	鬆脆物
-crisp	verb	
+crisp	verb	烘脆
 criticize	verb	批評
 cross	adj	生氣的
 cross	noun	十字、交叉、十字架
@@ -727,7 +727,7 @@ cutting board	noun	砧板
 dad	noun	爸爸
 dad	verb	
 daily	adj	每天的
-daily	adv	
+daily	adv	每天、每日、天天
 daily	noun	日報
 daily	verb	
 dance	noun	舞蹈、跳舞
@@ -735,7 +735,7 @@ dance	verb	跳舞
 danger	noun	危險
 dangerous	adj	危險
 dark	adj	暗、黑暗、昏暗
-dark	noun	
+dark	noun	黑、黑暗
 date	noun	椰棗
 daughter	noun	女兒、閨女、姑娘
 day	noun	天、日子；日
@@ -743,18 +743,18 @@ daylight	noun	日光；嫌隙
 dead	adj	死的
 dead	adv	完全地
 dead	noun	寂靜
-deal	adj	
+deal	adj	松木製的
 deal	noun	交易
 dear	adj	親愛的
 dear	adv	深愛地
 dear	intj	啊
 death	noun	死亡；死神
-debate	noun	
+debate	noun	辯論、討論
 debate	verb	辯論
 decide	verb	解決、決定
 deep	adv	深
 deep	noun	深淵
-deep	verb	
+deep	verb	（俚）深入思考、仔細考慮
 deeply	adv	深刻地；深、深深、深刻
 degree	noun	學位；度
 delay	noun	遲延、延遲
@@ -773,12 +773,12 @@ detail	verb	詳述
 develop	verb	發展；成長
 diary	noun	日記
 diary	verb	記錄日誌或日記。
-die	adv	
-die	noun	
+die	adv	每日
+die	noun	骰子
 die	verb	死、亡、去世
 diet	adj	
 diet	noun	飲食、吃喝、食物；節食、飲食療養
-diet	verb	
+diet	verb	照規定飲食
 difference	noun	差別、差異
 difference	verb	（紋章）加上區別標記
 different	adj	不一樣；不同
@@ -809,12 +809,12 @@ display	noun	顯示器
 disturb	verb	打擾
 divide	verb	分、分裂、隔；除
 do	noun	可以做或應該做的事；整骨醫學博士
-do	num	
+do	num	（十二進位）十二
 do	verb	嗎；做、作
 doctor	noun	醫生；博士
 doctor	phrase	
 doctor	verb	授以博士學位；篡改
-dog	adj	
+dog	adj	劣質
 dog	noun	家犬；犬科動物
 dog	verb	追捕；尾隨、糾纏騷擾
 dollar	noun	圓、元、塊
@@ -832,7 +832,7 @@ draw	intj	拉弓！
 draw	noun	拉、拖；平局、和局
 draw	verb	拉、拖；拖拉
 drawer	noun	抽屜
-drawing	noun	
+drawing	noun	圖畫、圖片
 dream	adj	
 dream	noun	夢；夢想
 dream	verb	做夢、夢見、發夢；夢想
@@ -840,13 +840,13 @@ dress	adj	正式場合合適；（場合）要求正式服裝的
 dress	noun	連衣裙、著裝、女服
 dress	verb	穿衣、穿衣服；敷藥
 Drill	noun	鑽；演練、訓練
-drink	noun	
+drink	noun	飲料
 drink	verb	喝、飲；喝酒、酗酒、酒醉
 drive	noun	動力、決心與動機；猛烈或快速的移動、急速前進、（尤指）迅速倉促的業務處理
 drive	verb	開車、駕駛、駛
 driver	noun	驅趕動物者；司機、駕駛員、駕駛者
 drop	noun	滴、液滴、甘草糖
-drop	verb	
+drop	verb	滴落
 drug	noun	藥、藥材、藥物；毒品、麻醉品、麻醉
 drug	verb	下毒、下藥
 dry	adj	乾、乾燥
@@ -865,7 +865,7 @@ each	noun	每個、個別項目
 each	pron	每個
 ear	noun	耳朵、耳
 early	adj	早
-early	adv	
+early	adv	早
 early	noun	
 earn	verb	掙、賺、賺取
 earring	noun	耳環
@@ -880,7 +880,7 @@ easy	adv	容易地
 easy	intj	
 easy	noun	無線電通話中代表字母（E）的舊代碼
 easy	verb	
-eat	noun	
+eat	noun	食物
 eat	verb	吃、食、餔；吃飯
 editor	noun	編輯
 education	noun	教育、教學、教養
@@ -933,7 +933,7 @@ error	verb
 escape	noun	逃跑、逃脫；退出鍵、逸出鍵
 especially	adv	尤其；特別
 essay	noun	雜文、論文、作文
-essay	verb	
+essay	verb	試圖
 establish	verb	確定；建立、創辦
 even	adv	連、甚至；更、更加
 even	noun	埃文人、鄂溫人
@@ -1023,16 +1023,16 @@ fancy	adj	想象的
 fancy	adv	
 fantastic	adj	奇妙；匪夷所思
 far	adv	遠的、遠離的、更遠的
-far	noun	
+far	noun	二粒小麥（尤指羅馬時代）
 farm	noun	農場、農莊
-farm	verb	
+farm	verb	務農
 farmer	noun	農夫、農民、農場主
 fashion	noun	時裝、時尚、時興
 fashion	verb	形成
 fast	adj	快速的；快
-fast	adv	
+fast	adv	牢固地
 fast	noun	絕食
-fast	verb	
+fast	verb	齋戒、禁食
 fat	adj	肥的
 fat	verb	
 father	noun	父親、父、爸爸；神父
@@ -1049,7 +1049,7 @@ feather	verb	長羽毛
 feature	noun	特徵
 fee	noun	費用；費、花、花費
 fee	verb	付費給
-feed	noun	
+feed	noun	飼料
 feel	noun	感覺
 feel	verb	觸控、觸、摸；感到、感覺
 female	adj	女、母、雌；女性的、雌性的
@@ -1063,11 +1063,11 @@ few	pron	很少的人或物
 fiction	noun	虛構文學、小說
 field	noun	田間、野外、野；田、田野
 field	verb	接球並處理；（棒球）擔任守備方（接球與傳球、而非擊球）
-fight	noun	
+fight	noun	鬥爭、戰鬥
 figure	noun	人物；體型、身材
 figure	verb	描繪
 file	noun	檔案
-fill	noun	
+fill	noun	足夠的量
 fill	verb	裝滿、填滿
 film	noun	薄膜；膠卷、膠帶、片子
 final	adj	最後；決定性的
@@ -1081,8 +1081,8 @@ fine	intj	好吧（勉強同意）；好吧（不再爭論）
 finish	noun	終結
 finish	verb	完成、完、結束
 finished	adj	完成的
-fire	adj	
-fire	intj	
+fire	adj	驚豔；出色。
+fire	intj	下令開槍。
 fire	noun	火
 fire truck	noun	雲梯車
 first	adj	第一、最初
@@ -1097,14 +1097,14 @@ flag	verb	懸旗
 flat	noun	平坦地區（有時覆蓋淺水或潮汐水）。；一般的平地
 flight	noun	飛行、飛；航班
 flight	verb	遷徙
-float	noun	
+float	noun	用於在水中或其他液體中承載物體的浮力裝置。
 flood	noun	洪水、洪災、水災
 floor	noun	地板、樓板
 floor	verb	鋪地板
 flower	noun	花、開花植物；花朵、花卉
 flower	verb	開花
 fly	noun	雙翅目；蒼蠅、蠅、蠅子
-fly	verb	
+fly	verb	飛、飛行、坐飛機
 focus	verb	聚焦
 follow	noun	跟隨
 follow	verb	跟隨；隨、接續
@@ -1134,13 +1134,13 @@ forward	adj	向前的
 forward	adv	向前
 forward	noun	前鋒
 forward	verb	促進...的生長；轉發
-frame	noun	
+frame	noun	骨架、架
 free	adj	自由的
 free	adv	自由地
-free	noun	
+free	noun	自由轉會
 freedom	adj	
 freedom	noun	自由
-freeze	noun	
+freeze	noun	結冰
 freeze	verb	凍結、凍、冰凍
 fresh	adj	新鮮、新的、新穎的；鮮的、鱻的
 fresh	noun	洪水；淡水溪流或泉水
@@ -1161,8 +1161,8 @@ fruit	noun	水果、成果；果、果實
 fruit	verb	結實或產孢
 fry	noun	油炸食物
 full	adj	充滿、滿、飽；完全
-full	noun	
-full	verb	
+full	noun	極限或最高程度；滿的狀態、位置或時刻；填滿。
+full	verb	變得完全明亮或照亮。
 fully	adv	充分地、完全地、徹底地
 fun	adj	好玩
 fun	noun	玩、熱鬧、樂趣
@@ -1219,20 +1219,20 @@ gold	adj	金製的；金色的
 gold	noun	黃金；金幣
 golden	adj	金的、黃金的；金色的
 golden	noun	金黃色的鼓手、金黃色的鰱魚等（Kyphosus vaigiensis）、一種發現於東南亞的魚類。
-golden	verb	
+golden	verb	變成金色或金黃色（在顏色上）。
 golf	noun	高爾夫球、高爾夫
 golf	verb	打高爾夫球
 good	adj	好、良；嫻熟
 good	adv	
 good	intj	好的
-good	verb	
+good	verb	興旺；改善（方言）
 government	noun	政府
 grace	noun	優雅；恩典、恩惠
 grace	verb	裝飾、美化、增輝；以恩惠提升尊榮、敬重
 grade	noun	等級；成績、等第
 gradually	adv	逐漸、漸漸、漸次
 graduate	adj	已得學位的
-graduate	verb	
+graduate	verb	畢業
 grammar	noun	語法、文法
 grammar	verb	
 grandmother	noun	奶奶、祖母、外祖母
@@ -1252,11 +1252,11 @@ great	noun	偉人
 greatly	adv	大大
 green	adj	呈綠色；（病態）蒼白、不舒服的
 green	noun	綠色、青
-green	verb	
+green	verb	綠化
 greet	adj	
 greet	verb	迎接、打招呼、歡迎
 grilled	adj	烤的
-ground	adj	
+ground	adj	磨碎的
 ground	noun	地；土、土壤
 group	noun	集團、群、組
 grow	noun	非法大麻農場。
@@ -1271,7 +1271,7 @@ gun	noun	槍；手槍
 guy	noun	人、人們、男人
 guy	verb	用支索撐住
 habit	noun	習慣
-habit	verb	
+habit	verb	使穿衣
 hair	noun	毛、頭髮；毛髮
 half	adj	半
 half	intj	（劇場）開演前 30 分鐘的提醒
@@ -1280,9 +1280,9 @@ half	prep	（時刻）半、……點半
 half	verb	使減半
 hall	noun	走廊；大廳、廳堂、會堂
 ham	noun	火腿
-ham	verb	
+ham	verb	過度表演；以誇張的情緒演出。
 hand	noun	手；針、指針
-hand	verb	
+hand	verb	遞交
 handle	noun	把手、柄、化名；控制代碼
 happen	verb	發生
 happiness	noun	幸福、快樂、愉快
@@ -1319,9 +1319,9 @@ heavy	verb
 hello	intj	你好、您好、你們好；喂
 hello	noun	
 hello	verb	
-help	intj	
+help	intj	救命
 help	noun	幫、幫助；助手、助理、副手
-help	verb	
+help	verb	幫助、幫忙
 helpful	adj	有幫助
 here	adj	活著的、在世的
 here	adv	這裡、此處、到這兒
@@ -1332,7 +1332,7 @@ hero	verb
 herself	pron	她自己
 hi	intj	你好、嗨 哈囉
 hi	noun	
-hide	noun	
+hide	noun	皮、皮革、獸皮
 hide	verb	藏、韞；躲藏、隱藏、躲
 high	adj	高
 high	adv	高
@@ -1341,7 +1341,7 @@ hill	noun	小山、山丘
 himself	pron	他自己
 history	noun	歷史、歷史學
 hit	adj	非常成功的
-hit	pron	
+hit	pron	它（方言）
 hit	verb	打擊
 hold	noun	握持；持有、握住的行為或例子
 hold	verb	拿、持、把
@@ -1354,9 +1354,9 @@ home	adv	在家裡、在家
 home	noun	家；故鄉、家鄉、祖國
 home	verb	（物品）回到主人身邊
 honor	noun	榮譽；名譽
-hope	noun	
+hope	noun	希望、指望、盼望
 horse	noun	馬、騎兵
-horse	verb	
+horse	verb	胡鬧
 hospital	noun	醫院
 host	noun	主人、聖體；主持人
 host	verb	當主人招待
@@ -1461,16 +1461,16 @@ journey	noun	旅遊、旅行、旅途
 journey	verb	旅遊、旅行
 joy	noun	歡喜、歡樂、喜悅
 joy	verb	使快樂
-judge	verb	
+judge	verb	判決、判定
 juice	noun	汁、果汁、菜汁
 juice	verb	榨取汁液；使（某物）充滿活力或受到刺激
 jump	verb	跳、蹦跳、蹦
 just	adj	準確；正義、公正、公平
 just	adv	就、只是；剛剛、剛、剛才
 just	intj	
-just	noun	
-just	verb	
-keep	noun	
+just	noun	馬上比武；比武大會
+just	verb	馬上比武
+keep	noun	生計
 keep	verb	繼續；保持、儲存
 key	adj	關鍵
 key	noun	鑰匙、匙、鑰；密鑰、金鑰
@@ -1480,11 +1480,11 @@ kick	verb	踢、蹴、趵
 kid	noun	小山羊
 kill	noun	殺害；死屍、屍體
 kill	verb	殺、殺死、戕殺；浪費
-kind	adj	
+kind	adj	親切的
 kind	noun	類
 king	noun	國王、王
 king	verb	使...成為君主
-kiss	noun	
+kiss	noun	吻、親、親吻
 kitchen	noun	廚房
 kitchen	verb	下廚、做菜；調味、加料
 knee	noun	膝、膝蓋
@@ -1501,7 +1501,7 @@ lack	noun	不足、缺乏
 lady	noun	女士、貴婦；太太、夫人、女主人
 lady	verb	
 lake	noun	湖、湖泊
-lake	verb	
+lake	verb	使生物細胞經歷反覆凍結與解凍直至破裂。
 lamp	noun	燈、電燈
 lamp	verb	夜間捕蟲；轉成檯燈
 land	verb	著地、著陸；登陸、上陸
@@ -1513,7 +1513,7 @@ large	adv	大大地
 large	noun	大號、大尺寸；大號的商品
 last	adj	最後、最終；最近的、上個
 last	det	上一個；最近的、上（週、月等）
-last	noun	
+last	noun	最後
 late	adj	晚
 late	adv	晚、遲、遲到
 late	noun	
@@ -1552,7 +1552,7 @@ lemon	verb	用檸檬調味。
 lend	noun	
 lend	verb	借出、借、貸款
 less	adv	較少；更少、不太、不那麼
-less	conj	
+less	conj	除非
 less	det	較少的（量）；較少的（數目）
 less	noun	較少
 less	prep	減去、不包括
@@ -1565,20 +1565,20 @@ letter	verb	寫字母於
 level	noun	水平尺
 library	noun	圖書館、圕；文庫、庫、藏書
 license	noun	許可證、執照
-license	verb	
+license	verb	正式授權
 license plate	noun	號牌、牌照、車牌
 lie	verb	躺、說謊、撒謊；位於、地處、坐落
 life	noun	生命、生活、存在
 life	verb	更換到期的零件
-light	adj	
+light	adj	明亮的、光明的
 light	noun	光、光亮；光源、燈
-like	adj	
+like	adj	相像的
 like	conj	
 like	noun	愛好；贊
-like	prep	
+like	prep	象、相像的、如
 like	verb	喜歡
 likely	adj	有可能的
-likely	adv	
+likely	adv	或許
 likely	noun	可能的人選、有希望的人
 lily	noun	百合、百合花
 line	noun	直線、線
@@ -1593,7 +1593,7 @@ little	adv	少
 little	det	少
 little	noun	一點點
 little	pron	不多、很少
-live	adv	
+live	adv	實況地
 live	verb	生、生活、活；住、居住
 load	noun	擔子、負荷、負擔；載重量
 local	adj	本地、當地
@@ -1601,7 +1601,7 @@ local	adv	在當地、在本地
 local	noun	本地人
 lock	noun	鎖、鎖子；鎖定
 long	adj	長；久
-long	adv	
+long	adv	長久
 long	noun	長時間
 long	verb	做多
 look	noun	目光、一見、樣子
@@ -1612,7 +1612,7 @@ loose	verb	釋放
 lose	verb	丟、失去；減、減肥
 lot	noun	運氣
 love	noun	愛、戀愛；愛情
-love	verb	
+love	verb	愛、熱愛、愛好
 lovely	adj	可愛的
 lovely	adv	
 lovely	noun	
@@ -1620,14 +1620,14 @@ lover	noun	戀人、情人、愛人
 low	adj	低；矮
 low	adv	低下地
 low	noun	低點
-low	verb	
+low	verb	牛叫
 luck	noun	運氣、時運
 luck	verb	
 lucky	adj	幸運、福氣、福
 lucky	noun	
 lunch	noun	午飯、午餐
 lunch	verb	吃午飯
-lying	adj	
+lying	adj	說謊的
 lying	noun	躺臥
 machine	noun	機、機器、機械；機構
 machine	verb	以機器製造
@@ -1647,7 +1647,7 @@ maker	noun	製造者
 male	noun	男性；雄
 man	intj	強調用語
 man	noun	男人、男的、男子；人、人類
-man	pron	
+man	pron	自我或群體代詞
 manage	noun	馴馬場
 manage	verb	管理
 manager	noun	經理、主管、主任
@@ -1669,16 +1669,16 @@ material	adj	物質的
 material	noun	資料、物質、材料
 matter	noun	物質
 matter	verb	有關係、要緊
-may	noun	
+may	noun	五月
 may	verb	可以；願
 maybe	adj	可能的、不確定的
 maybe	adv	也許、或許、或是
 maybe	noun	
 meal	noun	餐、飯
-meal	verb	
-mean	adj	
+meal	verb	進餐
+mean	adj	低劣的
 mean	verb	意謂；意味、是……的意思
-meaning	adj	
+meaning	adj	有意圖
 meaning	noun	意義、含義、意思；意味
 meat	noun	肉
 medical	adj	醫、藥
@@ -1701,17 +1701,17 @@ middle	adj	中間；中央的
 middle	noun	中央、中間、中心
 middle	verb	
 might	noun	力量
-might	verb	
+might	verb	（表示過去該做卻沒做的事）本來可以
 military	adj	軍事的；戰爭的
 military	noun	武裝部隊、軍隊
 milk	noun	奶、乳、乳汁
-milk	verb	
+milk	verb	擠奶、產乳
 mind	noun	智力、悟性、精神
 mind	verb	介意；注意
 mine	det	
 mine	pron	我的
-mine	verb	
-minute	adj	
+mine	verb	開採
+minute	adj	微小的
 minute	noun	分鐘、分；記錄、會議記錄、紀要
 minute	verb	記錄
 mirror	noun	鏡子、鑒；鏡像
@@ -1744,7 +1744,7 @@ most	noun	最多
 most	pron	大部分、大多數（人）
 mostly	adv	大多、大抵、大都
 mother	noun	母親、母、媽媽
-mother	verb	
+mother	verb	產生
 mountain	noun	山
 mouse	noun	老鼠；滑鼠、滑鼠器
 mouse	verb	捕鼠
@@ -1757,7 +1757,7 @@ much	adv	許多、多
 much	det	多、很多、好多
 much	noun	大量
 much	pron	大量、許多
-mug	adj	
+mug	adj	無趣
 mug	noun	馬克杯、杯子
 mug	verb	搶劫；做表情
 murder	noun	殺人、謀殺
@@ -1789,7 +1789,7 @@ nearly	adv	幾乎、差不多
 necessary	adj	必要的
 necessary	noun	
 neck	noun	頸、頸項、脖子；琴桿
-need	verb	
+need	verb	需要
 negative	adj	否定的、消極；負
 negative	intj	
 negative	noun	底片；負
@@ -1797,7 +1797,7 @@ negative	verb
 neighbor	noun	鄰居
 neighbor	verb	鄰接
 nervous	adj	神經緊張的；緊張
-net	adj	
+net	adj	淨的
 net	adv	
 net	verb	用網捕
 never	adv	從未、從來、不曾
@@ -1821,9 +1821,9 @@ nice	verb
 night	noun	夜、夜晚；宵
 night	verb	過夜
 no	adj	沒有
-no	adv	
+no	adv	不
 no	det	禁止、不行、沒有；不是
-no	prep	
+no	prep	沒有（方言）
 no	verb	
 nobody	noun	小人物
 nobody	pron	無人
@@ -1851,7 +1851,7 @@ noting	noun	註釋
 noun	noun	名詞
 noun	verb	
 novel	adj	新奇的；新穎
-novel	noun	
+novel	noun	小說
 now	adj	現在的
 now	adv	現在、如今、現今
 now	conj	由於
@@ -1871,7 +1871,7 @@ off	prep	離開
 off	verb	離開
 offer	adj	停止運作的、關閉的；（活動）取消的
 offer	noun	提供、提議、建議
-offer	verb	
+offer	verb	提議、建議
 office	noun	部；職務、職位
 office	verb	給（某人）配辦公室；有辦公室、辦公
 officer	noun	官員、官吏；軍官
@@ -1879,7 +1879,7 @@ officer	verb	指揮
 official	adj	公務的；官方、正式
 often	adv	經常、常常、時常
 oil	noun	油、植物油、素油；石油
-oil	verb	
+oil	verb	潤滑
 okay	adj	好、可以
 okay	adv	好、可以
 okay	intj	
@@ -1889,7 +1889,7 @@ old	adj	舊、古老；老、年老的、老年的
 old	noun	以前
 on	adj	正起作用的
 on	adv	上去
-on	noun	
+on	noun	（日語）音讀
 on	prep	……上
 on the table	phrase	正式討論中；待處理
 once	adv	一次、一遍；曾經、以前、有一次
@@ -1919,7 +1919,7 @@ oppose	verb	阻止、對抗；反對
 opposite	adj	對面的
 opposite	prep	對面
 or	conj	或、或者、還是
-or	noun	
+or	noun	（紋章）金色
 orange	adj	橙色、橙黃色、橘黃色
 orange	noun	橙樹、橙、柳橙；橙色、橙黃色、橘黃色
 orange	verb	染橙色；變成橙色
@@ -1949,10 +1949,10 @@ over	noun	（板球）一輪（六球）；多出的金額或貨物
 over	prep	在……之上
 overseas	adv	海外、國外
 own	adj	自己的
-own	noun	
+own	noun	自己的
 owner	noun	所有者、主人
 pack	noun	包、捆；副
-pack	verb	
+pack	verb	包裝、包
 page	noun	頁
 page	verb	為書籍或手稿標記或編號頁面。；翻閱出版物的多頁。
 paint	noun	油漆、塗料
@@ -1961,7 +1961,7 @@ painted	verb	塗抹的過去式與分詞
 painting	noun	圖畫、畫幅、繪畫；油漆
 pair	noun	雙、對、一對；夫婦、一雙
 pair	verb	成對
-pan	adj	
+pan	adj	泛性/泛浪漫
 pan	noun	廚房用寬平容器；容器內之物
 pan	verb	淘洗土砂；貶低、詆毀、嚴厲批評（尤指書籍、電影等作品）
 panic	adj	驚慌的
@@ -1978,16 +1978,16 @@ parent	noun	親、父母、家長
 parent	verb	養育、當父母；（程式）為物件指定父物件
 park	noun	公園
 park	verb	停、停車
-part	adj	
-part	adv	
+part	adj	部分的
+part	adv	部分地
 part	noun	部分
 partly	adv	部分地
 partner	noun	合夥人；夥伴、搭檔
 partner	verb	與...合夥
-party	adj	
+party	adj	偏袒一方的；黨派的
 party	noun	一方；聚會、派對、聯歡會
 party	verb	舉辦聚會
-pass	noun	
+pass	noun	連接河流或水域與大海的水道（如河口三角洲的水道）
 pass	verb	透過；過、及格、通過
 passage	adj	
 passage	noun	片斷、片段
@@ -2007,9 +2007,9 @@ peace	intj
 peace	noun	平靜、和平、治安；和睦相處
 peace	verb	安靜下來
 pen	noun	圈、欄圈
-pen	verb	
+pen	verb	圍欄起來
 people	noun	國民、民族、人民；人們、人
-people	verb	
+people	verb	填滿居民；使居住。
 perfect	adj	完美、完善
 perfect	noun	完成時
 perfectly	adv	完全地
@@ -2034,7 +2034,7 @@ photo	verb	照相
 photograph	noun	照片、相片
 physical	adj	物理的；身體的
 physical	noun	體格檢查
-piano	adv	
+piano	adv	輕柔地
 piano	noun	鋼琴
 piano	verb	鋼琴演奏。；像鋼琴家彈奏鋼琴那樣上下移動（手指）。
 pick	verb	摘、掘
@@ -2057,19 +2057,19 @@ place	noun	廣場；地方
 plan	noun	設計圖；計劃
 plane	adj	水平的、平面的
 plane	noun	平面
-plane	verb	
+plane	verb	刨
 planet	noun	行星
 plant	noun	植物
 plastic	adj	可塑的；可適應的、有彈性的、能適應不同條件
 plate	noun	盤子、碟、碟子
-plate	verb	
+plate	verb	鍍
 play	noun	玩
 play	verb	玩、玩耍、放；參與、參加
 player	noun	運動員、競賽者、選手；演員、藝人
 pleasant	adj	愉快
 pleasant	noun	
-please	adv	
-please	intj	
+please	adv	請
+please	intj	請、拜託
 pleasure	intj	
 pleasure	noun	歡樂、樂趣、愉快
 pleasure	verb	高興
@@ -2086,7 +2086,7 @@ pocket	verb	到口袋
 poem	noun	詩、詩篇、詩歌
 point	intj	明白
 point	noun	點、磅、磅因
-point	verb	
+point	verb	指、指出
 pointed	adj	有尖銳的、不鈍的。；具有特定數量的點。
 police	noun	警察、警方、公安
 police	verb	維持群體秩序；規範施加於
@@ -2097,7 +2097,7 @@ pool	noun	池、水塘；水池、池子
 pool	verb	合夥經營
 poor	adj	貧窮、貧乏、窮；糟糕
 poor	noun	窮人、貧困階層；（大富豪遊戲中的）貧民（倒數第二名）
-pop	adj	
+pop	adj	流行的
 pop	adv	突然
 pop	intj	
 pop	noun	砰然聲
@@ -2112,7 +2112,7 @@ positioned	adj	放置的
 possible	adj	可能
 possible	noun	
 possibly	adv	可能
-post	adv	
+post	adv	以郵寄方式寄出
 post	noun	柱子、郵件、帖子
 post	verb	張帖
 potato	noun	馬鈴薯、洋芋
@@ -2161,7 +2161,7 @@ probably	adv	大概、或許
 problem	adj	成問題的
 problem	noun	問題、困難、難題；題目、習題、課題
 problem	verb	把……問題化
-produce	noun	
+produce	noun	生產品
 produce	verb	製造、生產；製作、監製
 product	noun	產品；結果
 production	noun	生產
@@ -2182,7 +2182,7 @@ pull	verb	拖拉、拉、引
 purple	adj	紫色、紫、紺
 purple	noun	紫色
 purpose	noun	意向、意圖、目的
-purpose	verb	
+purpose	verb	意欲
 pursue	verb	追求
 push	verb	推
 put	noun	認沽期權
@@ -2204,11 +2204,11 @@ quiet	verb	平靜下來
 quietly	adv	悄悄地、安靜地
 quite	adv	挺；好生、夠
 quite	intj	（表示同意）正是、沒錯
-quite	noun	
+quite	noun	（鬥牛）用斗篷引開牛的一連串動作
 radio	noun	無線電；收音機、車載播放器
 radio	verb	用無線電傳送
 rain	noun	雨
-rain	verb	
+rain	verb	下雨、降雨
 raise	noun	上升
 raise	verb	舉、加註
 raised	adj	凸起的
@@ -2245,7 +2245,7 @@ recent	adj	最近
 recent	noun	最近瀏覽的項目
 recently	adv	最近、近日
 record	adj	創紀錄的
-record	verb	
+record	verb	錄
 red	adj	紅色的；橙棕色或橙金色的（薑黃色）
 red	noun	紅色
 refer	noun	
@@ -2267,7 +2267,7 @@ remind	verb	提醒
 remote	adj	遠、遙遠；偏僻的
 remote	noun	
 remote	verb	
-rent	adj	
+rent	adj	分裂的
 rent	noun	租金、房租、租價；租費
 rent	verb	租、租借、租賃；租用
 repair	noun	修理
@@ -2301,10 +2301,10 @@ rich	verb
 ride	noun	趟
 ride	verb	騎；乘、搭乘、坐
 right	adj	右；正確
-right	adv	
-right	intj	
-right	noun	
-right	verb	
+right	adv	右邊、在右邊
+right	intj	對；沒錯；同意
+right	noun	權利
+right	verb	扶直
 ring	noun	環、輪；戒指、指環
 ring	verb	包圍
 river	noun	河、河流、江；川流
@@ -2317,13 +2317,13 @@ roll	noun	滾動的行為、結果或狀態。；捲成緊實形狀的物件（�
 romantic	adj	浪漫；羅曼蒂克
 romantic	noun	浪漫的人
 roof	noun	屋頂、房頂
-roof	verb	
-room	adv	
+roof	verb	蓋頂
+room	adv	（航海）背風地
 room	noun	空間；房間、屋子
 root	noun	樹根；根
 root	verb	使紮根
 rope	noun	繩子、繩索
-rope	verb	
+rope	verb	捆、縛
 rose	adj	玫瑰色的
 rose	noun	玫瑰、月季；玫瑰色、玫紅
 rose	verb	
@@ -2367,7 +2367,7 @@ save	conj	除了、除非
 save	noun	救球
 save	prep	除...之外
 save	verb	拯救；節約、儲蓄
-savor	verb	
+savor	verb	另拼寫方式
 saw	noun	鋸子、鋸
 say	adv	比如說、假設
 say	intj	
@@ -2427,19 +2427,19 @@ senior	noun	年長者；前輩、先輩
 sense	noun	感覺
 sentence	noun	句子；語句
 separate	adj	分開的
-separate	noun	
+separate	noun	獨立件
 seriously	adv	說真的、認真地、鄭重地
 serve	noun	發球
 serve	verb	服務；當
-set	adj	
-set	noun	
+set	adj	決心的
+set	noun	盤
 set	verb	放
 several	adj	幾個的
 several	adv	個別地
 several	det	幾個、些
 several	noun	各個、單項
 shade	noun	陰影；內涵
-shade	verb	
+shade	verb	遮光
 shadow	noun	陰影、影子
 shake	noun	搖晃動作；抽動、痙攣、顫抖
 shall	verb	
@@ -2455,7 +2455,7 @@ shine	noun	光澤
 shine	verb	發亮、照、發光
 ship	noun	船、艦
 shirt	noun	襯衫、襯衣
-shirt	verb	
+shirt	verb	披上襯衫
 shock	adj	蓬亂濃密的
 shock	noun	衝擊；震撼、震驚
 shoe	noun	鞋子、鞋
@@ -2466,7 +2466,7 @@ shoot	verb	射擊、拍攝、射
 shop	intj	
 shop	noun	商店、店鋪、鋪子
 shore	noun	岸、海濱、海岸
-shore	verb	
+shore	verb	把...送上岸
 short	adj	短；矮
 short	adv	簡短地
 short	noun	扼要
@@ -2474,24 +2474,24 @@ short	prep	缺少；放空
 short	verb	故意少給
 shot	adj	雜色的
 shot	intj	
-shot	noun	
-shot	verb	
+shot	noun	發射、射擊
+shot	verb	裝彈
 should	noun	應該要有的情況
 should	verb	應該、應當、該；如果、倘若
 shoulder	noun	肩、肩膀
 shoulder	verb	肩負
 shout	noun	呼喊
-show	noun	
+show	noun	展覽的物品陳列（展示會）
 show	verb	展示、表示、顯示
 shower	noun	陣雨、小雨；淋浴、淋浴器、花灑
-showing	noun	
+showing	noun	顯示
 shut	noun	關閉
 shut	verb	關、閉、關閉
 sick	adj	不舒服；想吐
 sick	noun	
 sick	verb	嘔吐
 side	adj	旁的
-side	adv	
+side	adv	廣闊地；遠遠地（古語）
 side	noun	側面、旁邊；邊
 side	verb	同意
 sight	noun	景觀；視野、情景
@@ -2537,7 +2537,7 @@ size	verb	上漿
 ski	noun	雪板、滑雪板
 skill	adj	
 skill	noun	技巧、技能、技術
-skill	verb	
+skill	verb	分開；區隔（古語）
 skirt	noun	裙子、裙；邊緣、裙邊
 skirt	verb	位於...邊緣
 sky	noun	天、天空；天色、天氣
@@ -2552,13 +2552,13 @@ slow	noun
 slowly	adv	慢
 small	adj	小；年輕
 small	noun	狹小部分
-smart	adj	
-smart	noun	
+smart	adj	機靈、伶俐、精明
+smart	noun	刺痛
 smart	verb	刺痛
 smell	noun	味道、氣味；嗅覺
 smile	noun	微笑、笑容、笑臉
 smoke	noun	煙灰色、煙
-smoke	verb	
+smoke	verb	吸煙、抽煙、抽
 smooth	adj	平滑、光滑；平穩、順利
 smooth	noun	一塊平地
 smooth	verb	使光滑
@@ -2599,7 +2599,7 @@ something	verb
 somewhere	adv	到某處；某處
 somewhere	noun	
 son	noun	兒子；養子
-son	verb	
+son	verb	生兒子
 song	noun	歌曲、歌、唱兒；歌唱
 soon	adj	即將的、不久的；（be soon to）即將
 soon	adv	不久、快
@@ -2608,8 +2608,8 @@ sorry	intj	對不起、抱歉、不好意思；請再説一遍、再説一遍、
 sorry	noun	道歉
 sound	adv	徹底地
 sound	intj	
-sound	noun	
-sound	verb	
+sound	noun	聲音、聲、響
+sound	verb	響
 soup	noun	湯
 source	noun	根源、來源、本源
 source	verb	采購
@@ -2656,7 +2656,7 @@ stand	noun	站立
 stand	verb	站、站立、立；站起來
 star	noun	星、星星、恆星；星號
 start	noun	開始；起點
-start	verb	
+start	verb	開始
 state	noun	狀態、狀況
 statement	adj	有決定性的、顯眼的
 statement	noun	聲明、陳述；財務報告、銀行結單
@@ -2665,8 +2665,8 @@ station	noun	車站；站
 station	verb	安置
 statue	noun	雕像、塑像
 statue	verb	塑造雕像、製成雕像。
-stay	adj	
-stay	adv	
+stay	adj	陡峭的
+stay	adv	陡峭地
 stay	verb	呆、留
 steak	noun	牛排；肉排
 steak	verb	像牛排一樣烹煮（特別是魚類）。
@@ -2677,18 +2677,18 @@ step	verb	邁、踩
 still	adj	靜止、無汽；仍、仍然、依然
 still	adv	還、還是、仍；還要、更
 still	noun	靜默期；照片（與電影影片相對）
-still	verb	
+still	verb	平靜下來
 stomach	noun	胃、肚子、胃腸
 stone	adj	石製；具石頭外觀的
 stone	adv	石地
 stone	noun	石、石頭、寶石
-stone	verb	
+stone	verb	投石
 stop	noun	車站；障礙
 stop	verb	停、停止；停下
 store	noun	倉庫
 storm	noun	風暴
-storm	verb	
-story	intj	
+storm	verb	起風
+story	intj	（愛爾蘭口語問候）最近怎樣？
 story	noun	故事、限時動態
 story	verb	講述、敘述；發限時動態
 stove	noun	火爐、爐；爐子
@@ -2699,15 +2699,15 @@ straight	verb
 strange	adj	奇怪；陌生
 strange	noun	
 strange	verb	
-stranger	noun	
+stranger	noun	陌生人
 strategy	noun	戰略；策略
-street	adj	
+street	adj	符合都市潮流
 street	noun	街、路、馬路
 strength	noun	力氣
 strict	adj	嚴厲的；嚴格
 strike	noun	好球
 string	noun	線、琴絃、弦；弓弦
-string	verb	
+string	verb	串起
 strong	adj	強；強力
 strong	adv	強勁地
 strong	noun	強者
@@ -2716,14 +2716,14 @@ structure	noun	結構
 structure	verb	賦予結構、安排。
 student	adj	見習的、實習的
 student	noun	學生
-study	noun	
+study	noun	學習
 study	verb	學習、學
 stuff	noun	材料、東西
 style	noun	風格；格調、式樣
 style	verb	稱呼
 subject	adj	服從的；受支配的
-subject	noun	
-subject	verb	
+subject	noun	主語
+subject	verb	使隸屬
 succeed	verb	成功；繼、繼位
 success	noun	成功
 successful	adj	有成效的、完滿、成功的
@@ -2746,7 +2746,7 @@ suitable	adj	合適、適當
 sum	noun	總和、總數；金額
 sum	verb	總計
 summary	adj	摘要的
-summary	noun	
+summary	noun	摘要
 summer	noun	夏季、夏天
 sun	noun	太陽、日、日頭；陽光
 sun	verb	曬、曝
@@ -2754,7 +2754,7 @@ sunlight	noun	陽光、日光、太陽光
 sunshine	adj	公開開放
 sunshine	noun	陽光
 supper	noun	夜宵、宵夜、晚餐
-support	noun	
+support	noun	支援
 sure	adj	確定
 sure	adv	當然
 sure	intj	當然
@@ -2789,7 +2789,7 @@ task	noun	課題、作業、任務
 task	verb	派給...工作
 taxi	noun	出租汽車、計程車
 taxi	verb	滑行
-tea	adj	
+tea	adj	美豔
 tea	noun	茶葉、茶；茶水
 tea	verb	喝茶；享用下午茶（輕食）
 tea bag	noun	茶包的形式之一。
@@ -2824,7 +2824,7 @@ text	verb	發送文字訊息、即透過簡訊服務傳送文字於通訊裝置�
 than	adv	那時、然後（古語）
 than	conj	比、除...外
 than	prep	比
-thank	verb	
+thank	verb	道謝、感謝、謝
 that	conj	以致
 that	det	那、那個
 that	noun	那個東西、那些之一
@@ -2868,7 +2868,7 @@ tiger	noun	老虎、虎
 tight	adj	緊；緊張
 till	conj	直到...為止
 till	prep	直到、為止
-till	verb	
+till	verb	耕種
 time	intj	（裁判提醒）時間到、繼續比賽；（拳擊裁判）時間到
 time	noun	時間、時光
 timetable	noun	時刻表、時間表
@@ -2877,7 +2877,7 @@ title	noun	稱號；標題、書名
 title	verb	授予頭銜
 to	prep	給、到；比
 toast	noun	烤麵包、吐司、多士；敬酒、祝酒
-toast	verb	
+toast	verb	烤製食物
 today	adv	今天、今日、今兒個；現代
 together	adj	
 together	adv	一起、共同、一同
@@ -2908,7 +2908,7 @@ toward	prep	向、朝、往；關於
 towel	noun	毛巾、手巾
 towel	verb	用毛巾擦乾；用毛巾打
 tower	noun	塔樓、塔、樓閣
-tower	verb	
+tower	verb	高聳
 town	noun	城市、城、鎮
 toy	adj	供玩耍的
 toy	noun	玩具
@@ -2926,7 +2926,7 @@ train	noun	拖裾；火車、列車
 train	verb	訓練
 trap	noun	陷阱、圈套
 trap	verb	設圈套
-travel	noun	
+travel	noun	旅行、旅遊
 travel	verb	旅行、旅遊
 tree	noun	樹、喬木、樹木
 tree	verb	追上樹；放置於樹上
@@ -2952,7 +2952,7 @@ tube	noun	管、筒
 tube	verb	把...裝管
 tune	intj	
 tune	noun	曲調、曲子、樂曲
-turn	noun	
+turn	noun	轉彎、轉向
 turn	verb	轉動、旋轉、運轉；轉
 twice	adv	兩次、兩倍
 type	noun	類型、種類、種；活字、鉛字
@@ -2995,7 +2995,7 @@ upon	prep	在...之上
 upset	adj	懊惱
 upset	noun	
 use	noun	用、使用、利用
-use	verb	
+use	verb	用、使用、應用
 used	adj	使用過的；第二手、中古
 useful	adj	有用、實用
 usual	adj	通常
@@ -3023,8 +3023,8 @@ voice	noun	聲音、聲、音聲
 vote	noun	投票、表決
 wait	intj	
 wait	verb	等、等待、待
-wake	noun	
-walk	noun	
+wake	noun	守夜
+walk	noun	散步、漫步
 walk	verb	走、走路、步行；遛
 wall	noun	牆壁、牆、隔牆
 wall	verb	以牆圍繞
@@ -3035,14 +3035,14 @@ war	noun	戰爭、仗；鬥爭、挑戰
 war	verb	作戰、交兵、開戰
 warm	adj	暖和、溫暖
 warm	adv	溫暖地
-warm	noun	
+warm	noun	加熱行為
 wash	noun	洗、洗滌
 wash	verb	洗、洗滌、沖洗；沖走
 watch	noun	手錶；值日、值班
-watch	verb	
+watch	verb	看、觀、觀看
 water	noun	水
 watery	adj	水的
-wave	noun	
+wave	noun	波浪、波、浪
 way	adj	
 way	adv	
 way	intj	
@@ -3058,7 +3058,7 @@ weather	verb	使受風吹雨打
 web	noun	網、蛛絲
 web	verb	結網
 website	noun	網站
-week	intj	
+week	intj	（豬叫聲）嘰嘰
 week	noun	星期、週、禮拜
 weekend	adj	
 weekend	noun	週末
@@ -3077,8 +3077,8 @@ welcome	verb	歡迎、迎接
 well	adj	好、健康
 well	adv	好
 well	intj	好啦；啊哈
-well	noun	
-well	verb	
+well	noun	井
+well	verb	湧出
 west	adj	西
 west	adv	向西
 west	noun	西、西方
@@ -3165,7 +3165,7 @@ word	intj
 word	noun	詞、單詞、詞語；單字
 word	verb	措辭
 work	noun	工作、勞動、職業
-work	verb	
+work	verb	工作、幹活兒、做工
 worker	noun	工人、工作者、勞動者
 world	adj	全世界的、世界性的
 world	noun	世界；宇宙
@@ -3198,9 +3198,9 @@ yesterday	adv	昨天、昨日、昨兒個
 yesterday	noun	昨天、昨日
 yet	adv	還
 yet	conj	然而
-yet	noun	
-yet	verb	
-you	noun	
+yet	noun	金屬鍋；鍋爐
+yet	verb	得到（方言）
+you	noun	拉丁字母（U／u）的名稱
 you	pron	你、你們；您
 you	verb	用「你」（you、而非古語 thou）稱呼某人
 young	adj	年輕

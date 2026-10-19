@@ -30,7 +30,7 @@ from PIL import Image
 from sqlalchemy import case, func, or_, select, text
 
 from . import config
-from . import agent_pause, db, models as m, rate_gate, wikimedia_gate
+from . import agent_pause, db, models as m, openverse_auth, rate_gate, wikimedia_gate
 
 HOSTS = {'www.wikidata.org', 'commons.wikimedia.org', 'upload.wikimedia.org', 'thumb.wikimedia.org'}
 # Our own API endpoints for the two other live sources: an exact host match,
@@ -498,6 +498,12 @@ def fetch(url, limit=MAX_BYTES, validate=check_url):
     # the source while it is in a 429 pause (問題回報 #360); other hosts keep
     # this process's own throttle.
     gate = rate_gate.gate_for(request.full_url)
+    # Openverse with a registered client (問題回報 #380): bearer token on its
+    # own API only; an unredirected header never follows a redirect.
+    bearer = openverse_auth.token() if gate is rate_gate.OPENVERSE else None
+    if bearer:
+        request.add_unredirected_header('Authorization', f'Bearer {bearer}')
+    renewed = False
     for attempt in range(4):
         if gate is not None:
             if not gate.skip_when_paused:
@@ -522,6 +528,17 @@ def fetch(url, limit=MAX_BYTES, validate=check_url):
                 gate.succeeded()
             break
         except urllib.error.HTTPError as e:
+            if e.code == 401 and bearer and not renewed:
+                renewed = True
+                # Token revoked/expired early: drop it and retry once with a
+                # fresh one (or anonymously if none can be had).
+                openverse_auth.invalidate()
+                bearer = openverse_auth.token()
+                if bearer:
+                    request.add_unredirected_header('Authorization', f'Bearer {bearer}')
+                else:
+                    request.remove_header('Authorization')
+                continue
             if e.code not in (429, 503):
                 raise
             if gate is not None:  # pause every process

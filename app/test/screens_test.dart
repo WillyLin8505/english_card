@@ -480,6 +480,14 @@ void main() {
           '✕ 服務正常，但 API Key 不正確');
     });
 
+    testWidgets('測試連線: 401 shows the key error without the settings hint',
+        (tester) async {
+      // 卡 #389／#375：401 的說明句帶「（設定 → 照片辨識連線）」，結果列不顯示它。
+      await check(tester, MockClient((r) async => jsonResponse({}, 401)),
+          '✕ API Key 不正確');
+      expect(find.textContaining('（設定 → 照片辨識連線）'), findsNothing);
+    });
+
     testWidgets('測試連線: service not running', (tester) async {
       await check(
         tester,

@@ -35,6 +35,13 @@ AI_KEY = os.environ.get("LEXICON_AI_KEY", "")
 # limit); set LEXICON_SMITHSONIAN_API_KEY to a real key for production use.
 SMITHSONIAN_API_KEY = os.environ.get("LEXICON_SMITHSONIAN_API_KEY", "DEMO_KEY")
 
+# Openverse (問題回報 #380): anonymous requests get 20/min and 200/day; a
+# registered client (https://api.openverse.org/v1/#tag/auth) 10,000/day.
+# Both set -> app.openverse_auth trades them for a bearer token; unset ->
+# anonymous, as before.
+OPENVERSE_CLIENT_ID = os.environ.get("LEXICON_OPENVERSE_CLIENT_ID", "")
+OPENVERSE_CLIENT_SECRET = os.environ.get("LEXICON_OPENVERSE_CLIENT_SECRET", "")
+
 # Wikimedia's User-Agent policy asks for a way to reach the operator
 # (問題回報 #339); LEXICON_CONTACT overrides it (a URL or an e-mail address).
 CONTACT = os.environ.get("LEXICON_CONTACT", "https://api.willylinai.com")

@@ -82,7 +82,7 @@ alarm	noun	警報；鬧鐘
 album	noun	冊子、影集、畫冊；唱片
 alive	adj	活著
 all	adj	所有的
-all	adv	
+all	adv	所有、都
 all	det	...都、所有；全、整、整個
 all	noun	一切
 all	pron	全部
@@ -105,7 +105,7 @@ among	adv
 among	prep	其中、之間
 ancient	adj	古代、古老、古舊
 and	conj	和、與、及
-and	noun	
+and	noun	呼吸（古語）
 and	verb	（邏輯）用且運算結合（數值）
 angry	adj	惱怒的、憤怒的、生氣的；發炎且疼痛的
 angry	noun	
@@ -627,7 +627,7 @@ consequence	noun	後果、結果
 consequence	verb	
 consider	verb	考慮、熟慮、思考；認為
 consist	noun	編組
-consist	verb	
+consist	verb	存在、是
 contact	noun	接觸；聯繫、交往、通訊
 contact	verb	接觸；聯繫
 container	noun	容器；集裝箱、貨櫃
@@ -754,7 +754,7 @@ debate	verb	辯論
 decide	verb	解決、決定
 deep	adv	深
 deep	noun	深淵
-deep	verb	
+deep	verb	（俚）深入思考、仔細考慮
 deeply	adv	深刻地；深、深深、深刻
 degree	noun	學位；度
 delay	noun	遲延、延遲
@@ -814,7 +814,7 @@ do	verb	嗎；做、作
 doctor	noun	醫生；博士
 doctor	phrase	
 doctor	verb	授以博士學位；篡改
-dog	adj	
+dog	adj	劣質
 dog	noun	家犬；犬科動物
 dog	verb	追捕；尾隨、糾纏騷擾
 dollar	noun	圓、元、塊
@@ -1081,7 +1081,7 @@ fine	intj	好吧（勉強同意）；好吧（不再爭論）
 finish	noun	終結
 finish	verb	完成、完、結束
 finished	adj	完成的
-fire	adj	
+fire	adj	驚豔；出色。
 fire	intj	下令開槍。
 fire	noun	火
 fire truck	noun	消防車
@@ -1470,7 +1470,7 @@ just	adv	就、只是；剛剛、剛、剛才
 just	intj	
 just	noun	馬上比武、比武大會
 just	verb	馬上比武
-keep	noun	
+keep	noun	生計
 keep	verb	繼續；保持、儲存
 key	adj	關鍵
 key	noun	鑰匙、匙、鑰；密鑰、金鑰
@@ -1647,7 +1647,7 @@ maker	noun	製造者
 male	noun	男性；雄
 man	intj	強調用語
 man	noun	男人、男的、男子；人、人類
-man	pron	
+man	pron	自我或群體代詞
 manage	noun	馴馬場
 manage	verb	管理
 manager	noun	經理、主管、主任；管理器
@@ -1757,7 +1757,7 @@ much	adv	許多、多
 much	det	多、很多、好多
 much	noun	大量
 much	pron	大量、許多
-mug	adj	
+mug	adj	無趣
 mug	noun	馬克杯、杯子
 mug	verb	搶劫；做表情
 murder	noun	殺人、謀殺
@@ -1987,7 +1987,7 @@ partner	verb	與...合夥
 party	adj	偏袒一方的、黨派的
 party	noun	聚會、派對、聯歡會；一方
 party	verb	舉辦聚會
-pass	noun	
+pass	noun	連接河流或水域與大海的水道（如河口三角洲的水道）
 pass	verb	透過；過、及格、通過
 passage	adj	
 passage	noun	片斷、片段
@@ -2112,7 +2112,7 @@ positioned	adj	放置的
 possible	adj	可能
 possible	noun	
 possibly	adv	可能
-post	adv	
+post	adv	以郵寄方式寄出
 post	noun	柱子、郵件、帖子
 post	verb	張帖
 potato	noun	馬鈴薯、洋芋
@@ -2481,7 +2481,7 @@ should	verb	應該、應當、該；如果、倘若
 shoulder	noun	肩、肩膀
 shoulder	verb	肩負
 shout	noun	呼喊
-show	noun	
+show	noun	展覽的物品陳列（展示會）
 show	verb	展示、表示、顯示
 shower	noun	陣雨、小雨；淋浴、淋浴器、花灑
 showing	noun	顯示
@@ -2701,7 +2701,7 @@ strange	noun
 strange	verb	
 stranger	noun	陌生人
 strategy	noun	戰略；策略
-street	adj	
+street	adj	符合都市潮流
 street	noun	街、路、馬路
 strength	noun	力氣
 strict	adj	嚴厲的；嚴格
@@ -2789,7 +2789,7 @@ task	noun	課題、作業、任務
 task	verb	派給...工作
 taxi	noun	出租汽車、計程車
 taxi	verb	滑行
-tea	adj	
+tea	adj	美豔
 tea	noun	茶葉、茶；茶水
 tea	verb	喝茶；享用下午茶（輕食）
 tea bag	noun	茶包的形式之一。
