@@ -308,6 +308,7 @@ class AnkiExportScope {
   }
 
   String photoCredit(Photo p) {
+    if (p.credit != null) return p.credit!;
     if (p.id.startsWith('photo-deck-')) {
       return '卡片集圖片（作者與授權見 App「資料來源與授權」：Wikimedia Commons 等，各圖授權不同）';
     }

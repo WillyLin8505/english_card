@@ -689,7 +689,7 @@ class FlashcardSession extends ChangeNotifier {
           // A learner's photo whose original file is gone is skipped, so the
           // card shows another picture of the word (問題回報 #279).
           if (repo.photo(o.photoId) case final p? when PhotoStore.canShow(p))
-            (p, o.placed ? o.anchor : null, null as String?),
+            (p, o.placed ? o.anchor : null, p.credit),
         ..._databasePhotos(c.wordEntryId),
       ])
         if (seenIds.add(o.$1.id)) o,

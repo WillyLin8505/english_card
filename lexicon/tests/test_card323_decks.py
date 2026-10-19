@@ -66,7 +66,8 @@ def test_photo_deck_takes_labels_from_tags_and_rejects_bad_pictures(client):
     assert client.post("/decks", headers=H, json={**body, "asset_ids": [good, good]}).json()["count"] == 1
     with db.session_scope() as s:
         item = decks.public_deck(s, "pics")["items"][0]
-    assert item == {"asset_id": good, "labels": [
+    assert {"license", "license_url", "author", "page_url"} <= item.keys()  # 問題回報 #329
+    assert {k: item[k] for k in ("asset_id", "labels")} == {"asset_id": good, "labels": [
         {"word": "fruit", "pos": "noun", "cefr": "A1", "point": [0.5, 0.25]}]}
 
 

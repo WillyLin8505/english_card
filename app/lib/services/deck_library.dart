@@ -69,12 +69,25 @@ class DeckInfo {
       };
 }
 
+/// "Author · Licence · page" of a deck picture, or null when the server
+/// sent none (問題回報 #329).
+String? _credit(Map<String, dynamic> i) {
+  String? s(String k) {
+    final v = (i[k] as String?)?.trim();
+    return v == null || v.isEmpty ? null : v;
+  }
+
+  final parts = [s('author'), s('license'), s('page_url') ?? s('license_url')]
+      .whereType<String>();
+  return parts.isEmpty ? null : parts.join(' · ');
+}
+
 /// One deck with its items: [words] for a word deck, [pictures] for a
 /// picture deck.
 class DeckContent {
   final DeckInfo info;
   final List<({String word, String pos, String? level})> words;
-  final List<({int assetId, List<WordCandidate> labels})> pictures;
+  final List<({int assetId, List<WordCandidate> labels, String? credit})> pictures;
 
   const DeckContent(this.info,
       {this.words = const [], this.pictures = const []});
@@ -88,6 +101,7 @@ class DeckContent {
         for (final i in items)
           (
             assetId: (i['asset_id'] as num).toInt(),
+            credit: _credit(i),
             labels: [
               for (final l in (i['labels'] as List? ?? const [])
                   .cast<Map<String, dynamic>>())
@@ -274,7 +288,10 @@ class DeckLibrary extends ChangeNotifier {
           final p = deck.pictures[i];
           final bytes = await _picture(p.assetId);
           final saved = await intake.addDeckPicture(bytes,
-              title: deck.info.title, place: deck.info.topic, labels: p.labels);
+              title: deck.info.title,
+              place: deck.info.topic,
+              labels: p.labels,
+              credit: p.credit);
           photoIds.add(saved.photo.id);
           created.addAll(saved.created);
         }

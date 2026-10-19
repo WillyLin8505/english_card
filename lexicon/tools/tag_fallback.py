@@ -155,8 +155,8 @@ def _photo_stats(pack: dict, ids: set[int]) -> dict:
     golden = qc.load_golden()
     golden = {**golden, 'photos': [p for p in golden['photos'] if p['id'] in ids], 'words': []}
     res = qc.evaluate_golden(sub, golden)
-    return {k: v for k, v in res.items() if k.startswith('photo') or k in ('rates', 'counts')} \
-        if isinstance(res, dict) else res
+    return {'rates': res['rates'], 'counts': res['counts'],
+            'fails': {k: v[:8] for k, v in res['fails'].items()}}
 
 
 def _tag_stats(s, ids: list[int]) -> dict:
@@ -171,7 +171,7 @@ def _tag_stats(s, ids: list[int]) -> dict:
             'bands_with_3_per_photo': round(full_bands / max(1, len(ids)), 2), 'words': words}
 
 
-def golden(folder: Path, out: Path | None) -> dict:
+def golden(folder: Path, out: Path | None, base_file: Path | None = None) -> dict:
     import importlib.util
     import serve_app
     spec = importlib.util.spec_from_file_location('tools_qc', Path(__file__).with_name('qc.py'))
@@ -180,7 +180,12 @@ def golden(folder: Path, out: Path | None) -> dict:
     ids = [p['id'] for p in qc.load_golden()['photos']]
     answers = load_answers(folder)
     have = [i for i in ids if i in answers]
-    base = tools_qc.build_pack()
+    if base_file and base_file.is_file():  # live_pack takes ~9 min; reuse one build per comparison
+        base = json.loads(base_file.read_text(encoding='utf-8'))
+    else:
+        base = tools_qc.build_pack()
+        if base_file:
+            base_file.write_text(json.dumps(base, ensure_ascii=False), encoding='utf-8')
     with db.SessionLocal() as s:
         qwen = _tag_stats(s, have)
         try:
@@ -192,10 +197,10 @@ def golden(folder: Path, out: Path | None) -> dict:
         finally:
             s.rollback()
     by_id = {im['id']: im for im in catalog}
-    after = {**base, 'catalog_images': [by_id.get(im['id'], im) if im['id'] in set(have) else im
-                                        for im in base.get('catalog_images') or []]}
-    missing = [i for i in have if i in by_id and i not in {im['id'] for im in base.get('catalog_images') or []}]
-    after['catalog_images'] += [by_id[i] for i in missing]
+    # The compared photos come only from the fallback's catalog (a photo left
+    # without approved labels drops out, as it would in the app).
+    after = {**base, 'catalog_images': [im for im in base.get('catalog_images') or [] if im['id'] not in set(have)]
+             + [by_id[i] for i in have if i in by_id]}
     overlap = [len(qwen['words'][i] & fb['words'][i]) / max(1, len(qwen['words'][i] | fb['words'][i]))
                for i in have]
     report = {'photos_compared': len(have), 'photos_in_golden': len(ids),
@@ -247,6 +252,7 @@ def main() -> int:
     g = sub.add_parser('golden')
     g.add_argument('--dir', required=True)
     g.add_argument('--out')
+    g.add_argument('--base', help='cached live pack (built and saved here when missing)')
     r = sub.add_parser('run')
     r.add_argument('--force', action='store_true', help='ignore enabled=false and the queue check')
     r.add_argument('--batch', type=int)
@@ -272,7 +278,8 @@ def main() -> int:
     elif args.cmd == 'apply':
         out = apply_answers(Path(args.dir))
     elif args.cmd == 'golden':
-        out = golden(Path(args.dir), Path(args.out) if args.out else None)
+        out = golden(Path(args.dir), Path(args.out) if args.out else None,
+                     Path(args.base) if args.base else None)
     else:
         out = run(cfg, args.force, args.batch, args.backend)
     print(json.dumps(out, ensure_ascii=False, indent=1)[:4000])

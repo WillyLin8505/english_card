@@ -38,6 +38,14 @@ def public_list(s: Session) -> dict:
     return {"decks": [summary(s, d) for d in decks]}
 
 
+def _credit(a) -> dict:
+    """Who made a picture and under which licence (CC BY needs the credit shown)."""
+    if a is None:
+        return {}
+    return {"license": a.license_code, "license_url": a.license_url,
+            "author": a.author, "page_url": a.page_url}
+
+
 def public_deck(s: Session, slug: str) -> dict | None:
     """The deck with everything the app needs to add it offline: words as
     (word, pos, cefr); pictures as asset ids (fetched from /api/image) with labels."""
@@ -49,7 +57,10 @@ def public_deck(s: Session, slug: str) -> dict | None:
     if deck.kind == "words":
         rows = [{"word": i.lemma, "pos": i.pos or "", "cefr": i.cefr} for i in items]
     else:
-        rows = [{"asset_id": i.asset_id, "labels": i.labels or []} for i in items]
+        assets = {a.id: a for a in s.scalars(select(m.ImageAsset).where(
+            m.ImageAsset.id.in_([i.asset_id for i in items if i.asset_id])))}
+        rows = [{"asset_id": i.asset_id, "labels": i.labels or [], **_credit(assets.get(i.asset_id))}
+                for i in items]
     return {**summary(s, deck), "items": rows}
 
 

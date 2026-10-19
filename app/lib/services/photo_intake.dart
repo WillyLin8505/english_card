@@ -131,6 +131,7 @@ class PhotoIntake {
     required String title,
     String? place,
     required List<WordCandidate> labels,
+    String? credit,
   }) async {
     final repo = repository();
     final now = repo.clock();
@@ -150,6 +151,7 @@ class PhotoIntake {
       taggingStatus: TaggingStatus.done,
       safetyStatus: PhotoSafetyStatus.safe,
       contentHash: hashBytes(bytes),
+      credit: credit,
     );
     return (photo: photo, created: repo.addDeckPhoto(photo, labels));
   }

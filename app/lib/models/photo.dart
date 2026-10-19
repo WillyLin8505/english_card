@@ -84,6 +84,10 @@ class Photo {
   /// difficulty dial and background top-ups never offer them again.
   final List<String> rejectedWords;
 
+  /// Author and licence of a deck picture (問題回報 #329), e.g.
+  /// "Jane Doe · CC BY 4.0 · https://…". Null for the learner's own photos.
+  final String? credit;
+
   const Photo({
     required this.id,
     this.albumId,
@@ -107,6 +111,7 @@ class Photo {
     this.contentHash,
     this.scanMode = PhotoScanMode.objects,
     this.rejectedWords = const [],
+    this.credit,
   });
 
   bool get hasImage =>
@@ -155,6 +160,7 @@ class Photo {
         contentHash: contentHash,
         scanMode: scanMode,
         rejectedWords: rejectedWords ?? this.rejectedWords,
+        credit: credit,
       );
 
   factory Photo.fromJson(Map<String, dynamic> j) => Photo(
@@ -188,6 +194,7 @@ class Photo {
             PhotoScanMode.objects,
         rejectedWords:
             (j['rejectedWords'] as List?)?.cast<String>() ?? const [],
+        credit: j['credit'] as String?,
       );
 
   Map<String, dynamic> toJson() => {
@@ -212,6 +219,7 @@ class Photo {
         'contentHash': contentHash,
         if (scanMode != PhotoScanMode.objects) 'scanMode': scanMode.name,
         if (rejectedWords.isNotEmpty) 'rejectedWords': rejectedWords,
+        if (credit != null) 'credit': credit,
       };
 }
 
