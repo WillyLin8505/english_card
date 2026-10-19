@@ -215,3 +215,8 @@ commit `90f0976`（Windows：flutter analyze 無 error、01:06 +433 ~1: All test
 commit `7a43c3a`（Windows：flutter analyze 無 error、01:04 +433 ~1: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #343：問題回報 #339：Wikimedia Commons 回 429「please contact noc@wikimed
   結果：已修根因：所有程序打 Wikimedia 改走同一個跨程序限速閘門（全機合計每秒 1 個請求，遇 429/503 全體一起退避），試補 3+40 字音檔全部成功、0 次新 429；全庫還有 3220 字缺音檔要分批補（約 4 字/分鐘）。
+
+## M18（2026-10-19 15:04）狀態：待做
+commit `e5f4dec`（Windows：flutter analyze 無 error、01:03 +437 ~1: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #228：模擬使用者・設定
+  結果：第 3 輪：1/1 通過（runround 第 83 輪，findings 0）。修 1 個真錯（測試連線／照片辨識失敗時顯示英文原文「health check failed: …」），新問題 #345 #346（都是 UX 建議）。
