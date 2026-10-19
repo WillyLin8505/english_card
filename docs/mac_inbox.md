@@ -201,7 +201,7 @@ commit `607a3ff`（Windows：flutter analyze 無 error、01:19 +433 ~1: All test
 - 卡 #337：問題回報 #334：測試 test_batched_reresolve_preserves_stored_ai_tran
   結果：全部完成：#334 是測試資料過時，不是程式錯誤；修正 2 個測試的假 AI 翻譯後兩個檔 35/35 通過，詞庫 0 筆受影響、沒改資料。
 
-## M15（2026-10-19 13:22）狀態：待做
+## M15（2026-10-19 13:22）狀態：完成
 commit `16c7fc3`（Windows：flutter analyze 無 error、00:58 +433 ~1: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #341：問題回報 #337：ought 被當成 owe 的過去式，匯入時改匯 owe，詞庫沒有 ought
   結果：全部完成：根因修好（過時的 form-of 不再吃掉有自己意思的字），全庫 74285 字普查只有 5 字改判，ought 已重匯成 verb 4 義項＋noun 1 義項，golden／QC 前後無退步。
