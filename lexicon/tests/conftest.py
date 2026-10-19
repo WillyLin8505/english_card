@@ -40,6 +40,11 @@ def _no_live_pos_exclusions(tmp_path, monkeypatch):
     # Nor append to the real per-picture timing log (問題回報 #229).
     from app import images
     monkeypatch.setattr(images, "TAG_TIMING_LOG", tmp_path / "tag_timing.jsonl")
+    # Nor take slots from (or pause) the machine-wide Wikimedia budget (問題回報 #339).
+    from app import wikimedia_gate
+    monkeypatch.setattr(wikimedia_gate, "STATE", tmp_path / "wikimedia_gate.json")
+    monkeypatch.setattr(wikimedia_gate, "MIN_INTERVAL", 0.0)
+    monkeypatch.setattr(wikimedia_gate, "BACKOFF_BASE", 0.0)
 
 
 @pytest.fixture(scope="session")

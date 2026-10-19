@@ -35,7 +35,10 @@ AI_KEY = os.environ.get("LEXICON_AI_KEY", "")
 # limit); set LEXICON_SMITHSONIAN_API_KEY to a real key for production use.
 SMITHSONIAN_API_KEY = os.environ.get("LEXICON_SMITHSONIAN_API_KEY", "DEMO_KEY")
 
-USER_AGENT = "EnglishCardLexicon/1.0 (personal vocabulary database)"
+# Wikimedia's User-Agent policy asks for a way to reach the operator
+# (問題回報 #339); LEXICON_CONTACT overrides it (a URL or an e-mail address).
+CONTACT = os.environ.get("LEXICON_CONTACT", "https://api.willylinai.com")
+USER_AGENT = f"EnglishCardLexicon/1.1 ({CONTACT}; personal vocabulary database) Python-urllib"
 
 
 def database_url(test: bool = False) -> str:

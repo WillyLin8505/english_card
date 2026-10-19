@@ -19,7 +19,7 @@ import urllib.request
 from collections import defaultdict
 from dataclasses import dataclass
 
-from .. import config
+from .. import config, wikimedia_gate
 
 CACHE = config.RAW_DATA / "cache"
 
@@ -31,6 +31,10 @@ MIN_INTERVAL = defaultdict(lambda: 0.2, {"datamuse": 0.1, "kaikki": 0.25, "tatoe
                                          "wikimedia_commons": 1.5})
 BREAKER_FAILURES = 5
 BREAKER_OPEN_S = 60
+# Wikimedia hosts share one machine-wide budget (wikimedia_gate, 問題回報 #339):
+# their 429/503 pause every process instead of tripping this one's breaker, and
+# are retried this many extra times once the shared pause is over.
+RATE_RETRIES = 3
 
 
 class SourceError(Exception):
@@ -73,15 +77,34 @@ def cache_path(source: str, word: str, url: str):
     return CACHE / source / f"{_safe(word)}__{hashlib.sha1(url.encode()).hexdigest()[:12]}.json"
 
 
-def _wait_turn(source: str):
+def _wait_turn(source: str, url: str = ""):
+    gated = wikimedia_gate.is_wikimedia(url)
     with _lock:
         until = _open_until.get(source, 0)
         if until > time.time():
             raise SourceError("breaker", f"{source} 暫停使用（連續失敗，{int(until - time.time())} 秒後再試）")
-        wait = _last.get(source, 0) + MIN_INTERVAL[source] - time.time()
-        _last[source] = max(time.time(), _last.get(source, 0) + MIN_INTERVAL[source])
-    if wait > 0:
+        wait = 0.0
+        if not gated:
+            wait = _last.get(source, 0) + MIN_INTERVAL[source] - time.time()
+            _last[source] = max(time.time(), _last.get(source, 0) + MIN_INTERVAL[source])
+    if gated:
+        wikimedia_gate.wait_turn()
+    elif wait > 0:
         time.sleep(wait)
+
+
+def _rate_limited(source: str, url: str, started: float, e: urllib.error.HTTPError) -> bool:
+    """A Wikimedia 429/503: account it, pause every process, don't trip the breaker."""
+    if e.code not in (429, 503) or not wikimedia_gate.is_wikimedia(url):
+        return False
+    _account(source, started, ok=False, breaker=False)
+    wikimedia_gate.penalize(e.headers.get("Retry-After") if e.headers else None)
+    return True
+
+
+def _rate_ok(url: str):
+    if wikimedia_gate.is_wikimedia(url):
+        wikimedia_gate.succeeded()
 
 
 def _result(source: str, ok: bool):
@@ -107,8 +130,9 @@ def get(source: str, word: str, url: str, *, timeout: float = 20, retries: int =
             usage[source].cache_hits += 1
         return c["data"], c["status"]
     last_error: SourceError | None = None
-    for attempt in range(retries + 1):
-        _wait_turn(source)
+    attempt = limited = 0
+    while attempt <= retries:
+        _wait_turn(source, url)
         started = time.time()
         try:
             req = urllib.request.Request(url, headers={"User-Agent": config.USER_AGENT,
@@ -118,6 +142,7 @@ def get(source: str, word: str, url: str, *, timeout: float = 20, retries: int =
             data = ([json.loads(x) for x in body.splitlines() if x.strip()] if lines
                     else json.loads(body))
             _account(source, started, ok=True)
+            _rate_ok(url)
             if cache:
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(json.dumps({"url": url, "status": status, "data": data},
@@ -131,6 +156,12 @@ def get(source: str, word: str, url: str, *, timeout: float = 20, retries: int =
                     path.write_text(json.dumps({"url": url, "status": 404, "data": None}),
                                     encoding="utf-8")
                 return None, 404
+            if _rate_limited(source, url, started, e):
+                last_error = SourceError("http", f"HTTP {e.code}")
+                limited += 1
+                if limited <= RATE_RETRIES:
+                    continue  # the shared pause is waited out in _wait_turn
+                raise last_error from e
             _account(source, started, ok=False)
             last_error = SourceError("http", f"HTTP {e.code}", retryable=e.code in (429, 500, 502,
                                                                                     503, 504))
@@ -141,6 +172,7 @@ def get(source: str, word: str, url: str, *, timeout: float = 20, retries: int =
                     time.sleep(min(30.0, float(e.headers.get("Retry-After") or 5)))
                 except ValueError:
                     time.sleep(5)
+                attempt += 1
                 continue
         except TimeoutError as e:
             _account(source, started, ok=False)
@@ -157,23 +189,25 @@ def get(source: str, word: str, url: str, *, timeout: float = 20, retries: int =
             last_error = SourceError("network", f"{type(e).__name__}: {e}")
         if attempt < retries:
             time.sleep(min(8.0, 0.8 * 2 ** attempt) + random.uniform(0, 0.5))  # backoff + jitter
+        attempt += 1
     assert last_error is not None
     raise last_error
 
 
-def _account(source: str, started: float, ok: bool):
+def _account(source: str, started: float, ok: bool, breaker: bool = True):
     with _lock:
         u = usage[source]
         u.requests += 1
         u.ms_total += int((time.time() - started) * 1000)
         if not ok:
             u.errors += 1
-    _result(source, ok)
+    if breaker:
+        _result(source, ok)
 
 
 def post_json(source: str, url: str, payload: dict, *, timeout: float = 60,
               headers: dict | None = None):
-    _wait_turn(source)
+    _wait_turn(source, url)
     started = time.time()
     req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), method="POST",
                                  headers={"Content-Type": "application/json",
@@ -207,8 +241,9 @@ def download(source: str, url: str, dest, *, timeout: float = 60,
     """Stream a file to [dest] (a temp path). Returns (bytes, content-type).
     A 429 waits as long as the source asks and retries, same as get() —
     a single rate-limit reply must not fail (and breaker-trip) the download."""
-    for attempt in range(retries + 1):
-        _wait_turn(source)
+    attempt = limited = 0
+    while attempt <= retries:
+        _wait_turn(source, url)
         started = time.time()
         req = urllib.request.Request(url, headers={"User-Agent": config.USER_AGENT})
         try:
@@ -219,14 +254,21 @@ def download(source: str, url: str, dest, *, timeout: float = 60,
                     size += len(chunk)
                 ctype = r.headers.get("Content-Type")
             _account(source, started, ok=True)
+            _rate_ok(url)
             return size, ctype
         except urllib.error.HTTPError as e:
+            if _rate_limited(source, url, started, e):
+                limited += 1
+                if limited <= RATE_RETRIES:
+                    continue  # the shared pause is waited out in _wait_turn
+                raise SourceError("http", f"HTTP {e.code}") from e
             _account(source, started, ok=False)
             if e.code == 429 and attempt < retries:
                 try:
                     time.sleep(min(30.0, float(e.headers.get("Retry-After") or 5)))
                 except ValueError:
                     time.sleep(5)
+                attempt += 1
                 continue
             raise SourceError("http", f"HTTP {e.code}", retryable=e.code in (429, 500, 502,
                                                                              503, 504)) from e

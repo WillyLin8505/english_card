@@ -767,6 +767,28 @@ def test_claim_fetch_skips_a_task_still_in_backoff(session, monkeypatch):
         "the task still in backoff must not be claimed before its retry_at"
 
 
+def test_claim_fetch_fresh_words_before_retried_and_languages_alternate(session):
+    """問題回報 #338: words that keep returning 429 must not sit ahead of
+    never-tried ones, and one language's backlog must not starve another."""
+    from app import models as m
+    def task(lemma, lang="en", attempts=0, started=None):
+        return m.ImageFetchTask(target_language=lang, native_language="zh-TW", lemma=lemma,
+                                fields=["sense_image"], status="queued", attempts=attempts,
+                                started_at=started)
+    now = images.datetime.now(images.timezone.utc)
+    session.add_all([task("old429", attempts=30), task("fresh_en"),
+                     task("fresh_fr", lang="fr")])
+    session.add(m.ImageFetchTask(target_language="en", native_language="zh-TW", lemma="done_en",
+                                 fields=["sense_image"], status="completed", started_at=now))
+    session.flush()
+    first = images.claim_fetch(session, "w1")
+    assert first.lemma == "fresh_fr", "last run was en, so fr goes next"
+    second = images.claim_fetch(session, "w1")
+    assert second.lemma == "fresh_en"
+    third = images.claim_fetch(session, "w1")
+    assert third.lemma == "old429", "retried words come after never-tried ones"
+
+
 def test_auto_fetch_flags_persistent_429_as_rate_limited_not_a_plain_error(session, monkeypatch):
     """A source raising the same HTTPError fetch() gives up on after its own
     retries (429/503) must be distinguished from an ordinary ValueError/

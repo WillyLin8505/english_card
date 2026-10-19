@@ -123,6 +123,28 @@ CC BY-SA 的「相同方式分享」只及於該筆資料本身（詞條文字�
 - 工具：`tools/card325_fr_trial.py`（前景跑 fr→en 工作與圖片）、`tools/card325_backup.py`（pg_dump）。
 - 測試：`tests/test_card325_french.py`。
 
+## 6. 法語基礎 2000／3000 字（卡 #329，2026-10-19）
+
+- **本機索引**：`lexicon/raw-data/kaikki-fr/kaikki.org-dictionary-French.jsonl`（557 MB）→
+  `python lexicon/tools/build_kaikki_index.py <jsonl> --language fr --output lexicon/raw-data/kaikki-index.fr.sqlite3`
+  （403,268 筆、386,733 個詞形）。`kaikki_index.index_path(lang)` 會自動用 `kaikki-index.<lang>.sqlite3`
+  （英文仍是 `kaikki-index.sqlite3`），所以 fr 不再逐字打 kaikki.org。
+- **字表**：`python lexicon/tools/card329_fr_wordlist.py --write` → `wordlists(fr)` 的『法語基礎 3000 字』與『法語基礎 2000 字』
+  （JSON 與被排除的歧義字在 `raw-data/card329_fr_wordlist.json`）。規則：wordfreq fr 前 5,079 個 token，經索引還原詞元
+  （parlent→parler、pieds→pied），只收 noun／verb／adj／adv／num／intj；功能詞（de、le、tu、dans…含其變化形）、專有名詞、
+  單字母、只有粗話／貶義釋義的字（pute、con）不收；同形的姓氏（Maison、Homme）不影響。token 若同時是功能詞與罕用詞元
+  的變化形（tu→taire、lui→luire、mais→mai）只算功能詞；詞元頻率低於 token 1.5 zipf 以上不收（plus→plaire）。
+- **例句對應義項（法語規則，`adapters/local.py`）**：主詞性＝字典列的第一個詞性（不是義項最多的那個：maison 名詞 1 義、形容詞 3 義）；
+  句子不跟英文釋義比字；`_usage_pos_fr`：限定詞後且名詞片語在此結束→名詞（la maison est…、une belle maison），
+  只有動詞才有的詞形→動詞，「un grand homme」不判名詞；同形異音字（chat /ʃa/／/tʃat/）法語直接給主詞源。
+  結果：maison 名詞 0→20 句、grand 形容詞 19／名詞 1、chat 20 句全對到 cat。
+- **卡片集**：`python lexicon/tools/card329_fr_decks.py` 建／更新 `fr-basic-2000`、`fr-basic-3000`（kind words、target_language fr、已發布），
+  內容＝字表中已是 full 的詞條（主詞性＋CEFR），每輪匯入後重跑讓它長大。
+- **量化**：`POST /api/imports`（wordlist『法語基礎 3000 字』、parallelism 4、來源不含 ai_translate）→ 工作 #99–#102 由 4 個 text worker 跑；
+  圖片任務進 `image_fetch_tasks`，但 image worker 幾乎停擺（問題回報 #338：3,450 筆佇列、24 小時完成 13 筆），
+  前景抓圖用 `python lexicon/tools/card325_fr_trial.py pictures <words>`（每字 1.5–4.5 分鐘；Smithsonian／Commons 常回 429）。
+- **CEFR**：仍是頻率估計（#332 未決）；golden `fr_v1` 擴到 25 字。
+
 ## 5. 下一張卡（法語基礎 2000–3000 字）要先做的事
 1. 決定 CEFR 來源（§2.3）。2. 建 Kaikki 法語本機索引，不要逐字打 kaikki.org。3. 重啟 API 與 workers 載入法語程式
 （workers 會把舊程式留在記憶體，問題回報 #285）。4. 圖片標籤綁定支援法語（§2.6）。5. 字表：以 wordfreq fr 前 3000

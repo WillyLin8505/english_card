@@ -30,7 +30,7 @@ from PIL import Image
 from sqlalchemy import case, func, or_, select, text
 
 from . import config
-from . import agent_pause, db, models as m
+from . import agent_pause, db, models as m, wikimedia_gate
 
 HOSTS = {'www.wikidata.org', 'commons.wikimedia.org', 'upload.wikimedia.org', 'thumb.wikimedia.org'}
 # Our own API endpoints for the two other live sources: an exact host match,
@@ -106,6 +106,8 @@ _throttle = threading.Lock()
 # process with its own lock, so the combined rate against one host is up to
 # 2x this. 2.0s keeps that combined rate near the old single-worker 1/s
 # instead of doubling it (source of the 429s diagnosed on 卡 #3, 2026-10-15).
+# Wikimedia hosts no longer use it: they share wikimedia_gate's machine-wide
+# budget with every other process (問題回報 #339).
 MIN_INTERVAL = 2.0
 
 
@@ -331,6 +333,13 @@ def promote_rejected_refetch(s, limit: int = 1) -> int:
     return changed
 
 
+def _last_fetch_language():
+    """Language of the most recently started fetch task (scalar subquery)."""
+    return (select(m.ImageFetchTask.target_language)
+            .where(m.ImageFetchTask.started_at.is_not(None))
+            .order_by(m.ImageFetchTask.started_at.desc()).limit(1).scalar_subquery())
+
+
 def claim_fetch(s, worker_id: str):
     """Claim one deferred image lookup without blocking other workers.
 
@@ -365,6 +374,12 @@ def claim_fetch(s, worker_id: str):
         ).order_by(
             case((m.ImageFetchTask.status == "requeue", 0), else_=1),
             _lemma_has_picture(),
+            # Never-tried words before ones that keep coming back on a 429
+            # (#338): ~25 old words retrying hourly sat ahead of 2,384 fresh
+            # ones and kept both workers busy. Then the language that did
+            # not just run, so a big queue cannot starve another language.
+            case((m.ImageFetchTask.attempts > 0, 1), else_=0),
+            case((m.ImageFetchTask.target_language == _last_fetch_language(), 1), else_=0),
             m.ImageFetchTask.created_at,
         ).limit(1).with_for_update(skip_locked=True)
         ).scalar_one_or_none()
@@ -474,19 +489,33 @@ def run_fetch(s, task_id: int):
 def fetch(url, limit=MAX_BYTES, validate=check_url):
     request = urllib.request.Request(validate(url), headers={'User-Agent': config.USER_AGENT})
     opener = urllib.request.build_opener(Redirect(validate))
+    # Wikimedia hosts take a slot from the machine-wide budget shared with the
+    # text workers' audio downloads and other image workers (問題回報 #339);
+    # other hosts keep this process's own throttle.
+    gated = wikimedia_gate.is_wikimedia(request.full_url)
     for attempt in range(4):
-        with _throttle:
-            wait = _last_request[0] + MIN_INTERVAL - time.monotonic()
-            if wait > 0:
-                time.sleep(wait)
-            _last_request[0] = time.monotonic()
+        if gated:
+            wikimedia_gate.wait_turn()
+        else:
+            with _throttle:
+                wait = _last_request[0] + MIN_INTERVAL - time.monotonic()
+                if wait > 0:
+                    time.sleep(wait)
+                _last_request[0] = time.monotonic()
         try:
             with opener.open(request, timeout=25) as response:
                 data = response.read(limit + 1)
+            if gated:
+                wikimedia_gate.succeeded()
             break
         except urllib.error.HTTPError as e:
             if e.code not in (429, 503) or attempt == 3:
+                if gated and e.code in (429, 503):
+                    wikimedia_gate.penalize(e.headers.get('Retry-After'))
                 raise
+            if gated:  # pause every process; the next wait_turn waits it out
+                wikimedia_gate.penalize(e.headers.get('Retry-After'))
+                continue
             retry = e.headers.get('Retry-After', '')
             time.sleep(min(60.0, float(retry) if retry.isdigit() else 5.0 * 2 ** attempt))
     if len(data) > limit:

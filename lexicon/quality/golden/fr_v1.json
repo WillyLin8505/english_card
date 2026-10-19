@@ -1,6 +1,6 @@
 {
  "version": "fr_v1",
- "note": "Card #325 trial words (fr→en). CEFR = frequency estimate (no commercial French CEFR list yet, see docs/french_sources.md §2.3); extend with the 2000–3000 word card.",
+ "note": "Card #325 trial words + card #329 20-word trial (fr→en). CEFR = frequency estimate (no commercial French CEFR list yet, docs/french_sources.md §2.3); extend as the 3000-word import lands.",
  "photos": [],
  "words": [
   {
@@ -27,6 +27,106 @@
    "word": "pomme",
    "pos": "noun",
    "cefr": "B1"
+  },
+  {
+   "word": "temps",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "monde",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "vie",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "gens",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "pays",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "jour",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "homme",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "femme",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "enfant",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "eau",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "école",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "travail",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "main",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "année",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "chose",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "père",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "mère",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "ami",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "voiture",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "livre",
+   "pos": "noun",
+   "cefr": "A1"
   }
  ]
 }

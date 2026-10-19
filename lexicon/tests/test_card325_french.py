@@ -94,3 +94,40 @@ def test_qc_latin_check_only_for_chinese_native():
     assert "sense.native_has_latin" not in qc.validate(fr_pack)
     zh_pack = {"target_language": "en", "native_language": "zh-TW", "lexemes": [dict(lx)]}
     assert "sense.native_has_latin" in qc.validate(zh_pack)
+
+
+# ── Card #329: the 2000–3000 word list ──────────────────────────────────
+
+def test_kaikki_index_path_per_language(tmp_path, monkeypatch):
+    from app import config, kaikki_index
+    monkeypatch.setattr(config, "KAIKKI_INDEX", tmp_path / "kaikki-index.sqlite3")
+    assert kaikki_index.index_path("fr") == tmp_path / "kaikki-index.sqlite3"
+    (tmp_path / "kaikki-index.fr.sqlite3").write_bytes(b"")
+    assert kaikki_index.index_path("fr") == tmp_path / "kaikki-index.fr.sqlite3"
+    assert kaikki_index.index_path("en") == tmp_path / "kaikki-index.sqlite3"
+
+
+def test_french_usage_pos_in_sentence():
+    from app.adapters.local import _usage_pos_fr
+    forms = frozenset({"maison", "maisons"})
+    assert _usage_pos_fr("Laissez-moi vous faire visiter notre maison.", forms, frozenset()) == "noun"
+    assert _usage_pos_fr("Mes parents sont à la maison maintenant.", forms, frozenset()) == "noun"
+    assert _usage_pos_fr("J'ai acheté une belle maison.", forms, frozenset()) == "noun"
+    # un grand homme: the noun phrase goes on, so grand is the adjective.
+    assert _usage_pos_fr("C'est un grand homme.", frozenset({"grand", "grands"}), frozenset()) is None
+    assert _usage_pos_fr("Nous mangeons ensemble.", frozenset({"manger", "mangeons"}),
+                         frozenset({"mangeons"})) == "verb"
+    assert _usage_pos_fr("Il pleut.", forms, frozenset()) == "other"
+
+
+def test_french_verb_only_forms_use_fr_fields():
+    from app.adapters.local import _verb_only_forms
+
+    class Ctx:
+        lemma = "manger"
+
+        def items(self, key):
+            return {"fr_present_1p": [{"form": "mangeons"}],
+                    "fr_plural": [{"form": "mangers"}]}.get(key, [])
+
+    assert _verb_only_forms(Ctx()) == frozenset({"mangeons"})
