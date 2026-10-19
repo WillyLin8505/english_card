@@ -247,7 +247,7 @@ owner：Mac 掃到的**任何問題都要出現在問題回報頁**，不能只�
 2. 沒有金鑰時：結果檔表格那一列的「結果／實際」寫明「不通過」或「失敗」＋原因，push 後 Windows 每 2 分鐘自動把它轉成 `[Mac]` 問題回報並派工（lexicon/tools/mac_results_to_issues.py）。
 3. 請從最早的「待做」M 項開始往下做（M2 起），每做完一項就 push 一次，不要累積。
 
-## M23（2026-10-19 23:24）狀態：待做
+## M23（2026-10-19 23:24）狀態：完成
 commit `9530f99`（Windows：flutter analyze 無 error、02:23 +442 ~1: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #360：問題回報 #358：後台「工作佇列」/ui/#/jobs 有時載入很久
   結果：部分完成：/imports 列表不再載入完整單字清單、前端輪詢改自適應且不疊請求；後端要重啟才生效，未能在忙碌 DB 下實測修後數字。；- GET /api/imports：58 KB／50 筆，3 次量測 0.11 / 0.75 / 2.07 秒（波動大，符合「有時很久」）。
@@ -268,7 +268,7 @@ commit `9530f99`（Windows：flutter analyze 無 error、02:23 +442 ~1: All test
 - 卡 #379：問題回報 #377：文字辨識失敗時會把英文原始錯誤顯示給學習者（text_scan.dart:90）
   結果：全部完成：問題回報 #377（textscan.dart 把英文平台錯誤給學習者看）已修，補 2 個回歸測試，textscan 相關測試 15/15 通過。
 
-## M24（2026-10-19 23:36）狀態：待做
+## M24（2026-10-19 23:36）狀態：完成
 commit `fb73166`（Windows：flutter analyze 無 error、03:15 +442 ~1: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #362：問題回報 #360：圖片抓取：Smithsonian 幾乎每字回 429 Too Many Requests，沒有像 W
   結果：全部完成：Smithsonian／Openverse 改走跨程序共用限速閘門（rategate.py，20:42 上線），法語圖片任務平均 81.6 → 21.3 秒、每小時 4.2 → 61 筆（×14），Smithsonian 429 由 66/101 降到 2/132；golden／QC 無退步。
