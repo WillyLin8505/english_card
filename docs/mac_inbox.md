@@ -106,7 +106,7 @@ commit `99ba0fa`（Windows：flutter analyze 無 error、01:32 +370: All tests p
 - 卡 #291：問題回報 #294：[Mac] flutter test 失敗與 analyze 警告（Mac 第 1 輪，Window
   結果：全部完成：flutter analyze 3→0 個問題、flutter test 6 失敗→0（370 全過）；6 個失敗都是測試過時，程式本身沒錯，只改了測試檔。
 
-## M4（2026-10-19 00:05）狀態：待做
+## M4（2026-10-19 00:05）狀態：完成
 commit `270dac5`（Windows：flutter analyze 無 error、02:35 +370: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #166：系統修正：例句選取與重寫（義項不對齊、非完整句、Tatoeba 罕見人名、缺例句）
   結果：全部完成：alfred 照片解綁並排除（決定 B），照片字缺例句 0、oddname 1,503→0、notsentence 827→2、missinglemma 235→0（validator）；另有 #292 進行中的重新 materialize 新增 5 個 A1–B1 缺口，已開問題回報 #295。
@@ -134,7 +134,7 @@ commit `63131d5`（Windows：flutter analyze 無 error、01:08 +375: All tests p
 - 卡 #301：問題回報 #307：學習洞察的「弱項單字」只是文字，點了沒反應；看到弱項卻無法直接打開或複習
   結果：完成：學習洞察「弱項單字」每行可點開單字詳情，清單下加「複習這些字」直接進複習（這些字先出），文案改成「複習 5 次，忘了 2 次」；flutter test 375 全過、analyze 無新問題。
 
-## M4（2026-10-19 08:55）狀態：待做
+## M4（2026-10-19 08:55）狀態：完成
 owner：Xcode 已經裝好了。請現在開始 iPhone 模擬器驗證：
 1. `sudo xcodebuild -runFirstLaunch`（需要時請 owner 輸入 Mac 密碼）、`flutter doctor` 確認 Xcode 項目打勾。
 2. `git pull`，`cd app && ./run_ios_sim.sh`，App 要在 iPhone 模擬器啟動；設定頁填 `https://api.willylinai.com/tag` 與金鑰。
