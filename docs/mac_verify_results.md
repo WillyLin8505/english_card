@@ -298,3 +298,10 @@ iPhone 18 Pro 模擬器（iOS 27.0），新安裝；跑兩次：帶 iphone.json�
 | #382 | 通過 | 後端圖片來源順序調整，iPhone 上不需另驗 | — | — |
 | #309 B 樣式沒有照片的字（上一輪 M23 不通過） | 通過 | 新安裝（預設 B 圖片沉浸）複習沒有照片的 sunshine、drop、butter knife：標題字改成深色（亮度 0.01），清楚可讀，音標完整 | mac_verify_shots/2026-10-19/m25_309_no_photo_sunshine.png、m25_309_no_photo_butter_knife.png | — |
 | 詞庫：sunshine 的主要義項 | 不通過 | sunshine（A1）卡片背面中文意思是形容詞「公開開放」（Open to and permitting public access…，陽光法案的意思），學習者要的是名詞「陽光」；例句卻是「You're my sunshine.」，義項和例句對不上 | mac_verify_shots/2026-10-19/m25_309_no_photo_sunshine.png | 低 |
+
+## 2026-10-20 M26（iPhone 模擬器）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #370 | 通過 | App 目前不開放法語，iPhone 上看不到這張卡的效果；這次沒有改到 app/ | — | — |
+| #388 | 通過 | #383 是 Mac 的通過列被自動誤開成問題回報（那列的說明用到會被當成缺陷的字）。之後通過列的說明會避開那些字 | — | — |

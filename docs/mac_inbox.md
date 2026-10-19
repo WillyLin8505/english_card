@@ -280,7 +280,7 @@ commit `3fd8a4f`（Windows：flutter analyze 無 error、01:43 +443 ~1: All test
 - 卡 #382：問題回報 #375：圖片來源金鑰：Smithsonian 用的是公開 DEMO_KEY（每天只有 10 次）、Openv
   結果：完成（#375 決定 B）：Smithsonian 已移到圖片來源鏈最後，18/18 個圖片 policy（6 語言對 × senseimage/contextimage/thumbnail）改為 Commons → Open Images → Openverse → Smithsonian；C（Openverse 金
 
-## M26（2026-10-20 00:01）狀態：待做
+## M26（2026-10-20 00:01）狀態：完成
 commit `f8258c2`（Windows：flutter analyze 無 error、01:22 +443 ~1: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #370：問題回報 #368：法語：share_by_meaning 共用的圖片可能在法語 pack 只有 1–2 個法語標籤
   結果：全部完成：sharebymeaning 綁定前先預估這張圖在法語 pack 的法語標籤數，少於 3 就不共用（預估與實際 pack 1233/1233 張一致）；閘門上線前帶進的 73 筆共用綁定已刪（已備份），法語 pack 標籤 < 3 的照片 69 → 1，QC/golden 無退步。
