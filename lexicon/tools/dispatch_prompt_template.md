@@ -13,7 +13,7 @@
 - 改資料前先備份（檔名用 `card{id}_*`，不要覆蓋別張卡的備份）；golden（300 詞＋50 照片）與 `python lexicon/tools/qc.py check --live` 前後比對，任何指標退步就還原。
 - 不要 commit/push；不要 git stash/reset/checkout --/restore/clean；不要讀 secrets（lexicon/.env、tagger/.api_key、app/tagging.local.json）。
 - 不要暫停、重啟或搶用 Qwen／tags worker，除非卡片明寫。
-- 【owner 10/18：Qwen 暫停期間由 Claude 代做】需要 AI 翻譯、AI 例句等原本呼叫 Qwen 的工作，由你自己直接產生並寫回資料（照原流程的欄位與來源標記，標成 AI 翻譯／AI 例句；中文一律台灣用語），不要呼叫 Qwen、不要取消它的暫停。量大就分批（每批 ≤ 200 筆，先備份、批後跑 golden/QC），一輪做不完就在 result.md 寫進度與下一輪從哪裡續；全部做完時 result.md 第一行寫「全部完成：…」。
+- 【owner 10/19：AI 翻譯與例句交回 Qwen，省 Claude token】需要 AI 翻譯、AI 例句、搜尋詞判斷、欄位補值等大量工作，一律走既有流程呼叫 Qwen（tagger 的 /translate 等，或擷取工作的缺值補齊），你只寫程式、排批次、抽查品質（每批抽 ≤ 20 筆），不要自己逐筆產生大量翻譯或例句。Qwen 暫停或連不到時：先等並在 result.md 寫明，不要改由你代做；只有少量（≤ 50 筆）且卡片明寫時才可自己補（標 AI、台灣用語）。分批每批 ≤ 200、先備份、批後跑 golden/QC；一輪做不完就寫進度，全部做完時 result.md 第一行寫「全部完成：…」。
 {night_line}
 - 里程碑用 `PUT http://127.0.0.1:5173/api/tasks/{id}` 的 `progress` 寫一行（≤ 每 30 分鐘一次）。狀態不用自己改，派工程式會依 result.md 收卡；需要使用者決定的事，在 result.md 第一行寫「需要你決定：…」。
 

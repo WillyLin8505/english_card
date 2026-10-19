@@ -1,5 +1,5 @@
 {
- "_note": "Reviewed English search terms for non-English senses (card #384, 問題回報 #379). term null = no picture word for this sense (no picture fetched, no photo label maps to it); a sense without an entry keeps images.english_search_term's automatic first item. Key: normalized lemma|pos|sense_key. Written by lexicon/tools/card384_apply.py from lexicon/logs/agents/card384_decisions_b*.txt; edit by hand or re-run the script.",
+ "_note": "Reviewed English search terms for non-English senses (card #384, 問題回報 #379; card #371, 問題回報 #367). term null = no picture word for this sense (no picture fetched, no photo label maps to it); a sense without an entry keeps images.english_search_term's automatic first item. Key: normalized lemma|pos|sense_key. Written by lexicon/tools/card384_apply.py and lexicon/tools/card371_apply.py from the lexicon/logs/agents decision files; edit by hand or re-run.",
  "fr": {
   "abricot|noun|53ae90448fb6": {
    "term": null,
@@ -8,6 +8,30 @@
    "ordinal": 1,
    "why": "apricot (color)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "absolument|adv|37c5e7d2d37f": {
+   "term": null,
+   "auto": "absolutely",
+   "meaning": "absolutely; totally; completely",
+   "ordinal": 0,
+   "why": "adverb (absolutely)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "accorder|verb|7e17aaa744b3": {
+   "term": null,
+   "auto": "agree",
+   "meaning": "to agree, to correspond grammatically",
+   "ordinal": 6,
+   "why": "grammar label (agree grammatically)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "accorder|verb|989f56f8ead7": {
+   "term": null,
+   "auto": "make correspond grammatically",
+   "meaning": "to make correspond grammatically",
+   "ordinal": 4,
+   "why": "grammar label (make correspond grammatically)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "accès|noun|f138a1bdd99c": {
    "term": null,
@@ -49,6 +73,14 @@
    "why": "topic / topicality",
    "by": "card384 Claude review 2026-10-19"
   },
+  "actuellement|adv|9776699d2de1": {
+   "term": null,
+   "auto": "currently",
+   "meaning": "currently",
+   "ordinal": 0,
+   "why": "adverb (currently)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "agenda|noun|1aec318c90c7": {
    "term": "appointment book",
    "auto": "organiser",
@@ -73,6 +105,22 @@
    "why": "shaft (plough)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "agir|verb|805619c6df4f": {
+   "term": null,
+   "auto": "be",
+   "meaning": "to be, be all about, be a question of",
+   "ordinal": 3,
+   "why": "idiom (be a question of)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "ah|intj|fa57ddaf147b": {
+   "term": null,
+   "auto": "ah",
+   "meaning": "ah",
+   "ordinal": 0,
+   "why": "interjection (ah)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "aide|noun|41a84fb77569": {
    "term": null,
    "auto": "aide",
@@ -80,6 +128,22 @@
    "ordinal": 1,
    "why": "aide (person)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "ailleurs|adv|237d02a4be4c": {
+   "term": null,
+   "auto": "elsewhere",
+   "meaning": "elsewhere; somewhere else",
+   "ordinal": 0,
+   "why": "adverb (elsewhere)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "air|noun|d102e43516c4": {
+   "term": null,
+   "auto": "air",
+   "meaning": "air (pretension)",
+   "ordinal": 3,
+   "why": "pretension (air), term is wrong sense",
+   "by": "card371 Claude review 2026-10-19"
   },
   "air|noun|fedab6af9833": {
    "term": null,
@@ -89,6 +153,14 @@
    "why": "tune (music) draws no picture",
    "by": "card384 Claude review 2026-10-19"
   },
+  "alain|adj|c228b0a3327c": {
+   "term": null,
+   "auto": "alan",
+   "meaning": "Alan (of the Alans)",
+   "ordinal": 0,
+   "why": "ethnonym (Alans), term is a personal name",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "alcool|noun|6bc86b3efc87": {
    "term": "liquor",
    "auto": "spirits",
@@ -96,6 +168,54 @@
    "ordinal": 1,
    "why": "spirits are ghosts in pictures",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "aller|verb|7289f3ac1e1c": {
+   "term": null,
+   "auto": "be x-proof",
+   "meaning": "to be X-proof (to be suitable for use in an appliance without running the risk of being damaged in the process)",
+   "ordinal": 6,
+   "why": "technical phrase, no picture word",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "aller|verb|cf3a2994036b": {
+   "term": null,
+   "auto": "be going",
+   "meaning": "to be going (to); will soon; forms a near-future tense",
+   "ordinal": 2,
+   "why": "auxiliary (near future)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "allée|noun|b44e52d69ade": {
+   "term": null,
+   "auto": "action of going",
+   "meaning": "action of going (used nowadays only in the expression allées et venues: the repeated action of going and returning)",
+   "ordinal": 5,
+   "why": "abstract (action of going)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "alors|adv|2783fb6ee7b9": {
+   "term": null,
+   "auto": "so",
+   "meaning": "so, hence (as a consequence)",
+   "ordinal": 1,
+   "why": "adverb / consequence particle",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "alors|adv|ec13ec52776c": {
+   "term": null,
+   "auto": "then",
+   "meaning": "then (at that time)",
+   "ordinal": 0,
+   "why": "adverb (then)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "alors|intj|4420b9e3f040": {
+   "term": null,
+   "auto": "so",
+   "meaning": "so, well, well then",
+   "ordinal": 0,
+   "why": "interjection",
+   "by": "card371 Claude review 2026-10-19"
   },
   "amande|noun|e131d2c0a5f2": {
    "term": "glycymeris",
@@ -120,6 +240,14 @@
    "ordinal": 0,
    "why": "fine (payment) looks like the adjective",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "amoureux|adj|e7f0df330930": {
+   "term": null,
+   "auto": "love",
+   "meaning": "love",
+   "ordinal": 0,
+   "why": "the adjective in love, term is a noun",
+   "by": "card371 Claude review 2026-10-19"
   },
   "ampleur|noun|1171d177d385": {
    "term": null,
@@ -153,6 +281,14 @@
    "why": "laying out",
    "by": "card384 Claude review 2026-10-19"
   },
+  "américain|adj|d6c5b8f56556": {
+   "term": "american",
+   "auto": "english",
+   "meaning": "English (of or pertaining to the English language); \"American\"",
+   "ordinal": 1,
+   "why": "of or pertaining to America (américain), not English",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "américain|noun|82bb7cab4f51": {
    "term": null,
    "auto": "english",
@@ -161,6 +297,14 @@
    "why": "English (language) under américain is misleading",
    "by": "card384 Claude review 2026-10-19"
   },
+  "anglais|adj|8aac27e3b25a": {
+   "term": "anglophone",
+   "auto": "anglo-american or anglophone",
+   "meaning": "Anglo-American or Anglophone",
+   "ordinal": 1,
+   "why": "Anglo-American or Anglophone was a description, not a picture word",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "angle|noun|93cbf22851e7": {
    "term": "angle",
    "auto": "geometric angle",
@@ -168,6 +312,22 @@
    "ordinal": 0,
    "why": "the geometric angle",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "appareil|noun|31e415c783c3": {
+   "term": null,
+   "auto": "arrangement of people",
+   "meaning": "an arrangement of people, decorations, etc., for purposes of pomp",
+   "ordinal": 3,
+   "why": "abstract (arrangement of people)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "apparemment|adv|5f4c6ec9b487": {
+   "term": null,
+   "auto": "apparently",
+   "meaning": "apparently (seemingly)",
+   "ordinal": 0,
+   "why": "adverb (apparently)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "apparition|noun|746a54c06269": {
    "term": null,
@@ -200,6 +360,54 @@
    "ordinal": 1,
    "why": "arc (curve)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "argent|noun|8cca4b4cd13e": {
+   "term": null,
+   "auto": "argent",
+   "meaning": "argent (white in heraldry)",
+   "ordinal": 2,
+   "why": "heraldic colour (argent), no picture word",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "arriver|verb|c49655874ba6": {
+   "term": null,
+   "auto": "be able to",
+   "meaning": "to be able to, to manage (to do something successfully)",
+   "ordinal": 3,
+   "why": "modal-like (be able to)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "arrière|adv|397e4006e156": {
+   "term": null,
+   "auto": "late",
+   "meaning": "late",
+   "ordinal": 1,
+   "why": "adverb (late)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "arrière|adv|8a78954ac516": {
+   "term": null,
+   "auto": "great-",
+   "meaning": "great- (relatives)",
+   "ordinal": 3,
+   "why": "adverb (great-)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "arrière|adv|cf8cfcfc69df": {
+   "term": null,
+   "auto": "far",
+   "meaning": "far, far away",
+   "ordinal": 0,
+   "why": "adverb (far)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "arrière|adv|dbde1352b029": {
+   "term": null,
+   "auto": "rear",
+   "meaning": "rear, behind, hinter-",
+   "ordinal": 2,
+   "why": "adverb (rear)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "arrière|noun|c7a0a1adfea4": {
    "term": null,
@@ -241,6 +449,14 @@
    "why": "arrêté is a decree, not an agreement picture",
    "by": "card384 Claude review 2026-10-19"
   },
+  "article|noun|f44a7bcd5245": {
+   "term": null,
+   "auto": "moment",
+   "meaning": "moment (only in the phrase à l'article de la mort)",
+   "ordinal": 4,
+   "why": "idiom (à l'article de la mort)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "attaque|noun|7e3cc65e2a10": {
    "term": null,
    "auto": "onset",
@@ -265,6 +481,14 @@
    "why": "attentat",
    "by": "card384 Claude review 2026-10-19"
   },
+  "attention|intj|c9f7f7e4984f": {
+   "term": null,
+   "auto": "look out",
+   "meaning": "look out! watch out! careful!",
+   "ordinal": 0,
+   "why": "interjection (look out)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "aube|noun|d65d06704d9e": {
    "term": null,
    "auto": "beginning",
@@ -281,6 +505,78 @@
    "why": "hearing (court) pictures an ear",
    "by": "card384 Claude review 2026-10-19"
   },
+  "auparavant|adv|d1cd8daa2604": {
+   "term": null,
+   "auto": "beforehand",
+   "meaning": "beforehand, previously",
+   "ordinal": 0,
+   "why": "adverb (beforehand)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "aussitôt|adv|7ebcec8ac66f": {
+   "term": null,
+   "auto": "immediately",
+   "meaning": "immediately",
+   "ordinal": 0,
+   "why": "adverb (immediately)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "autant|adv|0790027aa363": {
+   "term": null,
+   "auto": "same",
+   "meaning": "the same, as much",
+   "ordinal": 2,
+   "why": "determiner (as much)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "autant|adv|0c8aa4e5030c": {
+   "term": null,
+   "auto": "so much",
+   "meaning": "so much",
+   "ordinal": 0,
+   "why": "adverb (so much)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "autant|adv|7c49f7f96263": {
+   "term": null,
+   "auto": "just as well",
+   "meaning": "just as well, might as well/may as well",
+   "ordinal": 1,
+   "why": "adverb (just as well)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "automatiquement|adv|97bda38cefe5": {
+   "term": null,
+   "auto": "automatically",
+   "meaning": "automatically",
+   "ordinal": 0,
+   "why": "adverb (automatically)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "autrefois|adv|d9806961e385": {
+   "term": null,
+   "auto": "previously",
+   "meaning": "previously; formerly (at a past time), erstwhile",
+   "ordinal": 0,
+   "why": "adverb (previously)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "autrement|adv|2533abd682cd": {
+   "term": null,
+   "auto": "differently",
+   "meaning": "differently, in another way or manner",
+   "ordinal": 0,
+   "why": "adverb (differently)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "autrement|conj|18e8e938bf21": {
+   "term": null,
+   "auto": "otherwise",
+   "meaning": "otherwise, or else",
+   "ordinal": 0,
+   "why": "conjunction (otherwise)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "avance|noun|7b8aa5f363b4": {
    "term": null,
    "auto": "progression",
@@ -289,6 +585,14 @@
    "why": "progression",
    "by": "card384 Claude review 2026-10-19"
   },
+  "avoir|verb|62dd0aa90982": {
+   "term": null,
+   "auto": "have",
+   "meaning": "(chiefly in se faire avoir) to have (to trick; to con)",
+   "ordinal": 5,
+   "why": "se faire avoir = be tricked; term have is wrong sense",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "baby|noun|4d7a0e7f2e72": {
    "term": null,
    "auto": "baby",
@@ -296,6 +600,14 @@
    "ordinal": 1,
    "why": "baby, darling",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "bah|intj|d989237ec296": {
+   "term": null,
+   "auto": "no",
+   "meaning": "No.",
+   "ordinal": 0,
+   "why": "interjection (no)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "baignoire|noun|34763dadbaf0": {
    "term": "bathtub",
@@ -328,6 +640,14 @@
    "ordinal": 0,
    "why": "bar, ingot",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "bas|adv|b4077aa9eb17": {
+   "term": null,
+   "auto": "low",
+   "meaning": "low",
+   "ordinal": 0,
+   "why": "adverb (low)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "bas|noun|2e7e6f704fc2": {
    "term": "stockings",
@@ -369,6 +689,30 @@
    "why": "percussion, drum kit",
    "by": "card384 Claude review 2026-10-19"
   },
+  "batterie|noun|ae999afbe3d4": {
+   "term": "drum kit",
+   "auto": "batterie",
+   "meaning": "batterie",
+   "ordinal": 3,
+   "why": "batterie is the French word itself; the sense is a drum kit",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "beaucoup|adv|4c7d3feb0559": {
+   "term": null,
+   "auto": "very",
+   "meaning": "very",
+   "ordinal": 1,
+   "why": "intensifier (very)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "beaucoup|adv|e13cdf1e6193": {
+   "term": null,
+   "auto": "much",
+   "meaning": "much, very much, a lot",
+   "ordinal": 0,
+   "why": "adverb (much)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "bel|noun|75c469bd7b67": {
    "term": null,
    "auto": "bel",
@@ -376,6 +720,22 @@
    "ordinal": 0,
    "why": "bel (unit)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "ben|intj|d80d42d641f3": {
+   "term": null,
+   "auto": "well",
+   "meaning": "Well; uh",
+   "ordinal": 0,
+   "why": "interjection (well)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "biaiser|verb|e542bbd43fa8": {
+   "term": null,
+   "auto": "go around",
+   "meaning": "to go around, work around",
+   "ordinal": 1,
+   "why": "idiom (go around, work around)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "biais|noun|5c062f6d16e8": {
    "term": null,
@@ -393,6 +753,54 @@
    "why": "angle, aspect",
    "by": "card384 Claude review 2026-10-19"
   },
+  "bientôt|adv|c96b786ae19b": {
+   "term": null,
+   "auto": "soon",
+   "meaning": "soon",
+   "ordinal": 0,
+   "why": "adverb (soon)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "bien|adv|364fa395ab90": {
+   "term": null,
+   "auto": "well",
+   "meaning": "well",
+   "ordinal": 0,
+   "why": "adverb (well)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "bien|adv|4d47a2d31234": {
+   "term": null,
+   "auto": "lot",
+   "meaning": "a lot (of)",
+   "ordinal": 2,
+   "why": "quantifier (a lot)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "bien|adv|65d806e172ac": {
+   "term": null,
+   "auto": "indeed",
+   "meaning": "indeed; so",
+   "ordinal": 1,
+   "why": "adverb (indeed)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "bien|adv|71b0301b9854": {
+   "term": null,
+   "auto": "very",
+   "meaning": "very; really",
+   "ordinal": 3,
+   "why": "intensifier (very)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "bien|adv|ab56afb385eb": {
+   "term": null,
+   "auto": "much",
+   "meaning": "much (more, less, better, etc.)",
+   "ordinal": 4,
+   "why": "adverb (much)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "billet|noun|fd43e0e50475": {
    "term": null,
    "auto": "note",
@@ -409,6 +817,14 @@
    "why": "pouch for tobacco",
    "by": "card384 Claude review 2026-10-19"
   },
+  "blague|noun|c8d0db5a4a07": {
+   "term": null,
+   "auto": "penis",
+   "meaning": "a penis",
+   "ordinal": 2,
+   "why": "slang for penis: no picture search term",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "blessé|noun|8a2a33d3ad94": {
    "term": "injured person",
    "auto": "injured",
@@ -416,6 +832,22 @@
    "ordinal": 0,
    "why": "injured (person)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "bleu|adj|d26bdbe38e6a": {
+   "term": "rare",
+   "auto": "very rare",
+   "meaning": "very rare, underdone",
+   "ordinal": 1,
+   "why": "very rare is a phrase; picture word rare",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "bleu|noun|3235d0929ef1": {
+   "term": null,
+   "auto": "supporter",
+   "meaning": "a supporter of the Democratic Party",
+   "ordinal": 5,
+   "why": "political affiliation, term too vague",
+   "by": "card371 Claude review 2026-10-19"
   },
   "bleu|noun|7dcf7e4c69b3": {
    "term": "blue",
@@ -425,6 +857,14 @@
    "why": "the color blue",
    "by": "card384 Claude review 2026-10-19"
   },
+  "bleu|noun|b010382c2b24": {
+   "term": null,
+   "auto": "supporter",
+   "meaning": "a supporter of the Conservative Party",
+   "ordinal": 4,
+   "why": "political affiliation, term too vague",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "bonheur|noun|97d46523fb70": {
    "term": null,
    "auto": "goodhap",
@@ -432,6 +872,22 @@
    "ordinal": 0,
    "why": "goodhap (archaic)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "bonjour|intj|08c7616149c2": {
+   "term": null,
+   "auto": "good day",
+   "meaning": "good day; good afternoon",
+   "ordinal": 0,
+   "why": "greeting",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "bonjour|intj|24f7b604fcc4": {
+   "term": null,
+   "auto": "goodbye",
+   "meaning": "goodbye",
+   "ordinal": 1,
+   "why": "greeting",
+   "by": "card371 Claude review 2026-10-19"
   },
   "bonjour|noun|b14a31418551": {
    "term": null,
@@ -441,6 +897,14 @@
    "why": "greetings",
    "by": "card384 Claude review 2026-10-19"
   },
+  "bonsoir|intj|4320550d597b": {
+   "term": null,
+   "auto": "good evening",
+   "meaning": "good evening",
+   "ordinal": 0,
+   "why": "greeting (good evening)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "bonus|noun|618c72cd40c5": {
    "term": null,
    "auto": "premium",
@@ -448,6 +912,14 @@
    "ordinal": 0,
    "why": "premium (bonus)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "bon|intj|75b247d1e266": {
+   "term": null,
+   "auto": "well",
+   "meaning": "well; OK",
+   "ordinal": 0,
+   "why": "interjection (well)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "boulevard|noun|b52a08c892c3": {
    "term": "rampart",
@@ -457,6 +929,14 @@
    "why": "bulwark (archaic)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "bourse|noun|223e1bfef65e": {
+   "term": "stock exchange",
+   "auto": "bourse",
+   "meaning": "bourse, stock exchange",
+   "ordinal": 2,
+   "why": "bourse is the French word itself; the sense is the stock exchange",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "bourse|noun|5734b1f6f270": {
    "term": null,
    "auto": "purseful of money",
@@ -465,6 +945,14 @@
    "why": "purseful of money",
    "by": "card384 Claude review 2026-10-19"
   },
+  "bourse|noun|fbb1bf1c1e0c": {
+   "term": null,
+   "auto": "scrotum",
+   "meaning": "the scrotum",
+   "ordinal": 3,
+   "why": "anatomy, no picture word (kept out of picture search)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "bouteille|noun|20cd717d8850": {
    "term": null,
    "auto": "experience",
@@ -472,6 +960,14 @@
    "ordinal": 1,
    "why": "experience (figurative)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "bravo|intj|d601d85180e6": {
+   "term": null,
+   "auto": "bravo",
+   "meaning": "bravo!, hear, hear!, well said!, well done!",
+   "ordinal": 0,
+   "why": "interjection (bravo)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "britannique|noun|a7d4b64126a5": {
    "term": null,
@@ -488,6 +984,14 @@
    "ordinal": 1,
    "why": "rumor or report",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "brut|adj|51786e1b3e2b": {
+   "term": null,
+   "auto": "brut",
+   "meaning": "brut, strong",
+   "ordinal": 2,
+   "why": "the French word brut (strong), no English term",
+   "by": "card371 Claude review 2026-10-19"
   },
   "brésil|noun|dde833848960": {
    "term": "brazilwood",
@@ -625,6 +1129,14 @@
    "why": "carotte (tobacco roll)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "carrément|adv|cc6a6abe4834": {
+   "term": null,
+   "auto": "squarely",
+   "meaning": "squarely, at right angles (in the shape of a square; of motion etc.)",
+   "ordinal": 3,
+   "why": "adverb (squarely)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "carré|noun|e963700419a5": {
    "term": null,
    "auto": "patch",
@@ -657,6 +1169,14 @@
    "why": "square on a board game",
    "by": "card384 Claude review 2026-10-19"
   },
+  "casque|noun|d9cf4d7c7992": {
+   "term": null,
+   "auto": "casque",
+   "meaning": "casque",
+   "ordinal": 3,
+   "why": "the French word itself, no English term",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "catalogue|noun|72062af8ae11": {
    "term": "catalogue",
    "auto": "systematical catalogue",
@@ -672,6 +1192,14 @@
    "ordinal": 0,
    "why": "cellar or basement",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "censé|adj|ef6832e46eb4": {
+   "term": null,
+   "auto": "supposed to",
+   "meaning": "supposed to, meant to",
+   "ordinal": 0,
+   "why": "modal (supposed to)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "centaine|noun|116d89101ae6": {
    "term": null,
@@ -697,6 +1225,22 @@
    "why": "cross (football pass)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "cependant|adv|67ff4986d7fb": {
+   "term": null,
+   "auto": "meanwhile",
+   "meaning": "meanwhile",
+   "ordinal": 0,
+   "why": "adverb (meanwhile)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "cependant|adv|8043a1dd14d9": {
+   "term": null,
+   "auto": "however",
+   "meaning": "however, nevertheless, yet, notwithstanding",
+   "ordinal": 1,
+   "why": "adverb (however)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "cercle|noun|ec6db1e8118e": {
    "term": null,
    "auto": "group of people",
@@ -713,6 +1257,30 @@
    "why": "cerise (color)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "certainement|adv|b7f47a6da140": {
+   "term": null,
+   "auto": "probably",
+   "meaning": "probably (very likely, although not entirely sure)",
+   "ordinal": 1,
+   "why": "adverb (probably)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "certainement|adv|d35fd27830e5": {
+   "term": null,
+   "auto": "certainly",
+   "meaning": "certainly (with certainty, without doubt)",
+   "ordinal": 0,
+   "why": "adverb (certainly)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "certes|adv|96122f45564d": {
+   "term": null,
+   "auto": "admittedly",
+   "meaning": "admittedly, granted, fair enough",
+   "ordinal": 0,
+   "why": "adverb (admittedly)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "cf|noun|9145741528aa": {
    "term": null,
    "auto": "fc",
@@ -728,6 +1296,14 @@
    "ordinal": 1,
    "why": "heat (sexual)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "champ|noun|a6e8db10bfd2": {
+   "term": null,
+   "auto": "vector field",
+   "meaning": "a vector field, tensor field, or scalar field (but not a commutative ring with identity for which every nonzero element has a multiplicative inverse, cf. corps m)",
+   "ordinal": 2,
+   "why": "mathematical field, no picture word",
+   "by": "card371 Claude review 2026-10-19"
   },
   "champ|noun|aafdf7b63907": {
    "term": null,
@@ -752,6 +1328,22 @@
    "ordinal": 1,
    "why": "subject, issue",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "chaque|adj|b5a552913c65": {
+   "term": null,
+   "auto": "each",
+   "meaning": "each",
+   "ordinal": 0,
+   "why": "determiner (each)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "chaque|adj|d5c7681f266e": {
+   "term": null,
+   "auto": "every",
+   "meaning": "every",
+   "ordinal": 1,
+   "why": "determiner (every)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "chargé|noun|c3ec63fe7011": {
    "term": null,
@@ -801,6 +1393,14 @@
    "why": "article, principal point",
    "by": "card384 Claude review 2026-10-19"
   },
+  "chemise|noun|00065335b52d": {
+   "term": null,
+   "auto": "chemise",
+   "meaning": "chemise (wall-enforcing earthwork)",
+   "ordinal": 2,
+   "why": "the French word itself (earthwork), no English term",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "chercheur|noun|ef4b6b9a7cb2": {
    "term": null,
    "auto": "searcher",
@@ -808,6 +1408,14 @@
    "ordinal": 0,
    "why": "searcher",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "cher|adv|f6489853613c": {
+   "term": null,
+   "auto": "dearly",
+   "meaning": "dearly",
+   "ordinal": 0,
+   "why": "adverb (dearly)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "cher|noun|92fbe5a22ece": {
    "term": null,
@@ -857,6 +1465,14 @@
    "why": "a digit i.e. 0–9",
    "by": "card384 Claude review 2026-10-19"
   },
+  "chinois|adj|f15cdf16ae1b": {
+   "term": "chinese",
+   "auto": "china",
+   "meaning": "of China; Chinese",
+   "ordinal": 0,
+   "why": "of China (Chinese), not porcelain (china)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "chinois|noun|406e53cec927": {
    "term": null,
    "auto": "greek",
@@ -864,6 +1480,14 @@
    "ordinal": 1,
    "why": "Greek (something difficult)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "chinois|noun|52d47aba2cba": {
+   "term": "strainer",
+   "auto": "chinois",
+   "meaning": "a chinois, fine-meshed strainer",
+   "ordinal": 2,
+   "why": "chinois is the French word itself; the sense is a conical strainer",
+   "by": "card371 Claude review 2026-10-19"
   },
   "choc|noun|d9467d65034e": {
    "term": "collision",
@@ -913,6 +1537,14 @@
    "why": "aim, goal",
    "by": "card384 Claude review 2026-10-19"
   },
+  "ciel|intj|aca9e60e6d48": {
+   "term": null,
+   "auto": "heavens",
+   "meaning": "heavens!",
+   "ordinal": 0,
+   "why": "interjection (heavens)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "cinquième|noun|561252a4639d": {
    "term": null,
    "auto": "fifth",
@@ -952,6 +1584,38 @@
    "ordinal": 1,
    "why": "citizenship",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "civil|adj|0205e0183bea": {
+   "term": null,
+   "auto": "civil",
+   "meaning": "civil",
+   "ordinal": 0,
+   "why": "wrong sense: lay (non-clerical), not civil",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "ci|adv|0581360c8145": {
+   "term": null,
+   "auto": "see -ci",
+   "meaning": "see -ci",
+   "ordinal": 0,
+   "why": "grammar (see -ci)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "clairement|adv|7199c340b933": {
+   "term": null,
+   "auto": "clearly",
+   "meaning": "clearly; patently",
+   "ordinal": 0,
+   "why": "adverb (clearly)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "clair|adv|d4d70520b04f": {
+   "term": null,
+   "auto": "clearly",
+   "meaning": "clearly",
+   "ordinal": 0,
+   "why": "adverb (clearly)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "clair|noun|4a40c95041b7": {
    "term": null,
@@ -1001,6 +1665,30 @@
    "why": "academy (collège)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "combien|adv|3b45e89957b1": {
+   "term": null,
+   "auto": "how much",
+   "meaning": "how much (for uncountable nouns and portions)",
+   "ordinal": 0,
+   "why": "adverb (how much)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "combien|adv|55913eb692c4": {
+   "term": null,
+   "auto": "how much",
+   "meaning": "how much (for money)",
+   "ordinal": 1,
+   "why": "adverb (how much)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "combien|adv|9643d5c4183b": {
+   "term": null,
+   "auto": "how many",
+   "meaning": "how many (with countable nouns)",
+   "ordinal": 2,
+   "why": "adverb (how many)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "commandement|noun|3dc0d92598dc": {
    "term": null,
    "auto": "command",
@@ -1017,6 +1705,22 @@
    "why": "authority",
    "by": "card384 Claude review 2026-10-19"
   },
+  "comment|adv|6602ea70fe00": {
+   "term": null,
+   "auto": "how",
+   "meaning": "how",
+   "ordinal": 0,
+   "why": "adverb (how)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "comment|intj|fca76e48643f": {
+   "term": null,
+   "auto": "pardon",
+   "meaning": "pardon?, sorry?, what?",
+   "ordinal": 0,
+   "why": "interjection (pardon)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "commission|noun|ae832ab3edbe": {
    "term": "errand",
    "auto": "message",
@@ -1032,6 +1736,38 @@
    "ordinal": 1,
    "why": "commonwealth",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "commune|noun|ea1b0f5e1354": {
+   "term": "paris commune",
+   "auto": "either",
+   "meaning": "Either of the French revolutionary governments (of 1792 or of 1871)",
+   "ordinal": 2,
+   "why": "term either is wrong; the sense is the revolutionary Commune",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "complètement|adv|5748f6dd5df3": {
+   "term": null,
+   "auto": "completely",
+   "meaning": "completely",
+   "ordinal": 0,
+   "why": "adverb (completely)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "composition|noun|7430f635c666": {
+   "term": null,
+   "auto": "composition",
+   "meaning": "composition, compounding, formation of compound words",
+   "ordinal": 3,
+   "why": "abstract (compounding)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "comprendre|verb|83e3b2bb7409": {
+   "term": null,
+   "auto": "know each other",
+   "meaning": "to know each other (well); to get on well, to get along well",
+   "ordinal": 2,
+   "why": "idiom (get along well)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "compte|noun|6cca311080de": {
    "term": null,
@@ -1057,6 +1793,14 @@
    "why": "riding (electoral)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "conception|noun|7d4a1b4c79ff": {
+   "term": null,
+   "auto": "ability to understand",
+   "meaning": "ability to understand",
+   "ordinal": 2,
+   "why": "abstract (ability to understand)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "condition|noun|34437750a8aa": {
    "term": null,
    "auto": "term",
@@ -1072,6 +1816,14 @@
    "ordinal": 1,
    "why": "preserve (food)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "conformément|adv|8da0ca0e5685": {
+   "term": null,
+   "auto": "accordingly",
+   "meaning": "accordingly",
+   "ordinal": 0,
+   "why": "adverb (accordingly)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "congo|noun|ccf9fbd7f34a": {
    "term": null,
@@ -1105,6 +1857,22 @@
    "why": "keeper, curator",
    "by": "card384 Claude review 2026-10-19"
   },
+  "constamment|adv|9a9df8be4f72": {
+   "term": null,
+   "auto": "constantly",
+   "meaning": "constantly",
+   "ordinal": 0,
+   "why": "adverb (constantly)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "constituent|verb|eac052b92a90": {
+   "term": null,
+   "auto": "third-person plural present",
+   "meaning": "third-person plural present/subjunctive of constituer",
+   "ordinal": 0,
+   "why": "grammar label (third-person plural)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "conséquence|noun|794d79d73829": {
    "term": null,
    "auto": "general senses",
@@ -1113,6 +1881,38 @@
    "why": "general senses",
    "by": "card384 Claude review 2026-10-19"
   },
+  "contact|noun|9911c4912474": {
+   "term": "contact",
+   "auto": "rapport",
+   "meaning": "rapport",
+   "ordinal": 2,
+   "why": "rapport is the French word itself; the sense is contact",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "contenant|adj|833f00e8be90": {
+   "term": null,
+   "auto": "containing",
+   "meaning": "containing",
+   "ordinal": 0,
+   "why": "participle (containing)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "content|verb|3e4c00b100e3": {
+   "term": null,
+   "auto": "third-person plural present",
+   "meaning": "third-person plural present/subjunctive of conter",
+   "ordinal": 0,
+   "why": "grammar label (third-person plural)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "contrairement|adv|5526d1fab640": {
+   "term": null,
+   "auto": "contrarily",
+   "meaning": "contrarily, oppositely",
+   "ordinal": 0,
+   "why": "adverb (contrarily)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "cookie|noun|14b47a59e54f": {
    "term": null,
    "auto": "cookie",
@@ -1120,6 +1920,14 @@
    "ordinal": 1,
    "why": "cookie (HTTP)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "cool|intj|689aa5a0b475": {
+   "term": null,
+   "auto": "cool",
+   "meaning": "cool! great!",
+   "ordinal": 0,
+   "why": "interjection (cool! great!)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "corde|noun|d1dd9d3a152a": {
    "term": null,
@@ -1137,6 +1945,30 @@
    "why": "corn (callus)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "correctement|adv|c13e30ea11a4": {
+   "term": null,
+   "auto": "correctly",
+   "meaning": "correctly (in a correct manner)",
+   "ordinal": 0,
+   "why": "adverb (correctly)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "cote|noun|7c8024e0f06b": {
+   "term": null,
+   "auto": "tax assessment",
+   "meaning": "tax assessment",
+   "ordinal": 6,
+   "why": "tax assessment is fine, but applicate (math) is wrong sense",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "cote|noun|a85c34d907eb": {
+   "term": null,
+   "auto": "applicate",
+   "meaning": "applicate, z-coordinate (the last of the three terms by which a point is referred to, in a system of Cartesian coordinates for a three-dimensional space)",
+   "ordinal": 2,
+   "why": "mathematical coordinate, no picture word",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "cote|noun|b2c8023028e5": {
    "term": null,
    "auto": "ratings",
@@ -1152,6 +1984,14 @@
    "ordinal": 0,
    "why": "going to bed",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "coucher|verb|8216a36755b8": {
+   "term": null,
+   "auto": "sleep with",
+   "meaning": "to sleep with",
+   "ordinal": 8,
+   "why": "euphemism (sleep with), no picture search term",
+   "by": "card371 Claude review 2026-10-19"
   },
   "couche|noun|220d87a42341": {
    "term": null,
@@ -1177,6 +2017,30 @@
    "why": "flush (cards)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "couple|noun|056ff31a741c": {
+   "term": null,
+   "auto": "ordered pair",
+   "meaning": "an ordered pair",
+   "ordinal": 2,
+   "why": "mathematical ordered pair, no picture word",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "couple|noun|82f0df4f5a05": {
+   "term": null,
+   "auto": "pair of something",
+   "meaning": "a pair of something",
+   "ordinal": 4,
+   "why": "abstract (a pair of something)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "couple|noun|9d75cfe3d12e": {
+   "term": null,
+   "auto": "couple of something",
+   "meaning": "a couple of something, not to be mistaken as a few",
+   "ordinal": 5,
+   "why": "abstract (a couple of something)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "coupure|noun|84901af63497": {
    "term": null,
    "auto": "interruption",
@@ -1184,6 +2048,22 @@
    "ordinal": 1,
    "why": "interruption",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "coup|noun|0c98b7095c35": {
+   "term": null,
+   "auto": "time",
+   "meaning": "a time, a try, an instance",
+   "ordinal": 7,
+   "why": "a time / an instance: no picture word",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "courage|intj|2f9b10662cdc": {
+   "term": null,
+   "auto": "chin up",
+   "meaning": "chin up! keep going! take heart!",
+   "ordinal": 0,
+   "why": "interjection (chin up)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "couronne|noun|6861ec55e3f1": {
    "term": "wreath",
@@ -1208,6 +2088,14 @@
    "ordinal": 0,
    "why": "court (law) pictures tennis courts",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "cour|noun|2fdfb96aa604": {
+   "term": null,
+   "auto": "following",
+   "meaning": "following (of a celebrity etc.)",
+   "ordinal": 4,
+   "why": "abstract (following of a celebrity)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "couverture|noun|19bc6fbbce3c": {
    "term": null,
@@ -1264,6 +2152,14 @@
    "ordinal": 1,
    "why": "a representation of a cross",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "croustillant|adj|7cf71155b32e": {
+   "term": null,
+   "auto": "suggestive",
+   "meaning": "suggestive, bawdy, filthy, saucy",
+   "ordinal": 1,
+   "why": "sexual sense (suggestive), no picture search term",
+   "by": "card371 Claude review 2026-10-19"
   },
   "culte|noun|f97f05377f52": {
    "term": "worship",
@@ -1337,6 +2233,86 @@
    "why": "date (point in time) pictures the fruit",
    "by": "card384 Claude review 2026-10-19"
   },
+  "davantage|adv|3c129d7bd816": {
+   "term": null,
+   "auto": "more",
+   "meaning": "more",
+   "ordinal": 0,
+   "why": "adverb (more)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "debout|adv|2116592221cb": {
+   "term": null,
+   "auto": "awake",
+   "meaning": "awake",
+   "ordinal": 1,
+   "why": "adverb (awake)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "debout|intj|6c0715f1ae94": {
+   "term": null,
+   "auto": "get up",
+   "meaning": "get up!",
+   "ordinal": 0,
+   "why": "interjection (get up)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "debout|intj|8cb6b5558c4d": {
+   "term": null,
+   "auto": "arise",
+   "meaning": "arise!",
+   "ordinal": 1,
+   "why": "interjection (arise)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "dedans|adv|cca06188e227": {
+   "term": null,
+   "auto": "towards the inside",
+   "meaning": "towards the inside; inwardly; internally",
+   "ordinal": 0,
+   "why": "adverb (towards the inside)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "dedans|prep|fa740ccc88c9": {
+   "term": null,
+   "auto": "inside",
+   "meaning": "inside, in, within",
+   "ordinal": 0,
+   "why": "preposition (inside)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "dehors|adv|e0265507793d": {
+   "term": null,
+   "auto": "outside",
+   "meaning": "outside",
+   "ordinal": 0,
+   "why": "adverb (outside)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "dehors|prep|63dfddf976e7": {
+   "term": null,
+   "auto": "outside",
+   "meaning": "outside; outside of",
+   "ordinal": 0,
+   "why": "preposition (outside)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "demain|adv|9fe194da8697": {
+   "term": null,
+   "auto": "tomorrow",
+   "meaning": "tomorrow",
+   "ordinal": 0,
+   "why": "adverb (tomorrow)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "demi|adv|3d89dc9a531f": {
+   "term": null,
+   "auto": "half",
+   "meaning": "half; partially; almost",
+   "ordinal": 0,
+   "why": "adverb (half, partially)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "demi|noun|eadc942c2428": {
    "term": null,
    "auto": "half",
@@ -1353,6 +2329,14 @@
    "why": "last",
    "by": "card384 Claude review 2026-10-19"
   },
+  "dessous|adv|0eae7a72d811": {
+   "term": null,
+   "auto": "underneath",
+   "meaning": "underneath; beneath",
+   "ordinal": 0,
+   "why": "adverb (underneath)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "dessous|noun|2c2cd895f7ed": {
    "term": null,
    "auto": "disadvantage",
@@ -1360,6 +2344,46 @@
    "ordinal": 1,
    "why": "disadvantage",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "dessous|noun|c059eea1224c": {
+   "term": null,
+   "auto": "hidden agenda",
+   "meaning": "hidden agenda",
+   "ordinal": 3,
+   "why": "abstract (hidden agenda)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "dessous|prep|2d57f1f4b1aa": {
+   "term": null,
+   "auto": "under",
+   "meaning": "under; beneath",
+   "ordinal": 0,
+   "why": "preposition (under)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "dessus|adv|6ec72772cc9c": {
+   "term": null,
+   "auto": "over",
+   "meaning": "over (it)",
+   "ordinal": 3,
+   "why": "adverb (over it)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "dessus|adv|83071f0e07ee": {
+   "term": null,
+   "auto": "upstairs",
+   "meaning": "upstairs",
+   "ordinal": 2,
+   "why": "adverb (upstairs)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "dessus|noun|14fdb820d1cb": {
+   "term": null,
+   "auto": "dessus",
+   "meaning": "dessus",
+   "ordinal": 2,
+   "why": "French word itself, no English term",
+   "by": "card371 Claude review 2026-10-19"
   },
   "dessus|noun|b14bf05fa04f": {
    "term": null,
@@ -1393,6 +2417,38 @@
    "why": "exercise, assignment (set for homework)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "devoir|verb|5922324efb22": {
+   "term": null,
+   "auto": "must",
+   "meaning": "must, to have to, should (as a requirement)",
+   "ordinal": 0,
+   "why": "modal (must)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "devoir|verb|b658106fd12c": {
+   "term": null,
+   "auto": "must",
+   "meaning": "must, to do or have with certainty",
+   "ordinal": 3,
+   "why": "modal (must, certainty)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "devoir|verb|f13f374deef4": {
+   "term": null,
+   "auto": "must",
+   "meaning": "must",
+   "ordinal": 1,
+   "why": "modal (must)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "devoir|verb|f2d0e9eab91e": {
+   "term": null,
+   "auto": "should",
+   "meaning": "should",
+   "ordinal": 2,
+   "why": "modal (should)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "devon|noun|5fca7a998775": {
    "term": null,
    "auto": "devon",
@@ -1425,6 +2481,14 @@
    "why": "division (music)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "directement|adv|8a4d8fad3d42": {
+   "term": null,
+   "auto": "directly",
+   "meaning": "directly",
+   "ordinal": 0,
+   "why": "adverb (directly)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "direction|noun|89824b0fdd1e": {
    "term": null,
    "auto": "government",
@@ -1456,6 +2520,14 @@
    "ordinal": 0,
    "why": "ruler pictures a measuring ruler",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "dispositif|noun|0e1e5ebef215": {
+   "term": null,
+   "auto": "dispositif",
+   "meaning": "dispositif",
+   "ordinal": 4,
+   "why": "the French word itself, no English term",
+   "by": "card371 Claude review 2026-10-19"
   },
   "dispositif|noun|6a9ddcae83c7": {
    "term": null,
@@ -1505,6 +2577,14 @@
    "why": "zone",
    "by": "card384 Claude review 2026-10-19"
   },
+  "dommage|intj|80ad2551b83c": {
+   "term": null,
+   "auto": "shame",
+   "meaning": "shame! what a pity! too bad!",
+   "ordinal": 0,
+   "why": "interjection (shame!)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "dommage|noun|1577d5e1cd72": {
    "term": null,
    "auto": "injury",
@@ -1512,6 +2592,22 @@
    "ordinal": 1,
    "why": "injury (dommage)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "donc|adv|bab3cac5ef48": {
+   "term": null,
+   "auto": "therefore",
+   "meaning": "therefore, consequently; thus",
+   "ordinal": 0,
+   "why": "conjunction (therefore)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "donné|adj|9f6a983ff63a": {
+   "term": null,
+   "auto": "viable",
+   "meaning": "viable, achievable, not difficult",
+   "ordinal": 1,
+   "why": "abstract (viable, achievable)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "don|noun|d00e0a66212a": {
    "term": null,
@@ -1537,6 +2633,38 @@
    "why": "back of furniture",
    "by": "card384 Claude review 2026-10-19"
   },
+  "doucement|adv|2a6c0b3913fb": {
+   "term": null,
+   "auto": "gently",
+   "meaning": "gently",
+   "ordinal": 2,
+   "why": "adverb (gently)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "doucement|adv|70f4200ffb13": {
+   "term": null,
+   "auto": "quietly",
+   "meaning": "quietly",
+   "ordinal": 1,
+   "why": "adverb (quietly)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "doucement|adv|76898e04171f": {
+   "term": null,
+   "auto": "softly",
+   "meaning": "softly",
+   "ordinal": 0,
+   "why": "adverb (softly)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "doux|adv|2a6c0b3913fb": {
+   "term": null,
+   "auto": "gently",
+   "meaning": "gently",
+   "ordinal": 0,
+   "why": "adverb (gently)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "do|noun|6e01e6210ba3": {
    "term": null,
    "auto": "do",
@@ -1561,6 +2689,22 @@
    "why": "the right (politics)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "droit|adv|8c9c250e16ac": {
+   "term": null,
+   "auto": "straight",
+   "meaning": "straight, straight on",
+   "ordinal": 0,
+   "why": "adverb (straight on)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "droit|adv|f88c23b53baf": {
+   "term": null,
+   "auto": "upright",
+   "meaning": "upright, straight, not bent or crooked",
+   "ordinal": 1,
+   "why": "adverb (upright)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "droit|noun|11de63ec673a": {
    "term": null,
    "auto": "right",
@@ -1576,6 +2720,14 @@
    "ordinal": 0,
    "why": "child (regional drôle)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "dur|adv|50c01c840eed": {
+   "term": null,
+   "auto": "hard",
+   "meaning": "hard",
+   "ordinal": 0,
+   "why": "adverb (hard)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "dur|noun|07ca16a1a8d0": {
    "term": null,
@@ -1633,6 +2785,30 @@
    "why": "shortcoming",
    "by": "card384 Claude review 2026-10-19"
   },
+  "définitivement|adv|2bc8caff1113": {
+   "term": null,
+   "auto": "definitively",
+   "meaning": "definitively, for good, once and for all",
+   "ordinal": 0,
+   "why": "adverb (definitively)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "définitivement|adv|4591027366b4": {
+   "term": null,
+   "auto": "definitely",
+   "meaning": "definitely",
+   "ordinal": 1,
+   "why": "adverb (definitely)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "déjà|adv|177a31fcf38b": {
+   "term": null,
+   "auto": "already",
+   "meaning": "already, before",
+   "ordinal": 0,
+   "why": "adverb (already)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "délit|noun|1c19eb4e462e": {
    "term": null,
    "auto": "tort",
@@ -1665,6 +2841,14 @@
    "why": "abdication",
    "by": "card384 Claude review 2026-10-19"
   },
+  "dépendre|verb|c348920e35e2": {
+   "term": null,
+   "auto": "it's up to",
+   "meaning": "it's up to [with de ‘someone’, along with de (+ infinitive) or que (+ subjunctive clause) ‘to do something’] (often negated using ne ... que, which may not be translated)",
+   "ordinal": 4,
+   "why": "idiom (it's up to)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "dépit|noun|506eef99103c": {
    "term": null,
    "auto": "scorn",
@@ -1689,6 +2873,22 @@
    "why": "act of depositing",
    "by": "card384 Claude review 2026-10-19"
   },
+  "désolé|intj|f04e250dcf14": {
+   "term": null,
+   "auto": "sorry",
+   "meaning": "sorry (an apology)",
+   "ordinal": 0,
+   "why": "interjection (sorry)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "désormais|adv|13a85c63c7f1": {
+   "term": null,
+   "auto": "henceforth",
+   "meaning": "henceforth, from now on",
+   "ordinal": 0,
+   "why": "adverb (henceforth)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "développement|noun|6303c42bc2e9": {
    "term": null,
    "auto": "net",
@@ -1712,6 +2912,14 @@
    "ordinal": 1,
    "why": "lineup",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "effectivement|adv|a02ec08e48aa": {
+   "term": null,
+   "auto": "indeed",
+   "meaning": "indeed",
+   "ordinal": 0,
+   "why": "adverb (indeed)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "effet|noun|49505cfbacbb": {
    "term": null,
@@ -1745,6 +2953,62 @@
    "why": "interior (enceinte)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "encore|adv|3c129d7bd816": {
+   "term": null,
+   "auto": "more",
+   "meaning": "more",
+   "ordinal": 1,
+   "why": "adverb (more)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "encore|adv|682b7e53a509": {
+   "term": null,
+   "auto": "yet",
+   "meaning": "(not) yet; (never) before",
+   "ordinal": 3,
+   "why": "adverb (yet)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "encore|adv|c00b9cb6fd93": {
+   "term": null,
+   "auto": "again",
+   "meaning": "again",
+   "ordinal": 2,
+   "why": "adverb (again)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "encore|adv|d7c6128a1275": {
+   "term": null,
+   "auto": "still",
+   "meaning": "still",
+   "ordinal": 0,
+   "why": "adverb (still)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "encore|adv|ebbfee9a1287": {
+   "term": null,
+   "auto": "again",
+   "meaning": "again (following a question)",
+   "ordinal": 4,
+   "why": "adverb (again)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "enfin|adv|d47d24202b4d": {
+   "term": null,
+   "auto": "introduces a contradiction",
+   "meaning": "Introduces a contradiction, objection, limitation or correction of what has just been stated.",
+   "ordinal": 3,
+   "why": "discourse particle",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "enfin|adv|e29963932a15": {
+   "term": null,
+   "auto": "finally",
+   "meaning": "finally; in the end",
+   "ordinal": 0,
+   "why": "adverb (finally)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "enjeu|noun|951372e167e3": {
    "term": null,
    "auto": "issue",
@@ -1769,6 +3033,14 @@
    "why": "inquest, investigation",
    "by": "card384 Claude review 2026-10-19"
   },
+  "ensemble|adv|854cadcd6618": {
+   "term": null,
+   "auto": "together",
+   "meaning": "together",
+   "ordinal": 0,
+   "why": "adverb (together)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "ensemble|noun|eb68a1c189ff": {
    "term": null,
    "auto": "set",
@@ -1776,6 +3048,14 @@
    "ordinal": 0,
    "why": "set, grouping",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "entièrement|adv|1ef8084a7d9a": {
+   "term": null,
+   "auto": "entirely",
+   "meaning": "entirely",
+   "ordinal": 0,
+   "why": "adverb (entirely)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "entourage|noun|3d260ec356e8": {
    "term": null,
@@ -1857,6 +3137,14 @@
    "why": "dispatch, sending",
    "by": "card384 Claude review 2026-10-19"
   },
+  "envoi|noun|6b3093168812": {
+   "term": null,
+   "auto": "envoi",
+   "meaning": "envoi",
+   "ordinal": 2,
+   "why": "the French word itself, poetic envoi, no picture word",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "escalier|noun|ee9a630b848c": {
    "term": "stairs",
    "auto": "step",
@@ -1881,6 +3169,22 @@
    "why": "boyfriend (espoir)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "esprit|noun|0255bdf11e8c": {
+   "term": null,
+   "auto": "high mind aptitude",
+   "meaning": "high mind aptitude",
+   "ordinal": 5,
+   "why": "abstract (high aptitude of mind)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "esprit|noun|3503328086d7": {
+   "term": null,
+   "auto": "deep intention",
+   "meaning": "deep intention, sense, or purpose (of a text, action, attitude...); philosophy (in figurative sense)",
+   "ordinal": 6,
+   "why": "abstract (intention of a text)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "esprit|noun|59910ef04186": {
    "term": null,
    "auto": "disembodied mind",
@@ -1888,6 +3192,14 @@
    "ordinal": 1,
    "why": "disembodied mind",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "esprit|noun|6e9d5e5de3f8": {
+   "term": null,
+   "auto": "specific mind aptitude",
+   "meaning": "specific mind aptitude",
+   "ordinal": 4,
+   "why": "abstract (specific aptitude of mind)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "espèce|noun|44edb16b31cc": {
    "term": null,
@@ -1929,6 +3241,14 @@
    "why": "petrol (labels are US English)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "essentiellement|adv|86d5ad524dd9": {
+   "term": null,
+   "auto": "essentially",
+   "meaning": "essentially",
+   "ordinal": 0,
+   "why": "adverb (essentially)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "estampe|noun|46542157688b": {
    "term": "engraving",
    "auto": "print",
@@ -1936,6 +3256,30 @@
    "ordinal": 0,
    "why": "print (estampe)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "euh|intj|c8e305767ed0": {
+   "term": null,
+   "auto": "er",
+   "meaning": "er, um, uh; expressing hesitation, reflection, confusion, or doubt",
+   "ordinal": 0,
+   "why": "interjection (er, um)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "exactement|adv|273ed234270a": {
+   "term": null,
+   "auto": "exactly",
+   "meaning": "exactly, quite",
+   "ordinal": 0,
+   "why": "adverb (exactly)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "exclusivement|adv|f0200784755d": {
+   "term": null,
+   "auto": "exclusively",
+   "meaning": "exclusively",
+   "ordinal": 0,
+   "why": "adverb (exclusively)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "excursion|noun|dbfa6c9f6b87": {
    "term": null,
@@ -1952,6 +3296,22 @@
    "ordinal": 0,
    "why": "copy; facsimile",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "exercice|noun|ac1440a341ac": {
+   "term": null,
+   "auto": "physical exercise",
+   "meaning": "physical exercise",
+   "ordinal": 3,
+   "why": "fiscal year is abstract; no picture word",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "exercice|noun|fe6eb79f1971": {
+   "term": null,
+   "auto": "fiscal year",
+   "meaning": "fiscal year, financial year",
+   "ordinal": 4,
+   "why": "fiscal year, no picture word",
+   "by": "card371 Claude review 2026-10-19"
   },
   "exigence|noun|21826e23cdd7": {
    "term": null,
@@ -1993,6 +3353,14 @@
    "why": "a clip",
    "by": "card384 Claude review 2026-10-19"
   },
+  "extrêmement|adv|0f50cb7585b9": {
+   "term": null,
+   "auto": "extremely",
+   "meaning": "extremely",
+   "ordinal": 0,
+   "why": "adverb (extremely)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "face|noun|df6df923187c": {
    "term": null,
    "auto": "surface",
@@ -2000,6 +3368,14 @@
    "ordinal": 1,
    "why": "surface, side",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "facilement|adv|109e893802f1": {
+   "term": null,
+   "auto": "easily",
+   "meaning": "easily",
+   "ordinal": 0,
+   "why": "adverb (easily)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "facture|noun|b0764bd26d50": {
    "term": null,
@@ -2073,6 +3449,14 @@
    "why": "fault, blame",
    "by": "card384 Claude review 2026-10-19"
   },
+  "faux|adv|09ee3d5cdee6": {
+   "term": null,
+   "auto": "badly",
+   "meaning": "badly; inaccurately; untruly",
+   "ordinal": 0,
+   "why": "adverb (badly)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "faux|noun|9a1b985bc804": {
    "term": "forgery",
    "auto": "fabrication",
@@ -2129,6 +3513,30 @@
    "why": "grain (of wood)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "finalement|adv|7865fddb6db5": {
+   "term": null,
+   "auto": "finally",
+   "meaning": "finally; last; lastly",
+   "ordinal": 0,
+   "why": "adverb (finally)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "finalement|adv|b990f82a6d02": {
+   "term": null,
+   "auto": "finally",
+   "meaning": "finally; eventually; after all",
+   "ordinal": 1,
+   "why": "adverb (finally)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "final|adj|428df87004fc": {
+   "term": null,
+   "auto": "expressing purpose",
+   "meaning": "expressing purpose",
+   "ordinal": 1,
+   "why": "grammar label (expressing purpose)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "final|noun|3288e4a1e70b": {
    "term": null,
    "auto": "finale",
@@ -2161,6 +3569,22 @@
    "why": "jewel (figurative fleuron)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "fleur|noun|5cd5abad9ebe": {
+   "term": null,
+   "auto": "best of something",
+   "meaning": "the best of something",
+   "ordinal": 3,
+   "why": "abstract (best of something)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "fleur|noun|f6800a5b221c": {
+   "term": null,
+   "auto": "virginity",
+   "meaning": "the virginity of a woman",
+   "ordinal": 4,
+   "why": "sensitive and not a picture word (virginity)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "flux|noun|a0edc32ffdc2": {
    "term": "tide",
    "auto": "flood",
@@ -2169,6 +3593,14 @@
    "why": "flood tide",
    "by": "card384 Claude review 2026-10-19"
   },
+  "flèche|noun|310544075538": {
+   "term": null,
+   "auto": "fleche",
+   "meaning": "fleche",
+   "ordinal": 3,
+   "why": "the French word itself (heraldic), no English term",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "flèche|noun|c51462bf4099": {
    "term": null,
    "auto": "pointer",
@@ -2176,6 +3608,22 @@
    "ordinal": 1,
    "why": "pointer, needle",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "flûte|intj|67ee08cba90e": {
+   "term": null,
+   "auto": "blow",
+   "meaning": "blow! drat! (mildly impolite interjection)",
+   "ordinal": 0,
+   "why": "interjection (blow!)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "flûte|noun|4a81a06e3e7b": {
+   "term": "fluyt",
+   "auto": "originally meaning fluyt",
+   "meaning": "Originally meaning fluyt, by the late 17th century used for any large cargo vessel",
+   "ordinal": 2,
+   "why": "term was a phrase; the sense is the fluyt, a ship type",
+   "by": "card371 Claude review 2026-10-19"
   },
   "foi|noun|67b5e66c032d": {
    "term": null,
@@ -2241,6 +3689,22 @@
    "why": "association football",
    "by": "card384 Claude review 2026-10-19"
   },
+  "forcément|adv|15d53ce7273e": {
+   "term": null,
+   "auto": "inevitably",
+   "meaning": "inevitably",
+   "ordinal": 0,
+   "why": "adverb (inevitably)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "forcément|adv|51d28fcb0293": {
+   "term": null,
+   "auto": "necessarily",
+   "meaning": "necessarily",
+   "ordinal": 1,
+   "why": "adverb (necessarily)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "forfait|noun|b65a83725a9b": {
    "term": null,
    "auto": "crime",
@@ -2265,6 +3729,54 @@
    "why": "menu offer",
    "by": "card384 Claude review 2026-10-19"
   },
+  "fortement|adv|050a51346479": {
+   "term": null,
+   "auto": "highly",
+   "meaning": "highly, extremely, sorely",
+   "ordinal": 1,
+   "why": "adverb (highly)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "fortement|adv|c5d017046265": {
+   "term": null,
+   "auto": "strongly",
+   "meaning": "strongly (fulfilling a stricter set of criteria)",
+   "ordinal": 0,
+   "why": "adverb (strongly)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "fortement|adv|d2684e0d0c16": {
+   "term": null,
+   "auto": "seriously",
+   "meaning": "seriously, greatly",
+   "ordinal": 2,
+   "why": "adverb (seriously)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "fort|adv|4c7d3feb0559": {
+   "term": null,
+   "auto": "very",
+   "meaning": "very",
+   "ordinal": 2,
+   "why": "adverb (very)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "fort|adv|d51d72e9f91c": {
+   "term": null,
+   "auto": "much",
+   "meaning": "much, a lot",
+   "ordinal": 1,
+   "why": "adverb (much)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "fort|adv|f2e0c0ec0185": {
+   "term": null,
+   "auto": "strongly",
+   "meaning": "strongly",
+   "ordinal": 0,
+   "why": "adverb (strongly)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "foule|noun|6a661ef07b9c": {
    "term": null,
    "auto": "thronging",
@@ -2273,6 +3785,14 @@
    "why": "thronging",
    "by": "card384 Claude review 2026-10-19"
   },
+  "foule|noun|bf87b0abf36a": {
+   "term": "crowd",
+   "auto": "great number",
+   "meaning": "a great number, multitude, mass; host",
+   "ordinal": 2,
+   "why": "the sense is a multitude; term great number is a phrase",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "fourchette|noun|fb1ad730903d": {
    "term": null,
    "auto": "diner",
@@ -2280,6 +3800,14 @@
    "ordinal": 1,
    "why": "diner, eater",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "foutre|verb|a36e2851d715": {
+   "term": null,
+   "auto": "do",
+   "meaning": "to do, to fuck around with, to dick around, to fritter, to tinker",
+   "ordinal": 3,
+   "why": "vulgar verb, no picture word",
+   "by": "card371 Claude review 2026-10-19"
   },
   "fraise|noun|dab2383d2493": {
    "term": null,
@@ -2297,6 +3825,30 @@
    "why": "cost, charge",
    "by": "card384 Claude review 2026-10-19"
   },
+  "franchement|adv|028ae88dfabf": {
+   "term": null,
+   "auto": "frankly",
+   "meaning": "frankly; sincerely",
+   "ordinal": 0,
+   "why": "adverb (frankly)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "franchement|adv|372f525173af": {
+   "term": null,
+   "auto": "really",
+   "meaning": "really, downright, outright",
+   "ordinal": 2,
+   "why": "adverb (really)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "franchement|adv|4dfdcd777188": {
+   "term": null,
+   "auto": "vigorously",
+   "meaning": "vigorously, without doubting oneself",
+   "ordinal": 1,
+   "why": "adverb (vigorously)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "franc|noun|58d77a64b864": {
    "term": null,
    "auto": "frank",
@@ -2304,6 +3856,14 @@
    "ordinal": 1,
    "why": "Frank (people)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "français|adj|5472c570261f": {
+   "term": "francophone",
+   "auto": "franco-american or francophone",
+   "meaning": "Franco-American or Francophone",
+   "ordinal": 1,
+   "why": "franco-american or francophone was a description, not a picture word",
+   "by": "card371 Claude review 2026-10-19"
   },
   "fraude|noun|48b4c2e1de6b": {
    "term": null,
@@ -2337,6 +3897,14 @@
    "why": "escape, getaway",
    "by": "card384 Claude review 2026-10-19"
   },
+  "félicitations|intj|08b97e588bf4": {
+   "term": null,
+   "auto": "felicitations",
+   "meaning": "felicitations, congratulations, well done",
+   "ordinal": 0,
+   "why": "interjection (congratulations)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "fête|noun|dc3a9a0844ea": {
    "term": null,
    "auto": "winter holidays",
@@ -2369,6 +3937,14 @@
    "why": "range, gamut",
    "by": "card384 Claude review 2026-10-19"
   },
+  "garder|verb|eea5d55a23c5": {
+   "term": null,
+   "auto": "be careful",
+   "meaning": "to be careful (de faire not to do)",
+   "ordinal": 2,
+   "why": "idiom (be careful)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "garde|noun|c76aa9cd3ce1": {
    "term": "guard",
    "auto": "watch",
@@ -2376,6 +3952,14 @@
    "ordinal": 0,
    "why": "garde = guard; watch pictures a wristwatch",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "gare|intj|4c32fd9650cd": {
+   "term": null,
+   "auto": "beware",
+   "meaning": "beware",
+   "ordinal": 0,
+   "why": "interjection (beware)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "gars|noun|c7fe9fa14ec7": {
    "term": null,
@@ -2417,6 +4001,22 @@
    "why": "style, look, type",
    "by": "card384 Claude review 2026-10-19"
   },
+  "genre|noun|a4485b78b063": {
+   "term": null,
+   "auto": "gender",
+   "meaning": "gender (of nouns)",
+   "ordinal": 3,
+   "why": "grammar (gender of nouns)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "genre|noun|d504f5b560dc": {
+   "term": null,
+   "auto": "voice",
+   "meaning": "voice (of verbs)",
+   "ordinal": 6,
+   "why": "grammar (voice of verbs)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "gens|noun|d3788da992b2": {
    "term": "people",
    "auto": "set of people",
@@ -2424,6 +4024,14 @@
    "ordinal": 0,
    "why": "set of people",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "gentil|adj|fb483f1deba9": {
+   "term": null,
+   "auto": "all very well",
+   "meaning": "all very well",
+   "ordinal": 5,
+   "why": "idiom (all very well)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "gentil|noun|7d5829acaf01": {
    "term": null,
@@ -2497,6 +4105,62 @@
    "why": "grown-up",
    "by": "card384 Claude review 2026-10-19"
   },
+  "gratuitement|adv|55603bd39e15": {
+   "term": null,
+   "auto": "freely",
+   "meaning": "freely, for free",
+   "ordinal": 0,
+   "why": "adverb (freely)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "gratuitement|adv|a327da474d6e": {
+   "term": null,
+   "auto": "without cause",
+   "meaning": "without cause, gratuitously",
+   "ordinal": 1,
+   "why": "adverb (without cause)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "gratuit|adj|8ca0df00fff7": {
+   "term": null,
+   "auto": "free of charge",
+   "meaning": "free of charge",
+   "ordinal": 0,
+   "why": "phrase (free of charge), no picture word",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "gratuit|adj|f2f7acfb456b": {
+   "term": null,
+   "auto": "gratuitous",
+   "meaning": "gratuitous, for no reason",
+   "ordinal": 1,
+   "why": "adjective (gratuitous), abstract",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "graveleux|adj|5c5713797877": {
+   "term": null,
+   "auto": "smutty",
+   "meaning": "smutty, obscene",
+   "ordinal": 1,
+   "why": "obscene sense (smutty), no picture search term",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "grave|adj|e5f95482c4ed": {
+   "term": null,
+   "auto": "back",
+   "meaning": "back",
+   "ordinal": 3,
+   "why": "wrong sense: grave accent (diacritic), not back",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "gravier|noun|85cca8a7a1a5": {
+   "term": null,
+   "auto": "beach woman",
+   "meaning": "beach woman, shoreman (individual who spreads out and dries cod on a (gravel) beach)",
+   "ordinal": 2,
+   "why": "the sense is a person, term is not a picture word",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "gros|noun|a9dcd5a52082": {
    "term": null,
    "auto": "bulk",
@@ -2537,6 +4201,14 @@
    "why": "guide person",
    "by": "card384 Claude review 2026-10-19"
   },
+  "guère|adv|21922637832f": {
+   "term": null,
+   "auto": "hardly",
+   "meaning": "hardly, barely, (not) much",
+   "ordinal": 0,
+   "why": "adverb (hardly)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "gâteau|noun|ff8548d2a376": {
    "term": "cake",
    "auto": "sponge cake",
@@ -2544,6 +4216,30 @@
    "ordinal": 0,
    "why": "a sponge cake",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "généralement|adv|fa856ee96549": {
+   "term": null,
+   "auto": "generally",
+   "meaning": "generally, in general",
+   "ordinal": 0,
+   "why": "adverb (generally)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "habituellement|adv|eb3f62ea7b30": {
+   "term": null,
+   "auto": "usually",
+   "meaning": "usually, habitually",
+   "ordinal": 0,
+   "why": "adverb (usually)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "haha|intj|7a4d2878a40a": {
+   "term": null,
+   "auto": "ha-ha",
+   "meaning": "ha-ha (imitative of laughter)",
+   "ordinal": 0,
+   "why": "interjection (ha-ha)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "haha|noun|713cc015f3c5": {
    "term": null,
@@ -2585,6 +4281,22 @@
    "why": "frog (of a bow)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "haut|adj|a15f4bbe9a57": {
+   "term": null,
+   "auto": "early",
+   "meaning": "early",
+   "ordinal": 2,
+   "why": "adverb-like sense (early, in haut Moyen Age)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "haut|adv|41d253d87dd5": {
+   "term": null,
+   "auto": "high",
+   "meaning": "high",
+   "ordinal": 0,
+   "why": "adverb (high)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "haut|noun|c0605e2104d8": {
    "term": null,
    "auto": "top",
@@ -2592,6 +4304,22 @@
    "ordinal": 0,
    "why": "top (haut) pictures clothing tops",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "ha|intj|d6c6ad34a9a3": {
+   "term": null,
+   "auto": "ha",
+   "meaning": "ha (exclamation of surprise or laughter)",
+   "ordinal": 0,
+   "why": "interjection (ha)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "hein|intj|2c4aee407e3c": {
+   "term": null,
+   "auto": "huh",
+   "meaning": "huh, hey, eh",
+   "ordinal": 0,
+   "why": "interjection (huh)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "henry|noun|c1fb035dbf2b": {
    "term": null,
@@ -2601,6 +4329,22 @@
    "why": "henry (unit)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "heureusement|adv|142625aeb583": {
+   "term": null,
+   "auto": "luckily",
+   "meaning": "luckily, fortunately",
+   "ordinal": 0,
+   "why": "adverb (luckily)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "heureusement|adv|76829c695916": {
+   "term": null,
+   "auto": "happily",
+   "meaning": "happily",
+   "ordinal": 1,
+   "why": "adverb (happily)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "heure|noun|1d28b9774c5c": {
    "term": null,
    "auto": "o'clock",
@@ -2608,6 +4352,14 @@
    "ordinal": 1,
    "why": "o'clock",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "hier|adv|b8d1285cb977": {
+   "term": null,
+   "auto": "yesterday",
+   "meaning": "yesterday",
+   "ordinal": 0,
+   "why": "adverb (yesterday)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "historique|noun|4a189a7c1210": {
    "term": null,
@@ -2624,6 +4376,14 @@
    "ordinal": 1,
    "why": "shame (something shameful)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "hop|intj|f98248583e14": {
+   "term": null,
+   "auto": "voila",
+   "meaning": "voila!, hey presto!",
+   "ordinal": 0,
+   "why": "interjection (voilà)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "huile|noun|3e14017b1919": {
    "term": null,
@@ -2649,6 +4409,14 @@
    "why": "mental state",
    "by": "card384 Claude review 2026-10-19"
   },
+  "hyper|adv|20f9efc83d4f": {
+   "term": null,
+   "auto": "very",
+   "meaning": "very, a lot",
+   "ordinal": 0,
+   "why": "adverb (very)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "hélice|noun|169e52529e9d": {
    "term": "propeller",
    "auto": "helix",
@@ -2664,6 +4432,14 @@
    "ordinal": 1,
    "why": "patrimony",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "ici|adv|4b6ab86ead12": {
+   "term": null,
+   "auto": "here",
+   "meaning": "here",
+   "ordinal": 0,
+   "why": "adverb (here)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "illumination|noun|30c4bedca01d": {
    "term": null,
@@ -2688,6 +4464,14 @@
    "ordinal": 1,
    "why": "frame (image)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "immédiatement|adv|7ebcec8ac66f": {
+   "term": null,
+   "auto": "immediately",
+   "meaning": "immediately",
+   "ordinal": 0,
+   "why": "adverb (immediately)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "importance|noun|da554435dc6a": {
    "term": null,
@@ -2809,6 +4593,22 @@
    "why": "boarder (pupil)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "intérêt|noun|fca5a61cea64": {
+   "term": null,
+   "auto": "point",
+   "meaning": "point (purpose, objective)",
+   "ordinal": 2,
+   "why": "abstract (purpose), term is wrong sense",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "issu|verb|e26c01aadb90": {
+   "term": null,
+   "auto": "issued",
+   "meaning": "Issued, published.",
+   "ordinal": 0,
+   "why": "participle (issued), no picture word",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "jacques|noun|54c6c8d0b213": {
    "term": "crowbar",
    "auto": "jemmy or crowbar",
@@ -2824,6 +4624,22 @@
    "ordinal": 0,
    "why": "stupid person",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "jamais|adv|3b35374beaa1": {
+   "term": null,
+   "auto": "ever",
+   "meaning": "ever",
+   "ordinal": 1,
+   "why": "adverb (ever)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "jamais|adv|6741794c0b37": {
+   "term": null,
+   "auto": "never",
+   "meaning": "never",
+   "ordinal": 0,
+   "why": "adverb (never)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "japonais|noun|1a7c0e4d0df8": {
    "term": "japanese",
@@ -2841,6 +4657,14 @@
    "why": "a pair of jeans",
    "by": "card384 Claude review 2026-10-19"
   },
+  "jeter|verb|4b53be5d9332": {
+   "term": null,
+   "auto": "rush oneself",
+   "meaning": "to rush oneself",
+   "ordinal": 4,
+   "why": "idiom (rush oneself)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "jeu|noun|c166ad736e53": {
    "term": null,
    "auto": "play",
@@ -2848,6 +4672,14 @@
    "ordinal": 1,
    "why": "play (theatre)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "jouer|verb|530f3772e8c9": {
+   "term": null,
+   "auto": "be of importance",
+   "meaning": "to be of importance (in), affect, intervein (in)",
+   "ordinal": 5,
+   "why": "idiom (be of importance)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "journaliste|noun|f169c80cb19c": {
    "term": "news anchor",
@@ -2857,6 +4689,46 @@
    "why": "anchor pictures a ship's anchor",
    "by": "card384 Claude review 2026-10-19"
   },
+  "justement|adv|04cd2e7d727b": {
+   "term": null,
+   "auto": "rightly",
+   "meaning": "rightly, justly; fairly",
+   "ordinal": 3,
+   "why": "adverb (rightly)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "justement|adv|4852215211f8": {
+   "term": null,
+   "auto": "just",
+   "meaning": "just (moments ago, recently), just then",
+   "ordinal": 1,
+   "why": "adverb (just)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "justement|adv|a44898595efa": {
+   "term": null,
+   "auto": "precisely",
+   "meaning": "precisely, exactly; accurately",
+   "ordinal": 0,
+   "why": "adverb (precisely)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "justement|adv|ee011c3e2928": {
+   "term": null,
+   "auto": "actually",
+   "meaning": "actually, at that very moment",
+   "ordinal": 2,
+   "why": "adverb (actually)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "juste|adv|1a9e4f5e9043": {
+   "term": null,
+   "auto": "exactly",
+   "meaning": "exactly, precisely",
+   "ordinal": 0,
+   "why": "adverb (exactly)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "juste|noun|119c533c9b67": {
    "term": null,
    "auto": "righteous person",
@@ -2864,6 +4736,14 @@
    "ordinal": 0,
    "why": "righteous person",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "laisse|noun|7ff60b2235a1": {
+   "term": "leash",
+   "auto": "laisse",
+   "meaning": "laisse",
+   "ordinal": 2,
+   "why": "laisse is the French word itself; the sense is a leash",
+   "by": "card371 Claude review 2026-10-19"
   },
   "lame|noun|29027f23d051": {
    "term": null,
@@ -2921,6 +4801,14 @@
    "why": "kickoff, momentum",
    "by": "card384 Claude review 2026-10-19"
   },
+  "largement|adv|2a5d51d632e1": {
+   "term": null,
+   "auto": "mainly",
+   "meaning": "mainly; mostly",
+   "ordinal": 0,
+   "why": "adverb (mainly)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "large|noun|9b7b174f40d7": {
    "term": null,
    "auto": "width",
@@ -2969,6 +4857,14 @@
    "why": "the day after",
    "by": "card384 Claude review 2026-10-19"
   },
+  "lentement|adv|2b839a44abf2": {
+   "term": null,
+   "auto": "slowly",
+   "meaning": "slowly",
+   "ordinal": 0,
+   "why": "adverb (slowly)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "lettres|noun|1287d3d6e7f6": {
    "term": null,
    "auto": "humanities",
@@ -2984,6 +4880,14 @@
    "ordinal": 0,
    "why": "letter (written character)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "lettre|noun|adc397c825f8": {
+   "term": null,
+   "auto": "literal meaning",
+   "meaning": "the literal meaning, the plain meaning of something",
+   "ordinal": 2,
+   "why": "abstract (literal meaning)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "levain|noun|f0cea28a39d8": {
    "term": null,
@@ -3113,6 +5017,14 @@
    "why": "literary person",
    "by": "card384 Claude review 2026-10-19"
   },
+  "littéralement|adv|7bbcc2413e0b": {
+   "term": null,
+   "auto": "literally",
+   "meaning": "literally",
+   "ordinal": 0,
+   "why": "adverb (literally)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "lit|noun|aed0d0439fa2": {
    "term": null,
    "auto": "layer",
@@ -3120,6 +5032,22 @@
    "ordinal": 1,
    "why": "layer (lit)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "live|adv|5990cbc016c6": {
+   "term": null,
+   "auto": "now",
+   "meaning": "now, at the moment.",
+   "ordinal": 1,
+   "why": "adverb (now)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "live|adv|fcc7ee9f3264": {
+   "term": null,
+   "auto": "live",
+   "meaning": "live (as it happens, in real time, directly)",
+   "ordinal": 0,
+   "why": "adverb (live)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "livraison|noun|2d6b91a2b5c1": {
    "term": null,
@@ -3136,6 +5064,14 @@
    "ordinal": 0,
    "why": "li (unit)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "li|pron|f8865320b74f": {
+   "term": null,
+   "auto": "him",
+   "meaning": "him",
+   "ordinal": 0,
+   "why": "pronoun (him)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "local|noun|08c39c76eac2": {
    "term": null,
@@ -3161,6 +5097,14 @@
    "why": "renting",
    "by": "card384 Claude review 2026-10-19"
   },
+  "loin|adv|0d445a74cd33": {
+   "term": null,
+   "auto": "far",
+   "meaning": "far, distant",
+   "ordinal": 0,
+   "why": "adverb (far)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "loi|noun|3d7868c7ae3b": {
    "term": null,
    "auto": "law",
@@ -3169,6 +5113,14 @@
    "why": "law (scientific principle)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "lol|intj|72d81a671d23": {
+   "term": null,
+   "auto": "lol",
+   "meaning": "LOL",
+   "ordinal": 0,
+   "why": "interjection (lol)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "long|noun|caa16aeb3f5c": {
    "term": null,
    "auto": "length",
@@ -3176,6 +5128,22 @@
    "ordinal": 0,
    "why": "length (long)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "lorrain|adj|0af671bb5f64": {
+   "term": "lorraine",
+   "auto": "of",
+   "meaning": "of, from or relating to Lorraine, a cultural region part of the administrative region of Grand Est, France",
+   "ordinal": 0,
+   "why": "the term \"of\" is a preposition; the sense is Lorraine (region)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "lors|adv|ec13ec52776c": {
+   "term": null,
+   "auto": "then",
+   "meaning": "then, at that time",
+   "ordinal": 0,
+   "why": "adverb (then)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "lot|noun|61108d7da767": {
    "term": null,
@@ -3209,6 +5177,22 @@
    "why": "bass (fish)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "lune|noun|ec3c53dbdcb4": {
+   "term": null,
+   "auto": "month",
+   "meaning": "a month, particularly a lunar month",
+   "ordinal": 2,
+   "why": "month (lunar), no picture word",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "lycée|adj|5a9a9cf4eb78": {
+   "term": null,
+   "auto": "lyceus",
+   "meaning": "Lyceus, Lycean (epithet of Apollo)",
+   "ordinal": 0,
+   "why": "epithet of Apollo, no picture word",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "lycée|noun|8c35bbb0ff4e": {
    "term": "high school",
    "auto": "public secondary school",
@@ -3216,6 +5200,38 @@
    "ordinal": 0,
    "why": "public secondary school",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "là|adv|2058012fce12": {
+   "term": null,
+   "auto": "here",
+   "meaning": "here; present (used with être)",
+   "ordinal": 1,
+   "why": "adverb (here)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "là|adv|794f1fcb7672": {
+   "term": null,
+   "auto": "there",
+   "meaning": "there",
+   "ordinal": 0,
+   "why": "adverb (there)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "légèrement|adv|0b7d755eeefc": {
+   "term": null,
+   "auto": "slightly",
+   "meaning": "slightly",
+   "ordinal": 1,
+   "why": "adverb (slightly)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "légèrement|adv|c8df2e81ac05": {
+   "term": null,
+   "auto": "lightly",
+   "meaning": "lightly",
+   "ordinal": 0,
+   "why": "adverb (lightly)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "macron|noun|98afc613755d": {
    "term": null,
@@ -3321,6 +5337,22 @@
    "why": "major (rank)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "malheureusement|adv|25f9dbf82308": {
+   "term": null,
+   "auto": "sadly",
+   "meaning": "sadly",
+   "ordinal": 1,
+   "why": "adverb (sadly)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "malheureusement|adv|63e15f2f35a7": {
+   "term": null,
+   "auto": "unfortunately",
+   "meaning": "unfortunately",
+   "ordinal": 0,
+   "why": "adverb (unfortunately)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "malheur|noun|2fd6da5876db": {
    "term": null,
    "auto": "mishap",
@@ -3344,6 +5376,14 @@
    "ordinal": 0,
    "why": "Mali (language)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "mal|adv|f599eff8f1ee": {
+   "term": null,
+   "auto": "badly",
+   "meaning": "badly",
+   "ordinal": 0,
+   "why": "adverb",
+   "by": "card371 Claude review 2026-10-19"
   },
   "mal|noun|55553d3166f1": {
    "term": null,
@@ -3377,6 +5417,14 @@
    "why": "expression (manifestation)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "manière|adv|1746371a3f28": {
+   "term": null,
+   "auto": "somewhat",
+   "meaning": "somewhat, kinda, sorta, a bit, a little",
+   "ordinal": 0,
+   "why": "adverb (somewhat)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "mannequin|noun|1099441889f3": {
    "term": "mannequin",
    "auto": "dummy",
@@ -3384,6 +5432,14 @@
    "ordinal": 1,
    "why": "dummy, mannequin",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "manquer|verb|48102c19d001": {
+   "term": null,
+   "auto": "almost do",
+   "meaning": "to almost do; to narrowly avoid",
+   "ordinal": 4,
+   "why": "idiom (almost do)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "manteau|noun|5f22d6ed65cd": {
    "term": null,
@@ -3529,6 +5585,22 @@
    "why": "detailed list",
    "by": "card384 Claude review 2026-10-19"
   },
+  "merci|intj|5bcab290badd": {
+   "term": null,
+   "auto": "thank you",
+   "meaning": "thank you",
+   "ordinal": 0,
+   "why": "interjection (thank you)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "merci|noun|0d951e1f7a05": {
+   "term": null,
+   "auto": "thanks",
+   "meaning": "thanks, an expression of gratitude, the word merci",
+   "ordinal": 2,
+   "why": "the word merci itself",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "merci|noun|15da2c0a5748": {
    "term": null,
    "auto": "grace",
@@ -3544,6 +5616,14 @@
    "ordinal": 0,
    "why": "mercy",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "merde|intj|097b643cd28e": {
+   "term": null,
+   "auto": "break a leg",
+   "meaning": "break a leg!",
+   "ordinal": 0,
+   "why": "interjection (break a leg)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "merde|noun|3e2ffcaf6b9e": {
    "term": null,
@@ -3569,6 +5649,14 @@
    "why": "metal (music style) pictures the material",
    "by": "card384 Claude review 2026-10-19"
   },
+  "mieux|adv|bdfd2f0bafbc": {
+   "term": null,
+   "auto": "more",
+   "meaning": "more, -er.",
+   "ordinal": 0,
+   "why": "adverb (more)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "mieux|noun|25b1584cc06b": {
    "term": null,
    "auto": "best",
@@ -3576,6 +5664,14 @@
    "ordinal": 0,
    "why": "one's best",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "mignon|adj|76f2cc9b70da": {
+   "term": null,
+   "auto": "cute",
+   "meaning": "cute (sexually attractive)",
+   "ordinal": 1,
+   "why": "sexual sense of cute, no picture search term",
+   "by": "card371 Claude review 2026-10-19"
   },
   "milieu|noun|ddf306cb6d0a": {
    "term": null,
@@ -3601,6 +5697,14 @@
    "why": "thousand",
    "by": "card384 Claude review 2026-10-19"
   },
+  "mince|intj|29a0f864b6e8": {
+   "term": null,
+   "auto": "drat",
+   "meaning": "drat!, darn!",
+   "ordinal": 0,
+   "why": "interjection (drat)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "mineur|noun|c57345101ddb": {
    "term": null,
    "auto": "minor",
@@ -3608,6 +5712,14 @@
    "ordinal": 0,
    "why": "minor (age) pictures miners",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "minute|intj|9916dfc80921": {
+   "term": null,
+   "auto": "wait a sec",
+   "meaning": "wait a sec!",
+   "ordinal": 0,
+   "why": "interjection (wait a sec)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "mise|noun|06e7ba297348": {
    "term": null,
@@ -3624,6 +5736,14 @@
    "ordinal": 1,
    "why": "bet; wager",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "misère|intj|9c8c023c4c9d": {
+   "term": null,
+   "auto": "dear me",
+   "meaning": "dear me! dear Lord! oh boy! heavens! woe is me!",
+   "ordinal": 0,
+   "why": "interjection (dear me)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "mi|noun|f5852244dfa7": {
    "term": null,
@@ -3649,6 +5769,22 @@
    "why": "method, means",
    "by": "card384 Claude review 2026-10-19"
   },
+  "mode|noun|d2f77100733a": {
+   "term": null,
+   "auto": "mode",
+   "meaning": "mode, mood",
+   "ordinal": 2,
+   "why": "grammar label (mood)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "mode|noun|e7494c75ab40": {
+   "term": null,
+   "auto": "mode",
+   "meaning": "mode (most common value)",
+   "ordinal": 4,
+   "why": "mathematical mode, no picture word",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "modèle|noun|4ae464ef165f": {
    "term": null,
    "auto": "template",
@@ -3673,6 +5809,22 @@
    "why": "significant other",
    "by": "card384 Claude review 2026-10-19"
   },
+  "moment|noun|634f6a560b62": {
+   "term": null,
+   "auto": "while",
+   "meaning": "a while",
+   "ordinal": 2,
+   "why": "time expression (a while)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "monde|intj|ecaa3dfe11d4": {
+   "term": null,
+   "auto": "good heavens",
+   "meaning": "good heavens",
+   "ordinal": 0,
+   "why": "interjection",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "monnaie|noun|5a3b4bd7d968": {
    "term": "coins",
    "auto": "change",
@@ -3680,6 +5832,14 @@
    "ordinal": 0,
    "why": "change (money back)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "monsieur|noun|30803335b30f": {
+   "term": null,
+   "auto": "specifically",
+   "meaning": "Specifically, the brother of the French king",
+   "ordinal": 2,
+   "why": "wrong sense: title (Monsieur, king's brother), not an adverb",
+   "by": "card371 Claude review 2026-10-19"
   },
   "monsieur|noun|78d3a4fdcbc6": {
    "term": null,
@@ -3721,6 +5881,14 @@
    "why": "the Alps",
    "by": "card384 Claude review 2026-10-19"
   },
+  "moral|adj|8e00a4990938": {
+   "term": null,
+   "auto": "incorporeal",
+   "meaning": "incorporeal",
+   "ordinal": 1,
+   "why": "abstract (incorporeal)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "moral|noun|0e6a219f48a8": {
    "term": null,
    "auto": "morale",
@@ -3760,6 +5928,14 @@
    "ordinal": 1,
    "why": "note, short message",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "mouillé|adj|1ac783db5a1e": {
+   "term": null,
+   "auto": "wet",
+   "meaning": "wet, moist (of a woman, sexually excited)",
+   "ordinal": 1,
+   "why": "sexual sense of wet; no picture search term",
+   "by": "card371 Claude review 2026-10-19"
   },
   "mouvement|noun|8a57f5c63044": {
    "term": null,
@@ -3881,6 +6057,30 @@
    "why": "skill, craft",
    "by": "card384 Claude review 2026-10-19"
   },
+  "même|adj|9442b31f366e": {
+   "term": null,
+   "auto": "very",
+   "meaning": "very",
+   "ordinal": 1,
+   "why": "intensifier (very)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "même|adj|f3aa6360ed90": {
+   "term": null,
+   "auto": "same",
+   "meaning": "same",
+   "ordinal": 0,
+   "why": "determiner (same)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "même|adv|64773baf0cf3": {
+   "term": null,
+   "auto": "even",
+   "meaning": "even",
+   "ordinal": 0,
+   "why": "adverb (even)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "naissance|noun|e247c51d22e7": {
    "term": null,
    "auto": "birth",
@@ -3905,6 +6105,14 @@
    "why": "layer (nappe)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "naturellement|adv|17dcf5693592": {
+   "term": null,
+   "auto": "naturally",
+   "meaning": "naturally",
+   "ordinal": 0,
+   "why": "adverb (naturally)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "naturel|noun|82b163c5051d": {
    "term": null,
    "auto": "naturalness",
@@ -3912,6 +6120,14 @@
    "ordinal": 0,
    "why": "naturalness",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "nature|adj|8f4ad8ab093f": {
+   "term": null,
+   "auto": "condomless",
+   "meaning": "condomless, bareback, raw dog, natural (see Thesaurus:condomless)",
+   "ordinal": 1,
+   "why": "euphemism (condomless), no picture word",
+   "by": "card371 Claude review 2026-10-19"
   },
   "nature|noun|f6cd2c1fe8b2": {
    "term": null,
@@ -3921,6 +6137,22 @@
    "why": "lexical category",
    "by": "card384 Claude review 2026-10-19"
   },
+  "nettement|adv|bc0dc41cb9fb": {
+   "term": null,
+   "auto": "neatly",
+   "meaning": "neatly, cleanly, clearly",
+   "ordinal": 0,
+   "why": "adverb (neatly)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "nom|noun|2d4e2cbe325d": {
+   "term": null,
+   "auto": "noun",
+   "meaning": "noun",
+   "ordinal": 3,
+   "why": "grammar label (noun)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "nom|noun|6b6c19b8d9f3": {
    "term": null,
    "auto": "last name",
@@ -3928,6 +6160,46 @@
    "ordinal": 1,
    "why": "last name",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "nom|noun|bcb6a15d39fb": {
+   "term": null,
+   "auto": "forms expletive interjections",
+   "meaning": "forms expletive interjections",
+   "ordinal": 2,
+   "why": "expletive interjection",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "normalement|adv|2775539f1e4c": {
+   "term": null,
+   "auto": "usually",
+   "meaning": "usually (most of the time)",
+   "ordinal": 1,
+   "why": "adverb (usually)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "normalement|adv|9704ac662c72": {
+   "term": null,
+   "auto": "normally",
+   "meaning": "normally",
+   "ordinal": 2,
+   "why": "adverb (normally)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "normal|adj|13c180983e9e": {
+   "term": null,
+   "auto": "normal",
+   "meaning": "normal (relating to a school to teach teachers how to teach)",
+   "ordinal": 1,
+   "why": "wrong sense: teacher-training school, not normal",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "notamment|adv|c3852a0c783d": {
+   "term": null,
+   "auto": "especially",
+   "meaning": "especially, in particular, not least",
+   "ordinal": 0,
+   "why": "adverb (especially)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "note|noun|383c17f0e918": {
    "term": null,
@@ -3953,6 +6225,22 @@
    "why": "new person",
    "by": "card384 Claude review 2026-10-19"
   },
+  "noël|noun|f8ff5969f84c": {
+   "term": "christmas carol",
+   "auto": "melody",
+   "meaning": "The melody of a Christmas song.",
+   "ordinal": 2,
+   "why": "the term was a full sentence; the sense is a Christmas song",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "nul|det|a17ed4b78210": {
+   "term": null,
+   "auto": "no",
+   "meaning": "no, none",
+   "ordinal": 0,
+   "why": "determiner (no)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "nul|noun|574463a769d1": {
    "term": null,
    "auto": "draw",
@@ -3961,6 +6249,14 @@
    "why": "a draw",
    "by": "card384 Claude review 2026-10-19"
   },
+  "nul|pron|dd4d783010f5": {
+   "term": null,
+   "auto": "no one",
+   "meaning": "no one, nobody",
+   "ordinal": 0,
+   "why": "pronoun (no one)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "nu|noun|71498ca66785": {
    "term": null,
    "auto": "nude",
@@ -3968,6 +6264,30 @@
    "ordinal": 0,
    "why": "nude",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "néanmoins|adv|3f6b25c433d6": {
+   "term": null,
+   "auto": "nevertheless",
+   "meaning": "nevertheless, nonetheless",
+   "ordinal": 1,
+   "why": "adverb (nevertheless)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "néanmoins|adv|cac7d6065145": {
+   "term": null,
+   "auto": "however",
+   "meaning": "however",
+   "ordinal": 0,
+   "why": "adverb (however)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "nécessairement|adv|8ddd9840da2e": {
+   "term": null,
+   "auto": "necessarily",
+   "meaning": "necessarily, inevitably, consequently",
+   "ordinal": 0,
+   "why": "adverb (necessarily)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "nécessaire|noun|3dfa634d41ab": {
    "term": null,
@@ -4025,6 +6345,14 @@
    "why": "charge, task",
    "by": "card384 Claude review 2026-10-19"
   },
+  "officiellement|adv|ce36607555fd": {
+   "term": null,
+   "auto": "officially",
+   "meaning": "officially",
+   "ordinal": 0,
+   "why": "adverb (officially)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "offre|noun|ef13a2f36352": {
    "term": null,
    "auto": "bid",
@@ -4032,6 +6360,22 @@
    "ordinal": 1,
    "why": "bid",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "oh|intj|87f12bc6694b": {
+   "term": null,
+   "auto": "oh",
+   "meaning": "oh",
+   "ordinal": 0,
+   "why": "interjection (oh)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "ok|intj|bc9b42ec6ead": {
+   "term": null,
+   "auto": "ok",
+   "meaning": "OK (endorsement; approval)",
+   "ordinal": 0,
+   "why": "interjection (OK)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "ombre|noun|ecf4af318819": {
    "term": null,
@@ -4113,6 +6457,22 @@
    "why": "ordinance",
    "by": "card384 Claude review 2026-10-19"
   },
+  "ordre|noun|0f3f3a3c510f": {
+   "term": null,
+   "auto": "kind",
+   "meaning": "kind, sort",
+   "ordinal": 4,
+   "why": "abstract (kind, sort)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "ordre|noun|d14e7aa1ebe9": {
+   "term": null,
+   "auto": "region",
+   "meaning": "region (used in estimations)",
+   "ordinal": 3,
+   "why": "wrong sense: order of magnitude, not region",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "organisme|noun|4f66eba23ff2": {
    "term": null,
    "auto": "organisation",
@@ -4137,6 +6497,22 @@
    "why": "show (ornement)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "oui|adv|e9e07050123b": {
+   "term": null,
+   "auto": "yes",
+   "meaning": "yes",
+   "ordinal": 0,
+   "why": "adverb (yes)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "oui|intj|aecfc84eb603": {
+   "term": null,
+   "auto": "yes",
+   "meaning": "yes",
+   "ordinal": 0,
+   "why": "interjection (yes)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "ourlet|noun|5c2afd7b128b": {
    "term": null,
    "auto": "rim",
@@ -4152,6 +6528,14 @@
    "ordinal": 0,
    "why": "goatskin, wine skin",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "outre|prep|b7c64aad7a45": {
+   "term": null,
+   "auto": "as well as",
+   "meaning": "as well as, besides, on top of",
+   "ordinal": 0,
+   "why": "preposition (as well as)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "ouvrage|noun|442a6a4f1b02": {
    "term": null,
@@ -4177,6 +6561,30 @@
    "why": "operator",
    "by": "card384 Claude review 2026-10-19"
   },
+  "où|adv|20f1b100ea59": {
+   "term": null,
+   "auto": "whither",
+   "meaning": "whither, to where",
+   "ordinal": 3,
+   "why": "adverb (whither)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "où|adv|737e366342b2": {
+   "term": null,
+   "auto": "where",
+   "meaning": "where (interrogative)",
+   "ordinal": 0,
+   "why": "interrogative adverb",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "où|adv|8115fa75591d": {
+   "term": null,
+   "auto": "where",
+   "meaning": "where (relative pronoun)",
+   "ordinal": 1,
+   "why": "relative adverb",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "page|noun|61666b849122": {
    "term": null,
    "auto": "page",
@@ -4192,6 +6600,14 @@
    "ordinal": 1,
    "why": "piece of bread",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "pain|noun|ab6b25d40afd": {
+   "term": null,
+   "auto": "bread-and-butter needs",
+   "meaning": "bread-and-butter needs, basic sustenance; breadwinner",
+   "ordinal": 3,
+   "why": "abstract (bread-and-butter needs)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "pair|noun|d69853834cd3": {
    "term": null,
@@ -4249,6 +6665,54 @@
    "why": "appearance (paraître)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "paraître|verb|d437535859d9": {
+   "term": null,
+   "auto": "be said that",
+   "meaning": "to be said that, to be rumored that",
+   "ordinal": 3,
+   "why": "idiom (it is said that)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "pardon|intj|c9374f5c32d4": {
+   "term": null,
+   "auto": "excuse me",
+   "meaning": "excuse me",
+   "ordinal": 0,
+   "why": "interjection (excuse me)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "pardon|intj|fd0c14fc563b": {
+   "term": null,
+   "auto": "sorry",
+   "meaning": "sorry",
+   "ordinal": 1,
+   "why": "interjection (sorry)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "pareil|adj|931d03dbf0b4": {
+   "term": null,
+   "auto": "such",
+   "meaning": "such",
+   "ordinal": 0,
+   "why": "determiner (such)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "pareil|adj|a0f253573ce7": {
+   "term": null,
+   "auto": "like",
+   "meaning": "like, alike, same",
+   "ordinal": 1,
+   "why": "preposition-like (like)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "pareil|adv|7393a7deab79": {
+   "term": null,
+   "auto": "same",
+   "meaning": "the same; alike",
+   "ordinal": 0,
+   "why": "adverb (same)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "parent|noun|ff33fbdd4507": {
    "term": null,
    "auto": "relative",
@@ -4265,6 +6729,14 @@
    "why": "relatives, kin",
    "by": "card384 Claude review 2026-10-19"
   },
+  "parfaitement|adv|d9dbd7cefd40": {
+   "term": null,
+   "auto": "perfectly",
+   "meaning": "perfectly",
+   "ordinal": 0,
+   "why": "adverb (perfectly)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "parfait|noun|b75c1dd55f8a": {
    "term": null,
    "auto": "perfect tense",
@@ -4272,6 +6744,14 @@
    "ordinal": 0,
    "why": "perfect tense",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "parfois|adv|d22cf87e8092": {
+   "term": null,
+   "auto": "sometimes",
+   "meaning": "sometimes",
+   "ordinal": 0,
+   "why": "adverb (sometimes)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "parfum|noun|418ca78d625f": {
    "term": null,
@@ -4297,6 +6777,22 @@
    "why": "parlance",
    "by": "card384 Claude review 2026-10-19"
   },
+  "parler|verb|61db1870065e": {
+   "term": null,
+   "auto": "cant",
+   "meaning": "to cant; (of a coat of arms) to make a pun of its bearer's name",
+   "ordinal": 2,
+   "why": "heraldic pun (cant), term is wrong sense",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "parole|intj|218cc165b8fd": {
+   "term": null,
+   "auto": "swear to god",
+   "meaning": "swear to God!",
+   "ordinal": 0,
+   "why": "interjection (swear to God)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "parole|noun|094b24bccf1f": {
    "term": null,
    "auto": "word utterance",
@@ -4312,6 +6808,22 @@
    "ordinal": 0,
    "why": "speech (faculty)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "particulièrement|adv|8da870f4ce77": {
+   "term": null,
+   "auto": "particularly",
+   "meaning": "particularly, specifically",
+   "ordinal": 0,
+   "why": "adverb (particularly)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "particulièrement|adv|cd5245e9da0f": {
+   "term": null,
+   "auto": "especially",
+   "meaning": "especially",
+   "ordinal": 1,
+   "why": "adverb (especially)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "partie|noun|5b6b1b129676": {
    "term": null,
@@ -4345,6 +6857,14 @@
    "why": "party pictures celebrations",
    "by": "card384 Claude review 2026-10-19"
   },
+  "partout|adv|88e6c4b69bd8": {
+   "term": null,
+   "auto": "everywhere",
+   "meaning": "everywhere",
+   "ordinal": 0,
+   "why": "adverb (everywhere)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "part|noun|6cd120883531": {
    "term": null,
    "auto": "share",
@@ -4360,6 +6880,14 @@
    "ordinal": 0,
    "why": "pascal (unit)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "passager|adj|f53ee2977391": {
+   "term": null,
+   "auto": "short duration",
+   "meaning": "of a short duration; temporary; transitory, fleeting, flighty",
+   "ordinal": 1,
+   "why": "abstract adjective (short duration)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "passion|noun|8d58998f17ab": {
    "term": null,
@@ -4465,6 +6993,22 @@
    "why": "homeroom",
    "by": "card384 Claude review 2026-10-19"
   },
+  "permettant|verb|6b6b8abe03f2": {
+   "term": null,
+   "auto": "allowing",
+   "meaning": "allowing, enabling, ensuring, so that, through which to, make it possible, as a means to, which could",
+   "ordinal": 0,
+   "why": "grammar (participle, allowing)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "permettre|verb|87427678df2a": {
+   "term": null,
+   "auto": "take the liberty",
+   "meaning": "to take the liberty",
+   "ordinal": 2,
+   "why": "idiom (take the liberty)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "personnage|noun|d297c8dcca85": {
    "term": null,
    "auto": "character",
@@ -4472,6 +7016,30 @@
    "ordinal": 0,
    "why": "character (fiction) pictures letters",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "personnellement|adv|852888397f4c": {
+   "term": null,
+   "auto": "personally",
+   "meaning": "personally",
+   "ordinal": 0,
+   "why": "adverb (personally)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "personne|pron|5faeb7223861": {
+   "term": null,
+   "auto": "anyone",
+   "meaning": "anyone",
+   "ordinal": 1,
+   "why": "pronoun (anyone)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "personne|pron|dd4d783010f5": {
+   "term": null,
+   "auto": "no one",
+   "meaning": "no one, nobody",
+   "ordinal": 0,
+   "why": "pronoun (no one)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "perso|noun|95c9e77dcbc5": {
    "term": null,
@@ -4513,6 +7081,14 @@
    "why": "little one",
    "by": "card384 Claude review 2026-10-19"
   },
+  "peu|adv|2f0d9eb55137": {
+   "term": null,
+   "auto": "little",
+   "meaning": "little; not very much/many",
+   "ordinal": 0,
+   "why": "adverb (little)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "peu|noun|74833ceb0863": {
    "term": null,
    "auto": "few",
@@ -4528,6 +7104,22 @@
    "ordinal": 1,
    "why": "little",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "philosophie|noun|2cc69f7db7f6": {
+   "term": null,
+   "auto": "philosophical attitude",
+   "meaning": "a philosophical (calm and stoically accepting) attitude",
+   "ordinal": 2,
+   "why": "abstract (philosophical attitude)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "physiquement|adv|3ecbf6651e82": {
+   "term": null,
+   "auto": "physically",
+   "meaning": "physically",
+   "ordinal": 0,
+   "why": "adverb (physically)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "pied|noun|74bf0be96f96": {
    "term": null,
@@ -4641,6 +7233,14 @@
    "why": "synthetic hydrocarbon-based polymer",
    "by": "card384 Claude review 2026-10-19"
   },
+  "plastique|noun|9875be2569ad": {
+   "term": null,
+   "auto": "formal beauty",
+   "meaning": "formal beauty",
+   "ordinal": 3,
+   "why": "abstract (formal beauty)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "plateau|noun|5ae53394bc10": {
    "term": "plateau",
    "auto": "flat area",
@@ -4656,6 +7256,14 @@
    "ordinal": 1,
    "why": "dish or course",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "pleinement|adv|7fcb6a2aee5d": {
+   "term": null,
+   "auto": "completely",
+   "meaning": "completely, all over",
+   "ordinal": 0,
+   "why": "adverb (completely)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "pluie|noun|b59d54e8f081": {
    "term": null,
@@ -4681,6 +7289,118 @@
    "why": "most of",
    "by": "card384 Claude review 2026-10-19"
   },
+  "plusieurs|adj|5c8522b7ea20": {
+   "term": null,
+   "auto": "several",
+   "meaning": "several, many, a lot",
+   "ordinal": 0,
+   "why": "determiner (several)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "plus|adv|252babdd15d1": {
+   "term": null,
+   "auto": "most",
+   "meaning": "most, -est (superlative)",
+   "ordinal": 1,
+   "why": "superlative adverb",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "plus|adv|330204733c8a": {
+   "term": null,
+   "auto": "neither",
+   "meaning": "neither, not either",
+   "ordinal": 10,
+   "why": "adverb (neither)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "plus|adv|3f738422ee3e": {
+   "term": null,
+   "auto": "more",
+   "meaning": "more, most (to a greater / the greatest extent)",
+   "ordinal": 2,
+   "why": "adverb",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "plus|adv|48b32b0f65ce": {
+   "term": null,
+   "auto": "more",
+   "meaning": "more (a greater amount)",
+   "ordinal": 4,
+   "why": "adverb",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "plus|adv|503eafc304f8": {
+   "term": null,
+   "auto": "more",
+   "meaning": "more, in addition",
+   "ordinal": 7,
+   "why": "adverb",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "plus|adv|59f5f59dfc7f": {
+   "term": null,
+   "auto": "more",
+   "meaning": "more, -er (comparative)",
+   "ordinal": 0,
+   "why": "comparative adverb",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "plus|adv|5f2c58db2fa8": {
+   "term": null,
+   "auto": "plus",
+   "meaning": "plus",
+   "ordinal": 8,
+   "why": "adverb (plus)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "plus|adv|71f727af1b75": {
+   "term": null,
+   "auto": "more",
+   "meaning": "the more ...",
+   "ordinal": 3,
+   "why": "adverb",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "plus|adv|7953a72b7dc5": {
+   "term": null,
+   "auto": "more",
+   "meaning": "[with de] more of a following noun",
+   "ordinal": 5,
+   "why": "grammar (with de)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "plus|adv|d1664f7ef623": {
+   "term": null,
+   "auto": "not any more",
+   "meaning": "not ... any more, no more, no longer",
+   "ordinal": 9,
+   "why": "adverb (no longer)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "plutôt|adv|2c30d006f682": {
+   "term": null,
+   "auto": "rather",
+   "meaning": "rather (introducing a correction or clarification)",
+   "ordinal": 1,
+   "why": "adverb (rather)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "plutôt|adv|56679f329fc6": {
+   "term": null,
+   "auto": "rather",
+   "meaning": "rather, pretty, kind of (indicating intensity or degree)",
+   "ordinal": 2,
+   "why": "adverb (rather)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "plutôt|adv|61dbabeeff44": {
+   "term": null,
+   "auto": "rather",
+   "meaning": "rather, instead (indicating preference)",
+   "ordinal": 0,
+   "why": "adverb (rather)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "poigne|noun|7098d6ccc23a": {
    "term": null,
    "auto": "grip",
@@ -4688,6 +7408,22 @@
    "ordinal": 0,
    "why": "grip (poigne)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "point|adv|48b167efa15b": {
+   "term": null,
+   "auto": "not",
+   "meaning": "not",
+   "ordinal": 0,
+   "why": "adverb (not)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "poitrine|verb|655eb45881e3": {
+   "term": null,
+   "auto": "first-person singular indicative",
+   "meaning": "first-person singular indicative/present of poitriner",
+   "ordinal": 0,
+   "why": "grammar label (first-person singular)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "policier|noun|b4287a5b6967": {
    "term": null,
@@ -4737,6 +7473,14 @@
    "why": "the public",
    "by": "card384 Claude review 2026-10-19"
   },
+  "porter|verb|c4107b51b6ac": {
+   "term": null,
+   "auto": "be about",
+   "meaning": "to be about, to concern",
+   "ordinal": 3,
+   "why": "be about: idiom, no picture word",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "portrait|noun|c639db7d1fa1": {
    "term": null,
    "auto": "portrait",
@@ -4753,6 +7497,30 @@
    "why": "port (harbour city)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "porté|adj|4a43cca248ec": {
+   "term": null,
+   "auto": "fond of",
+   "meaning": "fond of, fixated on something",
+   "ordinal": 0,
+   "why": "abstract (fond of, fixated on)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "poser|verb|e5d444a8d38d": {
+   "term": "put down",
+   "auto": "stop carrying",
+   "meaning": "to stop carrying, to put down (something or somebody)",
+   "ordinal": 0,
+   "why": "the sense is put down (stop carrying), term stop carrying is not a noun or object",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "positif|noun|ae13db0db8e6": {
+   "term": null,
+   "auto": "positive form",
+   "meaning": "positive form",
+   "ordinal": 2,
+   "why": "grammar label (positive form)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "possible|noun|c0136d20c6a3": {
    "term": null,
    "auto": "possible",
@@ -4760,6 +7528,14 @@
    "ordinal": 0,
    "why": "the possible",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "poteau|noun|16995de2c7ef": {
+   "term": null,
+   "auto": "paper candidate",
+   "meaning": "paper candidate",
+   "ordinal": 3,
+   "why": "unclear sense (paper candidate), no picture word",
+   "by": "card371 Claude review 2026-10-19"
   },
   "pourcentage|noun|dcd2624efcf9": {
    "term": null,
@@ -4769,6 +7545,22 @@
    "why": "commission, fee",
    "by": "card384 Claude review 2026-10-19"
   },
+  "pourquoi|adv|7665d02834f5": {
+   "term": null,
+   "auto": "why",
+   "meaning": "why",
+   "ordinal": 0,
+   "why": "adverb (why)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "pourtant|adv|6f08b2c65012": {
+   "term": null,
+   "auto": "however",
+   "meaning": "however, yet",
+   "ordinal": 0,
+   "why": "adverb (however)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "poussière|noun|89cd732147c6": {
    "term": null,
    "auto": "speck of dust",
@@ -4776,6 +7568,14 @@
    "ordinal": 1,
    "why": "speck of dust",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "poussière|noun|99b97f332172": {
+   "term": null,
+   "auto": "very little",
+   "meaning": "very little; next to nothing",
+   "ordinal": 2,
+   "why": "idiom (very little)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "pouvoir|noun|025a6956cf58": {
    "term": null,
@@ -4793,6 +7593,22 @@
    "why": "authority",
    "by": "card384 Claude review 2026-10-19"
   },
+  "pouvoir|verb|401c382282da": {
+   "term": null,
+   "auto": "may",
+   "meaning": "may (of a choice)",
+   "ordinal": 1,
+   "why": "modal (may)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "pouvoir|verb|8f35dd3ea737": {
+   "term": null,
+   "auto": "can",
+   "meaning": "can, to be able to",
+   "ordinal": 0,
+   "why": "modal (can)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "poète|noun|312680da07e3": {
    "term": null,
    "auto": "wordsmith",
@@ -4800,6 +7616,14 @@
    "ordinal": 1,
    "why": "wordsmith",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "pratiquement|adv|b405ba7740c3": {
+   "term": null,
+   "auto": "practically",
+   "meaning": "practically, almost",
+   "ordinal": 1,
+   "why": "adverb (practically)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "pratique|noun|87672659d8e0": {
    "term": null,
@@ -4809,6 +7633,22 @@
    "why": "execution or implementation",
    "by": "card384 Claude review 2026-10-19"
   },
+  "pratique|noun|f503cd1663bb": {
+   "term": null,
+   "auto": "act of frequenting",
+   "meaning": "act of frequenting",
+   "ordinal": 5,
+   "why": "abstract (act of frequenting)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "premier|adv|51ab7af45396": {
+   "term": null,
+   "auto": "first",
+   "meaning": "first",
+   "ordinal": 0,
+   "why": "adverb",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "premier|noun|30d51177ce77": {
    "term": null,
    "auto": "first",
@@ -4816,6 +7656,14 @@
    "ordinal": 0,
    "why": "first",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "presque|adv|9f3bc6d960c7": {
+   "term": null,
+   "auto": "almost",
+   "meaning": "almost",
+   "ordinal": 0,
+   "why": "adverb (almost)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "pression|noun|2fc3285727bd": {
    "term": "snap fastener",
@@ -4857,6 +7705,14 @@
    "why": "reward; prize; bonus",
    "by": "card384 Claude review 2026-10-19"
   },
+  "principalement|adv|3b06aec6f9a0": {
+   "term": null,
+   "auto": "mainly",
+   "meaning": "mainly, principally",
+   "ordinal": 0,
+   "why": "adverb (mainly)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "principe|noun|5b90cd5a1f61": {
    "term": null,
    "auto": "beginning",
@@ -4880,6 +7736,14 @@
    "ordinal": 1,
    "why": "grip (prise)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "probablement|adv|92e7333d4f93": {
+   "term": null,
+   "auto": "probably",
+   "meaning": "probably",
+   "ordinal": 0,
+   "why": "adverb (probably)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "problème|noun|aef8d7fa978e": {
    "term": null,
@@ -4929,6 +7793,22 @@
    "why": "production (produit)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "profondément|adv|df7f6ebe606a": {
+   "term": null,
+   "auto": "deeply",
+   "meaning": "deeply, profoundly",
+   "ordinal": 0,
+   "why": "adverb (deeply)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "progressivement|adv|946b1992d1f0": {
+   "term": null,
+   "auto": "progressively",
+   "meaning": "progressively",
+   "ordinal": 0,
+   "why": "adverb (progressively)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "projet|noun|2d9c22d85f08": {
    "term": null,
    "auto": "plan",
@@ -4953,6 +7833,14 @@
    "why": "aim, intention",
    "by": "card384 Claude review 2026-10-19"
   },
+  "propre|adj|b4fb531f7af8": {
+   "term": null,
+   "auto": "eigen-",
+   "meaning": "eigen-",
+   "ordinal": 5,
+   "why": "prefix, no picture word",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "propriétaire|noun|a69aaa74cbf0": {
    "term": "landlord",
    "auto": "property owner",
@@ -4968,6 +7856,14 @@
    "ordinal": 1,
    "why": "property, attribute",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "protéger|verb|280b920b2ad5": {
+   "term": null,
+   "auto": "protect one's",
+   "meaning": "to protect one's ...",
+   "ordinal": 2,
+   "why": "idiom (protect one's ...)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "proximité|noun|8d5e47ef33d0": {
    "term": null,
@@ -4993,6 +7889,30 @@
    "why": "concise summary",
    "by": "card384 Claude review 2026-10-19"
   },
+  "précisément|adv|1a9e4f5e9043": {
+   "term": null,
+   "auto": "exactly",
+   "meaning": "exactly, precisely",
+   "ordinal": 2,
+   "why": "adverb (exactly)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "précisément|adv|8bd3e139e96f": {
+   "term": null,
+   "auto": "specifically",
+   "meaning": "specifically",
+   "ordinal": 1,
+   "why": "adverb (specifically)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "précédemment|adv|a14cd60e1879": {
+   "term": null,
+   "auto": "before",
+   "meaning": "before, before now",
+   "ordinal": 0,
+   "why": "adverb (before)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "préférence|noun|4c53121df93c": {
    "term": null,
    "auto": "like",
@@ -5016,6 +7936,14 @@
    "ordinal": 1,
    "why": "introduction",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "présenter|verb|2b631894f2e2": {
+   "term": null,
+   "auto": "be a candidate",
+   "meaning": "to be a candidate",
+   "ordinal": 5,
+   "why": "idiom (be a candidate)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "présente|noun|7add1083b451": {
    "term": null,
@@ -5065,6 +7993,30 @@
    "why": "dominion",
    "by": "card384 Claude review 2026-10-19"
   },
+  "puissance|prep|f075dbeaaa27": {
+   "term": null,
+   "auto": "the power of",
+   "meaning": "to the power of",
+   "ordinal": 0,
+   "why": "preposition (to the power of)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "purement|adv|3d0c086bfb5d": {
+   "term": null,
+   "auto": "purely",
+   "meaning": "purely, completely, totally",
+   "ordinal": 0,
+   "why": "adverb (purely)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "père|noun|225ca7680a90": {
+   "term": null,
+   "auto": "sr",
+   "meaning": "Sr. (senior) (postnominal title used to indicate a father that shares the same name as the son)",
+   "ordinal": 2,
+   "why": "title (Sr.), not a word for a picture",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "père|noun|8072dbd09e21": {
    "term": "priest",
    "auto": "father",
@@ -5080,6 +8032,14 @@
    "ordinal": 1,
    "why": "era",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "période|noun|e627fec6be04": {
+   "term": null,
+   "auto": "point",
+   "meaning": "point, locus",
+   "ordinal": 2,
+   "why": "wrong sense: a period in time, not a point",
+   "by": "card371 Claude review 2026-10-19"
   },
   "pétrole|noun|a462650230ad": {
    "term": "petroleum",
@@ -5145,6 +8105,22 @@
    "why": "shift (period of work)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "quasiment|adv|b405ba7740c3": {
+   "term": null,
+   "auto": "practically",
+   "meaning": "practically, almost",
+   "ordinal": 0,
+   "why": "adverb (practically)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "quasi|adv|f6685d7a01ea": {
+   "term": null,
+   "auto": "almost",
+   "meaning": "almost, nearly",
+   "ordinal": 0,
+   "why": "adverb (almost)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "quatrième|noun|261d2117698c": {
    "term": null,
    "auto": "fourth",
@@ -5152,6 +8128,30 @@
    "ordinal": 0,
    "why": "fourth",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "quelconque|adj|7515a49ffcae": {
+   "term": null,
+   "auto": "indeterminate",
+   "meaning": "indeterminate; some, any",
+   "ordinal": 0,
+   "why": "determiner (some, any)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "quelconque|det|f1f5f6461f41": {
+   "term": null,
+   "auto": "any",
+   "meaning": "any, any which one",
+   "ordinal": 0,
+   "why": "determiner (any)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "question|noun|86b141029e5e": {
+   "term": null,
+   "auto": "question",
+   "meaning": "question (interrogation by torture)",
+   "ordinal": 2,
+   "why": "torture interrogation (historical procedure), no picture word",
+   "by": "card371 Claude review 2026-10-19"
   },
   "question|noun|d94909a4f7cb": {
    "term": null,
@@ -5193,6 +8193,22 @@
    "why": "root, origin",
    "by": "card384 Claude review 2026-10-19"
   },
+  "rang|noun|cef91be2eb13": {
+   "term": null,
+   "auto": "non-officers",
+   "meaning": "the non-officers of an army, taken as a group",
+   "ordinal": 4,
+   "why": "abstract group term",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "rapidement|adv|a098b29c5a7e": {
+   "term": null,
+   "auto": "speedily",
+   "meaning": "speedily; quickly",
+   "ordinal": 0,
+   "why": "adverb (speedily)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "rapide|noun|82f263562c18": {
    "term": "express train",
    "auto": "express",
@@ -5209,6 +8225,14 @@
    "why": "rapid (stretch of river)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "rappel|noun|5c650b402384": {
+   "term": null,
+   "auto": "continuance",
+   "meaning": "continuance of an existing speed limit",
+   "ordinal": 2,
+   "why": "abstract (continuance of a speed limit)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "rappel|noun|eaed2fd9e149": {
    "term": null,
    "auto": "encore",
@@ -5224,6 +8248,14 @@
    "ordinal": 0,
    "why": "ratio",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "rarement|adv|8f671e539195": {
+   "term": null,
+   "auto": "rarely",
+   "meaning": "rarely, seldom",
+   "ordinal": 0,
+   "why": "adverb (rarely)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "rayon|noun|57c17855b13f": {
    "term": null,
@@ -5289,6 +8321,14 @@
    "why": "queen (in a hive)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "relativement|adv|def82cc2522e": {
+   "term": null,
+   "auto": "relatively",
+   "meaning": "relatively",
+   "ordinal": 0,
+   "why": "adverb (relatively)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "religieux|noun|90cb2bc754eb": {
    "term": "monk",
    "auto": "religious person",
@@ -5337,6 +8377,30 @@
    "why": "production, yield",
    "by": "card384 Claude review 2026-10-19"
   },
+  "rendre|verb|5ed0e3f8635f": {
+   "term": null,
+   "auto": "call on",
+   "meaning": "to call on",
+   "ordinal": 11,
+   "why": "idiom (call on)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "rendre|verb|774a87877486": {
+   "term": null,
+   "auto": "make one's way",
+   "meaning": "to make one's way (to a place), to get oneself (into a place)",
+   "ordinal": 10,
+   "why": "idiom (make one's way)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "rendre|verb|e189bfa3696c": {
+   "term": null,
+   "auto": "render oneself",
+   "meaning": "to render oneself, to make oneself, to become due to one's actions",
+   "ordinal": 9,
+   "why": "idiom (render oneself)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "rendu|noun|38284fb1de08": {
    "term": null,
    "auto": "change",
@@ -5377,6 +8441,22 @@
    "why": "return (rentrée)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "reposer|verb|677bdab431a9": {
+   "term": null,
+   "auto": "be based on",
+   "meaning": "to be based on",
+   "ordinal": 3,
+   "why": "idiom (be based on)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "reprendre|verb|992a63e1b9e4": {
+   "term": null,
+   "auto": "pull oneself together",
+   "meaning": "to pull oneself together",
+   "ordinal": 8,
+   "why": "idiom (pull oneself together)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "reprise|noun|904b873d2f97": {
    "term": null,
    "auto": "time",
@@ -5384,6 +8464,14 @@
    "ordinal": 0,
    "why": "time, instance",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "respectivement|adv|d15d4f8d5de1": {
+   "term": null,
+   "auto": "respectively",
+   "meaning": "respectively",
+   "ordinal": 0,
+   "why": "adverb (respectively)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "responsabilité|noun|b3f29d352b5e": {
    "term": null,
@@ -5417,6 +8505,14 @@
    "why": "second coming",
    "by": "card384 Claude review 2026-10-19"
   },
+  "retrait|noun|18a65764739e": {
+   "term": null,
+   "auto": "out",
+   "meaning": "out",
+   "ordinal": 2,
+   "why": "out (withdrawal) is not a picture word",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "retrait|noun|efd4ca2c3b38": {
    "term": null,
    "auto": "withdrawal",
@@ -5424,6 +8520,14 @@
    "ordinal": 1,
    "why": "withdrawal",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "retrouver|verb|14c229a532e4": {
+   "term": null,
+   "auto": "find oneself",
+   "meaning": "to find oneself; to end up",
+   "ordinal": 4,
+   "why": "idiom (end up)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "revanche|noun|07ab28eb821b": {
    "term": null,
@@ -5456,6 +8560,22 @@
    "ordinal": 1,
    "why": "the breaking wheel",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "rouge|adj|653ab3c03e4f": {
+   "term": null,
+   "auto": "supporter",
+   "meaning": "a supporter of the Republican Party",
+   "ordinal": 2,
+   "why": "description (Republican supporter), term too vague",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "rouille|noun|02915afe3f33": {
+   "term": null,
+   "auto": "rouille",
+   "meaning": "rouille (provençal sauce made with chilli and garlic)",
+   "ordinal": 2,
+   "why": "the French word itself (Provençal sauce), no English term",
+   "by": "card371 Claude review 2026-10-19"
   },
   "rouille|noun|290cc648691b": {
    "term": null,
@@ -5529,6 +8649,14 @@
    "why": "realia",
    "by": "card384 Claude review 2026-10-19"
   },
+  "récemment|adv|898cfd911929": {
+   "term": null,
+   "auto": "recently",
+   "meaning": "recently",
+   "ordinal": 0,
+   "why": "adverb (recently)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "réceptacle|noun|57d10f688331": {
    "term": null,
    "auto": "repository",
@@ -5569,6 +8697,14 @@
    "why": "editorial staff",
    "by": "card384 Claude review 2026-10-19"
   },
+  "réduire|verb|0568fd9d3601": {
+   "term": null,
+   "auto": "amount to",
+   "meaning": "to amount to, to come down to",
+   "ordinal": 5,
+   "why": "idiom (amount to)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "réduit|noun|2576a21f36bd": {
    "term": null,
    "auto": "recess",
@@ -5585,6 +8721,14 @@
    "why": "cubbyhole",
    "by": "card384 Claude review 2026-10-19"
   },
+  "réellement|adv|6299e2a3cc90": {
+   "term": null,
+   "auto": "really",
+   "meaning": "really; genuinely; in fact",
+   "ordinal": 0,
+   "why": "adverb (really)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "réflexion|noun|329ff7eecb4d": {
    "term": null,
    "auto": "thought",
@@ -5600,6 +8744,30 @@
    "ordinal": 1,
    "why": "gold standard",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "régime|noun|24a36d2a165a": {
+   "term": null,
+   "auto": "object",
+   "meaning": "object",
+   "ordinal": 4,
+   "why": "grammar label (object of a verb)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "régulièrement|adv|a4a62f13a0f2": {
+   "term": null,
+   "auto": "legally",
+   "meaning": "legally, lawfully, in accordance with the rules",
+   "ordinal": 1,
+   "why": "adverb (legally)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "régulièrement|adv|a5f9cc6fbe91": {
+   "term": null,
+   "auto": "regularly",
+   "meaning": "regularly, on a regular basis, frequently",
+   "ordinal": 0,
+   "why": "adverb (regularly)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "répartition|noun|e073d71aa135": {
    "term": null,
@@ -5665,6 +8833,14 @@
    "why": "character (rôle)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "sacré|adj|2af3814d396e": {
+   "term": null,
+   "auto": "very important",
+   "meaning": "very important",
+   "ordinal": 2,
+   "why": "colloquial intensifier (sacré), no picture word",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "sage|noun|e24440468ec7": {
    "term": null,
    "auto": "sage",
@@ -5681,6 +8857,22 @@
    "why": "a male saint",
    "by": "card384 Claude review 2026-10-19"
   },
+  "salope|adj|0e0713914eb6": {
+   "term": null,
+   "auto": "immoral",
+   "meaning": "immoral, promiscuous, slutty",
+   "ordinal": 0,
+   "why": "insult (immoral), no picture search term",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "salope|adj|e246146376a2": {
+   "term": null,
+   "auto": "mean",
+   "meaning": "mean, unkind",
+   "ordinal": 1,
+   "why": "insult (mean), no picture search term",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "salut|noun|1b25b91cb9b5": {
    "term": null,
    "auto": "wave",
@@ -5696,6 +8888,22 @@
    "ordinal": 1,
    "why": "bow (inclination) pictures ribbons or weapons",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "santé|intj|40cb17711102": {
+   "term": null,
+   "auto": "cheers",
+   "meaning": "cheers! (as said when drinking)",
+   "ordinal": 0,
+   "why": "interjection (cheers)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "san|det|44501b743d9b": {
+   "term": null,
+   "auto": "his",
+   "meaning": "his, her, their, its",
+   "ordinal": 0,
+   "why": "determiner (his)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "san|noun|d82c45576eb3": {
    "term": null,
@@ -5761,6 +8969,14 @@
    "why": "circular sector",
    "by": "card384 Claude review 2026-10-19"
   },
+  "sec|adv|839549f8ca61": {
+   "term": null,
+   "auto": "sharply",
+   "meaning": "sharply, abruptly, quickly, swiftly, briskly",
+   "ordinal": 0,
+   "why": "adverb (sharply)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "seigneur|noun|49dc7bf2fa95": {
    "term": null,
    "auto": "lord",
@@ -5817,6 +9033,14 @@
    "why": "an opinion",
    "by": "card384 Claude review 2026-10-19"
   },
+  "service|intj|667597ab3b9a": {
+   "term": null,
+   "auto": "you're welcome",
+   "meaning": "you're welcome",
+   "ordinal": 0,
+   "why": "interjection (you're welcome)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "service|noun|c8d57f23c582": {
    "term": "tableware",
    "auto": "cutlery",
@@ -5833,6 +9057,54 @@
    "why": "threshold, level",
    "by": "card384 Claude review 2026-10-19"
   },
+  "seulement|adv|0d72f4126954": {
+   "term": null,
+   "auto": "only",
+   "meaning": "only",
+   "ordinal": 0,
+   "why": "adverb (only)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "seul|adj|0cb5088eedc9": {
+   "term": null,
+   "auto": "only",
+   "meaning": "only",
+   "ordinal": 2,
+   "why": "adjective only (determiner-like)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "sexe|adj|5a86372b7214": {
+   "term": null,
+   "auto": "horny",
+   "meaning": "horny, sexually aroused",
+   "ordinal": 1,
+   "why": "sexual content: no picture search term",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "sexe|adj|bea5fba12f55": {
+   "term": null,
+   "auto": "sexy",
+   "meaning": "sexy",
+   "ordinal": 2,
+   "why": "sexual content: no picture search term",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "sexe|adj|ffb8f7de05fb": {
+   "term": null,
+   "auto": "pornographic",
+   "meaning": "pornographic",
+   "ordinal": 0,
+   "why": "sexual content: no picture search term",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "sexy|adj|bea5fba12f55": {
+   "term": null,
+   "auto": "sexy",
+   "meaning": "sexy",
+   "ordinal": 0,
+   "why": "sexual content: no picture search term",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "signature|noun|9d77eeb4907c": {
    "term": null,
    "auto": "act of signing",
@@ -5840,6 +9112,14 @@
    "ordinal": 1,
    "why": "act of signing",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "simplement|adv|58ca62b2c336": {
+   "term": null,
+   "auto": "simply",
+   "meaning": "simply",
+   "ordinal": 0,
+   "why": "adverb (simply)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "simple|noun|072f2dceb2bc": {
    "term": null,
@@ -5888,6 +9168,14 @@
    "ordinal": 0,
    "why": "the self",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "soi|pron|a5569d3c0aeb": {
+   "term": null,
+   "auto": "oneself",
+   "meaning": "oneself",
+   "ordinal": 1,
+   "why": "pronoun (oneself)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "sommeil|noun|95964dfc9621": {
    "term": null,
@@ -5969,6 +9257,14 @@
    "why": "a problem",
    "by": "card384 Claude review 2026-10-19"
   },
+  "soudain|adv|c8e9cc592297": {
+   "term": null,
+   "auto": "suddenly",
+   "meaning": "suddenly, all of a sudden",
+   "ordinal": 0,
+   "why": "adverb (suddenly)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "soumis|noun|32d9e217c1b0": {
    "term": null,
    "auto": "masochist",
@@ -6009,6 +9305,14 @@
    "why": "memory (mental) pictures RAM",
    "by": "card384 Claude review 2026-10-19"
   },
+  "souvent|adv|a4b55cea9b78": {
+   "term": null,
+   "auto": "often",
+   "meaning": "often",
+   "ordinal": 0,
+   "why": "adverb (often)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "spectacle|noun|160a3e87d30e": {
    "term": "performance",
    "auto": "show",
@@ -6024,6 +9328,14 @@
    "ordinal": 1,
    "why": "a sight, a display",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "spécialement|adv|b128181b65fb": {
+   "term": null,
+   "auto": "especially",
+   "meaning": "especially, specially",
+   "ordinal": 0,
+   "why": "adverb (especially)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "spécifique|noun|e2446bda1253": {
    "term": null,
@@ -6065,6 +9377,14 @@
    "why": "memory (storage)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "stop|intj|ce28131769f8": {
+   "term": null,
+   "auto": "stop",
+   "meaning": "stop!",
+   "ordinal": 0,
+   "why": "interjection (stop!)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "succession|noun|f7d0f27bbb7d": {
    "term": null,
    "auto": "series",
@@ -6081,6 +9401,22 @@
    "why": "achievement",
    "by": "card384 Claude review 2026-10-19"
   },
+  "suffisamment|adv|8fbfe5f1f79e": {
+   "term": null,
+   "auto": "sufficiently",
+   "meaning": "sufficiently; enough",
+   "ordinal": 0,
+   "why": "adverb (sufficiently)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "suicider|verb|e32bf5dd23cd": {
+   "term": null,
+   "auto": "commit suicide",
+   "meaning": "to commit suicide, to kill oneself, suicide",
+   "ordinal": 0,
+   "why": "sensitive, and not a picture word (suicide)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "suisse|noun|5fdce7554d6e": {
    "term": "swiss guard",
    "auto": "guard",
@@ -6096,6 +9432,14 @@
    "ordinal": 0,
    "why": "result (suite)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "suite|noun|380e08fae5ee": {
+   "term": null,
+   "auto": "straight",
+   "meaning": "straight",
+   "ordinal": 3,
+   "why": "straight (in a row): term is wrong sense",
+   "by": "card371 Claude review 2026-10-19"
   },
   "suite|noun|afc4508ce82c": {
    "term": null,
@@ -6145,6 +9489,14 @@
    "why": "proud, arrogant person",
    "by": "card384 Claude review 2026-10-19"
   },
+  "super|intj|4e2221ba94d2": {
+   "term": null,
+   "auto": "great",
+   "meaning": "great, fantastic",
+   "ordinal": 0,
+   "why": "interjection (great)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "support|noun|34670a92b8d6": {
    "term": null,
    "auto": "base",
@@ -6176,6 +9528,22 @@
    "ordinal": 0,
    "why": "senior (boss)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "surtout|adv|9094572111e6": {
+   "term": null,
+   "auto": "above all",
+   "meaning": "above all",
+   "ordinal": 0,
+   "why": "adverb (above all)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "surtout|adv|cd5245e9da0f": {
+   "term": null,
+   "auto": "especially",
+   "meaning": "especially",
+   "ordinal": 1,
+   "why": "adverb (especially)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "surtout|noun|d407450e7608": {
    "term": null,
@@ -6257,6 +9625,22 @@
    "why": "national sports team",
    "by": "card384 Claude review 2026-10-19"
   },
+  "sérieusement|adv|4dc2c29dcda1": {
+   "term": null,
+   "auto": "seriously",
+   "meaning": "seriously",
+   "ordinal": 0,
+   "why": "adverb (seriously)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "série|noun|067eb159d9c9": {
+   "term": null,
+   "auto": "series",
+   "meaning": "series (sum of the terms of a sequence)",
+   "ordinal": 2,
+   "why": "mathematical series is abstract; no picture word",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "série|noun|8508c1ee7f6b": {
    "term": null,
    "auto": "serial",
@@ -6264,6 +9648,30 @@
    "ordinal": 1,
    "why": "serial (television)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "sûrement|adv|75bd93b05901": {
+   "term": null,
+   "auto": "surely",
+   "meaning": "surely, certainly",
+   "ordinal": 0,
+   "why": "adverb (surely)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "sûrement|adv|92e7333d4f93": {
+   "term": null,
+   "auto": "probably",
+   "meaning": "probably",
+   "ordinal": 1,
+   "why": "adverb (probably)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "tableau|noun|37b825dc93b8": {
+   "term": "painting",
+   "auto": "tableau",
+   "meaning": "tableau",
+   "ordinal": 5,
+   "why": "tableau is the French word itself; the sense is a painting",
+   "by": "card371 Claude review 2026-10-19"
   },
   "tableau|noun|60100fe9008a": {
    "term": null,
@@ -6281,6 +9689,46 @@
    "why": "the act of cutting, pruning",
    "by": "card384 Claude review 2026-10-19"
   },
+  "tant|adv|0c8aa4e5030c": {
+   "term": null,
+   "auto": "so much",
+   "meaning": "so much",
+   "ordinal": 0,
+   "why": "adverb (so much)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "tant|adv|1e1a8114e178": {
+   "term": null,
+   "auto": "both and",
+   "meaning": "both ... and",
+   "ordinal": 2,
+   "why": "correlative (both ... and)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "tant|adv|416b4e21d8c7": {
+   "term": null,
+   "auto": "so many",
+   "meaning": "so many",
+   "ordinal": 1,
+   "why": "adverb (so many)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "taper|verb|c5a248ae499b": {
+   "term": null,
+   "auto": "put up with",
+   "meaning": "to put up with",
+   "ordinal": 7,
+   "why": "idiom (put up with)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "tard|adv|397e4006e156": {
+   "term": null,
+   "auto": "late",
+   "meaning": "late",
+   "ordinal": 0,
+   "why": "adverb (late)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "tasse|noun|f905bf9f9db9": {
    "term": null,
    "auto": "cupful",
@@ -6296,6 +9744,46 @@
    "ordinal": 0,
    "why": "rate, level",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "tellement|adv|169a8a882881": {
+   "term": null,
+   "auto": "so much",
+   "meaning": "so much (singular); so many (plural)",
+   "ordinal": 1,
+   "why": "adverb (so much)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "tellement|adv|7435ce020369": {
+   "term": null,
+   "auto": "so much",
+   "meaning": "so much (gives a reason for the preceding statement)",
+   "ordinal": 2,
+   "why": "adverb (so much)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "tellement|adv|be9d21759420": {
+   "term": null,
+   "auto": "so",
+   "meaning": "so; so much; very",
+   "ordinal": 0,
+   "why": "adverb (so)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "tenir|verb|343b0980186e": {
+   "term": null,
+   "auto": "hold dear",
+   "meaning": "to hold dear, to be keen (about), to insist (upon)",
+   "ordinal": 8,
+   "why": "abstract (hold dear, insist)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "tenir|verb|5629019a1ddc": {
+   "term": null,
+   "auto": "be attached",
+   "meaning": "to be attached (to), to be fond (of), to hold dear",
+   "ordinal": 7,
+   "why": "abstract (be attached, be fond of)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "tentative|noun|794d79d73829": {
    "term": null,
@@ -6377,6 +9865,14 @@
    "why": "textile (non-nudist)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "thème|noun|248723d80d1a": {
+   "term": null,
+   "auto": "stem",
+   "meaning": "stem of (usually) a noun or verb, to which inflectional endings are attached",
+   "ordinal": 4,
+   "why": "grammar label (stem)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "thème|noun|4404c865a33e": {
    "term": null,
    "auto": "subject",
@@ -6448,6 +9944,14 @@
    "ordinal": 1,
    "why": "title (bestowed name)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "titre|noun|e2b7ad0633fa": {
+   "term": null,
+   "auto": "titre",
+   "meaning": "titre",
+   "ordinal": 2,
+   "why": "French word itself, no English term",
+   "by": "card371 Claude review 2026-10-19"
   },
   "titre|noun|f94eb5694e9c": {
    "term": null,
@@ -6521,6 +10025,14 @@
    "why": "tonne",
    "by": "card384 Claude review 2026-10-19"
   },
+  "ton|det|ffeea4d9e95d": {
+   "term": null,
+   "auto": "your",
+   "meaning": "your",
+   "ordinal": 0,
+   "why": "determiner (your)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "ton|noun|c4e3d7310c40": {
    "term": null,
    "auto": "tone",
@@ -6561,6 +10073,14 @@
    "why": "fault",
    "by": "card384 Claude review 2026-10-19"
   },
+  "totalement|adv|e1f390602a9a": {
+   "term": null,
+   "auto": "totally",
+   "meaning": "totally",
+   "ordinal": 0,
+   "why": "adverb (totally)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "toucher|noun|c098dca4b1ec": {
    "term": null,
    "auto": "way of touching",
@@ -6577,6 +10097,22 @@
    "why": "act of touching",
    "by": "card384 Claude review 2026-10-19"
   },
+  "toujours|adv|10ca7af849b2": {
+   "term": null,
+   "auto": "always",
+   "meaning": "always",
+   "ordinal": 0,
+   "why": "adverb (always)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "toujours|adv|d7c6128a1275": {
+   "term": null,
+   "auto": "still",
+   "meaning": "still",
+   "ordinal": 1,
+   "why": "adverb (still)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "tournée|noun|4ff3c10ee2c6": {
    "term": null,
    "auto": "tour",
@@ -6592,6 +10128,14 @@
    "ordinal": 1,
    "why": "treat (tournée)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "toutefois|adv|cef5d4775956": {
+   "term": null,
+   "auto": "however",
+   "meaning": "however, nonetheless",
+   "ordinal": 0,
+   "why": "adverb (however)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "traduction|noun|5d68fbb82e71": {
    "term": null,
@@ -6632,6 +10176,14 @@
    "ordinal": 0,
    "why": "line (trait)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "trait|noun|43067a6b757b": {
+   "term": null,
+   "auto": "vibrant",
+   "meaning": "a vibrant, brilliant, or innovative idea",
+   "ordinal": 5,
+   "why": "abstract (vibrant idea)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "traité|noun|9fee6ff6bf03": {
    "term": null,
@@ -6689,6 +10241,14 @@
    "why": "wide side",
    "by": "card384 Claude review 2026-10-19"
   },
+  "travers|noun|862b8de05379": {
+   "term": null,
+   "auto": "oddity",
+   "meaning": "oddity, irregularity of mind and mood, unfortunate disposition, defect of character",
+   "ordinal": 2,
+   "why": "abstract (oddity of mind)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "travers|noun|fdf3634d6b79": {
    "term": null,
    "auto": "outside",
@@ -6713,6 +10273,22 @@
    "why": "stand, grandstand",
    "by": "card384 Claude review 2026-10-19"
   },
+  "tromper|verb|2af8a1c95b21": {
+   "term": null,
+   "auto": "make a mistake",
+   "meaning": "to make a mistake, be wrong",
+   "ordinal": 3,
+   "why": "idiom (make a mistake)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "tromper|verb|b42994b827ba": {
+   "term": null,
+   "auto": "distract oneself from",
+   "meaning": "to distract oneself from",
+   "ordinal": 2,
+   "why": "idiom (distract oneself)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "tronc|noun|250c2402843d": {
    "term": "tree trunk",
    "auto": "trunk",
@@ -6728,6 +10304,14 @@
    "ordinal": 0,
    "why": "trunk pictures car trunks and elephants",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "trop|adv|25f9c64af14e": {
+   "term": null,
+   "auto": "too",
+   "meaning": "too; too much",
+   "ordinal": 0,
+   "why": "adverb",
+   "by": "card371 Claude review 2026-10-19"
   },
   "trouble|noun|e0fe10b2b0c2": {
    "term": null,
@@ -6753,6 +10337,22 @@
    "why": "kit (trousse)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "trouver|verb|d93d2fd52a73": {
+   "term": null,
+   "auto": "be the case",
+   "meaning": "to be the case, to turn out (that)",
+   "ordinal": 4,
+   "why": "grammar/idiom (be the case)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "trou|noun|77a6c83cbb45": {
+   "term": null,
+   "auto": "pause in conversation",
+   "meaning": "pause in conversation",
+   "ordinal": 2,
+   "why": "abstract (pause in conversation)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "trou|noun|7aa36f2eb041": {
    "term": null,
    "auto": "blank",
@@ -6768,6 +10368,14 @@
    "ordinal": 0,
    "why": "procedure, technique",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "très|adv|4c7d3feb0559": {
+   "term": null,
+   "auto": "very",
+   "meaning": "very",
+   "ordinal": 0,
+   "why": "adverb (very)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "trésor|noun|208372258ad8": {
    "term": null,
@@ -6785,6 +10393,14 @@
    "why": "pipe (tube) pictures smoking pipes",
    "by": "card384 Claude review 2026-10-19"
   },
+  "tuile|noun|24fe77ab73e5": {
+   "term": "tuile cookie",
+   "auto": "tuile",
+   "meaning": "tuile (thin cookie)",
+   "ordinal": 2,
+   "why": "tuile is the French word itself; the sense is a thin cookie",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "télé|noun|08994a70ef8c": {
    "term": "television",
    "auto": "tv",
@@ -6801,6 +10417,14 @@
    "why": "head (leader)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "tôt|adv|f9e7a547954e": {
+   "term": null,
+   "auto": "early",
+   "meaning": "early",
+   "ordinal": 0,
+   "why": "adverb (early)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "ultra|noun|e50526b5d940": {
    "term": null,
    "auto": "extremist",
@@ -6808,6 +10432,38 @@
    "ordinal": 0,
    "why": "extremist",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "uniquement|adv|3e7222e20d4a": {
+   "term": null,
+   "auto": "merely",
+   "meaning": "merely; only; just",
+   "ordinal": 2,
+   "why": "adverb (merely)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "uniquement|adv|944fcb342fad": {
+   "term": null,
+   "auto": "uniquely",
+   "meaning": "uniquely",
+   "ordinal": 0,
+   "why": "adverb (uniquely)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "uniquement|adv|a80a7fcfb34a": {
+   "term": null,
+   "auto": "only",
+   "meaning": "only; exclusively; solely",
+   "ordinal": 1,
+   "why": "adverb (only)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "unité|noun|d30c40429a5b": {
+   "term": null,
+   "auto": "ones",
+   "meaning": "ones (in arithmetic)",
+   "ordinal": 2,
+   "why": "arithmetic term (ones), no picture word",
+   "by": "card371 Claude review 2026-10-19"
   },
   "universitaire|noun|134130d5f17f": {
    "term": null,
@@ -6953,6 +10609,14 @@
    "why": "symbol of fragility",
    "by": "card384 Claude review 2026-10-19"
   },
+  "verre|noun|c9fba0c9f4e4": {
+   "term": null,
+   "auto": "symbol of transparency",
+   "meaning": "symbol of transparency",
+   "ordinal": 2,
+   "why": "abstract (symbol of transparency)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "version|noun|bff0a374797f": {
    "term": null,
    "auto": "translation",
@@ -6984,6 +10648,14 @@
    "ordinal": 1,
    "why": "Virgo",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "vieux|noun|78e8c40a1815": {
+   "term": null,
+   "auto": "old chap",
+   "meaning": "old chap",
+   "ordinal": 3,
+   "why": "forms of address (old chap)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "vie|noun|a479a7fc0db1": {
    "term": null,
@@ -7025,6 +10697,14 @@
    "why": "one's twenties",
    "by": "card384 Claude review 2026-10-19"
   },
+  "violer|verb|a1880669f96f": {
+   "term": null,
+   "auto": "rape",
+   "meaning": "to rape, to have sex with an unwilling partner",
+   "ordinal": 1,
+   "why": "sexual violence, no picture search term",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "viol|noun|968ba6aee0c4": {
    "term": null,
    "auto": "rape",
@@ -7032,6 +10712,22 @@
    "ordinal": 0,
    "why": "a rape",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "visiblement|adv|2acacd987e97": {
+   "term": null,
+   "auto": "apparently",
+   "meaning": "apparently",
+   "ordinal": 1,
+   "why": "adverb (apparently)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "visiblement|adv|bc2384c4ca3a": {
+   "term": null,
+   "auto": "visibly",
+   "meaning": "visibly",
+   "ordinal": 0,
+   "why": "adverb (visibly)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "vivant|noun|1bcd813cce3e": {
    "term": null,
@@ -7049,6 +10745,30 @@
    "why": "living person",
    "by": "card384 Claude review 2026-10-19"
   },
+  "vivement|adv|d8c5693fd317": {
+   "term": null,
+   "auto": "vigorously",
+   "meaning": "vigorously, sharply",
+   "ordinal": 0,
+   "why": "adverb (vigorously)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "vivement|adv|df7f6ebe606a": {
+   "term": null,
+   "auto": "deeply",
+   "meaning": "deeply, profoundly",
+   "ordinal": 1,
+   "why": "adverb (deeply)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "vivement|prep|c3a66ab38c2f": {
+   "term": null,
+   "auto": "roll on",
+   "meaning": "roll on (something), bring on (something), can't wait for (something)",
+   "ordinal": 0,
+   "why": "idiom (roll on), no picture word",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "voie|noun|451ea95449b6": {
    "term": null,
    "auto": "way",
@@ -7056,6 +10776,14 @@
    "ordinal": 0,
    "why": "way, track (voie)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "voire|adv|82a4b2100c85": {
+   "term": null,
+   "auto": "even",
+   "meaning": "even, indeed",
+   "ordinal": 0,
+   "why": "adverb (even)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "voiture|noun|0e6fbf5ad7d9": {
    "term": "railway carriage",
@@ -7065,6 +10793,14 @@
    "why": "car (wagon)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "voiture|noun|1af06cd54df4": {
+   "term": "carriage",
+   "auto": "car",
+   "meaning": "car (wheeled vehicle usually pulled by a horse)",
+   "ordinal": 2,
+   "why": "horse-drawn wheeled vehicle, not a car",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "voix|noun|3be10e59856f": {
    "term": null,
    "auto": "vote",
@@ -7072,6 +10808,14 @@
    "ordinal": 1,
    "why": "vote (voix)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "voler|verb|f0addb6fc284": {
+   "term": null,
+   "auto": "pursue flying",
+   "meaning": "to pursue flying",
+   "ordinal": 1,
+   "why": "idiom (pursue flying), no picture word",
+   "by": "card371 Claude review 2026-10-19"
   },
   "volonté|noun|3496ef5cc373": {
    "term": null,
@@ -7097,6 +10841,14 @@
    "why": "will (vouloir)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "vouloir|verb|c0e80133775b": {
+   "term": null,
+   "auto": "please do something",
+   "meaning": "to please do something",
+   "ordinal": 3,
+   "why": "politeness formula",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "voyage|noun|ca5dd4938407": {
    "term": null,
    "auto": "travel",
@@ -7112,6 +10864,38 @@
    "ordinal": 1,
    "why": "light (on a dashboard)",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "vraiment|adv|9af66b1021d5": {
+   "term": null,
+   "auto": "truly",
+   "meaning": "truly, really, genuinely",
+   "ordinal": 0,
+   "why": "adverb",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "vraiment|adv|f6c246e8651a": {
+   "term": null,
+   "auto": "really",
+   "meaning": "really; very",
+   "ordinal": 1,
+   "why": "adverb / intensifier",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "vraiment|intj|7e3f24cc4f4b": {
+   "term": null,
+   "auto": "really",
+   "meaning": "really? for real?",
+   "ordinal": 0,
+   "why": "interjection",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "vrai|adv|44649a2542e5": {
+   "term": null,
+   "auto": "true",
+   "meaning": "true; truly",
+   "ordinal": 0,
+   "why": "adverb (truly)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "vrai|noun|f9878a346c6d": {
    "term": null,
@@ -7177,6 +10961,22 @@
    "why": "scale (proportion) pictures a weighing scale",
    "by": "card384 Claude review 2026-10-19"
   },
+  "également|adv|12267fa6cbc8": {
+   "term": null,
+   "auto": "equally",
+   "meaning": "equally",
+   "ordinal": 0,
+   "why": "adverb (equally)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "également|adv|8c2aa4cc7dd9": {
+   "term": null,
+   "auto": "too",
+   "meaning": "too; also",
+   "ordinal": 1,
+   "why": "adverb (too)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "égalité|noun|61f0b9bba9dc": {
    "term": null,
    "auto": "tie",
@@ -7216,6 +11016,22 @@
    "ordinal": 1,
    "why": "programme, show",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "énormément|adv|ea001a39b293": {
+   "term": null,
+   "auto": "enormously",
+   "meaning": "enormously",
+   "ordinal": 0,
+   "why": "adverb (enormously)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "énormément|det|138b5cb7ded6": {
+   "term": null,
+   "auto": "enormously many",
+   "meaning": "enormously many, very much, a great deal",
+   "ordinal": 0,
+   "why": "determiner (enormously many)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "époque|noun|b3f055e07791": {
    "term": null,
@@ -7272,6 +11088,14 @@
    "ordinal": 1,
    "why": "equipping",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "établir|verb|e7f0db55661c": {
+   "term": null,
+   "auto": "stand at",
+   "meaning": "(+ preposition à) to stand at (about a statistic)",
+   "ordinal": 5,
+   "why": "idiom (stand at, about a statistic)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "étage|noun|575fc38d02c2": {
    "term": "storey",
@@ -7337,6 +11161,30 @@
    "why": "study (artwork)",
    "by": "card384 Claude review 2026-10-19"
   },
+  "éventuellement|adv|c480ca31fb7a": {
+   "term": null,
+   "auto": "eventually",
+   "meaning": "eventually",
+   "ordinal": 1,
+   "why": "adverb (eventually)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "éventuellement|adv|cc027666f9b0": {
+   "term": null,
+   "auto": "possibly",
+   "meaning": "possibly, maybe, perhaps; if you want",
+   "ordinal": 0,
+   "why": "adverb (possibly)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "évidemment|adv|8ea628da1cfa": {
+   "term": null,
+   "auto": "course",
+   "meaning": "of course, evidently, obviously",
+   "ordinal": 0,
+   "why": "adverb (of course, obviously)",
+   "by": "card371 Claude review 2026-10-19"
+  },
   "évidence|noun|0745b9380087": {
    "term": null,
    "auto": "obviousness",
@@ -7360,6 +11208,22 @@
    "ordinal": 1,
    "why": "being, existence",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "être|verb|114743e8cf34": {
+   "term": null,
+   "auto": "passive voice",
+   "meaning": "the passive voice",
+   "ordinal": 5,
+   "why": "grammar label (passive voice)",
+   "by": "card371 Claude review 2026-10-19"
+  },
+  "être|verb|7c1c473768e2": {
+   "term": null,
+   "auto": "all reflexive verbs",
+   "meaning": "all reflexive verbs",
+   "ordinal": 4,
+   "why": "grammar label (all reflexive verbs)",
+   "by": "card371 Claude review 2026-10-19"
   },
   "œil|noun|2301e392c9e1": {
    "term": null,

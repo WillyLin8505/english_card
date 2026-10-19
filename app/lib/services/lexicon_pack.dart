@@ -508,6 +508,8 @@ class LexEntry {
     'offensive',
     'euphemistic',
     'poetic',
+    // brown 「（幼兒用語）拉屎」 (問題回報 #341).
+    'childish',
     // Quality rules (#184): senses ranked low by lexicon/backend/app/quality.py.
     'low_priority',
   };
@@ -540,14 +542,17 @@ class LexEntry {
       _searchCache[this] ??= '$lemma ${learnerMeaning ?? ''}'.toLowerCase();
 
   String? _learnerMeaning() {
-    final usable = senses
-        .where((s) =>
-            (s.native ?? '').trim().isNotEmpty &&
-            !s.labels.any((l) =>
+    final usable = [
+      for (var i = 0; i < senses.length; i++)
+        if ((senses[i].native ?? '').trim().isNotEmpty &&
+            !senses[i].labels.any((l) =>
                 _rareLabels.contains(l.toLowerCase()) ||
-                // Another etymology: a different word with the same spelling.
-                l.startsWith('etymology-')))
-        .toList();
+                // Another etymology: a different word with the same
+                // spelling — unless the lexicon put it first (問題回報
+                // #341: date 「日期」, pen 「筆」, plane 「飛機」).
+                (i > 0 && l.startsWith('etymology-'))))
+          senses[i]
+    ];
     final dictionary = usable.where((s) => !s.nativeAi).toList();
     final common =
         (dictionary.isNotEmpty ? dictionary : usable).take(2).toList();

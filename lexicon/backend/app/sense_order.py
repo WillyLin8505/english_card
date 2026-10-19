@@ -227,8 +227,23 @@ PREFERRED_GLOSSES = {
 }
 
 
+@lru_cache(maxsize=1)
+def english_common_senses() -> dict:
+    """Card #381 (問題回報 #341): English senses reviewed as the common ones,
+    'lemma|pos' -> {first: [gloss prefixes], zh, zh_ai, low} (quality/
+    en_common_senses.json). Kaikki's English order is historical too: train's
+    first sense is a dress's train, capital's is money, pen's an enclosure."""
+    import json
+    from .quality import QUALITY_DIR
+    p = QUALITY_DIR / "en_common_senses.json"
+    return json.loads(p.read_text(encoding="utf-8")).get("words", {}) if p.exists() else {}
+
+
 def _preferred_index(item: dict, target: str, lemma: str) -> int:
-    prefs = PREFERRED_GLOSSES.get((target, lemma, str(item.get("pos") or "")))
+    pos = str(item.get("pos") or "")
+    prefs = PREFERRED_GLOSSES.get((target, lemma, pos))
+    if prefs is None and target == "en":
+        prefs = tuple(p.lower() for p in english_common_senses().get(f"{lemma}|{pos}", {}).get("first", ()))
     if not prefs:
         return 0
     gloss = str(item.get("gloss") or "").lower()

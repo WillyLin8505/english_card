@@ -9,7 +9,7 @@ Line counts as of 2026-10-17. **Big files: search first, then read a range** (se
 | Lexicon API (FastAPI) | `lexicon/backend/app/` (`main.py` registers routers) | 8770 — agents use **5173/api** only |
 | Workers (text / images / tags lanes) | `lexicon/worker/worker.py` | — |
 | Tagger (Qwen via llama-server) | `tagger/tagging_server.py`, config `tagger/tagger_config.py` | 8765 / 8790 |
-| Learner app (Flutter) | `app/` | web build on 8123 (`serve_app.py`) |
+| Learner app (Flutter) | `app/` | web build on 8123 (`serve_app.py`; `/api/lexicon` = `lexicon_transport.SnapshotStore`: after a restart it serves the newest `.runtime/dictionary-snapshots/*/` pack and rebuilds in the background, #380) |
 | Card studio | `card_preview/` | 8772 |
 | DB | PostgreSQL 17, `lexicon` + `lexicon_test`; migrations `lexicon/migrations/versions/00NN_*.py` | 5432 |
 

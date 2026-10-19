@@ -295,8 +295,12 @@ def rank_senses(senses: list[dict], low_keys: set[str] | None = None) -> list[di
     low_keys = low_keys or set()
     count_etymology = any(not _etymology_tagged(s) for s in senses)
     seen_dict = False
-    for s in senses:
-        low = sense_is_low(s, seen_dict, count_etymology=count_etymology) or _sense_key(s) in low_keys
+    for i, s in enumerate(senses):
+        # The first sense is not demoted for its etymology tag: sense_order
+        # put it first (card #381: date 「a specific day」 and pen 「a tool
+        # for writing」 are etymology-2/3, after the fruit and the enclosure).
+        low = sense_is_low(s, seen_dict, count_etymology=count_etymology and i > 0) \
+            or _sense_key(s) in low_keys
         s["priority"] = "low" if low else "main"
         if not low and s.get("native") and not s.get("native_ai"):
             seen_dict = True
