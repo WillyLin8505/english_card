@@ -342,7 +342,7 @@ class _DatabaseLibraryScreenState extends State<DatabaseLibraryScreen> {
                                                                           posLabel(
                                                                               word.pos)
                                                                         ].join(' / ')}'
-                                                                        '${word.cefr == null ? '' : ' · ${levelText(word.cefr!, estimated: word.cefrEstimated)}'}'
+                                                                        '${word.cefr == null || word.rareUsage ? '' : ' · ${levelText(word.cefr!, estimated: word.cefrEstimated)}'}'
                                                                         '${word.rareUsage ? ' · 罕見用法' : ''}',
                                                                         style: MFont.manrope(
                                                                             13,

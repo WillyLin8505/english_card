@@ -106,7 +106,9 @@ def report_failure(text: str, cards: list[dict]):
               f"{'、'.join('#' + str(c['card']) for c in cards)}，但 Windows 上檢查沒過，所以沒有 push。\n{text}\n"
               "修到 flutter analyze 無 error、flutter test 全過；不要為了過而刪測試。")
     if open_:
-        http("PUT", f"/issues/{open_[0]['id']}", {"detail": detail, "by": "mac_sync"})
+        # reopen so the issue swarm dispatches it again (an in_progress issue whose card is
+        # already done would otherwise never be picked up)
+        http("PUT", f"/issues/{open_[0]['id']}", {"detail": detail, "status": "open", "by": "mac_sync"})
     else:
         http("POST", "/issues", {"kind": "bug", "severity": "high", "area": "app", "title": FAIL_TITLE,
                                  "detail": detail, "reporter": "mac_sync"})
@@ -117,10 +119,20 @@ def next_item_no() -> int:
     return max([int(n) for n in re.findall(r"^## M(\d+)", text, re.M)] or [0]) + 1
 
 
+def clean_title(c: dict) -> str:
+    """Titles that reached the board through a non-UTF-8 shell arrive as '????' (card #376):
+    show the result's first sentence instead of unreadable text."""
+    t = (c.get("title") or "").strip()
+    if len(re.findall(r"[?�]", t)) < 3:
+        return t
+    out = (c.get("outcome") or "").replace("全部完成：", "").strip()
+    return f"問題回報（標題亂碼）：{out[:50]}"
+
+
 def inbox_item(no: int, commit: str, cards: list[dict], test_line: str) -> str:
     rows = []
     for c in cards:
-        rows.append(f"- 卡 #{c['card']}：{(c.get('title') or '')[:70]}\n  結果：{(c.get('outcome') or '')[:160]}")
+        rows.append(f"- 卡 #{c['card']}：{clean_title(c)[:70]}\n  結果：{(c.get('outcome') or '')[:160]}")
     return (f"\n## M{no}（{datetime.now(TAIPEI):%Y-%m-%d %H:%M}）狀態：待做\n"
             f"commit `{commit}`（Windows：flutter analyze 無 error、{test_line}）。`git pull` 後在 iPhone 模擬器"
             "（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，"

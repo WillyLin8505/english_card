@@ -197,3 +197,20 @@ def test_all_done_marker_ends_a_multi_round_card():
     import dispatch_tick as d
     assert d.ALL_DONE_RE.search("全部完成：5,552 槽補完")
     assert not d.ALL_DONE_RE.search("第 2 輪：補了 800 槽，還剩 4,752")
+
+
+def test_tag_fallback_starts_run_only_when_enabled(tmp_path, monkeypatch):
+    calls = []
+    monkeypatch.setattr(dt.subprocess, "Popen", lambda cmd, **kw: calls.append(cmd))
+    monkeypatch.setattr(dt, "TOOLS", tmp_path)
+    tick = dt.Tick.__new__(dt.Tick)
+    tick.dry = False
+    (tmp_path / "tag_fallback_config.json").write_text('{"enabled": false}', encoding="utf-8")
+    tick.tag_fallback()
+    assert calls == []
+    (tmp_path / "tag_fallback_config.json").write_text('{"enabled": true}', encoding="utf-8")
+    tick.tag_fallback()
+    assert len(calls) == 1 and calls[0][-2:] == [str(tmp_path / "tag_fallback.py"), "run"]
+    tick.dry = True
+    tick.tag_fallback()
+    assert len(calls) == 1

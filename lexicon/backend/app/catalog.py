@@ -89,6 +89,8 @@ FIELDS: list[Field] = [
     Field("fr_present_2p", "forms", "現在式 vous", languages=("fr",)),
     Field("fr_present_3p", "forms", "現在式 ils／elles", languages=("fr",)),
     Field("fr_past_participle", "forms", "過去分詞", languages=("fr",)),
+    # card #367: m. / f. / m./f. (epicene); "pl" = plural-only noun (les gens)
+    Field("fr_gender", "forms", "陰陽性", languages=("fr",)),
     Field("fr_feminine", "forms", "陰性", languages=("fr",)),
     Field("fr_plural", "forms", "複數", languages=("fr",)),
     Field("fr_feminine_plural", "forms", "陰性複數", languages=("fr",)),
@@ -173,7 +175,7 @@ _KAIKKI_EN_TARGET = {
 _KAIKKI_FR_TARGET = {
     "pos", "definition", "usage_labels", "register", "ipa", "audio", "fr_present_1s", "fr_present_2s",
     "fr_present_3s", "fr_present_1p", "fr_present_2p", "fr_present_3p", "fr_past_participle",
-    "fr_feminine", "fr_plural", "fr_feminine_plural", "synonyms", "antonyms", "related",
+    "fr_gender", "fr_feminine", "fr_plural", "fr_feminine_plural", "synonyms", "antonyms", "related",
     # The English Wiktionary's French entries carry hypernyms / hyponyms /
     # homophones and accent-tagged sounds too (chat: hypernyms félin; card #325).
     "hypernyms", "hyponyms", "homophones", "accent_labels",
@@ -323,7 +325,9 @@ def supports(source: str, target: str, native: str, field_key: str) -> tuple[boo
 # (sources in order, strategy, limit). English defaults are the spec's
 # 英文預設 Policy table; fields the table doesn't list get sensible ones.
 
-_IMAGE_SOURCES = ["wikimedia_commons", "open_images", "smithsonian", "openverse"]
+# Smithsonian last (問題回報 #375): its DEMO_KEY allows 10 requests a day and
+# it gave 9 of ~6,800 pictures, so Openverse is asked first.
+_IMAGE_SOURCES = ["wikimedia_commons", "open_images", "openverse", "smithsonian"]
 _EN_DEFAULTS = {
     "pos": (["kaikki", "oewn"], "FILL_MISSING", None),
     "definition": (["kaikki", "oewn"], "FILL_MISSING", 12),
@@ -420,7 +424,7 @@ FORM_POS = {"verb_base": "verb", "verb_past": "verb", "verb_past_participle": "v
             **{f"fr_present_{p}": "verb" for p in ("1s", "2s", "3s", "1p", "2p", "3p")},
             "fr_past_participle": "verb",
             "fr_feminine": ("adj", "noun"), "fr_plural": ("adj", "noun"),
-            "fr_feminine_plural": ("adj", "noun")}
+            "fr_feminine_plural": ("adj", "noun"), "fr_gender": "noun"}
 for _f in LEVELED:
     _src, _strategy, _limit = _EN_DEFAULTS[_f]
     _EN_DEFAULTS[_f] = ([*_src, "ai_translate"], _strategy, 30)

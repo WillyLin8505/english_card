@@ -221,6 +221,9 @@ PREFERRED_GLOSSES = {
     ("fr", "motif", "noun"): ("motive", "pattern", "motif"),
     ("fr", "bord", "noun"): ("border", "rim", "side"),
     ("fr", "flèche", "noun"): ("arrow", "spire", "pointer"),
+    ("fr", "forme", "noun"): ("shape (physical", "form", "shape"),
+    ("fr", "poignée", "noun"): ("handle", "grip", "handful (amount", "handful", "handshake"),
+    ("fr", "carrière", "noun"): ("career", "quarry", "racecourse"),
 }
 
 

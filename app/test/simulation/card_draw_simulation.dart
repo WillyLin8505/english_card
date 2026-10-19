@@ -20,6 +20,7 @@ import 'package:photo_english_app/models/learning_card.dart';
 import 'package:photo_english_app/models/word_entry.dart';
 import 'package:photo_english_app/services/flashcard_session.dart';
 import 'package:photo_english_app/services/fsrs_scheduler.dart';
+import 'package:photo_english_app/services/lexicon_pack.dart';
 import 'package:photo_english_app/services/word_database_repository.dart';
 
 class _Profile {
@@ -43,17 +44,35 @@ const _profiles = [
   _Profile('健忘200字_每天40_30天', 200, 40, 30, 0, 0.6),
 ];
 
-Map<String, Object> _run(_Profile p, int seed) {
+Map<String, Object> _run(_Profile p, int seed, {LexiconPack? pack}) {
   final rnd = Random(seed);
   var now = DateTime(2026, 1, 1, 20);
-  final repo = WordDatabaseRepository(clock: () => now)
+  final repo = WordDatabaseRepository(
+      clock: () => now, language: pack == null ? 'en' : 'fr')
     ..scheduler = FsrsScheduler(FsrsParameters());
+  final pool = <LexEntry>[];
+  final lemmas = <String>{};
+  if (pack != null) {
+    for (final word in pack.catalogWords) {
+      if (word.full && word.learnerMeaning != null && lemmas.add(word.lemma)) {
+        pool.add(word);
+      }
+    }
+    pool.shuffle(Random(seed));
+    expect(pool.length, greaterThanOrEqualTo(p.cards));
+  }
   var added = 0;
   void add(int n) {
     for (var i = 0; i < n && added < p.cards; i++) {
-      final w = 'w${added++}';
-      final e =
-          repo.addWord(word: w, pos: 'noun', meaning: '意思', level: 'A2');
+      final lex = pack == null ? null : pool[added];
+      final w = lex?.lemma ?? 'w$added';
+      added++;
+      final e = repo.addWord(
+          word: w,
+          pos: shortPos(lex?.pos ?? 'noun'),
+          meaning: lex?.learnerMeaning ?? '意思',
+          level: lex?.cefr ?? 'A2');
+      if (pack != null) continue;
       repo.editEntry(
         e.copyWith(examples: [
           WordExample(text: 'I see a $w every day.', translation: '我看到$w。')
@@ -61,6 +80,7 @@ Map<String, Object> _run(_Profile p, int seed) {
         {WordField.examples},
       );
     }
+    if (pack != null) repo.linkLexicon(pack);
   }
 
   add(p.addPerDay == 0 ? p.cards : p.addPerDay);
@@ -71,7 +91,8 @@ Map<String, Object> _run(_Profile p, int seed) {
   final coverage = <int, double>{};
   var totalDraws = 0;
   for (var day = 0; day < p.days; day++) {
-    now = DateTime(2026, 1, 1 + day, 7).add(Duration(minutes: rnd.nextInt(960)));
+    now =
+        DateTime(2026, 1, 1 + day, 7).add(Duration(minutes: rnd.nextInt(960)));
     if (day > 0) add(p.addPerDay);
     dueAtStart.add(repo.eligibleCards().length);
     final s = FlashcardSession(repo, random: rnd, continuous: true);
@@ -86,7 +107,8 @@ Map<String, Object> _run(_Profile p, int seed) {
       totalDraws++;
       s.showAnswer();
       final r = repo.scheduler.retrievability(c.fsrs, now);
-      final ok = r == null ? rnd.nextDouble() < 0.7 : rnd.nextDouble() < r * p.memory;
+      final ok =
+          r == null ? rnd.nextDouble() < 0.7 : rnd.nextDouble() < r * p.memory;
       s.rate(ok ? Rating.good : Rating.again);
       now = now.add(const Duration(seconds: 30));
     }
@@ -114,6 +136,8 @@ Map<String, Object> _run(_Profile p, int seed) {
   String f(num v) => v.toStringAsFixed(2);
   return {
     'profile': p.name,
+    'language': repo.language,
+    'word_samples': repo.entries.take(5).map((e) => e.word).toList(),
     'collection': added,
     'avg_shown_per_session': f(avg(shownPerDay)),
     'avg_due_at_start': f(avg(dueAtStart)),
@@ -135,22 +159,28 @@ void main() {
     final env = Platform.environment;
     final seed = int.parse(env['SIM_SEED'] ?? '7');
     final only = env['SIM_ONLY'];
+    final pack = env['SIM_TARGET'] == 'fr'
+        ? (LexiconPack.instance
+          ..loadJson(jsonDecode(File(env['SIM_PACK']!).readAsStringSync())
+              as Map<String, dynamic>))
+        : null;
     final rows = <Map<String, Object>>[];
     for (final p in _profiles) {
       if (only != null && !p.name.contains(only)) continue;
-      rows.add(_run(p, seed));
+      rows.add(_run(p, seed, pack: pack));
+    }
+    if (env['SIM_OUT'] != null) {
+      File(env['SIM_OUT']!)
+          .writeAsStringSync(const JsonEncoder.withIndent(' ').convert(rows));
     }
     // ignore: avoid_print
     print('SIMDRAW ${const JsonEncoder.withIndent(' ').convert(rows)}');
     for (final r in rows) {
       expect(double.parse(r['back_to_back_per_session'] as String), lessThan(1),
           reason: '${r['profile']}: the same word twice in a row');
-      // Reported, not asserted, until 問題回報 #319 (no cap on Again
-      // repeats in continuous mode) is fixed: then it must be <= 3.
-      if (int.parse('${r['worst_repeat']}') > 3) {
-        // ignore: avoid_print
-        print('SIMDRAW WARN ${r['profile']}: one word ${r['worst_repeat']}x');
-      }
+      // 問題回報 #319: a word shows at most 3 times a run, continuous included.
+      expect(int.parse('${r['worst_repeat']}'), lessThanOrEqualTo(3),
+          reason: '${r['profile']}: one word ${r['worst_repeat']}x in a run');
     }
   });
 }

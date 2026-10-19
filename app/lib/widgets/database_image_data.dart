@@ -78,7 +78,9 @@ String? databaseTagLevel(Map<String, dynamic> tag, LexiconPack pack) {
 bool databaseTagEstimated(Map<String, dynamic> tag, LexiconPack pack) {
   final source = tag['cefr_source'];
   if (source != null) {
-    return source == 'estimate' || source == 'frequency_estimate';
+    return source == 'estimate' ||
+        source == 'frequency_estimate' ||
+        source == 'ai_reviewed';
   }
   final id = (tag['lexeme_id'] as num?)?.toInt();
   return id != null && (pack.byId(id)?.cefrEstimated ?? false);

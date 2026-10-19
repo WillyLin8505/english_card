@@ -16,6 +16,12 @@ concrete improvements as issue reports — not only failures.
     python app/test/simulation/run_round.py 47 --only learner,database
     python app/test/simulation/run_round.py --with-ai  # also the photo simulation
     python app/test/simulation/run_round.py --no-posthog  # keep the events local
+    python app/test/simulation/run_round.py --lang fr  # English speaker learning French (#363)
+
+--lang fr uses the fr→en pack, its own rounds folder (app/build/rounds_fr/<N>/)
+and the French simulations (FR_SIMS), and adds pack_checks.json: what a French
+learner needs from the pack (noun gender, verb conjugation, English meanings,
+audio, French picture labels).
 
 The app's analytics events of every simulation (<name>.events.jsonl) are
 uploaded to PostHog when app/posthog.local.json exists, as one simulated
@@ -39,7 +45,8 @@ from pathlib import Path
 APP = Path(__file__).resolve().parents[2]
 ROUNDS = APP / "build" / "rounds"
 POSTHOG_FILE = APP / "posthog.local.json"
-PACK_URL = "http://127.0.0.1:8123/api/lexicon?target=en&native=zh-TW"
+PACK_URL = "http://127.0.0.1:8123/api/lexicon?target={target}&native={native}"
+LANGS = {"en": ("en", "zh-TW"), "fr": ("fr", "en")}
 # name: (file, extra environment). Timing probes are left out: they measure,
 # they don't check behaviour.
 SIMS = {
@@ -60,13 +67,23 @@ SIMS = {
 }
 
 
+# An English speaker learning French (問題回報 #363): onboarding, review,
+# word details and every tab with the English interface, at two levels.
+FR_SIMS = {
+    "fr_learner_a1": ("fr_learner_simulation.dart", {"SIM_WORDS": "40", "SIM_LEVEL": "A1", "SIM_CAPTURE": "1"}),
+    "fr_learner_b1": ("fr_learner_simulation.dart", {"SIM_WORDS": "60", "SIM_LEVEL": "B1"}),
+    "card_draw": ("card_draw_simulation.dart", {}),
+    "fr_media": ("fr_media_simulation.dart", {}),
+}
+
 # These call the local Qwen tagger.
 AI_SIMS = {"photo": ("photo_simulation.dart", {})}
 
 
-def next_round() -> int:
+def next_round(rounds=ROUNDS) -> int:
     """The next free round, claimed by creating its folder: several cards
     (one per app tab) may start rounds at the same time."""
+    ROUNDS = rounds
     ROUNDS.mkdir(parents=True, exist_ok=True)
     n = max((int(p.name) for p in ROUNDS.glob("*") if p.name.isdigit()), default=0) + 1
     while True:
@@ -77,14 +94,56 @@ def next_round() -> int:
             n += 1
 
 
-def fetch_pack(dest: Path) -> int:
-    request = urllib.request.Request(PACK_URL, headers={"Accept-Encoding": "gzip"})
+def fetch_pack(dest: Path, lang="en") -> int:
+    target, native = LANGS[lang]
+    url = PACK_URL.format(target=target, native=native)
+    request = urllib.request.Request(url, headers={"Accept-Encoding": "gzip"})
     with urllib.request.urlopen(request, timeout=300) as response:
         body = response.read()
         if response.headers.get("Content-Encoding") == "gzip":
             body = gzip.decompress(body)
     dest.write_bytes(body)
     return len(json.loads(body).get("lexemes", []))
+
+
+def fr_pack_checks(pack: Path) -> dict:
+    """What an English speaker learning French needs from the pack."""
+    d = json.loads(pack.read_text(encoding="utf-8"))
+    lex = d["lexemes"]
+    nouns = [l for l in lex if l["pos"] == "noun"]
+    verbs = [l for l in lex if l["pos"] == "verb"]
+    lemma = {l["id"]: l["lemma"] for l in lex}
+    labels = [lb for i in d.get("catalog_images", []) for lb in i.get("labels", [])]
+    gender = sum(1 for l in nouns if l.get("gender") or any(
+        f.get("field") in ("fr_gender", "gender") for f in l["forms"]))
+    return {
+        "lexemes": len(lex),
+        "nouns_with_gender": f"{gender}/{len(nouns)}",
+        "verbs_with_present_forms": f"{sum(1 for l in verbs if any(f['field'].startswith('fr_present') for f in l['forms']))}/{len(verbs)}",
+        "with_english_meaning": f"{sum(1 for l in lex if any(s.get('native') for s in l['senses']))}/{len(lex)}",
+        "with_audio": f"{sum(1 for l in lex if any(p['kind'] == 'audio' and p.get('audio') for p in l['pronunciations']))}/{len(lex)}",
+        "examples_without_translation": sum(1 for l in lex for e in l["examples"] if not e.get("translation")),
+        "picture_labels_not_french_lemma": sum(1 for lb in labels if lemma.get(lb.get("lexeme_id")) != lb["word"]),
+        "picture_labels": len(labels),
+    }
+
+
+def event_stats(out: Path, names) -> dict:
+    """Summarize local events even when uploading is disabled."""
+    stats = {}
+    for name in names:
+        path = out / f"{name}.events.jsonl"
+        events = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()
+                  if line.strip()] if path.exists() else []
+        reviews = [e.get("properties", {}) for e in events if e.get("event") == "card_reviewed"]
+        ratings = {}
+        for review in reviews:
+            rating = str(review.get("rating", "unknown"))
+            ratings[rating] = ratings.get(rating, 0) + 1
+        times = [r["duration_ms"] for r in reviews if isinstance(r.get("duration_ms"), (int, float))]
+        stats[name] = {"events": len(events), "card_reviewed": len(reviews),
+                       "ratings": ratings, "mean_answer_ms": round(sum(times) / len(times), 2) if times else None}
+    return stats
 
 
 def upload_events(out: Path, n: int, names) -> str:
@@ -104,7 +163,7 @@ def upload_events(out: Path, n: int, names) -> str:
         stamps = [datetime.fromisoformat(e["timestamp"].replace("Z", "+00:00")) for e in events]
         shift = datetime.now(timezone.utc) - max(stamps)
         for e, t in zip(events, stamps):
-            e["distinct_id"] = f"sim-r{n}-{name}"
+            e["distinct_id"] = f"sim-r{n}-{name}"  # n is "fr<N>" for French rounds
             e["timestamp"] = (t + shift).isoformat()
             e["properties"].update(simulated=True, sim_round=n, sim_name=name)
         for i in range(0, len(events), 500):
@@ -125,9 +184,12 @@ def main():
     ap.add_argument("--only", help="comma-separated simulation names")
     ap.add_argument("--with-ai", action="store_true", help="also simulations that call the Qwen tagger")
     ap.add_argument("--no-posthog", action="store_true", help="do not upload the analytics events")
+    ap.add_argument("--lang", choices=sorted(LANGS), default="en", help="learning language (fr: English speaker learning French)")
     a = ap.parse_args()
-    n = a.round or next_round()
-    out = ROUNDS / str(n)
+    rounds = ROUNDS if a.lang == "en" else APP / "build" / f"rounds_{a.lang}"
+    sims = SIMS if a.lang == "en" else FR_SIMS
+    n = a.round or next_round(rounds)
+    out = rounds / str(n)
     out.mkdir(parents=True, exist_ok=True)
     pack = out / "pack.json"
     # Re-running part of a round keeps that round's pack (same data as its
@@ -136,30 +198,45 @@ def main():
         words = len(json.loads(pack.read_text(encoding="utf-8")).get("lexemes", []))
         print(f"round {n}: reusing its pack ({words} lexemes)")
     else:
-        words = fetch_pack(pack)
+        words = fetch_pack(pack, a.lang)
         print(f"round {n}: pack {words} lexemes → {pack}")
+    if a.lang == "fr" and (not a.only or "fr_media" in a.only.split(",")):
+        # Replay the live deck list in a widget test without network calls or AI.
+        deck_file = out / "decks.json"
+        if not deck_file.exists():
+            with urllib.request.urlopen("http://127.0.0.1:8123/api/decks", timeout=60) as response:
+                deck_file.write_bytes(response.read())
     previous = out / "summary.json"
     results = (json.loads(previous.read_text(encoding="utf-8")).get("results", {})
                if previous.exists() and a.round else {})
     flutter = "flutter.bat" if os.name == "nt" else "flutter"
-    for name, (file, extra) in {**SIMS, **(AI_SIMS if a.with_ai else {})}.items():
+    for name, (file, extra) in {**sims, **(AI_SIMS if a.with_ai and a.lang == "en" else {})}.items():
         if a.only and name not in a.only.split(","):
             continue
         env = {**os.environ, "SIM_PACK": str(pack), "SIM_SEED": str(n),
+               "SIM_TARGET": a.lang, "SIM_DECKS": str(out / "decks.json"),
                "SIM_OUT": str(out / f"{name}.json"),
                "SIM_EVENTS": str(out / f"{name}.events.jsonl"), **extra}
         started = time.time()
         with open(out / f"{name}.log", "w", encoding="utf-8") as log:
-            code = subprocess.call([flutter, "test", f"test/simulation/{file}"], cwd=APP, env=env,
-                                   stdout=log, stderr=subprocess.STDOUT)
+            try:
+                code = subprocess.call([flutter, "test", f"test/simulation/{file}"], cwd=APP, env=env,
+                                       stdout=log, stderr=subprocess.STDOUT, timeout=540)
+            except subprocess.TimeoutExpired:
+                code = 124
+                log.write("\nSimulation exceeded the 9-minute foreground limit.\n")
         tail = (out / f"{name}.log").read_text(encoding="utf-8", errors="replace").strip().splitlines()[-1:]
         results[name] = {"ok": code == 0, "seconds": round(time.time() - started), "last": tail[0] if tail else ""}
         print(f"  {'通過' if code == 0 else '失敗'} {name} ({results[name]['seconds']} 秒) {results[name]['last'][:120]}")
     failed = [k for k, v in results.items() if not v["ok"]]
     if not a.no_posthog:
-        print(upload_events(out, n, results))
-    summary = {"round": n, "finished": time.strftime("%Y-%m-%d %H:%M:%S"), "pack_lexemes": words,
-               "results": results, "failed": failed}
+        print(upload_events(out, n if a.lang == "en" else f"{a.lang}{n}", results))
+    summary = {"round": n, "lang": a.lang, "finished": time.strftime("%Y-%m-%d %H:%M:%S"),
+               "pack_lexemes": words, "results": results, "failed": failed}
+    summary["events"] = event_stats(out, results)
+    if a.lang == "fr":
+        summary["pack_checks"] = fr_pack_checks(pack)
+        print("pack:", json.dumps(summary["pack_checks"], ensure_ascii=False))
     (out / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"round {n}: {len(results) - len(failed)}/{len(results)} 通過" + (f"，失敗：{'、'.join(failed)}" if failed else ""))
     sys.exit(1 if failed else 0)

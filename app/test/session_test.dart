@@ -336,6 +336,28 @@ void main() {
           hasLength(1 + FlashcardSession.maxAgainRepeats));
     });
 
+    test('continuous run: no word shows more than maxRunAppearances, even right',
+        () {
+      final repo = testRepository();
+      final session = FlashcardSession(repo,
+          random: math.Random(5), continuous: true);
+      final counts = <String, int>{};
+      var steps = 0;
+
+      while (!session.finished && steps < 300) {
+        final id = session.card!.id;
+        counts[id] = (counts[id] ?? 0) + 1;
+        session.showAnswer();
+        session.rate(Rating.good);
+        steps++;
+      }
+
+      expect(session.finished, isTrue);
+      expect(counts.values.every((n) => n <= FlashcardSession.maxRunAppearances),
+          isTrue,
+          reason: 'practice used to repeat a word without limit (#319)');
+    });
+
     test(
         'rating needs the answer shown; the back shows one of the word\'s photos',
         () {

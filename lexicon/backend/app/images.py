@@ -30,7 +30,7 @@ from PIL import Image
 from sqlalchemy import case, func, or_, select, text
 
 from . import config
-from . import agent_pause, db, models as m, wikimedia_gate
+from . import agent_pause, db, models as m, rate_gate, wikimedia_gate
 
 HOSTS = {'www.wikidata.org', 'commons.wikimedia.org', 'upload.wikimedia.org', 'thumb.wikimedia.org'}
 # Our own API endpoints for the two other live sources: an exact host match,
@@ -486,16 +486,29 @@ def run_fetch(s, task_id: int):
     return got
 
 
+WIKIMEDIA_MAX_WAIT_S = 20.0  # longest shared-pause wait one download accepts
+
+
 def fetch(url, limit=MAX_BYTES, validate=check_url):
     request = urllib.request.Request(validate(url), headers={'User-Agent': config.USER_AGENT})
     opener = urllib.request.build_opener(Redirect(validate))
     # Wikimedia hosts take a slot from the machine-wide budget shared with the
     # text workers' audio downloads and other image workers (問題回報 #339);
-    # other hosts keep this process's own throttle.
-    gated = wikimedia_gate.is_wikimedia(request.full_url)
+    # api.si.edu and api.openverse.org have their own shared gates that skip
+    # the source while it is in a 429 pause (問題回報 #360); other hosts keep
+    # this process's own throttle.
+    gate = rate_gate.gate_for(request.full_url)
     for attempt in range(4):
-        if gated:
-            wikimedia_gate.wait_turn()
+        if gate is not None:
+            if not gate.skip_when_paused:
+                # Wikimedia: never sit out a long shared 429 pause inside one
+                # download (問題回報 #376: tasks ran 400-1950 s); fail as a 429
+                # so the task is requeued with backoff and other words go on.
+                left = gate.status().get('paused_for', 0.0)
+                if left > WIKIMEDIA_MAX_WAIT_S:
+                    raise urllib.error.HTTPError(request.full_url, 429, f'Wikimedia 共用限速暫停中（還有 {left:.0f} 秒）',
+                                                 None, None)
+            gate.wait_turn()  # raises rate_gate.Paused for a skip-when-paused gate
         else:
             with _throttle:
                 wait = _last_request[0] + MIN_INTERVAL - time.monotonic()
@@ -505,17 +518,24 @@ def fetch(url, limit=MAX_BYTES, validate=check_url):
         try:
             with opener.open(request, timeout=25) as response:
                 data = response.read(limit + 1)
-            if gated:
-                wikimedia_gate.succeeded()
+            if gate is not None:
+                gate.succeeded()
             break
         except urllib.error.HTTPError as e:
-            if e.code not in (429, 503) or attempt == 3:
-                if gated and e.code in (429, 503):
-                    wikimedia_gate.penalize(e.headers.get('Retry-After'))
+            if e.code not in (429, 503):
                 raise
-            if gated:  # pause every process; the next wait_turn waits it out
-                wikimedia_gate.penalize(e.headers.get('Retry-After'))
-                continue
+            if gate is not None:  # pause every process
+                pause = gate.penalize(e.headers.get('Retry-After'))
+                if gate.skip_when_paused:
+                    # A fallback source (Smithsonian: Retry-After ~11 h with
+                    # DEMO_KEY; Openverse: 200/day): don't sit here, the
+                    # caller moves on to the next source.
+                    raise rate_gate.Paused(gate, pause, http_code=e.code) from e
+                if pause > WIKIMEDIA_MAX_WAIT_S or attempt >= 1:
+                    raise  # requeue the task instead of waiting (#376)
+                continue  # a short pause: wait it out once
+            if attempt == 3:
+                raise
             retry = e.headers.get('Retry-After', '')
             time.sleep(min(60.0, float(retry) if retry.isdigit() else 5.0 * 2 ** attempt))
     if len(data) > limit:
@@ -1106,10 +1126,11 @@ def _search_wikimedia_commons(s, sense_id, lemma, gloss, native, ctx):
     return sorted(out, key=lambda c: -c['score'])
 
 
-# Spec order (問題回報 #3): Wikidata／Commons → Open Images → Smithsonian
-# CC0 → Openverse. Each entry: (search(s, sense_id, lemma, gloss, native,
+# Spec order (問題回報 #3): Wikidata／Commons → Open Images → Openverse →
+# Smithsonian CC0 (moved last by 問題回報 #375: 10 requests a day, 9 pictures
+# ever). Each entry: (search(s, sense_id, lemma, gloss, native,
 # ctx) -> ranked [{"id", "score", "imported"}], ingest(s, candidate_id)).
-IMAGE_SOURCE_CHAIN = ('wikimedia_commons', 'open_images', 'smithsonian', 'openverse')
+IMAGE_SOURCE_CHAIN = ('wikimedia_commons', 'open_images', 'openverse', 'smithsonian')
 IMAGE_SOURCES = {
     'wikimedia_commons': (_search_wikimedia_commons, ingest),
     'open_images': (lambda s, sense_id, lemma, gloss, native, ctx:
@@ -1135,6 +1156,14 @@ def _note_fetch_error(out: dict, exc: BaseException) -> None:
     """Classify one source failure. The next candidate or source still runs."""
     if isinstance(exc, urllib.error.HTTPError) and exc.code in (429, 503):
         out['rate_limited'] = True
+        return
+    if isinstance(exc, rate_gate.Paused):
+        # A fallback source skipped while its shared gate is in a 429 pause
+        # (問題回報 #360). Not "rate_limited": that would requeue the task
+        # every hour to wait for a source that allows 10 requests a day; the
+        # task completes on the other sources and card362_requeue.py brings
+        # the skipped ones back once a real API key is configured.
+        out['source_paused'] = True
         return
     message = str(exc)
     if _is_timeout_error(exc):
@@ -1176,11 +1205,20 @@ def english_label_terms(meaning: str | None, gloss: str | None = None) -> list[s
 def _english_items(text_: str | None) -> list[str | None]:
     """The English items of a meaning in order; an item longer than three
     words is None (so the first item still decides english_search_term)."""
-    t = re.sub(r"\([^)]*\)|\[[^\]]*\]", " ", str(text_ or ""))
+    t = re.sub(r"\([^)]*\)|\[[^\]]*\]", " ", str(text_ or "")).replace("’", "'")
     items: list[str | None] = []
-    for part in re.split(r"[;,，、/]", t):
+    for part in re.split(r"[;,，、/:!?]", t):
         part = re.sub(r"^(to|a|an|the)\s+", "", part.strip().lower())
-        part = re.sub(r"[^a-z' -]", " ", part)
+        if part in _USAGE_ITEMS:
+            # 「archaic, king」 names the register, not the word (問題回報 #367).
+            continue
+        part = _OF_ITEM.sub("", part)  # 「of Africa」 → Africa, 「of a building」 → building
+        if not part.isascii() or _REFERENCE_ITEM.match(part) or _PHRASE_ITEM.match(part):
+            # A French loanword (fiancée), a cross-reference (synonym of …) or a
+            # clause fragment (in vain, that sings) is no English word to search for.
+            items.append(None)
+            continue
+        part = re.sub(r"[\d_]|[^\w' -]", " ", part)
         words = part.split()
         if len(words) > 3:
             # 「skin of a person or animal」 → skin (card #352); a generic
@@ -1191,6 +1229,14 @@ def _english_items(text_: str | None) -> list[str | None]:
     return items
 
 
+_USAGE_ITEMS = frozenset({
+    "obsolete", "archaic", "dated", "outdated", "colloquial", "slang", "vulgar", "derogatory",
+    "offensive", "euphemistic", "humorous", "nonstandard", "informal", "dialectal", "poetic",
+})
+_REFERENCE_ITEM = re.compile(r"^(?:synonym|alternative|alt|form|plural|feminine|masculine|"
+                             r"misspelling|abbreviation|initialism|clipping|standard) ")
+_PHRASE_ITEM = re.compile(r"^(?:in|on|with|for|at|by|from|into|than|about|that|which|who)\b")
+_OF_ITEM = re.compile(r"^of (?:a |an |the )?")
 _GLOSS_HEAD = re.compile(r"^([a-z][a-z'-]+) (?:of|in|on) (?:a|an|the|some|one's|any) ")
 _GENERIC_HEADS = frozenset({
     "kind", "type", "sort", "act", "part", "piece", "set", "member", "person", "one",
@@ -1215,7 +1261,7 @@ def auto_fetch(s, target, native, lemma, *, senses_per_lexeme=None, per_sense=3,
     term = (query or lemma).strip() or lemma
     chain = [src for src in (sources if sources is not None else
                              _enabled_image_sources(s, target, native)) if src in IMAGE_SOURCES]
-    rows = s.execute(text('''SELECT sn.id, d.text AS gloss, l.pos, t.text AS native
+    rows = s.execute(text('''SELECT sn.id, d.text AS gloss, l.pos, t.text AS native, sn.sense_key
         FROM senses sn JOIN lexemes l ON l.id = sn.lexeme_id
         LEFT JOIN definitions d ON d.sense_id = sn.id AND d.language = l.language
         LEFT JOIN sense_translations t ON t.sense_id = sn.id AND t.native_language = :native
@@ -1231,7 +1277,7 @@ def auto_fetch(s, target, native, lemma, *, senses_per_lexeme=None, per_sense=3,
         m.Sense, m.Sense.id == m.SenseImage.sense_id).join(m.Lexeme, m.Lexeme.id == m.Sense.lexeme_id)
         .where(m.Lexeme.language == target, m.Lexeme.normalized == lemma)).all())
     ctx = {'used_concepts': set()}
-    for sense_id, gloss, pos, meaning in rows:
+    for sense_id, gloss, pos, meaning, sense_key in rows:
         have = s.scalar(select(func.count()).select_from(m.SenseImage).where(
             m.SenseImage.sense_id == sense_id, m.SenseImage.review_status != 'rejected'))
         if have >= per_sense:
@@ -1240,17 +1286,20 @@ def auto_fetch(s, target, native, lemma, *, senses_per_lexeme=None, per_sense=3,
         got, attempted = have, False
         # Every picture source is English (Wikidata labels, Open Images
         # classes, Openverse queries): a French headword searches by the
-        # sense's English meaning instead (chat → cat), card #325.
+        # sense's English meaning instead (chat → cat), card #325 — or by
+        # the term reviewed for the sense (quality/search_terms.json, #384).
         sense_term = term
         if target != "en" and not query:
-            sense_term = english_search_term(meaning if native == "en" else None, gloss)
+            from .search_terms import sense_search_term
+            sense_term = sense_search_term(target, lemma, pos, sense_key,
+                                           meaning if native == "en" else None, gloss)
             if not sense_term:
                 out['incomplete_senses'] += 1
                 out['errors'].append(f'詞義 #{sense_id}：沒有英文詞義可用來搜圖')
                 continue
         for source_key in chain:
-            if got >= per_sense:
-                break
+            if got >= per_sense or out['rate_limited']:
+                break  # a 429 pauses every source of this host: requeue (#376)
             search_fn, ingest_fn = IMAGE_SOURCES[source_key]
             try:
                 ranked = search_fn(s, sense_id, sense_term, gloss, meaning, ctx)
@@ -1262,7 +1311,7 @@ def auto_fetch(s, target, native, lemma, *, senses_per_lexeme=None, per_sense=3,
                 continue
             attempted = True
             for c in ranked:
-                if got >= per_sense:
+                if got >= per_sense or out['rate_limited']:
                     break
                 if c.get('imported'):
                     continue
@@ -2636,11 +2685,17 @@ def share_existing(s, target, lemma, per_sense=3) -> int:
     return added
 
 
+SHARE_MIN_LABELS = 3  # QC photo.fewer_than_3_tags counts the target pack's labels
+
+
 def share_by_meaning(s, target, lemma, per_sense=3) -> int:
     """#336: a non-English word's first noun senses get pictures already
     labelled with the sense's English meaning (images.label_word: chat → cat)
     and approved for that English word, up to ``per_sense`` a sense, before
-    anything is downloaded. Bound pending, then auto_accept_asset decides."""
+    anything is downloaded. Bound pending, then auto_accept_asset decides.
+    A picture that would show fewer than SHARE_MIN_LABELS target words in the
+    target pack is not shared (#368)."""
+    from .meaning_labels import label_context, pack_label_words
     from .picture_need import PICTURE_POS, PRIMARY_ORDINAL
     senses = s.execute(select(m.Sense.id).join(m.Lexeme, m.Lexeme.id == m.Sense.lexeme_id).where(
         m.Lexeme.language == target, m.Lexeme.normalized == lemma, m.Lexeme.status == 'full',
@@ -2650,6 +2705,7 @@ def share_by_meaning(s, target, lemma, per_sense=3) -> int:
         m.Sense, m.Sense.id == m.SenseImage.sense_id).join(m.Lexeme, m.Lexeme.id == m.Sense.lexeme_id)
         .where(m.Lexeme.language == target, m.Lexeme.normalized == lemma)).all())
     added = 0
+    context = None
     for sense_id in senses:
         have = s.scalar(select(func.count()).select_from(m.SenseImage).where(
             m.SenseImage.sense_id == sense_id, m.SenseImage.review_status != 'rejected')) or 0
@@ -2666,12 +2722,23 @@ def share_by_meaning(s, target, lemma, per_sense=3) -> int:
             text("EXISTS (SELECT 1 FROM sense_images si JOIN senses x ON x.id = si.sense_id"
                  " JOIN lexemes el ON el.id = x.lexeme_id WHERE si.image_asset_id = image_assets.id"
                  " AND si.review_status = 'approved' AND el.language = 'en'"
-                 " AND el.normalized = ANY(:forms))").bindparams(forms=forms))
+                 " AND el.pos = :pos AND x.ordinal < :primary"
+                 " AND el.normalized = ANY(:forms))").bindparams(
+                     forms=forms, pos=PICTURE_POS, primary=PRIMARY_ORDINAL))
             .order_by(m.ImageAsset.id)).all()
+        lexeme_id = s.scalar(select(m.Sense.lexeme_id).where(m.Sense.id == sense_id))
         for asset in assets:
             if have >= per_sense:
                 break
             if asset.id in used:
+                continue
+            # #368: the target pack shows a picture's target words only (its
+            # bindings and meaning labels); one naming fewer than 3 even with
+            # this word would only add a QC photo.fewer_than_3_tags picture.
+            if context is None:
+                context = label_context(s, target)
+            if len(pack_label_words(s, target, asset.id, lexeme_id,
+                                    context=context)) < SHARE_MIN_LABELS:
                 continue
             binding = m.SenseImage(sense_id=sense_id, image_asset_id=asset.id,
                                    role='representative' if have == 0 else 'context',
@@ -2711,13 +2778,18 @@ def label_word(s, sense_id, language, lemma) -> str | None:
     meaning (#331)."""
     if language == 'en':
         return lemma
+    from .search_terms import sense_search_term
     meaning = s.scalar(select(m.SenseTranslation.text).where(
         m.SenseTranslation.sense_id == sense_id,
         m.SenseTranslation.native_language == 'en').order_by(m.SenseTranslation.id).limit(1))
     gloss = s.scalar(select(m.Definition.text).where(
         m.Definition.sense_id == sense_id,
         m.Definition.language == language).order_by(m.Definition.id).limit(1))
-    return english_search_term(meaning, gloss)
+    # A sense reviewed under card #384 uses its recorded term (or none).
+    ident = s.execute(select(m.Lexeme.normalized, m.Lexeme.pos, m.Sense.sense_key).join(
+        m.Lexeme, m.Lexeme.id == m.Sense.lexeme_id).where(m.Sense.id == sense_id)).first()
+    normalized, pos, sense_key = ident if ident else (lemma, None, None)
+    return sense_search_term(language, normalized or lemma, pos, sense_key, meaning, gloss)
 
 
 def sense_shows_word(s, asset, sense_id, language, lemma) -> tuple[str | None, bool]:

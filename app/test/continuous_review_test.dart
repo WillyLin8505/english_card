@@ -5,21 +5,23 @@ import 'review_archive_session_test.dart' show smallRepo;
 
 void main() {
   for (final rating in [Rating.good, Rating.again]) {
-    test('continuous review survives 60 responses: $rating', () {
+    // 問題回報 #319: a word shows at most maxRunAppearances times per run, so a
+    // one-word database ends the run there instead of looping 60 times.
+    test('continuous review stops at the per-word cap: $rating', () {
       final repo = smallRepo(1);
       final s = FlashcardSession(repo, continuous: true);
       addTearDown(s.dispose);
       final id = s.card!.id;
-      for (var i = 0; i < 60; i++) {
-        expect(s.finished, false);
+      var n = 0;
+      while (!s.finished && n < 60) {
         s.showAnswer();
         s.rate(rating);
+        n++;
       }
-      expect(s.reviewed, 60);
-      expect(repo.logsOf(id), hasLength(1));
-      expect(s.isExtraPractice, true);
-      repo.archiveWord(s.card!.wordEntryId);
       expect(s.finished, true);
+      expect(n, lessThanOrEqualTo(FlashcardSession.maxRunAppearances));
+      expect(s.reviewed, n);
+      expect(repo.logsOf(id), hasLength(1));
     });
   }
   test('future cards remain available in a new session', () {

@@ -1,0 +1,152 @@
+a          noun  s0[11] Ace. (including in card games)                | s9[49] The name of the Latin script letter A/a.
+about      adv   s0[19] On all sides, or in every or any direction fr | s4[46] Nearly; approximately; with close correspondence i
+act        noun  s0[7] An instance of a certain standardized college | s1[71] Something done, a deed.
+action     noun  s0[2] The effort of performing or doing something.  | s1[70] Something done, often so as to accomplish a purpos
+actor      noun  s0[26] Someone or something that takes part in some  | s1[113] A person who acts a part in a theatrical play or (
+address    noun  s0[8] A manner of speaking or writing to another; l | s4[126] A description of the location of a property, usual
+adventure  noun  s0[31] A feeling of desire for new and exciting thin | s2[62] A daring feat; a bold undertaking, in which danger
+agency     noun  s0[22] The capacity, condition, or state of acting o | s4[66] An establishment engaged in doing business for ano
+agent      noun  s0[13] One who exerts power, or has the power to act | s1[42] One who acts for, or in the place of, another (the
+alone      adv   s0[22] By oneself; apart from, or exclusive of, othe | s1[74] Without outside help.
+anxious    adj   s0[16] Nervous and worried.                          | s1[42] Having a feeling of anxiety or disquietude; extrem
+argue      verb  s0[3] To show grounds for concluding (that); to ind | s2[50] To have an argument, a quarrel.
+association noun  s0[21] The act of associating.                       | s3[57] A group of persons associated for a common purpose
+average    noun  s0[12] Any measure of central tendency, especially a | s1[45] The arithmetic mean.
+avoid      verb  s0[13] To try not to meet or communicate with (a per | s2[59] To keep away from; to keep clear of; to stay away 
+award      noun  s0[11] A judgment, sentence, or final decision. Spec | s3[65] A trophy or medal; something that denotes an accom
+bear       verb  s0[42] To endeavour to depress the price of, or pric | s1[92] To carry or convey, literally or figuratively.
+bill       noun  s0[24] A written list or inventory. (Now obsolete ex | s6[68] A written note of goods sold, services rendered, o
+blow       noun  s0[15] A strong wind.                                | s6[50] An instance of the act of striking or hitting.
+brand      noun  s0[25] A mark or scar made by burning with a hot iro | s3[55] A specific product, service, or provider so distin
+break      noun  s0[16] An instance of breaking something into two or | s3[39] A rest or pause, usually from work.
+broken     adj   s0[19] Fragmented; in separate pieces.               | s4[56] Interrupted; not continuous.
+card       verb  s0[8] To check IDs, especially against a minimum ag | s2[23] To use a carding device to disentangle the fibres 
+cat        noun  s0[66] A mammal of the family Felidae.               | s1[400] A carnivorous, four-legged, generally furry domest
+certainly  adv   s0[19] In a way which is certain; with certainty.    | s1[54] Without doubt, surely.
+child      noun  s0[102] A person who has not yet reached adulthood, w | s2[316] One's direct descendant by birth, regardless of ag
+citizen    noun  s0[38] A resident of a city or town, especially one  | s1[99] A legally recognized member of a state, with assoc
+classic    adj   s0[3] Of or relating to the first class or rank, es | s1[24] Exemplary of a particular style; defining a class 
+click      verb  s0[16] To cause to make a click; to operate (a switc | s3[42] To press and release (a button on a computer mouse
+communication noun  s0[21] The act or fact of communicating anything; tr | s1[68] The concept or state of exchanging data or informa
+company    noun  s0[42] A team; a group of people who work together f | s8[98] An entity having legal personality, and thus able 
+concert    noun  s0[8] An agreement in a design or plan; a union for | s2[79] A musical performance, usually public, in which se
+contest    noun  s0[18] Controversy; debate.                          | s2[40] A competition.
+couple     noun  s0[35] Two of the same kind connected or considered  | s1[76] Two partners in a romantic or sexual relationship.
+credit     noun  s0[15] Reliance on the truth of something said or do | s4[58] A privilege of delayed payment extended to a buyer
+deal       noun  s0[9] An indefinite quantity or amount; a lot (now  | s4[24] An agreement between parties; an arrangement.
+dear       adj   s0[22] High in price; expensive.                     | s1[73] Loved; lovable.
+desk       noun  s0[6] A table, frame, or case, in past centuries us | s1[75] A reading table or lectern to support the book fro
+die        noun  s0[8] The cubical part of a pedestal; a plinth.     | s7[88] An isohedral polyhedron, usually a cube, with numb
+do         noun  s0[4] A party, celebration, social function; usuall | s3[25] A syllable used in solfège to represent the first 
+do         verb  s0[38] A syntactic marker in a question whose main v | s5[193] To perform; to execute.
+down       verb  s0[9] To knock (someone or something) down; to caus | s5[18] To drink or swallow, especially without stopping b
+draw       noun  s0[3] That which draws: that which attracts e.g. a  | s5[38] The result of a two-innings match in which at leas
+driver     noun  s0[35] One who drives something.                     | s1[85] A person who drives a motorized vehicle such as a 
+drop       verb  s0[10] Of a liquid: to fall in drops or droplets.    | s1[26] To fall (straight down) under the influence of gra
+drug       noun  s0[27] A substance used to treat an illness, relieve | s1[74] A psychoactive substance, especially one which is 
+easily     adv   s0[9] Comfortably, without discomfort or anxiety.   | s1[41] Without difficulty.
+entrance   noun  s0[35] The action of entering, or going in.          | s2[88] The place of entering, as a gate or doorway.
+especially adv   s0[22] In a special manner; specially.               | s1[60] Particularly; to a greater extent than is normal.
+exhibition noun  s0[30] An instance of exhibiting, or something exhib | s1[75] A large-scale public showing of objects or product
+expression noun  s0[13] The action of expressing thoughts, ideas, fee | s2[63] A colloquialism or idiom.
+fair       adj   s0[9] Unblemished (figuratively or literally); clea | s2[44] Just.
+fast       adj   s0[3] Firm against attack; fortified by nature or a | s2[118] Moving with great speed, or capable of doing so; s
+fast       adv   s0[25] In a firm or secure manner, securely; in such | s3[58] Quickly, with great speed; within a short time .
+flat       noun  s0[10] An area of level ground (sometimes covered wi | s5[23] A note played one chromatic semitone lower than a 
+fly        noun  s0[75] Any insect of the order Diptera; characterize | s1[239] Especially, any of the insects of the family Musci
+football   noun  s0[50] A sport played on foot in which teams attempt | s2[149] Association football, also called soccer: a game i
+force      noun  s0[42] Ability to influence; strength or energy of b | s1[85] The generalized abstraction of this concept.
+forward    verb  s0[4] To advance, promote.                          | s1[28] To send (a letter, email etc.) on to a third party
+generation noun  s0[27] The act of creating something or bringing som | s2[79] A single step or stage in the succession of natura
+grade      noun  s0[24] A rating.                                     | s5[61] A level of primary and secondary education.
+great      adj   s0[9] Taking much space; large.                     | s3[53] Very good; excellent; wonderful; fantastic.
+green      adj   s0[14] Of a green hue.                               | s3[30] Inexperienced.
+gun        noun  s0[4] A device for shooting projectiles or ditto (a | s1[124] A very portable, short firearm, for hand use, whic
+hair       noun  s0[107] A pigmented filament of keratin which grows f | s1[270] The collection or mass of such growths growing fro
+ham        noun  s0[20] The region back of the knee joint; the poplit | s2[80] Meat from the thigh and/or buttock of a hog cured 
+horse      noun  s0[16] A hoofed mammal, Equus ferus caballus, often  | s1[493] Any member of the species Equus ferus, including t
+however    adv   s0[11] Nevertheless; yet, still; in spite of that.   | s5[25] In any way that one likes or chooses; in a haphaza
+idea       noun  s0[16] An abstract archetype of a given thing, compa | s1[92] An image of an object that is formed in the mind o
+ideal      adj   s0[1] Pertaining to ideas, or to a given idea.      | s2[42] Optimal; being the best possibility.
+issue      noun  s0[2] The outflow of a bodily fluid, particularly ( | s3[22] A single edition of a newspaper or other periodica
+keep       noun  s0[9] The food or money required to keep someone al | s3[23] The main tower of a castle or fortress, located wi
+keep       verb  s0[28] To continue in (a course or mode of action);  | s2[61] To maintain possession of.
+kind       adj   s0[1] Having a benevolent, courteous, friendly, gen | s1[55] Affectionate.
+light      adj   s0[52] Having light; bright; clear; not dark or obsc | s3[126] Having little or relatively little actual weight; 
+list       noun  s0[9] A strip of fabric, especially from the edge o | s2[87] A register or roll of paper consisting of a compil
+long       verb  s0[1] To take a long position in.                   | s1[30] To await, aspire, desire greatly (something to occ
+mail       noun  s0[24] A bag or wallet.                              | s4[79] The postal service or system in general.
+market     noun  s0[49] A gathering of people for the purchase and sa | s1[181] A relatively spacious outdoor or covered site wher
+miss       noun  s0[17] A failure to physically hit.                  | s6[39] An unmarried woman; a girl.
+must       noun  s0[15] Something that is mandatory, required or reco | s3[42] Fruit juice that will ferment or has fermented, us
+next       adj   s0[27] Nearest in place or position, having nothing  | s1[63] Nearest in order, succession, or rank; immediately
+night      noun  s0[21] The time when the Sun is below the horizon wh | s2[369] A period of time often defined in the legal system
+note       noun  s0[10] A mark or token by which a thing may be known | s3[36] A brief piece of writing intended to assist the me
+number     noun  s0[46] Quantity of countable things.                 | s1[165] An abstract entity used to describe quantity.
+official   adj   s0[27] Of or about an office or public trust.        | s2[62] Approved by authority; authorized.
+page       noun  s0[26] One of the many pieces of paper bound togethe | s1[163] One side of a paper leaf in a bound document.
+partner    noun  s0[22] Either of a pair of people or things that bel | s1[64] Someone who is associated with another in a common
+party      noun  s0[31] A person or group of people constituting one  | s3[91] A social gathering, usually of invited guests, whi
+pen        noun  s0[49] An enclosure (enclosed area) used to contain  | s3[139] A tool, originally made from a feather but now usu
+pen        verb  s0[9] To enclose in a pen.                          | s1[18] To write (an article, a book, etc.).
+personal   adj   s0[7] Pertaining to persons (human beings as oppose | s1[49] Of or pertaining to a particular person; relating 
+pilot      noun  s0[14] A person who steers a ship, a helmsman.       | s10[93] A person who is in charge of the controls of an ai
+pink       noun  s0[37] A color reminiscent of pinks, the flowers.    | s1[108] Magenta, the colour evoked by red and blue light w
+place      noun  s0[63] An open space, particularly a city square, ma | s8[171] A location or position in space.
+plane      noun  s0[23] A level or flat surface.                      | s7[88] An airplane; an aeroplane.
+planet     noun  s0[66] A body which is massive enough to be in hydro | s2[168] Each of the seven major bodies which move relative
+popular    adj   s0[15] Common among the general public; generally ac | s4[53] Liked by many people; generally pleasing, widely a
+pressure   noun  s0[30] A pressing; a force applied to a surface.     | s1[66] The amount of force that is applied over a given a
+printer    noun  s0[33] One who makes prints.                         | s2[79] A device, usually attached to a computer, used to 
+provide    verb  s0[5] To make a living; earn money for necessities. | s3[32] To give what is needed or desired, especially basi
+raise      noun  s0[1] A shot in which the delivered stone bumps ano | s1[18] A bet that increases the previous bet.
+real       noun  s0[2] A commodity; see realty.                      | s5[19] A unit of currency used in Portugal and its coloni
+replace    verb  s0[9] To restore to a former place, position, condi | s2[46] To supply or substitute an equivalent with.
+right      noun  s0[10] That which complies with justice, law or reas | s1[97] A legal, just or moral entitlement.
+ring       noun  s0[72] A circumscribing object, (roughly) circular a | s1[169] A round piece of (precious) metal worn around the 
+ring       verb  s0[10] To enclose or surround.                       | s7[51] Of a bell, etc., to produce a resonant sound.
+room       noun  s0[77] Space for something, or to carry out an activ | s3[160] A separate part of a building, enclosed by walls, 
+science    noun  s0[61] A particular discipline or branch of knowledg | s3[144] The collective discipline of study or learning acq
+screw      noun  s0[29] A simple machine, a helical inclined plane.   | s1[139] A (usually) metal fastener consisting of a partial
+script     noun  s0[33] A writing; a written document.                | s8[67] A system of writing adapted to a particular langua
+seat       noun  s0[2] Something to be sat upon.                     | s1[75] A place in which to sit.
+seed       noun  s0[30] Any propagative portion of a plant which may  | s2[220] Any small seed-like fruit.
+set        adj   s0[7] Fixed in position.                            | s2[24] Ready, prepared.
+shape      noun  s0[25] The status or condition of something          | s2[84] A graphical representation of an object's form or 
+shoe       verb  s0[16] To put shoes on one's own feet.               | s1[35] To put shoes on someone or something else's feet, 
+should     verb  s0[9] Used to issue an instruction (traditionally s | s4[47] Indicates that something is expected to have happe
+shoulder   noun  s0[20] The part of the human torso forming a relativ | s1[245] The joint between the arm and the torso, sometimes
+shoulder   verb  s0[5] To push (a person or thing) using one's shoul | s2[17] To put (something) on one's shoulders.
+significant adj   s0[17] Signifying something; carrying meaning.       | s1[37] Having a noticeable or major effect.
+sir        noun  s0[17] A man of a higher rank or position.           | s5[84] A respectful term of address to an adult male (oft
+smart      adj   s0[28] Exhibiting social ability or cleverness.      | s1[72] Exhibiting intellectual knowledge, such as that fo
+social     adj   s0[30] Being extroverted or outgoing.                | s1[61] Of or relating to society.
+son        noun  s0[24] One's male offspring.                         | s1[294] A male adopted person in relation to his adoptive 
+south      adj   s0[1] Toward the south; southward.                  | s2[39] Of or pertaining to the south; southern.
+spell      verb  s0[6] To put under the influence of a spell; to aff | s1[48] To write or say the letters that form a word or pa
+stamp      noun  s0[18] An act of stamping the foot, paw or hoof.     | s1[67] An indentation, imprint, or mark made by stamping.
+stand      noun  s0[6] The act of standing.                          | s9[29] A small building, booth, or stage, as in a bandsta
+still      adv   s0[10] Without motion.                               | s1[83] Up to a time, as in the preceding time.
+storm      verb  s0[5] Preceded by the dummy subject it: to have str | s4[22] To violently assault (a fortified position or stro
+strict     adj   s0[7] Strained; drawn close; tight.                 | s6[35] Severe in discipline.
+strike     noun  s0[11] A status resulting from a batter swinging and | s2[80] A work stoppage (or otherwise concerted stoppage o
+suit       verb  s0[5] To make proper or suitable; to adapt or fit.  | s2[25] To be appropriate or apt for.
+team       noun  s0[24] A set of draught animals, such as two horses  | s1[88] Any group of people involved in the same activity,
+tear       noun  s0[30] A hole or break caused by tearing.            | s2[188] A drop of clear, salty liquid produced from the ey
+technology noun  s0[25] The combined application of science and art i | s4[107] The study of or a collection of techniques.
+telephone  verb  s0[2] To convey (information, a message, news, etc. | s1[72] To (attempt to) contact (someone) using a telephon
+text       noun  s0[30] A writing consisting of multiple glyphs, char | s4[94] A verse or passage of Scripture, especially one ch
+there      adv   s0[12] In or at a place or location (stated, implied | s4[160] In its correct position, so as to be fully and pro
+through    prep  s0[27] So as to enter (something), pass within or ac | s2[68] From one side of (an opening) to the other.
+throw      noun  s0[6] The act of throwing something.                | s4[17] The flight of a thrown object.
+tie        noun  s0[2] A knot; a fastening.                          | s10[30] An equalizer, a run, goal, point, etc which causes
+tooth      noun  s0[1] A hard, calcareous structure present in the m | s4[369] A projection or point in other parts of the body r
+topical    adj   s0[3] Relating to a particular topic or subject.    | s1[15] Relating to a topic or subject of current interest
+train      noun  s0[32] The elongated back portion of a dress or skir | s6[162] A group of animals, vehicles, or people that follo
+unit       noun  s0[10] Oneness, singularity, seen as a component of  | s1[59] A standard measure of a quantity or magnitude.
+view       noun  s0[27] The act of seeing or looking at something.    | s2[62] Something to look at, such as scenery.
+watery     adj   s0[4] Resembling or characteristic of water.        | s1[26] Wet, soggy or soaked with water.
+wet        adj   s0[33] Made up of liquid or moisture, usually (but n | s1[151] Of an object, etc.: covered or impregnated with li
+whatever   det   s0[1] What ever; emphatic form of 'what'.           | s1[32] Regardless of the ... that; for any ... that.
+wine       verb  s0[5] To entertain (someone) with wine.             | s1[15] To drink wine.
+lexemes 3214 promote 151

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api, newIdempotencyKey, type Job } from "../api";
 import { Chip, Empty, ErrorBox, Link, Loading, Progress, fmtDuration, fmtTime, useApp, useLoad } from "../ui";
 
@@ -36,7 +36,13 @@ export function JobActions({ job, onDone }: { job: Job; onDone: () => void }) {
 
 export default function Jobs() {
   const { langName, target, native } = useApp();
-  const all = useLoad<Job[]>("/imports", [], 2000);
+  const [pollMs, setPollMs] = useState(2000);
+  const all = useLoad<Job[]>("/imports", [], pollMs);
+  // 2 s while something is active, otherwise 10 s (card #360).
+  const active = all.data?.some((j) => ["queued", "running", "pausing", "cancelling"].includes(j.status));
+  useEffect(() => {
+    if (all.data) setPollMs(active ? 2000 : 10000);
+  }, [active, all.data === null]);
   // Card #325: each backend (en→zh-TW, fr→en) sees its own jobs by default.
   const [onlyPair, setOnlyPair] = useState(true);
   const jobs = { ...all, data: all.data?.filter((j) => !onlyPair || (j.target_language === target && j.native_language === native)) };
@@ -45,7 +51,7 @@ export default function Jobs() {
       <header className="page-head">
         <div>
           <h1>工作佇列（Jobs）</h1>
-          <p className="muted">每 2 秒更新。暫停與取消會在目前單字處理完後生效；續跑從檢查點開始。</p>
+          <p className="muted">有進行中的工作時每 2 秒更新，否則每 10 秒。暫停與取消會在目前單字處理完後生效；續跑從檢查點開始。</p>
         </div>
         <div className="actions">
           <label className="muted"><input type="checkbox" checked={onlyPair} onChange={(e) => setOnlyPair(e.target.checked)} /> 只看 {langName(target)}→{langName(native)}</label>

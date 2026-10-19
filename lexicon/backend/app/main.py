@@ -332,10 +332,7 @@ def estimate_import(body: ImportBody, s: Session = DB):
 
 @app.get("/imports", dependencies=[Auth])
 def list_imports(status: str | None = None, limit: int = 50, s: Session = DB):
-    q = select(m.ImportJob).order_by(m.ImportJob.id.desc()).limit(min(limit, 200))
-    if status:
-        q = q.where(m.ImportJob.status == status)
-    return [jobs.job_dict(j) for j in s.execute(q).scalars()]
+    return jobs.list_job_dicts(s, status, limit)
 
 
 @app.get("/imports/{job_id}", dependencies=[Auth])

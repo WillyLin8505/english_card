@@ -14,7 +14,7 @@ from .adapters.base import ARPABET
 from .text import native_latin_issue
 
 LEVELS = ("A1", "A2", "B1", "B2", "C1", "C2")
-ESTIMATE_SOURCES = {"frequency_estimate", "estimate", "local_calc"}
+ESTIMATE_SOURCES = {"frequency_estimate", "estimate", "local_calc", "ai_reviewed"}
 GOLDEN = Path(__file__).resolve().parents[2] / "quality" / "golden"
 
 

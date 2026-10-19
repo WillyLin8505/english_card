@@ -1,8 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:photo_english_app/app/app_scope.dart';
 import 'package:photo_english_app/models/photo.dart';
@@ -13,6 +12,7 @@ import 'package:photo_english_app/services/local_vision.dart';
 import 'package:photo_english_app/services/photo_intake.dart';
 import 'package:photo_english_app/services/photo_store.dart';
 import 'package:photo_english_app/services/tagging_queue.dart';
+import 'package:photo_english_app/services/tagging_service.dart';
 import 'package:photo_english_app/services/word_database_repository.dart';
 
 import 'helpers.dart';
@@ -111,6 +111,27 @@ void main() {
     expect(s.usesLocalRecognition, isFalse);
     expect(s.showsTaggingServer, isTrue);
     expect(s.taggingConfigured, isTrue);
+  });
+
+  test('a platform failure shows a plain sentence, not the English error',
+      () async {
+    // 問題回報 #370: the simulator's Vision fails with "Failed to create
+    // espresso context." — that text must not reach the learner.
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(LocalVision.channel, (call) async {
+      throw PlatformException(
+          code: 'vision', message: 'Failed to create espresso context.');
+    });
+    addTearDown(() => TestDefaultBinaryMessengerBinding
+        .instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(LocalVision.channel, null));
+    await expectLater(
+      LocalVision.classify(Uint8List.fromList([1, 2, 3])),
+      throwsA(isA<TaggingApiException>().having(
+          (e) => e.message, 'message', visionFailedMessage)),
+    );
+    expect(visionFailedMessage, isNot(contains('espresso')));
+    expect(visionFailedMessage, isNot(matches(RegExp(r'[A-Za-z]{4,}'))));
   });
 
   test('a device that cannot classify has no recognition', () {

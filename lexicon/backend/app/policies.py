@@ -60,7 +60,8 @@ def seed(session: Session) -> None:
     upgrade_untouched_defaults(session)
     add_sources_before_ai(session)
     add_sources_at_end(session)
-    existing = {(p.target_language, p.native_language, p.field)
+    reorder_untouched_chains(session)
+    existing ={(p.target_language, p.native_language, p.field)
                 for p in session.execute(select(m.SourcePolicy)).scalars()}
     for t, n in catalog.PAIRS:
         for f in catalog.fields_for(t):
@@ -137,6 +138,33 @@ def add_sources_at_end(session: Session) -> None:
                 retries=1 if kind == "ai" else 2, min_confidence=0.0, max_results=None,
                 continue_on_failure=True))
     session.flush()
+
+
+# Default chains whose order changed later: a policy whose steps are still
+# exactly the old order gets the new one (positions swapped in place, version
+# kept so settled words aren't asked again). An order the admin chose differs
+# from the old default, so it is left alone. 問題回報 #375: Smithsonian last.
+REORDERED_DEFAULTS = {
+    f: (["wikimedia_commons", "open_images", "smithsonian", "openverse"],
+        ["wikimedia_commons", "open_images", "openverse", "smithsonian"])
+    for f in ("sense_image", "context_image", "thumbnail")}
+
+
+def reorder_untouched_chains(session: Session) -> int:
+    moved = 0
+    for p in session.execute(select(m.SourcePolicy).where(
+            m.SourcePolicy.field.in_(list(REORDERED_DEFAULTS)))).scalars().all():
+        old, new = REORDERED_DEFAULTS[p.field]
+        steps = steps_of(session, p)
+        if [st.source for st in steps] != old:
+            continue
+        by_src = {st.source: st for st in steps}
+        positions = [st.position for st in steps]
+        for src, pos in zip(new, positions):
+            by_src[src].position = pos
+        moved += 1
+    session.flush()
+    return moved
 
 
 def _write_default(session, t, n, field_key, policy: m.SourcePolicy | None = None):

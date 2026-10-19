@@ -27,9 +27,12 @@ export function useLoad<T>(path: string | null, deps: unknown[] = [], pollMs?: n
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const seq = useRef(0);
+  const inflight = useRef(false);
   const load = useCallback(
     async (quiet = false) => {
       if (!path) return;
+      if (quiet && inflight.current) return; // polling never stacks requests (card #360)
+      inflight.current = true;
       const n = ++seq.current;
       if (!quiet) setLoading(true);
       try {
@@ -41,6 +44,7 @@ export function useLoad<T>(path: string | null, deps: unknown[] = [], pollMs?: n
       } catch (e) {
         if (n === seq.current) setError((e as Error).message);
       } finally {
+        inflight.current = false;
         if (n === seq.current) setLoading(false);
       }
     },

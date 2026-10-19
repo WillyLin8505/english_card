@@ -233,7 +233,7 @@ commit `32f499f`（Windows：flutter analyze 無 error、00:58 +437 ~1: All test
 
 ## M21（2026-10-19 19:34）狀態：完成
 commit `c043297`（Windows：flutter analyze 無 error、00:56 +437 ~1: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
-- 卡 #353：問題回報 #351：????????87 ????????????????? did everything?did go
+- 卡 #353：問題回報 #351：#344 後 87 個 prep/conj/pron/det/num 詞條詞性檢查與例句不足
   結果：全部完成：#351 的 87 個 prep/conj/pron/det/num 詞條中 41 個補上例句（46 個留空），詞性檢查改完，golden/QC 無退步。
 
 ## M22（2026-10-19 19:56）狀態：完成

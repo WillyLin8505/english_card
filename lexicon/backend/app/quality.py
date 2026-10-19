@@ -778,7 +778,8 @@ def fix_catalog_senses(pack: dict) -> int:
                 if lx.get("cefr"):
                     t["cefr"] = lx["cefr"]
                     t["cefr_source"] = ("estimate" if lx.get("cefr_source") in
-                                        ("frequency_estimate", "estimate", "local_calc") else "cefr-j")
+                                        ("frequency_estimate", "estimate", "local_calc",
+                                         "ai_reviewed") else "cefr-j")
                 else:
                     t.pop("cefr", None)
                     t.pop("cefr_source", None)

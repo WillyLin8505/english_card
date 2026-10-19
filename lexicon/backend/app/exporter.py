@@ -114,6 +114,21 @@ def _sha256(path: Path) -> str:
     return h.hexdigest()
 
 
+_media_sha: dict[str, tuple[int, int, str]] = {}
+
+
+def _media_sha256(path: Path) -> str:
+    """A media file's hash, re-read only when its size or mtime changes (card #380:
+    every live pack hashed all 32,000 pictures again)."""
+    st = path.stat()
+    hit = _media_sha.get(str(path))
+    if hit and hit[:2] == (st.st_size, st.st_mtime_ns):
+        return hit[2]
+    sha = _sha256(path)
+    _media_sha[str(path)] = (st.st_size, st.st_mtime_ns, sha)
+    return sha
+
+
 # Spec 08: 同義詞與相關詞依關係詞本身的 CEFR 分級，A1～C2 每級 3 個.
 _PER_LEVEL = {"synonyms", "related"}
 _PER_LEVEL_MAX = 3
@@ -301,7 +316,8 @@ def _values(s, target, native):
     return out
 
 
-def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_safe=False):
+def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_safe=False,
+           copy_media=True):
     con = sqlite3.connect(db_path)
     con.executescript(DDL)  # foreign keys are checked after the build (PRAGMA foreign_key_check)
     values = _values(s, target, native)
@@ -623,7 +639,7 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_saf
     con.execute("INSERT INTO meta VALUES ('native_language', ?)", (native,))
     con.execute("INSERT INTO meta VALUES ('created_at', ?)",
                 (datetime.now(timezone.utc).isoformat(),))
-    image_files = _images(s, con, tmp_dir, counts)
+    image_files = _images(s, con, tmp_dir, counts, copy_media)
     con.commit()
     con.close()
     completeness = {}
@@ -640,9 +656,10 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_saf
     return counts, completeness, used_sources, audio_files
 
 
-def _images(s, con, tmp_dir: Path, counts) -> list[dict]:
+def _images(s, con, tmp_dir: Path, counts, copy_media=True) -> list[dict]:
     """Approved sense pictures (spec: 已核准詞義圖片清單): the thumbnail the
-    app shows, each picture's licence and author, and its AI labels."""
+    app shows, each picture's licence and author, and its AI labels.
+    copy_media=False (the live HTTP pack) lists them without copying files."""
     files = []
     for r in s.execute(sql_text("""
             SELECT si.id, si.sense_id, si.role, si.ordinal, si.semantic_score, a.path,
@@ -658,10 +675,11 @@ def _images(s, con, tmp_dir: Path, counts) -> list[dict]:
         src = config.MEDIA / rel
         if not src.exists():
             continue
-        dst = tmp_dir / "media" / rel
-        dst.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(src, dst)
-        sha = _sha256(dst)
+        if copy_media:
+            dst = tmp_dir / "media" / rel
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, dst)
+        sha = _media_sha256(src)
         con.execute("INSERT INTO sense_images VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                     (r["id"], r["sense_id"], r["role"], r["ordinal"], rel.replace("\\", "/"),
                      r["width"], r["height"], sha, r["license_code"], r["license_url"], r["author"],

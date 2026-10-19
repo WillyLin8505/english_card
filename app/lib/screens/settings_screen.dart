@@ -332,35 +332,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               onChanged: (v) => settings.apiKey = v,
                             ),
                             const SizedBox(height: 12),
-                            Row(
+                            Wrap(
+                              spacing: 12,
+                              runSpacing: 8,
                               children: [
-                                if (!kIsWeb) ...[
+                                if (!kIsWeb)
                                   OutlinedButton(
                                     onPressed:
                                         _checking ? null : _scanConnection,
                                     child: const UiText('掃描 QR code'),
                                   ),
-                                  const SizedBox(width: 12),
-                                ],
                                 OutlinedButton(
                                   onPressed: _checking ? null : _testConnection,
                                   child: UiText(_checking ? '測試中…' : '測試連線'),
                                 ),
-                                const SizedBox(width: 12),
-                                if (_check != null)
-                                  Expanded(
-                                    child: UiText(
-                                      _check!,
-                                      style: MFont.manrope(
-                                          13,
-                                          FontWeight.w700,
-                                          _check!.startsWith('✓')
-                                              ? MColors.success
-                                              : MColors.againFg),
-                                    ),
-                                  ),
                               ],
                             ),
+                            if (_check != null) ...[
+                              const SizedBox(height: 8),
+                              UiText(
+                                // The learner is already on this page.
+                                _check!.replaceAll('（設定 → 照片辨識連線）', ''),
+                                style: MFont.manrope(
+                                    13,
+                                    FontWeight.w700,
+                                    _check!.startsWith('✓')
+                                        ? MColors.success
+                                        : MColors.againFg),
+                              ),
+                            ],
                             if (waiting > 0) ...[
                               const SizedBox(height: 8),
                               UiText(

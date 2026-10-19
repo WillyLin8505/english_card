@@ -507,9 +507,28 @@ def heartbeat(session_factory, job_id: int, worker_id: str):
 
 # ── Reading ───────────────────────────────────────────────────────────
 
-def job_dict(job: m.ImportJob, detail: bool = False) -> dict:
+def list_job_dicts(s, status: str | None = None, limit: int = 50) -> list[dict]:
+    """Job summaries, newest first. On PostgreSQL the word list stays in the DB."""
+    from sqlalchemy import func, select, cast
+    from sqlalchemy.dialects.postgresql import JSONPATH
+    from sqlalchemy.orm import defer
+    q = select(m.ImportJob).order_by(m.ImportJob.id.desc()).limit(min(limit, 200))
+    if status:
+        q = q.where(m.ImportJob.status == status)
+    if s.get_bind().dialect.name != "postgresql":
+        return [job_dict(j) for j in s.execute(q).scalars()]
+    W = m.ImportJob.words
+    q = q.options(defer(m.ImportJob.words)).add_columns(
+        func.jsonb_array_length(W), func.jsonb_path_query_array(W, cast("$[0 to 7]", JSONPATH)),
+        W.op("->")(m.ImportJob.checkpoint))
+    return [job_dict(j, summary=(n, pv, cur)) for j, n, pv, cur in s.execute(q).all()]
+
+
+def job_dict(job: m.ImportJob, detail: bool = False, summary: tuple | None = None) -> dict:
+    """`summary` = (word_count, first_8_words, current_word) computed in SQL so the
+    list never loads the full `words` column (card #360)."""
     c = job.counts or {}
-    words = job.words or []
+    words = [] if summary else (job.words or [])
     recent_ms = [int(value) for value in (c.get("recent_word_ms") or [])
                  if isinstance(value, (int, float)) and value >= 0]
     recent_avg_ms = int(sum(recent_ms) / len(recent_ms)) if recent_ms else None
@@ -535,6 +554,11 @@ def job_dict(job: m.ImportJob, detail: bool = False) -> dict:
          # Keep queue payloads small while still showing which words a job handles.
          "word_preview": words[:8], "word_preview_remaining": max(0, len(words) - 8),
          "current_word": words[job.checkpoint] if job.checkpoint < len(words) else None}
+    if summary:
+        n, preview, current = summary
+        d["word_preview"] = preview or []
+        d["word_preview_remaining"] = max(0, (n or 0) - 8)
+        d["current_word"] = current if isinstance(current, str) else None
     if detail:
         d["words"] = words
         d["field_list"] = job.fields

@@ -94,11 +94,11 @@ class DatabaseWordScreen extends StatelessWidget {
                           if (word.entryType != 'word')
                             entryTypeLabel(word.entryType),
                           posLabel(word.pos)
-                        ].join(' / ')}${word.cefr == null ? '' : ' · ${levelLabel(word.cefr!)}'}'
+                        ].join(' / ')}${word.cefr == null || word.rareUsage ? '' : ' · ${levelLabel(word.cefr!)}'}'
                         '${word.rareUsage ? ' · 罕見用法' : ''}',
                         style: MFont.bodyMuted),
                   ),
-                  if (word.cefr != null) ...[
+                  if (word.cefr != null && !word.rareUsage) ...[
                     const SizedBox(width: 8),
                     LevelBadge(word.cefr!),
                   ],

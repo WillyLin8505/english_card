@@ -201,11 +201,7 @@ class FlashcardCardView extends StatelessWidget {
         Container(
           padding: EdgeInsets.fromLTRB(
               MSpace.lg, MSpace.sm, MSpace.lg, MSpace.md + bottom),
-          decoration: const BoxDecoration(
-            color: MColors.surface,
-            border: Border(top: BorderSide(color: MColors.hairline)),
-            boxShadow: MShadows.tabBar,
-          ),
+          decoration: look.dock,
           child: session.showingBack
               ? RatingBar(
                   previews: session.ratingPreviews,
@@ -215,6 +211,9 @@ class FlashcardCardView extends StatelessWidget {
                 )
               : PrimaryButton(
                   label: '顯示答案',
+                  decoration: look.answerButton,
+                  height: look.answerHeight,
+                  textStyle: look.answerText,
                   shortcut:
                       session.exercise?.type == ReviewExerciseType.photoRecall
                           ? '空白鍵'

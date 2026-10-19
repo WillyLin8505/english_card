@@ -67,30 +67,57 @@ class Snapshot:
         return self.gzip if compressed else self.body
 
 
+class Warming(RuntimeError):
+    """No snapshot exists yet; the first build runs in the background."""
+
+
 class SnapshotStore:
-    def __init__(self, builder, directory: Path, interval=120):
+    def __init__(self, builder, directory: Path, interval=120, stale_root: Path | None = None,
+                 wait_first=True):
         self.builder = builder
         self.directory = directory
         self.interval = interval
+        # Snapshots of earlier code revisions live beside this one (card #380):
+        # serve the newest while this revision's first build runs.
+        self.stale_root = stale_root
+        # False: a cold store raises Warming at once instead of holding the
+        # request for minutes (Cloudflare cuts it at 100 s, 524).
+        self.wait_first = wait_first
         self.entries = {}
         self.checked = {}
         self.refreshing = set()
         self.lock = threading.Lock()
 
-    def _path(self, pair):
+    def _path(self, pair, directory=None):
         # Pair validation belongs to the route; hashing also avoids path input.
         key = hashlib.sha256(encode(pair)).hexdigest()
-        return self.directory / (key + '.json.gz')
+        return (directory or self.directory) / (key + '.json.gz')
 
-    def _load(self, pair):
+    def _load(self, pair, path=None):
         try:
-            compressed = self._path(pair).read_bytes()
+            compressed = (path or self._path(pair)).read_bytes()
             snapshot = Snapshot(gzip.decompress(compressed), compressed)
             if (snapshot.pack['target_language'], snapshot.pack['native_language']) != pair:
                 return None
             return snapshot
         except (OSError, ValueError, KeyError, EOFError):
             return None
+
+    def _load_stale(self, pair):
+        if self.stale_root is None:
+            return None
+        name = self._path(pair).name
+        try:
+            paths = [d / name for d in self.stale_root.iterdir()
+                     if d.is_dir() and d != self.directory and (d / name).is_file()]
+        except OSError:
+            return None
+        for path in sorted(paths, key=lambda p: p.stat().st_mtime, reverse=True):
+            snapshot = self._load(pair, path)
+            if snapshot is not None:
+                logging.info('Serving stale dictionary snapshot %s until the rebuild finishes', path)
+                return snapshot
+        return None
 
     def _build(self, pair, previous):
         body, _ = self.builder(*pair)
@@ -132,7 +159,14 @@ class SnapshotStore:
         with self.lock:
             snapshot = self.entries.get(pair)
             if snapshot is None:
-                snapshot = self._load(pair)
+                snapshot = self._load(pair) or self._load_stale(pair)
+                if snapshot is None and not self.wait_first:
+                    # First installation only: build in the background, answer now.
+                    if pair not in self.refreshing:
+                        self.refreshing.add(pair)
+                        threading.Thread(target=self._refresh, args=(pair, None),
+                                         daemon=True, name='dictionary-refresh').start()
+                    raise Warming('Dictionary is being prepared')
                 if snapshot is None:
                     # First installation only. Warm this before accepting users.
                     snapshot = self._build(pair, None)

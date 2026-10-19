@@ -67,6 +67,10 @@ class TextScan {
 
   static const unavailableMessage = '網頁版還不能找照片裡的文字，請用手機 App';
 
+  /// Shown when the phone's text reader fails; the platform's own English
+  /// error is for developers, not the learner (問題回報 #377).
+  static const readFailedMessage = '手機暫時無法讀取這張照片裡的文字，請換一張照片再試';
+
   static Future<bool> probe() async {
     if (recognizer != null) return true;
     if (kIsWeb) return false;
@@ -87,7 +91,8 @@ class TextScan {
     try {
       raw = await channel.invokeListMethod<Object?>('recognize', {'image': jpeg});
     } on PlatformException catch (e) {
-      throw TaggingApiException('手機讀取文字失敗：${e.message ?? e.code}');
+      debugPrint('text recognition failed: ${e.code} ${e.message}');
+      throw TaggingApiException(readFailedMessage);
     } on MissingPluginException {
       throw TaggingApiException('這台裝置不能讀取照片裡的文字');
     }

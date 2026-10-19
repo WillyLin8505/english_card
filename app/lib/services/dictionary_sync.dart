@@ -235,11 +235,13 @@ class DictionarySync extends ChangeNotifier {
             await LexiconPack.instance.load(target: target, native: native);
             if (current()) repo.linkLexicon(LexiconPack.instance);
           }
-        } else {
+        } else if (!kIsWeb) {
           await LexiconPack.instance.load(target: target, native: native);
           if (current()) repo.linkLexicon(LexiconPack.instance);
         }
-        _activePair = pair;
+        // The web page skips the 30 MB bundled pack and goes online; the
+        // bundled one is only the offline fallback (catch below, #357).
+        if (!kIsWeb || saved != null) _activePair = pair;
       }
       final cachedVersion = LexiconPack.instance.version;
       final saved = _cache?.get(pair);
@@ -299,6 +301,15 @@ class DictionarySync extends ChangeNotifier {
       await _sendMissingQuietly();
     } catch (e) {
       debugPrint('DictionarySync: refresh failed: $e');
+      if (kIsWeb && _activePair != pair && current()) {
+        try {
+          await LexiconPack.instance.load(target: target, native: native);
+          if (current()) {
+            repo.linkLexicon(LexiconPack.instance);
+            _activePair = pair;
+          }
+        } catch (_) {}
+      }
       if (current()) {
         status = '暫時無法連線 · 使用已儲存的詞庫，稍後自動重試';
         hasError = true;

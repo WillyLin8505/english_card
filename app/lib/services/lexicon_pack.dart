@@ -561,17 +561,48 @@ class LexEntry {
           ...forms.map((f) => f.form)
         ].map(RegExp.escape).join('|')})(?![A-Za-z])',
         caseSensitive: false);
-    final parts = [
-      for (final sense in common)
-        [
-          for (final word in sense.native!.split(RegExp(r'[、，,]')))
-            if (word.trim().isNotEmpty &&
-                !answer.hasMatch(word) &&
-                seen.add(word.trim()))
-              word.trim()
-        ].join('、'),
-    ].where((part) => part.isNotEmpty);
-    return parts.isEmpty ? null : parts.join('；');
+    // An English meaning (the fr→en pack) keeps English punctuation; a
+    // Chinese one uses 、 and ； (問題回報 #363).
+    final chinese = common.any((s) => _cjk.hasMatch(s.native!));
+    List<String> build({required bool hideAnswer}) {
+      final seen = <String>{};
+      return [
+        for (final sense in common)
+          [
+            for (final word in _meaningWords(sense.native!))
+              if (word.isNotEmpty &&
+                  !(hideAnswer && answer.hasMatch(word)) &&
+                  seen.add(word))
+                word
+          ].join(chinese ? '、' : ', '),
+      ].where((part) => part.isNotEmpty).toList();
+    }
+
+    var parts = build(hideAnswer: true);
+    // A cognate's meaning is its own spelling (moment → moment, boss →
+    // boss): showing it beats a card with no meaning at all.
+    if (parts.isEmpty) parts = build(hideAnswer: false);
+    return parts.isEmpty ? null : parts.join(chinese ? '；' : '; ');
+  }
+
+  static final _cjk = RegExp(r'[一-鿿]');
+
+  /// The comma-separated words of a meaning, never split inside brackets:
+  /// "capacity (to hold, receive or absorb)" is one word.
+  static List<String> _meaningWords(String text) {
+    final out = <String>[];
+    var depth = 0, start = 0;
+    for (var i = 0; i < text.length; i++) {
+      final c = text[i];
+      if (c == '(' || c == '（') depth++;
+      if ((c == ')' || c == '）') && depth > 0) depth--;
+      if (depth == 0 && (c == ',' || c == '，' || c == '、')) {
+        out.add(text.substring(start, i).trim());
+        start = i + 1;
+      }
+    }
+    out.add(text.substring(start).trim());
+    return out;
   }
 
   /// 構詞拆解 as one line: ex- + -ter + -ior.
@@ -600,7 +631,8 @@ class LexEntry {
       status: j['status'] as String? ?? 'full',
       cefr: j['cefr'] as String?,
       cefrEstimated: j['cefr_source'] == 'frequency_estimate' ||
-          j['cefr_source'] == 'estimate',
+          j['cefr_source'] == 'estimate' ||
+          j['cefr_source'] == 'ai_reviewed',
       card: j['card'] as String?,
       cardForm: j['card_form'] == true,
       zipf: (j['zipf'] as num?)?.toDouble(),

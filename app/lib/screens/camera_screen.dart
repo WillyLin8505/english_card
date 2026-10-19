@@ -375,10 +375,15 @@ class _CameraScreenState extends State<CameraScreen>
                               children: [
                                 const MSvg(MIcon.chevronUp, size: 16),
                                 const SizedBox(width: MSpace.xs),
-                                UiText(
-                                    latest == null ? '先選一張照片開始學習' : '查看這張照片的單字',
-                                    style: MFont.manrope(
-                                        13, FontWeight.w700, MColors.primary)),
+                                // Flexible: the English and French copy is
+                                // longer than the Chinese (問題回報 #363).
+                                Flexible(
+                                  child: UiText(
+                                      latest == null ? '先選一張照片開始學習' : '查看這張照片的單字',
+                                      textAlign: TextAlign.center,
+                                      style: MFont.manrope(
+                                          13, FontWeight.w700, MColors.primary)),
+                                ),
                               ],
                             ),
                           ),

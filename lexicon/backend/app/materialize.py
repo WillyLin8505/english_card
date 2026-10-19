@@ -27,7 +27,7 @@ FORM_POS = {"verb_base": "verb", "verb_past": "verb", "verb_past_participle": "v
             "verb_present_participle": "verb", "verb_third_person": "verb",
             "noun_plural": "noun", "adj_comparative": "adj", "adj_superlative": "adj",
             "fr_past_participle": "verb", "fr_feminine": "adj", "fr_plural": "adj",
-            "fr_feminine_plural": "adj", **{f"fr_present_{p}": "verb" for p in
+            "fr_feminine_plural": "adj", "fr_gender": "noun", **{f"fr_present_{p}": "verb" for p in
                                             ("1s", "2s", "3s", "1p", "2p", "3p")}}
 REL_FIELDS = catalog.RELATION_FIELDS + ["derived_terms"]
 

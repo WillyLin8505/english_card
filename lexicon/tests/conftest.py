@@ -41,10 +41,16 @@ def _no_live_pos_exclusions(tmp_path, monkeypatch):
     from app import images
     monkeypatch.setattr(images, "TAG_TIMING_LOG", tmp_path / "tag_timing.jsonl")
     # Nor take slots from (or pause) the machine-wide Wikimedia budget (問題回報 #339).
-    from app import wikimedia_gate
+    from app import rate_gate, wikimedia_gate
     monkeypatch.setattr(wikimedia_gate, "STATE", tmp_path / "wikimedia_gate.json")
     monkeypatch.setattr(wikimedia_gate, "MIN_INTERVAL", 0.0)
     monkeypatch.setattr(wikimedia_gate, "BACKOFF_BASE", 0.0)
+    # Same for the Smithsonian / Openverse gates (問題回報 #360): a test must
+    # never pause the real workers' sources.
+    for gate in rate_gate.GATES:
+        monkeypatch.setattr(gate, "state", tmp_path / f"{gate.name}_gate.json")
+        monkeypatch.setattr(gate, "min_interval", 0.0)
+        monkeypatch.setattr(gate, "backoff_base", 0.0)
 
 
 @pytest.fixture(scope="session")

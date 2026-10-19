@@ -854,14 +854,41 @@ class Tick:
         if changed and not self.dry:
             board = http("GET", "/schedule/board")
         self.grade_if_needed(board)
+        if not self.dry and (self.cfg.get("mac_sync") or {}).get("enabled"):
+            # Mac's failed rows → 問題回報 now, so this tick's swarm already picks them up
+            try:
+                r = subprocess.run([python_exe(), str(TOOLS / "mac_results_to_issues.py")], cwd=ROOT,
+                                   capture_output=True, timeout=120,
+                                   creationflags=NO_WINDOW if os.name == "nt" else 0)
+                out = r.stdout.decode("utf-8", "replace").strip()
+                if out:
+                    log(f"mac results: {out[-300:]}")
+                    board = http("GET", "/schedule/board")
+            except Exception as e:  # noqa: BLE001
+                log(f"mac_results_to_issues failed: {e}")
         swarmed = self.swarm(board)
         if swarmed and not self.dry:
             board = http("GET", "/schedule/board")
         self.dispatch(board)
         self.heartbeats(board)
         self.mac_sync()
+        self.tag_fallback()
         self.save()
         return 0
+
+    def tag_fallback(self):
+        """問題回報 #327: Codex/Cursor photo tagging when Qwen is paused or ≥ threshold photos wait.
+        tag_fallback.py run checks that itself, holds its own lock and stops at a usage limit."""
+        if self.dry or not load_json(TOOLS / "tag_fallback_config.json", {}).get("enabled"):
+            return
+        flags = NO_WINDOW if os.name == "nt" else 0
+        cmd = [python_exe(), str(TOOLS / "tag_fallback.py"), "run"]
+        try:
+            subprocess.Popen(cmd, cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                             creationflags=flags | BREAKAWAY)
+        except OSError:
+            subprocess.Popen(cmd, cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                             creationflags=flags)
 
     def mac_sync(self):
         """Finished app cards → tested, pushed and listed for the Mac (mac_sync.py, own lock)."""

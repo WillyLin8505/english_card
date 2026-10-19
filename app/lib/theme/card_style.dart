@@ -6,20 +6,23 @@ import 'mobile_theme.dart';
 /// set of card widgets; a style only changes the tokens they read, never
 /// what the card shows or how a review runs.
 enum CardStyle {
-  /// The look before #317; the default.
+  /// The look before #317.
   classic,
 
   /// A — 簡潔留白: one white card, large type, hairline-separated sections.
   minimal,
 
   /// B — 圖片沉浸: the photo leads, the word sits on it; sections are tiles.
+  /// The default (owner's choice on 問題回報 #317).
   immersive,
 
   /// C — 活潑遊戲: a sticker-like card with tinted, icon-labelled sections.
   playful;
 
+  static const CardStyle fallback = CardStyle.immersive;
+
   static CardStyle parse(String? name) => CardStyle.values
-      .firstWhere((s) => s.name == name, orElse: () => CardStyle.classic);
+      .firstWhere((s) => s.name == name, orElse: () => fallback);
 
   String get label => switch (this) {
         CardStyle.classic => '經典',
@@ -85,6 +88,17 @@ class CardLook {
   final Color? buttonAccent;
   final double buttonRadius;
 
+  /// The bar fixed under the card: 顯示答案 on the front, the four grades on
+  /// the back. A grade tile keeps its spec colours (bg, fg); a style only
+  /// changes its shape.
+  final BoxDecoration dock;
+  final BoxDecoration Function(bool enabled) answerButton;
+  final double answerHeight;
+  final TextStyle answerText;
+  final BoxDecoration Function(Color bg, Color fg) ratingTile;
+  final double ratingHeight;
+  final double ratingLabelSize;
+
   const CardLook._({
     required this.style,
     required this.canvas,
@@ -118,6 +132,13 @@ class CardLook {
     required this.exerciseTitle,
     this.buttonAccent,
     this.buttonRadius = MRadii.md,
+    required this.dock,
+    required this.answerButton,
+    required this.answerHeight,
+    required this.answerText,
+    required this.ratingTile,
+    required this.ratingHeight,
+    required this.ratingLabelSize,
   });
 
   static BoxDecoration? _noPanel(int _) => null;
@@ -172,6 +193,23 @@ class CardLook {
         frontHint: MFont.manrope(30, FontWeight.w800, MColors.ink),
         frontMeaning: MFont.manrope(24, FontWeight.w800, MColors.primary),
         exerciseTitle: MFont.manrope(20, FontWeight.w800, MColors.ink),
+        dock: const BoxDecoration(
+          color: MColors.surface,
+          border: Border(top: BorderSide(color: MColors.hairline)),
+          boxShadow: MShadows.tabBar,
+        ),
+        answerButton: (enabled) => enabled
+            ? MDecor.primaryPill(radius: 26)
+            : MDecor.softPanel(color: MColors.label, radius: 26),
+        answerHeight: 52,
+        answerText: MFont.manrope(16, FontWeight.w800, Colors.white),
+        ratingTile: (bg, fg) => BoxDecoration(
+          color: bg,
+          borderRadius: MRadii.rMd,
+          border: Border.all(color: fg.withValues(alpha: 0.12)),
+        ),
+        ratingHeight: 72,
+        ratingLabelSize: 14,
       );
 
   // A: quiet type hierarchy (40 / 20 / 15 / 12), ink instead of blue for the
@@ -225,6 +263,25 @@ class CardLook {
         exerciseTitle: MFont.manrope(20, FontWeight.w700, _aInk),
         buttonAccent: _aInk,
         buttonRadius: MRadii.xs,
+        // A flat white bar, an ink button (17.7:1) and outlined grades.
+        dock: const BoxDecoration(
+          color: MColors.surface,
+          border: Border(top: BorderSide(color: Color(0xFFE5E7EB))),
+        ),
+        answerButton: (enabled) => BoxDecoration(
+          color: enabled ? _aInk : const Color(0xFF9CA3AF),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        answerHeight: 52,
+        answerText: MFont.manrope(16, FontWeight.w700, Colors.white)
+            .copyWith(letterSpacing: 0.5),
+        ratingTile: (bg, fg) => BoxDecoration(
+          color: MColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: fg, width: 1.5),
+        ),
+        ratingHeight: 64,
+        ratingLabelSize: 14,
       );
 
   // B: the photo is the hero (300 pt, word on a dark scrim); the rest are
@@ -273,6 +330,26 @@ class CardLook {
         exerciseTitle: MFont.manrope(22, FontWeight.w800, _bInk),
         buttonAccent: _bAccent,
         buttonRadius: MRadii.pill,
+        // A raised sheet with rounded top corners, a deep-sky pill (white
+        // text 5.9:1) and soft filled grade tiles.
+        dock: const BoxDecoration(
+          color: MColors.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          boxShadow: MShadows.tabBar,
+        ),
+        answerButton: (enabled) => BoxDecoration(
+          color: enabled ? _bAccent : MColors.label,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: enabled ? MShadows.soft : null,
+        ),
+        answerHeight: 56,
+        answerText: MFont.manrope(17, FontWeight.w800, Colors.white),
+        ratingTile: (bg, fg) => BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        ratingHeight: 72,
+        ratingLabelSize: 15,
       );
 
   // C: a sticker card (2 pt ink outline, hard offset shadow), sections on
@@ -348,6 +425,33 @@ class CardLook {
         exerciseTitle: MFont.manrope(26, FontWeight.w800, _cInk),
         buttonAccent: _cAccent,
         buttonRadius: MRadii.pill,
+        // Stickers again: 2 pt ink outlines with a hard offset shadow.
+        dock: const BoxDecoration(
+          color: Color(0xFFFFF4E0),
+          border: Border(top: BorderSide(color: _cInk, width: 2)),
+        ),
+        answerButton: (enabled) => BoxDecoration(
+          color: enabled ? _cAccent : MColors.label,
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: _cInk, width: 2),
+          boxShadow: enabled
+              ? const [
+                  BoxShadow(color: _cInk, offset: Offset(0, 4), blurRadius: 0)
+                ]
+              : null,
+        ),
+        answerHeight: 56,
+        answerText: MFont.manrope(18, FontWeight.w800, Colors.white),
+        ratingTile: (bg, fg) => BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: _cInk, width: 2),
+          boxShadow: const [
+            BoxShadow(color: _cInk, offset: Offset(0, 4), blurRadius: 0)
+          ],
+        ),
+        ratingHeight: 72,
+        ratingLabelSize: 15,
       );
 }
 

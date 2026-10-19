@@ -1,6 +1,6 @@
 {
-  "note": "問題回報 #327 / 卡 #330: Codex/Cursor 看圖打標備援。enabled=false 時 `run` 只在 --force 下執行；golden 比較不輸才改 true。",
-  "enabled": false,
+  "note": "問題回報 #327 / 卡 #330: Codex/Cursor 看圖打標備援。enabled=false 時 `run` 只在 --force 下執行；golden 比較不輸才改 true。owner 10/19 決定 A：已開，dispatch_tick 每輪背景啟動 `run`（自己判斷 Qwen 暫停或待打標 ≥ pending_threshold、自己的鎖、額度用完就停）。",
+  "enabled": true,
   "backends": ["codex", "cursor"],
   "pending_threshold": 200,
   "batch": 20,

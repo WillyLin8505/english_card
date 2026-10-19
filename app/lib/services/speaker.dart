@@ -43,14 +43,16 @@ class DeviceSpeaker implements Speaker {
         // Wait for the clip to end so two accents played in a row (card
         // #251: 英式、美式各一次) do not cut each other off; a clip that
         // never reports completion gives up after a few seconds.
-        final finished = player.onPlayerComplete.first;
+        final Future<void> finished =
+            player.onPlayerComplete.first.then<void>((_) {});
         // UrlSource only plays http/file URLs. Bundled clips are Flutter
         // assets; AssetSource's cache already prefixes `assets/`.
         final source = packMediaIsAsset(audioUrl)
             ? AssetSource(audioUrl.substring('assets/'.length))
             : UrlSource(audioUrl);
         await player.play(source);
-        await finished.timeout(const Duration(seconds: 6), onTimeout: () {});
+        await finished.timeout(const Duration(seconds: 6),
+            onTimeout: () => null);
         return true;
       } catch (e) {
         debugPrint('Recording failed, using TTS: $e');

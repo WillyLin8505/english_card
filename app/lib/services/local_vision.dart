@@ -14,6 +14,10 @@ import 'tagging_service.dart';
 /// One label from the device's image classifier, e.g. (`banana`, 0.93).
 typedef VisionLabel = ({String label, double confidence});
 
+/// Shown when the phone's classifier fails on a photo. The simulator has no
+/// neural engine, so this is common there; a real phone rarely hits it.
+const visionFailedMessage = '手機暫時無法辨識這張照片（模擬器上常見，實機可能正常），請換一張照片再試';
+
 /// On-device picture recognition (問題回報 #265, owner decision 2026-10-18:
 /// B+C 本機辨識＋內建詞庫). iOS answers through Apple Vision's image
 /// classifier (`VNClassifyImageRequest`, ~1,300 labels) registered on the
@@ -49,7 +53,10 @@ class LocalVision {
       raw = await channel.invokeListMethod<Object?>(
           'classify', {'image': jpeg, 'maxResults': maxResults});
     } on PlatformException catch (e) {
-      throw TaggingApiException('手機辨識失敗：${e.message ?? e.code}');
+      // The platform's own text (e.g. "Failed to create espresso context.")
+      // is for developers; the learner gets a plain sentence (問題回報 #370).
+      debugPrint('local vision failed: ${e.code} ${e.message}');
+      throw TaggingApiException(visionFailedMessage);
     } on MissingPluginException {
       throw TaggingApiException('這台裝置沒有本機照片辨識');
     }

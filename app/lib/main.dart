@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'l10n/ui_text.dart';
 import 'services/dictionary_sync.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -38,8 +39,9 @@ Widget phoneFrameBuilder(BuildContext context, Widget? child) =>
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Web only: Chinese glyphs ready before the first frame (問題回報 #25).
-  final cjkFont = loadWebCjkFont();
+  // Web only: the Chinese font loads in the background, never blocking the
+  // first frame (問題回報 #357); text re-lays out when it arrives.
+  unawaited(loadWebCjkFont());
   await Hive.initFlutter();
   await WordDetailService.instance.load();
   final lexicon = await CefrLexicon.load();
@@ -55,8 +57,12 @@ Future<void> main() async {
 
   Future<WordDatabaseRepository> open(String language) async {
     // The downloaded language pack for this direction (assets/lexicon/).
-    await LexiconPack.instance
-        .load(target: language, native: settings.nativeLanguage);
+    // The web page doesn't wait for it (30 MB, 問題回報 #357): DictionarySync
+    // fills it from the cached or online dictionary once the app is up.
+    if (!kIsWeb) {
+      await LexiconPack.instance
+          .load(target: language, native: settings.nativeLanguage);
+    }
     final store = await HiveWordDatabaseStore.open(language: language);
     // Database content is shown by the live catalog. Personal collections
     // start empty; existing saved photos and review records stay intact.
@@ -76,7 +82,6 @@ Future<void> main() async {
   }
 
   final repository = await open(settings.learningLanguage);
-  await cjkFont;
   runApp(PhotoEnglishApp(
     repository: repository,
     settings: settings,

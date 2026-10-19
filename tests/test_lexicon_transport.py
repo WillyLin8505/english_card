@@ -131,3 +131,38 @@ def test_exporter_language_mismatch_is_never_persisted(tmp_path):
     with pytest.raises(ValueError, match='language pair'):
         store.get('en', 'zh-TW')
     assert not list(tmp_path.iterdir())
+
+
+def wait_idle(store):
+    for _ in range(300):
+        if not store.refreshing:
+            return
+        time.sleep(.01)
+
+
+def test_new_code_revision_serves_previous_revision_snapshot_while_rebuilding(tmp_path):
+    # Card #380: a restart after a code change must not rebuild for minutes in the request.
+    old = SnapshotStore(lambda *a: (encode(pack('old')), 'old'), tmp_path / 'rev1')
+    old.get('en', 'zh-TW')
+    release = threading.Event()
+
+    def slow(*a):
+        assert release.wait(3)
+        return encode(pack('new')), 'new'
+
+    store = SnapshotStore(slow, tmp_path / 'rev2', stale_root=tmp_path, wait_first=False)
+    try:
+        assert store.get('en', 'zh-TW').version == 'old'
+    finally:
+        release.set()
+    wait_idle(store)
+    assert store.get('en', 'zh-TW').version == 'new'
+    assert (tmp_path / 'rev2').is_dir()
+    from lexicon_transport import Warming
+    import pytest
+    cold = SnapshotStore(lambda *a: (encode(pack('fr')), 'fr'), tmp_path / 'new' / 'rev',
+                         stale_root=tmp_path / 'new', wait_first=False)
+    with pytest.raises(Warming):
+        cold.get('en', 'zh-TW')
+    wait_idle(cold)
+    assert cold.get('en', 'zh-TW').version == 'fr'

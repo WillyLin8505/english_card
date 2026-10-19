@@ -11,6 +11,10 @@ export type WordAudio = {
 
 export type WordImage = {
   id: number; sense_id: number; ordinal: number; pos: string; gloss: string | null; native: string | null;
+  /** A non-English word's own headword (問題回報 #362); its labels are its French words. */
+  label?: string | null;
+  /** English labels naming no word of this entry: listed, not drawn. */
+  unmatched_tags?: { word: string; score?: number | null }[] | null;
   asset_id: number; width: number; height: number; author: string | null; license_code: string | null;
   license_url: string | null; page_url: string | null; semantic_score: number | null; tag_status: string;
   tags: { word: string; pos: string | null; point: [number, number] | null;
@@ -182,11 +186,12 @@ export default function WordMedia({ lemma, display, audio, images, imagesPending
             <figure key={im.id} className="word-image">
               <TaggedImage im={im} lemma={lemma} alt={`${display}：${im.native ?? im.gloss ?? ""}`} />
               <figcaption>
-                <strong>{im.pos} #{im.ordinal + 1}</strong> {im.native ?? ""}
+                <strong>{im.pos} #{im.ordinal + 1}</strong> {im.label ?? im.native ?? ""}
                 <span className="muted"> {im.gloss ?? ""}</span>
                 <br />
                 <small className="muted">
-                  {im.tag_status === "done" ? `AI 標籤 ${im.tags.length} 個`
+                  {im.label && im.tags.length === 0 && im.tag_status === "done" ? "圖上沒有標到這個字"
+                    : im.tag_status === "done" ? `AI 標籤 ${im.tags.length} 個`
                     : im.tag_status === "failed" ? "AI 標籤失敗"
                     : im.tags.length > 0 ? `AI 標籤 ${im.tags.length} 個（A1～C2 尚未各滿 3 個）`
                     : "AI 標籤處理中"}
@@ -199,6 +204,10 @@ export default function WordMedia({ lemma, display, audio, images, imagesPending
                 {(im.dropped_tags?.length ?? 0) > 0 && <details>
                   <summary className="muted">未採用／待審核的標籤 {im.dropped_tags!.length} 個</summary>
                   <TagScores tags={im.dropped_tags} word={lemma} label="未通過的 AI 標籤" />
+                </details>}
+                {(im.unmatched_tags?.length ?? 0) > 0 && <details>
+                  <summary className="muted">未對應「{lemma}」的英文標籤 {im.unmatched_tags!.length} 個（已隱藏）</summary>
+                  <p className="muted">{im.unmatched_tags!.map((t) => t.word).join("、")}</p>
                 </details>}
               </figcaption>
             </figure>

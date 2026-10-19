@@ -243,7 +243,8 @@ void main() {
   testWidgets('設定 → 卡片樣式 switches the style',
       (tester) async {
     final app = await pumpApp(tester, initialTab: AppTab.settings);
-    expect(app.settings.cardStyle, CardStyle.classic);
+    // Owner's choice on #317: B is the default.
+    expect(app.settings.cardStyle, CardStyle.immersive);
     final chip = find.text('C 活潑遊戲');
     await tester.scrollUntilVisible(chip, 300,
         scrollable: find
@@ -257,10 +258,42 @@ void main() {
     expect(app.settings.cardStyle, CardStyle.playful);
   });
 
-  test('卡片樣式 is stored by name; unknown names fall back to classic', () {
-    expect(CardStyle.parse('immersive'), CardStyle.immersive);
-    expect(CardStyle.parse(null), CardStyle.classic);
-    expect(CardStyle.parse('nonsense'), CardStyle.classic);
+  test('卡片樣式 is stored by name; unknown names fall back to B', () {
+    expect(CardStyle.parse('classic'), CardStyle.classic);
+    expect(CardStyle.parse(null), CardStyle.immersive);
+    expect(CardStyle.parse('nonsense'), CardStyle.immersive);
+  });
+
+  testWidgets('each style restyles 顯示答案 and the four grades',
+      (tester) async {
+    Container answer() => tester.widget<Container>(find
+        .ancestor(of: find.text('顯示答案'), matching: find.byType(Container))
+        .first);
+    Container grade() => tester.widget<Container>(find
+        .ancestor(of: find.text('忘記'), matching: find.byType(Container))
+        .first);
+    final seen = <CardStyle, (Object?, Object?)>{};
+    for (final style in CardStyle.values) {
+      final look = CardLook.forStyle(style);
+      final s = await pumpReview(tester, style);
+      final a = answer();
+      expect(a.decoration, look.answerButton(true), reason: style.name);
+      final answerBox = tester.getSize(find
+          .ancestor(of: find.text('顯示答案'), matching: find.byType(Container))
+          .first);
+      expect(answerBox.height, greaterThanOrEqualTo(44), reason: style.name);
+      await showBack(tester, s);
+      expect(tester.takeException(), isNull);
+      final g = grade();
+      expect(tester.getSize(find
+              .ancestor(of: find.text('忘記'), matching: find.byType(Container))
+              .first)
+          .height, greaterThanOrEqualTo(44), reason: style.name);
+      seen[style] = (a.decoration, g.decoration);
+    }
+    // Four different looks, not one look four times.
+    expect(seen.values.map((v) => v.$1.toString()).toSet(), hasLength(4));
+    expect(seen.values.map((v) => v.$2.toString()).toSet(), hasLength(4));
   });
 
   testWidgets('screenshots for the owner (docs/card_styles/)', (tester) async {

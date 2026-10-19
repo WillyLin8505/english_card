@@ -70,6 +70,10 @@ class FlashcardSession extends ChangeNotifier {
   /// Maximum same-run appearances after the card's first appearance.
   static const maxAgainRepeats = 2;
 
+  /// Most times one word shows in a run, counting correct repeats too
+  /// (問題回報 #319 decision A): after that it waits for FSRS tomorrow.
+  static const maxRunAppearances = 1 + maxAgainRepeats;
+
   final WordDatabaseRepository repo;
   final math.Random _random;
   final LexiconPack _lexicon;
@@ -163,6 +167,7 @@ class FlashcardSession extends ChangeNotifier {
   final _shownAt = <String, int>{};
   final _again = <String, int>{};
   final _againRepeats = <String, int>{};
+  final _appearances = <String, int>{};
   final _recentPhotos = <String>[];
   String? _lastPhoto;
 
@@ -316,6 +321,7 @@ class FlashcardSession extends ChangeNotifier {
           (_scheduledThisRun.contains(_cardId) ||
               !repo.isEligible(card!, repo.clock()));
       _shownAt[_cardId!] = _step;
+      _appearances[_cardId!] = (_appearances[_cardId!] ?? 0) + 1;
       _choosePhoto();
       // A card with no buildable interactive exercise falls back to the
       // traditional flip (word → native meaning) instead of being skipped
@@ -583,6 +589,9 @@ class FlashcardSession extends ChangeNotifier {
     return id;
   }
 
+  /// True once a word has used up its appearances in this run.
+  bool _worn(String id) => (_appearances[id] ?? 0) >= maxRunAppearances;
+
   String? _pick() {
     // A queued Again card may have been marked learned from word details.
     _again.removeWhere((id, _) {
@@ -600,6 +609,7 @@ class FlashcardSession extends ChangeNotifier {
     }
     for (final id in focus) {
       if (_shownAt.containsKey(id) || _again.containsKey(id)) continue;
+      if (_worn(id)) continue;
       final c = repo.card(id);
       if (c != null && !c.archived && repo.entry(c.wordEntryId) != null) {
         return id;
@@ -616,18 +626,13 @@ class FlashcardSession extends ChangeNotifier {
         // wait for their own turn instead of being recycled here too — unless
         // the database is so small that the practice card was itself just
         // shown; then the Again card comes back early rather than repeating.
-        // A word that used up its Again returns waits for FSRS, not for this
-        // pool (問題回報 #319) — unless it is all the database has, so a
-        // one-word database keeps practising instead of ending the run.
+        // A word that reached [maxRunAppearances] waits for FSRS, not for
+        // this pool (問題回報 #319); when no word is left the run ends.
         final pool = [
           for (final c in repo.eligibleCards(includeFuture: true))
-            if (!_again.containsKey(c.id)) c,
+            if (!_again.containsKey(c.id) && !_worn(c.id)) c,
         ];
-        final rested = [
-          for (final c in pool)
-            if ((_againRepeats[c.id] ?? 0) < maxAgainRepeats) c,
-        ];
-        final practice = (rested.isEmpty ? pool : rested)..shuffle(_random);
+        final practice = pool..shuffle(_random);
         practice.sort(
             (a, b) => (_shownAt[a.id] ?? -1).compareTo(_shownAt[b.id] ?? -1));
         final best = practice.firstOrNull;

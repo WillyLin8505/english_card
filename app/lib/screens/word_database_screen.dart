@@ -645,7 +645,9 @@ class _WordRow extends StatelessWidget {
                     color: MColors.success, size: 18),
               ),
             if (level != null) ...[
-              LevelBadge(level!),
+              // Flexible: "Upper intermediate (B2)" in English is wider
+              // than 中高級 (問題回報 #363).
+              Flexible(child: LevelBadge(level!)),
               const SizedBox(width: MSpace.xxs),
             ],
             IconButton(

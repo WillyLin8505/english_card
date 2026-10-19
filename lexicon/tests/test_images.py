@@ -645,11 +645,11 @@ def test_auto_fetch_falls_back_through_the_source_chain(session, monkeypatch):
         return {"id": binding.id, "status": "pending"}
 
     monkeypatch.setitem(images.IMAGE_SOURCES, "open_images", (make_search("open_images", False), fake_ingest))
-    monkeypatch.setitem(images.IMAGE_SOURCES, "smithsonian", (make_search("smithsonian", True), fake_ingest))
-    monkeypatch.setitem(images.IMAGE_SOURCES, "openverse", (make_search("openverse", False), fake_ingest))
+    monkeypatch.setitem(images.IMAGE_SOURCES, "openverse", (make_search("openverse", True), fake_ingest))
+    monkeypatch.setitem(images.IMAGE_SOURCES, "smithsonian", (make_search("smithsonian", False), fake_ingest))
 
     got = images.auto_fetch(session, "en", "zh-TW", "gizmo", per_sense=1)
-    assert tried == ["open_images", "smithsonian"], "stops once the sense has enough pictures"
+    assert tried == ["open_images", "openverse"], "stops once the sense has enough pictures"
     assert got["images"] == 1
 
 
@@ -834,7 +834,36 @@ def test_enabled_image_sources_honors_policy_order_and_disabled_steps(session):
         steps["smithsonian"].position, steps["openverse"].position
     session.flush()
     assert images._enabled_image_sources(session, "en", "zh-TW") == [
-        "open_images", "openverse", "smithsonian"]
+        "open_images", "smithsonian", "openverse"]
+
+
+def test_seed_moves_smithsonian_last_only_in_untouched_image_chains(session):
+    # 問題回報 #375: the old default order gets Smithsonian last; an order the
+    # admin chose is left alone.
+    from sqlalchemy import select
+    from app import models as m, policies
+
+    def chain(field):
+        p = session.execute(select(m.SourcePolicy).where(
+            m.SourcePolicy.target_language == "en", m.SourcePolicy.native_language == "zh-TW",
+            m.SourcePolicy.field == field)).scalar_one()
+        return p, {st.source: st for st in policies.steps_of(session, p)}
+
+    old = ["wikimedia_commons", "open_images", "smithsonian", "openverse"]
+    p, steps = chain("sense_image")
+    for i, src in enumerate(old):
+        steps[src].position = (i + 1) * 1000
+    q, custom = chain("thumbnail")
+    for i, src in enumerate(["smithsonian", "wikimedia_commons", "open_images", "openverse"]):
+        custom[src].position = (i + 1) * 1000
+    session.flush()
+    version = p.version
+    assert policies.reorder_untouched_chains(session) >= 1
+    assert [st.source for st in policies.steps_of(session, p)] == [
+        "wikimedia_commons", "open_images", "openverse", "smithsonian"]
+    assert p.version == version
+    assert [st.source for st in policies.steps_of(session, q)][0] == "smithsonian"
+    assert policies.reorder_untouched_chains(session) == 0
 
 
 def test_enabled_image_sources_defaults_to_the_full_chain_when_no_policy_exists(session):

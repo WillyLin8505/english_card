@@ -16,10 +16,11 @@ CC BY-SA 的「相同方式分享」只及於該筆資料本身（詞條文字�
 | 字典（輔） | Kaikki：法文版 Wiktionnaire（frwiktionary） | CC BY-SA 4.0／GFDL | 法語 2,657,554 個義項（含所有變化形） | 未接；釋義是法文，給英文母語者不如英文版；留作變位表、法語例句、Lingua Libre 音檔的補充 |
 | 字典（輔） | DBnary（Wiktionnaire 的 Ontolex 萃取） | CC BY-SA 3.0 | 法語版全量；含消歧後的翻譯（`fr_dbnary_enhancement.ttl`） | 未接；只在需要 fr→en 翻譯對照表時用 |
 | 詞頻 | wordfreq（fr） | Apache-2.0（程式）／CC BY-SA 4.0（資料） | 法語 zipf 頻率，前 6 萬字表 | **已接**（`wordfreq` 來源、`kaikki_wordlist` 拼字相近） |
-| 詞頻 | Lexique 4（lexique.org） | CC BY-SA 4.0 | 190,000 個法語詞形：字幕語料 3.16 億詞的頻率、詞類、陰陽性、單複數、音標、詞幹 | 未接；建議接為 CEFR 估計與陰陽性的第二來源 |
+| 詞頻 | Lexique 3.83（lexique.org，New & Pallier） | CC BY-SA 4.0 | 142,694 列、46,947 個有頻率的詞元：字幕＋書籍語料的詞元頻率、詞類、陰陽性、單複數、音標 | **已接（卡 #335）**：詞元 zipf → `backend/app/fr_lexique_lemma_zipf.json`，CEFR 頻率估計取 max(wordfreq, Lexique) |
 | 詞頻 | FrequencyWords（hermitdave，OpenSubtitles 2018） | 程式 MIT／資料 CC BY-SA 4.0 | 法語 5 萬字頻表 | 未接；與 wordfreq 重疊 |
 | CEFR | FLELex（UCLouvain CENTAL） | **CC BY-NC-SA 4.0（非商用）** | 14,236（TreeTagger 版）／17,871（CRF 版）個詞元，A1–C2 各級頻率 | **不能用**（非商用）；可洽 UCLouvain 商用授權 |
-| CEFR | 本機頻率估計（`local_calc`，wordfreq zipf 分級） | 自有 | 全部法語字 | **已接**（標 `cefr_source=frequency_estimate`，與英文無 CEFR-J 時相同） |
+| CEFR | 自建校正表（卡 #335，#332 決定 C）：頻率初分＋Claude 對照 CEFR／DELF A1–B1 公開能力描述校正 | 自有 | 法語基礎 3000 字 | **已接**：`backend/app/fr_cefr_reviewed.json`，標 `cefr_source=ai_reviewed`（app 仍顯示「估算」） |
+| CEFR | 本機頻率估計（`local_calc`，max(wordfreq, Lexique 詞元) zipf 分級） | 自有 | 3000 字以外的法語字 | **已接**（標 `cefr_source=frequency_estimate`，與英文無 CEFR-J 時相同） |
 | 例句 | Tatoeba（fra／eng 週匯出＋ fra-eng 連結） | CC BY 2.0 FR（逐句標示作者） | 法語 735,614 句、英語 2,047,687 句；fra-eng 連結檔 2.7 MB（bz2） | **已接**（快照 #3 `fr:en` 已匯入 3,209,906 列） |
 | 音檔 | Lingua Libre（Wikimedia Commons） | CC BY-SA 4.0（逐檔） | Commons 分類「Lingua Libre pronunciation-fra」439,614 個檔 | **已接**：Kaikki 詞條 `sounds` 直接列出 `LL-Q150 (fra)-<speaker>-<word>.wav` 的 ogg／mp3 網址 |
 | 音檔 | Wiktionary 傳統錄音（Commons `Fr-<mot>.ogg`、`Fr-Paris--<mot>.ogg`） | 逐檔（多為 CC BY-SA） | Commons 分類「French pronunciation」3,558 個檔 | **已接**（`adapters/commons.py` 法語檔名樣式） |
@@ -57,8 +58,17 @@ CC BY-SA 的「相同方式分享」只及於該筆資料本身（詞條文字�
 - **Lexique 4**：http://www.lexique.org/ ，CC BY-SA 4.0，TSV；欄位 `ortho/phon/lemme/cgram/genre/nombre/freqlemfilms2/freqlemlivres`。
   可同時給陰陽性（`genre`）、詞類與頻率；建議接為 `fr` 的第二頻率來源並用於 CEFR 估計校正。
 - **FLELex**：https://cental.uclouvain.be/cefrlex/flelex/ ，CC BY-NC-SA 4.0 → **不能商用**。它是目前唯一按 CEFR
-  教材語料分級的法語詞表（Beacco 版另有一欄推得的 CEFR 等級）。**需要 owner 決定**：接受頻率估計（現況），
-  或洽 UCLouvain 取得商用授權，或自建（以 wordfreq＋Lexique 頻率＋教材字表人工校正 A1–B1 約 3000 字）。
+  教材語料分級的法語詞表（Beacco 版另有一欄推得的 CEFR 等級）。
+- **owner 決定（#332，2026-10-19）＝ C 自建**，卡 #335 完成：
+  1. 頻率初分：max(wordfreq zipf, Lexique 3.83 詞元 zipf)（詞元頻率含所有詞形，動詞與具體名詞不再被低估）。
+  2. 校正：Claude 逐字對照 CEFR／DELF A1–B1 公開能力描述的主題範圍（自我介紹、家庭、住家、食物、時間、購物、
+     交通、健康、工作、休閒；B1 才是時事、社會、抽象概念與連接詞），**沒有抄任何受版權保護的字表**
+     （Référentiels／FLELex 不用）。結果 A1 504／A2 792／B1 1,508／B2 141／C1 55（C1 多為人名地名：louis、macron、seine）。
+  3. 與頻率初分相比：同級 1,369、校正變易 358、變難 1,273（新聞／政治／抽象字從 A1–A2 拉到 B1）；
+     差異全表給 owner 抽查：`lexicon/raw-data/card335_fr_cefr_diff.tsv`。
+  4. 程式：`adapters/local.py` `word_level(w,"fr")` 先查表、`fr_cefr_source()`；`app_pack` 主用法標 `ai_reviewed`；
+     `qc`／`quality`／Flutter 把 `ai_reviewed` 當估算。工具：`lexicon/tools/card335_fr_cefr.py build|apply|restore`。
+  5. 已知缺口：3000 字表本身漏了不少教材 A1 具體名詞（cuisine、lit、bouche、cahier、jupe…），見問題回報 #364。
 - Kelly 法語詞表、Français fondamental（Gougenheim 1954，1er degré 1,475 字）：授權不明／年代久，列為參考，不直接匯入。
 
 ### 2.4 例句 — Tatoeba
@@ -143,13 +153,18 @@ CC BY-SA 的「相同方式分享」只及於該筆資料本身（詞條文字�
 - **量化**：`POST /api/imports`（wordlist『法語基礎 3000 字』、parallelism 4、來源不含 ai_translate）→ 工作 #99–#102 由 4 個 text worker 跑；
   圖片任務進 `image_fetch_tasks`，但 image worker 幾乎停擺（問題回報 #338：3,450 筆佇列、24 小時完成 13 筆），
   前景抓圖用 `python lexicon/tools/card325_fr_trial.py pictures <words>`（每字 1.5–4.5 分鐘；Smithsonian／Commons 常回 429）。
-- **CEFR**：仍是頻率估計（#332 未決）；golden `fr_v1` 擴到 25 字。
+- **CEFR**：卡 #335 起為自建校正表（§2.3）；golden `fr_v1` 擴到 25 字（chat、pomme 改為 A1）。
 - **第 2 輪（10/19 下午）音檔與圖片**：`python lexicon/tools/card329_fr_media.py report|share|audio|pictures`，前景、逐字 commit、
   走 `wikimedia_gate`（全機共用配額，其他程序也在用時約 10 秒一字）。`share`＝#336 的 `share_by_meaning`：法語名詞義項依英文
   釋義重用已核准、已標籤的英文圖（305 字 +940 張，自動採用）；`audio`＝沒有 ready 錄音的 full 字，每個詞性只抓一檔（Fr-<字>.ogg 優先），
   其他音檔項標「本輪未下載」，再跑同一個 `materialize`。**音檔根因**：`adapters/http.py download()` 原本把 404（轉檔 .mp3 常不存在，
   正常會改抓 .ogg）算成來源失敗，連續 5 次就開斷路器 60 秒，期間每個字的音檔立即失敗 → 法語 5,168／英文 2,045 筆 failed；
   已改成跟 `get()` 一樣不計入斷路器（問題回報 #343 記英文待補；text workers 要重啟才會帶到）。
+- **第 3 輪（10/19 晚）**：匯入 #99–#102 全部完成（3000 字表中 2,999 字 full；`monté` 只是 monter 的分詞，匯入沒有建詞條，字表留著不補），
+  `card329_fr_decks.py` 重跑 → fr-basic-2000＝1,999／fr-basic-3000＝2,999（A1 556、A2 1,062、B1 1,165、B2 149、C1 58、C2 9）。
+  `audio --budget 480` 連跑 6 批（workers 閒下來後約 2.3 秒一字）補 1,202 字；字表只剩 88 字沒錄音（68 字 Commons／Lingua Libre 根本沒檔，
+  20 字 404），`relink`（同字其他詞性已有錄音就直接連過去，不下載）剩 7 字 IPA 不同。圖片：image worker 一天約 100 筆，瓶頸是
+  Smithsonian 429（問題回報 #360），佇列 2,302 筆要等；法語圖打標 Qwen 佇列 ≤ 4，不需 Codex／Cursor 備援。
 
 ## 5. 下一張卡（法語基礎 2000–3000 字）要先做的事
 1. 決定 CEFR 來源（§2.3）。2. 建 Kaikki 法語本機索引，不要逐字打 kaikki.org。3. 重啟 API 與 workers 載入法語程式

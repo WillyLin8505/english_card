@@ -20,6 +20,10 @@ Line counts as of 2026-10-17. **Big files: search first, then read a range** (se
 - `tasks.py` 649 — 排程 board API (`/tasks`, `/schedule/*`, difficulty, agents-info). `agent_usage.py` — AI usage panel.
 - `issues.py` — 問題回報 API. `quality.py` 495, `qc.py`, `qc_fix.py` — quality rules. `policies.py` 428.
 - `adapters/` — dictionary sources (kaikki 810, local 792, ai 311, tatoeba, ecdict, cmudict, oewn, commons…).
+- Shared request budgets (one state file per source under `lexicon/state/*_gate.json`, all processes): `wikimedia_gate.py`
+  (#339, waits a 429 pause out) and `rate_gate.py` (#360: `api.si.edu`, `api.openverse.org` — a paused source is
+  skipped at once, the task completes on the other sources). Measure: `tools/card362_measure.py`; re-queue tasks that
+  skipped a paused source: `tools/card362_requeue.py --source smithsonian --dry-run`; per-host profile: `card362_profile.py`.
 
 ## Tools (`lexicon/tools/`)
 - Board: `task.py` (local, key from env), `launch_agent.py` (dispatch), `pick_card.py`, `grade_cards.py`,
@@ -50,6 +54,10 @@ Line counts as of 2026-10-17. **Big files: search first, then read a range** (se
   the English word's first senses. Re-rank existing rows: `card352_reorder.py --lang fr|en --dry-run|--apply|--restore`;
   measure: `card352_measure.py --lang fr`. `meaning_index` also labels pictures from deeper plain senses that English
   Wiktionary confirms (motif 「pattern」).
+- CEFR (#335, issue #332 decision C): `word_level(w, "fr")` = `backend/app/fr_cefr_reviewed.json` (法語基礎 3000 字,
+  Claude-reviewed A1–B1, `cefr_source=ai_reviewed`, app shows 估算) else max(wordfreq, Lexique 3.83 lemma zipf in
+  `fr_lexique_lemma_zipf.json`). Rebuild / rewrite DB: `tools/card335_fr_cefr.py build|apply [--dry-run]|restore`;
+  review batches `raw-data/card335_review/b0*.txt`, owner diff `raw-data/card335_fr_cefr_diff.tsv`.
 
 ## Data you should NOT read whole
 - `lexicon/logs/agents/` is ~700 MB: `*pack*.json` are 100+ MB app-pack dumps, `*.jsonl` up to 18 MB. Use Python/jq to

@@ -176,6 +176,34 @@ def _accents(tags) -> list[str]:
     return out
 
 
+FR_GENDER_HEAD = {"m": "m", "f": "f", "mf": "m/f", "m-p": "m", "f-p": "f", "mf-p": "m/f"}
+
+
+def fr_gender(noun_entries) -> str | None:
+    """The noun's gender (card #367): the Wiktionary head template first
+    (fr-noun 「m」「f」「mf」), else the sense tags. 'm/f' = epicene.
+    Plural-only nouns (tag plural-only) get 'pl'."""
+    head, tags = set(), set()
+    for e in noun_entries:
+        for h in e.get("head_templates", []):
+            head.add(FR_GENDER_HEAD.get((h.get("args") or {}).get("1", "")))
+        for s in e.get("senses", []):
+            tags |= set(s.get("tags", []))
+        tags |= set(e.get("tags", []))
+    head.discard(None)
+    if len(head) == 1:
+        return head.pop()
+    if "epicene" in tags or {"masculine", "feminine"} <= tags:
+        return "m/f"
+    if "masculine" in tags:
+        return "m"
+    if "feminine" in tags:
+        return "f"
+    if "plural-only" in tags:
+        return "pl"
+    return None
+
+
 def form_field(pos: str, tags: set[str], target: str) -> str | None:
     if tags & LOW_TAGS or tags & FORM_SKIP:
         return None
@@ -382,6 +410,10 @@ class Kaikki(SourceAdapter):
                         add({"form": b}, b.lower(), conf=0.9, rid=f"{word}#verb")
                 else:
                     add({"form": word}, word.lower(), rid=f"{word}#verb")
+        elif f == "fr_gender":
+            g = fr_gender([e for e in entries if _pos(e) == "noun"])
+            if g:
+                add({"form": g}, g, rid=f"{word}#noun")
         elif f in catalog.FORM_FIELDS:
             # A headword that is itself a form (grated, ate, eaten, apples,
             # better) shares its base word's whole table: eat, ate and eaten
@@ -543,6 +575,56 @@ class Kaikki(SourceAdapter):
                 best, score = s["sense_key"], sc
         return best if score >= 0.34 else None
 
+    def native_translations(self, entries, senses, native) -> list[tuple[str, str, float]]:
+        """(native word, sense key, confidence) of every translation of the
+        word into [native] (問題回報 #341, card #381). A table goes to the
+        sense its title matches, else to the part of speech's first sense
+        (Wiktionary's tables follow its senses), except when
+          · Kaikki's _dis1 weights are all but certain about another sense
+            (≥ 90 of 100: moment's 「moment of force」 力矩 → the physics
+            sense) — weaker weights are often wrong (first's 「numeral」
+            第一 has 80 on 「of a first family」);
+          · the title names a domain or register the first sense does not
+            have (top 「gay sexual slang: …」 主動、一, hot 「slang: …」
+            帥呆了, point 「typography: unit of size」 磅): the table goes to
+            the sense _dis1 favours clearly, else nowhere.
+        Kaikki's placement of a table inside a sense is not used: with
+        several entries in one part of speech it is often the wrong one
+        (bad's 「unfavorable」 壞 sits under 「Good, superlative, excellent」)."""
+        out = []
+        for e in entries:
+            pos = _pos(e)
+            home = {id(s["sense"]): s["sense_key"] for s in senses if s["entry"] is e}
+            raw = e.get("senses", [])
+            trs = list(e.get("translations", []))
+            for s in raw:
+                trs += [dict(t, sense=t.get("sense") or _gloss(s)) for t in s.get("translations", [])]
+            first = next((s for s in senses if s["pos"] == pos), None)
+            for tr in trs:
+                text = _native_word(tr, native)
+                if not text:
+                    continue
+                k, c = self.place_translation(tr, senses, raw, home, first, pos)
+                if k:
+                    out.append((text, k, c))
+        return out
+
+    def place_translation(self, tr, senses, raw, home, first, pos) -> tuple[str | None, float]:
+        """(sense key or None, confidence) for one translation (see
+        native_translations)."""
+        k = self._match_sense(senses, tr.get("sense"), pos)
+        if k or not first:
+            return k, 0.9
+        hit = _dis1_index(tr, raw, 90, 3)
+        if hit is not None:
+            # (None: a sense not kept, such as moment's 「Ellipsis of moment of force」)
+            return home.get(id(raw[hit])), 0.7
+        domain = _title_domain(tr.get("sense") or "")
+        if domain and domain in _labels_of(raw) and domain not in _first_labels(first):
+            hit = _dis1_index(tr, raw, 40, 2)
+            return (home.get(id(raw[hit])) if hit is not None else None), 0.7
+        return first["sense_key"], 0.5
+
     def _native_definitions(self, entries, ctx: Context, add):
         native = ctx.native
         wanted = {i.get("sense_key") for i in ctx.items("definition")} or None
@@ -557,28 +639,13 @@ class Kaikki(SourceAdapter):
             return
         by_sense: dict[str, list[str]] = {}
         conf: dict[str, float] = {}
-        for e in entries:
-            pos = _pos(e)
-            trs = list(e.get("translations", []))
-            for s in e.get("senses", []):
-                trs += [dict(t, sense=t.get("sense") or _gloss(s)) for t in s.get("translations", [])]
-            for tr in trs:
-                text = _native_word(tr, native)
-                if not text:
-                    continue
-                k = self._match_sense(senses, tr.get("sense"), pos)
-                c = 0.9
-                if not k:
-                    first = next((s for s in senses if s["pos"] == pos), None)
-                    if not first:
-                        continue
-                    k, c = first["sense_key"], 0.5
-                if wanted is not None and k not in wanted:
-                    continue
-                lst = by_sense.setdefault(k, [])
-                if text not in lst:
-                    lst.append(text)
-                conf[k] = max(conf.get(k, 0), c)
+        for text, k, c in self.native_translations(entries, senses, native):
+            if wanted is not None and k not in wanted:
+                continue
+            lst = by_sense.setdefault(k, [])
+            if text not in lst:
+                lst.append(text)
+            conf[k] = max(conf.get(k, 0), c)
         for k, words in by_sense.items():
             words = _without_erhua(words)
             add({"sense_key": k, "text": "、".join(words[:3])}, k, slot=k, conf=conf[k],
@@ -777,6 +844,49 @@ def _without_erhua(words: list[str]) -> list[str]:
     return out
 
 
+_GRAMMAR_PREFIX = {"transitive", "intransitive", "ambitransitive", "reflexive", "countable",
+                   "uncountable", "attributive", "predicative", "plural", "singular"}
+
+
+def _title_domain(title: str) -> str | None:
+    """The domain or register a translation table's title starts with:
+    「typography: unit of size」 → typography, 「gay sexual slang: …」 →
+    slang; None for a grammatical note (「intransitive: be finished」)."""
+    m = re.match(r"\s*\(?([a-z][a-z ,]{1,30}?)\)?:\s", title.lower())
+    if not m or m.group(1).strip() in _GRAMMAR_PREFIX:
+        return None
+    words = m.group(1).replace(",", " ").split()
+    return words[-1] if words else None
+
+
+def _first_labels(first: dict) -> set[str]:
+    s = first.get("sense") or {}
+    return {str(x).lower() for x in [*s.get("tags", []), *s.get("topics", []),
+                                     *(r.get("name", "") for r in s.get("raw_tags", []) if isinstance(r, dict))]} \
+        | {w.lower() for w in re.findall(r"[a-z]+", first.get("gloss", "").lower())}
+
+
+def _labels_of(raw: list[dict]) -> set[str]:
+    """Every tag and topic of an entry's senses (the domains it knows)."""
+    return {str(x).lower() for s in raw for x in [*s.get("tags", []), *s.get("topics", []),
+                                                  *s.get("raw_tags", [])]}
+
+
+def _dis1_index(tr: dict, raw: list[dict], floor: int, ratio: float) -> int | None:
+    """The raw sense Kaikki's _dis1 weights (one per raw sense, 0–100)
+    point to with at least [floor] and [ratio] × the runner-up, else None."""
+    try:
+        weights = [int(x) for x in str(tr.get("_dis1") or "").split()]
+    except ValueError:
+        return None
+    if len(weights) < 2 or len(weights) != len(raw):
+        return None
+    top = max(weights)
+    if top < floor or sorted(weights)[-2] * ratio > top:
+        return None
+    return weights.index(top)
+
+
 def _native_word(tr: dict, native: str) -> str | None:
     word = (tr.get("word") or "").strip()
     if not word and native == "zh-TW":
@@ -797,6 +907,9 @@ def _native_word(tr: dict, native: str) -> str | None:
         if not simp and trad:
             conv = opencc("s2twp", trad)
             trad = conv or trad
+        # A note that is not a word: across 「but see 從一邊到另一邊」.
+        if not re.search(r"[㐀-鿿]", trad) or re.search(r"[A-Za-z]{2}", trad):
+            return None
         return trad or None
     if native == "fr":
         return word if tr.get("lang_code", tr.get("code")) == "fr" else None

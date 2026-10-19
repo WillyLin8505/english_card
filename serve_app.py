@@ -28,7 +28,12 @@ from urllib.error import HTTPError, URLError
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / 'lexicon' / 'backend'))
 from app import accounts, app_pack, catalog, config, db, decks, exporter
-from lexicon_transport import SnapshotStore, accepts_gzip, matches_etag
+from app.meaning_labels import add_meaning_tags, meaning_index  # noqa: F401 (meaning_index: tools use serve_app.meaning_index)
+try:
+    import brotli as _brotli
+except ImportError:
+    _brotli = None
+from lexicon_transport import SnapshotStore, Warming, accepts_gzip, matches_etag
 
 _lock = threading.Lock()
 _cache = {}
@@ -59,14 +64,33 @@ _http_snapshots = None
 _http_snapshots_lock = threading.Lock()
 
 
-def http_snapshot(target, native):
+def http_snapshot(target, native, wait=False):
     if target not in catalog.LANGUAGES or native not in catalog.LANGUAGES or target == native:
         raise ValueError('Unsupported language pair')
     global _http_snapshots
     with _http_snapshots_lock:
         if _http_snapshots is None:
-            _http_snapshots = SnapshotStore(live_pack, snapshot_directory())
+            # Card #380: a restart after a code change answers from the last
+            # revision's snapshot while this revision's pack builds (5+ min).
+            directory = snapshot_directory()
+            _http_snapshots = SnapshotStore(live_pack, directory, stale_root=directory.parent,
+                                            wait_first=wait)
     return _http_snapshots.get(target, native)
+
+
+# The packs the app and website ask for; built right after a restart, not on
+# the first request.
+WARM_PAIRS = (('en', 'zh-TW'), ('fr', 'en'))
+
+
+def warm_snapshots():
+    for pair in WARM_PAIRS:
+        try:
+            http_snapshot(*pair)
+        except Warming:
+            pass
+        except Exception:
+            logging.exception('Could not warm dictionary %s', pair)
 
 
 def catalog_snapshot(session, target):
@@ -89,6 +113,11 @@ def catalog_snapshot(session, target):
     listed = cefr_list()
 
     def cefr_source(word, band):
+        # French levels are frequency estimates (docs/french_sources.md); the
+        # English CEFR-J list would match a French word spelled like an English
+        # one (pain → pain), so it is not consulted (問題回報 #362).
+        if target != 'en':
+            return 'estimate'
         hit = listed.get(word.normalized)
         return 'cefr-j' if hit and band in hit[1].values() else 'estimate'
     tags = {}
@@ -103,30 +132,7 @@ def catalog_snapshot(session, target):
     # names the target words whose main sense means one of the picture's
     # approved English words (#347: chat → cat, table → table).
     sense_label, by_meaning, rivals = ({}, {}, {}) if target == 'en' else meaning_index(session, target, True)
-    if by_meaning:
-        from sqlalchemy import text
-        from app.sense_order import english_sense_translations
-        for asset_id, english, pos, bound_gloss in session.execute(text(
-                "SELECT si.image_asset_id, l.normalized, l.pos,"
-                " (SELECT d.text FROM definitions d WHERE d.sense_id = x.id AND d.language = 'en'"
-                "  ORDER BY d.id LIMIT 1) FROM sense_images si"
-                " JOIN senses x ON x.id = si.sense_id JOIN lexemes l ON l.id = x.lexeme_id"
-                " WHERE si.review_status = 'approved' AND l.language = 'en' AND l.status = 'full'"
-                " AND si.image_asset_id = ANY(:ids) ORDER BY si.id"), {'ids': list(tags)}):
-            hit = by_meaning.get((english, pos))
-            # Several target words share this English word: the one English
-            # Wiktionary lists under the picture's own English sense wins
-            # (card #358: the plate photo is assiette, not plaque).
-            if hit and (english, pos) in rivals and bound_gloss:
-                on_sense = english_sense_translations(english, pos, target, bound_gloss)
-                if on_sense and hit[1] and not any(c[2] == hit[1] and c[3].lower() in on_sense
-                                                 for c in rivals[(english, pos)]):
-                    pick = next((c for c in rivals[(english, pos)] if c[3].lower() in on_sense), None)
-                    if pick and not any(t['lexeme_id'] == pick[1] for t in tags[asset_id]):
-                        hit = (pick[1], pick[2])
-            if hit and hit[0] in full_words:
-                tags[asset_id].append({'lexeme_id': hit[0], 'sense_id': hit[1],
-                                       'review_status': 'approved', 'origin': 'meaning'})
+    add_meaning_tags(session, target, tags, full_words, by_meaning, rivals)
     # The vision model supplies positions, but only approved bindings decide
     # which labels are visible. This prevents foreign, rejected and unrelated
     # suggestions from appearing in the app.
@@ -180,63 +186,6 @@ def catalog_snapshot(session, target):
     return words, images
 
 
-def meaning_index(session, target, with_candidates=False):
-    """English label words of the target language's main senses (#347).
-
-    Returns ({sense_id: [english, ...]}, {(english, pos): (lexeme_id, sense_id)}):
-    the English words are every item of the sense's English meaning (#350:
-    ombre 「shade, shadow」 names a picture's shadow too), the first being
-    images.label_word's. When several words share one English word, the main
-    sense wins, then an earlier item, then a meaning that is the word itself
-    (not a gloss), then the easier CEFR level, then the older entry.
-
-    A deeper sense (ordinal >= PRIMARY_ORDINAL) counts too when it is a
-    plain current sense and English Wiktionary lists the word as a
-    translation of that English word (card #352: motif 「pattern」 is its
-    third sense, flèche 「spire」 its sixth; passer 「to sit (an exam)」 is
-    not a translation of sit)."""
-    from sqlalchemy import text
-    from app.images import english_label_terms
-    from app.picture_need import PRIMARY_ORDINAL
-    from app.sense_order import english_translates_to, sense_rank
-    rows = session.execute(text(
-        "SELECT l.id, l.pos, l.cefr, sn.id, sn.ordinal,"
-        " (SELECT t.text FROM sense_translations t WHERE t.sense_id = sn.id"
-        "  AND t.native_language = 'en' ORDER BY t.id LIMIT 1),"
-        " (SELECT d.text FROM definitions d WHERE d.sense_id = sn.id"
-        "  AND d.language = :lang ORDER BY d.id LIMIT 1),"
-        " l.lemma, sn.labels"
-        " FROM lexemes l JOIN senses sn ON sn.lexeme_id = l.id"
-        " WHERE l.language = :lang AND l.status = 'full'"),
-        {'lang': target}).all()
-    bands = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
-    sense_label, ranked, candidates = {}, {}, {}
-    for lexeme_id, pos, cefr, sense_id, ordinal, meaning, gloss, lemma, labels in rows:
-        terms = english_label_terms(meaning, gloss)
-        if not terms:
-            continue
-        if ordinal >= PRIMARY_ORDINAL:
-            if target == 'en' or sense_rank({'pos': pos, 'gloss': gloss or '', 'labels': labels or []},
-                                            target, lemma) != 0:
-                continue
-            terms = [t for t in terms if english_translates_to(t, pos, target, lemma) is True]
-            if not terms:
-                continue
-        sense_label[sense_id] = terms
-        level = bands.index(cefr) if cefr in bands else len(bands)
-        own = english_label_terms(meaning)
-        for position, english in enumerate(terms):
-            rank = (ordinal, position, english not in own, level, lexeme_id)
-            key = (english, pos)
-            candidates.setdefault(key, []).append((rank, lexeme_id, sense_id, lemma))
-            if key not in ranked or rank < ranked[key][0]:
-                ranked[key] = (rank, (lexeme_id, sense_id))
-    by_meaning = {key: hit for key, (_, hit) in ranked.items()}
-    if with_candidates:
-        return sense_label, by_meaning, {k: sorted(v) for k, v in candidates.items() if len(v) > 1}
-    return sense_label, by_meaning
-
-
 _gzip_cache: dict[str, bytes] = {}
 
 
@@ -284,15 +233,18 @@ def live_pack(target: str, native: str):
                               m.ImageAsset, m.SenseImage, m.ImageCandidate,
                               m.CardTemplate, m.CardTemplateVersion):
                     table = model.__tablename__
-                    signatures.append(session.execute(text(
-                        f"SELECT md5(coalesce(string_agg(md5(row_to_json(t)::text), '' "
-                        f"ORDER BY row_to_json(t)::text), '')) FROM {table} t"
-                    )).scalar_one())
+                    # Order-free sum of row hashes: no sort of 500,000 rows
+                    # (card #380: 43 s -> 9 s per check, every 2 minutes).
+                    signatures.append(tuple(session.execute(text(
+                        f"SELECT count(*), coalesce(sum(('x' || left(md5(t::text), 15))"
+                        f"::bit(60)::bigint), 0) FROM {table} t"
+                    )).one()))
                 fingerprint = tuple(signatures)
                 if cached and cached[3] == fingerprint:
                     _cache[(target, native)] = (time.monotonic(), cached[1], cached[2], fingerprint)
                     return cached[1:3]
-                exporter._build(session, path, target, native, None, False, Path(folder))
+                exporter._build(session, path, target, native, None, False, Path(folder),
+                                copy_media=False)
                 from app.card_templates import published
                 card_template = published(session)
                 catalog_words, catalog_images = catalog_snapshot(session, target)
@@ -349,6 +301,74 @@ class Handler(SimpleHTTPRequestHandler):
             super().send_header('Cache-Control', 'no-cache')
         self._cache_header_sent = False
         super().end_headers()
+
+    # Static web build (問題回報 #357): compressed once per file version,
+    # revalidated by ETag, and fonts / canvaskit kept for a week so a warm
+    # visit downloads nothing big. index.html and the bootstrap stay no-cache.
+    STATIC_ZIP = {'.js', '.json', '.wasm', '.ttf', '.otf', '.html', '.css', '.svg', '.map', '.txt'}
+    STATIC_LONG = ('/fonts/', '/canvaskit/', '/icons/')
+    _static_cache: dict = {}
+
+    def send_static(self, url_path: str) -> bool:
+        if self.command not in ('GET', 'HEAD'):
+            return False
+        path = Path(self.translate_path(url_path))
+        if path.is_dir():
+            path = path / 'index.html'
+        if not path.is_file():
+            return False
+        stat = path.stat()
+        etag = f'"{stat.st_mtime_ns:x}-{stat.st_size:x}"'
+        ctype = mimetypes.guess_type(path)[0] or 'application/octet-stream'
+        if path.suffix == '.wasm':
+            ctype = 'application/wasm'
+        accept = self.headers.get('Accept-Encoding', '')
+        encoding = None
+        if path.suffix in self.STATIC_ZIP and stat.st_size > 1024:
+            if 'br' in accept and _brotli is not None:
+                encoding = 'br'
+            elif accepts_gzip(accept):
+                encoding = 'gzip'
+        long_cache = url_path.startswith(self.STATIC_LONG) and path.name not in ('index.html',)
+        self.send_response(304 if matches_etag(self.headers.get('If-None-Match', ''), etag) else 200)
+        self.send_header('ETag', etag)
+        self.send_header('Cache-Control', 'public, max-age=604800' if long_cache else 'no-cache')
+        self.send_header('Vary', 'Accept-Encoding')
+        self.send_header('Content-Type', ctype)
+        self.send_header('X-Content-Type-Options', 'nosniff')
+        if self._response_status() == 304:
+            self.end_headers()
+            return True
+        body = None
+        if encoding:
+            key = (str(path), etag, encoding)
+            body = self._static_cache.get(key)
+            if body is None:
+                raw = path.read_bytes()
+                if encoding == 'br':
+                    body = _brotli.compress(raw, quality=9)
+                else:
+                    import gzip
+                    body = gzip.compress(raw, compresslevel=9)
+                self._static_cache.clear() if len(self._static_cache) > 12 else None
+                self._static_cache[key] = body
+            self.send_header('Content-Encoding', encoding)
+        self.send_header('Content-Length', str(len(body) if body is not None else stat.st_size))
+        self.end_headers()
+        if self.command == 'GET':
+            if body is not None:
+                self.wfile.write(body)
+            else:
+                with path.open('rb') as f:
+                    self.copyfile(f, self.wfile)
+        return True
+
+    def _response_status(self) -> int:
+        return self._last_status
+
+    def send_response(self, code, message=None):
+        self._last_status = code
+        super().send_response(code, message)
 
     def do_OPTIONS(self):
         if not self.allowed_request():
@@ -728,7 +748,51 @@ class Handler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def do_GET(self):
+    def send_audio(self, path, head_only=False):
+        """Serve a recording with byte ranges: iOS AVPlayer refuses sources that answer 200 to Range."""
+        size = path.stat().st_size
+        start, end, status = 0, size - 1, 200
+        match = re.fullmatch(r'bytes=(\d*)-(\d*)', self.headers.get('Range', '').strip())
+        if match and (match[1] or match[2]):
+            if match[1]:
+                start = int(match[1])
+                end = min(int(match[2]), size - 1) if match[2] else size - 1
+            else:  # suffix range: last N bytes
+                start, end = max(size - int(match[2]), 0), size - 1
+            if start >= size or start > end:
+                self.send_response(416)
+                self.send_header('Content-Range', f'bytes */{size}')
+                self.send_header('Content-Length', '0')
+                self.end_headers()
+                return
+            status = 206
+        self.send_response(status)
+        self.send_header('Content-Type', mimetypes.guess_type(path)[0] or 'application/octet-stream')
+        self.send_header('Accept-Ranges', 'bytes')
+        if status == 206:
+            self.send_header('Content-Range', f'bytes {start}-{end}/{size}')
+        self.send_header('Content-Length', str(end - start + 1))
+        self.end_headers()
+        if head_only:
+            return
+        with path.open('rb') as audio:
+            audio.seek(start)
+            remaining = end - start + 1
+            while remaining > 0:
+                chunk = audio.read(min(65536, remaining))
+                if not chunk:
+                    break
+                self.wfile.write(chunk)
+                remaining -= len(chunk)
+
+    def do_HEAD(self):
+        url = urlsplit(self.path)
+        if url.path == '/api/audio':
+            self.do_GET(head_only=True)
+        else:
+            super().do_HEAD()
+
+    def do_GET(self, head_only=False):
         if not self.allowed_request():
             return
         url = urlsplit(self.path)
@@ -789,20 +853,24 @@ class Handler(SimpleHTTPRequestHandler):
                     or path.suffix.lower() not in {'.mp3', '.wav', '.ogg', '.opus', '.m4a', '.flac'}):
                 self.send_error(404)
                 return
-            self.send_response(200)
-            self.send_header('Content-Type', mimetypes.guess_type(path)[0] or 'application/octet-stream')
-            self.send_header('Content-Length', str(path.stat().st_size))
-            self.end_headers()
-            with path.open('rb') as audio:
-                self.copyfile(audio, self.wfile)
+            self.send_audio(path, head_only)
             return
         if url.path != '/api/lexicon':
-            return super().do_GET()
+            if not self.send_static(url.path):
+                return super().do_GET()
+            return
         query = parse_qs(url.query)
         try:
             snapshot = http_snapshot(query.get('target', ['en'])[0], query.get('native', ['zh-TW'])[0])
         except ValueError:
             self.send_error(400, 'Unsupported language pair')
+            return
+        except Warming:
+            # No pack on disk at all: answer at once rather than after 100 s (524).
+            self.send_response(503)
+            self.send_header('Retry-After', '60')
+            self.send_header('Content-Length', '0')
+            self.end_headers()
             return
         except Exception:
             logging.exception('Dictionary snapshot unavailable')
@@ -839,7 +907,7 @@ if __name__ == '__main__':
                              'repeatable, or PUBLIC_HOSTS=a,b. Tagging needs X-API-Key; the read-only dictionary is open but rate-limited')
     args = parser.parse_args()
     if args.warm_only:
-        snapshot = http_snapshot('en', 'zh-TW')
+        snapshot = http_snapshot('en', 'zh-TW', wait=True)
         print(f'Dictionary ready: {len(snapshot.body)} bytes, gzip {len(snapshot.gzip)} bytes')
         sys.exit(0)
     from start_services import ensure_studio
@@ -851,4 +919,5 @@ if __name__ == '__main__':
     server.lan = args.lan
     server.public_hosts = {h.strip().lower() for h in
                            args.public_host + os.environ.get('PUBLIC_HOSTS', '').split(',') if h.strip()}
+    threading.Thread(target=warm_snapshots, daemon=True, name='dictionary-warm').start()
     server.serve_forever()

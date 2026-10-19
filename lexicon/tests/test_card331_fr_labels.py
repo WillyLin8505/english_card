@@ -114,6 +114,8 @@ def test_share_existing_reuses_pictures_by_english_meaning(session, tmp_path, mo
     from app import config, models as m
     monkeypatch.setattr(config, "MEDIA", tmp_path)
     cat = _fr_word(session, m, "chat", "cat (feline)")
+    _fr_word(session, m, "fourrure", "fur")  # the French pack names fur and nose too (#368)
+    _fr_word(session, m, "nez", "nose")
     pics = [_asset(session, m, tmp_path, ["cat", "fur", "nose", "eye"], f"cat{i}") for i in range(4)]
     en_cat, fur, nose = (_en_sense(session, m, w) for w in ("cat", "fur", "nose"))
     for p in pics:
@@ -133,3 +135,84 @@ def test_share_existing_reuses_pictures_by_english_meaning(session, tmp_path, mo
     assert english_chat.id not in {b.image_asset_id for b in got}
     # Already full: nothing more is added.
     assert images.share_existing(session, "fr", "chat", per_sense=3) == 0
+
+
+def test_share_by_meaning_uses_only_english_noun_primary_senses(session, tmp_path, monkeypatch):
+    """#336: garde → watch reuses a wristwatch approved for the noun, not a
+    picture approved for the verb watch or for a later noun sense."""
+    from app import config, models as m
+    monkeypatch.setattr(config, "MEDIA", tmp_path)
+    monkeypatch.setattr(images, "SHARE_MIN_LABELS", 1)  # only the sense choice is tested here
+    garde = _fr_word(session, m, "garde", "watch")
+    noun, verb_pic, late_pic = (_asset(session, m, tmp_path, ["watch", "wrist"], f"w{i}") for i in range(3))
+    _approve(session, m, _en_sense(session, m, "watch"), noun)
+    verb = m.Lexeme(language="en", lemma="watch", normalized="watch", pos="verb", status="full")
+    session.add(verb)
+    session.flush()
+    verb_sense = m.Sense(lexeme_id=verb.id, sense_key="en-watch-v", ordinal=0)
+    late = m.Sense(lexeme_id=verb.id, sense_key="en-watch-n5", ordinal=5)
+    session.add_all([verb_sense, late])
+    session.flush()
+    _approve(session, m, verb_sense, verb_pic)
+    late.lexeme_id = session.query(m.Lexeme).filter_by(language="en", normalized="watch", pos="noun").one().id
+    session.flush()
+    _approve(session, m, late, late_pic)
+    assert images.share_existing(session, "fr", "garde", per_sense=3) == 1
+    got = {b.image_asset_id for b in session.query(m.SenseImage).filter_by(sense_id=garde.id)}
+    assert got == {noun.id}
+
+
+def test_share_by_meaning_skips_a_picture_with_fewer_than_3_french_labels(session, tmp_path, monkeypatch):
+    """#368: the French pack shows a picture's French words only; a cat photo
+    whose other approved English words have no French entry would show just
+    chat, so it is not shared. Once fourrure and nez exist it is."""
+    from app import config, models as m
+    from app.meaning_labels import pack_label_words
+    monkeypatch.setattr(config, "MEDIA", tmp_path)
+    cat = _fr_word(session, m, "chat", "cat (feline)")
+    pic = _asset(session, m, tmp_path, ["cat", "fur", "nose"], "lonely_cat")
+    for word in ("cat", "fur", "nose"):
+        _approve(session, m, _en_sense(session, m, word), pic)
+    assert images.share_existing(session, "fr", "chat", per_sense=3) == 0
+    assert not session.query(m.SenseImage).filter_by(sense_id=cat.id).count()
+    fur = _fr_word(session, m, "fourrure", "fur")
+    assert images.share_existing(session, "fr", "chat", per_sense=3) == 0
+    assert not session.query(m.SenseImage).filter_by(sense_id=cat.id).count()
+    nose = _fr_word(session, m, "nez", "nose")
+    # chat already names the picture by meaning (cat); now fur and nose too.
+    assert pack_label_words(session, "fr", pic.id) == {cat.lexeme_id, fur.lexeme_id, nose.lexeme_id}
+    assert images.share_existing(session, "fr", "chat", per_sense=3) == 1
+    assert pack_label_words(session, "fr", pic.id) == {cat.lexeme_id, fur.lexeme_id, nose.lexeme_id}
+
+
+def test_meaning_cache_refreshes_after_existing_translation_edit(session, tmp_path):
+    from app import models as m
+    from app.meaning_labels import pack_label_words
+    cat = _fr_word(session, m, "chat", "cat")
+    pic = _asset(session, m, tmp_path, ["cat", "fur", "nose"], "edited_meaning")
+    _approve(session, m, _en_sense(session, m, "cat"), pic)
+    assert pack_label_words(session, "fr", pic.id) == {cat.lexeme_id}
+    translation = session.query(m.SenseTranslation).filter_by(sense_id=cat.id).one()
+    translation.text = "dog"
+    session.flush()
+    assert pack_label_words(session, "fr", pic.id) == set()
+
+
+def test_projected_labels_match_pack_with_competing_meanings(session, tmp_path, monkeypatch):
+    import serve_app
+    from app import models as m, sense_order
+    from app.meaning_labels import pack_label_words
+    default = _fr_word(session, m, "plaque", "plate")
+    specific = _fr_word(session, m, "assiette", "plate")
+    table = _fr_word(session, m, "table", "table")
+    plate = _en_sense(session, m, "plate")
+    session.add(m.Definition(sense_id=plate.id, language="en", text="A dish for food.", source="kaikki"))
+    pic = _asset(session, m, tmp_path, ["plate", "table", "food"], "rival_plate")
+    _approve(session, m, plate, pic)
+    _approve(session, m, _en_sense(session, m, "table"), pic)
+    monkeypatch.setattr(sense_order, "english_sense_translations", lambda *a: {"assiette"})
+    projected = pack_label_words(session, "fr", pic.id, specific.lexeme_id)
+    _approve(session, m, specific, pic)
+    _, catalog = serve_app.catalog_snapshot(session, "fr")
+    actual = {t['lexeme_id'] for p in catalog if p['id'] == pic.id for t in p['tags']}
+    assert projected == actual == {default.lexeme_id, specific.lexeme_id, table.lexeme_id}

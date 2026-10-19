@@ -33,6 +33,10 @@ from app import db, images, models as m, qc, vision_fallback as vf  # noqa: E402
 CONFIG = Path(__file__).with_name('tag_fallback_config.json')
 LOG_DIR = ROOT / 'lexicon' / 'logs' / 'tag_fallback'
 COST_LOG = LOG_DIR / 'cost.jsonl'
+RUN_LOG = LOG_DIR / 'runs.jsonl'
+# dispatch_tick starts `run` every tick; a batch takes minutes, so only one runs at a time.
+RUN_LOCK = ROOT / 'lexicon' / 'state' / 'tag_fallback.lock'
+RUN_LOCK_STALE_S = 3600
 
 
 def load_config() -> dict:
@@ -230,6 +234,24 @@ def run(cfg: dict, force: bool, batch: int | None, backend: str | None) -> dict:
         ids = vf.pick_batch(s, batch or int(cfg.get('batch', 20)), vf.deferred_ids())
     if not ids:
         return {'skipped': '沒有待打標的照片', 'why': why}
+    names = [backend] if backend else cfg.get('backends', ['codex'])
+    if all(vf.limited(n) for n in names):
+        return {'skipped': '所有備援額度用完', 'limits': {b: vf.limited(b) for b in vf.BACKENDS}}
+    from dispatch_tick import acquire_lock, release_lock
+    if not acquire_lock(RUN_LOCK, RUN_LOCK_STALE_S):
+        return {'skipped': '上一批還在跑'}
+    try:
+        out = _run_batch(cfg, ids, why, backend)
+    finally:
+        release_lock(RUN_LOCK)
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+    with RUN_LOG.open('a', encoding='utf-8') as f:
+        f.write(json.dumps({'at': datetime.now(timezone.utc).isoformat(timespec='seconds'),
+                            **{k: v for k, v in out.items() if k != 'ask'}}, ensure_ascii=False) + '\n')
+    return out
+
+
+def _run_batch(cfg: dict, ids: list[int], why: str | None, backend: str | None) -> dict:
     for name in ([backend] if backend else cfg.get('backends', ['codex'])):
         if vf.limited(name):
             continue
@@ -287,7 +309,14 @@ def main() -> int:
         out = golden(Path(args.dir), Path(args.out) if args.out else None,
                      Path(args.base) if args.base else None)
     else:
-        out = run(cfg, args.force, args.batch, args.backend)
+        try:
+            out = run(cfg, args.force, args.batch, args.backend)
+        except Exception as e:  # noqa: BLE001 — started detached by dispatch_tick; leave a trace
+            LOG_DIR.mkdir(parents=True, exist_ok=True)
+            with RUN_LOG.open('a', encoding='utf-8') as f:
+                f.write(json.dumps({'at': datetime.now(timezone.utc).isoformat(timespec='seconds'),
+                                    'error': f'{type(e).__name__}: {e}'[:300]}, ensure_ascii=False) + '\n')
+            raise
     print(json.dumps(out, ensure_ascii=False, indent=1)[:4000])
     return 0
 

@@ -382,6 +382,8 @@ class LevelBadge extends StatelessWidget {
         child: Center(
           widthFactor: 1,
           child: UiText(levelLabel(level),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: MFont.inter(11, FontWeight.w700, MColors.primaryDeep,
                   height: 1.4)),
         ),
@@ -551,14 +553,24 @@ class SdsButton extends StatelessWidget {
   }
 }
 
-/// The blue pill button used for 顯示答案, 開始複習 and 完成.
+/// The blue pill button used for 顯示答案, 開始複習 and 完成. [decoration],
+/// [height] and [textStyle] restyle it (顯示答案 in a 卡片樣式, #317).
 class PrimaryButton extends StatelessWidget {
   final String label;
   final String? shortcut;
   final VoidCallback? onTap;
+  final BoxDecoration Function(bool enabled)? decoration;
+  final double height;
+  final TextStyle? textStyle;
 
   const PrimaryButton(
-      {super.key, required this.label, required this.onTap, this.shortcut});
+      {super.key,
+      required this.label,
+      required this.onTap,
+      this.shortcut,
+      this.decoration,
+      this.height = 52,
+      this.textStyle});
 
   @override
   Widget build(BuildContext context) => Tap(
@@ -568,11 +580,12 @@ class PrimaryButton extends StatelessWidget {
             : '${ui(context, label)}（${ui(context, shortcut!)}）',
         labelOnly: true,
         child: Container(
-          height: 52,
+          height: height,
           alignment: Alignment.center,
-          decoration: onTap == null
-              ? MDecor.softPanel(color: MColors.label, radius: 26)
-              : MDecor.primaryPill(radius: 26),
+          decoration: decoration?.call(onTap != null) ??
+              (onTap == null
+                  ? MDecor.softPanel(color: MColors.label, radius: 26)
+                  : MDecor.primaryPill(radius: 26)),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -584,7 +597,8 @@ class PrimaryButton extends StatelessWidget {
                       textAlign: TextAlign.center,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: MFont.manrope(16, FontWeight.w800, Colors.white))),
+                      style: textStyle ??
+                          MFont.manrope(16, FontWeight.w800, Colors.white))),
               if (shortcut != null) ...[
                 const SizedBox(width: 10),
                 UiText(shortcut!,

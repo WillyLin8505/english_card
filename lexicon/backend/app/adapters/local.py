@@ -839,17 +839,51 @@ def capped_frequency_level(word: str, zipf_value: float, language: str = "en") -
     return LEVELS[idx]
 
 
+FR_REVIEWED = Path(__file__).resolve().parents[1] / "fr_cefr_reviewed.json"
+FR_LEXIQUE = Path(__file__).resolve().parents[1] / "fr_lexique_lemma_zipf.json"
+
+
+@lru_cache(maxsize=1)
+def fr_reviewed() -> dict[str, str]:
+    """法語基礎 3000 字's levels: wordfreq + Lexique frequency, then reviewed
+    by Claude against the DELF A1-B1 descriptors (問題回報 #332 decision C;
+    FLELex is CC BY-NC-SA). Built by tools/card335_fr_cefr.py."""
+    if not FR_REVIEWED.exists():
+        return {}
+    return json.loads(FR_REVIEWED.read_text(encoding="utf-8"))["words"]
+
+
+@lru_cache(maxsize=1)
+def _fr_lexique() -> dict[str, float]:
+    if not FR_LEXIQUE.exists():
+        return {}
+    return json.loads(FR_LEXIQUE.read_text(encoding="utf-8"))["lemmas"]
+
+
+def fr_zipf(word: str) -> float:
+    """A French lemma's zipf: the higher of wordfreq (one spelling) and
+    Lexique 3.83's lemma frequency (all its forms -- parler, chaussure)."""
+    return max(_zipf(word, "fr"), _fr_lexique().get(word, 0.0))
+
+
+def fr_cefr_source(word: str) -> str:
+    return "ai_reviewed" if (word or "").strip().lower() in fr_reviewed() else "frequency_estimate"
+
+
 def word_level(word: str, language: str = "en") -> str:
-    """A word's CEFR level: its easiest CEFR-J level when listed, else a
-    capped frequency estimate (a phrase counts as its hardest word)."""
+    """A word's CEFR level: its easiest CEFR-J level when listed (French: the
+    reviewed 3000-word list), else a capped frequency estimate (a phrase
+    counts as its hardest word)."""
     w = (word or "").strip().lower()
     hit = cefr_list().get(w) if language == "en" else None
     if hit:
         return min(hit[1].values(), key=LEVELS.index)
+    if language == "fr" and w in fr_reviewed():
+        return fr_reviewed()[w]
     parts = tokens(w) if language == "en" else [w]
     if len(parts) > 1:
         return max((word_level(p, language) for p in parts), key=LEVELS.index)
-    return capped_frequency_level(w, _zipf(w, language), language)
+    return capped_frequency_level(w, fr_zipf(w) if language == "fr" else _zipf(w, language), language)
 
 
 def word_forms(ctx: Context) -> frozenset[str]:
@@ -886,12 +920,15 @@ class LocalCalc(SourceAdapter):
     def normalize(self, f, raw, ctx):
         C = []
         if f == "cefr" and ctx.target in ("en", "fr"):
-            # Not in CEFR-J (English) / no open French CEFR list yet (card
-            # #325: FLELex is CC BY-NC-SA): estimated from wordfreq, and marked so.
+            # Not in CEFR-J (English): estimated from wordfreq, and marked so.
+            # French has no open CEFR list (FLELex is CC BY-NC-SA): the
+            # 3000-word list is AI-reviewed (#332), the rest a frequency estimate.
             level = word_level(ctx.lemma, ctx.target)
+            source = fr_cefr_source(ctx.lemma) if ctx.target == "fr" else "frequency_estimate"
             C.append(Candidate(f, ctx.target, {"level": level, "by_pos": {}, "estimate": True,
-                                               "cefr_source": "frequency_estimate"}, level,
-                               confidence=0.5, source_record_id=ctx.lemma))
+                                               "cefr_source": source}, level,
+                               confidence=0.6 if source == "ai_reviewed" else 0.5,
+                               source_record_id=ctx.lemma))
         elif f == "ipa" and ctx.target == "en" and " " in ctx.lemma:
             # A phrase: its words' pronunciations (cutting board).
             parts = [(cefr_list().get(w) or [None, None, None])[2] for w in ctx.lemma.split()]

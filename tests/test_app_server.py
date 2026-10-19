@@ -181,3 +181,30 @@ def test_public_host_dictionary_is_keyless_but_rate_limited(monkeypatch, tmp_pat
         server.shutdown()
         server.server_close()
         thread.join()
+
+
+def test_audio_supports_range_and_head_for_ios(monkeypatch, tmp_path):
+    (tmp_path / 'audio').mkdir()
+    (tmp_path / 'audio' / 'a.mp3').write_bytes(bytes(range(100)))
+    monkeypatch.setattr(server_module.config, 'MEDIA', tmp_path)
+    server = ThreadingHTTPServer(('127.0.0.1', 0), server_module.Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        def call(method, headers=None):
+            conn = HTTPConnection('127.0.0.1', server.server_port)
+            conn.request(method, '/api/audio?path=audio/a.mp3', headers=headers or {})
+            result = conn.getresponse()
+            out = (result.status, result.getheader('Content-Range'), result.getheader('Content-Length'), result.read())
+            conn.close()
+            return out
+        assert call('GET')[0::2] == (200, '100')
+        assert call('GET', {'Range': 'bytes=0-1'}) == (206, 'bytes 0-1/100', '2', b'\x00\x01')
+        assert call('GET', {'Range': 'bytes=98-'})[3] == bytes([98, 99])
+        assert call('GET', {'Range': 'bytes=-3'})[1] == 'bytes 97-99/100'
+        assert call('GET', {'Range': 'bytes=500-'})[0] == 416
+        assert call('HEAD') == (200, None, '100', b'')
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join()

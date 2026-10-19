@@ -215,7 +215,7 @@ def word(s: Session, t: str, n: str, lemma_in: str) -> dict:
         "fields": fields, "senses": senses, "examples": examples, "relations": relations,
         "morphemes": morphemes,
         "audio": word_audio(s, [lx.id for lx in lexemes]),
-        **word_images(s, [lx.id for lx in lexemes], n),
+        **word_images(s, [lx.id for lx in lexemes], n, t),
         "issues": issues,
         "summary": {
             "target": {"complete": sum(x["status"] in OK for x in target_fields),
@@ -435,22 +435,66 @@ def word_audio(s: Session, lexeme_ids: list[int]) -> list[dict]:
     return out
 
 
-def word_images(s: Session, lexeme_ids: list[int], native: str) -> dict:
+CEFR_BANDS = ("A1", "A2", "B1", "B2", "C1", "C2")
+
+
+def french_labels(row, tags: list, dropped: list, target: str = "fr") -> dict:
+    """A non-English word's picture labels (問題回報 #362). The picture's labels
+    are English words; those naming this sense's English meaning are the
+    word's own label (its lemma, POS and CEFR from the lexicon entry, as the
+    app pack shows them). The other English labels name no word of this
+    entry: they come back as unmatched_tags and are not drawn. A sense
+    reviewed under card #384 names only its recorded term."""
+    from .images import tag_word
+    from .search_terms import sense_label_terms
+    terms = set(sense_label_terms(target, row.get("normalized") or row["lemma"], row["pos"],
+                                  row.get("sense_key"), row["english"], row["gloss"]))
+    named = [tg for tg in tags if tag_word(tg) in terms]
+    best = next((tg for tg in named if tg.get("point")), named[0] if named else {})
+    band = str(row["cefr"] or "").strip().upper()
+    base = {"word": row["lemma"], "pos": row["pos"], "cefr": band if band in CEFR_BANDS else None,
+            "native": (row["english"] or "").split("、")[0] or None}
+    return {
+        "tags": [{**base, "point": best.get("point"), "box": best.get("box"),
+                  "score": best.get("score"), "modelLevel": best.get("modelLevel")}] if named else [],
+        "dropped_tags": [{**base, "score": tg.get("score"), "dropReason": tg.get("dropReason")}
+                         for tg in dropped if tag_word(tg) in terms],
+        "unmatched_tags": [{"word": tg.get("word"), "score": tg.get("score")}
+                           for tg in tags + dropped if tag_word(tg) not in terms],
+    }
+
+
+def word_images(s: Session, lexeme_ids: list[int], native: str, target: str = "en") -> dict:
     """Approved sense pictures with the AI labels on them (the meanings
-    looked up in the lexicon), and how many still wait for review."""
+    looked up in the lexicon), and how many still wait for review. For a
+    non-English word the labels are its own French words (french_labels)."""
     if not lexeme_ids:
         return {"images": [], "images_pending": 0}
     rows = s.execute(text("""
         SELECT si.id, si.sense_id, si.review_status, si.semantic_score, sn.ordinal, l.pos,
-               d.text AS gloss, t.text AS native, a.id AS asset_id, a.width, a.height, a.author,
-               a.license_code, a.license_url, a.page_url, a.attribution, a.tags, a.tag_status,
-               a.dropped_tags
+               l.lemma, l.cefr, l.normalized, sn.sense_key,
+               d.text AS gloss, t.text AS native, a.id AS asset_id, a.width,
+               a.height, a.author, a.license_code, a.license_url, a.page_url, a.attribution,
+               a.tags, a.tag_status, a.dropped_tags,
+               (SELECT e.text FROM sense_translations e WHERE e.sense_id = sn.id
+                AND e.native_language = 'en' ORDER BY e.id LIMIT 1) AS english
         FROM sense_images si JOIN senses sn ON sn.id = si.sense_id
         JOIN lexemes l ON l.id = sn.lexeme_id JOIN image_assets a ON a.id = si.image_asset_id
         LEFT JOIN definitions d ON d.sense_id = sn.id AND d.language = l.language
         LEFT JOIN sense_translations t ON t.sense_id = sn.id AND t.native_language = :n
         WHERE sn.lexeme_id = ANY(:ids) ORDER BY l.id, sn.ordinal, si.ordinal, si.id"""),
         {"ids": lexeme_ids, "n": native}).mappings().all()
+    if target != "en":
+        images = []
+        for r in rows:
+            if r["review_status"] != "approved":
+                continue
+            own = {k: r[k] for k in r.keys() if k not in ("tags", "dropped_tags", "english", "cefr", "lemma",
+                                                          "normalized", "sense_key")}
+            images.append({**own, "label": r["lemma"],
+                           **french_labels(r, r["tags"] or [], r["dropped_tags"] or [], target)})
+        return {"images": images,
+                "images_pending": sum(1 for r in rows if r["review_status"] == "pending")}
     words = {tg["word"].lower() for r in rows for tg in (r["tags"] or []) if tg.get("word")}
     means = {}
     if words:
@@ -461,7 +505,8 @@ def word_images(s: Session, lexeme_ids: list[int], native: str) -> dict:
             WHERE l.normalized = ANY(:w) AND l.status = 'full'
             ORDER BY l.normalized, l.id, sn.ordinal"""), {"w": list(words), "n": native}).all():
             means[w] = text_.split("、")[0]
-    images = [{**{k: r[k] for k in r.keys() if k != "tags"},
+    images = [{**{k: r[k] for k in r.keys() if k not in ("tags", "english", "cefr", "lemma",
+                                                          "normalized", "sense_key")},
                "tags": [{**tg, "native": means.get(tg["word"].lower())} for tg in (r["tags"] or [])]}
               for r in rows if r["review_status"] == "approved"]
     return {"images": images,

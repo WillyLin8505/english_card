@@ -102,7 +102,7 @@ class AppSettings extends ChangeNotifier {
     String learningLanguage = 'en',
     String nativeLanguage = 'zh-TW',
     String englishAccent = 'en-GB',
-    CardStyle cardStyle = CardStyle.classic,
+    CardStyle cardStyle = CardStyle.fallback,
     bool onboarded = true,
     bool shareUsageStats = false,
   })  : _box = null,
@@ -167,7 +167,7 @@ class AppSettings extends ChangeNotifier {
   /// 7) or "en-US".
   String get englishAccent => _englishAccent;
 
-  /// 卡片樣式 of the review card (問題回報 #317); [CardStyle.classic] by
+  /// 卡片樣式 of the review card (問題回報 #317); [CardStyle.immersive] (B) by
   /// default.
   CardStyle get cardStyle => _cardStyle;
 
