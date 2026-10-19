@@ -16,12 +16,13 @@ class _BlockState extends State<_Block> {
 
   @override
   Widget build(BuildContext context) {
+    final look = CardLook.of(context);
     if (!widget.collapsed) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SectionLabel(widget.label),
-          const SizedBox(height: 6),
+          _SectionTitle(widget.label),
+          SizedBox(height: look.labelGap),
           widget.child
         ],
       );
@@ -35,15 +36,36 @@ class _BlockState extends State<_Block> {
           child: Row(
             children: [
               Expanded(
-                  child: ExcludeSemantics(child: SectionLabel(widget.label))),
+                  child:
+                      ExcludeSemantics(child: _SectionTitle(widget.label))),
               Icon(_open ? Icons.expand_less : Icons.expand_more,
-                  size: 20, color: MColors.label),
+                  size: 20, color: look.sectionIconColor),
             ],
           ),
         ),
-        if (_open) ...[const SizedBox(height: 6), widget.child],
+        if (_open) ...[SizedBox(height: look.labelGap), widget.child],
       ],
     );
+  }
+}
+
+/// A section's title in the card's 卡片樣式, with the style's icon if any.
+class _SectionTitle extends StatelessWidget {
+  final String label;
+
+  const _SectionTitle(this.label);
+
+  @override
+  Widget build(BuildContext context) {
+    final look = CardLook.of(context);
+    final icon = look.sectionIcon(label);
+    final text = UiText(label, style: look.sectionLabel);
+    if (icon == null) return text;
+    return Row(children: [
+      Icon(icon, size: 18, color: look.sectionIconColor),
+      const SizedBox(width: 8),
+      Expanded(child: text),
+    ]);
   }
 }
 
@@ -76,11 +98,11 @@ class FlashcardFront extends StatelessWidget {
                             ? firstLetterHint(entry.word)
                             : entry.meaning,
                         textAlign: TextAlign.center,
-                        style: MFont.manrope(
-                            24, FontWeight.w800, MColors.primary)),
+                        style: CardLook.of(context).frontMeaning),
                     collapsed: section['collapsed'] == true)),
       ]);
     }
+    final look = CardLook.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -88,7 +110,7 @@ class FlashcardFront extends StatelessWidget {
         Text(
           firstLetterHint(entry.word),
           textAlign: TextAlign.center,
-          style: MFont.manrope(30, FontWeight.w800, MColors.ink),
+          style: look.frontHint,
         ),
         const SizedBox(height: 24),
         Row(
@@ -100,7 +122,7 @@ class FlashcardFront extends StatelessWidget {
           Text(
             entry.meaning,
             textAlign: TextAlign.center,
-            style: MFont.manrope(24, FontWeight.w800, MColors.primary),
+            style: look.frontMeaning,
           ),
         const SizedBox(height: 32),
         UiText(

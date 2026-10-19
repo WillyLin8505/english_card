@@ -10,10 +10,10 @@ $pyw = Join-Path (Split-Path $py -Parent) 'pythonw.exe'
 if (-not (Test-Path $pyw)) { throw "pythonw.exe not found next to $py" }
 $script = Join-Path $root 'lexicon\tools\dispatch_tick.py'
 $action = New-ScheduledTaskAction -Execute $pyw -Argument "`"$script`"" -WorkingDirectory $root
-$trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) -RepetitionInterval (New-TimeSpan -Minutes 20)
+$trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) -RepetitionInterval (New-TimeSpan -Minutes 2)
 $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
     -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Minutes 10) -StartWhenAvailable
 $principal = New-ScheduledTaskPrincipal -UserId "$env:USERDOMAIN\$env:USERNAME" -LogonType Interactive -RunLevel Limited
 Register-ScheduledTask -TaskName $name -Action $action -Trigger $trigger -Settings $settings `
-    -Principal $principal -Description 'english_card: board dispatcher tick every 20 min (lexicon/tools/dispatch_tick.py, zero LLM tokens)' -Force | Out-Null
+    -Principal $principal -Description 'english_card: board dispatcher tick every 2 min (owner 10/19: new cards start at once) (lexicon/tools/dispatch_tick.py, zero LLM tokens)' -Force | Out-Null
 Get-ScheduledTask -TaskName $name | Select-Object TaskName, State

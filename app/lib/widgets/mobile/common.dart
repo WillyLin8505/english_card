@@ -45,6 +45,24 @@ class Tap extends StatelessWidget {
       );
 }
 
+/// Learner-facing copy for a failed camera / gallery / save step. The raw
+/// exception goes to the debug log only.
+String photoErrorMessage(Object error) {
+  debugPrint('photo error: $error');
+  final text = error.toString().toLowerCase();
+  if (RegExp(r'permission|denied|access').hasMatch(text)) {
+    return '沒有相機或相簿權限，請到手機設定開啟後再試。';
+  }
+  if (RegExp(r'enospc|no space|storage|disk full').hasMatch(text)) {
+    return '手機儲存空間不足，請清出空間後再試。';
+  }
+  if (error is FormatException ||
+      RegExp(r'decode|format|codec').hasMatch(text)) {
+    return '這張照片的格式無法使用，請換一張。';
+  }
+  return '發生問題，請再試一次。';
+}
+
 void showToast(BuildContext context, String message) {
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
@@ -124,22 +142,27 @@ class MNavBar extends StatelessWidget {
   final Widget? trailing;
   final bool divider;
 
+  /// Width of each side slot; wider when [trailing] holds two buttons.
+  final double sideWidth;
+
   const MNavBar({
     super.key,
     required this.title,
     this.leading,
     this.trailing,
     this.divider = true,
+    this.sideWidth = 48,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: MSpace.xl, vertical: MSpace.sm),
+      padding: const EdgeInsets.symmetric(
+          horizontal: MSpace.xl, vertical: MSpace.sm),
       decoration: MDecor.listTileSurface(showDivider: divider),
       child: Row(
         children: [
-          SizedBox(width: 48, child: leading),
+          SizedBox(width: sideWidth, child: leading),
           Expanded(
             child: UiText(
               title,
@@ -149,7 +172,7 @@ class MNavBar extends StatelessWidget {
               style: MFont.title,
             ),
           ),
-          SizedBox(width: 48, child: trailing),
+          SizedBox(width: sideWidth, child: trailing),
         ],
       ),
     );
@@ -172,7 +195,8 @@ class AlbumTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: MSpace.md, vertical: MSpace.sm),
+        padding: const EdgeInsets.symmetric(
+            horizontal: MSpace.md, vertical: MSpace.sm),
         child: Row(
           children: [
             leading,
@@ -303,7 +327,8 @@ class TagChip extends StatelessWidget {
   Widget build(BuildContext context) => Tap(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: MSpace.sm, vertical: 6),
+          padding:
+              const EdgeInsets.symmetric(horizontal: MSpace.sm, vertical: 6),
           decoration: MDecor.chipSurface(active: true, radius: MRadii.sm),
           child: Text(localize ? ui(context, label) : label,
               style: MFont.manrope(12, FontWeight.w700, MColors.primary)),
@@ -327,7 +352,8 @@ class AlbumPill extends StatelessWidget {
   Widget build(BuildContext context) => Tap(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: MSpace.md, vertical: MSpace.xs),
+          padding: const EdgeInsets.symmetric(
+              horizontal: MSpace.md, vertical: MSpace.xs),
           decoration: active
               ? MDecor.primaryPill(radius: MRadii.xl)
               : MDecor.softPanel(color: MColors.albumPill, radius: MRadii.xl),
@@ -351,7 +377,8 @@ class LevelBadge extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         height: 24,
         padding: const EdgeInsets.symmetric(horizontal: 10),
-        decoration: MDecor.softPanel(color: MColors.primarySoft, radius: MRadii.sm),
+        decoration:
+            MDecor.softPanel(color: MColors.primarySoft, radius: MRadii.sm),
         child: Center(
           widthFactor: 1,
           child: UiText(levelLabel(level),
@@ -386,7 +413,8 @@ class LabelLevelBar extends StatelessWidget {
         height: 28,
         child: Row(
           children: [
-            UiText('程度', style: MFont.inter(12, FontWeight.w600, MColors.gray500)),
+            UiText('程度',
+                style: MFont.inter(12, FontWeight.w600, MColors.gray500)),
             const SizedBox(width: MSpace.xs),
             for (final (i, l) in [null, ...cefrLevels].indexed) ...[
               if (i > 0) const SizedBox(width: 4),
@@ -433,8 +461,8 @@ class SectionLabel extends StatelessWidget {
   const SectionLabel(this.text, {super.key});
 
   @override
-  Widget build(BuildContext context) =>
-      UiText(text, style: MFont.caption.copyWith(fontSize: 13, fontWeight: FontWeight.w700));
+  Widget build(BuildContext context) => UiText(text,
+      style: MFont.caption.copyWith(fontSize: 13, fontWeight: FontWeight.w700));
 }
 
 TextStyle _sdsBody(Color color) =>
@@ -535,7 +563,9 @@ class PrimaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Tap(
         onTap: onTap,
-        label: shortcut == null ? label : '${ui(context, label)}（${ui(context, shortcut!)}）',
+        label: shortcut == null
+            ? label
+            : '${ui(context, label)}（${ui(context, shortcut!)}）',
         labelOnly: true,
         child: Container(
           height: 52,
@@ -549,10 +579,12 @@ class PrimaryButton extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              Flexible(child: UiText(label,
-                  textAlign: TextAlign.center,
-                  maxLines: 2, overflow: TextOverflow.ellipsis,
-                  style: MFont.manrope(16, FontWeight.w800, Colors.white))),
+              Flexible(
+                  child: UiText(label,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: MFont.manrope(16, FontWeight.w800, Colors.white))),
               if (shortcut != null) ...[
                 const SizedBox(width: 10),
                 UiText(shortcut!,

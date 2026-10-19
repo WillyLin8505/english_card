@@ -77,6 +77,9 @@ def validate(pack: dict) -> dict[str, list]:
     """Contract violations: rule -> list of evidence (ids)."""
     by_id, redirects = _index(pack)
     v: dict[str, list] = defaultdict(list)
+    # Latin letters are residue only in a Chinese pack; a French pack's
+    # native text is English (card #325).
+    zh_native = str(pack.get("native_language") or "zh-TW").startswith("zh")
     full = [lx for lx in pack.get("lexemes") or [] if lx.get("status") == "full"]
     for lx in pack.get("lexemes") or []:
         if lx.get("status") == "stub" and not lx.get("redirect_to"):
@@ -98,7 +101,7 @@ def validate(pack: dict) -> dict[str, list]:
             if not _has_zh(sense):
                 v["sense.native_empty"].append(lx["id"])
                 continue
-            latin = native_latin_issue(sense.get("native"))
+            latin = native_latin_issue(sense.get("native")) if zh_native else None
             if latin:
                 v["sense.native_has_latin"].append([lx["id"], latin])
         if lx.get("pos") in (None, "", "unknown"):

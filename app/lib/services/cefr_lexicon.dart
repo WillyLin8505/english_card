@@ -197,6 +197,17 @@ class CefrLexicon {
     return hit == null ? null : (word, hit);
   }
 
+  /// [word]'s dictionary form and its listed parts of speech (easiest
+  /// first), or null when the list doesn't know it: "menus" → menu (noun),
+  /// "served" → serve (verb). For words read off a photo (問題回報 #324).
+  ({String lemma, List<String> pos})? lemmaOf(String word) {
+    final hit = _find(word.trim().toLowerCase());
+    if (hit == null) return null;
+    final byPos = hit.$2.$2.entries.toList()
+      ..sort((a, b) => levelIndex(a.value).compareTo(levelIndex(b.value)));
+    return (lemma: hit.$1, pos: [for (final e in byPos) e.key]);
+  }
+
   String? ipaOf(String word) {
     final hit = _find(word, 'exact');
     if (hit != null && hit.$1 == word) return hit.$2.$3;

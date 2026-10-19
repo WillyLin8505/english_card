@@ -42,8 +42,22 @@ class ListedWord {
   final String? aiLabel;
   final bool edited;
 
+  /// Typed in by the learner (問題回報 #323): no AI label behind it.
+  final bool added;
+
+  /// False when an added word was never put on the photo (no pin).
+  final bool placed;
+
+  /// The learner typed the meaning: stored as their edit even when a new
+  /// entry starts with it, so background updates keep it.
+  final bool ownMeaning;
+
   const ListedWord(this.candidate, this.anchor,
-      {this.aiLabel, this.edited = false});
+      {this.aiLabel,
+      this.edited = false,
+      this.added = false,
+      this.placed = true,
+      this.ownMeaning = false});
 
   String get word => candidate.word;
 }
@@ -168,6 +182,27 @@ class WordDatabaseRepository extends ChangeNotifier {
 
   int _nextId = 0;
   LexiconPack? _linkedPack;
+  String? _linkedVersion;
+
+  /// Words a dictionary update filled in, by entry id → the fields
+  /// ([missingFieldNames]) that were missing before it and are there now
+  /// (問題回報 #300: the 單字本 shows a one-time notice instead of a
+  /// silent update). Only a new pack version counts; linking the same pack
+  /// again after adding a word is not an update.
+  final Map<String, Set<String>> _filledByUpdate = {};
+
+  Map<String, Set<String>> get filledByUpdate => {
+        for (final x in _filledByUpdate.entries)
+          if (entry(x.key) != null) x.key: Set.unmodifiable(x.value),
+      };
+
+  /// The learner has seen the notice; [notify] is false while a widget is
+  /// being disposed.
+  void dismissPackUpdateNotice({bool notify = true}) {
+    if (_filledByUpdate.isEmpty) return;
+    _filledByUpdate.clear();
+    if (notify) notifyListeners();
+  }
 
   WordDatabaseRepository({
     this.language = 'en',
@@ -805,7 +840,11 @@ class WordDatabaseRepository extends ChangeNotifier {
   /// photo ↔ lexeme_id；釋義、發音、例句直接由詞庫讀取). Learner edits are
   /// kept. Returns how many photos and words changed.
   int linkLexicon(LexiconPack pack) {
+    final update = _linkedPack != null &&
+        pack.version != null &&
+        pack.version != _linkedVersion;
     _linkedPack = pack;
+    _linkedVersion = pack.version;
     if (pack.cardTemplate != null) updateTemplate(pack.cardTemplate!);
     if (pack.isEmpty) return 0;
     var changed = 0;
@@ -897,17 +936,24 @@ class WordDatabaseRepository extends ChangeNotifier {
       merged['lexemeId'] = x.id;
       merged['entry_type'] = x.entryType;
       if (pack.mediaBase != null) {
-        merged['audioUrl'] = x.audio == null
-            ? null
-            : packRecordingUrl(pack.mediaBase, x.audio!);
+        merged['audioUrl'] =
+            x.audio == null ? null : packRecordingUrl(pack.mediaBase, x.audio!);
       }
       merged['translatedFor'] = pack.native;
       // A dictionary gap is explicit, not an endless background loading state.
       merged['dataStatus'] = x.nativeMeaning == null ? 'failed' : 'complete';
       merged['dataError'] = x.nativeMeaning == null ? '詞庫尚未提供中文意思' : null;
       if (jsonEncode(merged) != jsonEncode(e.toJson())) {
-        _putEntry(WordEntry.fromJson(merged));
+        final next = WordEntry.fromJson(merged);
+        _putEntry(next);
         changed++;
+        if (update) {
+          final filled = missingFieldNames(e).toSet()
+            ..removeAll(missingFieldNames(next));
+          if (filled.isNotEmpty) {
+            (_filledByUpdate[e.id] ??= {}).addAll(filled);
+          }
+        }
       }
     }
     notifyListeners();
@@ -936,6 +982,71 @@ class WordDatabaseRepository extends ChangeNotifier {
     _photos.removeWhere((p) => p.id == photoId);
     _persist((s) => s.deletePhoto(photoId));
     for (final id in affected) {
+      _dropIfUnused(id);
+    }
+    notifyListeners();
+  }
+
+  // ── 卡片集 (card #323, 問題回報 #320) ─────────────────────────────────
+
+  /// Adds the words of a downloaded deck, each with its card so it can be
+  /// reviewed at once. Words already in the database stay as they are.
+  /// Returns the entries this call created (the deck remembers them so 移除
+  /// 集合 can take them out again); their meanings are filled by the
+  /// enricher like any word added by hand.
+  List<WordEntry> addDeckWords(
+      List<({String word, String pos, String? level})> words) {
+    final created = <WordEntry>[];
+    for (final w in words) {
+      final normalized = w.word.trim().toLowerCase();
+      if (normalized.isEmpty) continue;
+      var e = entryByWord(normalized);
+      if (e == null) {
+        e = _createEntry(
+          word: normalized,
+          pos: w.pos,
+          meaning: '',
+          level: w.level,
+          levelSource: w.level == null ? null : 'deck',
+          dataStatus: WordDataStatus.pending,
+        );
+        created.add(e);
+      }
+      _ensureCard(e.id);
+      if (_profile.familiarityOf(e.word) == Familiarity.unknown) {
+        _setProfile(
+            _profile.withFamiliarity(e.word, Familiarity.learning, clock()));
+      }
+    }
+    notifyListeners();
+    return created;
+  }
+
+  /// Adds a downloaded deck picture with its labels already saved as the
+  /// photo's word list (no tagging needed). Returns the entries created.
+  List<WordEntry> addDeckPhoto(Photo photo, List<WordCandidate> labels) {
+    addPhoto(photo.copyWith(candidates: labels));
+    return savePhotoWords(
+      photo.id,
+      [
+        for (final c in labels.take(WordSelector.maxWords))
+          ListedWord(c, c.point),
+      ],
+      difficultyOffset: 0,
+    );
+  }
+
+  /// 移除集合: takes the deck's pictures and the words it created out
+  /// again. A word that was reviewed, edited or is still on another photo
+  /// stays (with its history).
+  void removeDeckContent({
+    Iterable<String> photoIds = const [],
+    Iterable<String> wordEntryIds = const [],
+  }) {
+    for (final id in photoIds.toList()) {
+      if (photo(id) != null) removePhoto(id);
+    }
+    for (final id in wordEntryIds) {
       _dropIfUnused(id);
     }
     notifyListeners();
@@ -1048,11 +1159,12 @@ class WordDatabaseRepository extends ChangeNotifier {
       photoId: photoId,
       wordEntryId: e.id,
       anchor: w.anchor,
-      aiLabel: w.aiLabel ?? w.word,
-      userEdited: w.edited,
+      aiLabel: w.added ? null : (w.aiLabel ?? w.word),
+      userEdited: w.edited || w.added,
       evidence: w.candidate.evidence.isEmpty ? null : w.candidate.evidence,
       confidence: w.candidate.visualConfidence,
       contextOnly: contextOnly,
+      placed: w.placed,
     );
     _occurrences.add(occ);
     _persist((s) => s.putOccurrence(occ));
@@ -1103,7 +1215,10 @@ class WordDatabaseRepository extends ChangeNotifier {
       if (e == null) continue;
       final w = listed[e.word];
       if (w != null) {
-        if (w.anchor.x != o.anchor.x || w.anchor.y != o.anchor.y) {
+        if (w.placed &&
+            (!o.placed ||
+                w.anchor.x != o.anchor.x ||
+                w.anchor.y != o.anchor.y)) {
           moveLabel(o.id, w.anchor);
         }
         if (o.contextOnly) {
@@ -1135,7 +1250,8 @@ class WordDatabaseRepository extends ChangeNotifier {
       var e = _entryFor(w.candidate);
       if (w.edited &&
           w.candidate.meaning.isNotEmpty &&
-          w.candidate.meaning != e.meaning) {
+          (w.candidate.meaning != e.meaning ||
+              (w.ownMeaning && !e.userEdited.contains(WordField.meaning)))) {
         e = e.copyWith(
           meaning: w.candidate.meaning,
           userEdited: {...e.userEdited, WordField.meaning},
@@ -1215,6 +1331,7 @@ class WordDatabaseRepository extends ChangeNotifier {
         userEdited: true,
         evidence: current.evidence,
         confidence: current.confidence,
+        placed: current.placed,
       );
       _occurrences[i] = moved;
       _persist((s) => s.putOccurrence(moved));
@@ -1280,14 +1397,17 @@ class WordDatabaseRepository extends ChangeNotifier {
     );
     _setCard(i, after);
     _reviewLogs.add(log);
-    Analytics.instance.capture('card_reviewed', {
-      'rating': rating.name,
-      'template': templateType,
-      'correct': correct,
-      'hints': hintCount,
-      'duration_ms': duration?.inMilliseconds,
-      'scheduled_days': result.scheduledDays,
-    }, now);
+    Analytics.instance.capture(
+        'card_reviewed',
+        {
+          'rating': rating.name,
+          'template': templateType,
+          'correct': correct,
+          'hints': hintCount,
+          'duration_ms': duration?.inMilliseconds,
+          'scheduled_days': result.scheduledDays,
+        },
+        now);
     if (FsrsOptimizer.effective(log)) _effectiveReviewCount++;
     if (_effectiveReviewCount >= FsrsOptimizer.minimumReviews &&
         (_lastOptimizationSize == 0 ||

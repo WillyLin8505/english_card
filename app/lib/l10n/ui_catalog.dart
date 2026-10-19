@@ -1,6 +1,22 @@
 /// Traditional Chinese source keys are stable UI identifiers, never dictionary
 /// content. Missing keys/languages deliberately retain the original copy.
 const uiCatalog = <String, (String, String)>{
+  '卡片集': ('Decks', 'Paquets'),
+  '瀏覽並下載卡片集': ('Browse and download decks', 'Parcourir et télécharger des paquets'),
+  '卡片集：下載別人整理好的單字集與圖片集': (
+    'Decks: download word and picture sets made by others',
+    'Paquets : télécharger des listes de mots et d’images'
+  ),
+  '目前還沒有卡片集': ('No decks yet', 'Aucun paquet pour le moment'),
+  '加入': ('Add', 'Ajouter'),
+  '移除': ('Remove', 'Retirer'),
+  '集合裡的圖片與單字會從你的收藏移除；已經複習過或你編輯過的單字會保留。': (
+    'The deck’s pictures and words are removed from your collection; words you reviewed or edited are kept.',
+    'Les images et mots du paquet sont retirés de votre collection ; les mots révisés ou modifiés sont conservés.'
+  ),
+  '詞庫已更新': ('Dictionary updated', 'Dictionnaire mis à jour'),
+  '知道了': ('Got it', 'Compris'),
+  '關閉提示': ('Dismiss', 'Fermer'),
   '結束複習': ('End review', 'Terminer la révision'),
   '找不到這個單字': ('Word not found', 'Mot introuvable'),
   '編輯單字': ('Edit word', 'Modifier le mot'),
@@ -30,7 +46,7 @@ const uiCatalog = <String, (String, String)>{
   '詞頻估計': ('Frequency estimate', 'Estimation de fréquence'),
   '很簡單': ('Very easy', 'Très facile'),
   '簡單': ('Easy', 'Facile'),
-  '符合程度': ('At your level', 'À votre niveau'),
+  '剛好': ('At your level', 'À votre niveau'),
   '稍難': ('A little harder', 'Un peu plus difficile'),
   '挑戰': ('Challenging', 'Un défi'),
   '收起難度選單': ('Close difficulty menu', 'Fermer le menu de difficulté'),
@@ -291,6 +307,15 @@ const uiCatalog = <String, (String, String)>{
   '法文（Français）': ('French (Français)', 'Français'),
   '繁體中文': ('Traditional Chinese', 'Chinois traditionnel'),
   '發音腔調': ('Pronunciation accent', 'Accent'),
+  '卡片樣式': ('Card style', 'Style des cartes'),
+  '現行樣式': ('Current', 'Actuel'),
+  'A 簡潔留白': ('A Clean', 'A Épuré'),
+  'B 圖片沉浸': ('B Photo-first', 'B Immersif'),
+  'C 活潑遊戲': ('C Playful', 'C Ludique'),
+  '只改變複習卡片的外觀，內容和複習方式不變。': (
+    'Changes only how review cards look; their content and reviews stay the same.',
+    'Change seulement l’apparence des cartes ; contenu et révisions restent identiques.'
+  ),
   '英式（en-GB）': ('British (en-GB)', 'Britannique (en-GB)'),
   '美式（en-US）': ('American (en-US)', 'Américain (en-US)'),
   '單字難度': ('Word difficulty', 'Difficulté des mots'),
@@ -510,6 +535,7 @@ const uiCatalog = <String, (String, String)>{
   '送出答案': ('Submit answer', 'Valider la réponse'),
   '輸入缺少的單字': ('Enter the missing word', 'Saisissez le mot manquant'),
   '需要提示': ('Need a hint', 'Besoin d’un indice'),
+  '提示已顯示': ('Hint shown', 'Indice affiché'),
   '顯示字首提示': ('Show first-letter hint', 'Afficher la première lettre'),
   '字首提示': ('First-letter hint', 'Première lettre'),
   '母語提示': ('Native-language hint', 'Indice en langue maternelle'),
@@ -745,6 +771,19 @@ const _templateCopy = <String, (String, String)>{
   '聽 {0} 的發音': ('Listen to {0}', 'Écouter {0}'),
   '復原 {0}': ('Restore {0}', 'Rétablir {0}'),
   '開啟照片「{0}」': ('Open photo “{0}”', 'Ouvrir la photo « {0} »'),
+  '沒有相機或相簿權限，請到手機設定開啟後再試。': (
+    'No camera or photo permission. Turn it on in Settings and try again.',
+    'Autorisation caméra ou photos manquante. Activez-la dans Réglages puis réessayez.'
+  ),
+  '手機儲存空間不足，請清出空間後再試。': (
+    'Not enough storage. Free up some space and try again.',
+    'Espace insuffisant. Libérez de l’espace puis réessayez.'
+  ),
+  '這張照片的格式無法使用，請換一張。': (
+    'This photo format can’t be used. Please pick another.',
+    'Ce format de photo n’est pas pris en charge. Choisissez-en une autre.'
+  ),
+  '發生問題，請再試一次。': ('Something went wrong. Please try again.', 'Un problème est survenu. Réessayez.'),
   '拍照失敗：{0}': ('Could not take photo: {0}', 'Échec de la prise de photo : {0}'),
   '儲存照片失敗：{0}': (
     'Could not save photo: {0}',
@@ -756,6 +795,16 @@ const _templateCopy = <String, (String, String)>{
   ),
   '照片中：{0}': ('In the photo: {0}', 'Sur la photo : {0}'),
   '待補：{0}': ('Pending: {0}', 'En attente : {0}'),
+  // The longer one first: templates match in order.
+  '詞庫已更新：{0} 個字補上{1}，查看是哪些字': (
+    'Dictionary updated: {1} added for {0} words, see which ones',
+    'Dictionnaire mis à jour : {1} ajouté(s) pour {0} mots, voir lesquels'
+  ),
+  '詞庫已更新：{0} 個字補上{1}': (
+    'Dictionary updated: {1} added for {0} words',
+    'Dictionnaire mis à jour : {1} ajouté(s) pour {0} mots'
+  ),
+  '補上：{0}': ('Added: {0}', 'Ajouté : {0}'),
   '尚缺：{0}。詞庫更新後會自動補上。': (
     'Missing: {0}. Added automatically after a dictionary update.',
     'Manquant : {0}. Ajout automatique après une mise à jour.'
@@ -765,10 +814,20 @@ const _templateCopy = <String, (String, String)>{
     'Added “{0}”; examples and translations will follow.',
     '« {0} » ajouté ; exemples et traductions suivront.'
   ),
-  '{0}：{1} 個單字 · {2} 張照片 · {3} 張卡片 · 已學會 {4} 個': (
-    '{0}: {1} words · {2} photos · {3} cards · {4} learned',
-    '{0} : {1} mots · {2} photos · {3} cartes · {4} acquis'
+  // 問題回報 #301：一字一卡，「張卡片」和「個單字」重複，拿掉
+  '{0}：{1} 個單字 · {2} 張照片 · 已學會 {3} 個': (
+    '{0}: {1} words · {2} photos · {3} learned',
+    '{0} : {1} mots · {2} photos · {3} acquis'
   ),
+  // 匯出到 Anki (問題回報 #325)
+  '匯出到 Anki': ('Export to Anki', 'Exporter vers Anki'),
+  '匯出到 Anki：選擇範圍': ('Export to Anki: choose what', 'Exporter vers Anki : choisir'),
+  '正在建立 Anki 匯入檔…': ('Creating the Anki file…', 'Création du fichier Anki…'),
+  '產生 Anki 可匯入的檔案（含照片、發音與授權標示），用分享存出。': (
+    'Creates a file Anki can import (with photos, pronunciation and license credits) and shares it.',
+    'Crée un fichier importable dans Anki (photos, prononciation et licences) et le partage.'
+  ),
+  '這個範圍沒有單字可以匯出': ('No words to export here', 'Aucun mot à exporter ici'),
   // 備份與還原 (問題回報 #278)
   '匯出備份': ('Export backup', 'Exporter une sauvegarde'),
   '從備份還原': ('Restore from backup', 'Restaurer une sauvegarde'),

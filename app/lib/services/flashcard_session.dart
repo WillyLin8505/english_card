@@ -236,7 +236,8 @@ class FlashcardSession extends ChangeNotifier {
   }
 
   void useHint() {
-    if (finished || _back || !canAnswer) return;
+    // The hint (first letter) never changes, so it counts once per card.
+    if (finished || _back || !canAnswer || _hintCount > 0) return;
     _hintCount++;
     notifyListeners();
   }
@@ -284,7 +285,10 @@ class FlashcardSession extends ChangeNotifier {
     _reviewed++;
     if (rating == Rating.again) {
       final repeats = _againRepeats[id] ?? 0;
-      if (continuous || repeats < maxAgainRepeats) {
+      // Continuous mode caps returns too (問題回報 #319): past the cap the
+      // card is left to its FSRS schedule instead of coming back every few
+      // cards. Focus picks are not counted — they never come from this queue.
+      if (repeats < maxAgainRepeats) {
         _againRepeats[id] = repeats + 1;
         _again[id] = _step + againGap;
       }
@@ -529,7 +533,8 @@ class FlashcardSession extends ChangeNotifier {
         ...occurrences.where((o) => o.wordEntryId != entry.id),
       ]) {
         final e = repo.entry(o.wordEntryId);
-        if (e != null && !repo.isArchived(e.id)) {
+        // A word added without a spot on the photo has nowhere to drag to.
+        if (e != null && o.placed && !repo.isArchived(e.id)) {
           add(e.word, e.meaning, o.anchor);
         }
       }
@@ -569,18 +574,29 @@ class FlashcardSession extends ChangeNotifier {
     );
   }
 
+  /// Step at which an Again card last came back, so returns are spaced out.
+  int _lastAgainReturn = -againGap;
+
+  String? _takeAgain(String id) {
+    _again.remove(id);
+    _lastAgainReturn = _step;
+    return id;
+  }
+
   String? _pick() {
     // A queued Again card may have been marked learned from word details.
     _again.removeWhere((id, _) {
       final c = repo.card(id);
       return c == null || c.archived || repo.entry(c.wordEntryId) == null;
     });
-    // An Again card whose turn has come.
+    // An Again card whose turn has come — at most one return per [againGap]
+    // steps. Serving every due Again card first let three forgotten words
+    // refill the queue every three steps and crowd out the whole database
+    // (問題回報 #315: 複習一直重複同幾個字); the other slots are fresh cards.
     final back = _again.entries.where((e) => e.value <= _step).toList()
       ..sort((a, b) => a.value.compareTo(b.value));
-    if (back.isNotEmpty) {
-      _again.remove(back.first.key);
-      if (repo.card(back.first.key) case final c? when !c.archived) return c.id;
+    if (back.isNotEmpty && _step - _lastAgainReturn >= againGap) {
+      return _takeAgain(back.first.key);
     }
     for (final id in focus) {
       if (_shownAt.containsKey(id) || _again.containsKey(id)) continue;
@@ -595,20 +611,38 @@ class FlashcardSession extends ChangeNotifier {
         if (!_shownAt.containsKey(c.id) && !_again.containsKey(c.id)) c,
     ];
     if (eligible.isEmpty) {
-      // Only Again cards left: show the next one now rather than stop.
-      if (_again.isEmpty) {
-        if (!continuous) return null;
-        final practice = repo.eligibleCards(includeFuture: true).toList()
-          ..shuffle(_random);
+      if (continuous) {
+        // Extra practice: the card not shown for longest. Queued Again cards
+        // wait for their own turn instead of being recycled here too — unless
+        // the database is so small that the practice card was itself just
+        // shown; then the Again card comes back early rather than repeating.
+        // A word that used up its Again returns waits for FSRS, not for this
+        // pool (問題回報 #319) — unless it is all the database has, so a
+        // one-word database keeps practising instead of ending the run.
+        final pool = [
+          for (final c in repo.eligibleCards(includeFuture: true))
+            if (!_again.containsKey(c.id)) c,
+        ];
+        final rested = [
+          for (final c in pool)
+            if ((_againRepeats[c.id] ?? 0) < maxAgainRepeats) c,
+        ];
+        final practice = (rested.isEmpty ? pool : rested)..shuffle(_random);
         practice.sort(
             (a, b) => (_shownAt[a.id] ?? -1).compareTo(_shownAt[b.id] ?? -1));
-        return practice.firstOrNull?.id;
+        final best = practice.firstOrNull;
+        if (best != null &&
+            (_again.isEmpty ||
+                _step - (_shownAt[best.id] ?? -againGap) >= againGap)) {
+          return best.id;
+        }
       }
+      // Only Again cards left: show the next one now rather than stop.
+      if (_again.isEmpty) return null;
       final next = (_again.entries.toList()
             ..sort((a, b) => a.value.compareTo(b.value)))
           .first;
-      _again.remove(next.key);
-      return next.key;
+      return _takeAgain(next.key);
     }
     final photosByWord = repo.photoIdsByWord();
     double score(LearningCard c) {
@@ -655,7 +689,7 @@ class FlashcardSession extends ChangeNotifier {
           // A learner's photo whose original file is gone is skipped, so the
           // card shows another picture of the word (問題回報 #279).
           if (repo.photo(o.photoId) case final p? when PhotoStore.canShow(p))
-            (p, o.anchor as LabelPoint?, null as String?),
+            (p, o.placed ? o.anchor : null, null as String?),
         ..._databasePhotos(c.wordEntryId),
       ])
         if (seenIds.add(o.$1.id)) o,

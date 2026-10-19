@@ -269,6 +269,7 @@ class AppBackup {
         'learningLanguage': s.learningLanguage,
         'nativeLanguage': s.nativeLanguage,
         'englishAccent': s.englishAccent,
+        'cardStyle': s.cardStyle.name,
         'desiredRetention': s.desiredRetention,
         'shareUsageStats': s.shareUsageStats,
       };
@@ -284,6 +285,7 @@ class AppBackup {
       s.nativeLanguage = v;
     }
     if (raw['englishAccent'] case final String v) s.englishAccent = v;
+    if (raw['cardStyle'] case final String v) s.cardStyle = CardStyle.parse(v);
     if (raw['desiredRetention'] case final num v) {
       s.desiredRetention = v.toDouble();
     }

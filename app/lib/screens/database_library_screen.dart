@@ -137,6 +137,18 @@ class _DatabaseLibraryScreenState extends State<DatabaseLibraryScreen> {
                                                 max: 1, level: _level)
                                             .isNotEmpty))
                                 .toList();
+                            // Search spans every level; say how many hits
+                            // sit at a level the album isn't showing (#302).
+                            final elsewhere = !widget.photos ||
+                                    _level == null ||
+                                    _search.trim().isEmpty
+                                ? 0
+                                : images
+                                    .where((image) =>
+                                        databaseSearchElsewhere(
+                                            image, pack, _search, _level) !=
+                                        null)
+                                    .length;
                             return Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
@@ -158,6 +170,7 @@ class _DatabaseLibraryScreenState extends State<DatabaseLibraryScreen> {
                                                     ? _level == null
                                                         ? '共 ${pack.catalogImages.length} 張圖片 · 每張都有單字標籤'
                                                         : '${levelLabel(_level!)}：${images.length} 張圖片有這個程度的標籤'
+                                                            '${elsewhere == 0 ? '' : ' · $elsewhere 張的搜尋字在其他程度'}'
                                                     : '${allWords.where((w) => w.full).length} 筆正式單字 · 與資料庫同步',
                                                 style: MFont.bodyMuted),
                                             // Connecting/connected is debug
@@ -248,7 +261,11 @@ class _DatabaseLibraryScreenState extends State<DatabaseLibraryScreen> {
                                                           index) =>
                                                       DatabaseImageTile(
                                                           image: images[index],
-                                                          level: _level))
+                                                          level: _level,
+                                                          search: _search,
+                                                          onLevelChanged: (l) =>
+                                                              setState(() =>
+                                                                  _level = l)))
                                           : words.isEmpty
                                               ? Center(
                                                   child: Container(

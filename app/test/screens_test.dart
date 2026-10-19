@@ -112,14 +112,14 @@ void main() {
       final app = await openBreakfast(tester);
       expect(find.text('辨識單字列表 (5)'), findsOneWidget);
       expect(find.text('Coffee'), findsNWidgets(2)); // pin + card
-      expect(find.text('單字難度 入門（A1） · 符合程度'), findsOneWidget);
+      expect(find.text('單字難度 入門（A1） · 剛好'), findsOneWidget);
 
       // ☆ Apple, then turn the dial to B2.
       await tester.tap(find.bySemanticsLabel('鎖定（調整難度時保留）').at(1));
       await tester.pump();
       await tester.tap(find.bySemanticsLabel(RegExp('^單字難度 入門（A1），')));
       await tester.pumpAndSettle();
-      expect(find.text('A1 · 符合程度'), findsOneWidget);
+      expect(find.text('A1 · 剛好'), findsOneWidget);
       await tester.tap(find.bySemanticsLabel(RegExp('^難度 B2')));
       await tester.pumpAndSettle();
       expect(find.text('單字難度 中高階（B2） · 挑戰'), findsOneWidget);

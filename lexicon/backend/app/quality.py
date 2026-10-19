@@ -69,6 +69,18 @@ _INFLECTION_GLOSS_RE = re.compile(
     r" of ([A-Za-z][A-Za-z'-]*(?: [A-Za-z][A-Za-z'-]*){0,3})\.?$", re.I)
 
 
+# 問題回報 #296 (card #318): a spelling variant (distill = "US standard spelling
+# of distil") is a pointer to the main entry, never a word of its own. The gloss
+# shape is the same in DB definitions and Kaikki; tools/card318_variants.py
+# imports this pattern.
+VARIANT_GLOSS_RE = re.compile(
+    r"^(?:(?:US|UK|British|American|Canadian|Australian|Irish|Oxford|Non-Oxford|obsolete|archaic|"
+    r"nonstandard|dated|rare|standard|alternative|alternate|common|informal|eye|and|English|"
+    r"misspelling|superseded|less common|uncommon|proscribed|hyphenated|unhyphenated)[ ,]+)*"
+    r"(?:spelling|form|misspelling)s? of "
+    r"([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ' -]*?)(?:\s*[,:(“;].*|\.)?$", re.I)
+
+
 def _sense_base(sense: dict, word: str) -> str | None:
     """The word this sense is purely a form of, by tag or (fallback) gloss text."""
     tags = set(sense.get("tags") or [])
@@ -78,9 +90,13 @@ def _sense_base(sense: dict, word: str) -> str | None:
             if b and b != word:
                 return b
         return None
+    glosses = sense.get("glosses") or []
+    if sense.get("alt_of") and not sense.get("form_of") and len(glosses) == 1:
+        m = VARIANT_GLOSS_RE.match(str(glosses[0]).strip())
+        if m and m.group(1).lower() != word:
+            return m.group(1).lower()
     if sense.get("form_of") or sense.get("alt_of"):
         return None
-    glosses = sense.get("glosses") or []
     if len(glosses) != 1:
         return None  # a nested/extra gloss means this sense has its own meaning
     m = _INFLECTION_GLOSS_RE.match(str(glosses[0]).strip())
@@ -696,8 +712,11 @@ def fix_catalog_senses(pack: dict) -> int:
         for coll in (im.get("tags") or [], im.get("labels") or []):
             for t in coll:
                 lid = t.get("lexeme_id")
-                if lid in redirects and redirects[lid] in by_id:
-                    t["lexeme_id"] = redirects[lid]
+                # Card #331: never move a tag onto a stub (faded -> fade the
+                # noun); strip_stubs drops that redirect anyway.
+                target = by_id.get(redirects.get(lid))
+                if target and target.get("status", "full") == "full":
+                    t["lexeme_id"] = target["id"]
         tags = im.get("tags") or []
         for t in tags:
             lx = by_id.get(t.get("lexeme_id")) or {}

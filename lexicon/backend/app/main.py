@@ -56,8 +56,10 @@ from . import images, issues, tasks
 images.register(app, Auth)
 issues.register(app, Auth)
 tasks.register(app, Auth)
-from . import card_templates
+from . import accounts, card_templates, decks
 card_templates.register(app, Auth)
+decks.register(app, Auth)
+accounts.register(app, Auth)
 
 
 @app.exception_handler(policies.PolicyError)

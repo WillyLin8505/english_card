@@ -24,11 +24,16 @@
     166,
     167,
     244,
-    267
+    267,
+    325,
+    329
   ],
   "unblock_after": {
     "166": [
       202
+    ],
+    "329": [
+      325
     ]
   },
   "cooldown_hours": 12,
@@ -72,7 +77,7 @@
   "probe_interval_minutes": 60,
   "issue_swarm": {
     "enabled": true,
-    "max_parallel": 15,
+    "max_parallel": 25,
     "cover_for": [
       "Cursor CLI",
       "Codex"

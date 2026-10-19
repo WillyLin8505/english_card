@@ -56,6 +56,7 @@ SIMS = {
     # usability review: lexicon/docs/agents/simulation_usability.md.
     "learner_view": ("learner_view_simulation.dart", {"SIM_WORDS": "60", "SIM_LEVEL": "B1"}),
     "settings": ("settings_simulation.dart", {}),
+    "card_draw": ("card_draw_simulation.dart", {}),
 }
 
 

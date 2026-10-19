@@ -195,6 +195,11 @@ def main(argv=None) -> int:
             log(f"push failed: {p.stderr[-300:]}")
             return 1
         mark_issues(cards, no, commit)
+        # the web app served by serve_app.py (127.0.0.1:8123 / api.willylinai.com) is a build:
+        # rebuild it so the owner sees the same code the Mac verifies (owner 10/19)
+        defines = ["--dart-define-from-file=posthog.local.json"] if (APP / "posthog.local.json").exists() else []
+        b = sh(FLUTTER, "build", "web", "--release", *defines, cwd=APP, timeout=1500)
+        log("web build " + ("OK" if b.returncode == 0 else f"failed: {(b.stdout + b.stderr)[-300:]}"))
         state["since"] = upto
         state["last"] = {"at": datetime.now(TAIPEI).isoformat(timespec="seconds"), "item": f"M{no}",
                          "commit": commit, "cards": [c["card"] for c in cards]}

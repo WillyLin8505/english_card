@@ -8,7 +8,9 @@ import 'package:share_plus/share_plus.dart';
 import '../app/app_scope.dart';
 import '../models/word_entry.dart';
 import '../services/word_database_query.dart';
+import '../services/word_database_repository.dart';
 import '../theme/mobile_theme.dart';
+import 'deck_browser_screen.dart';
 import '../widgets/mobile/common.dart';
 import '../widgets/mobile/dialogs.dart';
 
@@ -40,8 +42,13 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
   bool _onlyLearning = false;
   final Set<String> _selected = {};
 
+  /// Set when the update notice was on screen: leaving the 單字本 ends it,
+  /// so it shows once (問題回報 #300).
+  WordDatabaseRepository? _noticeShownIn;
+
   @override
   void dispose() {
+    _noticeShownIn?.dismissPackUpdateNotice(notify: false);
     _search.dispose();
     super.dispose();
   }
@@ -65,6 +72,50 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
     });
     unawaited(scope.enricher.process());
     showToast(context, '已新增「${entry.word}」，例句與翻譯會在背景補上。');
+  }
+
+  /// Which words the dictionary update filled in (問題回報 #300); seeing
+  /// the list ends the one-time notice, and a word opens its detail.
+  Future<void> _showFilled(Map<String, Set<String>> filled) async {
+    final scope = AppScope.of(context);
+    final repo = scope.repository;
+    final rows = [
+      for (final x in filled.entries)
+        if (repo.entry(x.key) case final e?) (e, x.value),
+    ]..sort((a, b) => a.$1.word.compareTo(b.$1.word));
+    final open = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: UiText('詞庫已更新',
+            style: MFont.manrope(18, FontWeight.w700, MColors.ink)),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              for (final (e, fields) in rows)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(e.word,
+                      style: MFont.manrope(15, FontWeight.w700, MColors.ink)),
+                  subtitle: UiText('補上：${fields.join('、')}',
+                      style: MFont.inter(13, FontWeight.w500, MColors.muted)),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () => Navigator.of(context).pop(e.id),
+                ),
+            ],
+          ),
+        ),
+        actions: [
+          FilledButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const UiText('知道了')),
+        ],
+      ),
+    );
+    if (!mounted) return;
+    repo.dismissPackUpdateNotice();
+    if (open != null) scope.navigator.openWord(open);
   }
 
   void _share(List<DatabaseRow> rows) {
@@ -98,6 +149,8 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
             .toList();
         final slice = PageSlice.of(rows, _page, _pageSize);
         _selected.removeWhere((id) => !rows.any((r) => r.id == id));
+        final notice = packUpdateSummary(repo.filledByUpdate);
+        if (notice != null) _noticeShownIn = repo;
 
         return Scaffold(
           backgroundColor: MColors.canvas,
@@ -121,6 +174,14 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        if (notice != null) ...[
+                          _PackUpdateNotice(
+                            summary: notice,
+                            onOpen: () => _showFilled(repo.filledByUpdate),
+                            onClose: repo.dismissPackUpdateNotice,
+                          ),
+                          const SizedBox(height: MSpace.sm),
+                        ],
                         SdsSearchField(
                           controller: _search,
                           onChanged: (t) =>
@@ -189,7 +250,18 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: MSpace.sm),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton.icon(
+                            onPressed: () => Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                    builder: (_) => const DeckBrowserScreen())),
+                            icon: const Icon(Icons.collections_bookmark_outlined,
+                                size: 18),
+                            label: const UiText('卡片集：下載別人整理好的單字集與圖片集'),
+                          ),
+                        ),
+                        const SizedBox(height: MSpace.xxs),
                         Wrap(
                           spacing: MSpace.xs,
                           runSpacing: MSpace.xs,
@@ -442,6 +514,57 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
 }
 
 /// Figma "word-row" (54:436): 62px, marker / word / meaning / level.
+/// 「詞庫已更新：3 個字補上例句」 at the top of the 單字本 (問題回報 #300).
+class _PackUpdateNotice extends StatelessWidget {
+  final String summary;
+  final VoidCallback onOpen;
+  final VoidCallback onClose;
+
+  const _PackUpdateNotice(
+      {required this.summary, required this.onOpen, required this.onClose});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        decoration: BoxDecoration(
+          color: MColors.primarySoft,
+          borderRadius: BorderRadius.circular(MRadii.md),
+          border: Border.all(color: MColors.blue100),
+        ),
+        child: Row(children: [
+          Expanded(
+            child: Tap(
+              onTap: onOpen,
+              label: '$summary，查看是哪些字',
+              labelOnly: true,
+              child: Padding(
+                padding: const EdgeInsets.all(MSpace.sm),
+                child: Row(children: [
+                  const Icon(Icons.auto_awesome_rounded,
+                      color: MColors.primaryDeep, size: 18),
+                  const SizedBox(width: MSpace.xs),
+                  Expanded(
+                    child: UiText(summary,
+                        style: MFont.inter(
+                            14, FontWeight.w600, MColors.primaryDeep)),
+                  ),
+                  const Icon(Icons.chevron_right_rounded,
+                      color: MColors.primaryDeep, size: 18),
+                ]),
+              ),
+            ),
+          ),
+          Tap(
+            onTap: onClose,
+            label: '關閉提示',
+            child: const Padding(
+              padding: EdgeInsets.all(MSpace.sm),
+              child: Icon(Icons.close_rounded, color: MColors.muted, size: 18),
+            ),
+          ),
+        ]),
+      );
+}
+
 class _WordRow extends StatelessWidget {
   final String usageBadge;
   final String word;

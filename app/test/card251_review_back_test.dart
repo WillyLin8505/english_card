@@ -230,6 +230,15 @@ void main() {
     expect(find.byType(PinnedPhoto), findsOneWidget);
   });
 
+  testWidgets('card #308: many photos show a counter instead of dots',
+      (tester) async {
+    await pumpBack(tester, photos: [
+      for (var i = 0; i < 29; i++) (_photo('p$i'), null, null),
+    ]);
+    expect(find.text('第 1 / 29 張　·　左右滑動換照片'), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('第 1 張，共 29 張')), findsOneWidget);
+  });
+
   test('item 9: only words in the database become links (phrases first)',
       () {
     final repo = WordDatabaseRepository(clock: () => testNow, entries: [

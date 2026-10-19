@@ -133,7 +133,7 @@ class _PhotoPickerScreenState extends State<PhotoPickerScreen> {
         _selected = 0;
       });
     } catch (e) {
-      if (mounted) showToast(context, '無法開啟相簿：$e');
+      if (mounted) showToast(context, photoErrorMessage(e));
     }
   }
 
@@ -145,7 +145,7 @@ class _PhotoPickerScreenState extends State<PhotoPickerScreen> {
     try {
       bytes = await _candidates[_selected].load();
     } catch (e) {
-      if (mounted) showToast(context, '無法讀取照片：$e');
+      if (mounted) showToast(context, photoErrorMessage(e));
       return;
     }
     if (!mounted) return;
@@ -165,23 +165,26 @@ class _PhotoPickerScreenState extends State<PhotoPickerScreen> {
     final choice = await showSaveToAlbumDialog(
       context,
       repository: scope.repository,
-      defaultTitle: '新照片 ${now.month}/${now.day}',
+      defaultTitle: defaultPhotoTitle(now),
       albumId: widget.albumId,
+      scanMode: scope.settings.scanMode,
     );
     if (choice == null || !mounted) return;
+    scope.settings.scanMode = choice.scanMode;
     setState(() => _saving = true);
     try {
       final Photo photo = await scope.intake.addPhoto(
         bytes,
         title: choice.title,
         albumId: choice.albumId,
+        scanMode: choice.scanMode,
       );
       unawaited(scope.queue.process());
       if (!mounted) return;
       Navigator.of(context).pop();
       scope.navigator.openPhoto(photo.id);
     } catch (e) {
-      if (mounted) showToast(context, '儲存照片失敗：$e');
+      if (mounted) showToast(context, photoErrorMessage(e));
     } finally {
       if (mounted) setState(() => _saving = false);
     }

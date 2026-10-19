@@ -42,13 +42,14 @@ class _InteractiveExerciseState extends State<_InteractiveExercise> {
     if (photo == null) return const SizedBox.shrink();
     final attempt = s.photoAttempt;
     final anchor = s.anchor;
+    final look = CardLook.of(context);
     return SizedBox(
-      height: 260,
+      height: look.frontPhotoHeight,
       child: Stack(fit: StackFit.expand, children: [
         PinnedPhoto(
           key: ValueKey(attempt),
           photo: photo,
-          radius: 18,
+          radius: look.frontPhotoRadius,
           pins: const [],
           overlay: mark && anchor != null && !s.photoFailed
               ? Semantics(
@@ -74,7 +75,7 @@ class _InteractiveExerciseState extends State<_InteractiveExercise> {
         padding: const EdgeInsets.only(bottom: 18),
         child: UiText(text,
             textAlign: TextAlign.center,
-            style: MFont.manrope(20, FontWeight.w800, MColors.ink)),
+            style: CardLook.of(context).exerciseTitle),
       );
 
   @override
@@ -106,8 +107,10 @@ class _InteractiveExerciseState extends State<_InteractiveExercise> {
           Align(
             alignment: Alignment.centerRight,
             child: IconButton(
-              tooltip: ui(context, '顯示字首提示'),
-              onPressed: !widget.session.canAnswer
+              tooltip: ui(context,
+                  widget.session.hintCount > 0 ? '提示已顯示' : '顯示字首提示'),
+              onPressed: !widget.session.canAnswer ||
+                      widget.session.hintCount > 0
                   ? null
                   : () {
                       widget.session.useHint();
@@ -178,7 +181,8 @@ class _InteractiveExerciseState extends State<_InteractiveExercise> {
                 style: MFont.manrope(14, FontWeight.w700, MColors.label)),
           const SizedBox(height: 12),
           OutlinedButton(
-              onPressed: !widget.session.canAnswer
+              onPressed: !widget.session.canAnswer ||
+                      widget.session.hintCount > 0
                   ? null
                   : () {
                       widget.session.useHint();
@@ -186,7 +190,13 @@ class _InteractiveExerciseState extends State<_InteractiveExercise> {
                     },
               child: UiText(widget.session.hintCount == 0
                   ? '需要提示'
-                  : firstLetterHint(x.answer))),
+                  : '提示已顯示')),
+          if (widget.session.hintCount > 0)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(firstLetterHint(x.answer),
+                  textAlign: TextAlign.center),
+            ),
         ],
         if (x.type == ReviewExerciseType.imageDrag) ...[
           _title(x.prompt),

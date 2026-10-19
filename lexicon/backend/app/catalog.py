@@ -174,6 +174,9 @@ _KAIKKI_FR_TARGET = {
     "pos", "definition", "usage_labels", "register", "ipa", "audio", "fr_present_1s", "fr_present_2s",
     "fr_present_3s", "fr_present_1p", "fr_present_2p", "fr_present_3p", "fr_past_participle",
     "fr_feminine", "fr_plural", "fr_feminine_plural", "synonyms", "antonyms", "related",
+    # The English Wiktionary's French entries carry hypernyms / hyponyms /
+    # homophones and accent-tagged sounds too (chat: hypernyms félin; card #325).
+    "hypernyms", "hyponyms", "homophones", "accent_labels",
     "derived_terms", "etymology_text", "origin_language", "original_form", "example_sentences",
     "example_sense",
 }
@@ -396,11 +399,22 @@ MAY_BE_EMPTY = {"antonyms", "hypernyms", "hyponyms", "homophones", "near_homopho
                 "adj_comparative", "adj_superlative", "noun_plural",
                 # a headword that is itself a form (dappled, garnished) has none
                 "verb_base", "verb_past", "verb_past_participle", "verb_present_participle",
-                "verb_third_person"}
-# Forms that belong to one part of speech.
+                "verb_third_person",
+                # French (card #325): a noun has no conjugation, an invariable
+                # adjective (orange) no feminine, a mass noun no plural.
+                "fr_present_1s", "fr_present_2s", "fr_present_3s", "fr_present_1p",
+                "fr_present_2p", "fr_present_3p", "fr_past_participle", "fr_feminine",
+                "fr_plural", "fr_feminine_plural"}
+# Forms that belong to one part of speech (a tuple: any of these).
 FORM_POS = {"verb_base": "verb", "verb_past": "verb", "verb_past_participle": "verb",
             "verb_present_participle": "verb", "verb_third_person": "verb",
-            "noun_plural": "noun", "adj_comparative": "adj", "adj_superlative": "adj"}
+            "noun_plural": "noun", "adj_comparative": "adj", "adj_superlative": "adj",
+            # French: conjugation is the verb's; gender / number forms belong to
+            # nouns and adjectives alike (chat → chatte, grand → grande).
+            **{f"fr_present_{p}": "verb" for p in ("1s", "2s", "3s", "1p", "2p", "3p")},
+            "fr_past_participle": "verb",
+            "fr_feminine": ("adj", "noun"), "fr_plural": ("adj", "noun"),
+            "fr_feminine_plural": ("adj", "noun")}
 for _f in LEVELED:
     _src, _strategy, _limit = _EN_DEFAULTS[_f]
     _EN_DEFAULTS[_f] = ([*_src, "ai_translate"], _strategy, 30)

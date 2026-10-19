@@ -105,8 +105,13 @@ class PhotoImage extends StatelessWidget {
       // Another photo starts from its placeholder (no stale pixels); the
       // same photo at a new decode size keeps showing until it is ready.
       return KeyedSubtree(
-        key: ValueKey((photo.id, photo.assetPath, photo.networkUrl,
-            photo.filePath, photo.storedKey)),
+        key: ValueKey((
+          photo.id,
+          photo.assetPath,
+          photo.networkUrl,
+          photo.filePath,
+          photo.storedKey
+        )),
         child: Image(
           image: image,
           fit: fit,
@@ -178,7 +183,10 @@ class WordPin extends StatelessWidget {
   /// [base] is the surrounding DefaultTextStyle the badge's text inherits
   /// (its line height).
   static Size badgeSize(String word, String zh, bool large, TextScaler scaler,
-      {bool linked = true, double? maxWidth, TextStyle? base, String entryType = 'word'}) {
+      {bool linked = true,
+      double? maxWidth,
+      TextStyle? base,
+      String entryType = 'word'}) {
     final second = secondLine(typedMeaning(zh, entryType), linked);
     final line = _measure(word, second, large, scaler, null, base);
     if (maxWidth == null || line.width <= maxWidth) return line;
@@ -220,7 +228,9 @@ class WordPin extends StatelessWidget {
         : zhStyle(large);
     final stacked = maxWidth != null &&
         badgeSize(word, zh, large, MediaQuery.textScalerOf(context),
-                    linked: linked, entryType: entryType, base: DefaultTextStyle.of(context).style)
+                    linked: linked,
+                    entryType: entryType,
+                    base: DefaultTextStyle.of(context).style)
                 .width >
             maxWidth!;
     final badge = Container(
@@ -280,6 +290,9 @@ class PinData {
   /// In the downloaded language pack (has a lexeme id).
   final bool linked;
 
+  /// Where the word is printed on the photo, framed (問題回報 #324).
+  final LabelBox? frame;
+
   const PinData({
     required this.id,
     required this.anchor,
@@ -288,6 +301,7 @@ class PinData {
     this.entryType = 'word',
     this.muted = false,
     this.linked = true,
+    this.frame,
   });
 }
 
@@ -304,6 +318,10 @@ class PinnedPhoto extends StatefulWidget {
   final bool largePins;
   final ValueChanged<PinData>? onPinTap;
   final void Function(PinData pin, LabelPoint to)? onPinMoved;
+
+  /// A tap on the photo itself (not a label): where, as a fraction of the
+  /// original image — used to place a word the learner added by hand.
+  final ValueChanged<LabelPoint>? onPhotoTap;
   final Widget? overlay;
   final WidgetBuilder? imageErrorBuilder;
   final ValueChanged<bool>? onImageState;
@@ -324,6 +342,7 @@ class PinnedPhoto extends StatefulWidget {
     this.largePins = false,
     this.onPinTap,
     this.onPinMoved,
+    this.onPhotoTap,
     this.overlay,
     this.imageErrorBuilder,
     this.onImageState,
@@ -379,7 +398,8 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
               PinItem(
                   p.id,
                   geo.toBox(p.anchor),
-                  WordPin.badgeSize(p.word, p.zh, widget.largePins, scaler, entryType: p.entryType,
+                  WordPin.badgeSize(p.word, p.zh, widget.largePins, scaler,
+                      entryType: p.entryType,
                       linked: p.linked,
                       // layoutPins' margin: a long label wraps in full.
                       maxWidth: box.width - 12,
@@ -397,14 +417,28 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
             clipBehavior: Clip.hardEdge,
             children: [
               Positioned.fill(
-                  child: PhotoImage(widget.photo,
-                      imageErrorBuilder: widget.imageErrorBuilder,
-                      onImageState: widget.onImageState)),
+                  child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTapUp: widget.onPhotoTap == null
+                    ? null
+                    : (d) => widget.onPhotoTap!(geo.fromBox(d.localPosition)),
+                child: PhotoImage(widget.photo,
+                    imageErrorBuilder: widget.imageErrorBuilder,
+                    onImageState: widget.onImageState),
+              )),
               Positioned.fill(
                 child: IgnorePointer(
                   child: CustomPaint(
                     painter: _LeaderPainter([
                       for (final pl in visible) (pl, byId[pl.id]!.muted),
+                    ], frames: [
+                      for (final p in widget.pins)
+                        if (p.frame case final f? when p.id != _dragging)
+                          (
+                            Rect.fromPoints(geo.toBox(LabelPoint(f.left, f.top)),
+                                geo.toBox(LabelPoint(f.left + f.width, f.top + f.height))),
+                            p.muted,
+                          ),
                     ]),
                   ),
                 ),
@@ -474,10 +508,29 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
 class _LeaderPainter extends CustomPainter {
   final List<(PinPlacement, bool)> pins;
 
-  _LeaderPainter(this.pins);
+  /// Boxes around printed words (問題回報 #324), and whether muted.
+  final List<(Rect, bool)> frames;
+
+  _LeaderPainter(this.pins, {this.frames = const []});
 
   @override
   void paint(Canvas canvas, Size size) {
+    for (final (r, muted) in frames) {
+      final a = muted ? 0.55 : 1.0;
+      final box = RRect.fromRectAndRadius(r.inflate(2), const Radius.circular(4));
+      canvas.drawRRect(
+          box,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 3
+            ..color = Color.fromRGBO(20, 28, 46, 0.28 * a));
+      canvas.drawRRect(
+          box,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.5
+            ..color = MColors.primary.withValues(alpha: 0.9 * a));
+    }
     for (final (pl, muted) in pins) {
       final a = muted ? 0.55 : 1.0;
       if (pl.leaderLength > 1) {
@@ -528,8 +581,7 @@ class TargetRing extends StatelessWidget {
             if (box case final b?)
               if (CoverGeometry(c.biggest, photo) case final geo)
                 Positioned.fromRect(
-                  rect: Rect.fromPoints(
-                      geo.toBox(LabelPoint(b.left, b.top)),
+                  rect: Rect.fromPoints(geo.toBox(LabelPoint(b.left, b.top)),
                       geo.toBox(LabelPoint(b.right, b.bottom))),
                   child: IgnorePointer(
                     child: Container(
@@ -543,7 +595,8 @@ class TargetRing extends StatelessWidget {
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: MColors.primary, width: 1.5),
+                          border:
+                              Border.all(color: MColors.primary, width: 1.5),
                         ),
                       ),
                     ),

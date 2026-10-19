@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../app/app_scope.dart';
+import '../models/learning_card.dart';
 import '../models/photo.dart';
 import '../models/word_entry.dart';
 import '../services/lexicon_pack.dart';
@@ -25,7 +26,7 @@ part '../widgets/photo_difficulty_controls.dart';
 String relativeDifficulty(int offset) => switch (offset) {
       <= -2 => '很簡單',
       -1 => '簡單',
-      0 => '符合程度',
+      0 => '剛好',
       1 => '稍難',
       _ => '挑戰',
     };
@@ -38,8 +39,9 @@ String relativeDifficulty(int offset) => switch (offset) {
 /// suggested words picked on this device from the AI's candidates. Swipe
 /// a word left when you already know it (已學會); ☆ keeps a word while
 /// the dial moves; drag a pin to put it on the right spot; tap a pin to
-/// correct it. There is no 建立 button — leaving the page saves the list
-/// and creates the cards.
+/// correct it or delete a wrong one; 自己加字 adds a word the AI missed,
+/// placed with a tap on the photo (問題回報 #323). There is no 建立 button
+/// — leaving the page saves the list and creates the cards.
 class PhotoDetailScreen extends StatefulWidget {
   final String photoId;
 
@@ -67,6 +69,9 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
   /// The dial was opened by a long press and follows the finger.
   bool _dialDragging = false;
   final _sliderKey = GlobalKey();
+
+  /// An added word waiting for a tap on the photo to get its pin.
+  SessionWord? _placing;
 
   @override
   void initState() {
@@ -149,7 +154,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
             ListTile(
               title: Text('${displayWord(w.word)}　${w.candidate.meaning}',
                   style: MFont.manrope(16, FontWeight.w800, MColors.ink)),
-              subtitle: const UiText('可查看意思、修改名稱或標為已學會。'),
+              subtitle: const UiText('可查看意思、改成正確的字、刪除或標為已學會。'),
             ),
             ListTile(
               leading: const Icon(Icons.menu_book_outlined),
@@ -160,6 +165,17 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
               leading: const Icon(Icons.edit_outlined),
               title: const UiText('修改標籤'),
               onTap: () => Navigator.pop(context, 'edit'),
+            ),
+            if (!w.placed)
+              ListTile(
+                leading: const Icon(Icons.push_pin_outlined),
+                title: const UiText('放到照片上'),
+                onTap: () => Navigator.pop(context, 'place'),
+              ),
+            ListTile(
+              leading: const Icon(Icons.delete_outline),
+              title: const UiText('刪除（照片裡沒有這個）'),
+              onTap: () => Navigator.pop(context, 'delete'),
             ),
             ListTile(
               leading: const Icon(Icons.check_circle_outline,
@@ -182,15 +198,48 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
           title: '修改標籤',
           word: w.word,
           zh: w.candidate.meaning,
+          hint: '改了英文、中文沒改，會改用詞庫的意思。',
         );
         if (result != null) {
           final level = lexicon.resolve(result.word, w.candidate.pos).level;
           session.correct(w,
               word: result.word, meaning: result.zh, level: level);
         }
+      case 'place':
+        setState(() => _placing = w);
+      case 'delete':
+        session.delete(w);
+        if (_placing == w) setState(() => _placing = null);
+        showToast(context, '已刪除「${displayWord(w.word)}」，這張照片不會再推薦它');
       case 'known':
         session.swipe(w);
     }
+  }
+
+  /// 自己加字: the word, then a tap on the photo for its pin (or none).
+  Future<void> _addWord() async {
+    final scope = AppScope.of(context);
+    final session = _session!;
+    final result = await showLabelDialog(
+      context,
+      title: '自己加字',
+      hint: '中文可以留空，會用詞庫的意思。',
+    );
+    if (result == null || !mounted) return;
+    final word = LexiconPack.normalize(result.word);
+    final level = scope.lexicon
+        .resolve(word, word.contains(' ') ? 'phrase' : 'noun')
+        .level;
+    final w = session.add(word: word, meaning: result.zh, level: level);
+    if (w == null) return;
+    setState(() => _placing = w.placed ? null : w);
+  }
+
+  void _placeAt(LabelPoint at) {
+    final w = _placing;
+    if (w == null) return;
+    _session!.move(w, at);
+    setState(() => _placing = null);
   }
 
   // ── Dial ──────────────────────────────────────────────────────────
@@ -254,19 +303,25 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
         final old = session.showLearned ? session.oldWords : const <OldWord>[];
         final pins = [
           for (final w in session.words)
-            PinData(
-              id: w.word,
-              anchor: w.anchor,
-              word: displayWord(w.word),
-              zh: typedMeaning(
-                  w.candidate.meaning,
-                  LexiconPack.instance
-                          .lookup(w.word, pos: w.candidate.pos)
-                          ?.entry
-                          .entryType ??
-                      'word'),
-              linked: w.candidate.inDatabase || LexiconPack.instance.isEmpty,
-            ),
+            if (w.placed)
+              PinData(
+                id: w.word,
+                anchor: w.anchor,
+                word: displayWord(w.word),
+                zh: typedMeaning(
+                    w.candidate.meaning,
+                    LexiconPack.instance
+                            .lookup(w.word, pos: w.candidate.pos)
+                            ?.entry
+                            .entryType ??
+                        'word'),
+                linked: w.candidate.inDatabase || LexiconPack.instance.isEmpty,
+                // A word read off the photo is framed where it is printed,
+                // until the learner drags its label somewhere else.
+                frame: w.candidate.box?.contains(w.anchor) == true
+                    ? w.candidate.box
+                    : null,
+              ),
           for (final o in old)
             PinData(
               id: 'old:${o.word}',
@@ -327,6 +382,8 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                                     final w = wordOf(p);
                                     if (w != null) session.move(w, to);
                                   },
+                                  onPhotoTap:
+                                      _placing == null ? null : _placeAt,
                                   overlay: _overlayFor(photo, session),
                                   // Labels keep off the difficulty dial,
                                   // which overlaps the photo's corner.
@@ -337,6 +394,11 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                                 ),
                               ),
                             ),
+                            if (_placing case final w?)
+                              _PlacingBar(
+                                word: displayWord(w.word),
+                                onSkip: () => setState(() => _placing = null),
+                              ),
                             _buildList(photo, session, old),
                           ],
                         ),
@@ -456,6 +518,16 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
               ),
             ],
           ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              key: const ValueKey('add-word'),
+              onPressed: _addWord,
+              icon: const Icon(Icons.add_rounded, size: 18),
+              label: UiText('自己加字',
+                  style: MFont.manrope(13, FontWeight.w800, MColors.primary)),
+            ),
+          ),
           // 問題回報 #276: the "no 建立 button, leaving saves" rule used to sit
           // under all five words; say it next to the list title instead.
           Row(
@@ -491,8 +563,18 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
               direction: DismissDirection.endToStart,
               background: const _KnownBackground(),
               onDismissed: (_) {
+                final undo = OldWord(w.candidate, w.anchor, learned: true);
                 session.swipe(w);
-                showToast(context, '已把「${displayWord(w.word)}」移到已學會');
+                // 問題回報 #299: 和複習畫面一樣，提示帶「復原」按鈕.
+                ScaffoldMessenger.of(context)
+                  ..hideCurrentSnackBar()
+                  ..showSnackBar(SnackBar(
+                    content: UiText('已把「${displayWord(w.word)}」移到已學會'),
+                    action: SnackBarAction(
+                      label: ui(context, '復原'),
+                      onPressed: () => session.restore(undo),
+                    ),
+                  ));
               },
               child: _WordCard(
                 word: displayWord(w.word),
@@ -543,7 +625,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
           ],
           const SizedBox(height: 4),
           UiText(
-            '左滑單字表示已經會了；拖曳照片上的標籤可調整位置。',
+            '左滑單字表示已經會了；拖曳照片上的標籤可調整位置；點標籤可改字或刪除。',
             textAlign: TextAlign.center,
             style: MFont.manrope(12, FontWeight.w600, MColors.label),
           ),
@@ -616,3 +698,33 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
 
 /// The level line under the list title, with the spec's shortcuts:
 /// 「更多動作」「更多描述」「簡單一點」「難一點」.
+
+/// Under the photo while an added word waits for its spot (問題回報 #323:
+/// 可在照片上點一下放位置，沒放就不標位置).
+class _PlacingBar extends StatelessWidget {
+  final String word;
+  final VoidCallback onSkip;
+
+  const _PlacingBar({required this.word, required this.onSkip});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        key: const ValueKey('placing-bar'),
+        margin: const EdgeInsets.fromLTRB(20, 0, 20, 4),
+        padding: const EdgeInsets.fromLTRB(14, 4, 4, 4),
+        decoration:
+            MDecor.softPanel(color: MColors.surfaceSoft, radius: MRadii.xl),
+        child: Row(
+          children: [
+            const Icon(Icons.touch_app_outlined,
+                size: 18, color: MColors.primary),
+            const SizedBox(width: 8),
+            Expanded(
+              child: UiText('在照片上點一下，放「$word」的位置',
+                  style: MFont.manrope(13, FontWeight.w700, MColors.ink)),
+            ),
+            TextButton(onPressed: onSkip, child: const UiText('不放位置')),
+          ],
+        ),
+      );
+}

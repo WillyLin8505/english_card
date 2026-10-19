@@ -143,9 +143,18 @@ FILE_ACCENTS = {"uk": "UK", "gb": "UK", "us": "US", "au": "AU", "ca": "CA", "nz"
                 "ie": "IE", "in": "IN", "za": "ZA"}
 
 
+FR_FILE_ACCENTS = {"ca": "CA", "be": "BE", "ch": "CH", "fr": "FR"}
+
+
 def file_accent(name: str | None) -> list[str]:
     m = re.match(r"(?i)en[-_ ]([a-z]{2})[-_ ]", name or "")
     a = FILE_ACCENTS.get(m.group(1).lower()) if m else None
+    if not a:
+        # French recordings (card #325): Fr-Paris--chat.ogg, Fr-ca-chat.ogg,
+        # LL-Q150 (fra)-Lyokoï-chat.wav (speaker named, accent not: "other").
+        fm = re.match(r"(?i)fr[-_ ](paris|[a-z]{2})[-_ ]", name or "")
+        if fm:
+            a = "FR" if fm.group(1).lower() == "paris" else FR_FILE_ACCENTS.get(fm.group(1).lower())
     return [a] if a else []
 
 

@@ -24,6 +24,32 @@ class LabelPoint {
   Map<String, dynamic> toJson() => {'x': x, 'y': y};
 }
 
+/// A normalized (0–1) rectangle on a photo, top-left origin: where a word
+/// found by text recognition is printed (問題回報 #324: 在照片上框出文字位置).
+class LabelBox {
+  final double left;
+  final double top;
+  final double width;
+  final double height;
+
+  const LabelBox(this.left, this.top, this.width, this.height);
+
+  LabelPoint get center => LabelPoint(left + width / 2, top + height / 2);
+
+  bool contains(LabelPoint p) =>
+      p.x >= left && p.x <= left + width && p.y >= top && p.y <= top + height;
+
+  factory LabelBox.fromJson(Map<String, dynamic> j) => LabelBox(
+        (j['left'] as num).toDouble(),
+        (j['top'] as num).toDouble(),
+        (j['width'] as num).toDouble(),
+        (j['height'] as num).toDouble(),
+      );
+
+  Map<String, dynamic> toJson() =>
+      {'left': left, 'top': top, 'width': width, 'height': height};
+}
+
 /// One appearance of a [WordEntry] in one [Photo]. Owns everything that
 /// is specific to that photo, so merging duplicate WordEntries never
 /// loses it (spec: "屬於 PhotoOccurrence，不因合併重複單字而遺失").
@@ -52,6 +78,11 @@ class PhotoOccurrence {
   /// hidden like before saving, and the list stays at five words or fewer.
   final bool contextOnly;
 
+  /// False for a word the learner added without tapping a spot on the
+  /// photo (問題回報 #323: 沒放就不標位置): no pin, no target area on the
+  /// quiz. [anchor] is then only the photo's centre, for crops.
+  final bool placed;
+
   const PhotoOccurrence({
     required this.id,
     required this.photoId,
@@ -62,8 +93,10 @@ class PhotoOccurrence {
     this.evidence,
     this.confidence,
     this.contextOnly = false,
+    this.placed = true,
   });
 
+  /// A new [anchor] places the label.
   PhotoOccurrence copyWith(
           {String? wordEntryId,
           LabelPoint? anchor,
@@ -79,6 +112,7 @@ class PhotoOccurrence {
         evidence: evidence,
         confidence: confidence,
         contextOnly: contextOnly ?? this.contextOnly,
+        placed: anchor != null || placed,
       );
 
   factory PhotoOccurrence.fromJson(Map<String, dynamic> j) => PhotoOccurrence(
@@ -91,6 +125,7 @@ class PhotoOccurrence {
         evidence: j['evidence'] as String?,
         confidence: (j['confidence'] as num?)?.toDouble(),
         contextOnly: j['contextOnly'] as bool? ?? false,
+        placed: j['unplaced'] != true,
       );
 
   Map<String, dynamic> toJson() => {
@@ -103,6 +138,7 @@ class PhotoOccurrence {
         'evidence': evidence,
         'confidence': confidence,
         if (contextOnly) 'contextOnly': true,
+        if (!placed) 'unplaced': true,
       };
 }
 

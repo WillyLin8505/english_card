@@ -1,7 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 
+import '../models/photo.dart';
+import '../theme/card_style.dart';
 import 'analytics.dart';
+import 'text_scan.dart';
+
+export '../theme/card_style.dart' show CardStyle;
 
 /// The languages the MVP supports, as learning or native language (spec
 /// section 7: 英文、法文、繁體中文).
@@ -47,6 +52,7 @@ class AppSettings extends ChangeNotifier {
   String _learningLanguage;
   String _nativeLanguage;
   String _englishAccent;
+  CardStyle _cardStyle;
   bool _onboarded;
   bool _shareUsageStats;
 
@@ -84,6 +90,7 @@ class AppSettings extends ChangeNotifier {
                 : 'zh-TW',
         _englishAccent =
             _box?.get('englishAccent') == 'en-US' ? 'en-US' : 'en-GB',
+        _cardStyle = CardStyle.parse(_box?.get('cardStyle')),
         _onboarded = _box?.get('onboarded') == 'true',
         // Absent means off: existing installs stop sending until they opt in.
         _shareUsageStats = _box?.get('shareUsageStats') == 'true';
@@ -95,6 +102,7 @@ class AppSettings extends ChangeNotifier {
     String learningLanguage = 'en',
     String nativeLanguage = 'zh-TW',
     String englishAccent = 'en-GB',
+    CardStyle cardStyle = CardStyle.classic,
     bool onboarded = true,
     bool shareUsageStats = false,
   })  : _box = null,
@@ -104,6 +112,7 @@ class AppSettings extends ChangeNotifier {
         _learningLanguage = learningLanguage,
         _nativeLanguage = nativeLanguage,
         _englishAccent = englishAccent,
+        _cardStyle = cardStyle,
         _onboarded = onboarded,
         _shareUsageStats = shareUsageStats;
 
@@ -158,6 +167,10 @@ class AppSettings extends ChangeNotifier {
   /// 7) or "en-US".
   String get englishAccent => _englishAccent;
 
+  /// 卡片樣式 of the review card (問題回報 #317); [CardStyle.classic] by
+  /// default.
+  CardStyle get cardStyle => _cardStyle;
+
   /// Whether the first-run questions (languages, background) are done.
   bool get onboarded => _onboarded;
 
@@ -193,6 +206,27 @@ class AppSettings extends ChangeNotifier {
     assert(v == 'en-GB' || v == 'en-US');
     _save('englishAccent', _englishAccent = v);
   }
+
+  set cardStyle(CardStyle v) => _save('cardStyle', (_cardStyle = v).name);
+
+  PhotoScanMode? _scanMode;
+
+  /// 找物品／找文字／兩者都找 for the next photo (問題回報 #324): the last
+  /// choice, else things in the picture — or text on a device that can
+  /// read text but has no picture recognizer. Text is never offered where
+  /// the device can't read it (the web build).
+  PhotoScanMode get scanMode {
+    final saved = _scanMode ??
+        PhotoScanMode.values.asNameMap()[_box?.get('scanMode')];
+    if (saved != null && (!saved.findsText || TextScan.available)) {
+      return saved;
+    }
+    return !taggingConfigured && TextScan.available
+        ? PhotoScanMode.text
+        : PhotoScanMode.objects;
+  }
+
+  set scanMode(PhotoScanMode v) => _save('scanMode', (_scanMode = v).name);
 
   set onboarded(bool v) => _save('onboarded', '${_onboarded = v}');
 

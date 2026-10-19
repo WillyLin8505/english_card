@@ -20,17 +20,47 @@ List<Map<String, dynamic>> databaseImageTags(Map<String, dynamic> image) => [
           Map<String, dynamic>.from(tag)
     ];
 
+String databaseTagLabel(Map<String, dynamic> tag, LexiconPack pack) {
+  final word = pack.byId((tag['lexeme_id'] as num).toInt());
+  if (word == null) return '單字待補齊';
+  final sense = word.senses.where((s) => s.id == tag['sense_id']).firstOrNull;
+  return '${word.lemma} · ${sense?.native ?? word.nativeMeaning ?? '中文意思待補齊'}';
+}
+
 String databaseImageLabels(Map<String, dynamic> image, LexiconPack pack) =>
     databaseImageTags(image)
-        .map((tag) {
-          final word = pack.byId((tag['lexeme_id'] as num).toInt());
-          if (word == null) return '單字待補齊';
-          final sense =
-              word.senses.where((s) => s.id == tag['sense_id']).firstOrNull;
-          return '${word.lemma} · ${sense?.native ?? word.nativeMeaning ?? '中文意思待補齊'}';
-        })
+        .map((tag) => databaseTagLabel(tag, pack))
         .toSet()
         .join('、');
+
+/// The searched words on this picture and their levels (A1→C2, unleveled
+/// last as null). Search spans every level while the album shows one, so the
+/// hit can sit at a level the learner isn't looking at (問題回報 #302).
+List<(String word, String? level)> databaseSearchHits(
+    Map<String, dynamic> image, LexiconPack pack, String query) {
+  final q = query.trim().toLowerCase();
+  if (q.isEmpty) return const [];
+  final hits = <(String, String?)>{
+    for (final tag in databaseImageTags(image))
+      if (databaseTagLabel(tag, pack).toLowerCase().contains(q))
+        (
+          pack.byId((tag['lexeme_id'] as num).toInt())?.lemma ?? query.trim(),
+          databaseTagLevel(tag, pack)
+        )
+  }.toList();
+  int rank(String? l) => l == null ? cefrLevels.length : cefrLevels.indexOf(l);
+  return hits..sort((a, b) => rank(a.$2).compareTo(rank(b.$2)));
+}
+
+/// The level to switch to so the searched word shows, or null when it
+/// already shows at [level]. `('全部', null)` means the word has no level.
+({String word, String? level})? databaseSearchElsewhere(
+    Map<String, dynamic> image, LexiconPack pack, String query, String? level) {
+  if (level == null) return null;
+  final hits = databaseSearchHits(image, pack, query);
+  if (hits.isEmpty || hits.any((h) => h.$2 == level)) return null;
+  return (word: hits.first.$1, level: hits.first.$2);
+}
 
 /// CEFR for a database tag: pack lexeme first, then tag metadata from the tagger.
 String? databaseTagLevel(Map<String, dynamic> tag, LexiconPack pack) {

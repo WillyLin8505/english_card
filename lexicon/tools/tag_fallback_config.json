@@ -1,0 +1,13 @@
+{
+  "note": "問題回報 #327 / 卡 #330: Codex/Cursor 看圖打標備援。enabled=false 時 `run` 只在 --force 下執行；golden 比較不輸才改 true。",
+  "enabled": false,
+  "backends": ["codex", "cursor"],
+  "pending_threshold": 200,
+  "batch": 20,
+  "parallel": 4,
+  "max_rounds": 2,
+  "codex_model": null,
+  "codex_effort": "low",
+  "cursor_model": "grok-4.7-low",
+  "timeout_seconds": 300
+}

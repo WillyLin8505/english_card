@@ -1116,6 +1116,23 @@ def _note_fetch_error(out: dict, exc: BaseException) -> None:
         out['transient'] = True
 
 
+def english_search_term(meaning: str | None, gloss: str | None = None) -> str | None:
+    """The English word to search pictures with for a non-English headword
+    (card #325): the sense's English meaning (fr→en native text, else the
+    English Wiktionary gloss) cut to its first item — "cat (feline)" → cat,
+    "to eat" → eat, "house; home" → house, "big, large" → big. None when
+    nothing English and short enough is left."""
+    for text_ in (meaning, gloss):
+        t = re.sub(r"\([^)]*\)|\[[^\]]*\]", " ", str(text_ or ""))
+        t = re.split(r"[;,，、/]", t)[0]
+        t = re.sub(r"^(to|a|an|the)\s+", "", t.strip().lower())
+        t = re.sub(r"[^a-z' -]", " ", t)
+        words = t.split()
+        if words and len(words) <= 3:
+            return " ".join(words)
+    return None
+
+
 def auto_fetch(s, target, native, lemma, *, senses_per_lexeme=None, per_sense=3, sources=None,
                query=None):
     """Find and download pictures for a word's first senses, trying each
@@ -1151,12 +1168,22 @@ def auto_fetch(s, target, native, lemma, *, senses_per_lexeme=None, per_sense=3,
             out['senses'] += 1
             continue
         got, attempted = have, False
+        # Every picture source is English (Wikidata labels, Open Images
+        # classes, Openverse queries): a French headword searches by the
+        # sense's English meaning instead (chat → cat), card #325.
+        sense_term = term
+        if target != "en" and not query:
+            sense_term = english_search_term(meaning if native == "en" else None, gloss)
+            if not sense_term:
+                out['incomplete_senses'] += 1
+                out['errors'].append(f'詞義 #{sense_id}：沒有英文詞義可用來搜圖')
+                continue
         for source_key in chain:
             if got >= per_sense:
                 break
             search_fn, ingest_fn = IMAGE_SOURCES[source_key]
             try:
-                ranked = search_fn(s, sense_id, term, gloss, meaning, ctx)
+                ranked = search_fn(s, sense_id, sense_term, gloss, meaning, ctx)
             except (ValueError, KeyError, OSError) as e:
                 _note_fetch_error(out, e)
                 out['errors'].append(f'{source_key} 詞義 #{sense_id}：{e}')

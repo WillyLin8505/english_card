@@ -5,6 +5,7 @@ import '../models/photo.dart';
 import '../models/vocabulary_profile.dart';
 import '../models/word_candidate.dart';
 import '../models/word_entry.dart';
+import 'lexicon_pack.dart';
 import 'tagging_queue.dart';
 import 'word_database_repository.dart';
 import 'word_selector.dart';
@@ -17,14 +18,24 @@ class SessionWord {
   final String aiLabel;
   bool edited = false;
 
+  /// Typed in by the learner (自己加字, 問題回報 #323).
+  final bool added;
+
+  /// The meaning is one the learner typed: kept over the pack's.
+  bool ownMeaning = false;
+
   /// Where its pin is — moved by dragging (照片標籤可拖曳重新定位).
   LabelPoint anchor;
+
+  /// False for an added word that was never put on the photo: no pin.
+  bool placed;
 
   /// ☆: kept when the dial moves; only for this visit (星星只在本次照片
   /// 選詞期間有效…離開頁面後不保存星星狀態).
   bool starred = false;
 
-  SessionWord(this.candidate, this.anchor, {String? aiLabel})
+  SessionWord(this.candidate, this.anchor,
+      {String? aiLabel, this.added = false, this.placed = true})
       : aiLabel = aiLabel ?? candidate.word;
 
   String get word => candidate.word;
@@ -59,19 +70,29 @@ class PhotoWordSession extends ChangeNotifier {
   final TaggingQueue? queue;
   final WordSelector selector;
 
+  /// Where corrected and added words are looked up again (lemma, meaning,
+  /// lexeme id); words it lacks become missing-word requests (/api/missing).
+  final LexiconPack pack;
+
   PhotoWordSession({
     required this.repo,
     required this.photoId,
     this.queue,
     this.selector = const WordSelector(),
-  }) {
+    LexiconPack? pack,
+  }) : pack = pack ?? LexiconPack.instance {
     final photo = repo.photo(photoId);
+    _rejected.addAll(photo?.rejectedWords ?? const []);
     _target = (repo.profile.level + (photo?.difficultyOffset ?? 0)).clamp(0, 5);
     _poolSize = photo?.candidates.length ?? 0;
     if (photo != null && photo.wordsSavedAt != null) {
       words = [
         for (final l in repo.visibleLabels(photoId))
-          SessionWord(_candidateFor(l.entry, l.occ), l.occ.anchor),
+          SessionWord(_candidateFor(l.entry, l.occ), l.occ.anchor,
+              aiLabel: l.occ.aiLabel,
+              added: l.occ.aiLabel == null,
+              placed: l.occ.placed)
+            ..edited = l.occ.userEdited && l.occ.aiLabel != l.entry.word,
       ];
     } else {
       _reselect(allowTopUp: true);
@@ -84,6 +105,10 @@ class PhotoWordSession extends ChangeNotifier {
   int _poolSize = 0;
   List<SessionWord> words = [];
   final Set<String> _removed = {};
+
+  /// Not in this photo, says the learner: deleted as wrong, or an AI label
+  /// corrected to another word. Saved with the photo ([Photo.rejectedWords]).
+  final Set<String> _rejected = {};
   PosBias _bias = PosBias.none;
   bool _showLearned = false;
   bool _dirty = false;
@@ -163,11 +188,12 @@ class PhotoWordSession extends ChangeNotifier {
       target: _target,
       profile: repo.profile,
       studying: _studyingElsewhere,
-      removed: _removed,
+      removed: {..._removed, ..._rejected},
       current: [for (final w in words) w.word],
+      // The learner's own words stay whatever the dial says.
       locked: {
         for (final w in words)
-          if (w.starred) w.word,
+          if (w.starred || w.added || w.edited) w.word,
       },
       bias: _bias,
       now: repo.clock(),
@@ -250,36 +276,131 @@ class PhotoWordSession extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// 修改標籤 (spec: AI 英文標籤「可改」): another word or meaning for
-  /// this spot. The level is looked up again for a new word.
+  /// 修改標籤 (spec: AI 英文標籤「可改」; 問題回報 #323): another word or
+  /// meaning for this spot. A new word is looked up again — lemma, sense
+  /// and lexeme id from the language pack, [level] from the CEFR list — and
+  /// the AI's word is never offered on this photo again. A meaning left as
+  /// it was (the old word's) or blank takes the pack's; a typed one is the
+  /// learner's and background updates leave it alone.
   void correct(SessionWord w,
       {required String word, required String meaning, String? level}) {
-    final normalized = word.trim().toLowerCase();
+    final normalized = LexiconPack.normalize(word);
     if (normalized.isEmpty) return;
     final c = w.candidate;
-    w.candidate = WordCandidate(
-      word: normalized,
-      pos: normalized == c.word
-          ? c.pos
-          : (normalized.contains(' ') ? 'phrase' : c.pos),
-      meaning: meaning.trim(),
-      level: normalized == c.word ? c.level : (level ?? c.level),
-      levelSource: normalized == c.word
-          ? c.levelSource
-          : (level == null ? c.levelSource : 'cefr-j'),
-      evidence: c.evidence,
-      point: c.point,
-      visualConfidence: c.visualConfidence,
-      usefulness: c.usefulness,
-      inferred: c.inferred,
-    );
+    final typed = meaning.trim();
+    if (normalized == c.word) {
+      if (typed.isEmpty || typed == c.meaning) return;
+      w.candidate = c.copyWith(meaning: typed);
+      w.ownMeaning = true;
+    } else {
+      final relinked = _lookUp(
+        normalized,
+        pos: normalized.contains(' ') ? 'phrase' : c.pos,
+        meaning: typed == c.meaning ? '' : typed,
+        level: level,
+        point: c.point,
+        evidence: c.evidence,
+        visualConfidence: c.visualConfidence,
+      );
+      if (words.any((o) => o != w && o.word == relinked.word)) {
+        // Already on the list: the wrong label just goes.
+        delete(w);
+        return;
+      }
+      w.candidate = relinked;
+      w.ownMeaning = typed.isNotEmpty && typed != c.meaning;
+      if (w.aiLabel != relinked.word) _rejected.add(w.aiLabel);
+      _rejected.remove(relinked.word);
+    }
     w.edited = true;
     _dirty = true;
     notifyListeners();
   }
 
+  /// [word] as a candidate linked to the pack (a form leads to its lemma).
+  WordCandidate _lookUp(String word,
+      {required String pos,
+      required String meaning,
+      String? level,
+      required LabelPoint point,
+      String evidence = '',
+      double visualConfidence = 1.0}) {
+    final hit = pack.lookup(word, pos: pos);
+    // No pack downloaded yet: nothing to link, and nothing is "missing".
+    WordCandidate link(WordCandidate c) => pack.isEmpty ? c : pack.link(c);
+    final c = link(WordCandidate(
+      word: word,
+      pos: hit == null ? pos : _appPos(hit.entry.pos, pos),
+      meaning: meaning,
+      level: level ?? hit?.entry.cefr ?? 'B1',
+      levelSource: level == null && hit?.entry.cefr == null ? 'ai' : 'cefr-j',
+      zipf: hit?.entry.zipf,
+      ipa: hit?.entry.ipa,
+      evidence: evidence,
+      point: point,
+      visualConfidence: visualConfidence,
+      usefulness: 0.8,
+    ));
+    // The learner's meaning wins over the pack's.
+    return meaning.isEmpty ? c : c.copyWith(meaning: meaning);
+  }
+
+  static String _appPos(String packPos, String fallback) => switch (packPos) {
+        'noun' || 'verb' || 'phrase' => packPos,
+        'adj' => 'adj.',
+        'adv' => 'adv.',
+        _ => fallback,
+      };
+
+  /// 刪掉錯的 (問題回報 #323): the label is wrong — not "already known", so
+  /// nothing is marked 已學會 and the word stays out of this photo.
+  void delete(SessionWord w) {
+    words.remove(w);
+    if (!w.added) _rejected.add(w.aiLabel);
+    _rejected.add(w.word);
+    _dirty = true;
+    _reselect(allowTopUp: true);
+    notifyListeners();
+  }
+
+  /// 自己加字 (問題回報 #323): a word the AI missed. [at] is where the
+  /// learner tapped on the photo; without it the word has no pin. It is
+  /// looked up in the pack like a recognized word (a missing-word request
+  /// when the pack lacks it) and becomes a card when the page is left.
+  /// Returns the word as listed, or null when [word] is blank.
+  SessionWord? add(
+      {required String word,
+      String meaning = '',
+      String? level,
+      LabelPoint? at}) {
+    final normalized = LexiconPack.normalize(word);
+    if (normalized.isEmpty) return null;
+    final c = _lookUp(
+      normalized,
+      pos: normalized.contains(' ') ? 'phrase' : 'noun',
+      meaning: meaning.trim(),
+      level: level,
+      point: at ?? const LabelPoint(0.5, 0.5),
+    );
+    final existing = words.where((w) => w.word == c.word).firstOrNull;
+    if (existing != null) {
+      if (at != null) move(existing, at);
+      return existing;
+    }
+    _rejected.remove(c.word);
+    _removed.remove(c.word);
+    final w = SessionWord(c, c.point, added: true, placed: at != null)
+      ..edited = meaning.trim().isNotEmpty
+      ..ownMeaning = meaning.trim().isNotEmpty;
+    words.add(w);
+    _dirty = true;
+    notifyListeners();
+    return w;
+  }
+
   void move(SessionWord w, LabelPoint anchor) {
     w.anchor = anchor;
+    w.placed = true;
     _dirty = true;
     notifyListeners();
   }
@@ -345,6 +466,7 @@ class PhotoWordSession extends ChangeNotifier {
       }
       words.add(SessionWord(o.candidate, o.anchor));
     }
+    _rejected.remove(o.word);
     _dirty = true;
     notifyListeners();
   }
@@ -352,16 +474,21 @@ class PhotoWordSession extends ChangeNotifier {
   /// What leaving the page does. Returns the words created (to fetch
   /// their full data) and whether the photo was removed.
   ({List<WordEntry> created, bool photoRemoved}) save() {
-    final p = photo;
+    var p = photo;
     if (p == null || (!_dirty && p.wordsSavedAt != null)) {
       return (created: const [], photoRemoved: false);
+    }
+    if (!setEquals(_rejected, p.rejectedWords.toSet())) {
+      p = p.copyWith(rejectedWords: [..._rejected]..sort());
+      repo.updatePhoto(p);
     }
     // Still waiting for the tagger: nothing to save yet, so the list is
     // picked fresh when the candidates arrive.
     // A tagged photo whose words are all being studied from other photos
     // still saves them as its contexts (spec: 新照片只加入該單字的照片情境;
     // 問題回報 #120) — only an untagged or truly empty one returns here.
-    final knownHere = p.candidates.any((c) => _studyingElsewhere.contains(c.word));
+    final knownHere =
+        p.candidates.any((c) => _studyingElsewhere.contains(c.word));
     if (words.isEmpty && !_removedAny && p.wordsSavedAt == null && !knownHere) {
       // Tagged, but the dial left nothing to learn at this level: keep the
       // dial for this photo (spec: 輪盤選擇只保存為此照片的
@@ -393,7 +520,11 @@ class PhotoWordSession extends ChangeNotifier {
       [
         for (final w in words)
           ListedWord(w.candidate, w.anchor,
-              aiLabel: w.edited ? w.aiLabel : null, edited: w.edited),
+              aiLabel: w.edited ? w.aiLabel : null,
+              edited: w.edited,
+              added: w.added,
+              placed: w.placed,
+              ownMeaning: w.ownMeaning),
       ],
       difficultyOffset: offset,
       alsoSeen: alsoSeen,

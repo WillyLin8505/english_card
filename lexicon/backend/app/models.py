@@ -879,3 +879,85 @@ class Agent(Base):
     kind: Mapped[str] = mapped_column(String(16), default="ai")
     last_seen: Mapped[datetime] = _now()
     note: Mapped[str | None] = mapped_column(Text)
+
+
+# ── 卡片集／圖片集 (card #323, 問題回報 #320) ─────────────────────────────
+
+class Deck(Base):
+    """A collection someone curated, shown in the app's 卡片集: a word deck
+    (kind "words": 基礎 3000 字) or a picture deck (kind "photos": B1 歐洲圖片集).
+    The app downloads it into the learner's own collection."""
+    __tablename__ = "decks"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    slug: Mapped[str] = mapped_column(String(64), unique=True)
+    kind: Mapped[str] = mapped_column(String(8))                  # words / photos
+    title: Mapped[str] = mapped_column(Text)
+    cefr: Mapped[str | None] = mapped_column(String(8))           # A1…C2
+    topic: Mapped[str | None] = mapped_column(Text)
+    description: Mapped[str | None] = mapped_column(Text)
+    author: Mapped[str | None] = mapped_column(Text)
+    cover_asset_id: Mapped[int | None] = mapped_column(ForeignKey("image_assets.id", ondelete="SET NULL"))
+    target_language: Mapped[str] = mapped_column(String(16), default="en")
+    published: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    # Shared by a user (card #324): owner, state (private/shared/removed/hidden), download count.
+    owner_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), index=True)
+    share_status: Mapped[str] = mapped_column(String(12), default="private", server_default="private")
+    downloads: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    created_at: Mapped[datetime] = _now()
+    updated_at: Mapped[datetime] = _updated()
+
+
+class DeckItem(Base):
+    """One word (lemma + pos) or one picture (asset + its labels) of a deck.
+    labels: [{"word", "pos", "cefr", "point": [x, y]}] for a picture."""
+    __tablename__ = "deck_items"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    deck_id: Mapped[int] = mapped_column(ForeignKey("decks.id", ondelete="CASCADE"), index=True)
+    position: Mapped[int] = mapped_column(Integer, default=0)
+    lemma: Mapped[str | None] = mapped_column(Text)
+    pos: Mapped[str | None] = mapped_column(String(32))
+    cefr: Mapped[str | None] = mapped_column(String(8))
+    asset_id: Mapped[int | None] = mapped_column(ForeignKey("image_assets.id", ondelete="CASCADE"))
+    labels: Mapped[list | None] = mapped_column(Json)
+
+
+class User(Base):
+    """A learner account (card #324). Apple sign-in has no password; email
+    accounts keep only a salted PBKDF2 hash. `blocked` = banned by the admin."""
+    __tablename__ = "users"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    provider: Mapped[str] = mapped_column(String(8))              # apple / email
+    provider_sub: Mapped[str] = mapped_column(String(255), unique=True)  # apple sub or lower-cased email
+    email: Mapped[str | None] = mapped_column(String(255))
+    password_hash: Mapped[str | None] = mapped_column(Text)
+    nickname: Mapped[str] = mapped_column(String(40))
+    native_lang: Mapped[str | None] = mapped_column(String(16))
+    level: Mapped[str | None] = mapped_column(String(8))          # A1…C2
+    blocked: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    created_at: Mapped[datetime] = _now()
+
+
+class UserToken(Base):
+    """Bearer token the app keeps in the iOS Keychain; only its SHA-256 is stored."""
+    __tablename__ = "user_tokens"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    created_at: Mapped[datetime] = _now()
+
+
+class UserBlock(Base):
+    """`user_id` no longer sees anything shared by `blocked_user_id` (App Review 1.2)."""
+    __tablename__ = "user_blocks"
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    blocked_user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+
+
+class DeckReport(Base):
+    __tablename__ = "deck_reports"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    deck_id: Mapped[int] = mapped_column(ForeignKey("decks.id", ondelete="CASCADE"), index=True)
+    reporter_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    reason: Mapped[str] = mapped_column(Text)
+    resolved: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    created_at: Mapped[datetime] = _now()

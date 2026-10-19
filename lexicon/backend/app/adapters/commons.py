@@ -20,6 +20,15 @@ from .kaikki import audio_slot, file_accent
 API = "https://commons.wikimedia.org/w/api.php"
 AUDIO_TITLES = ("En-uk-{}.ogg", "En-gb-{}.ogg", "En-uk-{}.wav", "En-gb-{}.wav", "En-uk-{}.oga",
                 "En-us-{}.ogg", "En-us-{}.wav", "En-us-{}.oga")
+# French Wiktionary recordings on Commons (card #325): Fr-chat.ogg,
+# Fr-Paris--chat.ogg (Paris speakers), Fr-ca-… (Québec). Lingua Libre files
+# (LL-Q150 (fra)-<speaker>-chat.wav) name the speaker, so they can't be
+# guessed here; Kaikki's `sounds` already lists them for the headword.
+AUDIO_TITLES_BY_LANGUAGE = {
+    "en": AUDIO_TITLES,
+    "fr": ("Fr-{}.ogg", "Fr-{}.oga", "Fr-{}.wav", "Fr-Paris--{}.ogg", "Fr-ca-{}.ogg",
+           "Fr-be-{}.ogg", "Fr-ch-{}.ogg"),
+}
 
 
 def mp3_url(url: str) -> str:
@@ -38,12 +47,13 @@ class WikimediaCommons(SourceAdapter):
         return super().lookup(field_key, ctx) if field_key == "audio" else []
 
     def fetch(self, ctx: Context):
-        if ctx.target != "en":
+        titles = AUDIO_TITLES_BY_LANGUAGE.get(ctx.target)
+        if not titles:
             return None
         word = (ctx.display or ctx.lemma).strip()
         url = API + "?" + urllib.parse.urlencode({
             "action": "query", "format": "json", "formatversion": 2,
-            "titles": "|".join("File:" + t.format(word) for t in AUDIO_TITLES),
+            "titles": "|".join("File:" + t.format(word) for t in titles),
             "prop": "imageinfo", "iiprop": "url|mime"})
         data, _ = http.get(self.key, word, url, timeout=ctx.timeout, retries=ctx.retries,
                            refresh=ctx.refresh)

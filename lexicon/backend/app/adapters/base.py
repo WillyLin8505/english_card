@@ -342,7 +342,7 @@ def validate(c: Candidate, ctx: Context) -> str | None:
             return "詞彙欄位清單，不是學習例句"
         if len(text) > 240:
             return "例句過長（> 240 字元）"
-        if ctx.target == "en" and len(text.split()) < 3:
+        if ctx.target in ("en", "fr") and len(text.split()) < 3:
             return "少於 3 個字，不像完整句子"
         if ctx.target != "zh-TW" and len(text.split()) > catalog.MAX_EXAMPLE_WORDS:
             return f"超過 {catalog.MAX_EXAMPLE_WORDS} 個字"

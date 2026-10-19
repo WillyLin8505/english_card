@@ -885,11 +885,12 @@ class LocalCalc(SourceAdapter):
 
     def normalize(self, f, raw, ctx):
         C = []
-        if f == "cefr" and ctx.target == "en":
-            # Not in CEFR-J: estimated from frequency, and marked so.
-            level = word_level(ctx.lemma)
-            C.append(Candidate(f, "en", {"level": level, "by_pos": {}, "estimate": True,
-                                         "cefr_source": "frequency_estimate"}, level,
+        if f == "cefr" and ctx.target in ("en", "fr"):
+            # Not in CEFR-J (English) / no open French CEFR list yet (card
+            # #325: FLELex is CC BY-NC-SA): estimated from wordfreq, and marked so.
+            level = word_level(ctx.lemma, ctx.target)
+            C.append(Candidate(f, ctx.target, {"level": level, "by_pos": {}, "estimate": True,
+                                               "cefr_source": "frequency_estimate"}, level,
                                confidence=0.5, source_record_id=ctx.lemma))
         elif f == "ipa" and ctx.target == "en" and " " in ctx.lemma:
             # A phrase: its words' pronunciations (cutting board).

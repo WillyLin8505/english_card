@@ -10,6 +10,7 @@ import 'cefr_lexicon.dart';
 import 'lexicon_pack.dart';
 import 'photo_intake.dart';
 import 'tagging_service.dart';
+import 'text_scan.dart';
 import 'word_database_repository.dart';
 
 /// Tags photos in the background (spec section 7, 非同步辨識與連線): a new
@@ -158,9 +159,10 @@ class TaggingQueue extends ChangeNotifier {
                 p.taggingStatus == TaggingStatus.pending ||
                 p.taggingStatus == TaggingStatus.tagging)
             .toList();
-        if (waiting.isEmpty || !settings.taggingConfigured) break;
+        final next = waiting.where(_canTag).firstOrNull;
+        if (next == null) break;
         _total = _completed + waiting.length;
-        final ok = await _tag(repo, waiting.first);
+        final ok = await _tag(repo, next);
         if (!ok) break;
         _completed++;
       }
@@ -243,14 +245,47 @@ class TaggingQueue extends ChangeNotifier {
     String? focus,
     List<String> exclude = const [],
   }) async {
-    if (!settings.taggingConfigured) throw TaggingNotConfigured();
+    // Top-ups ask for more things in the picture; text is read once.
+    final mode = focus == null ? photo.scanMode : PhotoScanMode.objects;
+    final objects = mode.findsObjects &&
+        (mode == PhotoScanMode.objects || settings.taggingConfigured);
+    final text = mode.findsText &&
+        (mode == PhotoScanMode.text || TextScan.available);
+    if (!objects && !text) throw TaggingNotConfigured();
     final bytes = await intake.bytesOf(photo);
     if (bytes == null) throw TaggingApiException('這張照片沒有影像可以辨識');
-    // The phone's own classifier unless a server address is set (問題回報
-    // #265: the store build has no server).
-    final tagger = settings.usesLocalRecognition
-        ? intake.createLocalTagger()
-        : intake.createTagger(Uri.parse(settings.taggingUrl), settings.apiKey);
+    return [
+      if (objects)
+        ...await _ask(_objectTagger(), bytes,
+            level: level, focus: focus, exclude: exclude),
+      if (text)
+        ...await _ask(intake.createTextTagger(), bytes,
+            level: level, exclude: exclude),
+    ];
+  }
+
+  /// Whether [photo] can be recognized now: things in the picture need a
+  /// recognizer (the phone's or a server), text needs the phone's reader —
+  /// a text-only photo on the web is tried and fails with an explanation.
+  bool _canTag(Photo photo) => switch (photo.scanMode) {
+        PhotoScanMode.objects => settings.taggingConfigured,
+        PhotoScanMode.text => true,
+        PhotoScanMode.both => settings.taggingConfigured || TextScan.available,
+      };
+
+  // The phone's own classifier unless a server address is set (問題回報
+  // #265: the store build has no server).
+  PhotoTagger _objectTagger() => settings.usesLocalRecognition
+      ? intake.createLocalTagger()
+      : intake.createTagger(Uri.parse(settings.taggingUrl), settings.apiKey);
+
+  Future<List<WordCandidate>> _ask(
+    PhotoTagger tagger,
+    Uint8List bytes, {
+    required String level,
+    String? focus,
+    List<String> exclude = const [],
+  }) async {
     try {
       return LexiconPack.instance.linkAll(await tagger.candidates(
         bytes,
@@ -284,6 +319,7 @@ class TaggingQueue extends ChangeNotifier {
   /// Whether more candidates of [focus] can still be asked for.
   bool canTopUp(Photo photo, String focus) =>
       settings.taggingConfigured &&
+      photo.scanMode.findsObjects &&
       !_asked.contains('${photo.id}|$focus') &&
       !photo.candidates.any((c) => c.focus == focus);
 

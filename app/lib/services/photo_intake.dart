@@ -5,9 +5,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
 import '../models/photo.dart';
+import '../models/word_candidate.dart';
+import '../models/word_entry.dart';
 import 'local_vision.dart';
 import 'photo_store.dart';
 import 'tagging_service.dart';
+import 'text_scan.dart';
 import 'word_database_repository.dart';
 import 'analytics.dart';
 
@@ -29,25 +32,49 @@ class PhotoIntake {
   /// The device's own recognizer (the published app, 問題回報 #265).
   final PhotoTagger Function() createLocalTagger;
 
+  /// The device's text reader, for 找文字 (問題回報 #324).
+  final PhotoTagger Function() createTextTagger;
+
   PhotoIntake({
     required this.repository,
     required this.photoStore,
     PhotoTagger Function(Uri endpoint, String apiKey)? createTagger,
     PhotoTagger Function()? createLocalTagger,
+    PhotoTagger Function()? createTextTagger,
   })  : createTagger = createTagger ??
             ((endpoint, apiKey) =>
                 TaggingService(endpoint: endpoint, apiKey: apiKey)),
-        createLocalTagger = createLocalTagger ?? LocalVisionTagger.new;
+        createLocalTagger = createLocalTagger ?? LocalVisionTagger.new,
+        createTextTagger = createTextTagger ?? TextScanTagger.new;
 
   /// A stable fingerprint of a picture's bytes: 64-bit FNV-1a, hex. Not
   /// cryptographic — it only has to tell "the same file again" from a new
   /// one, without adding a dependency.
   static String hashBytes(Uint8List bytes) {
-    var h = 0xcbf29ce484222325;
+    // Two 32-bit halves so the web build (no exact 64-bit ints in
+    // JavaScript) gives the same value as before: prime = 2^40 + 0x1b3.
+    const base = 0x100000000;
+    var hi = 0xcbf29ce4, lo = 0x84222325;
     for (final b in bytes) {
-      h = ((h ^ b) * 0x100000001b3) & 0xFFFFFFFFFFFFFFFF;
+      lo ^= b;
+      final low = lo * 0x1b3;
+      final carry = low ~/ base;
+      hi = (hi * 0x1b3 + carry + (lo % 0x1000000) * 0x100) % base;
+      lo = low % base;
     }
-    return '${bytes.length}-${h.toRadixString(16)}';
+    // The old code printed the signed 64-bit value ("-…" when the top bit
+    // is set); keep that so saved hashes still match.
+    var sign = '';
+    if (hi >= 0x80000000) {
+      sign = '-';
+      final borrow = lo == 0 ? 0 : 1;
+      lo = (base - lo) % base;
+      hi = (base - hi - borrow) % base;
+    }
+    final hex = hi == 0
+        ? lo.toRadixString(16)
+        : '${hi.toRadixString(16)}${lo.toRadixString(16).padLeft(8, '0')}';
+    return '${bytes.length}-$sign$hex';
   }
 
   /// The learner's photo that already holds exactly these bytes, if any
@@ -67,6 +94,7 @@ class PhotoIntake {
     required String title,
     String? albumId,
     String? place,
+    PhotoScanMode scanMode = PhotoScanMode.objects,
   }) async {
     final repo = repository();
     final now = repo.clock();
@@ -87,11 +115,43 @@ class PhotoIntake {
       taggingStatus: TaggingStatus.pending,
       safetyStatus: PhotoSafetyStatus.unchecked,
       contentHash: hashBytes(bytes),
+      scanMode: scanMode,
     );
     repo.addPhoto(photo);
     Analytics.instance
         .capture('photo_added', {'in_album': albumId != null}, now);
     return photo;
+  }
+
+  /// 卡片集 (card #323): saves a downloaded deck picture. Its labels come
+  /// with the deck, so it is already tagged and safe — nothing is queued.
+  /// Returns the word entries the picture created.
+  Future<({Photo photo, List<WordEntry> created})> addDeckPicture(
+    Uint8List bytes, {
+    required String title,
+    String? place,
+    required List<WordCandidate> labels,
+  }) async {
+    final repo = repository();
+    final now = repo.clock();
+    final id = 'photo-deck-${now.microsecondsSinceEpoch}';
+    final saved = await photoStore.save(id, bytes);
+    final size = await _imageSize(bytes);
+    final photo = Photo(
+      id: id,
+      title: title,
+      place: place,
+      takenAt: now,
+      filePath: saved.filePath,
+      storedKey: saved.storedKey,
+      width: size?.$1,
+      height: size?.$2,
+      createdAt: now,
+      taggingStatus: TaggingStatus.done,
+      safetyStatus: PhotoSafetyStatus.safe,
+      contentHash: hashBytes(bytes),
+    );
+    return (photo: photo, created: repo.addDeckPhoto(photo, labels));
   }
 
   static Future<(int, int)?> _imageSize(Uint8List bytes) async {

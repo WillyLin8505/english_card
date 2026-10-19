@@ -27,7 +27,7 @@ from urllib.error import HTTPError, URLError
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / 'lexicon' / 'backend'))
-from app import app_pack, catalog, config, db, exporter
+from app import accounts, app_pack, catalog, config, db, decks, exporter
 from lexicon_transport import SnapshotStore, accepts_gzip, matches_etag
 
 _lock = threading.Lock()
@@ -36,7 +36,9 @@ _cache = {}
 
 # Requests per minute per client on the public name (the app polls every ~30 s
 # and downloads a pack's images/audio in bursts).
-RATE_LIMITS = {'/api/lexicon': 30, '/api/image': 600, '/api/audio': 600}
+RATE_LIMITS = {'/api/lexicon': 30, '/api/image': 600, '/api/audio': 600,
+               '/api/decks': 60,
+               '/api/account': 30, '/api/shares': 60}   # accounts + sharing (card #324)   # 卡片集: the list and one deck's content (card #323)
 RATE_HITS: dict = {}
 RATE_LOCK = threading.Lock()
 
@@ -296,6 +298,11 @@ class Handler(SimpleHTTPRequestHandler):
         """The read-only dictionary (/api/lexicon, images, audio) needs no key so a
         store build can update its word list; a per-client limit stops bulk
         downloads. Only the public name is limited (the LAN and loopback aren't)."""
+        if path.startswith('/api/decks/'):
+            path = '/api/decks'
+        for prefix in ('/api/account', '/api/shares'):
+            if path.startswith(prefix + '/'):
+                path = prefix
         if not self.public_request() or path not in RATE_LIMITS:
             return True
         # The Cloudflare tunnel connects from loopback; the real client is in this header.
@@ -365,7 +372,7 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_header('Access-Control-Allow-Origin', origin)
             self.send_header('Vary', 'Origin')
             self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-            self.send_header('Access-Control-Allow-Headers', 'Content-Type, If-None-Match')
+            self.send_header('Access-Control-Allow-Headers', 'Content-Type, If-None-Match, Authorization')
             self.send_header('Access-Control-Expose-Headers', 'ETag')
             self.send_header('Access-Control-Allow-Private-Network', 'true')
 
@@ -498,6 +505,9 @@ class Handler(SimpleHTTPRequestHandler):
         if self.ISSUES_PATH.match(path):
             self.proxy_issues('POST')
             return
+        if path.startswith(('/api/account/', '/api/shares')):
+            self.handle_account('POST', path)
+            return
         if path not in ('/tag', '/api/missing'):
             self.send_error(404)
             return
@@ -519,6 +529,117 @@ class Handler(SimpleHTTPRequestHandler):
             self.record_missing(self.rfile.read(length))
             return
         self.proxy_tagger(self.rfile.read(length))
+
+    def send_json(self, status: int, data: dict) -> None:
+        body = json.dumps(data, ensure_ascii=False).encode('utf-8')
+        self.send_response(status)
+        self.send_header('Content-Type', 'application/json; charset=utf-8')
+        self.send_header('Cache-Control', 'no-store')
+        self.send_header('X-Content-Type-Options', 'nosniff')
+        self.send_header('Content-Length', str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def handle_account(self, method: str, path: str) -> None:
+        """Accounts and sharing (card #324): bearer token from the app's Keychain,
+        JSON bodies (photos: raw bytes). All logic lives in app/accounts.py."""
+        try:
+            length = int(self.headers.get('Content-Length', '0'))
+        except ValueError:
+            length = -1
+        if not 0 <= length <= accounts.PHOTO_MAX_BYTES + 1:
+            self.send_json(413, {'detail': 'too large'})
+            return
+        raw = self.rfile.read(length) if length else b''
+        token = (self.headers.get('Authorization') or '').removeprefix('Bearer ').strip() or None
+        parts = path.strip('/').split('/')[1:]   # after "api"
+        try:
+            with db.session_scope() as s:
+                result = self.run_account(s, method, parts, raw, token)
+        except accounts.AccountError as e:
+            self.send_json(e.status, {'detail': e.message})
+            return
+        except (ValueError, KeyError, TypeError):
+            self.send_json(400, {'detail': 'bad request'})
+            return
+        self.send_json(200, result)
+
+    @staticmethod
+    def run_account(s, method, parts, raw, token) -> dict:
+        body = {} if parts[-1:] == ['photo'] or not raw else json.loads(raw)
+        area, rest = parts[0], parts[1:]
+        if area == 'account':
+            if method == 'POST' and rest == ['register']:
+                user, tok = accounts.register_email(s, body['email'], body['password'], body.get('nickname'),
+                                                    body.get('native_lang'), body.get('level'))
+                return {'token': tok, 'user': accounts.profile(user)}
+            if method == 'POST' and rest == ['login']:
+                user, tok = accounts.login_email(s, body['email'], body['password'])
+                return {'token': tok, 'user': accounts.profile(user)}
+            if method == 'POST' and rest == ['apple']:
+                user, tok = accounts.login_apple(s, body['identity_token'], body.get('nickname'),
+                                                 body.get('native_lang'), body.get('level'))
+                return {'token': tok, 'user': accounts.profile(user)}
+            user = accounts.user_from_token(s, token)
+            if method == 'GET' and rest == ['me']:
+                return accounts.profile(user)
+            if method == 'POST' and rest == ['profile']:
+                return accounts.update_profile(s, user, body.get('nickname'), body.get('native_lang'), body.get('level'))
+            if method == 'POST' and rest == ['logout']:
+                accounts.logout(s, token)
+                return {'ok': True}
+            if method == 'POST' and rest == ['delete']:
+                accounts.delete_account(s, user)
+                return {'ok': True}
+        elif area == 'shares':
+            user = accounts.user_from_token(s, token)
+            if method == 'GET' and rest == ['mine']:
+                return accounts.my_shares(s, user)
+            if method == 'POST' and rest == []:
+                return accounts.share_deck(s, user, kind=body['kind'], title=body.get('title'), cefr=body.get('cefr'),
+                                           topic=body.get('topic'), description=body.get('description'),
+                                           words=body.get('words'), photos=body.get('photos'),
+                                           acknowledged_privacy=bool(body.get('acknowledged_privacy')))
+            if method == 'POST' and rest == ['photo']:
+                return {'asset_id': accounts.upload_photo(s, user, raw)}
+            if method == 'POST' and len(rest) == 2:
+                slug, action = rest
+                if action == 'withdraw':
+                    accounts.withdraw(s, user, slug)
+                    return {'ok': True}
+                if action == 'report':
+                    accounts.report_deck(s, user, slug, body.get('reason'))
+                    return {'ok': True}
+                if action == 'block':
+                    accounts.block_author(s, user, slug)
+                    return {'ok': True}
+        raise accounts.AccountError(404, 'not found')
+
+    def send_decks(self, slug: str) -> None:
+        """卡片集 (card #323): the published decks, read-only and keyless like
+        the dictionary; one deck carries everything the app downloads."""
+        token = (self.headers.get('Authorization') or '').removeprefix('Bearer ').strip() or None
+        with db.session_scope() as session:
+            viewer = None
+            if token:
+                try:
+                    viewer = accounts.user_from_token(session, token)
+                except accounts.AccountError:
+                    pass
+            data = decks.public_deck(session, slug) if slug else accounts.public_list(session, viewer)
+            if data is not None and slug:
+                accounts.count_download(session, slug)
+        if data is None:
+            self.send_error(404)
+            return
+        body = json.dumps(data, ensure_ascii=False).encode('utf-8')
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json; charset=utf-8')
+        self.send_header('Cache-Control', 'private, no-cache')
+        self.send_header('X-Content-Type-Options', 'nosniff')
+        self.send_header('Content-Length', str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
 
     def do_GET(self):
         if not self.allowed_request():
@@ -552,6 +673,12 @@ class Handler(SimpleHTTPRequestHandler):
                 self.end_headers()
                 with path.open('rb') as image_file:
                     self.copyfile(image_file, self.wfile)
+            return
+        if url.path.startswith(('/api/account/', '/api/shares/')):
+            self.handle_account('GET', url.path)
+            return
+        if url.path == '/api/decks' or url.path.startswith('/api/decks/'):
+            self.send_decks(url.path[len('/api/decks'):].strip('/'))
             return
         if url.path in ('/privacy', '/privacy.html'):
             body = (ROOT / 'docs' / 'privacy.html').read_bytes()

@@ -16,6 +16,7 @@ import '../models/word_entry.dart';
 import '../services/flashcard_session.dart';
 import '../services/fsrs_scheduler.dart';
 import '../services/word_database_repository.dart';
+import '../theme/card_style.dart';
 import '../theme/mobile_theme.dart';
 import '../widgets/mobile/common.dart';
 import '../widgets/mobile/dialogs.dart';
@@ -146,9 +147,9 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     // grade buttons (問題回報 #97).
     ScaffoldMessenger.maybeOf(context)?.removeCurrentSnackBar();
     setState(() {
-      _session = FlashcardSession(scope.repository,
-          continuous: true, focus: focus)
-        ..addListener(_changed);
+      _session =
+          FlashcardSession(scope.repository, continuous: true, focus: focus)
+            ..addListener(_changed);
       _wasBack = false;
     });
     scope.navigator.setReviewing(true);
@@ -213,6 +214,29 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     ));
   }
 
+  // 問題回報 #316: 學習者直接回報這張卡有問題.
+  Future<void> _reportCard(FlashcardSession s) async {
+    final scope = AppScope.of(context);
+    final entry =
+        s.card == null ? null : scope.repository.entry(s.card!.wordEntryId);
+    if (entry == null) return;
+    final sent = await showCardReportDialog(
+      context,
+      word: entry.word,
+      pos: entry.pos,
+      meaning: entry.meaning,
+      photoId: s.photo?.id,
+      cardType: '${s.exercise?.type.name ?? ''} ${s.showingBack ? '背面' : '正面'}'
+          .trim(),
+      apiKey: scope.settings.apiKey,
+    );
+    if (sent == null || !mounted) return;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    messenger?.removeCurrentSnackBar();
+    messenger?.showSnackBar(
+        SnackBar(content: UiText(sent ? '已送出回報，謝謝你' : '已存在這支手機，連上網路後會再送出')));
+  }
+
   void _changed() {
     final s = _session;
     if (s == null || !mounted) return;
@@ -268,17 +292,19 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
   Widget build(BuildContext context) {
     final scope = AppScope.of(context);
     final s = _session;
+    final look = CardLook.forStyle(scope.settings.cardStyle);
     return Focus(
       autofocus: true,
       onKeyEvent: _onKey,
       child: Scaffold(
-        backgroundColor: MColors.canvas,
+        backgroundColor: s == null || s.finished ? MColors.canvas : look.canvas,
         body: SafeArea(
           bottom: false,
           child: Column(
             children: [
               MNavBar(
                 title: '複習',
+                sideWidth: s == null || s.finished ? 48 : 104,
                 leading: s == null
                     ? BackNavButton(
                         onTap: _lastRunReviewed != null
@@ -287,26 +313,37 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
                     : BackNavButton(onTap: () => _end(summary: true)),
                 trailing: s == null || s.finished
                     ? null
-                    : NavIconButton(
-                        label: '刪除此卡片',
-                        background: MColors.againBg,
-                        icon: const Icon(Icons.close,
-                            size: 20, color: MColors.againFg),
-                        onTap: () {
-                          final card = s.card;
-                          if (card != null) _deleteCard(card.wordEntryId);
-                        },
-                      ),
+                    : Row(mainAxisSize: MainAxisSize.min, children: [
+                        NavIconButton(
+                          label: '回報此卡片',
+                          icon: const Icon(Icons.flag_outlined,
+                              size: 20, color: MColors.label),
+                          onTap: () => _reportCard(s),
+                        ),
+                        const SizedBox(width: 8),
+                        NavIconButton(
+                          label: '刪除此卡片',
+                          background: MColors.againBg,
+                          icon: const Icon(Icons.close,
+                              size: 20, color: MColors.againFg),
+                          onTap: () {
+                            final card = s.card;
+                            if (card != null) _deleteCard(card.wordEntryId);
+                          },
+                        ),
+                      ]),
               ),
               Expanded(
                 child: s == null
                     ? _lastRunReviewed != null
                         ? _Finished(
-                            reviewed: _lastRunReviewed!, onDone: _dismissSummary)
+                            reviewed: _lastRunReviewed!,
+                            onDone: _dismissSummary)
                         : _Intro(onStart: _start)
                     : s.finished
                         ? _Finished(reviewed: s.reviewed, onDone: _end)
-                        : _CardView(session: s),
+                        : CardLookScope(
+                            look: look, child: FlashcardCardView(session: s)),
               ),
             ],
           ),

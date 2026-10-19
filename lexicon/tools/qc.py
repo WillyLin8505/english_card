@@ -33,10 +33,10 @@ OUT = ROOT / "lexicon" / "exports" / "quality" / "qc"
 ISSUES = os.environ.get("QC_ISSUES_URL", "http://127.0.0.1:5173/api/issues")
 
 
-def build_pack() -> dict:
+def build_pack(target: str = "en", native: str = "zh-TW") -> dict:
     import serve_app
     serve_app._cache.clear()
-    body, _ = serve_app.live_pack("en", "zh-TW")
+    body, _ = serve_app.live_pack(target, native)
     return json.loads(body)
 
 
@@ -137,23 +137,27 @@ def run(trigger: str, dry_run: bool, issues: bool) -> int:
     return 1 if bad else 0
 
 
-def check_pack(source: str | None, out: str, before: str | None, live: bool) -> int:
+def check_pack(source: str | None, out: str, before: str | None, live: bool,
+               target: str = "en", native: str = "zh-TW", golden: str | None = None) -> int:
     """Read-only golden/QC guard, also usable without database credentials.
 
     `--live` builds the pack in-process (same as `run`, via serve_app.live_pack)
     instead of reading a URL/file; it is the only way to get `catalog_images` for
     the photo golden checks, since plain exports and the admin API don't include
     them. Needs DB access, same as `run` does.
+    `--target/--native` pick the language pair (card #325: fr en for the French
+    lexicon); `--golden` names the golden file (default v1 for en, fr_v1 for fr).
     """
     if live:
-        pack = build_pack()
+        pack = build_pack(target, native)
     elif source.startswith(('http://', 'https://')):
         with urllib.request.urlopen(source, timeout=120) as response:
             pack = json.load(response)
     else:
         pack = json.loads(Path(source).read_text(encoding='utf-8'))
-    snapshot = qc.snapshot(pack, qc.load_golden())
-    if live:
+    golden_name = golden or ("v1" if target == "en" else f"{target}_v1")
+    snapshot = qc.snapshot(pack, qc.load_golden(golden_name))
+    if live and target == "en":
         # Values vs lexemes drift is only visible in the database (#281).
         from app import db, qc_drift
         with db.session_scope() as s:
@@ -185,11 +189,15 @@ def main(argv=None) -> int:
                         'this for photo golden/QC checks')
     check.add_argument('--out', required=True)
     check.add_argument('--before')
+    check.add_argument('--target', default='en', help='target language of the pack (en / fr)')
+    check.add_argument('--native', default=None, help='native language (default zh-TW for en, en for fr)')
+    check.add_argument('--golden', default=None, help='golden file name under quality/golden (default v1 / fr_v1)')
     a = ap.parse_args(argv)
     if a.cmd == 'check':
         if not a.live and not a.pack:
             ap.error('check requires --pack or --live')
-        return check_pack(a.pack, a.out, a.before, a.live)
+        native = a.native or ('zh-TW' if a.target == 'en' else 'en')
+        return check_pack(a.pack, a.out, a.before, a.live, a.target, native, a.golden)
     if a.cmd == "run":
         return run(a.trigger, a.dry_run, not a.no_issues)
     from app import db, qc_fix

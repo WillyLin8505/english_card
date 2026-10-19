@@ -392,7 +392,11 @@ class LexExample {
 
   const LexExample(this.text, this.translation, this.translationAi, this.source,
       this.difficulty,
-      {this.senseId});
+      {this.senseId, this.license});
+
+  /// The sentence's license as the pack stores it ("CC BY 2.0 FR"), for
+  /// credits outside the app (匯出到 Anki, 問題回報 #325).
+  final String? license;
 
   /// The sentence itself was written by AI (a CEFR level the dictionaries
   /// left short), not only its translation.
@@ -425,6 +429,10 @@ class LexEntry {
   final String? ipa;
   final String? audio; // relative to assets/lexicon/media/
   final List<({String path, String? accent})> recordings;
+
+  /// License and attribution of [audio] ("CC BY-SA 4.0 · Own work"), for
+  /// credits outside the app (匯出到 Anki, 問題回報 #325).
+  final String? audioCredit;
   final List<LexExample> examples;
   final List<LexRelation> relations;
   final List<LexMorpheme> morphemes;
@@ -466,6 +474,7 @@ class LexEntry {
     this.ipa,
     this.audio,
     this.recordings = const [],
+    this.audioCredit,
     this.examples = const [],
     this.relations = const [],
     this.morphemes = const [],
@@ -616,6 +625,15 @@ class LexEntry {
           if ((p['audio'] as String).isNotEmpty)
             (path: p['audio'] as String, accent: p['accent'] as String?),
       ],
+      audioCredit: () {
+        final first = audio.firstOrNull;
+        final parts = [
+          for (final k in ['license', 'attribution'])
+            if ((first?[k] as String? ?? '').trim().isNotEmpty)
+              (first![k] as String).trim(),
+        ];
+        return parts.isEmpty ? null : parts.join(' · ');
+      }(),
       examples: [
         for (final e in list('examples'))
           LexExample(
@@ -624,7 +642,8 @@ class LexEntry {
               e['translation_ai'] == true,
               e['source'] as String?,
               (e['level'] ?? e['difficulty']) as String?,
-              senseId: (e['sense_id'] as num?)?.toInt()),
+              senseId: (e['sense_id'] as num?)?.toInt(),
+              license: e['license'] as String?),
       ],
       relations: [
         for (final r in list('relations'))

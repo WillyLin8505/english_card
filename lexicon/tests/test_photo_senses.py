@@ -78,5 +78,17 @@ def test_fix_catalog_senses_follows_redirect_and_falls_back():
     assert q.fix_catalog_senses(pack) == 0  # idempotent
 
 
+def test_fix_catalog_senses_never_follows_redirect_to_stub():
+    """Card #331: faded (full) -> fade the noun (stub) left 7 photo tags on a stub."""
+    pack = {"lexemes": [{"id": 28210, "status": "full", "senses": [{"id": 21833, "native": "褪色的", "priority": "main"}]},
+                        {"id": 1397, "status": "stub"}],
+            "redirects": {"28210": 1397},
+            "catalog_images": [{"tags": [{"lexeme_id": 28210, "sense_id": 21833}],
+                                "labels": [{"lexeme_id": 28210}]}]}
+    q.fix_catalog_senses(pack)
+    im = pack["catalog_images"][0]
+    assert im["tags"][0]["lexeme_id"] == 28210 and im["labels"][0]["lexeme_id"] == 28210
+
+
 def test_etymology_sense_is_low():
     assert q.sense_is_low({"labels": ["etymology-2"], "native": "語音", "native_ai": False}, False)

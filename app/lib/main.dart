@@ -23,6 +23,7 @@ import 'services/word_database_repository.dart';
 import 'services/word_database_store.dart';
 import 'services/word_detail_service.dart';
 import 'services/local_vision.dart';
+import 'services/text_scan.dart';
 import 'services/word_enricher.dart';
 import 'theme/mobile_theme.dart';
 import 'widgets/background_error_banner.dart';
@@ -46,6 +47,7 @@ Future<void> main() async {
   // Photos are recognized on the phone when it can (Apple Vision); only a
   // developer build with a server address uploads them (問題回報 #265).
   AppSettings.localRecognition = await LocalVision.probe();
+  TextScan.available = await TextScan.probe();
   // Usage analytics (PostHog). Nothing is sent until 分享使用統計 is on,
   // and nothing is sent without POSTHOG_API_KEY.
   Analytics.instance.sharing = settings.shareUsageStats;

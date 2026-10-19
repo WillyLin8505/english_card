@@ -85,7 +85,8 @@ void main() {
     final (before, photos, pixels) = await fill();
     final settings = AppSettings.inMemory(apiKey: 'secret-key')
       ..desiredRetention = 0.85
-      ..englishAccent = 'en-US';
+      ..englishAccent = 'en-US'
+      ..cardStyle = CardStyle.playful;
     final (bytes, made) =
         await AppBackup.toBytes(settings: settings, photoStore: photos);
     expect(made.photos, 2);
@@ -109,6 +110,7 @@ void main() {
     expect(restored.reviews, made.reviews);
     expect(newSettings.desiredRetention, 0.85);
     expect(newSettings.englishAccent, 'en-US');
+    expect(newSettings.cardStyle, CardStyle.playful);
     expect(newSettings.apiKey, '');
 
     final after = await open();

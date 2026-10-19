@@ -202,6 +202,17 @@ List<int> pageWindow(int page, int pageCount, {int size = 3}) {
   return [for (var i = 0; i < size; i++) start + i];
 }
 
+const _fieldOrder = ['中文意思', '音標', '真人發音', '例句', '例句翻譯', '詞源'];
+
+/// The 單字本's one-time notice after a dictionary update (問題回報 #300),
+/// e.g. 「詞庫已更新：3 個字補上例句」; null when nothing was filled in.
+String? packUpdateSummary(Map<String, Set<String>> filled) {
+  if (filled.isEmpty) return null;
+  final fields = {for (final f in filled.values) ...f}.toList()
+    ..sort((a, b) => _fieldOrder.indexOf(a).compareTo(_fieldOrder.indexOf(b)));
+  return '詞庫已更新：${filled.length} 個字補上${fields.join('、')}';
+}
+
 /// The fields a word still lacks, by name (spec section 7: 單字集必須指出
 /// 發音、例句、詞源、翻譯等具體失敗欄位，不可只顯示整個詞條錯誤).
 List<String> missingFieldNames(WordEntry e) => [

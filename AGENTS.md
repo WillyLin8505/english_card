@@ -58,7 +58,7 @@ Qwen/Grokbot take no cards), shown in the board's AI 機器人 panel with each A
 ## Dispatcher = `dispatch_tick.py` (owner, 2026-10-18: cut Grokbot tokens to ≤ 1/5)
 
 All routine dispatching runs **without an LLM**: Windows Task Scheduler task `EnglishCard_DispatchTick`
-runs `pythonw lexicon/tools/dispatch_tick.py` every 20 min (lock file, log `lexicon/logs/dispatch_tick.log`).
+runs `pythonw lexicon/tools/dispatch_tick.py` every 2 min (owner 10/19: a new card gets its CLI at once) (lock file, log `lexicon/logs/dispatch_tick.log`).
 Each tick: Grokbot paused → nothing; collects finished cards (result.md → done / next run / queued,
 repeat cards' result renamed `card<id>.rN.result.md`); LIMIT → card queued, AI rested until its reset
 (`lexicon/state/dispatch_state.json`); unblocks `unblock_after` cards; grades ungraded cards; picks and

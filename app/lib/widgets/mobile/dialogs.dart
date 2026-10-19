@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import '../../models/card_template.dart';
 import '../../models/photo.dart';
 import '../../models/word_entry.dart';
+import '../../services/card_report.dart';
+import '../../services/text_scan.dart';
 import '../../services/word_database_repository.dart';
 import '../../services/word_selector.dart';
 import '../../theme/mobile_theme.dart';
@@ -155,19 +157,22 @@ Future<({String word, String zh})?> showLabelDialog(
   String title = '新增單字標籤',
   String word = '',
   String zh = '',
+  String? hint,
 }) =>
     showDialog<({String word, String zh})>(
       context: context,
-      builder: (_) => _LabelDialog(title: title, word: word, zh: zh),
+      builder: (_) =>
+          _LabelDialog(title: title, word: word, zh: zh, hint: hint),
     );
 
 class _LabelDialog extends StatefulWidget {
   final String title;
   final String word;
   final String zh;
+  final String? hint;
 
   const _LabelDialog(
-      {required this.title, required this.word, required this.zh});
+      {required this.title, required this.word, required this.zh, this.hint});
 
   @override
   State<_LabelDialog> createState() => _LabelDialogState();
@@ -204,6 +209,11 @@ class _LabelDialogState extends State<_LabelDialog> {
             const SizedBox(height: 6),
             TextField(
                 controller: _zh, style: _input, onSubmitted: (_) => _submit()),
+            if (widget.hint != null) ...[
+              const SizedBox(height: 10),
+              UiText(widget.hint!,
+                  style: MFont.manrope(12, FontWeight.w600, MColors.label)),
+            ],
           ],
         ),
         actions: [
@@ -215,25 +225,41 @@ class _LabelDialogState extends State<_LabelDialog> {
       );
 }
 
-/// After picking a photo: its name and which album it goes in (spec:
-/// 存成本機英文相簿). Returns null if cancelled.
-Future<({String title, String? albumId})?> showSaveToAlbumDialog(
+/// Default name for a new photo, the same for the camera and the picker
+/// (問題回報 #313): month/day plus time, e.g. 「10/19 14:32」.
+String defaultPhotoTitle(DateTime now) =>
+    '${now.month}/${now.day} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+
+typedef SavePhotoChoice = ({
+  String title,
+  String? albumId,
+  PhotoScanMode scanMode,
+});
+
+/// After picking a photo: its name, which album it goes in (spec:
+/// 存成本機英文相簿) and what to look for in it — things, printed text or
+/// both (問題回報 #324). Returns null if cancelled.
+Future<SavePhotoChoice?> showSaveToAlbumDialog(
   BuildContext context, {
   required WordDatabaseRepository repository,
   required String defaultTitle,
   String? albumId,
+  PhotoScanMode scanMode = PhotoScanMode.objects,
 }) =>
-    showDialog<({String title, String? albumId})>(
+    showDialog<SavePhotoChoice>(
       context: context,
-      builder: (_) => _SaveToAlbumDialog(repository, defaultTitle, albumId),
+      builder: (_) =>
+          _SaveToAlbumDialog(repository, defaultTitle, albumId, scanMode),
     );
 
 class _SaveToAlbumDialog extends StatefulWidget {
   final WordDatabaseRepository repository;
   final String defaultTitle;
   final String? albumId;
+  final PhotoScanMode scanMode;
 
-  const _SaveToAlbumDialog(this.repository, this.defaultTitle, this.albumId);
+  const _SaveToAlbumDialog(
+      this.repository, this.defaultTitle, this.albumId, this.scanMode);
 
   @override
   State<_SaveToAlbumDialog> createState() => _SaveToAlbumDialogState();
@@ -245,6 +271,7 @@ class _SaveToAlbumDialogState extends State<_SaveToAlbumDialog> {
   late String? _albumId =
       widget.albumId ?? widget.repository.albums.firstOrNull?.id;
   bool _creating = false;
+  late PhotoScanMode _scanMode = widget.scanMode;
 
   @override
   void dispose() {
@@ -262,7 +289,8 @@ class _SaveToAlbumDialogState extends State<_SaveToAlbumDialog> {
     }
     final title =
         _name.text.trim().isEmpty ? widget.defaultTitle : _name.text.trim();
-    Navigator.of(context).pop((title: title, albumId: albumId));
+    Navigator.of(context)
+        .pop((title: title, albumId: albumId, scanMode: _scanMode));
   }
 
   @override
@@ -311,6 +339,30 @@ class _SaveToAlbumDialogState extends State<_SaveToAlbumDialog> {
                 decoration: InputDecoration(hintText: ui(context, '相片冊名稱')),
               ),
             ],
+            const SizedBox(height: 14),
+            _fieldLabel('要找什麼'),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final m in PhotoScanMode.values)
+                  ChoiceChip(
+                    label: UiText(m.label),
+                    selected: m == _scanMode,
+                    onSelected: m.findsText && !TextScan.available
+                        ? null
+                        : (_) => setState(() => _scanMode = m),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            UiText(
+              TextScan.available
+                  ? '找文字：讀出招牌、菜單、書頁上的英文單字'
+                  : TextScan.unavailableMessage,
+              style: MFont.inter(12, FontWeight.w500, MColors.gray500),
+            ),
           ],
         ),
       ),
@@ -723,4 +775,122 @@ class _EditWordDialogState extends State<_EditWordDialog> {
       ],
     );
   }
+}
+
+/// 回報此卡片 (問題回報 #316): pick what is wrong and add a line; the word,
+/// sense, photo, card type and app version are attached for the learner.
+/// Returns true when the report was sent, false when it was kept on the
+/// device to send later, null when cancelled.
+Future<bool?> showCardReportDialog(
+  BuildContext context, {
+  required String word,
+  required String pos,
+  String? meaning,
+  String? photoId,
+  String cardType = '',
+  String apiKey = '',
+  CardReportService? service,
+}) =>
+    showDialog<bool>(
+      context: context,
+      builder: (_) => _CardReportDialog(
+        word: word,
+        pos: pos,
+        meaning: meaning,
+        photoId: photoId,
+        cardType: cardType,
+        apiKey: apiKey,
+        service: service ?? CardReportService.instance,
+      ),
+    );
+
+class _CardReportDialog extends StatefulWidget {
+  final String word, pos, cardType, apiKey;
+  final String? meaning, photoId;
+  final CardReportService service;
+
+  const _CardReportDialog({
+    required this.word,
+    required this.pos,
+    required this.cardType,
+    required this.apiKey,
+    required this.service,
+    this.meaning,
+    this.photoId,
+  });
+
+  @override
+  State<_CardReportDialog> createState() => _CardReportDialogState();
+}
+
+class _CardReportDialogState extends State<_CardReportDialog> {
+  String _kind = CardReport.kinds.first.$1;
+  final _note = TextEditingController();
+  bool _sending = false;
+
+  @override
+  void dispose() {
+    _note.dispose();
+    super.dispose();
+  }
+
+  Future<void> _send() async {
+    setState(() => _sending = true);
+    final sent = await widget.service.submit(
+      CardReport(
+        kind: _kind,
+        note: _note.text,
+        word: widget.word,
+        pos: widget.pos,
+        meaning: widget.meaning,
+        photoId: widget.photoId,
+        cardType: widget.cardType,
+      ),
+      apiKey: widget.apiKey,
+    );
+    if (mounted) Navigator.of(context).pop(sent);
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+        title: _title('回報「${widget.word}」這張卡'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _fieldLabel('哪裡有問題？'),
+              const SizedBox(height: 8),
+              Wrap(spacing: 8, runSpacing: 8, children: [
+                for (final k in CardReport.kinds)
+                  ChoiceChip(
+                    label: UiText(k.$2),
+                    selected: _kind == k.$1,
+                    onSelected: (_) => setState(() => _kind = k.$1),
+                  ),
+              ]),
+              const SizedBox(height: 16),
+              _fieldLabel('說明（一句話就好）'),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _note,
+                style: _input,
+                minLines: 2,
+                maxLines: 4,
+                maxLength: 300,
+                decoration: const InputDecoration(border: OutlineInputBorder()),
+              ),
+              UiText('會一併附上這張卡的單字、詞性、義項、照片與 App 版本。',
+                  style: MFont.inter(12, FontWeight.w500, MColors.label)),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: _sending ? null : () => Navigator.of(context).pop(),
+              child: const UiText('取消')),
+          FilledButton(
+              onPressed: _sending ? null : _send, child: const UiText('送出')),
+        ],
+      );
 }

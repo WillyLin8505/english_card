@@ -4,6 +4,7 @@ import 'package:photo_english_app/app/app_scope.dart';
 import 'package:photo_english_app/screens/database_library_screen.dart';
 import 'package:photo_english_app/services/lexicon_pack.dart';
 import 'package:photo_english_app/widgets/mobile/common.dart';
+import 'package:photo_english_app/widgets/mobile/photo_widgets.dart';
 
 import 'helpers.dart';
 
@@ -189,6 +190,48 @@ void main() {
       await toEnd();
       expect(find.text('apple · 蘋果'), findsOneWidget);
       expect(find.text('cluster · 串'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    // 問題回報 #302: search spans every level; a hit the chosen level hides
+    // is named with its level and a switch, on the tile and in the detail.
+    testWidgets('a search hit at another level says where it is',
+        (tester) async {
+      await pumpApp(tester,
+          initialTab: AppTab.album,
+          databaseLibrary: true,
+          size: const Size(360, 740));
+      await tester.pumpAndSettle();
+      await tester.tap(level('A1'));
+      await tester.enterText(find.byType(TextField), 'cluster');
+      await tester.pumpAndSettle();
+      expect(find.byType(DatabaseImageTile), findsOneWidget);
+      expect(find.text('入門（A1）：1 張圖片有這個程度的標籤 · 1 張的搜尋字在其他程度'),
+          findsOneWidget);
+      expect(find.text('搜尋的字 cluster 在 中階（B1）'), findsOneWidget);
+
+      // The detail opens at A1 and offers the same switch.
+      await tester.tap(find.byType(PinnedPhoto));
+      await tester.pumpAndSettle();
+      expect(find.text('搜尋的字 cluster 在 中階（B1）'), findsOneWidget);
+      await tester.tap(find.text('切到 B1'));
+      await tester.pumpAndSettle();
+      expect(find.text('搜尋的字 cluster 在 中階（B1）'), findsNothing);
+      await tester.drag(find.byType(ListView).last, const Offset(0, -2000));
+      await tester.pumpAndSettle();
+      expect(find.text('cluster · 串'), findsOneWidget);
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+
+      // The tile's switch moves the album to B1; a hit at the chosen level
+      // needs no hint.
+      await tester.tap(find.text('切到 B1'));
+      await tester.pumpAndSettle();
+      expect(find.text('中階（B1）：1 張圖片有這個程度的標籤'), findsOneWidget);
+      expect(find.text('搜尋的字 cluster 在 中階（B1）'), findsNothing);
+      await tester.tap(level('全部'));
+      await tester.pumpAndSettle();
+      expect(find.byType(DatabaseSearchHint), findsNothing);
       expect(tester.takeException(), isNull);
     });
   });

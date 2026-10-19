@@ -123,10 +123,11 @@ class _Finished extends StatelessWidget {
       );
 }
 
-class _CardView extends StatelessWidget {
+/// The card under review (front or back) and the fixed bottom bar.
+class FlashcardCardView extends StatelessWidget {
   final FlashcardSession session;
 
-  const _CardView({required this.session});
+  const FlashcardCardView({super.key, required this.session});
 
   @override
   Widget build(BuildContext context) {
@@ -157,12 +158,15 @@ class _CardView extends StatelessWidget {
     }
     final native = scope.settings.nativeLanguage;
     final bottom = MediaQuery.paddingOf(context).bottom;
+    final look = CardLook.of(context);
     return Column(
       children: [
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-            child: AnimatedSwitcher(
+            child: _CardFrame(
+                look: look,
+                child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 180),
               child: session.showingBack
                   ? FlashcardBack(
@@ -190,7 +194,7 @@ class _CardView extends StatelessWidget {
                       key: ValueKey('front:${card.id}'),
                       entry: entry,
                       session: session),
-            ),
+            )),
           ),
         ),
         // Fixed at the bottom (spec: 畫面底部固定「顯示答案」／四個評分按鈕).
@@ -227,6 +231,46 @@ class _CardView extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+
+/// The card around the front and the back, in the chosen 卡片樣式
+/// (問題回報 #317); the classic style has none.
+class _CardFrame extends StatelessWidget {
+  final CardLook look;
+  final Widget child;
+
+  const _CardFrame({required this.look, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final card = look.card;
+    final accent = look.buttonAccent;
+    var framed = child;
+    if (accent != null) {
+      framed = Theme(
+        data: Theme.of(context).copyWith(
+          outlinedButtonTheme: OutlinedButtonThemeData(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: accent,
+              minimumSize: const Size(0, 48),
+              side: BorderSide(color: accent, width: 1.5),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(look.buttonRadius)),
+              textStyle: MFont.manrope(15, FontWeight.w800, accent),
+            ),
+          ),
+        ),
+        child: framed,
+      );
+    }
+    if (card == null) return framed;
+    return Container(
+        key: const ValueKey('card-frame'),
+        decoration: card,
+        padding: look.cardPadding,
+        child: framed);
   }
 }
 

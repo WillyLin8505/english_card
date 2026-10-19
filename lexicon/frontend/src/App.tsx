@@ -14,6 +14,8 @@ import CardWorkspace from "./pages/CardWorkspace";
 import Images from "./pages/Images";
 import Issues from "./pages/Issues";
 import Schedule from "./pages/Schedule";
+import ShareStats from "./pages/ShareStats";
+import Decks from "./pages/Decks";
 
 const NAV = [
   ["/", "總覽", "Dashboard"],
@@ -25,6 +27,8 @@ const NAV = [
   ["/coverage", "單字資料庫", "Word Database"],
   ["/card-studio", "字卡工作室", "Card Studio"],
   ["/images", "圖片庫", "Image Library"],
+  ["/decks", "卡片集", "Decks"],
+  ["/share-stats", "分享統計", "Shared Decks"],
   ["/snapshots", "來源快照", "Source Snapshots"],
   ["/export", "匯出給 Flutter", "Export for Flutter"],
 ] as const;
@@ -41,6 +45,18 @@ function useHashRoute() {
 }
 
 const PAIR_STORE = "lexicon.pair";
+
+// The lexicon backends the product ships (card #325): one language pair each,
+// same tables and field catalog, rows split by target/native language. The
+// switch in the sidebar (or the #/lang/<code> route) moves every page to it.
+export const BACKENDS = [
+  { code: "en", target: "en", native: "zh-TW", zh: "英文詞庫", sub: "英文 → 繁體中文" },
+  { code: "fr", target: "fr", native: "en", zh: "法文詞庫", sub: "法文 → 英文" },
+] as const;
+
+export function backendOf(target: string) {
+  return BACKENDS.find((b) => b.target === target) ?? null;
+}
 
 function loadPair(): [string, string] {
   try {
@@ -89,6 +105,16 @@ export default function App() {
     }
   }, []);
 
+  // #/lang/fr → the French backend (fr→en), then the dashboard.
+  useEffect(() => {
+    const lm = route.match(/^\/lang\/([a-zA-Z-]+)$/);
+    if (!lm) return;
+    const b = backendOf(lm[1]);
+    if (b) setPair(b.target, b.native);
+    window.location.hash = "/";
+  }, [route, setPair]);
+  const backend = backendOf(target);
+
   const ctx = useMemo(() => {
     if (!meta) return null;
     const langs = Object.fromEntries(meta.languages.map((l) => [l.code, l.zh]));
@@ -118,6 +144,8 @@ export default function App() {
   // Recordings are on each word's page (單字資料庫 → 單字).
   else if (route === "/audio") page = <Coverage />;
   else if (route === "/images") page = <Images />;
+  else if (route === "/decks") page = <Decks />;
+  else if (route === "/share-stats") page = <ShareStats />;
   else if (route === "/schedule") page = <Schedule />;
   else if (route === "/issues") page = <Issues />;
   else if (route === "/snapshots") page = <Snapshots />;
@@ -127,11 +155,29 @@ export default function App() {
   const active = NAV.filter(([p]) => (p === "/" ? route === "/" : route.startsWith(p) || (p === "/jobs" && route.startsWith("/jobs")) || (p === "/coverage" && route.startsWith("/words")))).map(([p]) => p);
 
   return (
-    <div className="shell">
+    <div className={`shell lang-${target}`}>
       <nav className="side" aria-label="主選單">
         <div className="brand">
-          <strong>語言資料後台</strong>
-          <span>來源管理與擷取</span>
+          <strong>{backend ? `${backend.zh}後台` : "語言資料後台"}</strong>
+          <span>{backend ? backend.sub : `${ctx?.langName(target) ?? target} → ${ctx?.langName(native) ?? native}`}</span>
+        </div>
+        <div className="lang-switch" role="tablist" aria-label="後台語言">
+          {BACKENDS.map((b) => (
+            <button
+              key={b.code}
+              type="button"
+              role="tab"
+              aria-selected={target === b.target && native === b.native}
+              className={target === b.target && native === b.native ? "active" : ""}
+              onClick={() => {
+                setPair(b.target, b.native);
+                if (route.startsWith("/words/")) window.location.hash = "/coverage";
+              }}
+            >
+              <span>{b.zh}</span>
+              <small>{b.sub}</small>
+            </button>
+          ))}
         </div>
         {NAV.map(([p, zh, en]) => (
           <a key={p} href={`#${p}`} className={active.includes(p) ? "active" : ""} aria-current={active.includes(p) ? "page" : undefined}>

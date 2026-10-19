@@ -255,8 +255,9 @@ class FlashcardBack extends StatelessWidget {
   Widget _items(CardBackField field, List<Widget> items) =>
       Column(crossAxisAlignment: CrossAxisAlignment.start, children: items);
 
-  Widget? _configuredField(TemplateField setting, WordLinks links) {
-    final block = _field(setting.field, links);
+  Widget? _configuredField(
+      TemplateField setting, WordLinks links, CardLook look) {
+    final block = _field(setting.field, links, look);
     if (block is _Block) return _Block(block.label, block.child);
     return block;
   }
@@ -309,7 +310,7 @@ class FlashcardBack extends StatelessWidget {
     ];
   }
 
-  Widget? _field(CardBackField field, WordLinks links) {
+  Widget? _field(CardBackField field, WordLinks links, CardLook look) {
     switch (field) {
       case CardBackField.word:
       case CardBackField.pronunciation:
@@ -342,8 +343,7 @@ class FlashcardBack extends StatelessWidget {
                 Row(children: [TagChip(posLabel(pos))]),
                 const SizedBox(height: 6),
               ],
-              Text(meaning,
-                  style: MFont.manrope(22, FontWeight.w800, MColors.primary)),
+              Text(meaning, style: look.meaning),
               if (definition != null)
                 LinkedText(definition,
                     style: MFont.manrope(14, FontWeight.w600, MColors.muted),
@@ -362,7 +362,13 @@ class FlashcardBack extends StatelessWidget {
         var initial = all.indexWhere((o) => o.$1.id == photo?.id);
         if (initial < 0) initial = 0;
         return _PhotoPager(
-            photos: all, initialIndex: initial, onSelected: onPhotoSelected);
+            photos: all,
+            initialIndex: initial,
+            onSelected: onPhotoSelected,
+            height: look.photoHeight,
+            radius: look.photoRadius,
+            // 圖片沉浸 (#317): the word is written on the photo.
+            overlay: look.photoHero ? _HeroWord(entry.word, look) : null);
       case CardBackField.example:
         // Spec sections 4 and 7: 3–5 examples at the learner's level.
         final recommended = learningExamples(entry, learnerLevel,
@@ -374,13 +380,9 @@ class FlashcardBack extends StatelessWidget {
             // Item 4: the sentences sit close together.
             for (final x in recommended)
               Container(
-                margin: const EdgeInsets.only(bottom: MSpace.xxs),
-                padding: const EdgeInsets.symmetric(
-                    horizontal: MSpace.sm, vertical: MSpace.xs),
-                decoration: MDecor.softPanel(
-                  color: MColors.surfaceSoft,
-                  radius: MRadii.md,
-                ),
+                margin: EdgeInsets.only(bottom: look.exampleGap),
+                padding: look.examplePadding,
+                decoration: look.example,
                 child: ExampleText(
                     example: x,
                     links: links,
@@ -538,12 +540,26 @@ class FlashcardBack extends StatelessWidget {
         .where((f) => f.field == CardBackField.pronunciation)
         .every((f) => f.visible);
     final links = WordLinks.of(AppScope.of(context).repository);
+    final look = CardLook.of(context);
     // Every visible template field that has data (spec: 可用時一併顯示；
     // 欄位沒有內容時自動省略).
     final fields = [
       for (final f in template.backFields)
-        if (f.visible) _configuredField(f, links),
-    ].whereType<Widget>();
+        if (f.visible) _configuredField(f, links, look),
+    ].whereType<Widget>().toList();
+    // 圖片沉浸 (#317): the photo leads, the word written on it.
+    final hero =
+        look.photoHero ? fields.whereType<_PhotoPager>().firstOrNull : null;
+    if (hero != null) fields.remove(hero);
+    var panel = 0;
+    Widget section(Widget w) {
+      // A photo needs no panel behind it.
+      final decoration = w is _PhotoPager ? null : look.sectionPanel(panel++);
+      if (decoration == null) return w;
+      return Container(
+          decoration: decoration, padding: look.sectionPadding, child: w);
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -579,18 +595,17 @@ class FlashcardBack extends StatelessWidget {
           ),
           const SizedBox(height: 16),
         ],
+        if (hero != null) ...[hero, const SizedBox(height: 8)],
         Row(
           children: [
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(displayWord(entry.word),
-                      style: MFont.manrope(32, FontWeight.w800, MColors.ink)),
+                  if (hero == null)
+                    Text(displayWord(entry.word), style: look.headword),
                   if (ipa != null && showPronunciation)
-                    Text(ipa,
-                        style:
-                            MFont.manrope(16, FontWeight.w600, MColors.muted)),
+                    Text(ipa, style: look.ipa),
                 ],
               ),
             ),
@@ -608,7 +623,10 @@ class FlashcardBack extends StatelessWidget {
             ],
           ],
         ),
-        for (final w in fields) ...[const SizedBox(height: 16), w],
+        for (final w in fields) ...[
+          SizedBox(height: look.sectionGap),
+          section(w),
+        ],
       ],
     );
   }
@@ -628,26 +646,25 @@ class _WordChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final id = links.idFor(word);
+    final look = CardLook.of(context);
     return Tap(
       label: id == null ? null : '$word，查看單字',
       onTap: id == null
           ? null
           : () => (onOpenWord ?? AppScope.of(context).navigator.openWord)(id),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: MSpace.sm, vertical: 6),
-        decoration: MDecor.chipSurface(active: true, radius: MRadii.sm),
+        constraints: BoxConstraints(minHeight: look.chipMinHeight),
+        padding: look.chipPadding,
+        decoration: look.chip(id != null),
         child: Text.rich(TextSpan(children: [
           TextSpan(
               text: word,
-              style: MFont.manrope(13, FontWeight.w800, MColors.primary)
-                  .copyWith(
-                      decoration:
-                          id == null ? null : TextDecoration.underline,
-                      decorationColor: MColors.primary.withValues(alpha: 0.45))),
+              style: look.chipWord.copyWith(
+                  decoration: id == null ? null : TextDecoration.underline,
+                  decorationColor:
+                      look.chipWord.color?.withValues(alpha: 0.45))),
           if (meaning.isNotEmpty)
-            TextSpan(
-                text: '  $meaning',
-                style: MFont.manrope(12, FontWeight.w600, MColors.muted)),
+            TextSpan(text: '  $meaning', style: look.chipMeaning),
         ])),
       ),
     );
@@ -798,15 +815,28 @@ class _PhotoPager extends StatefulWidget {
   final List<CardPhoto> photos;
   final int initialIndex;
   final ValueChanged<int>? onSelected;
+  final double height;
+  final double radius;
+
+  /// Drawn over the photo, not swiped with it; taps pass through.
+  final Widget? overlay;
 
   const _PhotoPager(
-      {required this.photos, required this.initialIndex, this.onSelected});
+      {required this.photos,
+      required this.initialIndex,
+      this.onSelected,
+      this.height = 200,
+      this.radius = 16,
+      this.overlay});
 
   @override
   State<_PhotoPager> createState() => _PhotoPagerState();
 }
 
 class _PhotoPagerState extends State<_PhotoPager> {
+  /// Above this many photos the page dots switch to a "第 N / M 張" counter.
+  static const _maxDotPhotos = 12;
+
   late final PageController _controller =
       PageController(initialPage: widget.initialIndex);
   late int _index = widget.initialIndex;
@@ -822,7 +852,7 @@ class _PhotoPagerState extends State<_PhotoPager> {
     final a = o.$2;
     final photoWidget = PinnedPhoto(
       photo: p,
-      radius: 16,
+      radius: widget.radius,
       imageErrorBuilder: p.networkUrl == null
           ? null
           : (_) => const Center(child: UiText('圖片暫時無法載入，稍後再試')),
@@ -856,15 +886,24 @@ class _PhotoPagerState extends State<_PhotoPager> {
   @override
   Widget build(BuildContext context) {
     final photos = widget.photos;
-    if (photos.length == 1) {
-      return SizedBox(height: 200, child: _photo(context, photos.single));
-    }
+    Widget framed(Widget photo) => SizedBox(
+          height: widget.height,
+          child: widget.overlay == null
+              ? photo
+              : Stack(fit: StackFit.expand, children: [
+                  photo,
+                  IgnorePointer(
+                      child: ClipRRect(
+                          borderRadius: BorderRadius.circular(widget.radius),
+                          child: widget.overlay)),
+                ]),
+        );
+    if (photos.length == 1) return framed(_photo(context, photos.single));
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SizedBox(
-          height: 200,
-          child: PageView.builder(
+        framed(
+          PageView.builder(
             controller: _controller,
             itemCount: photos.length,
             onPageChanged: (i) {
@@ -881,24 +920,62 @@ class _PhotoPagerState extends State<_PhotoPager> {
         const SizedBox(height: 8),
         Semantics(
           label: '第 ${_index + 1} 張，共 ${photos.length} 張，左右滑動切換照片',
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              for (var i = 0; i < photos.length; i++)
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  margin: const EdgeInsets.symmetric(horizontal: 3),
-                  width: i == _index ? 16 : 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: i == _index ? MColors.primary : MColors.border,
-                    borderRadius: BorderRadius.circular(3),
+          child: photos.length > _maxDotPhotos
+              // Too many dots overflow a 350px phone row (card #308), so
+              // a counter replaces them.
+              ? Center(
+                  child: UiText(
+                    '第 ${_index + 1} / ${photos.length} 張　·　左右滑動換照片',
+                    style: MFont.manrope(13, FontWeight.w600, MColors.muted),
                   ),
+                )
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    for (var i = 0; i < photos.length; i++)
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        margin: const EdgeInsets.symmetric(horizontal: 3),
+                        width: i == _index ? 16 : 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: i == _index ? MColors.primary : MColors.border,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
+                  ],
                 ),
-            ],
-          ),
         ),
       ],
     );
   }
+}
+
+/// 圖片沉浸 (#317): the word in white on a dark fade at the photo's foot.
+/// The fade reaches 70% black under the text, so it keeps ≥ 4.5:1 on any
+/// photo.
+class _HeroWord extends StatelessWidget {
+  final String word;
+  final CardLook look;
+
+  const _HeroWord(this.word, this.look);
+
+  @override
+  Widget build(BuildContext context) => Container(
+        alignment: Alignment.bottomLeft,
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            stops: [0.45, 1],
+            colors: [Color(0x00000000), Color(0xB3000000)],
+          ),
+        ),
+        child: Text(displayWord(word),
+            key: const ValueKey('hero-word'),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: look.headword),
+      );
 }

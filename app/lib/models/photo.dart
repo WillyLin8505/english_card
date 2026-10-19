@@ -75,6 +75,15 @@ class Photo {
   /// saved before the hash existed — those are never reported as duplicates.
   final String? contentHash;
 
+  /// What recognition looks for (問題回報 #324): things in the picture,
+  /// printed English text (signs, menus, book pages), or both.
+  final PhotoScanMode scanMode;
+
+  /// Words the learner said are not in this photo: labels deleted as wrong
+  /// and AI labels they corrected to another word (問題回報 #323). The
+  /// difficulty dial and background top-ups never offer them again.
+  final List<String> rejectedWords;
+
   const Photo({
     required this.id,
     this.albumId,
@@ -96,10 +105,15 @@ class Photo {
     this.difficultyOffset = 0,
     this.wordsSavedAt,
     this.contentHash,
+    this.scanMode = PhotoScanMode.objects,
+    this.rejectedWords = const [],
   });
 
   bool get hasImage =>
-      assetPath != null || filePath != null || storedKey != null || networkUrl != null;
+      assetPath != null ||
+      filePath != null ||
+      storedKey != null ||
+      networkUrl != null;
 
   /// Shown with an hourglass: waiting for (or in) AI tagging.
   bool get awaitingTagging =>
@@ -116,6 +130,7 @@ class Photo {
     List<WordCandidate>? candidates,
     int? difficultyOffset,
     DateTime? wordsSavedAt,
+    List<String>? rejectedWords,
   }) =>
       Photo(
         id: id,
@@ -138,6 +153,8 @@ class Photo {
         difficultyOffset: difficultyOffset ?? this.difficultyOffset,
         wordsSavedAt: wordsSavedAt ?? this.wordsSavedAt,
         contentHash: contentHash,
+        scanMode: scanMode,
+        rejectedWords: rejectedWords ?? this.rejectedWords,
       );
 
   factory Photo.fromJson(Map<String, dynamic> j) => Photo(
@@ -155,9 +172,8 @@ class Photo {
         createdAt: DateTime.parse(j['createdAt'] as String),
         taggingStatus: TaggingStatus.values.asNameMap()[j['taggingStatus']] ??
             TaggingStatus.none,
-        safetyStatus:
-            PhotoSafetyStatus.values.asNameMap()[j['safetyStatus']] ??
-                PhotoSafetyStatus.safe,
+        safetyStatus: PhotoSafetyStatus.values.asNameMap()[j['safetyStatus']] ??
+            PhotoSafetyStatus.safe,
         taggingError: j['taggingError'] as String?,
         candidates: [
           for (final c in (j['candidates'] as List? ?? const []))
@@ -168,6 +184,10 @@ class Photo {
             ? null
             : DateTime.parse(j['wordsSavedAt'] as String),
         contentHash: j['contentHash'] as String?,
+        scanMode: PhotoScanMode.values.asNameMap()[j['scanMode']] ??
+            PhotoScanMode.objects,
+        rejectedWords:
+            (j['rejectedWords'] as List?)?.cast<String>() ?? const [],
       );
 
   Map<String, dynamic> toJson() => {
@@ -190,7 +210,22 @@ class Photo {
         'difficultyOffset': difficultyOffset,
         'wordsSavedAt': wordsSavedAt?.toIso8601String(),
         'contentHash': contentHash,
+        if (scanMode != PhotoScanMode.objects) 'scanMode': scanMode.name,
+        if (rejectedWords.isNotEmpty) 'rejectedWords': rejectedWords,
       };
+}
+
+/// 找物品／找文字／兩者都找 (問題回報 #324).
+enum PhotoScanMode {
+  objects('找物品'),
+  text('找文字'),
+  both('兩者都找');
+
+  final String label;
+  const PhotoScanMode(this.label);
+
+  bool get findsObjects => this != text;
+  bool get findsText => this != objects;
 }
 
 /// The 相片冊 filter pills (Figma photo-album-page, 17:19).

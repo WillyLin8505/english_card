@@ -1,6 +1,7 @@
 import '../l10n/ui_text.dart';
 import '../screens/connection_scan_screen.dart';
 import '../screens/data_sources_screen.dart';
+import '../screens/deck_browser_screen.dart';
 import '../screens/privacy_policy_screen.dart';
 import '../services/learning_content.dart';
 import '../services/learning_insights.dart';
@@ -17,6 +18,7 @@ import '../services/word_database_query.dart';
 import '../theme/mobile_theme.dart';
 import '../widgets/mobile/common.dart';
 import '../widgets/mobile/dialogs.dart';
+import '../widgets/anki_export_button.dart';
 import '../widgets/backup_buttons.dart';
 
 /// 設定 — the fifth tab. The Figma file has no frame for it, so it uses
@@ -435,10 +437,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               '${ui(context, supportedLanguages[repo.language]!)}：'
                               '${formatCount(repo.wordCount)} 個單字 · '
                               '${formatCount(repo.photoCount)} 張照片 · '
-                              '${formatCount(repo.cardCount)} 張卡片 · '
                               '已學會 ${formatCount(profile.learned.length)} 個'),
                           const SizedBox(height: 6),
                           const BackupButtons(),
+                          const AnkiExportButton(),
                         ],
                       ),
                       _Card(
@@ -468,6 +470,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               child: const UiText('查看隱私權政策'),
                             ),
                           ),
+                        ],
+                      ),
+                      _Card(
+                        title: '卡片集',
+                        children: [
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton(
+                              onPressed: () => Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                      builder: (_) =>
+                                          const DeckBrowserScreen())),
+                              child: const UiText('瀏覽並下載卡片集'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      // 問題回報 #317: the review card's look only.
+                      _Card(
+                        title: '卡片樣式',
+                        children: [
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              for (final style in CardStyle.values)
+                                ChoiceChip(
+                                  label: UiText(style.label),
+                                  selected: style == settings.cardStyle,
+                                  onSelected: (_) =>
+                                      settings.cardStyle = style,
+                                ),
+                            ],
+                          ),
+                          _note('只改變複習卡片的外觀，內容和複習方式不變。'),
                         ],
                       ),
                       _Card(

@@ -14,6 +14,7 @@ import '../widgets/mobile/common.dart';
 import '../widgets/mobile/dialogs.dart';
 import '../widgets/mobile/m_icon.dart';
 import '../services/photo_store.dart';
+import '../services/text_scan.dart';
 import '../widgets/mobile/photo_widgets.dart';
 import 'photo_picker_screen.dart';
 
@@ -141,16 +142,19 @@ class _CameraScreenState extends State<CameraScreen>
       final choice = await showSaveToAlbumDialog(
         context,
         repository: scope.repository,
-        defaultTitle:
-            '拍攝於 ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
+        defaultTitle: defaultPhotoTitle(now),
+        scanMode: scope.settings.scanMode,
       );
       if (choice == null) return;
-      final photo = await scope.intake
-          .addPhoto(bytes, title: choice.title, albumId: choice.albumId);
+      scope.settings.scanMode = choice.scanMode;
+      final photo = await scope.intake.addPhoto(bytes,
+          title: choice.title,
+          albumId: choice.albumId,
+          scanMode: choice.scanMode);
       unawaited(scope.queue.process());
       scope.navigator.openPhoto(photo.id);
     } catch (e) {
-      if (mounted) showToast(context, '拍照失敗：$e');
+      if (mounted) showToast(context, photoErrorMessage(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -198,7 +202,7 @@ class _CameraScreenState extends State<CameraScreen>
                   : '相機未啟用';
         } else {
           badge = !scope.settings.taggingConfigured
-              ? '照片辨識尚未連線'
+              ? (TextScan.available ? '可找照片裡的文字' : '照片辨識尚未連線')
               : scope.queue.offline
                   ? 'AI 離線 · 照片會先排隊'
                   : 'AI 辨識就緒';
@@ -225,7 +229,8 @@ class _CameraScreenState extends State<CameraScreen>
                             children: [
                               UiText('拍照學單字', style: MFont.display),
                               const SizedBox(height: MSpace.xxs),
-                              UiText('拍照或選一張照片，找出生活中的英文單字', style: MFont.caption),
+                              UiText('拍照或選一張照片，找出生活中的英文單字',
+                                  style: MFont.caption),
                             ],
                           ),
                         ),
@@ -242,7 +247,8 @@ class _CameraScreenState extends State<CameraScreen>
                   ),
                   Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: MSpace.xl),
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: MSpace.xl),
                       child: Container(
                         decoration: MDecor.heroPhotoFrame(),
                         clipBehavior: Clip.hardEdge,
@@ -279,7 +285,8 @@ class _CameraScreenState extends State<CameraScreen>
                                   color: MColors.primarySoft,
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: MColors.primary.withValues(alpha: 0.25),
+                                    color:
+                                        MColors.primary.withValues(alpha: 0.25),
                                     width: 2,
                                   ),
                                 ),
@@ -344,7 +351,8 @@ class _CameraScreenState extends State<CameraScreen>
                                   TextButton.icon(
                                     onPressed: () => scope.navigator
                                         .selectTab(AppTab.settings),
-                                    icon: const MSvg(MIcon.settings20, size: 16),
+                                    icon:
+                                        const MSvg(MIcon.settings20, size: 16),
                                     label: const UiText('設定辨識'),
                                   ),
                                 ],
@@ -368,9 +376,7 @@ class _CameraScreenState extends State<CameraScreen>
                                 const MSvg(MIcon.chevronUp, size: 16),
                                 const SizedBox(width: MSpace.xs),
                                 UiText(
-                                    latest == null
-                                        ? '先選一張照片開始學習'
-                                        : '查看這張照片的單字',
+                                    latest == null ? '先選一張照片開始學習' : '查看這張照片的單字',
                                     style: MFont.manrope(
                                         13, FontWeight.w700, MColors.primary)),
                               ],
@@ -474,14 +480,15 @@ class _Viewfinder extends StatelessWidget {
           reserveBottom: c == null ? 84 : 0,
           pins: [
             for (final l in repo.visibleLabels(fallback!.id))
-              PinData(
-                  id: l.occ.id,
-                  anchor: l.occ.anchor,
-                  word: displayWord(l.entry.word),
-                  zh: l.entry.meaning,
-                  entryType: l.entry.entryType,
-                  linked:
-                      l.entry.lexemeId != null || LexiconPack.instance.isEmpty),
+              if (l.occ.placed)
+                PinData(
+                    id: l.occ.id,
+                    anchor: l.occ.anchor,
+                    word: displayWord(l.entry.word),
+                    zh: l.entry.meaning,
+                    entryType: l.entry.entryType,
+                    linked: l.entry.lexemeId != null ||
+                        LexiconPack.instance.isEmpty),
           ],
         ),
       );

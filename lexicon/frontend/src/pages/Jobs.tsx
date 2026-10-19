@@ -35,8 +35,11 @@ export function JobActions({ job, onDone }: { job: Job; onDone: () => void }) {
 }
 
 export default function Jobs() {
-  const { langName } = useApp();
-  const jobs = useLoad<Job[]>("/imports", [], 2000);
+  const { langName, target, native } = useApp();
+  const all = useLoad<Job[]>("/imports", [], 2000);
+  // Card #325: each backend (en→zh-TW, fr→en) sees its own jobs by default.
+  const [onlyPair, setOnlyPair] = useState(true);
+  const jobs = { ...all, data: all.data?.filter((j) => !onlyPair || (j.target_language === target && j.native_language === native)) };
   return (
     <div className="page page-wide">
       <header className="page-head">
@@ -44,13 +47,16 @@ export default function Jobs() {
           <h1>工作佇列（Jobs）</h1>
           <p className="muted">每 2 秒更新。暫停與取消會在目前單字處理完後生效；續跑從檢查點開始。</p>
         </div>
-        <Link to="/imports/new" className="btn btn-primary">開始擷取</Link>
+        <div className="actions">
+          <label className="muted"><input type="checkbox" checked={onlyPair} onChange={(e) => setOnlyPair(e.target.checked)} /> 只看 {langName(target)}→{langName(native)}</label>
+          <Link to="/imports/new" className="btn btn-primary">開始擷取</Link>
+        </div>
       </header>
       {jobs.error && <ErrorBox error={jobs.error} onRetry={() => jobs.reload()} />}
       {!jobs.data ? (
         <Loading />
       ) : jobs.data.length === 0 ? (
-        <Empty>還沒有工作。<Link to="/imports/new">建立第一個乾跑工作</Link>。</Empty>
+        <Empty>{onlyPair ? `${langName(target)}→${langName(native)} 還沒有工作。` : "還沒有工作。"}<Link to="/imports/new">建立第一個乾跑工作</Link>。</Empty>
       ) : (
         <table className="table">
           <thead>

@@ -1,20 +1,81 @@
 part of '../screens/database_library_screen.dart';
 
+/// 「搜尋的字 cluster 在 中階（B1）」 with a switch to that level, for a picture
+/// found by a word the chosen level hides (問題回報 #302 decision: keep the
+/// cross-level search, name the hit and its level, offer the switch).
+class DatabaseSearchHint extends StatelessWidget {
+  final ({String word, String? level}) hit;
+  final ValueChanged<String?> onSwitch;
+  final bool compact;
+  const DatabaseSearchHint(
+      {super.key,
+      required this.hit,
+      required this.onSwitch,
+      this.compact = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final where = hit.level == null ? '沒有分級' : '在 ${levelLabel(hit.level!)}';
+    final target = hit.level ?? '全部';
+    return Semantics(
+      button: true,
+      label: '搜尋的字 ${hit.word} $where，切到 $target',
+      excludeSemantics: true,
+      child: Tap(
+        onTap: () => onSwitch(hit.level),
+        child: Container(
+          padding: EdgeInsets.symmetric(
+              horizontal: compact ? MSpace.xs : MSpace.md,
+              vertical: compact ? 4 : MSpace.sm),
+          color: MColors.surfaceSoft,
+          child: Row(children: [
+            Expanded(
+              child: UiText('搜尋的字 ${hit.word} $where',
+                  maxLines: compact ? 2 : null,
+                  overflow: compact ? TextOverflow.ellipsis : null,
+                  style: compact ? MFont.caption : MFont.bodyMuted),
+            ),
+            const SizedBox(width: 4),
+            UiText('切到 $target',
+                style: MFont.inter(compact ? 11 : 13, FontWeight.w700,
+                    MColors.primaryDeep)),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
 class DatabaseImageTile extends StatelessWidget {
   final Map<String, dynamic> image;
 
   /// Only this CEFR level's labels; null shows every level.
   final String? level;
-  const DatabaseImageTile({super.key, required this.image, this.level});
+
+  /// The album's search text, to explain a hit at another level.
+  final String search;
+
+  /// Switches the album's level (the hint's 「切到 B1」).
+  final ValueChanged<String?>? onLevelChanged;
+  const DatabaseImageTile(
+      {super.key,
+      required this.image,
+      this.level,
+      this.search = '',
+      this.onLevelChanged});
   @override
   Widget build(BuildContext context) {
+    final elsewhere =
+        databaseSearchElsewhere(image, LexiconPack.instance, search, level);
     return Container(
       decoration: MDecor.card(radius: MRadii.lg),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
           onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
               builder: (_) => DatabaseImageScreen(
-                  imageId: (image['id'] as num).toInt(), initialLevel: level))),
+                  imageId: (image['id'] as num).toInt(),
+                  initialLevel: level,
+                  search: search))),
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Expanded(
@@ -23,6 +84,9 @@ class DatabaseImageTile extends StatelessWidget {
                     pins: databasePins(image, LexiconPack.instance,
                         max: 4, level: level),
                     radius: 0)),
+            if (elsewhere != null && onLevelChanged != null)
+              DatabaseSearchHint(
+                  hit: elsewhere, onSwitch: onLevelChanged!, compact: true),
             ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 100),
               child: SingleChildScrollView(
@@ -146,8 +210,11 @@ class DatabaseImageScreen extends StatefulWidget {
 
   /// The level the album was showing when the picture was opened.
   final String? initialLevel;
+
+  /// The album's search text, to explain a hit at another level.
+  final String search;
   const DatabaseImageScreen(
-      {super.key, required this.imageId, this.initialLevel});
+      {super.key, required this.imageId, this.initialLevel, this.search = ''});
   @override
   State<DatabaseImageScreen> createState() => _DatabaseImageScreenState();
 }
@@ -165,6 +232,9 @@ class _DatabaseImageScreenState extends State<DatabaseImageScreen> {
         final image =
             pack.catalogImages.where((i) => i['id'] == imageId).firstOrNull;
         final info = image == null ? const <Widget>[] : _imageInfoLines(image);
+        final elsewhere = image == null
+            ? null
+            : databaseSearchElsewhere(image, pack, widget.search, _level);
         return Scaffold(
             backgroundColor: MColors.canvas,
             appBar: AppBar(title: const UiText('圖片與單字標籤')),
@@ -192,6 +262,15 @@ class _DatabaseImageScreenState extends State<DatabaseImageScreen> {
                         level: _level,
                         defaultLabel: '全部',
                         onChanged: (l) => setState(() => _level = l)),
+                    if (elsewhere != null) ...[
+                      const SizedBox(height: MSpace.sm),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(MRadii.md),
+                        child: DatabaseSearchHint(
+                            hit: elsewhere,
+                            onSwitch: (l) => setState(() => _level = l)),
+                      ),
+                    ],
                     const SizedBox(height: MSpace.md),
                     UiText('圖片標籤', style: MFont.titleSm),
                     const SizedBox(height: 2),

@@ -47,3 +47,9 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // On-device text reading for 找文字 (問題回報 #324). The bundled Latin
+    // model ships inside the app: works offline, no Google Play download.
+    implementation("com.google.mlkit:text-recognition:16.0.1")
+}

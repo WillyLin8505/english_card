@@ -35,6 +35,10 @@ class WordCandidate {
   /// 圖片證據: what in the photo supports the word, and where.
   final String evidence;
   final LabelPoint point;
+
+  /// Where the word is printed, for words read from text in the photo
+  /// (問題回報 #324); null for things recognized in the picture.
+  final LabelBox? box;
   final double visualConfidence;
 
   /// 日常實用性 (0–1), from the model.
@@ -66,6 +70,7 @@ class WordCandidate {
     this.ipa,
     this.evidence = '',
     required this.point,
+    this.box,
     this.visualConfidence = 0.5,
     this.usefulness = 0.5,
     this.inferred = false,
@@ -112,6 +117,7 @@ class WordCandidate {
         ipa: ipa,
         evidence: evidence,
         point: point ?? this.point,
+        box: box,
         visualConfidence: visualConfidence,
         usefulness: usefulness,
         inferred: inferred,
@@ -131,6 +137,9 @@ class WordCandidate {
         ipa: j['ipa'] as String?,
         evidence: j['evidence'] as String? ?? '',
         point: LabelPoint.fromJson(j['point'] as Map<String, dynamic>),
+        box: j['box'] == null
+            ? null
+            : LabelBox.fromJson(j['box'] as Map<String, dynamic>),
         visualConfidence: (j['visualConfidence'] as num? ?? 0.5).toDouble(),
         usefulness: (j['usefulness'] as num? ?? 0.5).toDouble(),
         inferred: j['inferred'] as bool? ?? false,
@@ -150,6 +159,7 @@ class WordCandidate {
         'ipa': ipa,
         'evidence': evidence,
         'point': point.toJson(),
+        if (box != null) 'box': box!.toJson(),
         'visualConfidence': visualConfidence,
         'usefulness': usefulness,
         'inferred': inferred,

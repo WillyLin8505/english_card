@@ -141,9 +141,11 @@ def not_applicable(field_key: str, ctx: Context) -> str | None:
     """Why this field can't apply to the word, if it can't."""
     pos_needed = catalog.FORM_POS.get(field_key)
     if pos_needed:
+        needed = (pos_needed,) if isinstance(pos_needed, str) else tuple(pos_needed)
         have = {i.get("pos") for i in ctx.items("pos")}
-        if have and pos_needed not in have:
-            return "不是" + {"verb": "動詞", "noun": "名詞", "adj": "形容詞"}[pos_needed]
+        if have and not have & set(needed):
+            names = {"verb": "動詞", "noun": "名詞", "adj": "形容詞"}
+            return "不是" + "／".join(names[p] for p in needed)
     if field_key == "example_sense" and field_key_done(ctx, "definition") \
             and not ctx.items("definition"):
         return "沒有詞義可對應（片語沒有字典釋義）"

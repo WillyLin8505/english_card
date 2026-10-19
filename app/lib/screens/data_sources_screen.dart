@@ -41,6 +41,18 @@ class DataSourcesScreen extends StatelessWidget {
       'https://github.com/skywind3000/ECDICT',
     ),
     (
+      '卡片集『基礎 3000 字』',
+      'New General Service List 1.2（Browne, Culligan & Phillips）',
+      'CC BY-SA 4.0',
+      'https://www.newgeneralservicelist.com/',
+    ),
+    (
+      'CEFR 程度分級',
+      'CEFR-J Wordlist（東京外國語大學投野研究室）與 Octanove Labs',
+      'CEFR-J：註明出處即可使用；Octanove：CC BY-SA 4.0',
+      'https://github.com/openlanguageprofiles/olp-en-cefrj',
+    ),
+    (
       '圖片',
       'Wikimedia Commons，以及 Openverse、Smithsonian Open Access',
       '每張圖依各自授權：CC0、公有領域、CC BY 1.0 至 4.0 等。'

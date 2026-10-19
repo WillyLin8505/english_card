@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react';
 import { api } from '../api';
-import { cefrSummary, ErrorBox, Link, Loading, TagScores, useLoad } from '../ui';
+import { cefrSummary, ErrorBox, Link, Loading, TagScores, useApp, useLoad } from '../ui';
 
 type Sense = { id: number; lemma: string; pos: string; translation: string | null };
 type Candidate = { id: number; title: string; description: string; author: string; license_code: string; page_url: string; imported: boolean };
 type Asset = {
   id: number; sense_id: number; review_status: string; semantic_score: number | null; role: string;
-  ordinal: number; lemma: string; normalized: string; pos: string; gloss: string | null; native: string | null;
+  ordinal: number; lemma: string; normalized: string; pos: string; language?: string; gloss: string | null; native: string | null;
   asset_id: number; author: string; license_code: string; page_url: string; width: number; height: number;
   size_bytes: number; status: string; tag_status: string; tag_count: number; shared: number;
   tags: { word: string; pos: string | null; score?: number | null;
@@ -22,7 +22,10 @@ const STATUS: Record<string, string> = { approved: '已核准', rejected: '已�
  *  semantic score, licence and duplicate state; approve, reject, move to
  *  another sense, make representative, or search a word's pictures again. */
 export default function Images() {
-  const senses = useLoad<Sense[]>('/images/senses', []);
+  // One backend at a time (card #325): the French lexicon's pictures live
+  // under fr→en, the English ones under en→zh-TW.
+  const { target, native, langName } = useApp();
+  const senses = useLoad<Sense[]>(`/images/senses?target=${target}&native=${native}`, [target, native]);
   const library = useLoad<Asset[]>('/images', []);
   const [only, setOnly] = useState<'pending' | 'all'>('pending');
   const [busy, setBusy] = useState(false);
@@ -36,25 +39,26 @@ export default function Images() {
   const words = useMemo(() => {
     const byWord = new Map<string, Map<number, Asset[]>>();
     for (const a of library.data ?? []) {
+      if ((a.language ?? 'en') !== target) continue;
       if (only === 'pending' && a.review_status !== 'pending') continue;
       const w = byWord.get(a.normalized) ?? new Map<number, Asset[]>();
       w.set(a.sense_id, [...(w.get(a.sense_id) ?? []), a]);
       byWord.set(a.normalized, w);
     }
     return [...byWord.entries()];
-  }, [library.data, only]);
-  const pending = library.data?.filter((a) => a.review_status === 'pending') ?? [];
+  }, [library.data, only, target]);
+  const pending = library.data?.filter((a) => (a.language ?? 'en') === target && a.review_status === 'pending') ?? [];
   const top = pending.filter((a) => (a.semantic_score ?? 0) >= 0.95).length;
   const sensesOf = (lemma: string) => (senses.data ?? []).filter((x) => x.lemma.toLowerCase() === lemma);
 
   return <div className="page page-wide">
-    <header className="page-head"><div><h1>圖片庫與審核</h1>
+    <header className="page-head"><div><h1>圖片庫與審核 <small className="muted">{langName(target)}→{langName(native)}</small></h1>
       <p className="muted">擷取工作會自動為名詞的前兩個詞義抓圖，每張圖再由本機視覺模型打上標籤。圖片的 AI 標籤必須認出這個字才能核准；沒認出的會自動拒絕，不會放在這個字下面。只有核准的圖片會顯示在單字頁並進入資料包。語意分數：0.95 AI 標籤認出這個字、0.9 Wikidata 概念代表圖、0.7 檔名或說明提到這個字。每個 AI 標籤後面的百分比是它的辨識分數：模型再看一次圖片、逐一確認標籤時回答「有出現」的機率。<strong>只有 80% 以上的標籤通過</strong>，才會用來認字、分享到其他單字與顯示在圖片上；未通過的收在每張圖下方。</p></div></header>
     {error && <ErrorBox error={error} />}{library.error && <ErrorBox error={library.error} />}
     {message && <p role="status">{message}</p>}
     <div className="toolbar">
       <label><input type="radio" checked={only === 'pending'} onChange={() => setOnly('pending')} /> 待審核（{pending.length}）</label>
-      <label><input type="radio" checked={only === 'all'} onChange={() => setOnly('all')} /> 全部（{library.data?.length ?? 0}）</label>
+      <label><input type="radio" checked={only === 'all'} onChange={() => setOnly('all')} /> 全部（{library.data?.filter((a) => (a.language ?? 'en') === target).length ?? 0}）</label>
       {top > 0 && <button className="btn btn-primary" disabled={busy} onClick={() => run(async () => {
         const r = await api.post<{ approved: number }>('/images/review-batch', { min_score: 0.95, note: '管理者批次核准 AI 認出該字的圖片' });
         return `已核准 ${r.approved} 張 AI 認出該字的圖片。`;
@@ -63,9 +67,9 @@ export default function Images() {
     {!library.data ? <Loading /> : words.length === 0 ? <p className="muted">{only === 'pending' ? '沒有待審核的圖片。' : '尚未儲存圖片。'}</p> : words.map(([lemma, bySense]) => (
       <section key={lemma} className="card">
         <div className="toolbar" style={{ justifyContent: 'space-between' }}>
-          <h2 style={{ margin: 0 }}><Link to={`/words/en/zh-TW/${encodeURIComponent(lemma)}`}>{lemma}</Link></h2>
+          <h2 style={{ margin: 0 }}><Link to={`/words/${target}/${native}/${encodeURIComponent(lemma)}`}>{lemma}</Link></h2>
           <button className="btn" disabled={busy} onClick={() => run(async () => {
-            const r = await api.post<{ dropped: number; images: number }>('/images/refetch', { lemma });
+            const r = await api.post<{ dropped: number; images: number }>('/images/refetch', { lemma, target_language: target, native_language: native });
             return `「${lemma}」重新搜尋：移除 ${r.dropped} 張待審核，下載 ${r.images} 張新候選。`;
           })}>重新搜尋這個字的圖片</button>
         </div>
