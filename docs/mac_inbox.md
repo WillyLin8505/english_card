@@ -286,3 +286,8 @@ commit `f8258c2`（Windows：flutter analyze 無 error、01:22 +443 ~1: All test
   結果：全部完成：sharebymeaning 綁定前先預估這張圖在法語 pack 的法語標籤數，少於 3 就不共用（預估與實際 pack 1233/1233 張一致）；閘門上線前帶進的 73 筆共用綁定已刪（已備份），法語 pack 標籤 < 3 的照片 69 → 1，QC/golden 無退步。
 - 卡 #388：問題回報 #383：[Mac] 2026-10-19 M23（iPhone 模擬器）：通過
   結果：全部完成：問題回報 #383 是 Mac 的「通過」回報（#379，M23，iPhone 模擬器：選「找文字」存照片後沒有英文平台錯誤字串），不是缺陷，無需修復。
+
+## M27（2026-10-20 00:07）狀態：待做
+commit `997d444`（Windows：flutter analyze 無 error、01:36 +443 ~1: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #389：問題回報 #382：[Mac] 2026-10-19 M23（iPhone 模擬器）：通過
+  結果：問題回報 #382（#375 測試連線結果列）：Windows 重現為已修好；補一支 401 迴歸測試，全部通過，analyze 無問題。
