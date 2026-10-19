@@ -26,6 +26,7 @@ sys.path.insert(0, str(ROOT))
 
 from app import qc as pack_qc  # noqa: E402
 from app.text import native_latin_issue  # noqa: E402
+from app.quality import example_flags  # noqa: E402
 
 OUT = ROOT / "lexicon" / "exports" / "quality" / "scan"
 SAMPLE_MAX = 30
@@ -263,7 +264,12 @@ def scan_pack(pack: dict) -> dict:
             f.get("normalized") for f in (lx.get("forms") or []) if f.get("normalized")
         }
         forms.discard("")
-        if text and not any(re.search(r"\b" + re.escape(form) + r"\b", text) for form in forms):
+        # Same rule as the product validator (quality.example_flags, card #344): a stored
+        # form list is incomplete for "-s/-ed/-ing" inflections, so a plain word match over
+        # it reported ~450 correct sentences ("customs" for custom) as missing the word.
+        if text and "missing_lemma" in example_flags(
+                _example_text(ex), lx.get("lemma") or "", lx.get("pos") or "",
+                [f.get("normalized") for f in (lx.get("forms") or []) if f.get("normalized")]):
             missing_lemma.append(lx.get("lemma"))
     no_examples = [lx.get("lemma") for lx in full if not lx.get("examples")]
     vulgar_examples = [

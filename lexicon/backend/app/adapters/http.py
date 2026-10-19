@@ -262,6 +262,15 @@ def download(source: str, url: str, dest, *, timeout: float = 60,
                 if limited <= RATE_RETRIES:
                     continue  # the shared pause is waited out in _wait_turn
                 raise SourceError("http", f"HTTP {e.code}") from e
+            if e.code == 404:
+                # A definite answer (the transcoded .mp3 of a Commons recording
+                # often does not exist and the caller falls back to the .ogg),
+                # not a source outage: same as get(), it must not count towards
+                # the breaker — five of them in a row used to shut the source
+                # for a minute and fail every recording asked meanwhile
+                # (card #329: 5,168 French + 2,045 English audio assets).
+                _account(source, started, ok=True)
+                raise SourceError("http", "HTTP 404", retryable=False) from e
             _account(source, started, ok=False)
             if e.code == 429 and attempt < retries:
                 try:

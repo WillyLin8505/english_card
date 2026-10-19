@@ -67,7 +67,11 @@ void main() {
         await tester.ensureVisible(button);
         await tester.tap(button);
         await tester.pump();
-        final hasMeaning = (w.learnerMeaning ?? '').trim().isNotEmpty;
+        // One card per spelling: a part of speech with no Chinese (top intj)
+        // gets another one's from the pack, so judge the card, not the
+        // lexeme (round 76 false alarm).
+        final hasMeaning =
+            (repo.entryByWord(w.lemma)?.meaning ?? '').trim().isNotEmpty;
         final saysWaiting = find.text('已加入我的單字本；中文意思補齊後會自動排進複習').evaluate().isNotEmpty;
         final saysAdded = find.text('已加入我的單字本與複習').evaluate().isNotEmpty;
         final saysDup = find.textContaining('已在我的單字本').evaluate().isNotEmpty ||

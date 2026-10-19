@@ -102,3 +102,20 @@ def test_http_429_retries_after_shared_pause_without_breaker(monkeypatch):
 def test_user_agent_has_contact():
     from app import config
     assert "(" in config.USER_AGENT and ("http" in config.USER_AGENT or "@" in config.USER_AGENT)
+
+
+def test_download_404_is_an_answer_not_a_breaker_failure(monkeypatch, tmp_path):
+    """Card #329: the transcoded .mp3 of a Commons recording often does not
+    exist (the caller then takes the .ogg); five such 404s in a row used to
+    open the source breaker and fail every recording for a minute."""
+    monkeypatch.setattr(http.urllib.request, "urlopen",
+                        lambda req, timeout: (_ for _ in ()).throw(_http_error(404)))
+    http._failures["wikimedia_commons"] = 0
+    http._open_until.pop("wikimedia_commons", None)
+    for _ in range(http.BREAKER_FAILURES + 1):
+        try:
+            http.download("wikimedia_commons", "https://upload.wikimedia.org/x/Fr-a.ogg.mp3", tmp_path / "a")
+        except http.SourceError as e:
+            assert e.kind == "http" and not e.retryable
+    assert http._failures["wikimedia_commons"] == 0
+    assert "wikimedia_commons" not in http._open_until or http._open_until["wikimedia_commons"] < time.time()
