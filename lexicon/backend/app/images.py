@@ -2550,18 +2550,73 @@ def demote_unmentioned_representatives(s, protect: set[int] | None = None) -> in
     return changed
 
 
-def share_existing(s, target, lemma) -> int:
+def share_existing(s, target, lemma, per_sense=3) -> int:
     """A word imported after pictures were labelled gets those that name it.
     Labels are English words bound to English entries: a French headword
-    (chat, table) is not looked up as an English label (#331)."""
+    (chat, table) is not looked up as an English label (#331); its senses
+    reuse pictures by their English meaning instead (#336)."""
     if target != 'en':
-        return 0
+        return share_by_meaning(s, target, lemma, per_sense)
     added = 0
     for asset in s.scalars(select(m.ImageAsset).where(
             m.ImageAsset.tag_status == 'done',
             text("EXISTS (SELECT 1 FROM jsonb_array_elements(image_assets.tags::jsonb) t"
                  " WHERE lower(t->>'word') = :w)").bindparams(w=lemma))).all():
         added += share(s, asset, only_lemma=lemma)
+    return added
+
+
+def share_by_meaning(s, target, lemma, per_sense=3) -> int:
+    """#336: a non-English word's first noun senses get pictures already
+    labelled with the sense's English meaning (images.label_word: chat → cat)
+    and approved for that English word, up to ``per_sense`` a sense, before
+    anything is downloaded. Bound pending, then auto_accept_asset decides."""
+    from .picture_need import PICTURE_POS, PRIMARY_ORDINAL
+    senses = s.execute(select(m.Sense.id).join(m.Lexeme, m.Lexeme.id == m.Sense.lexeme_id).where(
+        m.Lexeme.language == target, m.Lexeme.normalized == lemma, m.Lexeme.status == 'full',
+        m.Lexeme.pos == PICTURE_POS, m.Sense.ordinal < PRIMARY_ORDINAL)
+        .order_by(m.Lexeme.id, m.Sense.ordinal)).scalars().all()
+    used = set(s.scalars(select(m.SenseImage.image_asset_id).join(
+        m.Sense, m.Sense.id == m.SenseImage.sense_id).join(m.Lexeme, m.Lexeme.id == m.Sense.lexeme_id)
+        .where(m.Lexeme.language == target, m.Lexeme.normalized == lemma)).all())
+    added = 0
+    for sense_id in senses:
+        have = s.scalar(select(func.count()).select_from(m.SenseImage).where(
+            m.SenseImage.sense_id == sense_id, m.SenseImage.review_status != 'rejected')) or 0
+        word = label_word(s, sense_id, target, lemma)
+        if have >= per_sense or not word:
+            continue
+        from .adapters.local import regular_plural
+        forms = sorted({word.lower(), regular_plural(word.lower()), *lemma_forms(s, word)})
+        assets = s.scalars(select(m.ImageAsset).where(
+            m.ImageAsset.tag_status == 'done', m.ImageAsset.status == 'ready',
+            m.ImageAsset.safety_status == 'safe',
+            text("EXISTS (SELECT 1 FROM jsonb_array_elements(image_assets.tags::jsonb) t"
+                 " WHERE lower(t->>'word') = ANY(:forms))").bindparams(forms=forms),
+            text("EXISTS (SELECT 1 FROM sense_images si JOIN senses x ON x.id = si.sense_id"
+                 " JOIN lexemes el ON el.id = x.lexeme_id WHERE si.image_asset_id = image_assets.id"
+                 " AND si.review_status = 'approved' AND el.language = 'en'"
+                 " AND el.normalized = ANY(:forms))").bindparams(forms=forms))
+            .order_by(m.ImageAsset.id)).all()
+        for asset in assets:
+            if have >= per_sense:
+                break
+            if asset.id in used:
+                continue
+            binding = m.SenseImage(sense_id=sense_id, image_asset_id=asset.id,
+                                   role='representative' if have == 0 else 'context',
+                                   ordinal=have, semantic_score=0.95, alt_native={},
+                                   review_status='pending')
+            s.add(binding)
+            s.flush()
+            shown = lemma if word == lemma else f'{word}（{lemma}）'
+            s.add(m.ImageReview(sense_image_id=binding.id, decision='pending',
+                                note=f'共用圖片：英文字已核准、AI 標籤認出「{shown}」（#336）'))
+            s.flush()
+            auto_accept_asset(s, asset, note='共用英文圖片自動採用（#336）')
+            used.add(asset.id)
+            have += 1
+            added += 1
     return added
 
 

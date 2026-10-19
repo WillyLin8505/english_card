@@ -200,7 +200,11 @@ SOURCES: dict[str, Source] = {s.key: s for s in [
                       "derived_native_meaning": {"zh-TW", "fr"},
                       **{f"{r}_native": {"zh-TW", "fr"} for r in _RELS},
                       "morphemes": {"*"}, "morphemes_native": {"zh-TW", "fr"}},
-               "fr": {**_target(_KAIKKI_FR_TARGET), "native_definition": {"en"}},
+               # French entries' glosses are English: they are the fr→en native
+               # meaning of the word and of its related / derived words (card #325).
+               "fr": {**_target(_KAIKKI_FR_TARGET), "native_definition": {"en"},
+                      "derived_native_meaning": {"en"},
+                      **{f"{r}_native": {"en"} for r in _RELS}},
                "zh-TW": {**_target(_KAIKKI_ZH_TARGET), "native_definition": {"en"}},
            }, "翻譯表只在英文 Wiktionary 的英文詞條裡；法文、中文詞條的釋義是英文。"),
     Source("kaikki_wordlist", "本地字表計算", "local", "Apache-2.0／CC BY-SA 4.0（wordfreq 字表）",

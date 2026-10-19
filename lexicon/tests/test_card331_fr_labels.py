@@ -90,3 +90,46 @@ def test_a_sense_without_english_meaning_is_left_for_review(session, tmp_path):
 
 def test_share_existing_skips_a_french_headword(session):
     assert images.share_existing(session, "fr", "chat") == 0
+
+
+def _en_sense(session, m, word):
+    en = m.Lexeme(language="en", lemma=word, normalized=word, pos="noun", status="full")
+    session.add(en)
+    session.flush()
+    sense = m.Sense(lexeme_id=en.id, sense_key=f"en-{word}", ordinal=0)
+    session.add(sense)
+    session.flush()
+    return sense
+
+
+def _approve(session, m, sense, asset):
+    session.add(m.SenseImage(sense_id=sense.id, image_asset_id=asset.id, role="context",
+                             review_status="approved", semantic_score=0.9, alt_native={}))
+    session.flush()
+
+
+def test_share_existing_reuses_pictures_by_english_meaning(session, tmp_path, monkeypatch):
+    """#336: chat reuses pictures approved for cat, not ones only labelled
+    chat (the English word) or labelled cat but never approved."""
+    from app import config, models as m
+    monkeypatch.setattr(config, "MEDIA", tmp_path)
+    cat = _fr_word(session, m, "chat", "cat (feline)")
+    pics = [_asset(session, m, tmp_path, ["cat", "fur", "nose", "eye"], f"cat{i}") for i in range(4)]
+    en_cat, fur, nose = (_en_sense(session, m, w) for w in ("cat", "fur", "nose"))
+    for p in pics:
+        _approve(session, m, fur, p)
+        _approve(session, m, nose, p)
+    for p in pics[:3]:  # pics[3] is labelled cat but not approved for cat
+        _approve(session, m, en_cat, p)
+    unapproved = pics[3]
+    english_chat = _asset(session, m, tmp_path, ["chat", "phone", "screen"], "chat_en")
+    session.flush()
+    assert images.share_existing(session, "fr", "chat", per_sense=4) == 3
+    got = session.query(m.SenseImage).filter_by(sense_id=cat.id).order_by(m.SenseImage.ordinal).all()
+    assert [b.image_asset_id for b in got] == [p.id for p in pics[:3]]
+    assert got[0].role == "representative" and all(b.role == "context" for b in got[1:])
+    assert all(b.review_status == "approved" for b in got), "auto_accept_asset approved them"
+    assert unapproved.id not in {b.image_asset_id for b in got}
+    assert english_chat.id not in {b.image_asset_id for b in got}
+    # Already full: nothing more is added.
+    assert images.share_existing(session, "fr", "chat", per_sense=3) == 0

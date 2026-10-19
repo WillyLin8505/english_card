@@ -856,9 +856,9 @@ def fetch_images(s: Session, ctx: Context, wanted: list[str], run_policies, reco
         # Pictures per sense: the 詞義圖片 policy's item count (spec).
         # Pictures already labelled with this word first: nothing to download
         # for a word other pictures show.
-        images.share_existing(s, ctx.target, ctx.lemma)
-        got = images.auto_fetch(s, ctx.target, ctx.native, ctx.lemma,
-                                per_sense=(policy.max_items if policy and policy.max_items else 3))
+        per_sense = policy.max_items if policy and policy.max_items else 3
+        images.share_existing(s, ctx.target, ctx.lemma, per_sense=per_sense)
+        got = images.auto_fetch(s, ctx.target, ctx.native, ctx.lemma, per_sense=per_sense)
         error = "；".join(got["errors"][:3]) or None
     except Exception as e:  # noqa: BLE001 — a network failure must not lose the word
         got, error = {"senses": 0, "images": 0, "errors": [str(e)]}, f"{type(e).__name__}: {e}"
