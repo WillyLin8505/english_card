@@ -125,7 +125,7 @@ commit `d0bc371`（Windows：flutter analyze 無 error、01:57 +372: All tests p
 - 卡 #228：模擬使用者・設定
   結果：第 2 輪：1/1 通過（runround 第 74 輪，findings 3→0）、修 1 個真錯（複習比例超出滑桿範圍會壞畫面）、新問題 #306 #307、UX 建議 #306 #307＋#277 補一句。
 
-## M7（2026-10-19 03:04）狀態：待做
+## M7（2026-10-19 03:04）狀態：完成
 commit `63131d5`（Windows：flutter analyze 無 error、01:08 +375: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #297：問題回報 #303：詞庫有 status=full 但 0 個義項的詞條（shack 形容詞、hollow 感嘆詞），資
   結果：全部完成：全庫只有 2 個「status=full 但 0 義項」的詞條（shack adj #28442、hollow intj #40443），根因在 materialize，已從根因修並重建這 2 個字；QC/golden 無退步。
