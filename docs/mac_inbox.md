@@ -267,3 +267,8 @@ commit `9530f99`（Windows：flutter analyze 無 error、02:23 +442 ~1: All test
   結果：問題回報 #370 已修：模擬器上的本機辨識失敗改顯示白話句子（不再顯示英文 espresso 錯誤），flutter test localvision 9/9 通過。
 - 卡 #379：問題回報 #377：文字辨識失敗時會把英文原始錯誤顯示給學習者（text_scan.dart:90）
   結果：全部完成：問題回報 #377（textscan.dart 把英文平台錯誤給學習者看）已修，補 2 個回歸測試，textscan 相關測試 15/15 通過。
+
+## M24（2026-10-19 23:36）狀態：待做
+commit `fb73166`（Windows：flutter analyze 無 error、03:15 +442 ~1: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #362：問題回報 #360：圖片抓取：Smithsonian 幾乎每字回 429 Too Many Requests，沒有像 W
+  結果：全部完成：Smithsonian／Openverse 改走跨程序共用限速閘門（rategate.py，20:42 上線），法語圖片任務平均 81.6 → 21.3 秒、每小時 4.2 → 61 筆（×14），Smithsonian 429 由 66/101 降到 2/132；golden／QC 無退步。
