@@ -52,6 +52,9 @@ class Resolver:
     # FILL_MISSING: the limit counts per slot (per part of speech) instead of
     # per field, so a noun's senses can't use up a verb's places (#292).
     cap_per_slot: bool = False
+    # Sort key applied (stable) before the limit cuts: Kaikki's own order is
+    # historical, so the limit must not decide which senses survive (#388).
+    order_key: Callable[[object], object] | None = None
     adopted: list[Adopted] = field(default_factory=list)
     _keys: set = field(default_factory=set)
     _filled: set = field(default_factory=set)
@@ -150,6 +153,8 @@ class Resolver:
         items = self.adopted
         if self.strategy == "BEST_SCORE":
             items = sorted(items, key=lambda a: -a.candidate.confidence)
+        if self.order_key is not None:
+            items = sorted(items, key=lambda a: self.order_key(a.candidate))
         if self.enough is not None:  # the settling values survive the limit
             items = sorted(items, key=lambda a: not self.enough(a.candidate))
         if self.cap_per_slot and self.limit:

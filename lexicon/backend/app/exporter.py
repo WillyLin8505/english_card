@@ -397,11 +397,17 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_saf
         registers = {i.get("sense_key") or i.get("slot"): i for i in items(lemma, "register")}
         sense_id_by_key: dict[str, int] = {}
         ord_by_lx: dict[int, int] = {}
+        # 問題回報 #389: number the senses by senses.ordinal (materialize's
+        # order_senses, card352_reorder.py), not by the definition item order,
+        # which keeps the source's historical order (assiette's plate was 5th).
+        matched = []
         for it in items(lemma, "definition"):
             sk = it.get("sense_key") or it.get("key")
             sense = first_for_ids(senses_index, ids, sk)
-            if sense is None:
-                continue
+            if sense is not None:
+                matched.append((it, sk, sense))
+        matched.sort(key=lambda t: t[2].ordinal)  # stable: equal ordinals keep item order
+        for it, sk, sense in matched:
             n = ord_by_lx.get(sense.lexeme_id, 0)
             ord_by_lx[sense.lexeme_id] = n + 1
             reg = registers.get(sk) or {}

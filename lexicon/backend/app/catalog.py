@@ -330,7 +330,7 @@ def supports(source: str, target: str, native: str, field_key: str) -> tuple[boo
 _IMAGE_SOURCES = ["wikimedia_commons", "open_images", "openverse", "smithsonian"]
 _EN_DEFAULTS = {
     "pos": (["kaikki", "oewn"], "FILL_MISSING", None),
-    "definition": (["kaikki", "oewn"], "FILL_MISSING", 12),
+    "definition": (["kaikki", "oewn"], "FILL_MISSING", 20),
     "native_definition": (["kaikki", "ecdict"], "FILL_MISSING", None),
     "cefr": (["cefrj", "local_calc"], "FIRST_VALID", None),
     "frequency": (["wordfreq", "datamuse"], "FIRST_VALID", None),

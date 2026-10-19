@@ -29,7 +29,7 @@ from sqlalchemy.orm import Session
 
 from . import catalog
 from . import models as m
-from . import policies, pos_exclusions
+from . import policies, pos_exclusions, sense_order
 from .adapters import ADAPTERS, Candidate, Context, SourceError
 from .adapters.base import inflection_bases, localize
 from .adapters.local import LEVELS, sentence_level, word_forms, word_level
@@ -373,6 +373,12 @@ class _OnlySourceRecorder(Recorder):
                                 attempts, record_id)
 
 
+def _sense_key(c, ctx) -> tuple[int, int]:
+    item = dict(c.value, confidence=c.confidence, source="kaikki")
+    return (sense_order.sense_rank(item, ctx.target, ctx.lemma),
+            sense_order._preferred_index(item, ctx.target, ctx.lemma))
+
+
 def _phonemic(c) -> bool:
     return str((c.value or {}).get("ipa", "")).startswith("/")
 
@@ -422,6 +428,7 @@ def resolve_field(s: Session, ctx: Context, field_key: str, policy, steps, *, mo
                    per_slot=catalog.TARGETED.get(field_key) if expected is not None else None,
                    only_missing=field_key == "audio",
                    cap_per_slot=field_key in catalog.PER_SLOT_CAP,
+                   order_key=(lambda c: _sense_key(c, ctx)) if field_key == "definition" else None,
                    # Learners read phonemic /…/ IPA: narrow […] alone asks on (#24).
                    enough=_phonemic if field_key == "ipa" else None)
     rep = FieldReport(field_key, "missing", strategy=policy.strategy)
