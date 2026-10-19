@@ -342,7 +342,7 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，等伺服器詞庫同步進
 
 | 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
 |----|----|----|----|----|
-| 模擬器重現：相簿選 6 張照片去辨識 | 未重現 | iPhone 18 Pro 模擬器（iOS 27.0），commit bb73d03，新安裝。相簿加入 6 張測試照：4032×3024／3024×4032 的 JPEG 與 HEIC、8064×6048（48MP）的 JPEG 與 HEIC。從 App「選擇照片」的最近照片（19 張，第一次讀 14 秒）依序選這 6 張→存到相片冊→辨識；上架設定（本機 Apple Vision）與 iphone.json（伺服器）各跑一輪，12 次都沒有閃退、沒有 Flutter 例外，系統 log 沒有 jetsam。注意：模擬器上 Apple Vision 一開始就放棄（CSU: Failed to create espresso context），所以 VNClassifyImageRequest 真正分析大圖那一段只有實機才會跑到 | mac_verify_shots/2026-10-19/ask2_picker_library.png、ask2_result_48mp.png | — |
+| 模擬器重現：相簿選 6 張照片去辨識 | 未重現 | iPhone 18 Pro 模擬器（iOS 27.0），commit bb73d03，新安裝。相簿加入 6 張測試照：4032×3024／3024×4032 的 JPEG 與 HEIC、8064×6048（48MP）的 JPEG 與 HEIC。從 App「選擇照片」的最近照片（19 張，第一次讀 14 秒）依序選這 6 張→存到相片冊→辨識；上架設定（本機 Apple Vision）與 iphone.json（伺服器）各跑一輪，12 次 App 都沒有中途結束、沒有 Flutter 例外，系統 log 沒有 jetsam。注意：模擬器上 Apple Vision 一開始就放棄（CSU: Failed to create espresso context），所以 VNClassifyImageRequest 真正分析大圖那一段只有實機才會跑到 | mac_verify_shots/2026-10-19/ask2_picker_library.png、ask2_result_48mp.png | — |
 | 可能的閃退原因：詞庫快取太大 | 不通過 | App 沙盒裡 Documents/dictionary_cache_v1.hive 有 261,298,439 bytes（約 261 MB）。10/19 Mac 第一次跑 integration test 時就在讀這個 Hive 檔時 Out of Memory（BinaryReaderImpl.readString ← FrameIoHelper.framesFromFile）。實機記憶體上限比模擬器低，啟動或同步時把整個詞庫讀進記憶體，再加上辨識一張大照片，很可能被系統因記憶體不足砍掉（看起來就是閃退）。建議詞庫改成分批讀或用檔案索引，不要整包載入 | — | 高 |
 | 可能的閃退原因：相簿原圖沒有縮小 | 不通過 | lib/screens/photo_picker_screen.dart:49 最近照片用 entity.originBytes，拿到的是原始檔（HEIC 或 48MP 原圖，解碼後可達 190 MB 以上）直接存檔、顯示、送 Apple Vision；「從相簿選擇」那條路有 maxWidth: 2048，最近照片這條沒有。建議用 entity.thumbnailDataWithSize 或先縮到長邊 2048 再處理 | — | 中 |
 | 最近照片第一次讀取很慢 | 不通過 | 相簿只有 19 張，第一次打開「選擇照片」要 14 秒才讀完最近照片（之後 1 秒）；期間只看到「正在讀取最近照片…」 | — | 低 |
