@@ -163,7 +163,7 @@ commit `ce2099c`（Windows：flutter analyze 無 error、02:21 +433 ~1: All test
 - 卡 #318：問題回報 #296：拼法變體的詞條（distill、cross-section、bad-mouth）只有「拼法異寫」義項
   結果：部分完成：全庫 58 個「只有拼法異寫義項」的完整詞條，已處理 45 個（2 個導向主詞條、43 個去 CEFR 並登記待補主詞條），13 個暫緩；golden／QC 無退步。
 
-## M9（2026-10-19 09:49）狀態：待做
+## M9（2026-10-19 09:49）狀態：完成
 commit `7dac0dc`（Windows：flutter analyze 無 error、01:14 +433 ~1: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #303：問題回報 #315：複習卡片一直重複同幾個單字（pot、fresh、brick、ocean…）
   結果：全部完成：根因是 FlashcardSession.pick() 把所有到期的 Again 卡排在任何新卡之前且 continuous 模式沒有節流——學習者只要對 ≥3 個字按「忘記」，這 3 個字每 3 步就把佇列填滿，整場再也出不了別的字；修正後 50 字連續複習 40 張，相異字由 3 → 27，無同字連續出現
