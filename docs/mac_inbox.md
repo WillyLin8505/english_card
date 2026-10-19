@@ -167,3 +167,8 @@ commit `ce2099c`（Windows：flutter analyze 無 error、02:21 +433 ~1: All test
 commit `7dac0dc`（Windows：flutter analyze 無 error、01:14 +433 ~1: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #303：問題回報 #315：複習卡片一直重複同幾個單字（pot、fresh、brick、ocean…）
   結果：全部完成：根因是 FlashcardSession.pick() 把所有到期的 Again 卡排在任何新卡之前且 continuous 模式沒有節流——學習者只要對 ≥3 個字按「忘記」，這 3 個字每 3 步就把佇列填滿，整場再也出不了別的字；修正後 50 字連續複習 40 張，相異字由 3 → 27，無同字連續出現
+
+## M10（2026-10-19 09:55）狀態：待做
+commit `33f8830`（Windows：flutter analyze 無 error、01:16 +433 ~1: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #328：問題回報 #325：匯出到 Anki（.apkg 或 CSV），讓重度學習者在其他 App 複習
+  結果：全部完成：設定 → 資料新增「匯出到 Anki」（全部單字／某相簿／某卡片集），產生 zip（Anki 文字匯入檔＋照片／音檔＋匯入說明），14 欄含授權欄；新測試 5 個全過，整套 flutter test 433 全過。
