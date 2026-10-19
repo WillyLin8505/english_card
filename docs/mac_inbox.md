@@ -272,3 +272,10 @@ commit `9530f99`（Windows：flutter analyze 無 error、02:23 +442 ~1: All test
 commit `fb73166`（Windows：flutter analyze 無 error、03:15 +442 ~1: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #362：問題回報 #360：圖片抓取：Smithsonian 幾乎每字回 429 Too Many Requests，沒有像 W
   結果：全部完成：Smithsonian／Openverse 改走跨程序共用限速閘門（rategate.py，20:42 上線），法語圖片任務平均 81.6 → 21.3 秒、每小時 4.2 → 61 筆（×14），Smithsonian 429 由 66/101 降到 2/132；golden／QC 無退步。
+
+## M25（2026-10-19 23:56）狀態：待做
+commit `3fd8a4f`（Windows：flutter analyze 無 error、01:43 +443 ~1: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #380：問題回報 #378：serve_app 重啟後第一次產生詞庫要 353 秒：公開網址前幾分鐘查詞庫都會被 Cloudfl
+  結果：全部完成：serveapp 重啟後第一次 /api/lexicon 由 353 秒（同步重建）降為 9.2 秒（en）／5.7 秒（fr，先回上一版快照、背景重建）；冷建 en 353→263 秒、fr 136 秒，每 2 分鐘的指紋檢查 43→9 秒。
+- 卡 #382：問題回報 #375：圖片來源金鑰：Smithsonian 用的是公開 DEMO_KEY（每天只有 10 次）、Openv
+  結果：完成（#375 決定 B）：Smithsonian 已移到圖片來源鏈最後，18/18 個圖片 policy（6 語言對 × senseimage/contextimage/thumbnail）改為 Commons → Open Images → Openverse → Smithsonian；C（Openverse 金
