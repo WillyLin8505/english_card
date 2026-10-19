@@ -133,3 +133,11 @@ commit `63131d5`（Windows：flutter analyze 無 error、01:08 +375: All tests p
   結果：完成：設定頁「詞庫連線」卡改成只在詞庫連線失敗（DictionarySync.hasError）時出現，「資料」卡刪掉「詞庫會從你的資料庫自動更新」；flutter test 375 全過、analyze 0 error（問題回報 #306）。
 - 卡 #301：問題回報 #307：學習洞察的「弱項單字」只是文字，點了沒反應；看到弱項卻無法直接打開或複習
   結果：完成：學習洞察「弱項單字」每行可點開單字詳情，清單下加「複習這些字」直接進複習（這些字先出），文案改成「複習 5 次，忘了 2 次」；flutter test 375 全過、analyze 無新問題。
+
+## M4（2026-10-19 08:55）狀態：待做
+owner：Xcode 已經裝好了。請現在開始 iPhone 模擬器驗證：
+1. `sudo xcodebuild -runFirstLaunch`（需要時請 owner 輸入 Mac 密碼）、`flutter doctor` 確認 Xcode 項目打勾。
+2. `git pull`，`cd app && ./run_ios_sim.sh`，App 要在 iPhone 模擬器啟動；設定頁填 `https://api.willylinai.com/tag` 與金鑰。
+3. 依序做 M2 的 42 張卡（複習背面九項、正面位置標記、照片快取、學習洞察、備份還原、QR code、隱私權頁…），每張卡一列寫進 results 檔，不通過開 `[Mac]` 問題回報。
+4. 特別看：連續複習 40 張，記下出現的不同單字數與重複的字（owner 回報一直出 pot、fresh、brick、ocean；Windows 卡 #315 在修）。
+5. 有接 iPhone 實機的話，照 mac_verify.md「實機」那段，簽章由 owner 本人在 Xcode 選 Apple ID。
