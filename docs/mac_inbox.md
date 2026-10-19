@@ -236,7 +236,7 @@ commit `c043297`（Windows：flutter analyze 無 error、00:56 +437 ~1: All test
 - 卡 #353：問題回報 #351：????????87 ????????????????? did everything?did go
   結果：全部完成：#351 的 87 個 prep/conj/pron/det/num 詞條中 41 個補上例句（46 個留空），詞性檢查改完，golden/QC 無退步。
 
-## M22（2026-10-19 19:56）狀態：待做
+## M22（2026-10-19 19:56）狀態：完成
 commit `f782271`（Windows：flutter analyze 無 error、00:57 +437 ~1: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #352：問題回報 #350：法語詞條的義項順序照 Kaikki 原序，圖片用的常見義項常排在第 3 項以後（assiette=p
   結果：全部完成：義項改依現代用法排序（新 app/senseorder.py 接進 materialize）；既有資料重排 fr 176 詞／679 個 ordinal（第一義項改 51 詞）、en 1597 詞／7369 個 ordinal（第一義項改 270 詞）；assiette 匯入後 dish@0、plate@1；
