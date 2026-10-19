@@ -144,6 +144,12 @@ CC BY-SA 的「相同方式分享」只及於該筆資料本身（詞條文字�
   圖片任務進 `image_fetch_tasks`，但 image worker 幾乎停擺（問題回報 #338：3,450 筆佇列、24 小時完成 13 筆），
   前景抓圖用 `python lexicon/tools/card325_fr_trial.py pictures <words>`（每字 1.5–4.5 分鐘；Smithsonian／Commons 常回 429）。
 - **CEFR**：仍是頻率估計（#332 未決）；golden `fr_v1` 擴到 25 字。
+- **第 2 輪（10/19 下午）音檔與圖片**：`python lexicon/tools/card329_fr_media.py report|share|audio|pictures`，前景、逐字 commit、
+  走 `wikimedia_gate`（全機共用配額，其他程序也在用時約 10 秒一字）。`share`＝#336 的 `share_by_meaning`：法語名詞義項依英文
+  釋義重用已核准、已標籤的英文圖（305 字 +940 張，自動採用）；`audio`＝沒有 ready 錄音的 full 字，每個詞性只抓一檔（Fr-<字>.ogg 優先），
+  其他音檔項標「本輪未下載」，再跑同一個 `materialize`。**音檔根因**：`adapters/http.py download()` 原本把 404（轉檔 .mp3 常不存在，
+  正常會改抓 .ogg）算成來源失敗，連續 5 次就開斷路器 60 秒，期間每個字的音檔立即失敗 → 法語 5,168／英文 2,045 筆 failed；
+  已改成跟 `get()` 一樣不計入斷路器（問題回報 #343 記英文待補；text workers 要重啟才會帶到）。
 
 ## 5. 下一張卡（法語基礎 2000–3000 字）要先做的事
 1. 決定 CEFR 來源（§2.3）。2. 建 Kaikki 法語本機索引，不要逐字打 kaikki.org。3. 重啟 API 與 workers 載入法語程式
