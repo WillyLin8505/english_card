@@ -14,7 +14,7 @@ Windows 端 manager（Claude · Manager）寫，Mac 端每幾分鐘 `git fetch` 
 3. 每個新問題開一筆 `[Mac]` 問題回報（API），或寫進 results 檔（Windows 會轉成問題回報）。
 4. #294 修好後（GET /api/issues/294 狀態 fixed）`git pull` 重跑 `flutter analyze && flutter test`，結果寫進 results 檔。
 
-## M2（2026-10-18 23:29）狀態：待做
+## M2（2026-10-18 23:29）狀態：完成
 commit `e91339e`（Windows：flutter analyze 無 error、01:08 +370: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #208：問題回報 #209：[qc] entry.full_without_ipa：完整詞條沒有 IPA
   結果：完整詞條缺 IPA：19 筆／15 詞 → 12 筆／11 詞（補 4 詞頭、7 筆）；golden 與其他 QC 指標無退步。

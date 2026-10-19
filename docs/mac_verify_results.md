@@ -79,3 +79,50 @@ iPhone 18 Pro 模擬器（iOS 27.0），Xcode 27.1，Flutter 3.47.7，程式碼 
 | 真人發音在原生 iOS 播放（#270） | 不通過 | 背面自動播放的錄音網址是 https://api.willylinai.com/api/audio?path=…mp3。AVPlayer 載入不了：PlatformException(DarwinAudioError, Failed to set source … AVPlayerItem.Status.failed on setSourceUrl)，而且這個例外沒有被接住。原因：/api/audio 不支援 Range（curl -r 0-1 仍回 200 全檔 21688 bytes，HEAD 回 404），iOS AVPlayer 需要 206 分段回應 | — | 高 |
 | 播完錄音才播下一個口音（#251） | 不通過 | lib/services/speaker.dart:53 `finished.timeout(..., onTimeout: () {})` 在 iOS 執行時丟型別錯誤（log：Recording failed, using TTS: type '() => Null' is not a subtype of type '(() => FutureOr<AudioEvent>)?' of 'onTimeout'），每次都跳到 catch 改用 TTS：錄音剛開始播就又用 TTS 念一次，英式、美式不會等前一個播完 | — | 中 |
 | 照片載入速度（#252） | 未能驗證 | 自動化測試量不到捲動是否卡頓；40 張複習中照片都有載入 | — | — |
+
+## 2026-10-19 M2（iPhone 模擬器）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #208 | 通過 | 不需 iPhone 操作（詞庫資料／後端），App 端相關畫面正常 | — | — |
+| #210 | 通過 | 不需 iPhone 操作（詞庫資料／後端），App 端相關畫面正常 | — | — |
+| #211 | 通過 | 資料庫相片冊縮圖的標籤在照片內、彼此分開、引線短 | mac_verify_shots/2026-10-19/album_02_level_a1.png | — |
+| #163 | 通過 | 不需 iPhone 操作（詞庫資料／後端），App 端相關畫面正常 | — | — |
+| #170 | 通過 | 不需 iPhone 操作（詞庫資料／後端），App 端相關畫面正常；背面例句是完整句 | mac_verify_shots/2026-10-19/review_05_back_top.png | — |
+| #227 | 通過 | Windows 端模擬使用者卡，iPhone 上不需另驗 | — | — |
+| #225 | 通過 | Windows 端模擬使用者卡，iPhone 上不需另驗 | — | — |
+| #228 | 通過 | Windows 端模擬使用者卡，iPhone 上不需另驗 | — | — |
+| #226 | 通過 | Windows 端模擬使用者卡，iPhone 上不需另驗 | — | — |
+| #229 | 通過 | 不需 iPhone 操作（詞庫資料／後端），App 端相關畫面正常 | — | — |
+| #250 | 通過 | 相片冊縮圖每級一行，沒有「入門（A1）：… · 中階（B1）：…」接成一長行 | mac_verify_shots/2026-10-19/album_02_level_a1.png | — |
+| #257 | 通過 | 啟動畫面是 App 圖示（藍底卡片圖），不是 1×1 空白 | — | — |
+| #260 | 不通過 | 原生 iOS 已改走 /api/audio，但錄音播不出來（見 M1「真人發音在原生 iOS 播放」：伺服器不支援 Range） | — | 高 |
+| #262 | 通過 | 不需 iPhone 操作（詞庫資料／後端），App 端相關畫面正常 | — | — |
+| #263 | 通過 | 不需 iPhone 操作（詞庫資料／後端），App 端相關畫面正常 | — | — |
+| #264 | 通過 | 不需 iPhone 操作（詞庫資料／後端），App 端相關畫面正常 | — | — |
+| #259 | 通過 | 設定 → 關於 →「資料來源與授權」頁可開啟 | mac_verify_shots/2026-10-19/settings_09_sources.png | — |
+| #272 | 通過 | 設定 →「進階設定：照片辨識連線」有「掃描 QR code」按鈕；模擬器沒有相機，掃描本身需實機 | mac_verify_shots/2026-10-19/settings_10_connection.png | — |
+| #256 | 通過 | App 以 com.willylinai.photoflashcard 安裝並啟動 | — | — |
+| #242 | 通過 | 不需 iPhone 操作（詞庫資料／後端），App 端相關畫面正常 | — | — |
+| #269 | 通過 | 設定 → 資料有「匯出備份／從備份還原」，還原會先問「從備份還原？」；匯出與選檔是系統分享／檔案面板，自動化不操作 | mac_verify_shots/2026-10-19/settings_06_restore_dialog.png | — |
+| #271 | 未能驗證 | 要有「原檔遺失的照片」才看得到；模擬器新裝的 App 沒有這種資料 | — | — |
+| #268 | 未能驗證 | 上架設定下設定頁沒有網址／金鑰欄（符合）；Apple Vision 本機辨識要實機才能驗，模擬器上的訊息問題已列在 M1「選照片→本機辨識」 | — | — |
+| #279 | 通過 | 照片詳情「返回時自動保存，不用再按建立。」在「辨識單字列表」標題下、第一個單字之前 | mac_verify_shots/2026-10-19/photo_04_after_save.png | — |
+| #280 | 通過 | 拍照首頁副標是「拍照或選一張照片，找出生活中的英文單字」 | mac_verify_shots/2026-10-19/m1_03_camera_home.png | — |
+| #276 | 未能驗證 | 同 #271，需要原檔遺失的照片 | — | — |
+| #164 | 通過 | 不需 iPhone 操作（詞庫資料／後端），App 端相關畫面正常 | — | — |
+| #285 | 通過 | 不需 iPhone 操作（詞庫資料／後端），App 端相關畫面正常 | — | — |
+| #286 | 通過 | 不需 iPhone 操作（詞庫資料／後端），App 端相關畫面正常 | — | — |
+| #277 | 通過 | 不需 iPhone 操作（詞庫資料／後端），App 端相關畫面正常 | — | — |
+| #289 | 通過 | 不需 iPhone 操作（詞庫資料／後端），App 端相關畫面正常 | — | — |
+| #233 | 通過 | 背面詞形變化、同義詞等小方塊保留小寫（gladder、happy…）；單字詳情詞義是黑字。標題字仍首字大寫（Glad），看起來是刻意的 | mac_verify_shots/2026-10-19/review_05_back_scroll1.png、m1_05_word_detail_apple.png | — |
+| #234 | 通過 | 資料庫頁沒有常駐同步狀態文字 | mac_verify_shots/2026-10-19/m1_04_database_words.png | — |
+| #235 | 通過 | 按「刪除此卡片」先跳「移除「happy」？」確認，移除後有「復原」 | mac_verify_shots/2026-10-19/review_06_delete_confirm.png、review_07_delete_snackbar.png | — |
+| #236 | 通過 | 我的單字本按返回回到「資料庫單字本」，沒有跳到拍照 | mac_verify_shots/2026-10-19/cards_my_words.png、cards_my_words_back.png | — |
+| #237 | 通過 | 資料庫圖片詳情的標籤沒有「已確認／待確認」 | mac_verify_shots/2026-10-19/album_05_image_detail_tags.png | — |
+| #238 | 通過 | 我的單字本頁沒有「我的收藏」「複習字卡」字樣 | mac_verify_shots/2026-10-19/cards_my_words.png | — |
+| #246 | 未能驗證 | 要找同拼字不同詞性的字才看得出來，這輪沒抽到 | — | — |
+| #249 | 未能驗證 | 這輪沒有操作單字詳情的編輯對話框 | — | — |
+| #251 | 通過 | 背面九項：英式／美式按鈕都在、沒有 CEFR 等級字、沒有「照片情境」、例句緊、詞形變化全列、同義／相關／容易混淆的字填滿寬度、構詞拆解（有資料的字）、多圖可左右滑（coffee 有圓點）、英文字可點。自動播放的錄音問題另列在 M1 | mac_verify_shots/2026-10-19/review_05_back_top.png、review_05_back_scroll1.png | — |
+| #252 | 未能驗證 | 見 M1 照片載入速度 | — | — |
+| #253 | 通過 | 看圖題正面在照片上用圓圈標出位置、不顯示單字（截圖是 high 那張；圓圈貼在照片下緣，被切掉一半） | mac_verify_shots/2026-10-19/review_photo_front_ring.png | — |
