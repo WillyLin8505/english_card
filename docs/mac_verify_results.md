@@ -134,3 +134,9 @@ iPhone 18 Pro 模擬器（iOS 27.0），Xcode 27.1，Flutter 3.47.7，程式碼 
 | #166 | 通過 | 背面例句是完整句，40 張複習沒看到罕見人名例句 | mac_verify_shots/2026-10-19/review_05_back_top.png | — |
 | Xcode 已裝好，開始模擬器驗證 | 通過 | 本輪就是這一項 | — | — |
 | 連續複習 40 張 | 通過 | 見 M9 #303 | — | — |
+
+## 2026-10-19 M5（iPhone 模擬器）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #295 | 通過 | 連上詞庫後搜尋 peak 有詞條，詳情有「峰」 | mac_verify_shots/2026-10-19/cards_search_peak.png、cards_peak_detail.png | — |
