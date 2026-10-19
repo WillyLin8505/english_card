@@ -311,3 +311,10 @@ iPhone 18 Pro 模擬器（iOS 27.0），新安裝；跑兩次：帶 iphone.json�
 | 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
 |----|----|----|----|----|
 | #389 | 通過 | M23 #375 那列本來就是通過（測試連線結果已在按鈕下方整行顯示），因為說明裡引用了結果訊息的符號被自動誤開成問題回報 #382。這次沒有改到 app/ | mac_verify_shots/2026-10-19/m23_375_connection_result.png | — |
+
+## 2026-10-20 M28（iPhone 模擬器）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| analyze／test（commit 751d1c5） | 通過 | flutter analyze 0 error、0 warning；flutter test 443 通過、2 略過 | — | — |
+| #392 | 通過 | 從 Mac 帶 Accept-Encoding: gzip 抓 /api/lexicon：回 content-encoding gzip、有 ETag，實際傳輸 34,096,632 bytes（約 34 MB，15 秒）。App 用 http.Client（iOS 上會自動要 gzip），所以 M25 那列的 238 MB 是未壓縮大小，是 Mac 量法的問題 | — | — |
