@@ -231,7 +231,7 @@ commit `32f499f`（Windows：flutter analyze 無 error、00:58 +437 ~1: All test
 - 卡 #350：問題回報 #348：法語詞庫缺 452 個圖片英文標籤字的對應詞條，156 張法語 pack 圖片仍少於 3 個法語標籤
   結果：全部完成：法語 pack 圖片少於 3 個法語標籤 155 → 28（code 修正 155→110，再匯入 556 個法語對應詞 110→28）；phototags 2635 → 4273；英文 pack 不變；fr golden 全 1.0、QC 無退步。
 
-## M21（2026-10-19 19:34）狀態：待做
+## M21（2026-10-19 19:34）狀態：完成
 commit `c043297`（Windows：flutter analyze 無 error、00:56 +437 ~1: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #353：問題回報 #351：????????87 ????????????????? did everything?did go
   結果：全部完成：#351 的 87 個 prep/conj/pron/det/num 詞條中 41 個補上例句（46 個留空），詞性檢查改完，golden/QC 無退步。
