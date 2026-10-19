@@ -211,7 +211,7 @@ commit `90f0976`（Windows：flutter analyze 無 error、01:06 +433 ~1: All test
 - 卡 #322：問題回報 #321：下載英文入門基礎約 3000 字單字集，做成『基礎 3000 字』卡片集
   結果：卡片集『基礎 3000 字』已上線（2,808/2,809 字＋A1–C2 六個子集合）；AI 代填進行中（344/2,231 字），下一輪從 batch 4 續做。
 
-## M17（2026-10-19 14:29）狀態：待做
+## M17（2026-10-19 14:29）狀態：完成
 commit `7a43c3a`（Windows：flutter analyze 無 error、01:04 +433 ~1: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #343：問題回報 #339：Wikimedia Commons 回 429「please contact noc@wikimed
   結果：已修根因：所有程序打 Wikimedia 改走同一個跨程序限速閘門（全機合計每秒 1 個請求，遇 429/503 全體一起退避），試補 3+40 字音檔全部成功、0 次新 429；全庫還有 3220 字缺音檔要分批補（約 4 字/分鐘）。
