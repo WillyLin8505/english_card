@@ -142,7 +142,7 @@ owner：Xcode 已經裝好了。請現在開始 iPhone 模擬器驗證：
 4. 特別看：連續複習 40 張，記下出現的不同單字數與重複的字（owner 回報一直出 pot、fresh、brick、ocean；Windows 卡 #315 在修）。
 5. 有接 iPhone 實機的話，照 mac_verify.md「實機」那段，簽章由 owner 本人在 Xcode 選 Apple ID。
 
-## M8（2026-10-19 09:44）狀態：待做
+## M8（2026-10-19 09:44）狀態：完成
 commit `ce2099c`（Windows：flutter analyze 無 error、02:21 +433 ~1: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #308：問題回報 #308：複習背面照片輪播圓點超出手機寬度：274 個完整詞條有至少 29 張照片
   結果：完成：複習背面照片 >12 張時圓點改為「第 N / M 張」計數器（修正問題回報 #308 的圓點溢出；UI 修正，未改任何資料）。
