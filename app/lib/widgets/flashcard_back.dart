@@ -248,8 +248,19 @@ class FlashcardBack extends StatelessWidget {
 
   LexEntry? get _source {
     final pack = LexiconPack.instance;
-    return (entry.lexemeId == null ? null : pack.byId(entry.lexemeId!)) ??
-        pack.lookup(entry.word, pos: entry.pos)?.entry;
+    final byId = entry.lexemeId == null ? null : pack.byId(entry.lexemeId!);
+    // A saved lexeme id can name another part of speech of the same spelling
+    // (out 「出」 the adverb, id of out the adjective): its synonyms (knocked
+    // out, forbidden…) belong to a different meaning. Follow the card's own
+    // part of speech then (問題回報 #384).
+    final pos = entry.pos.trim();
+    if (byId != null &&
+        pos.isNotEmpty &&
+        byId.pos != LexiconPack.packPos(pos)) {
+      final same = pack.lookup(entry.word, pos: pos)?.entry;
+      if (same != null && same.pos == LexiconPack.packPos(pos)) return same;
+    }
+    return byId ?? pack.lookup(entry.word, pos: entry.pos)?.entry;
   }
 
   Widget _items(CardBackField field, List<Widget> items) =>
