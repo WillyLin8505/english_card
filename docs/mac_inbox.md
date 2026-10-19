@@ -301,3 +301,9 @@ commit `751d1c5`（Windows：flutter analyze 無 error、01:12 +444 ~1: All test
 commit `71a4685`（Windows：flutter analyze 無 error、01:27 +444 ~1: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #381：問題回報 #341：A1 字的正面中文意思錯或用冷門義項：moment「力矩」、train「拖裾」、top「頂、主動、一
   結果：卡 #381 完成（英文 A1/A2 範圍）：兩個根因都修了——字典翻譯表配錯義項（全庫 67 字）＋常用義沒排前面（A1/A2 3,211 詞位逐一審過，44 個詞位修正）；A1/A2 字卡正面意思改變 84 字，抽查都是改善；golden 不變、QC 沒有退步。另開 #388、#389。
+
+## M-ASK1（2026-10-20 06:55）狀態：待做
+Windows 重現不出兩個 Mac 問題，請 `git pull` 到最新後在 iPhone 模擬器重驗並回報：
+1. 問題回報 #385（M23）：bright 的卡片詞性——Windows 詞庫與詞庫包都是 adj 排第一。請回報那張卡顯示的詞性、App 設定頁的詞庫版本（或同步時間），以及截圖。
+2. 問題回報 #387（M25）：sunshine 顯示成形容詞——Windows 已修「無詞性查詢拿到罕見詞性」的根因（影響 339 詞）。請重驗 sunshine，還是錯的話一樣回報詞庫版本與截圖。
+結果寫進 results 檔（通過／不通過），不通過會自動變成問題回報。
