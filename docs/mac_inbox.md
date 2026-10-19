@@ -220,3 +220,8 @@ commit `7a43c3a`（Windows：flutter analyze 無 error、01:04 +433 ~1: All test
 commit `e5f4dec`（Windows：flutter analyze 無 error、01:03 +437 ~1: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #228：模擬使用者・設定
   結果：第 3 輪：1/1 通過（runround 第 83 輪，findings 0）。修 1 個真錯（測試連線／照片辨識失敗時顯示英文原文「health check failed: …」），新問題 #345 #346（都是 UX 建議）。
+
+## M19（2026-10-19 15:09）狀態：待做
+commit `f3d3e88`（Windows：flutter analyze 無 error、01:17 +437 ~1: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #348：問題回報 #346：設定「卡片樣式」只有名字沒有預覽，學習者選之前看不到樣子；「現行樣式」命名和 A/B/C 不一致
+  結果：全部完成：設定「卡片樣式」改為 4 個縮圖預覽磚（用各樣式自己的 CardLook 畫迷你卡），「現行樣式」改名「經典」。
