@@ -61,3 +61,21 @@ Mac 環境：Flutter 3.47.7、Dart 3.13.5。Windows 回報 analyze 無 error、3
 | 1 | flutter analyze | 無 error | 0 error、0 warning、1 info（`test/simulation/card226_review_audit.dart:16` 多餘的 `dart:typed_data` import）。M6 的 `screens_test.dart:552` 編譯錯誤已修好 | — | 低 |
 | 2 | flutter test | 全部通過 | 374 通過、1 略過、0 失敗 | — | — |
 | 3 | M7 卡 #297、#300、#301 iPhone 模擬器驗證 | — | 尚未執行（Mac 還在裝 Xcode） | — | — |
+
+## 2026-10-19 M1（iPhone 模擬器）
+
+iPhone 18 Pro 模擬器（iOS 27.0），Xcode 27.1，Flutter 3.47.7，程式碼 commit 4dad506。用本機 integration_test 自動點按（不 commit），`--dart-define-from-file=iphone.json`；另跑一次不帶 iphone.json（上架設定）。截圖在 `docs/mac_verify_shots/2026-10-19/`。
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| 第 4 步 run_ios_sim／App 啟動 | 通過 | App 在模擬器啟動；新手引導兩頁→「從基礎開始」進主畫面 | mac_verify_shots/2026-10-19/m1_01_onboarding_language.png、m1_02_onboarding_level.png | — |
+| 設定頁填網址／金鑰 | 未做 | 金鑰要 owner 本人輸入；未填時「測試連線」顯示 API Key 不正確（符合預期） | mac_verify_shots/2026-10-19/settings_10_connection.png | — |
+| 設定頁「測試連線」結果排版 | 不通過 | 結果文字被擠在「掃描 QR code／測試連線」按鈕右邊的窄欄，一行一兩個字；而且訊息要使用者去「設定 → 照片辨識連線」，但使用者就在這一頁 | mac_verify_shots/2026-10-19/settings_11_connection_test.png | 低 |
+| 詞庫同步 | 通過 | 資料庫分頁顯示 5132 筆正式單字；沒有常駐「已連接詞庫・每 30 秒自動更新」 | mac_verify_shots/2026-10-19/m1_04_database_words.png | — |
+| 拍照／選照片→打標（iphone.json） | 未做 | 模擬器沒有相機；選內建範例照片可存檔，但沒填金鑰所以伺服器打標回 API Key 不正確（符合預期） | mac_verify_shots/2026-10-19/photo_02_save_dialog.png、photo_04_after_save.png | — |
+| 選照片→本機辨識（上架設定） | 不通過 | 不帶 iphone.json 時改用 Apple Vision，模擬器上顯示「手機辨識失敗：Failed to create espresso context.」。模擬器沒有神經網路引擎，需實機再驗；但這段英文技術字串會直接給學習者看，建議換成白話說明 | — | 低 |
+| 複習正面／背面九項 | 通過 | 見 M2 #251、#253；背面英式＋美式按鈕、無等級字、無「照片情境」、詞形變化、同義／相關／容易混淆的字填滿寬度 | mac_verify_shots/2026-10-19/review_05_back_top.png、review_05_back_scroll1.png | — |
+| 刪除卡片確認與復原 | 通過 | 見 M2 #235 | mac_verify_shots/2026-10-19/review_06_delete_confirm.png、review_07_delete_snackbar.png | — |
+| 真人發音在原生 iOS 播放（#270） | 不通過 | 背面自動播放的錄音網址是 https://api.willylinai.com/api/audio?path=…mp3。AVPlayer 載入不了：PlatformException(DarwinAudioError, Failed to set source … AVPlayerItem.Status.failed on setSourceUrl)，而且這個例外沒有被接住。原因：/api/audio 不支援 Range（curl -r 0-1 仍回 200 全檔 21688 bytes，HEAD 回 404），iOS AVPlayer 需要 206 分段回應 | — | 高 |
+| 播完錄音才播下一個口音（#251） | 不通過 | lib/services/speaker.dart:53 `finished.timeout(..., onTimeout: () {})` 在 iOS 執行時丟型別錯誤（log：Recording failed, using TTS: type '() => Null' is not a subtype of type '(() => FutureOr<AudioEvent>)?' of 'onTimeout'），每次都跳到 catch 改用 TTS：錄音剛開始播就又用 TTS 念一次，英式、美式不會等前一個播完 | — | 中 |
+| 照片載入速度（#252） | 未能驗證 | 自動化測試量不到捲動是否卡頓；40 張複習中照片都有載入 | — | — |
