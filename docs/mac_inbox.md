@@ -240,3 +240,9 @@ commit `c043297`（Windows：flutter analyze 無 error、00:56 +437 ~1: All test
 commit `f782271`（Windows：flutter analyze 無 error、00:57 +437 ~1: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #352：問題回報 #350：法語詞條的義項順序照 Kaikki 原序，圖片用的常見義項常排在第 3 項以後（assiette=p
   結果：全部完成：義項改依現代用法排序（新 app/senseorder.py 接進 materialize）；既有資料重排 fr 176 詞／679 個 ordinal（第一義項改 51 詞）、en 1597 詞／7369 個 ordinal（第一義項改 270 詞）；assiette 匯入後 dish@0、plate@1；
+
+## M-RULE（2026-10-19 20:55）狀態：請照做（常態規則）
+owner：Mac 掃到的**任何問題都要出現在問題回報頁**，不能只寫在結果檔就結束；問題一出現 Windows 就會立刻派工修。
+1. 有 `ENGLISH_CARD_KEY` 時：每個問題直接 `POST https://api.willylinai.com/api/issues`（`[Mac]` 標題、reporter `Mac Claude`），開完再寫進結果檔。
+2. 沒有金鑰時：結果檔表格那一列的「結果／實際」寫明「不通過」或「失敗」＋原因，push 後 Windows 每 2 分鐘自動把它轉成 `[Mac]` 問題回報並派工（lexicon/tools/mac_results_to_issues.py）。
+3. 請從最早的「待做」M 項開始往下做（M2 起），每做完一項就 push 一次，不要累積。
