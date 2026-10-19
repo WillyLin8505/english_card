@@ -234,8 +234,11 @@ def test_batched_reresolve_preserves_stored_ai_translations(session, fakes, monk
     from app.adapters.ai import AITranslate
 
     apple_data(fakes)
+    # Plain Chinese: "pome中文" would trip the Latin-letter guard, and an
+    # invalid stored row is rightly sent to the model again (問題回報 #334).
+    chinese = {"orchard apple": "果園蘋果", "pome": "梨果"}
     fakes["ai_translate"].data["synonyms_native"] = lambda ctx: [
-        ({"word": slot, "text": f"{slot}中文", "ai": True}, slot, slot)
+        ({"word": slot, "text": chinese[slot], "ai": True}, slot, slot)
         for slot in ctx.memo.get(("missing_slots", "synonyms_native")) or []
     ]
     pipeline.process_word(session, "en", "zh-TW", "apple",
@@ -243,7 +246,7 @@ def test_batched_reresolve_preserves_stored_ai_translations(session, fakes, monk
     before = session.execute(select(m.FieldCandidate).where(
         m.FieldCandidate.field == "synonyms_native",
         m.FieldCandidate.source == "ai_translate")).scalars().all()
-    assert len(before) == 2
+    assert len(before) == 2 and all(row.valid for row in before)
 
     adapter = AITranslate()
     monkeypatch.setattr(adapter, "_reuse", lambda *args: {})

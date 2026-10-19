@@ -26,6 +26,9 @@ Line counts as of 2026-10-17. **Big files: search first, then read a range** (se
   `card_difficulty.py`, `agent_capabilities.json`, `agent_preamble.md`.
 - Quality: `qc.py` (loads .env itself — run it, never open .env), `qc_golden.py` (`--out`, `--force`), `qc_snapshot.py`,
   `quality_ai.py`, `apply_quality_decisions.py`, `recompute_photo_tag_cefr.py`, `enrich_cefr_tags.py`.
+- Photo labelling fallback (#327/#330): `tag_fallback.py` (status / ask / apply / golden / run, config
+  `tag_fallback_config.json`) → backend `app/vision_fallback.py`; Codex/Cursor CLI look at the photo when Qwen
+  is paused or the queue is long; cost log `lexicon/logs/tag_fallback/cost.jsonl`.
 - Files starting with `_` and `cardNN_*.py` are one-off scripts from earlier cards — reuse them for the same check.
 
 ## Flutter app (`app/`)

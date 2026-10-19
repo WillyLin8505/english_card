@@ -4,10 +4,10 @@ rem First time: see README.md (PostgreSQL, .env, migration, npm install).
 rem Workers run in lanes so network, model and picture work overlap: four
 rem text workers and three picture labellers share the model server's four
 rem slots (tagger\start_tagger.bat); two download pictures from Wikimedia.
-rem run_worker.bat restarts a worker when backend code changes (#285).
+rem run_worker.bat / run_api.bat restart a worker / the API when backend code changes (#285, #335).
 cd /d "%~dp0"
 python -m alembic upgrade head || goto :error
-start "lexicon API" cmd /k python -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8770
+start "lexicon API" cmd /k run_api.bat
 start "lexicon text 1" cmd /k worker\run_worker.bat text
 start "lexicon text 2" cmd /k worker\run_worker.bat text
 start "lexicon text 3" cmd /k worker\run_worker.bat text

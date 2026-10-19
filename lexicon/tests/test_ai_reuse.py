@@ -49,7 +49,9 @@ def test_prefetch_reuses_stored_translations(session, monkeypatch):
 
     def fake_call(context, kind, items, lang_out=None):
         sent.extend(items)
-        return ({item["id"]: f"譯-{item['text']}" for item in items}, "qwen/test")
+        # Plain Chinese: "譯-vast" would be dropped by the Latin-letter guard (問題回報 #334).
+        return ({item["id"]: {"vast": "廣大"}.get(item["text"], "譯文") for item in items},
+                "qwen/test")
 
     monkeypatch.setattr(adapter, "_call", fake_call)
     assert adapter.prefetch(ctx, ["native_definition", "example_translation",
@@ -61,7 +63,7 @@ def test_prefetch_reuses_stored_translations(session, monkeypatch):
     words = {c.value["word"]: c for c in adapter.lookup("synonyms_native", ctx)}
     assert words["large"].value["text"] == "大的"
     assert words["large"].value["ai"] is True  # still marked AI
-    assert words["vast"].value["text"] == "譯-vast"
+    assert words["vast"].value["text"] == "廣大"
     examples = {c.value["example_key"]: c.value["text"]
                 for c in adapter.lookup("example_translation", ctx)}
     assert examples["e1"] == "一隻大狗叫了。"

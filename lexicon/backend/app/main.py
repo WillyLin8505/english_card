@@ -22,7 +22,7 @@ from sqlalchemy import func, select, text
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
 
-from . import adapters, catalog, config, db, exporter, jobs, pipeline, policies, snapshots, views
+from . import adapters, catalog, code_watch, config, db, exporter, jobs, pipeline, policies, snapshots, views
 from . import models as m
 from .adapters import Context
 from .adapters.base import ARPABET
@@ -72,6 +72,7 @@ async def _bad_request(request: Request, exc: Exception):
 
 @app.on_event("startup")
 def _startup():
+    code_watch.start()
     with db.session_scope() as s:
         # Workers seed under the same lock (worker.py); starting everything at
         # once otherwise raced on source_capabilities (2026-10-16).
@@ -106,12 +107,13 @@ def seed_wordlists(s: Session):
 
 @app.get("/health")
 def health():
-    return {"ok": True, "keyConfigured": bool(config.API_KEY)}
+    return {"ok": True, "keyConfigured": bool(config.API_KEY), **code_watch.status()}
 
 
 @app.get("/meta", dependencies=[Auth])
 def meta():
     return {
+        **code_watch.status(),
         "languages": [{"code": k, **v} for k, v in catalog.LANGUAGES.items()],
         "pairs": [{"target_language": t, "native_language": n} for t, n in catalog.PAIRS],
         "blocks": [{"key": k, "label": v} for k, v in catalog.BLOCKS],

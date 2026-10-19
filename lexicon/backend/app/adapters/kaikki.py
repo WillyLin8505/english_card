@@ -591,6 +591,17 @@ class Kaikki(SourceAdapter):
         if wanted and len(entries) > 1:
             matching = [e for e in entries if _pos(e) in wanted]
             entries = matching if matching or not loose else entries
+        if ctx.target != "en" and ctx.native == "en":
+            # A French / Chinese word's English meaning is its first gloss
+            # in the English Wiktionary (no translation tables there; card #325).
+            for e in entries:
+                for s in e.get("senses", []):
+                    if _is_form_of(s):
+                        continue
+                    g = _gloss(s)
+                    if g:
+                        return g[:80]
+            return None
         for e in entries:
             words, first_sense = [], None
             for tr in e.get("translations", []):

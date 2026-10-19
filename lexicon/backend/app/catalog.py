@@ -238,7 +238,9 @@ SOURCES: dict[str, Source] = {s.key: s for s in [
            {t: _target({"frequency"}) for t in LANGUAGES}),
     Source("local_calc", "本機規則計算", "local", "由其他欄位計算", "",
            "", {t: {**_target({"derivation_relation", "example_difficulty", "example_sense",
-                               "stress", "cefr", "ipa", "noun_plural", "derived_pos"})}
+                               "cefr", "ipa", "noun_plural", "derived_pos"}
+                              # French has no lexical stress (card #325): 未設定, not 缺漏.
+                              | ({"stress"} if t != "fr" else set()))}
                 for t in LANGUAGES},
            "由已取得的欄位推算（例如由衍生詞字尾判斷衍生關係）。"),
     Source("lexicon", "詞庫內既有詞條", "local", "沿用該詞條的來源授權", "",

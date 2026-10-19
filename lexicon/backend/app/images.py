@@ -1553,11 +1553,15 @@ def own_words(s, asset) -> set[str]:
     (balcony A2 was pushed out by column, furniture and plant)."""
     if asset is None or asset.id is None:
         return set()
-    return {w for (w,) in s.execute(select(m.Lexeme.normalized).join(
-        m.Sense, m.Sense.lexeme_id == m.Lexeme.id).join(
-        m.SenseImage, m.SenseImage.sense_id == m.Sense.id).where(
-        m.SenseImage.image_asset_id == asset.id,
-        m.SenseImage.review_status != 'rejected')).all()}
+    # A French word's labels are its English meaning (chat → cat, #331).
+    words = {w if lang == 'en' else label_word(s, sense_id, lang, w)
+             for w, lang, sense_id in s.execute(select(
+                 m.Lexeme.normalized, m.Lexeme.language, m.Sense.id).join(
+                 m.Sense, m.Sense.lexeme_id == m.Lexeme.id).join(
+                 m.SenseImage, m.SenseImage.sense_id == m.Sense.id).where(
+                 m.SenseImage.image_asset_id == asset.id,
+                 m.SenseImage.review_status != 'rejected')).all()}
+    return {w for w in words if w}
 
 
 def _select_cefr_tags(tags: list[dict], keep: set[str] | frozenset = frozenset()):
@@ -2027,11 +2031,12 @@ def _settle(s, asset, passed, dropped, model, done=True):
     asset.tagged_at = datetime.now(timezone.utc)
     asset.tag_status = 'done' if done else 'pending'
     asset.safety_status = 'safe'
-    for binding, lemma in s.execute(select(m.SenseImage, m.Lexeme.normalized).join(
+    for binding, lemma, language in s.execute(select(
+            m.SenseImage, m.Lexeme.normalized, m.Lexeme.language).join(
             m.Sense, m.Sense.id == m.SenseImage.sense_id).join(
             m.Lexeme, m.Lexeme.id == m.Sense.lexeme_id).where(
             m.SenseImage.image_asset_id == asset.id)).all():
-        judge(s, binding, asset, lemma)
+        judge(s, binding, asset, lemma, language)
     share(s, asset)
     auto_accept_asset(s, asset)
 
@@ -2504,7 +2509,8 @@ def demote_unmentioned_representatives(s, protect: set[int] | None = None) -> in
     """A representative picture whose stored labels do not contain the word
     stops being the representative (#146). Promote another approved picture
     of that sense when its label is the word and clears the box gates."""
-    rows = s.execute(select(m.SenseImage, m.Lexeme.normalized, m.Lexeme.lemma, m.ImageAsset.tags).join(
+    rows = s.execute(select(m.SenseImage, m.Lexeme.normalized, m.Lexeme.lemma, m.ImageAsset.tags,
+                            m.Lexeme.language).join(
         m.Sense, m.Sense.id == m.SenseImage.sense_id).join(
         m.Lexeme, m.Lexeme.id == m.Sense.lexeme_id).join(
         m.ImageAsset, m.ImageAsset.id == m.SenseImage.image_asset_id).where(
@@ -2512,9 +2518,13 @@ def demote_unmentioned_representatives(s, protect: set[int] | None = None) -> in
         m.SenseImage.review_status == 'approved')).all()
     protect = protect or set()
     changed = 0
-    for binding, normalized, lemma, tags in rows:
+    for binding, normalized, lemma, tags, language in rows:
         if binding.image_asset_id in protect:
             continue
+        if language != 'en':  # labels are English: chat → cat (#331)
+            normalized = lemma = label_word(s, binding.sense_id, language, normalized)
+            if not normalized:
+                continue
         names = {tag_word(tag) for tag in tags or []}
         if normalized in names or (lemma or '').lower() in names:
             continue
@@ -2541,7 +2551,11 @@ def demote_unmentioned_representatives(s, protect: set[int] | None = None) -> in
 
 
 def share_existing(s, target, lemma) -> int:
-    """A word imported after pictures were labelled gets those that name it."""
+    """A word imported after pictures were labelled gets those that name it.
+    Labels are English words bound to English entries: a French headword
+    (chat, table) is not looked up as an English label (#331)."""
+    if target != 'en':
+        return 0
     added = 0
     for asset in s.scalars(select(m.ImageAsset).where(
             m.ImageAsset.tag_status == 'done',
@@ -2562,6 +2576,29 @@ def lemma_forms(s, lemma: str) -> set[str]:
         m.Form.field.in_(('noun_plural', 'verb_third_person', 'verb_past',
                           'verb_past_participle', 'verb_present_participle')))).all()}
     return found | set(_morphology_lemmas(lemma))
+
+
+def label_word(s, sense_id, language, lemma) -> str | None:
+    """The English word a picture's labels must name for this sense: the
+    headword itself for English; for another language (labels are English)
+    the sense's English meaning — the same term auto_fetch searched with
+    (chat → cat, maison → house). None when the sense has no English
+    meaning (#331)."""
+    if language == 'en':
+        return lemma
+    meaning = s.scalar(select(m.SenseTranslation.text).where(
+        m.SenseTranslation.sense_id == sense_id,
+        m.SenseTranslation.native_language == 'en').order_by(m.SenseTranslation.id).limit(1))
+    gloss = s.scalar(select(m.Definition.text).where(
+        m.Definition.sense_id == sense_id,
+        m.Definition.language == language).order_by(m.Definition.id).limit(1))
+    return english_search_term(meaning, gloss)
+
+
+def sense_shows_word(s, asset, sense_id, language, lemma) -> tuple[str | None, bool]:
+    """(the English word looked for, whether the picture's labels name it)."""
+    word = label_word(s, sense_id, language, lemma)
+    return word, bool(word and shows_word(asset.tags, word, lemma_forms(s, word)))
 
 
 AUTO_ACCEPT_MIN = 0.35  # #34: below this only the no-Chinese fallback binding (0.3)
@@ -2589,14 +2626,18 @@ def auto_accept_asset(s, asset, note='自動採用（#34）') -> int:
     least 3 approved words; otherwise they stay pending for the QC/review."""
     if not labelled(asset):
         return 0
-    rows = s.execute(select(m.SenseImage, m.Lexeme.normalized).join(
+    rows = s.execute(select(m.SenseImage, m.Lexeme.normalized, m.Lexeme.language).join(
         m.Sense, m.Sense.id == m.SenseImage.sense_id).join(
         m.Lexeme, m.Lexeme.id == m.Sense.lexeme_id).where(
         m.SenseImage.image_asset_id == asset.id)).all()
-    approved = sum(1 for b, _ in rows if b.review_status == 'approved')
-    ok = [(b, w) for b, w in rows if b.review_status == 'pending'
-          and auto_accept_ok(asset, shows_word(asset.tags, w, lemma_forms(s, w)), b.semantic_score)
-          and auto_accept_sense_ok(s, b.sense_id)]
+    approved = sum(1 for b, _, _ in rows if b.review_status == 'approved')
+    ok = []
+    for b, w, lang in rows:
+        if b.review_status != 'pending':
+            continue
+        word, seen = sense_shows_word(s, asset, b.sense_id, lang, w)
+        if auto_accept_ok(asset, seen, b.semantic_score) and auto_accept_sense_ok(s, b.sense_id):
+            ok.append((b, w if word == w else f'{word}（{w}）'))
     if not ok or approved + len(ok) < AUTO_ACCEPT_MIN_TAGS:
         return 0
     for b, w in ok:
@@ -2613,9 +2654,12 @@ def auto_accept_sense_ok(s, sense_id) -> bool:
     se = s.get(m.Sense, sense_id)
     if se is None:
         return False
+    # A French sense's learner meaning is English (fr→en pack, #331).
+    lx = s.get(m.Lexeme, se.lexeme_id)
+    native = 'zh-TW' if lx is None or lx.language == 'en' else 'en'
     tr = s.scalars(select(m.SenseTranslation).where(
         m.SenseTranslation.sense_id == sense_id,
-        m.SenseTranslation.native_language == 'zh-TW')).first()
+        m.SenseTranslation.native_language == native)).first()
     if not (tr and (tr.text or '').strip()):
         return False
     return not _q.sense_is_low({'labels': se.labels or [], 'native': tr.text,
@@ -2631,18 +2675,22 @@ def shows_word(tags, lemma, forms=()) -> bool:
     return bool(forms & words) or any(f in w.split() for w in words for f in forms)
 
 
-def judge(s, binding, asset, lemma) -> None:
+def judge(s, binding, asset, lemma, language='en') -> None:
     """A picture belongs to a word only when the vision model sees the word
     in it: confirmed pictures score 0.95; the others are taken off the word
-    (the user: 沒有該單字的圖片不要放在該單字內)."""
+    (the user: 沒有該單字的圖片不要放在該單字內). A French word is seen
+    through its sense's English meaning (chat → cat, #331); a sense with no
+    English meaning cannot be judged and is left for review."""
     if not labelled(asset):
         return
-    if shows_word(asset.tags, lemma, lemma_forms(s, lemma)):
+    word, seen = sense_shows_word(s, asset, binding.sense_id, language, lemma)
+    if seen:
         binding.semantic_score = max(binding.semantic_score or 0, 0.95)
-    elif binding.review_status != 'rejected':
+    elif word and binding.review_status != 'rejected':
         binding.review_status = 'rejected'
+        shown = lemma if word == lemma else f'{word}（{lemma}）'
         s.add(m.ImageReview(sense_image_id=binding.id, decision='rejected',
-                            note=f'AI 標籤沒有認出「{lemma}」（自動）'))
+                            note=f'AI 標籤沒有認出「{shown}」（自動）'))
 
 
 def score_tags(data: bytes, tags: list[dict], mime: str | None = None,
@@ -2852,12 +2900,14 @@ def register(app, auth):
                                        or not (config.MEDIA / asset.path).is_file()):
             raise HTTPException(400, '檔案或授權尚未就緒')
         if decision == 'approved':
-            lemma = s.execute(select(m.Lexeme.normalized).join(
-                m.Sense, m.Sense.lexeme_id == m.Lexeme.id).where(m.Sense.id == binding.sense_id)).scalar()
+            lemma, language = s.execute(select(m.Lexeme.normalized, m.Lexeme.language).join(
+                m.Sense, m.Sense.lexeme_id == m.Lexeme.id).where(m.Sense.id == binding.sense_id)).one()
             if not labelled(asset):
                 raise HTTPException(400, '圖片還在等 AI 標籤，標完才能核准')
-            if not shows_word(asset.tags, lemma):
-                raise HTTPException(400, f'AI 標籤沒有認出「{lemma}」，這張圖不能放在這個字')
+            word, seen = sense_shows_word(s, asset, binding.sense_id, language, lemma)
+            if word and not seen:
+                shown = lemma if word == lemma else f'{word}（{lemma}）'
+                raise HTTPException(400, f'AI 標籤沒有認出「{shown}」，這張圖不能放在這個字')
         binding.review_status = decision
         if decision == 'approved':
             asset.safety_status = 'safe'
@@ -2918,7 +2968,8 @@ def register(app, auth):
         """The reviewer approves at once every pending picture the vision
         model confirmed (its AI labels name the word)."""
         approved = 0
-        for binding, lemma in s.execute(select(m.SenseImage, m.Lexeme.normalized).join(
+        for binding, lemma, language in s.execute(select(
+                m.SenseImage, m.Lexeme.normalized, m.Lexeme.language).join(
                 m.Sense, m.Sense.id == m.SenseImage.sense_id).join(
                 m.Lexeme, m.Lexeme.id == m.Sense.lexeme_id).where(
                 m.SenseImage.review_status == 'pending',
@@ -2927,7 +2978,8 @@ def register(app, auth):
             if asset.status != 'ready' or not allowed_license(asset.license_code) \
                     or asset.safety_status != 'safe' \
                     or not (config.MEDIA / asset.path).is_file() \
-                    or asset.tag_status != 'done' or not shows_word(asset.tags, lemma):
+                    or asset.tag_status != 'done' \
+                    or not sense_shows_word(s, asset, binding.sense_id, language, lemma)[1]:
                 continue
             binding.review_status = 'approved'
             asset.safety_status = 'safe'
