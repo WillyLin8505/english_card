@@ -216,7 +216,7 @@ def live_pack(target: str, native: str):
             exported = {w['id']: w for w in pack['lexemes']}
             pack['lexemes'] = merge_catalog(exported, word_metadata)
             # The catalog's CEFR replaced the pack's; rank the usages again.
-            app_pack.rank_usages(pack['lexemes'])
+            app_pack.rank_usages(pack['lexemes'], language=target)
             # After the catalog merge: a form's card must be a full word here.
             app_pack.assign_cards(pack['lexemes'], target)
             # Owner decision #191 (redirects, CEFR) after the cards are reassigned.

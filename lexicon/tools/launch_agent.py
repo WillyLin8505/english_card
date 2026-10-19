@@ -47,7 +47,7 @@ CURSOR_MODEL_PREFS = ["grok-4.7-high", "grok-4.7-medium", "grok-4.7", "cursor-gr
 
 # Usage-limit / quota messages seen from Claude Code, Codex and Cursor CLI.
 LIMIT_PATTERNS = [
-    r"usage limit", r"hit your (usage )?limit", r"limit reached", r"weekly limit",
+    r"usage limit", r"hit your (usage |session )?limit", r"session limit", r"limit reached", r"weekly limit",
     r"out of (usage|credits|requests)", r"spend(ing)? limit", r"you've reached your",
     r"you have reached your", r"upgrade to (pro|ultra|a higher)",
 ]

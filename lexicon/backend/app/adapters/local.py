@@ -953,11 +953,18 @@ class LocalCalc(SourceAdapter):
                 by_pos.setdefault(x.get("pos"), []).append(x)
             try:
                 listed = [{"adj.": "adj", "adv.": "adv"}.get(p, p) for p in
-                          ((cefr_list().get(ctx.lemma) or [None, {}])[1] or {})]
+                          ((cefr_list().get(ctx.lemma) or [None, {}])[1] or {})] \
+                    if ctx.target == "en" else []
             except Exception:  # noqa: BLE001 — no list: the most senses
                 listed = []
-            main_pos = next((p for p in listed if p in by_pos),
-                            max(by_pos, key=lambda p: len(by_pos[p])) if by_pos else None)
+            if ctx.target == "en":
+                main_pos = next((p for p in listed if p in by_pos),
+                                max(by_pos, key=lambda p: len(by_pos[p])) if by_pos else None)
+            else:
+                # No CEFR list for French: the dictionary lists the main
+                # part of speech first (maison noun «house» before the
+                # adjective «homemade», card #329), sense count misleads.
+                main_pos = next(iter(by_pos), None)
             # A homograph: another etymology inside a main usage (wind the
             # verb 纏繞), not a rare extra one (apply's adjective 「apple-y」).
             # It is also pronounced differently (wind /wɪnd/, /waɪnd/; bow,
@@ -977,11 +984,17 @@ class LocalCalc(SourceAdapter):
                                                        "sense_key": item["sense_key"]}, k,
                                        slot=k, confidence=0.9))
                     continue
-                use = _usage_pos(item.get("text", ""), forms, verb_only, ctx.lemma)
+                if ctx.target == "en":
+                    use = _usage_pos(item.get("text", ""), forms, verb_only, ctx.lemma)
+                else:
+                    use = _usage_pos_fr(item.get("text", ""), forms, verb_only)
                 if use == "other":
                     continue  # 「the wound」: a verb form used as a noun is another word
+                # A French sentence shares no words with an English gloss:
+                # its sense is the part of speech it shows (card #329).
                 words = (set(tokens(item.get("text", "")))
-                         - ENGLISH_STOPWORDS - SENSE_COUNT_WORDS - forms)
+                         - ENGLISH_STOPWORDS - SENSE_COUNT_WORDS - forms) \
+                    if ctx.target == "en" else set()
                 ranked = []
                 for s in senses:
                     if use and s.get("pos") and s.get("pos") != use and any(
@@ -1001,8 +1014,10 @@ class LocalCalc(SourceAdapter):
                                        slot=k, confidence=0.5))
                     continue
                 # A homograph (wind 風／纏繞, bow, tear: senses of another
-                # etymology) still needs that evidence.
-                if homograph:
+                # etymology) still needs that evidence. French has no gloss
+                # evidence: chat /ʃa/ «cat» (listed first) takes the
+                # sentence, not chat /tʃat/ «online chat» (card #329).
+                if homograph and ctx.target == "en":
                     continue
                 # Otherwise the main usage's first common sense: the part of
                 # speech the sentence shows, else the CEFR-J listed one.
@@ -1063,8 +1078,50 @@ def _verb_only_forms(ctx: Context) -> frozenset[str]:
         for i in ctx.items(k):
             form = (i.get("form") or "").lower()
             if form:
-                (verb if k.startswith("verb_") and k != "verb_base" else other).add(form)
+                # English verb_* and French fr_present_* / fr_past_participle.
+                is_verb = catalog.FORM_POS.get(k) == "verb" and k != "verb_base"
+                (verb if is_verb else other).add(form)
     return frozenset(verb - other)
+
+
+# French determiners before a noun: la maison, une maison, ma maison, à la
+# maison (card #329: a sentence's part of speech, like _usage_pos for English).
+FR_DETERMINERS = {"le", "la", "les", "l", "un", "une", "des", "du", "au", "aux", "ce", "cet",
+                  "cette", "ces", "mon", "ma", "mes", "ton", "ta", "tes", "son", "sa", "ses",
+                  "notre", "votre", "leur", "nos", "vos", "leurs", "quel", "quelle", "quels",
+                  "quelles", "chaque", "plusieurs", "quelques", "aucun", "aucune", "tout",
+                  "toute", "tous", "toutes"}
+# What may follow a noun phrase (la maison est…, à la maison avec…); «un grand
+# homme» continues with a noun, so grand is the adjective there.
+FR_PHRASE_END = {"est", "sont", "était", "étaient", "sera", "seront", "a", "ont", "avait",
+                 "de", "du", "des", "d", "à", "au", "aux", "en", "dans", "sur", "sous", "avec",
+                 "pour", "par", "sans", "chez", "vers", "entre", "que", "qu", "qui", "dont",
+                 "où", "et", "ou", "mais", "ne", "n", "se", "s", "y", "me", "te", "nous",
+                 "vous", "il", "elle", "ils", "elles", "je", "tu", "on", "ce", "c", "là",
+                 "ici", "aussi", "très", "trop", "plus", "moins", "encore", "toujours",
+                 "jamais", "déjà", "maintenant", "hier", "demain", "puis", "donc", "si"}
+
+
+def _usage_pos_fr(text: str, forms, verb_only) -> str | None:
+    """Which part of speech the French headword is in this sentence: "noun"
+    after a determiner when the noun phrase ends there (la maison est…,
+    une belle maison), "verb" for a form only the verb has (mangeons),
+    "other" when the word is not there, else None (unclear)."""
+    toks = [t.strip("'") for t in re.split(r"[^a-zà-ÿœæ']+", (text or "").lower())]
+    toks = [p for t in toks for p in t.split("'") if p]
+    if not any(t in forms for t in toks):
+        return "other"
+    for i, t in enumerate(toks):
+        if t not in forms:
+            continue
+        if t in verb_only:
+            return "verb"
+        near_det = i > 0 and (toks[i - 1] in FR_DETERMINERS
+                              or (i > 1 and toks[i - 2] in FR_DETERMINERS))
+        ends = i == len(toks) - 1 or toks[i + 1] in FR_PHRASE_END
+        if near_det and ends:
+            return "noun"
+    return None
 
 
 # Finite copulas only. Bare "be" is "must be shadow" (a noun), not "is tired".

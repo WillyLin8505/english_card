@@ -97,7 +97,7 @@ def build(db_path: Path) -> dict:
                     for lx in by_lex.values()],
     }
     con.close()
-    rank_usages(pack["lexemes"])
+    rank_usages(pack["lexemes"], language=pack["target_language"] or "en")
     assign_cards(pack["lexemes"], pack["target_language"] or "en")
     # Each spelling's main part of speech first: the app takes a word's first
     # entry when it doesn't know the part of speech (sky 天空, not the verb
@@ -235,7 +235,7 @@ def dictionary_pos(word: str) -> tuple[int, dict[str, int], dict[str, int]]:
 
 
 def rank_usages(lexemes: list[dict], cefr_by_pos: dict | None = None,
-                pos_votes=None) -> None:
+                pos_votes=None, language: str = "en") -> None:
     """Owner decision 2026-09-30 (問題回報 #16): until the usage layer
     exists, each part of speech of a spelling is its own entry; the main
     ones keep their CEFR, the rare ones are marked ``rare_usage`` with a
@@ -269,6 +269,10 @@ def rank_usages(lexemes: list[dict], cefr_by_pos: dict | None = None,
     from . import quality
     from .adapters.local import _family_cap, capped_frequency_level
 
+    if cefr_by_pos is None and language != "en":
+        # The CEFR-J list is English: a French "chat" / "grand" must not take
+        # the English word's level (card #325). Levels stay the stored ones.
+        cefr_by_pos = {}
     if cefr_by_pos is None:
         try:
             from .adapters.local import cefr_list
@@ -347,7 +351,7 @@ def rank_usages(lexemes: list[dict], cefr_by_pos: dict | None = None,
                     # far above the base's listed level (#214/#218); the
                     # app says it is an estimate either way (#139 decision:
                     # 標「估算」; #132 noodle).
-                    cap = _family_cap(word, "en")
+                    cap = _family_cap(word, language)
                     if cap is not None:
                         lx["cefr"] = _LEVELS[min(_LEVELS.index(lx["cefr"]), cap)]
                     lx["cefr_source"] = "frequency_estimate"
@@ -357,7 +361,7 @@ def rank_usages(lexemes: list[dict], cefr_by_pos: dict | None = None,
             if lx.get("zipf") is None:
                 continue
             share = share_of[id(lx)] / total
-            estimate = capped_frequency_level(word, lx["zipf"] + math.log10(share))
+            estimate = capped_frequency_level(word, lx["zipf"] + math.log10(share), language)
             floor = main.get("cefr") or lx.get("cefr")
             if floor in _LEVELS and _LEVELS.index(estimate) < _LEVELS.index(floor):
                 # A rarer usage is never shown easier than the word's main
@@ -365,7 +369,7 @@ def rank_usages(lexemes: list[dict], cefr_by_pos: dict | None = None,
                 # should never show as hard as that main usage (standing
                 # adj <= stand A2 + 1, even though standing noun 「social
                 # standing」 is listed C2, 問題回報 #218).
-                cap = _family_cap(word, "en")
+                cap = _family_cap(word, language)
                 estimate = floor if cap is None or _LEVELS.index(floor) <= cap else _LEVELS[cap]
             lx["cefr"], lx["cefr_source"] = estimate, "frequency_estimate"
 

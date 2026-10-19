@@ -105,11 +105,19 @@ CC BY-SA 的「相同方式分享」只及於該筆資料本身（詞條文字�
 
 ## 4. 這張卡改了什麼（程式）
 - `catalog.py`：`FORM_POS` 加法語詞形（變位→動詞；陰性／複數→名詞或形容詞），`MAY_BE_EMPTY` 加法語詞形，
-  `_KAIKKI_FR_TARGET` 加 hypernyms／hyponyms／homophones／accent_labels。
+  `_KAIKKI_FR_TARGET` 加 hypernyms／hyponyms／homophones／accent_labels；Kaikki 對 fr 宣告 `*_native`／`derived_native_meaning`
+  （英文釋義就是關係詞的英文詞義）；`local_calc` 對 fr 不宣告 stress（法語無詞重音 → 未設定，不是缺漏）。
+- `adapters/kaikki.py`：`_word_meaning` 在 target≠en、native=en 時回傳該詞第一個英文釋義（英文版 Wiktionary 的法語詞條沒有翻譯表）。
+- fr→en 的來源順位有 17 個欄位與目錄預設不同（cefr、ipa、audio、hypernyms…、所有 `*_native` 都缺來源），已用
+  `tools/card325_policy_restore.py` 重設為預設（備份 `raw-data/card325_policies_fr_en_backup.json`）。
 - `pipeline.not_applicable`：詞形欄位可對應多個詞性。
 - `adapters/local.py`：`local_calc` 的 CEFR 頻率估計支援 fr。`adapters/base.py`：法語例句也要 ≥ 3 個字。
 - `adapters/commons.py`：法語錄音檔名；`adapters/kaikki.py`：`Fr-Paris--`／`Fr-ca-` 口音。
 - `images.py`：`english_search_term`，非英文詞條以英文詞義搜圖。
+- `app_pack.rank_usages(..., language)`／`serve_app.live_pack`：非英文包不套英文 CEFR-J 詞表與英文字族上限
+  （否則法語 chat／grand 會拿到英文 chat／grand 的等級）。
+- 已知與英文一致的行為：低優先義項（colloquial、derogatory、第二詞源）不給母語釋義（`local.is_rare_sense`），
+  例句對應義項（`example_sense`）在法語只靠句長，不靠釋義字詞比對。
 - `qc.py`（backend）：母語非中文不做拉丁字母檢查；`tools/qc.py`：`--target/--native/--golden`。
 - 前端：`App.tsx` 後台語言切換＋`#/lang/<code>`；`Images.tsx`、`Jobs.tsx` 依語言對過濾；`styles.css`。
 - 工具：`tools/card325_fr_trial.py`（前景跑 fr→en 工作與圖片）、`tools/card325_backup.py`（pg_dump）。
@@ -118,4 +126,5 @@ CC BY-SA 的「相同方式分享」只及於該筆資料本身（詞條文字�
 ## 5. 下一張卡（法語基礎 2000–3000 字）要先做的事
 1. 決定 CEFR 來源（§2.3）。2. 建 Kaikki 法語本機索引，不要逐字打 kaikki.org。3. 重啟 API 與 workers 載入法語程式
 （workers 會把舊程式留在記憶體，問題回報 #285）。4. 圖片標籤綁定支援法語（§2.6）。5. 字表：以 wordfreq fr 前 3000
-（排除專有名詞、功能詞）或 Lexique 4 頻率建 `wordlists(language='fr')`。
+（排除專有名詞、功能詞）或 Lexique 4 頻率建 `wordlists(language='fr')`。6. 例句掛哪個詞條：法語例句對應義項只靠句長，
+試跑的 maison 20 句全掛到形容詞詞條、名詞 0 句，pack 因而把名詞排成罕用（CEFR 估成 B1）；要加「句子含該詞形 → 依主詞性」規則。

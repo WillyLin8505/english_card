@@ -230,12 +230,13 @@ class Kaikki(SourceAdapter):
         # (identical records) and records what it has cached.
         folder = http.CACHE / "kaikki"
         files = list(folder.glob("*.json")) if folder.exists() else []
-        indexed = config.KAIKKI_INDEX.is_file()
+        index = kaikki_index.index_path(language)
+        indexed = kaikki_index.wordlist_snapshot(language) is not None
         return {"version": "local SQLite index" if indexed else "per-headword JSONL (on demand)",
                 "url": f"https://kaikki.org/dictionary/{DICT_NAME.get(language, 'English')}/",
                 "path": str(folder), "row_count": len(files),
                 "details": {"mode": "local_index" if indexed else "on_demand",
-                            "index": str(config.KAIKKI_INDEX) if indexed else None,
+                            "index": str(index) if indexed else None,
                             "cached_headwords": len(files),
                             "note": "全量 JSONL 資料包 2–3 GB；逐字 JSONL 內容相同，隨查隨存。"}}
 

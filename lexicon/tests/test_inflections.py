@@ -30,6 +30,16 @@ DICTIONARY = {
               {"word": "lying", "pos": "adj",
                "senses": [{"glosses": ["Tending to tell lies, untruthful."]}]}],
     "apples": [{"word": "apples", "pos": "noun", "senses": [form("apple", "plural")]}],
+    # Kaikki copies the headword labels 「(auxiliary, dialectal or formal)」 onto
+    # every sense; the only form-of is obsolete (問題回報 #337).
+    "ought": [{"word": "ought", "pos": "verb", "senses": [form("owe", "obsolete", "past")]},
+              {"word": "ought", "pos": "verb",
+               "senses": [{"glosses": ["Indicating duty or obligation."],
+                           "tags": ["auxiliary", "dialectal", "formal"]}]}],
+    "holpen": [{"word": "holpen", "pos": "verb", "senses": [form("help", "archaic", "participle")]}],
+    "thy": [{"word": "thy", "pos": "det", "senses": [form("thou", "archaic", "possessive")]},
+            {"word": "thy", "pos": "det",
+             "senses": [{"glosses": ["Thine."], "tags": ["obsolete"]}]}],
 }
 
 
@@ -46,6 +56,14 @@ def test_a_form_without_a_meaning_of_its_own_names_its_words(monkeypatch):
     assert inflection_bases("children", "en") == ("child",)  # not the dialectal childer
     assert inflection_bases("lying", "en") == ()  # also 說謊的
     assert inflection_bases("apple", "en") == ()
+    inflection_bases.cache_clear()
+
+
+def test_an_obsolete_inflection_does_not_claim_a_word_of_its_own(monkeypatch):
+    _dictionary(monkeypatch)
+    assert inflection_bases("ought", "en") == ()  # a modal, not the old past of owe
+    assert inflection_bases("holpen", "en") == ("help",)  # nothing but the old form
+    assert inflection_bases("thy", "en") == ("thou",)  # its own sense is obsolete too
     inflection_bases.cache_clear()
 
 

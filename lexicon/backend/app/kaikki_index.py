@@ -13,21 +13,32 @@ from .text import normalize_lemma
 _local = threading.local()
 
 
+def index_path(language: str) -> Path:
+    """The index file for a language: `kaikki-index.<lang>.sqlite3` next to
+    the main index when it exists (French, card #329: 660 MB of its own,
+    built with tools/build_kaikki_index.py --output), else the main one
+    (English lives in `kaikki-index.sqlite3`)."""
+    own = config.KAIKKI_INDEX.with_name(f"kaikki-index.{language}.sqlite3")
+    return own if language != "en" and own.is_file() else config.KAIKKI_INDEX
+
+
 def _connection(path: Path) -> sqlite3.Connection | None:
     if not path.is_file():
         return None
-    current = getattr(_local, "kaikki", None)
-    if current and current[0] == path:
-        return current[1]
-    conn = sqlite3.connect(f"file:{path.as_posix()}?mode=ro", uri=True, timeout=5)
-    conn.execute("PRAGMA query_only=ON")
-    _local.kaikki = (path, conn)
+    pool = getattr(_local, "kaikki", None)
+    if pool is None:
+        pool = _local.kaikki = {}
+    conn = pool.get(path)
+    if conn is None:
+        conn = sqlite3.connect(f"file:{path.as_posix()}?mode=ro", uri=True, timeout=5)
+        conn.execute("PRAGMA query_only=ON")
+        pool[path] = conn
     return conn
 
 
 def lookup(language: str, word: str, path: Path | None = None) -> list[dict] | None:
     """Return None when no index is installed, and a list for an indexed lookup."""
-    conn = _connection(path or config.KAIKKI_INDEX)
+    conn = _connection(path or index_path(language))
     if conn is None:
         return None
     key = normalize_lemma(word, language)
@@ -53,7 +64,7 @@ def spelling_candidates(language: str, word: str, path: Path | None = None) -> l
     dictionary to an invented alphabet or loading every headword into RAM.
     The caller still verifies edit distance and ranks learning suitability.
     """
-    conn = _connection(path or config.KAIKKI_INDEX)
+    conn = _connection(path or index_path(language))
     if conn is None:
         return None
     try:
@@ -86,7 +97,7 @@ def spelling_candidates(language: str, word: str, path: Path | None = None) -> l
 
 
 def wordlist_snapshot(language: str, path: Path | None = None) -> dict | None:
-    path = path or config.KAIKKI_INDEX
+    path = path or index_path(language)
     conn = _connection(path)
     if conn is None:
         return None

@@ -206,6 +206,20 @@ def is_proper_noun(word: str, language: str) -> bool:
 MINOR_SENSE_TAGS = {"obsolete", "archaic", "dated", "rare", "slang", "humorous", "nonstandard",
                     "vulgar", "derogatory", "offensive", "euphemistic", "poetic", "dialectal",
                     "in-compounds", "alt-of", "abbreviation", "clipping", "misspelling"}
+# An inflection no longer in use (ought 「(obsolete) simple past of owe」)
+# doesn't claim a word that has meanings of its own, even minor-tagged ones:
+# Kaikki copies the headword line's labels onto every sense, so ought's
+# 「(auxiliary, dialectal or formal: without to)」 made all four modal meanings
+# 'dialectal' and the whole word a form of owe (問題回報 #337).
+STALE_FORM_TAGS = {"obsolete", "archaic"}
+# A minor sense that is itself out of use (thy 「(obsolete) thine」) or only
+# points at another spelling (hath 「alternative form of …」) doesn't save a
+# word from its old inflection: thy → thou, hath → have still hold.
+NOT_A_LIVE_SENSE = STALE_FORM_TAGS | {"dated", "alt-of", "abbreviation", "clipping", "misspelling"}
+
+
+def minor_sense(sense: dict) -> bool:
+    return bool(MINOR_SENSE_TAGS & set(sense.get("tags") or []))
 
 
 @lru_cache(maxsize=50_000)
@@ -213,19 +227,29 @@ def inflection_bases(word: str, language: str) -> tuple[str, ...]:
     """The words an inflected form belongs to, when the dictionary gives it
     no meaning of its own: runs → run, children → child, leaves → leaf and
     leave. Empty for a form that is also a word (lying 說謊的, spotted
-    有斑點的, tethered) and without the index (問題回報 #51)."""
+    有斑點的, tethered, ought) and without the index (問題回報 #51)."""
     from .. import kaikki_index
     w = word.strip().lower()
     entries = [e for e in kaikki_index.lookup(language, w) or []
                if str(e.get("word", "")).lower() == w and e.get("pos") != "name"]
     bases: list[str] = []
+    stale: list[str] = []
+    live = False
     for e in entries:
         for s in e.get("senses") or []:
+            tags = set(s.get("tags") or [])
             if s.get("form_of"):
-                bases += [str(f.get("word") or "") for f in s["form_of"]]
-            elif (s.get("glosses") or [""])[0].strip() \
-                    and not MINOR_SENSE_TAGS & set(s.get("tags") or []):
-                return ()  # a meaning of its own
+                words = [str(f.get("word") or "") for f in s["form_of"]]
+                if STALE_FORM_TAGS & tags:
+                    stale += words
+                else:
+                    bases += words
+            elif (s.get("glosses") or [""])[0].strip():
+                if not minor_sense(s):
+                    return ()  # a meaning of its own
+                live = live or not (tags & NOT_A_LIVE_SENSE)  # ought: minor-tagged but current
+    if not live:
+        bases += stale  # holpen → help, thy → thou: nothing current of their own
     # Lower case (apples → apple, not the brand Apple) and in use (children
     # → child, not the dialectal childer).
     return tuple(b for b in dict.fromkeys(bases)
@@ -266,8 +290,7 @@ def card_base(word: str, language: str) -> str | None:
 
     def own(e):
         return [s for s in e.get("senses") or [] if not s.get("form_of")
-                and (s.get("glosses") or [""])[0].strip()
-                and not MINOR_SENSE_TAGS & set(s.get("tags") or [])]
+                and (s.get("glosses") or [""])[0].strip() and not minor_sense(s)]
 
     first = next((e for e in entries if own(e)), None)
     if first is None:

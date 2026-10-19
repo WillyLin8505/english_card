@@ -1,0 +1,32 @@
+{
+ "version": "fr_v1",
+ "note": "Card #325 trial words (fr→en). CEFR = frequency estimate (no commercial French CEFR list yet, see docs/french_sources.md §2.3); extend with the 2000–3000 word card.",
+ "photos": [],
+ "words": [
+  {
+   "word": "chat",
+   "pos": "noun",
+   "cefr": "A2"
+  },
+  {
+   "word": "grand",
+   "pos": "adj",
+   "cefr": "A1"
+  },
+  {
+   "word": "maison",
+   "pos": "noun",
+   "cefr": "A1"
+  },
+  {
+   "word": "manger",
+   "pos": "verb",
+   "cefr": "A1"
+  },
+  {
+   "word": "pomme",
+   "pos": "noun",
+   "cefr": "B1"
+  }
+ ]
+}
