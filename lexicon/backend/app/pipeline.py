@@ -811,12 +811,14 @@ def process_word(s: Session, target: str, native: str, word: str, fields: list[s
         # naming slots that no longer exist (問題回報 #288).
         refresh_dependents(s, ctx, set(ordered), write)
     if write and mode != "validate_only" and materialize_after:
-        from .materialize import materialize
+        from .materialize import materialize, prefetch_word_audio
         # Parallel word shards may create the same related-word stubs. Keep the
-        # short projection phase serialized while all network/model work remains parallel.
+        # short projection phase serialized while all network/model work remains
+        # parallel: recordings are downloaded before the lock (問題回報 #330).
+        audio_fetched = prefetch_word_audio(s, target, lemma)
         if s.bind is not None and s.bind.dialect.name == "postgresql":
             s.execute(sql_text("SELECT pg_advisory_xact_lock(770000002)"))
-        materialize(s, target, lemma, word.strip())
+        materialize(s, target, lemma, word.strip(), audio_fetched=audio_fetched)
         if images_wanted:
             from . import images
             if images.enqueue_fetch(s, target, native, lemma, images_wanted) is not None:

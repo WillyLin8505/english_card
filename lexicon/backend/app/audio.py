@@ -112,8 +112,8 @@ def apply_meta(asset: m.AudioAsset, meta: dict) -> None:
         asset.error = None
 
 
-def refresh_meta(asset: m.AudioAsset, file_name: str | None = None) -> bool:
-    """Retry the Commons credit for one asset. True when the licence is now known."""
+def lookup_meta(asset: m.AudioAsset, file_name: str | None = None) -> dict:
+    """The Commons credit for one asset (network only, nothing written)."""
     if not file_name and asset.source_page and "File:" in asset.source_page:
         file_name = urllib.parse.unquote(asset.source_page.split("File:", 1)[1])
     meta = commons_meta(file_name, asset.source_url)
@@ -121,25 +121,31 @@ def refresh_meta(asset: m.AudioAsset, file_name: str | None = None) -> bool:
         by_url = commons_meta(None, asset.source_url)
         if not by_url.get("error"):
             meta = by_url
+    return meta
+
+
+def refresh_meta(asset: m.AudioAsset, file_name: str | None = None) -> bool:
+    """Retry the Commons credit for one asset. True when the licence is now known."""
+    meta = lookup_meta(asset, file_name)
     apply_meta(asset, meta)
     return not meta.get("error") and bool(asset.license)
 
 
-def ensure_audio(s: Session, language: str, item: dict, source: str = "kaikki") -> m.AudioAsset:
-    """The audio asset for a resolved audio item, downloading it once."""
+def _ready(asset: m.AudioAsset | None) -> bool:
+    return asset is not None and asset.status == "ready" and bool(asset.path) \
+        and (config.MEDIA / asset.path).exists()
+
+
+def _by_url(s: Session, url: str) -> m.AudioAsset | None:
+    return s.execute(select(m.AudioAsset).where(m.AudioAsset.source_url == url)).scalar_one_or_none()
+
+
+def fetch_audio(s: Session, language: str, item: dict) -> dict:
+    """The network half of ensure_audio: download, check, hash and store the
+    file, then look up its Commons credit.  Writes no rows (only reads), so it
+    can run before a caller takes a lock (問題回報 #330).
+    {"error": …} on failure, else the file's facts for _store."""
     url = item["url"]
-    asset = s.execute(select(m.AudioAsset).where(m.AudioAsset.source_url == url)).scalar_one_or_none()
-    if asset is not None and asset.status == "ready" and asset.path \
-            and (config.MEDIA / asset.path).exists():
-        if (asset.error or "").startswith(META_PENDING):
-            refresh_meta(asset, item.get("file"))
-            s.flush()
-        return asset
-    if asset is None:
-        asset = m.AudioAsset(language=language, source=source, source_url=url)
-        s.add(asset)
-    accent = (item.get("accent") or [None])[0]
-    asset.accent = accent
     folder = config.MEDIA / "audio" / language
     folder.mkdir(parents=True, exist_ok=True)
     tmp = folder / f".tmp-{uuid.uuid4().hex}.part"
@@ -158,30 +164,87 @@ def ensure_audio(s: Session, language: str, item: dict, source: str = "kaikki") 
             raise ValueError(f"不是音檔（Content-Type {ctype}）")
         mime, ext = kind
         digest = sha256_file(tmp)
-        same = s.execute(select(m.AudioAsset).where(m.AudioAsset.sha256 == digest,
-                                                    m.AudioAsset.id != (asset.id or -1))
-                         ).scalar_one_or_none()
-        if same is not None:
+        same = s.execute(select(m.AudioAsset.id).where(m.AudioAsset.sha256 == digest,
+                                                       m.AudioAsset.source_url != url)).first()
+        if same is not None:  # stored once already: no file, no credit lookup
             tmp.unlink(missing_ok=True)
-            if asset.id is not None:
-                s.delete(asset)
-            else:
-                s.expunge(asset)
-            s.flush()
-            return same
+            return {"sha256": digest}
         final = folder / f"{digest}.{ext}"
         os.replace(tmp, final)  # atomic on the same volume
-        meta = commons_meta(item.get("file"), url)
-        info = audio_info(final)
-        asset.mime, asset.size_bytes, asset.sha256 = mime, size, digest
-        asset.path = final.relative_to(config.MEDIA).as_posix()
-        asset.license = asset.attribution = asset.speaker = asset.source_page = None
-        asset.duration_s, asset.sample_rate, asset.channels = (
-            info.get("duration_s"), info.get("sample_rate"), info.get("channels"))
-        asset.status = "ready"
-        apply_meta(asset, meta)
+        return {"sha256": digest, "mime": mime, "size": size,
+                "path": final.relative_to(config.MEDIA).as_posix(),
+                "info": audio_info(final), "meta": commons_meta(item.get("file"), url)}
     except (http.SourceError, ValueError, OSError) as e:
         tmp.unlink(missing_ok=True)
-        asset.status, asset.error = "failed", str(e)
+        return {"error": str(e)}
+
+
+def prefetch_audio(s: Session, language: str, items: list[dict]) -> dict[str, dict]:
+    """Network work for these audio items, done ahead (url → fetch_audio /
+    {"credit": meta}).  Hand the result to ensure_audio(fetched=…) so the
+    write phase makes no network calls."""
+    out: dict[str, dict] = {}
+    for it in items:
+        url = it.get("url")
+        if not url or it.get("tts") or url in out:
+            continue
+        asset = _by_url(s, url)
+        if _ready(asset):
+            if (asset.error or "").startswith(META_PENDING):
+                out[url] = {"credit": lookup_meta(asset, it.get("file"))}
+            continue
+        out[url] = fetch_audio(s, language, it)
+    return out
+
+
+def ensure_audio(s: Session, language: str, item: dict, source: str = "kaikki",
+                 fetched: dict[str, dict] | None = None) -> m.AudioAsset:
+    """The audio asset for a resolved audio item, downloading it once.
+    With `fetched` (prefetch_audio) the download is already done."""
+    url = item["url"]
+    got = (fetched or {}).get(url)
+    asset = _by_url(s, url)
+    if _ready(asset):
+        if (asset.error or "").startswith(META_PENDING):
+            if got and "credit" in got:
+                apply_meta(asset, got["credit"])
+            else:
+                refresh_meta(asset, item.get("file"))
+            s.flush()
+        return asset
+    if got is None or "credit" in got:
+        got = fetch_audio(s, language, item)
+    if asset is None:
+        asset = m.AudioAsset(language=language, source=source, source_url=url)
+        s.add(asset)
+    asset.accent = (item.get("accent") or [None])[0]
+    if "error" in got:
+        asset.status, asset.error = "failed", got["error"]
+        s.flush()
+        return asset
+    same = s.execute(select(m.AudioAsset).where(m.AudioAsset.sha256 == got["sha256"],
+                                                m.AudioAsset.id != (asset.id or -1))
+                     ).scalar_one_or_none()
+    if same is not None:
+        if asset.id is not None:
+            s.delete(asset)
+        else:
+            s.expunge(asset)
+        s.flush()
+        return same
+    if "path" not in got:  # its twin was gone by now: fetch the file after all
+        got = fetch_audio(s, language, item)
+        if "error" in got or "path" not in got:
+            asset.status, asset.error = "failed", got.get("error") or "重複音檔已不存在"
+            s.flush()
+            return asset
+    info = got["info"]
+    asset.mime, asset.size_bytes, asset.sha256 = got["mime"], got["size"], got["sha256"]
+    asset.path = got["path"]
+    asset.license = asset.attribution = asset.speaker = asset.source_page = None
+    asset.duration_s, asset.sample_rate, asset.channels = (
+        info.get("duration_s"), info.get("sample_rate"), info.get("channels"))
+    asset.status = "ready"
+    apply_meta(asset, got["meta"])
     s.flush()
     return asset

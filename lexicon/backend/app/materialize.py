@@ -19,7 +19,7 @@ from sqlalchemy.orm import Session
 from . import catalog
 from . import models as m
 from . import pos_exclusions
-from .audio import ensure_audio
+from .audio import ensure_audio, prefetch_audio
 from .text import example_key, normalize_lemma, text_hash
 
 FORM_POS = {"verb_base": "verb", "verb_past": "verb", "verb_past_participle": "verb",
@@ -177,7 +177,18 @@ def _stub_excluded(s: Session, language: str, lemma: str, gone: set[str]) -> Non
         s.flush()
 
 
-def materialize(s: Session, target: str, lemma: str, display: str | None = None) -> list[int]:
+def prefetch_word_audio(s: Session, target: str, lemma: str) -> dict[str, dict]:
+    """Download the recordings materialize would store, before the caller
+    takes the projection lock (問題回報 #330). Pass the result to materialize."""
+    values = _values(s, target, lemma)
+    if not values:
+        return {}
+    u = lambda f: _union(values, f)  # noqa: E731
+    return prefetch_audio(s, target, [*u("audio"), *u("tts_fallback")])
+
+
+def materialize(s: Session, target: str, lemma: str, display: str | None = None,
+                audio_fetched: dict[str, dict] | None = None) -> list[int]:
     values = _values(s, target, lemma)
     gone = pos_exclusions.excluded(target, lemma)  # 問題回報 #284
     if not values:
@@ -259,7 +270,8 @@ def materialize(s: Session, target: str, lemma: str, display: str | None = None)
         if it.get("tts"):
             audio_assets.append((None, it))
         elif it.get("url"):
-            asset = ensure_audio(s, target, it, it.get("source", "kaikki"))
+            asset = ensure_audio(s, target, it, it.get("source", "kaikki"),
+                                 fetched=audio_fetched)
             if asset is not None and asset.status == "ready":
                 audio_assets.append((asset, it))
     for lx in lexemes.values():

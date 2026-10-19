@@ -91,3 +91,37 @@ def test_refresh_replaces_old_placeholder():
     assert audio_mod.needs_meta(a)
     audio_mod.apply_meta(a, {"page": "p", "error": "x", "retry": True})
     assert a.license is None and a.error == audio_mod.META_PENDING + "x"
+
+
+def test_prefetch_does_the_network_work_before_the_write_phase(session, tmp_path, monkeypatch):
+    """問題回報 #330: the projection lock must not wait on downloads. After
+    prefetch_audio, ensure_audio(fetched=…) makes no network call at all."""
+    monkeypatch.setattr(audio_mod.config, "MEDIA", tmp_path)
+    monkeypatch.setattr(http, "download", _fake_download({"https://a/p.mp3": MP3,
+                                                          "https://a/q.mp3": MP3 + b"q"}))
+    monkeypatch.setattr(audio_mod, "commons_meta", lambda f, u: {"license": "CC BY-SA 4.0",
+                                                                 "page": "p", "artist": "S"})
+    items = [{"url": "https://a/p.mp3", "accent": ["UK"]}, {"url": "https://a/q.mp3"},
+             {"tts": True, "url": "x"}, {"url": "https://a/p.mp3"}]
+    fetched = audio_mod.prefetch_audio(session, "en", items)
+    assert set(fetched) == {"https://a/p.mp3", "https://a/q.mp3"}
+    assert session.query(m.AudioAsset).count() == 0   # nothing written yet
+
+    def no_network(*a_, **k):
+        raise AssertionError("network inside the write phase")
+    monkeypatch.setattr(http, "download", no_network)
+    monkeypatch.setattr(audio_mod, "commons_meta", no_network)
+    a = audio_mod.ensure_audio(session, "en", items[0], fetched=fetched)
+    b = audio_mod.ensure_audio(session, "en", items[1], fetched=fetched)
+    assert (a.status, a.accent, a.license, b.status) == ("ready", "UK", "CC BY-SA 4.0", "ready")
+    assert (tmp_path / a.path).exists() and a.sha256 != b.sha256
+    # Already stored: prefetch has nothing to download.
+    assert audio_mod.prefetch_audio(session, "en", items) == {}
+
+
+def test_prefetch_failure_is_stored_as_failed(session, tmp_path, monkeypatch):
+    monkeypatch.setattr(audio_mod.config, "MEDIA", tmp_path)
+    monkeypatch.setattr(http, "download", _fake_download({"https://a/bad.mp3": b"<html>"}))
+    fetched = audio_mod.prefetch_audio(session, "en", [{"url": "https://a/bad.mp3"}])
+    a = audio_mod.ensure_audio(session, "en", {"url": "https://a/bad.mp3"}, fetched=fetched)
+    assert a.status == "failed" and "不是音檔" in a.error
