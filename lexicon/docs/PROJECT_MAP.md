@@ -43,7 +43,13 @@ Line counts as of 2026-10-17. **Big files: search first, then read a range** (se
   QC for the French pack: `python lexicon/tools/qc.py check --live --target fr --native en --out <file>` (golden `fr_v1`).
 - Picture labels by meaning (#347/#350): `serve_app.meaning_index` maps a picture's approved English words to French
   main senses via `images.english_label_terms`. Measure `card349_measure.py --target fr` / `card350_measure.py`;
-  missing French words: `card350_candidates.py` → `card350_wordlist.py` → `card350_import.py` (no audio field, ~1 s/word).
+  missing French words: `card350_candidates.py` → `card350_wordlist.py` → `card350_import.py` (no audio field, ~1 s/word;
+  `--words <json>` for another list, e.g. `card352_wordlist.py`'s).
+- Sense order (#352): `app/sense_order.py` — materialize() puts out-of-use senses (archaic, dated, historical…) last and,
+  for French, a domain sense (Kaikki topics) after the plain ones unless English Wiktionary lists the word under one of
+  the English word's first senses. Re-rank existing rows: `card352_reorder.py --lang fr|en --dry-run|--apply|--restore`;
+  measure: `card352_measure.py --lang fr`. `meaning_index` also labels pictures from deeper plain senses that English
+  Wiktionary confirms (motif 「pattern」).
 
 ## Data you should NOT read whole
 - `lexicon/logs/agents/` is ~700 MB: `*pack*.json` are 100+ MB app-pack dumps, `*.jsonl` up to 18 MB. Use Python/jq to

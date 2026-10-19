@@ -102,15 +102,28 @@ def catalog_snapshot(session, target):
     # picture shared by meaning (#336) is bound to one word only, so it also
     # names the target words whose main sense means one of the picture's
     # approved English words (#347: chat → cat, table → table).
-    sense_label, by_meaning = ({}, {}) if target == 'en' else meaning_index(session, target)
+    sense_label, by_meaning, rivals = ({}, {}, {}) if target == 'en' else meaning_index(session, target, True)
     if by_meaning:
         from sqlalchemy import text
-        for asset_id, english, pos in session.execute(text(
-                "SELECT si.image_asset_id, l.normalized, l.pos FROM sense_images si"
+        from app.sense_order import english_sense_translations
+        for asset_id, english, pos, bound_gloss in session.execute(text(
+                "SELECT si.image_asset_id, l.normalized, l.pos,"
+                " (SELECT d.text FROM definitions d WHERE d.sense_id = x.id AND d.language = 'en'"
+                "  ORDER BY d.id LIMIT 1) FROM sense_images si"
                 " JOIN senses x ON x.id = si.sense_id JOIN lexemes l ON l.id = x.lexeme_id"
                 " WHERE si.review_status = 'approved' AND l.language = 'en' AND l.status = 'full'"
                 " AND si.image_asset_id = ANY(:ids) ORDER BY si.id"), {'ids': list(tags)}):
             hit = by_meaning.get((english, pos))
+            # Several target words share this English word: the one English
+            # Wiktionary lists under the picture's own English sense wins
+            # (card #358: the plate photo is assiette, not plaque).
+            if hit and (english, pos) in rivals and bound_gloss:
+                on_sense = english_sense_translations(english, pos, target, bound_gloss)
+                if on_sense and hit[1] and not any(c[2] == hit[1] and c[3].lower() in on_sense
+                                                 for c in rivals[(english, pos)]):
+                    pick = next((c for c in rivals[(english, pos)] if c[3].lower() in on_sense), None)
+                    if pick and not any(t['lexeme_id'] == pick[1] for t in tags[asset_id]):
+                        hit = (pick[1], pick[2])
             if hit and hit[0] in full_words:
                 tags[asset_id].append({'lexeme_id': hit[0], 'sense_id': hit[1],
                                        'review_status': 'approved', 'origin': 'meaning'})
@@ -167,7 +180,7 @@ def catalog_snapshot(session, target):
     return words, images
 
 
-def meaning_index(session, target):
+def meaning_index(session, target, with_candidates=False):
     """English label words of the target language's main senses (#347).
 
     Returns ({sense_id: [english, ...]}, {(english, pos): (lexeme_id, sense_id)}):
@@ -175,34 +188,53 @@ def meaning_index(session, target):
     ombre 「shade, shadow」 names a picture's shadow too), the first being
     images.label_word's. When several words share one English word, the main
     sense wins, then an earlier item, then a meaning that is the word itself
-    (not a gloss), then the easier CEFR level, then the older entry."""
+    (not a gloss), then the easier CEFR level, then the older entry.
+
+    A deeper sense (ordinal >= PRIMARY_ORDINAL) counts too when it is a
+    plain current sense and English Wiktionary lists the word as a
+    translation of that English word (card #352: motif 「pattern」 is its
+    third sense, flèche 「spire」 its sixth; passer 「to sit (an exam)」 is
+    not a translation of sit)."""
     from sqlalchemy import text
     from app.images import english_label_terms
     from app.picture_need import PRIMARY_ORDINAL
+    from app.sense_order import english_translates_to, sense_rank
     rows = session.execute(text(
         "SELECT l.id, l.pos, l.cefr, sn.id, sn.ordinal,"
         " (SELECT t.text FROM sense_translations t WHERE t.sense_id = sn.id"
         "  AND t.native_language = 'en' ORDER BY t.id LIMIT 1),"
         " (SELECT d.text FROM definitions d WHERE d.sense_id = sn.id"
-        "  AND d.language = :lang ORDER BY d.id LIMIT 1)"
+        "  AND d.language = :lang ORDER BY d.id LIMIT 1),"
+        " l.lemma, sn.labels"
         " FROM lexemes l JOIN senses sn ON sn.lexeme_id = l.id"
-        " WHERE l.language = :lang AND l.status = 'full' AND sn.ordinal < :n"),
-        {'lang': target, 'n': PRIMARY_ORDINAL}).all()
+        " WHERE l.language = :lang AND l.status = 'full'"),
+        {'lang': target}).all()
     bands = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
-    sense_label, ranked = {}, {}
-    for lexeme_id, pos, cefr, sense_id, ordinal, meaning, gloss in rows:
+    sense_label, ranked, candidates = {}, {}, {}
+    for lexeme_id, pos, cefr, sense_id, ordinal, meaning, gloss, lemma, labels in rows:
         terms = english_label_terms(meaning, gloss)
         if not terms:
             continue
+        if ordinal >= PRIMARY_ORDINAL:
+            if target == 'en' or sense_rank({'pos': pos, 'gloss': gloss or '', 'labels': labels or []},
+                                            target, lemma) != 0:
+                continue
+            terms = [t for t in terms if english_translates_to(t, pos, target, lemma) is True]
+            if not terms:
+                continue
         sense_label[sense_id] = terms
         level = bands.index(cefr) if cefr in bands else len(bands)
         own = english_label_terms(meaning)
         for position, english in enumerate(terms):
             rank = (ordinal, position, english not in own, level, lexeme_id)
             key = (english, pos)
+            candidates.setdefault(key, []).append((rank, lexeme_id, sense_id, lemma))
             if key not in ranked or rank < ranked[key][0]:
                 ranked[key] = (rank, (lexeme_id, sense_id))
-    return sense_label, {key: hit for key, (_, hit) in ranked.items()}
+    by_meaning = {key: hit for key, (_, hit) in ranked.items()}
+    if with_candidates:
+        return sense_label, by_meaning, {k: sorted(v) for k, v in candidates.items() if len(v) > 1}
+    return sense_label, by_meaning
 
 
 _gzip_cache: dict[str, bytes] = {}

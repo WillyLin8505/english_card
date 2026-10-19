@@ -25,6 +25,7 @@ in the Kaikki index by gloss.
 """
 from __future__ import annotations
 
+import re
 from functools import lru_cache
 
 from .quality import LOW_SENSE_LABELS, NEVER_MAIN_LABELS, REGISTER_LABELS
@@ -34,6 +35,10 @@ OUT_OF_USE_LABELS = (LOW_SENSE_LABELS - REGISTER_LABELS) | NEVER_MAIN_LABELS | {
     "low_priority", "nonstandard", "dialectal", "misspelling", "alternative",
     "pronunciation-spelling", "eye-dialect"}
 DOMAIN_TAGS = {"figuratively", "figurative"}
+# Topics that do not make a sense a domain sense: body parts and food are
+# core learner vocabulary (poitrine 「chest」, foie 「liver」, recette 「recipe」).
+EVERYDAY_TOPICS = {"anatomy", "medicine", "sciences", "pathology", "food", "cooking",
+                   "lifestyle", "clothing", "fashion", "family"}
 
 
 def _labels(item: dict) -> set[str]:
@@ -100,19 +105,60 @@ def english_translates_to(english: str, pos: str, target: str, lemma: str) -> bo
     code = LANG_CODE.get(target, target)
     want = lemma.strip().lower()
     seen = False
+
+    def is_lemma(t) -> bool:
+        w = str(t.get("word") or "").strip().lower()
+        return w == want or (pos == "verb" and _strip_reflexive(w) == want)
+
     for e in kaikki_index.lookup("en", english) or []:
         if str(e.get("word", "")).lower() != english or _kaikki_pos(e) != pos:
             continue
-        trs = list(e.get("translations") or [])
-        for s in e.get("senses") or []:
-            trs += list(s.get("translations") or [])
-        for t in trs:
-            if t.get("lang_code") == code and t.get("word"):
-                seen = True
-                w = str(t["word"]).strip().lower()
-                if w == want or (pos == "verb" and _strip_reflexive(w) == want):
-                    return True
+        senses = e.get("senses") or []
+        # (translation, indexes of the English senses it belongs to)
+        attached = [(t, [i]) for i, s in enumerate(senses) for t in s.get("translations") or []]
+        attached += [(t, _attached_senses(t, senses)) for t in e.get("translations") or []]
+        for t, idx in attached:
+            if t.get("lang_code") != code or not t.get("word"):
+                continue
+            seen = True
+            if not is_lemma(t):
+                continue
+            # The word counts when English Wiktionary attaches it to one of
+            # the English word's first three senses or to a plain one — not
+            # only to a deep domain sense (trim lists assiette under 「the
+            # manner in which a vessel floats」, its 5th sense, nautical).
+            if idx is None or any(i < 3 or not senses[i].get("topics") for i in idx if i < len(senses)):
+                return True
     return False if seen else None
+
+
+_SENSE_STOP = frozenset({"a", "an", "the", "of", "in", "on", "or", "and", "to", "for", "by",
+                         "with", "which", "that", "is", "as", "etc", "see", "also"})
+
+
+def _attached_senses(t: dict, senses: list[dict]) -> list[int] | None:
+    """Indexes of the English senses an entry-level translation belongs
+    to: the senses whose gloss shares most words with the translation
+    table's title, else the highest Kaikki _dis1 weights; None when
+    unknown."""
+    title = {w for w in re.findall(r"[a-z']+", str(t.get("sense") or "").lower())} - _SENSE_STOP
+    if title and senses:
+        scores = []
+        for s in senses:
+            words = set(re.findall(r"[a-z']+", (s.get("glosses") or [""])[0].lower())) - _SENSE_STOP
+            scores.append(len(title & words))
+        best = max(scores)
+        if best >= max(2, len(title) // 2):
+            return [i for i, sc in enumerate(scores) if sc == best]
+    raw = str(t.get("_dis1") or "").split()
+    try:
+        weights = [int(x) for x in raw]
+    except ValueError:
+        return None
+    if not weights or max(weights) <= 0:
+        return None
+    top = max(weights)
+    return [i for i, w in enumerate(weights) if w == top]
 
 
 def confirmed_by_english(item: dict, target: str, lemma: str) -> bool | None:
@@ -162,11 +208,63 @@ def sense_rank(item: dict, target: str, lemma: str) -> int:
         return 0
     if topics is None:
         topics = topics_of(target, lemma, pos, gloss)
-    if (topics or _labels(item) & DOMAIN_TAGS) and confirmed_by_english(item, target, lemma) is False:
+    domain = set(topics or ()) - EVERYDAY_TOPICS or _labels(item) & DOMAIN_TAGS
+    if domain and confirmed_by_english(item, target, lemma) is False:
         return 1
     return 0
 
 
+# Card #357: plain senses of one word have no frequency data (Kaikki order is
+# arbitrary), so the senses a picture needs are curated by hand, most common
+# first: (lemma, pos) -> English gloss prefixes. Unlisted senses keep their order.
+PREFERRED_GLOSSES = {
+    ("fr", "motif", "noun"): ("motive", "pattern", "motif"),
+    ("fr", "bord", "noun"): ("border", "rim", "side"),
+    ("fr", "flèche", "noun"): ("arrow", "spire", "pointer"),
+}
+
+
+def _preferred_index(item: dict, target: str, lemma: str) -> int:
+    prefs = PREFERRED_GLOSSES.get((target, lemma, str(item.get("pos") or "")))
+    if not prefs:
+        return 0
+    gloss = str(item.get("gloss") or "").lower()
+    for i, p in enumerate(prefs):
+        if gloss.startswith(p):
+            return i
+    return len(prefs)
+
+
 def order_senses(items: list[dict], target: str, lemma: str) -> list[dict]:
     """The definition items in the order their senses get ordinals."""
-    return sorted(items, key=lambda it: sense_rank(it, target, lemma))
+    return sorted(items, key=lambda it: (sense_rank(it, target, lemma), _preferred_index(it, target, lemma)))
+
+def english_sense_translations(english: str, pos: str, target: str, gloss: str) -> set[str] | None:
+    """The ``target``-language words English Wiktionary lists under the one
+    English sense whose gloss is ``gloss`` (plate 「A slightly curved but
+    almost flat dish」 → assiette, plat). None when no sense matches the gloss
+    or the English word has no translation for that sense (card #358)."""
+    from . import kaikki_index
+    from .adapters.kaikki import LANG_CODE
+    code = LANG_CODE.get(target, target)
+    norm = lambda x: " ".join(re.findall(r"[a-z']+", str(x).lower()))
+    want = norm(gloss)
+    if not want:
+        return None
+    words: set[str] | None = None
+    for e in kaikki_index.lookup("en", english) or []:
+        if str(e.get("word", "")).lower() != english or _kaikki_pos(e) != pos:
+            continue
+        senses = e.get("senses") or []
+        hit = [i for i, s in enumerate(senses) if norm((s.get("glosses") or [""])[0]) == want]
+        if not hit:
+            continue
+        found = {str(t["word"]).strip().lower() for i in hit for t in senses[i].get("translations") or []
+                 if t.get("lang_code") == code and t.get("word")}
+        for t in e.get("translations") or []:
+            if t.get("lang_code") == code and t.get("word") and set(_attached_senses(t, senses) or ()) & set(hit):
+                found.add(str(t["word"]).strip().lower())
+        if found:
+            words = (words or set()) | found
+    return words
+
