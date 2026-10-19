@@ -120,3 +120,44 @@ def test_catalog_only_publishes_approved_formal_labels(session, fakes):
         expected_tag['cefr_source'] = expected_label['cefr_source'] = source
     assert image['tags'] == [expected_tag]
     assert image['labels'] == [expected_label]
+
+
+def test_shared_picture_names_target_words_by_meaning(session, fakes):
+    """#347: a French pack's shared English picture also names the French
+    words whose main sense means another approved English word on it."""
+    apple_data(fakes)
+    pipeline.process_word(session, 'en', 'zh-TW', 'apple', None, 'fill_missing')
+    session.flush()
+    apple = session.scalars(select(m.Sense)).first()
+    apple_pos = session.get(m.Lexeme, apple.lexeme_id).pos
+
+    def word(language, lemma, meaning=None, ordinal=0):
+        lexeme = m.Lexeme(language=language, lemma=lemma, normalized=lemma, pos=apple_pos, status='full')
+        session.add(lexeme)
+        session.flush()
+        sense = m.Sense(lexeme_id=lexeme.id, sense_key=f'{lemma}-{ordinal}', ordinal=ordinal)
+        session.add(sense)
+        session.flush()
+        if meaning:
+            session.add(m.SenseTranslation(sense_id=sense.id, native_language='en',
+                                           text=meaning, source='test'))
+        return lexeme, sense
+
+    cat_en = word('en', 'cat')[1]
+    pomme, pomme_sense = word('fr', 'pomme', 'apple (fruit)')
+    chat, chat_sense = word('fr', 'chat', 'cat (animal)')
+    word('fr', 'matou', 'cat', ordinal=1)  # a later sense loses to chat's main sense
+    asset = m.ImageAsset(source='test', source_image_id='shared-347', status='ready',
+                         path='images/test.jpg',
+                         tags=[{'word': 'apple', 'point': [0.4, 0.5]}, {'word': 'cat', 'point': [0.8, 0.7]}])
+    session.add(asset)
+    session.flush()
+    for sense_id in (apple.id, cat_en.id, pomme_sense.id):
+        session.add(m.SenseImage(sense_id=sense_id, image_asset_id=asset.id,
+                                 role='context', review_status='approved'))
+    session.flush()
+    image = serve_app.catalog_snapshot(session, 'fr')[1][0]
+    assert [(t['lexeme_id'], t['origin']) for t in image['tags']] == [
+        (pomme.id, 'binding'), (chat.id, 'meaning')]
+    assert [t['sense_id'] for t in image['tags']] == [pomme_sense.id, chat_sense.id]
+    assert [lb['point'] for lb in image['labels']] == [[0.4, 0.5], [0.8, 0.7]]

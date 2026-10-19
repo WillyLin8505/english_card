@@ -41,6 +41,9 @@ Line counts as of 2026-10-17. **Big files: search first, then read a range** (se
   Sources, licences and the design decision: `docs/french_sources.md`. Admin UI: sidebar 「法文詞庫」 or `#/lang/fr`.
 - Trial / rerun on a few words: `python lexicon/tools/card325_fr_trial.py run <words>` (foreground, fresh code);
   QC for the French pack: `python lexicon/tools/qc.py check --live --target fr --native en --out <file>` (golden `fr_v1`).
+- Picture labels by meaning (#347/#350): `serve_app.meaning_index` maps a picture's approved English words to French
+  main senses via `images.english_label_terms`. Measure `card349_measure.py --target fr` / `card350_measure.py`;
+  missing French words: `card350_candidates.py` → `card350_wordlist.py` → `card350_import.py` (no audio field, ~1 s/word).
 
 ## Data you should NOT read whole
 - `lexicon/logs/agents/` is ~700 MB: `*pack*.json` are 100+ MB app-pack dumps, `*.jsonl` up to 18 MB. Use Python/jq to

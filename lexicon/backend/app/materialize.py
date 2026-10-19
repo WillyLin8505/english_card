@@ -187,6 +187,38 @@ def prefetch_word_audio(s: Session, target: str, lemma: str) -> dict[str, dict]:
     return prefetch_audio(s, target, [*u("audio"), *u("tts_fallback")])
 
 
+def _ipa_key(it: dict) -> str:
+    return (it.get("ipa") or "").strip("/[] ")
+
+
+def ipa_by_pos(ipa_items: list) -> dict[str, set[str]]:
+    """{pos: {ipa, …}} of a headword's IPA items; pos-less items under ""."""
+    out: dict[str, set[str]] = {}
+    for it in ipa_items:
+        key = _ipa_key(it)
+        if key:
+            out.setdefault(it.get("pos") or "", set()).add(key)
+    return out
+
+
+def sibling_recordings(pos: str | None, audio_assets: list, ipa: dict[str, set[str]]) -> list:
+    """Card #329: a lexeme whose part of speech has no recording of its own
+    borrows a sibling's (être the noun: Kaikki lists the sound only under the
+    verb; 102 French / 2,096 English full lexemes). Only when the two parts of
+    speech share an IPA, so heteronyms (record /ˈɹɛkɚd/ vs /ɹɪˈkɔɹd/) and
+    lexemes without any IPA keep the system voice instead of a wrong recording."""
+    mine = (ipa.get(pos or "") or set()) | (ipa.get("") or set())
+    out = []
+    for asset, it in audio_assets:
+        other = it.get("pos")
+        if asset is None or not other or other == pos:
+            continue
+        theirs = (ipa.get(other) or set()) | (ipa.get("") or set())
+        if mine & theirs:
+            out.append((asset, it))
+    return out
+
+
 def materialize_pronunciations(s: Session, target: str, values: dict[str, dict[str, list]],
                                lexemes: dict[str, m.Lexeme],
                                audio_fetched: dict[str, dict] | None = None) -> None:
@@ -209,6 +241,7 @@ def materialize_pronunciations(s: Session, target: str, values: dict[str, dict[s
                                  fetched=audio_fetched)
             if asset is not None and asset.status == "ready":
                 audio_assets.append((asset, it))
+    ipa_sets = ipa_by_pos(u("ipa"))
     for lx in lexemes.values():
         n = 0
         for kind, f in (("ipa", "ipa"), ("phonemes", "phonemes"), ("syllables", "syllables"),
@@ -226,6 +259,9 @@ def materialize_pronunciations(s: Session, target: str, values: dict[str, dict[s
         first_audio = True
         matching_audio = [(asset, it) for asset, it in audio_assets
                           if not it.get("pos") or it.get("pos") == lx.pos]
+        if not any(asset is not None for asset, _ in matching_audio):
+            # Before the system voice, like a recording of its own would be.
+            matching_audio = sibling_recordings(lx.pos, audio_assets, ipa_sets) + matching_audio
         for asset, it in british_first(matching_audio,
                                        lambda r: r[0].accent if r[0] else "~", lambda r: ""):
             s.add(m.Pronunciation(

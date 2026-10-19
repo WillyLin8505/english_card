@@ -1152,14 +1152,38 @@ def english_search_term(meaning: str | None, gloss: str | None = None) -> str | 
     "to eat" → eat, "house; home" → house, "big, large" → big. None when
     nothing English and short enough is left."""
     for text_ in (meaning, gloss):
-        t = re.sub(r"\([^)]*\)|\[[^\]]*\]", " ", str(text_ or ""))
-        t = re.split(r"[;,，、/]", t)[0]
-        t = re.sub(r"^(to|a|an|the)\s+", "", t.strip().lower())
-        t = re.sub(r"[^a-z' -]", " ", t)
-        words = t.split()
-        if words and len(words) <= 3:
-            return " ".join(words)
+        items = _english_items(text_)
+        if items and items[0]:
+            return items[0]
     return None
+
+
+def english_label_terms(meaning: str | None, gloss: str | None = None) -> list[str]:
+    """Every English word the sense means, for matching a picture's English
+    labels to a non-English word (card #350): "shade, shadow" → [shade,
+    shadow], "tag, label" → [tag, label], "plate, dish (the crockery)" →
+    [plate, dish]. english_search_term's word comes first; items of the
+    native meaning before the gloss's; long items dropped. Empty when
+    nothing fits."""
+    out: list[str] = []
+    for text_ in (meaning, gloss):
+        for term in _english_items(text_):
+            if term and term not in out:
+                out.append(term)
+    return out
+
+
+def _english_items(text_: str | None) -> list[str | None]:
+    """The English items of a meaning in order; an item longer than three
+    words is None (so the first item still decides english_search_term)."""
+    t = re.sub(r"\([^)]*\)|\[[^\]]*\]", " ", str(text_ or ""))
+    items: list[str | None] = []
+    for part in re.split(r"[;,，、/]", t):
+        part = re.sub(r"^(to|a|an|the)\s+", "", part.strip().lower())
+        part = re.sub(r"[^a-z' -]", " ", part)
+        words = part.split()
+        items.append(" ".join(words) if words and len(words) <= 3 else None)
+    return items
 
 
 def auto_fetch(s, target, native, lemma, *, senses_per_lexeme=None, per_sense=3, sources=None,

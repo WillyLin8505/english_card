@@ -98,6 +98,22 @@ def catalog_snapshot(session, target):
             tags.setdefault(binding.image_asset_id, []).append({
                 'lexeme_id': word_id, 'sense_id': binding.sense_id,
                 'review_status': binding.review_status, 'origin': 'binding'})
+    # Vision labels are English words (#331). In another language's pack a
+    # picture shared by meaning (#336) is bound to one word only, so it also
+    # names the target words whose main sense means one of the picture's
+    # approved English words (#347: chat → cat, table → table).
+    sense_label, by_meaning = ({}, {}) if target == 'en' else meaning_index(session, target)
+    if by_meaning:
+        from sqlalchemy import text
+        for asset_id, english, pos in session.execute(text(
+                "SELECT si.image_asset_id, l.normalized, l.pos FROM sense_images si"
+                " JOIN senses x ON x.id = si.sense_id JOIN lexemes l ON l.id = x.lexeme_id"
+                " WHERE si.review_status = 'approved' AND l.language = 'en' AND l.status = 'full'"
+                " AND si.image_asset_id = ANY(:ids) ORDER BY si.id"), {'ids': list(tags)}):
+            hit = by_meaning.get((english, pos))
+            if hit and hit[0] in full_words:
+                tags[asset_id].append({'lexeme_id': hit[0], 'sense_id': hit[1],
+                                       'review_status': 'approved', 'origin': 'meaning'})
     # The vision model supplies positions, but only approved bindings decide
     # which labels are visible. This prevents foreign, rejected and unrelated
     # suggestions from appearing in the app.
@@ -126,7 +142,8 @@ def catalog_snapshot(session, target):
             # An explicit approved sense/image binding is sufficient to
             # publish the label. Vision coordinates improve the overlay but
             # must not erase a human-approved label when tagging is pending.
-            item = positioned.get(word.normalized) or {}
+            item = next((positioned[name] for name in sense_label.get(binding['sense_id'], [word.normalized])
+                         if name in positioned), {})
             seen_words.add(word.id)
             # Decision 2 / P2: the photo tag's level is the card's level
             # (lexicon), never the vision model's guess.
@@ -148,6 +165,44 @@ def catalog_snapshot(session, target):
                        'author': asset.author, 'attribution': asset.attribution,
                        'license': asset.license_code, 'source': asset.source})
     return words, images
+
+
+def meaning_index(session, target):
+    """English label words of the target language's main senses (#347).
+
+    Returns ({sense_id: [english, ...]}, {(english, pos): (lexeme_id, sense_id)}):
+    the English words are every item of the sense's English meaning (#350:
+    ombre 「shade, shadow」 names a picture's shadow too), the first being
+    images.label_word's. When several words share one English word, the main
+    sense wins, then an earlier item, then a meaning that is the word itself
+    (not a gloss), then the easier CEFR level, then the older entry."""
+    from sqlalchemy import text
+    from app.images import english_label_terms
+    from app.picture_need import PRIMARY_ORDINAL
+    rows = session.execute(text(
+        "SELECT l.id, l.pos, l.cefr, sn.id, sn.ordinal,"
+        " (SELECT t.text FROM sense_translations t WHERE t.sense_id = sn.id"
+        "  AND t.native_language = 'en' ORDER BY t.id LIMIT 1),"
+        " (SELECT d.text FROM definitions d WHERE d.sense_id = sn.id"
+        "  AND d.language = :lang ORDER BY d.id LIMIT 1)"
+        " FROM lexemes l JOIN senses sn ON sn.lexeme_id = l.id"
+        " WHERE l.language = :lang AND l.status = 'full' AND sn.ordinal < :n"),
+        {'lang': target, 'n': PRIMARY_ORDINAL}).all()
+    bands = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
+    sense_label, ranked = {}, {}
+    for lexeme_id, pos, cefr, sense_id, ordinal, meaning, gloss in rows:
+        terms = english_label_terms(meaning, gloss)
+        if not terms:
+            continue
+        sense_label[sense_id] = terms
+        level = bands.index(cefr) if cefr in bands else len(bands)
+        own = english_label_terms(meaning)
+        for position, english in enumerate(terms):
+            rank = (ordinal, position, english not in own, level, lexeme_id)
+            key = (english, pos)
+            if key not in ranked or rank < ranked[key][0]:
+                ranked[key] = (rank, (lexeme_id, sense_id))
+    return sense_label, {key: hit for key, (_, hit) in ranked.items()}
 
 
 _gzip_cache: dict[str, bytes] = {}
