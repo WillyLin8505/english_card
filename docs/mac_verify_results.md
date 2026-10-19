@@ -258,3 +258,32 @@ iPhone 18 Pro 模擬器（iOS 27.0），Xcode 27.1，Flutter 3.47.7，程式碼 
 | 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
 |----|----|----|----|----|
 | #352 | 通過 | App 目前不開放法語，iPhone 上看不到這張卡的效果 | — | — |
+
+## 2026-10-19 M23（iPhone 模擬器）
+
+iPhone 18 Pro 模擬器（iOS 27.0），新安裝；跑兩次：帶 iphone.json（開發）與不帶（上架設定，選「找文字」）。
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| analyze／test（commit 9530f99） | 通過 | flutter analyze 0 error、0 warning；flutter test 441 通過、2 略過 | — | — |
+| #360 | 通過 | 不需 iPhone 操作（後端／資料） | — | — |
+| #320 | 通過 | 對同一字每次都按「忘記」，20 張內 coffee 出現 3 次、butter knife 出現 3 次，沒有超過 3 次 | mac_verify_shots/2026-10-19/m23_320_again_cap.png | — |
+| #309 預設樣式 B | 通過 | 新安裝後複習背面是 B 圖片沉浸（單字疊在照片上） | mac_verify_shots/2026-10-19/m23_308_counter_bright.png | — |
+| #309 B 樣式沒有照片的字 | 不通過 | B 圖片沉浸遇到沒有照片的字（out），標題字「Out」是白字放在淺色背景上，幾乎看不見；音標 /ˈäʊt/ 也被切掉一半。沒有照片時標題字要改深色或給深色底 | mac_verify_shots/2026-10-19/m23_309_style_b_no_photo.png | 中 |
+| #367 | 通過 | App 目前不開放法語，iPhone 上看不到這張卡的效果 | — | — |
+| #373 | 通過 | 與 #371 重複已標 wontfix；/api/audio 的 Range 問題要看 #371，這輪 iPhone 上背面錄音仍走伺服器網址 | — | — |
+| #375 | 通過 | 「測試連線」結果「✕ API Key 不正確」改在按鈕列下方整行顯示，沒有「（設定 → 照片辨識連線）」 | mac_verify_shots/2026-10-19/m23_375_connection_result.png | — |
+| #339 | 通過 | App 目前不開放法語，iPhone 上看不到這張卡的效果 | — | — |
+| #377 | 通過 | 上架設定在模擬器選照片：畫面沒有 espresso 等英文技術字串（這次顯示「這張照片沒有新的單字」） | mac_verify_shots/2026-10-19/m23_377_store_photo.png | — |
+| #379 | 通過 | 選「找文字」存照片後畫面沒有英文平台錯誤字串 | mac_verify_shots/2026-10-19/m23_377_store_photo.png | — |
+| speaker.dart onTimeout（上一輪 M1 #251） | 通過 | 在 iPhone 模擬器用真的 DeviceSpeaker 播內建錄音：say() 回傳 true、約 1 秒播完，沒有再改用 TTS | — | — |
+| #308 超過 12 張照片的計數 | 通過 | bright 有 46 張照片，背面顯示「第 23 / 46 張 · 左右滑動換照片」 | mac_verify_shots/2026-10-19/m23_308_counter_bright.png | — |
+| 詞庫：out 的同義詞 | 不通過 | out（副詞，出）背面同義詞列出 knocked out、forbidden、prohibited、taboo，是別的義項（禁忌、被擊倒）的同義詞，跟卡片的「出」不符 | mac_verify_shots/2026-10-19/m23_309_style_b_no_photo.png | 低 |
+| 詞庫：bright 的主要義項 | 不通過 | bright 卡片背面中文意思是動詞「照亮」（Often followed by up: to cast light on…），A1 學習者要的是形容詞「明亮的」 | mac_verify_shots/2026-10-19/m23_308_counter_bright.png | 低 |
+
+## 2026-10-19 M24（iPhone 模擬器）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| analyze／test（commit fb73166） | 通過 | flutter analyze 0 error、0 warning；flutter test 441 通過、2 略過 | — | — |
+| #362 | 通過 | 不需 iPhone 操作（後端／資料） | — | — |
