@@ -1,6 +1,12 @@
 {
   "_note": "Card #381 (問題回報 #341, owner decision: 常用意思都要排在前面). Reviewed by Claude, A1/A2 learner meanings. Per 'lemma|pos': first = English gloss prefixes of the most common senses, in order (app.sense_order puts them first); zh = dictionary Chinese for a sense whose translation was missing, AI-only or misplaced, taken from ECDICT's entry for the word (source ecdict); zh_ai = Claude's translation where ECDICT has none (source ai_translate, marked AI); low = senses that must not be a card's meaning (quality/overrides.json low_priority_senses). Apply: python lexicon/tools/card381_common.py apply.",
   "words": {
+    "a|adv": {"first": ["across"]},
+    "a|noun": {"first": ["The name of the Latin script letter"]},
+    "cell|noun": {"first": ["A room in a prison or jail", "A device which stores electrical power"]},
+    "hate|noun": {"first": ["Hatred."]},
+    "moment|noun": {"low": ["A particular point of space"]},
+    "personal|adj": {"first": ["Of or pertaining to a particular person"]},
     "account|noun": {"zh": {"A registry of pecuniary transactions": "帳目、帳戶", "A statement in general of reasons": "解釋、理由"}},
     "agency|noun": {"first": ["An establishment engaged in doing business"],
                     "low": ["The capacity, condition, or state of acting", "The capacity of individuals to act"]},
