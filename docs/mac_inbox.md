@@ -194,7 +194,7 @@ commit `00b79b7`（Windows：flutter analyze 無 error、01:35 +433 ~1: All test
 - 卡 #333：問題回報 #330：擷取：materialize 持有全域鎖 770000002 時下載 Wikimedia 音檔，平行
   結果：已修好：音檔下載與 Commons 授權查詢移到鎖 770000002 之前，實測鎖內時間 apple 25.6s→0.2s、water 55.0s→0.2s；要等 owner 重啟 text worker 才會生效（問題回報 #285 的老問題）。
 
-## M14（2026-10-19 10:41）狀態：待做
+## M14（2026-10-19 10:41）狀態：完成
 commit `607a3ff`（Windows：flutter analyze 無 error、01:19 +433 ~1: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #334：問題回報 #331：法語：圖片 AI 標籤與自動核准只綁英文詞條，法語圖片無法被「標籤認出這個字」
   結果：全部完成：法語圖片改用義項英文詞義比對英文標籤（chat→cat），全庫 18 筆法語圖片綁定重判後 5 筆自動核准、0 筆待審；golden/QC 無退步。
