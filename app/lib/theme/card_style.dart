@@ -22,7 +22,7 @@ enum CardStyle {
       .firstWhere((s) => s.name == name, orElse: () => CardStyle.classic);
 
   String get label => switch (this) {
-        CardStyle.classic => '現行樣式',
+        CardStyle.classic => '經典',
         CardStyle.minimal => 'A 簡潔留白',
         CardStyle.immersive => 'B 圖片沉浸',
         CardStyle.playful => 'C 活潑遊戲',

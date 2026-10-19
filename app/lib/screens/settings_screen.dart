@@ -19,6 +19,7 @@ import '../theme/mobile_theme.dart';
 import '../widgets/mobile/common.dart';
 import '../widgets/mobile/dialogs.dart';
 import '../widgets/anki_export_button.dart';
+import '../widgets/card_style_picker.dart';
 import '../widgets/backup_buttons.dart';
 
 /// 設定 — the fifth tab. The Figma file has no frame for it, so it uses
@@ -280,7 +281,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               '累積足夠的使用紀錄後（至少 20 次），程度會依你的評分、左滑與轉盤慢慢自動調整，一次最多一級。'),
                         ],
                       ),
-                      _insightsCard(repo.insights()),
                       // The store build has no server to point at (問題回報
                       // #265): photos are recognized on the phone, so the
                       // address / key fields are a developer and web thing.
@@ -491,18 +491,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       _Card(
                         title: '卡片樣式',
                         children: [
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              for (final style in CardStyle.values)
-                                ChoiceChip(
-                                  label: UiText(style.label),
-                                  selected: style == settings.cardStyle,
-                                  onSelected: (_) =>
-                                      settings.cardStyle = style,
-                                ),
-                            ],
+                          CardStylePicker(
+                            selected: settings.cardStyle,
+                            onChanged: (style) => settings.cardStyle = style,
                           ),
                           _note('只改變複習卡片的外觀，內容和複習方式不變。'),
                         ],
@@ -522,6 +513,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                         ],
                       ),
+                      _insightsCard(repo.insights()),
                     ],
                   ),
                 ),
@@ -549,10 +541,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ],
       const SizedBox(height: 12),
       _label('CEFR 等級變化'),
-      if (ins.levelChanges.isEmpty)
+      // 問題回報 #345: clicking a level in 設定 is not progress.
+      if (ins.levelChanges.every((c) => c.source == 'user'))
         _note('目前程度還沒有變動。')
       else
-        for (final c in ins.levelChanges.reversed.take(5))
+        for (final c in ins.levelChanges.reversed
+            .where((c) => c.source != 'user')
+            .take(5))
           UiText(
               '${c.at.toLocal().toString().substring(0, 10)}　'
               '${cefrLevels[c.from]} → ${cefrLevels[c.to]}'

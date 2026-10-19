@@ -187,6 +187,58 @@ def prefetch_word_audio(s: Session, target: str, lemma: str) -> dict[str, dict]:
     return prefetch_audio(s, target, [*u("audio"), *u("tts_fallback")])
 
 
+def materialize_pronunciations(s: Session, target: str, values: dict[str, dict[str, list]],
+                               lexemes: dict[str, m.Lexeme],
+                               audio_fetched: dict[str, dict] | None = None) -> None:
+    """Rebuild the pronunciation rows (IPA, phonemes, syllables, stress, real
+    recordings, system voice) of the headword's lexemes from its field values.
+    The projection step materialize() runs; callable on its own when only the
+    recordings changed (card #345: refetch after the Commons breaker)."""
+    u = lambda f: _union(values, f)  # noqa: E731
+    ids = [lx.id for lx in lexemes.values()]
+    s.execute(delete(m.Pronunciation).where(m.Pronunciation.lexeme_id.in_(ids)))
+    audio_assets = []
+    # Keep the system voice as a playable fallback.  It is a separate policy
+    # field so it never masks a later real recording, but both become
+    # pronunciations in the app projection.
+    for it in [*u("audio"), *u("tts_fallback")]:
+        if it.get("tts"):
+            audio_assets.append((None, it))
+        elif it.get("url"):
+            asset = ensure_audio(s, target, it, it.get("source", "kaikki"),
+                                 fetched=audio_fetched)
+            if asset is not None and asset.status == "ready":
+                audio_assets.append((asset, it))
+    for lx in lexemes.values():
+        n = 0
+        for kind, f in (("ipa", "ipa"), ("phonemes", "phonemes"), ("syllables", "syllables"),
+                        ("stress", "stress")):
+            rows = [it for it in u(f) if not it.get("pos") or it.get("pos") == lx.pos]
+            rows = british_first(rows) if f == "ipa" else rows
+            for i, it in enumerate(rows):
+                val = (it.get("ipa") or it.get("phonemes")
+                       or "·".join(it.get("syllables") or []) or str(it.get("count") or "")
+                       or it.get("pattern") or str(it.get("primary_syllable") or ""))
+                s.add(m.Pronunciation(lexeme_id=lx.id, kind=kind, value=val,
+                                      accent=main_accent(it.get("accent")),
+                                      is_default=i == 0, source=it.get("source", ""), ordinal=n))
+                n += 1
+        first_audio = True
+        matching_audio = [(asset, it) for asset, it in audio_assets
+                          if not it.get("pos") or it.get("pos") == lx.pos]
+        for asset, it in british_first(matching_audio,
+                                       lambda r: r[0].accent if r[0] else "~", lambda r: ""):
+            s.add(m.Pronunciation(
+                lexeme_id=lx.id, kind="tts" if asset is None else "audio",
+                value=it.get("locale", "") if asset is None else "",
+                accent=(it.get("accent") or [None])[0] if asset is not None else None,
+                audio_asset_id=asset.id if asset is not None else None,
+                is_default=first_audio, source=it.get("source", ""),
+                ordinal=n))
+            first_audio = False
+            n += 1
+
+
 def materialize(s: Session, target: str, lemma: str, display: str | None = None,
                 audio_fetched: dict[str, dict] | None = None) -> list[int]:
     values = _values(s, target, lemma)
@@ -261,47 +313,7 @@ def materialize(s: Session, target: str, lemma: str, display: str | None = None,
                              normalized=normalize_lemma(form, target), source=it.get("source", "")))
 
     # Pronunciations (shared by every part of speech of the headword)
-    s.execute(delete(m.Pronunciation).where(m.Pronunciation.lexeme_id.in_(ids)))
-    audio_assets = []
-    # Keep the system voice as a playable fallback.  It is a separate policy
-    # field so it never masks a later real recording, but both become
-    # pronunciations in the app projection.
-    for it in [*u("audio"), *u("tts_fallback")]:
-        if it.get("tts"):
-            audio_assets.append((None, it))
-        elif it.get("url"):
-            asset = ensure_audio(s, target, it, it.get("source", "kaikki"),
-                                 fetched=audio_fetched)
-            if asset is not None and asset.status == "ready":
-                audio_assets.append((asset, it))
-    for lx in lexemes.values():
-        n = 0
-        for kind, f in (("ipa", "ipa"), ("phonemes", "phonemes"), ("syllables", "syllables"),
-                        ("stress", "stress")):
-            rows = [it for it in u(f) if not it.get("pos") or it.get("pos") == lx.pos]
-            rows = british_first(rows) if f == "ipa" else rows
-            for i, it in enumerate(rows):
-                val = (it.get("ipa") or it.get("phonemes")
-                       or "·".join(it.get("syllables") or []) or str(it.get("count") or "")
-                       or it.get("pattern") or str(it.get("primary_syllable") or ""))
-                s.add(m.Pronunciation(lexeme_id=lx.id, kind=kind, value=val,
-                                      accent=main_accent(it.get("accent")),
-                                      is_default=i == 0, source=it.get("source", ""), ordinal=n))
-                n += 1
-        first_audio = True
-        matching_audio = [(asset, it) for asset, it in audio_assets
-                          if not it.get("pos") or it.get("pos") == lx.pos]
-        for asset, it in british_first(matching_audio,
-                                       lambda r: r[0].accent if r[0] else "~", lambda r: ""):
-            s.add(m.Pronunciation(
-                lexeme_id=lx.id, kind="tts" if asset is None else "audio",
-                value=it.get("locale", "") if asset is None else "",
-                accent=(it.get("accent") or [None])[0] if asset is not None else None,
-                audio_asset_id=asset.id if asset is not None else None,
-                is_default=first_audio, source=it.get("source", ""),
-                ordinal=n))
-            first_audio = False
-            n += 1
+    materialize_pronunciations(s, target, values, lexemes, audio_fetched)
 
     # Relations and derived words, linked to real (or stub) lexemes
     derivation = {i["word"].lower(): i for i in u("derivation_relation") if i.get("word")}

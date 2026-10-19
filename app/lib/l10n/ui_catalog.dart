@@ -308,7 +308,7 @@ const uiCatalog = <String, (String, String)>{
   '繁體中文': ('Traditional Chinese', 'Chinois traditionnel'),
   '發音腔調': ('Pronunciation accent', 'Accent'),
   '卡片樣式': ('Card style', 'Style des cartes'),
-  '現行樣式': ('Current', 'Actuel'),
+  '經典': ('Classic', 'Classique'),
   'A 簡潔留白': ('A Clean', 'A Épuré'),
   'B 圖片沉浸': ('B Photo-first', 'B Immersif'),
   'C 活潑遊戲': ('C Playful', 'C Ludique'),

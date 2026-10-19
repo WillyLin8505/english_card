@@ -177,6 +177,14 @@ void main() {
       final hasResult = find.textContaining('✕').evaluate().isNotEmpty ||
           find.textContaining('✓').evaluate().isNotEmpty;
       if (!hasResult) f.add('連線失敗時沒有看到結果訊息', current);
+      // 第 3 輪：失敗訊息要是給人看的中文，不是伺服器的英文原文。
+      for (final t in tester.widgetList<Text>(find.textContaining('✕'))) {
+        final s = t.data ?? '';
+        if (RegExp(r'\b(failed|error|request|response)\b', caseSensitive: false)
+            .hasMatch(s)) {
+          f.add('連線失敗訊息是英文原文', '$current：$s');
+        }
+      }
     }
     checkNoNull();
 
@@ -265,18 +273,89 @@ void main() {
     }
     checkNoNull();
 
+    // --- 隱私：分享使用統計開關要真的改到 AppSettings（第 3 輪）---
+    current = '隱私開關';
+    final privacy = find.widgetWithText(Row, '分享使用統計');
+    final share = find.descendant(of: privacy, matching: find.byType(Switch));
+    if (share.evaluate().isEmpty) {
+      f.add('找不到分享使用統計開關', current);
+    } else {
+      final before = settings.shareUsageStats;
+      await tester.ensureVisible(share.first);
+      await tester.tap(share.first);
+      await tester.pumpAndSettle();
+      if (settings.shareUsageStats == before) {
+        f.add('分享使用統計開關沒有生效', current);
+      }
+      await tester.tap(share.first);
+      await tester.pumpAndSettle();
+    }
+
+    // --- 卡片樣式：每個樣式都點一次，要真的換掉 settings.cardStyle ---
+    current = '卡片樣式';
+    for (final style in [...CardStyle.values.skip(1), CardStyle.values.first]) {
+      final chip = find.widgetWithText(ChoiceChip, style.label);
+      if (chip.evaluate().isEmpty) {
+        f.add('找不到卡片樣式「${style.label}」', current);
+        continue;
+      }
+      await tester.ensureVisible(chip.first);
+      await tester.tap(chip.first);
+      await tester.pumpAndSettle();
+      if (settings.cardStyle != style) {
+        f.add('卡片樣式「${style.label}」沒有生效', current);
+      }
+    }
+
+    // --- 子頁面：隱私權政策、資料來源與授權要能開、能回來。卡片集頁用
+    // DeckLibrary.instance（Hive），這裡只看入口；頁面本身由
+    // card323_deck_library_test 測 ---
+    if (find.text('瀏覽並下載卡片集').evaluate().isEmpty) {
+      f.add('找不到「瀏覽並下載卡片集」', '卡片集');
+    }
+    for (final label in ['查看隱私權政策', '資料來源與授權']) {
+      current = '開「$label」';
+      final btn = find.text(label);
+      if (btn.evaluate().isEmpty) {
+        f.add('找不到「$label」', current);
+        continue;
+      }
+      await tester.ensureVisible(btn.first);
+      await tester.tap(btn.first);
+      await tester.pump(const Duration(milliseconds: 500));
+      checkNoNull();
+      final nav = tester.state<NavigatorState>(find.byType(Navigator).last);
+      if (!nav.canPop()) {
+        f.add('「$label」沒有開新頁', current);
+      } else {
+        nav.pop();
+        await tester.pumpAndSettle();
+      }
+      if (find.text('設定').evaluate().isEmpty) f.add('回不到設定頁', current);
+    }
+
+    // 學習者由上往下讀到的文字（易用性評估用）。
+    final screenText = <String>[
+      for (final t in tester.widgetList<Text>(find.byType(Text)))
+        if ((t.data ?? t.textSpan?.toPlainText() ?? '').trim().isNotEmpty)
+          (t.data ?? t.textSpan!.toPlainText()).trim(),
+    ];
+
     final report = {
       'learningLanguage': settings.learningLanguage,
       'nativeLanguage': settings.nativeLanguage,
       'englishAccent': settings.englishAccent,
       'desiredRetention': settings.desiredRetention,
       'cefr': repo.profile.cefr,
+      'cardStyle': settings.cardStyle.name,
+      'shareUsageStats': settings.shareUsageStats,
+      'screenText': screenText,
       'findings': f.toJson(),
     };
     File(Platform.environment['SIM_OUT'] ?? 'build/settings_simulation.json')
       ..createSync(recursive: true)
       ..writeAsStringSync(const JsonEncoder.withIndent(' ').convert(report));
     // ignore: avoid_print
-    print(const JsonEncoder.withIndent(' ').convert({...report, 'findings': f.counts}));
+    print(const JsonEncoder.withIndent(' ').convert({...report, 'screenText': screenText.length, 'findings': f.counts}));
   }, timeout: const Timeout(Duration(minutes: 10)));
 }

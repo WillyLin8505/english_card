@@ -65,18 +65,22 @@ void main() {
         f.add('沒有加入按鈕', current);
       } else {
         await tester.ensureVisible(button);
+        final before = {for (final e in repo.entries) e.id};
         await tester.tap(button);
         await tester.pump();
-        // One card per spelling: a part of speech with no Chinese (top intj)
-        // gets another one's from the pack, so judge the card, not the
-        // lexeme (round 76 false alarm).
-        final hasMeaning =
-            (repo.entryByWord(w.lemma)?.meaning ?? '').trim().isNotEmpty;
+        // Judge the card, not the lexeme: one card per spelling, so a part
+        // of speech with no Chinese (top intj) gets another one's, and a
+        // form folds into its base word's card (potted → pot, 問題回報 #51)
+        // — rounds 76–77 false alarms.
+        final card = repo.entryByWord(w.lemma) ??
+            repo.entries.where((e) => !before.contains(e.id)).firstOrNull;
+        final folded = card == null;
+        final hasMeaning = card?.meaning.trim().isNotEmpty ?? false;
         final saysWaiting = find.text('已加入我的單字本；中文意思補齊後會自動排進複習').evaluate().isNotEmpty;
         final saysAdded = find.text('已加入我的單字本與複習').evaluate().isNotEmpty;
         final saysDup = find.textContaining('已在我的單字本').evaluate().isNotEmpty ||
             find.textContaining('放回複習').evaluate().isNotEmpty;
-        if (saysDup) {
+        if (saysDup || folded) {
           // one card per spelling: another part of speech was added already
         } else if (hasMeaning && !saysAdded) {
           f.add('有中文的字沒有說已加入複習', current);

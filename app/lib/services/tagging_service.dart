@@ -117,7 +117,11 @@ String describeTaggingError(Object e, String url) {
       502 => 'AI 模型沒有回應，稍後會自動重試',
       451 => '這張照片含有成人內容，未加入相片冊',
       422 => '這張照片的辨識結果格式不完整，請稍後重新辨識',
-      _ => e.message,
+      // 卡 #228：其他 HTTP 錯誤不再把英文的伺服器原文給學習者看。
+      404 => '這個網址找不到 AI 辨識服務（$url），請確認網址',
+      503 => 'AI 辨識服務還在啟動，稍後會自動重試',
+      final int code => 'AI 辨識服務回應錯誤（代碼 $code），請確認網址或稍後再試',
+      null => e.message,
     };
   }
   if (e is http.ClientException) return '連不到 AI 辨識服務（$url），請確認服務已啟動';
@@ -319,7 +323,7 @@ class TaggingService implements PhotoTagger {
     try {
       return jsonDecode(utf8.decode(response.bodyBytes));
     } on FormatException {
-      throw TaggingApiException('response is not JSON: ${response.body}');
+      throw TaggingApiException('這個網址的回應不是 AI 辨識服務的格式，請確認網址');
     }
   }
 
