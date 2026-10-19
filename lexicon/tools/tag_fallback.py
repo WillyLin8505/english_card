@@ -123,7 +123,7 @@ def load_answers(folder: Path) -> dict[int, dict]:
 
 
 def apply_answers(folder: Path) -> dict:
-    stats = {'applied': 0, 'skipped_taken': 0, 'blocked': 0, 'errors': 0, 'tags': 0}
+    stats = {'applied': 0, 'skipped_taken': 0, 'deferred_adult': 0, 'errors': 0, 'tags': 0}
     for asset_id, res in sorted(load_answers(folder).items()):
         done_mark = folder / f'{asset_id}.applied'
         if done_mark.exists():
@@ -142,7 +142,9 @@ def apply_answers(folder: Path) -> dict:
                 print(f'  #{asset_id}: {type(e).__name__}: {e}'[:200])
                 s.rollback()
                 continue
-        stats['blocked' if got['blocked'] else 'applied'] += 1
+        stats['deferred_adult' if got['deferred'] else 'applied'] += 1
+        if got['deferred']:
+            vf.remember_deferred(asset_id)
         stats['tags'] += got['passed']
         done_mark.write_text(json.dumps(got, ensure_ascii=False), encoding='utf-8')
     return stats
@@ -189,8 +191,8 @@ def golden(folder: Path, out: Path | None, base_file: Path | None = None) -> dic
     with db.SessionLocal() as s:
         qwen = _tag_stats(s, have)
         try:
-            for i in have:
-                vf.label(s, s.get(m.ImageAsset, i), answers[i]['answers'], answers[i]['backend'])
+            deferred = [i for i in have if vf.label(s, s.get(m.ImageAsset, i), answers[i]['answers'],
+                                                    answers[i]['backend'])['deferred']]
             s.flush()
             fb = _tag_stats(s, have)
             _, catalog = serve_app.catalog_snapshot(s, 'en')
@@ -201,9 +203,13 @@ def golden(folder: Path, out: Path | None, base_file: Path | None = None) -> dic
     # without approved labels drops out, as it would in the app).
     after = {**base, 'catalog_images': [im for im in base.get('catalog_images') or [] if im['id'] not in set(have)]
              + [by_id[i] for i in have if i in by_id]}
+    # Same pack-time steps live_pack runs on catalog_images (serve_app.live_pack).
+    from app import quality
+    quality.fix_catalog_senses(after)
+    qc.strip_stubs(after)
     overlap = [len(qwen['words'][i] & fb['words'][i]) / max(1, len(qwen['words'][i] | fb['words'][i]))
                for i in have]
-    report = {'photos_compared': len(have), 'photos_in_golden': len(ids),
+    report = {'photos_compared': len(have), 'photos_in_golden': len(ids), 'deferred_to_qwen': deferred,
               'qwen': {'golden': _photo_stats(base, set(have)), **{k: v for k, v in qwen.items() if k != 'words'}},
               'fallback': {'golden': _photo_stats(after, set(have)), **{k: v for k, v in fb.items() if k != 'words'}},
               'label_overlap_jaccard': round(sum(overlap) / max(1, len(overlap)), 3)}
@@ -221,7 +227,7 @@ def run(cfg: dict, force: bool, batch: int | None, backend: str | None) -> dict:
         why = vf.qwen_busy(s, int(cfg.get('pending_threshold', 200)))
         if not why and not force:
             return {'skipped': 'Qwen 未暫停且佇列低於門檻'}
-        ids = vf.pick_batch(s, batch or int(cfg.get('batch', 20)))
+        ids = vf.pick_batch(s, batch or int(cfg.get('batch', 20)), vf.deferred_ids())
     if not ids:
         return {'skipped': '沒有待打標的照片', 'why': why}
     for name in ([backend] if backend else cfg.get('backends', ['codex'])):

@@ -57,7 +57,7 @@ proper names, no made-up multi-word descriptions.
 describes what is visible.
 - box: normalized 0-1 coordinates of the region showing it (whole photo = [0, 0, 1, 1]).
 - visualConfidence: 0-1, how sure you are the word is visibly correct for this photo; be strict.
-- "adult": true only if the photo shows explicit sexual content or nudity.{exclude}"""
+- "adult": true only for pornographic or explicit sexual content; artworks, statues, cherubs, swimwear and medical pictures are not adult.{exclude}"""
 
 
 # ---------------------------------------------------------------- queue / quota
@@ -117,6 +117,18 @@ def mark_limited(backend: str, text: str) -> datetime:
     FALLBACK_STATE.parent.mkdir(parents=True, exist_ok=True)
     FALLBACK_STATE.write_text(json.dumps(state, ensure_ascii=False, indent=1), encoding='utf-8')
     return until
+
+
+def deferred_ids() -> set[int]:
+    """Pictures the fallback left for Qwen (adult flag): not picked again."""
+    return {int(i) for i in _read_json(FALLBACK_STATE).get('deferred', [])}
+
+
+def remember_deferred(asset_id: int) -> None:
+    state = _read_json(FALLBACK_STATE)
+    state['deferred'] = sorted({*state.get('deferred', []), int(asset_id)})
+    FALLBACK_STATE.parent.mkdir(parents=True, exist_ok=True)
+    FALLBACK_STATE.write_text(json.dumps(state, ensure_ascii=False, indent=1), encoding='utf-8')
 
 
 class QuotaExhausted(RuntimeError):
@@ -253,14 +265,17 @@ def to_tag(candidate: dict, source: str) -> dict | None:
 def label(s, asset, answers: list[dict], backend: str) -> dict:
     """Run the normal label pipeline on the CLI's answers and settle the picture.
 
+    An answer flagged adult changes nothing (``deferred``): blocking stays Qwen's call.
+
     The visual confidence is the label's score (the CLI has no yes-token
     probability); the 80% rule, dictionary CEFR, band caps and sense binding are
     unchanged. Existing scored labels of a safe picture are kept, as in _tag_asset.
     """
     source = BACKENDS[backend]
     if any(a['payload'].get('adult') is True for a in answers):
-        images._block_unsafe(s, asset)
-        return {'blocked': True, 'passed': 0}
+        # Never block on the fallback's word (golden: a cherub clock was flagged);
+        # the picture stays as it is for Qwen's own safety check.
+        return {'deferred': 'adult', 'passed': len(asset.tags or [])}
     keep = images.own_words(s, asset)
     if asset.safety_status == 'safe':
         existing = [images.classify_tag_cefr(s, t) for t in (asset.tags or [])]
@@ -302,7 +317,7 @@ def label(s, asset, answers: list[dict], backend: str) -> dict:
     model = f'cefr+{source}:{answers[0].get("model", "default")}' if answers else f'cefr+{source}'
     images._settle(s, asset, passed, dropped, model, done=True)
     asset.tag_attempts, asset.tag_error, asset.tag_retry_at = 0, None, None
-    return {'blocked': False, 'passed': len(asset.tags or []),
+    return {'deferred': None, 'passed': len(asset.tags or []),
             'bands': images.cefr_counts(asset.tags or [])}
 
 

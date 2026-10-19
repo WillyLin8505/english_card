@@ -33,6 +33,12 @@ Line counts as of 2026-10-17. **Big files: search first, then read a range** (se
 - `lib/screens/` (photo_detail 605, word_detail 562, camera 550, word_database 529…), `lib/widgets/` (flashcard_back 409…), `lib/models/` (word_entry 648).
 - Tests `app/test/` (64 files; screens_test 622, session_test 523). Simulations `app/test/simulation/` + `run_round.py` → `app/build/rounds/<n>/summary.json`.
 
+## French lexicon (fr→en, card #325)
+- Same schema and field catalog as English; rows split by `target_language='fr'` / `native_language='en'`.
+  Sources, licences and the design decision: `docs/french_sources.md`. Admin UI: sidebar 「法文詞庫」 or `#/lang/fr`.
+- Trial / rerun on a few words: `python lexicon/tools/card325_fr_trial.py run <words>` (foreground, fresh code);
+  QC for the French pack: `python lexicon/tools/qc.py check --live --target fr --native en --out <file>` (golden `fr_v1`).
+
 ## Data you should NOT read whole
 - `lexicon/logs/agents/` is ~700 MB: `*pack*.json` are 100+ MB app-pack dumps, `*.jsonl` up to 18 MB. Use Python/jq to
   count or extract; read only `card<ID>.result.md` and the latest `card<ID>.prompt.txt` of a card.
