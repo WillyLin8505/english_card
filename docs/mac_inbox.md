@@ -188,3 +188,8 @@ commit `b91d857`（Windows：flutter analyze 無 error、01:21 +433 ~1: All test
   結果：完成：照片詳情可改字（重查詞庫，AI 原字保留並不再推薦）、刪除錯字（不算已學會）、自己加字（點照片放位置，沒放就不標）；新測試 7 項通過，全套 433 項通過（0 項真失敗）。
 - 卡 #331：問題回報 #328：[qc] photo_tag.lexeme_not_full：photo_tag.lexeme_no
   結果：全部完成：phototag.lexemenotfull 7 → 0。根因是 6 條「full 詞 → stub」的錯誤 redirect（faded→fade 名詞），已刪除並在 pack 端加防護；golden photo.tagvalid 0.9978 → 1.0。
+
+## M13（2026-10-19 10:23）狀態：待做
+commit `00b79b7`（Windows：flutter analyze 無 error、01:35 +433 ~1: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #333：問題回報 #330：擷取：materialize 持有全域鎖 770000002 時下載 Wikimedia 音檔，平行
+  結果：已修好：音檔下載與 Commons 授權查詢移到鎖 770000002 之前，實測鎖內時間 apple 25.6s→0.2s、water 55.0s→0.2s；要等 owner 重啟 text worker 才會生效（問題回報 #285 的老問題）。
