@@ -123,6 +123,15 @@ class LexiconPack extends ChangeNotifier {
       }
       if (e.card != null) _family.putIfAbsent(e.card!, () => []).add(e);
     }
+    // The spelling's main part of speech first, so a lookup without a part
+    // of speech gets sunshine 陽光, not the rare adjective (card #393).
+    for (final list in _byLemma.values) {
+      if (list.length < 2) continue;
+      final order = {for (var i = 0; i < list.length; i++) list[i]: i};
+      list.sort((a, b) => a.usageRank != b.usageRank
+          ? a.usageRank.compareTo(b.usageRank)
+          : order[a]!.compareTo(order[b]!));
+    }
     pointers.forEach((form, id) {
       final base = _byId[id];
       if (base == null || !base.full) return;
@@ -443,6 +452,9 @@ class LexEntry {
   /// frequency estimate and database lists put it after the main usages.
   final bool rareUsage;
 
+  /// 0 = the spelling's main part of speech (the pack ranks them).
+  final int usageRank;
+
   /// [cefr] is a frequency estimate, not from the CEFR-J / Octanove lists:
   /// shown as 「估算」 (問題回報 #139 decision, #132).
   final bool cefrEstimated;
@@ -481,6 +493,7 @@ class LexEntry {
     this.etymology,
     this.missing = const {},
     this.rareUsage = false,
+    this.usageRank = 0,
     this.cefrEstimated = false,
     this.card,
     this.cardForm = false,
@@ -707,6 +720,7 @@ class LexEntry {
           '${e.key}': '${e.value}',
       },
       rareUsage: j['rare_usage'] == true,
+      usageRank: (j['usage_rank'] as num?)?.toInt() ?? 0,
       pictureIds: j.containsKey('picture_ids')
           ? [
               for (final id in (j['picture_ids'] as List? ?? const []))

@@ -119,6 +119,31 @@ void main() {
   late LexiconPack pack;
   setUp(() => pack = LexiconPack()..loadJson(_pack()));
 
+  test('a lookup without a part of speech gets the main one (card #393)', () {
+    Map<String, dynamic> lex(int id, String pos, int rank) => {
+          'id': id,
+          'lemma': 'sunshine',
+          'normalized': 'sunshine',
+          'pos': pos,
+          'status': 'full',
+          'usage_rank': rank,
+          'rare_usage': rank > 0,
+          'senses': [
+            {'id': id * 10, 'definition': 'd', 'native': pos}
+          ],
+        };
+    final p = LexiconPack()
+      ..loadJson({
+        'schema_version': 3,
+        'target_language': 'en',
+        'native_language': 'zh-TW',
+        'created_at': '2026-09-25T07:15:00Z',
+        'lexemes': [lex(2, 'adj', 1), lex(1, 'noun', 0)],
+      });
+    expect(p.lookup('sunshine')!.entry.pos, 'noun');
+    expect(p.lookup('sunshine', pos: 'adj')!.entry.pos, 'adj');
+  });
+
   test('looks up lemma + part of speech, then lemma, then inflected forms', () {
     expect(pack.lookup('Apple', pos: 'noun')!.via, 'lemma+pos');
     expect(pack.lookup('apple', pos: 'verb')!.via, 'lemma');

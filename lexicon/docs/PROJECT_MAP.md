@@ -52,7 +52,9 @@ Line counts as of 2026-10-17. **Big files: search first, then read a range** (se
 - Sense order (#352): `app/sense_order.py` — materialize() puts out-of-use senses (archaic, dated, historical…) last and,
   for French, a domain sense (Kaikki topics) after the plain ones unless English Wiktionary lists the word under one of
   the English word's first senses. Re-rank existing rows: `card352_reorder.py --lang fr|en --dry-run|--apply|--restore`;
-  measure: `card352_measure.py --lang fr`. `meaning_index` also labels pictures from deeper plain senses that English
+  measure: `card352_measure.py --lang fr`. English (#381): reviewed common senses in `quality/en_common_senses.json`
+  → `card381_common.py check|apply|order|restore` (the pack's order is the definition items' order, not senses.ordinal);
+  card fronts: `card381_learner.py --cefr A1,A2 --out f.tsv` (port of learnerMeaning). `meaning_index` also labels pictures from deeper plain senses that English
   Wiktionary confirms (motif 「pattern」).
 - CEFR (#335, issue #332 decision C): `word_level(w, "fr")` = `backend/app/fr_cefr_reviewed.json` (法語基礎 3000 字,
   Claude-reviewed A1–B1, `cefr_source=ai_reviewed`, app shows 估算) else max(wordfreq, Lexique 3.83 lemma zipf in

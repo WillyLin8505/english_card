@@ -118,6 +118,11 @@ void main() {
     expect(tea([s(1, '舊', ['obsolete'])]).learnerMeaning, '舊', reason: 'only rare senses: still something');
     // Another etymology is a different word (sofa: 馬利帝國奴隸兵).
     expect(tea([s(1, '沙發'), s(2, '馬利帝國奴隸兵', ['etymology-2'])]).learnerMeaning, '沙發');
+    // 問題回報 #341: unless the lexicon put it first (date 日期 after 椰棗);
+    // baby talk is not a card's meaning (brown 拉屎).
+    expect(tea([s(1, '日期', ['etymology-2']), s(2, '椰棗')]).learnerMeaning, '日期；椰棗');
+    expect(tea([s(1, '變為棕色'), s(2, '拉屎', ['childish']), s(3, '煎至褐色')]).learnerMeaning,
+        '變為棕色；煎至褐色');
     // 問題回報 #118: a meaning spelling the answer is left out.
     expect(tea([s(1, '茶'), s(2, '喝 tea、午茶')]).learnerMeaning, '茶；午茶');
     expect(tea([s(1, 'T恤')]).learnerMeaning, 'T恤');

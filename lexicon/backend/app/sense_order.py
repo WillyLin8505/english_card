@@ -18,7 +18,10 @@ materialize() orders the definition items with order_senses():
      Wiktionary lists the headword as a translation of one of its English
      words (face 「face (anatomy)」 and pied 「foot」 stay first; assiette's
      seat / trim / basis go after dish and plate);
-  3. otherwise the dictionary's order (stable sort).
+  3. hand-reviewed common senses first (PREFERRED_GLOSSES for French,
+     quality/en_common_senses.json for English — card #381: train's first
+     Kaikki sense is a dress's train);
+  4. otherwise the dictionary's order (stable sort).
 
 Items carry their Kaikki topics since this card; older items are looked up
 in the Kaikki index by gloss.

@@ -584,10 +584,11 @@ class Kaikki(SourceAdapter):
             (≥ 90 of 100: moment's 「moment of force」 力矩 → the physics
             sense) — weaker weights are often wrong (first's 「numeral」
             第一 has 80 on 「of a first family」);
-          · the title names a domain or register the first sense does not
-            have (top 「gay sexual slang: …」 主動、一, hot 「slang: …」
-            帥呆了, point 「typography: unit of size」 磅): the table goes to
-            the sense _dis1 favours clearly, else nowhere.
+          · the title starts with a domain or register that some sense of
+            the entry is tagged with but the first sense is not (top 「gay
+            sexual slang: …」 主動、一, hot 「slang: …」 帥呆了, point
+            「typography: unit of size」 磅): the table goes to the sense
+            _dis1 favours clearly, else nowhere.
         Kaikki's placement of a table inside a sense is not used: with
         several entries in one part of speech it is often the wrong one
         (bad's 「unfavorable」 壞 sits under 「Good, superlative, excellent」)."""
