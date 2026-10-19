@@ -1130,7 +1130,7 @@ _COPULA = {"is", "are", "was", "were", "am", "seems", "seem", "seemed",
 _DEGREE = {"very", "really", "so", "too", "quite", "more", "most", "extremely"}
 _MODAL = {"will", "would", "can", "could", "should", "must", "may", "might", "did", "does"}
 # -ly nouns/verbs that are not manner adverbs.
-_NOT_LY_ADV = {"family", "apply", "reply", "supply", "imply", "only", "early", "fly", "belly"}
+_NOT_LY_ADV = {"family", "apply", "reply", "supply", "imply", "only", "fly", "belly"}
 # Not "al"/"ic": those endings are the noun itself (metal, traffic).
 _ADJ_SUFFIX = ("ed", "ful", "ous", "ive", "less", "able", "ible", "ish")
 # Closed-class adverbs that sit between a subject and a verb. They are not
@@ -1373,6 +1373,8 @@ def matches_lexeme_pos(text: str, lemma: str, pos: str, forms, verb_only=()) -> 
         # compound, so every sentence was rejected (卡 #166).
         joined = " " + " ".join(tokens(text)) + " "
         return any(" " + " ".join(tokens(f)) + " " in joined for f in bag if " " in f)
+    if pos in _CLOSED_CLASS:
+        return lemma.lower() in _CLOSED_CLASS[pos] and _closed_class_frame(text, lemma.lower(), pos)
     only = frozenset(str(f).lower() for f in verb_only if _form_of_lemma(lemma, str(f))
                      and str(f).lower() != lemma.lower())
     use = _usage_pos(text, bag, only, lemma)
@@ -1388,6 +1390,59 @@ def matches_lexeme_pos(text: str, lemma: str, pos: str, forms, verb_only=()) -> 
         return _adv_frame(text, lemma, bag)
     if pos == "phrase" and " " in lemma:
         return lemma.lower() in " ".join(tokens(text))
+    return False
+
+
+# Function words (問題回報 #351). Their dictionary pos is often odd (swim/pron,
+# do/num), so only these lemmas are ever accepted, each as the listed pos.
+_CLOSED_CLASS = {
+    "prep": {"about", "along", "as", "near", "on", "except", "despite", "without", "per"},
+    "conj": {"before", "until", "since", "till", "however", "yet", "where", "how", "because",
+             "but", "whether"},
+    "det": {"both", "each", "little", "much", "no", "one", "which", "certain", "enough", "per",
+            "neither", "another", "any", "this", "many"},
+    "pron": {"another", "any", "each", "either", "he", "i", "little", "many", "much", "one",
+             "there", "this", "what", "where", "who", "anywhere", "plenty", "neither", "both"},
+}
+_SUBJECT = {"i", "you", "he", "she", "it", "we", "they", "there", "this", "that"}
+_OBJECT = {"me", "him", "her", "us", "them", "you", "it"}
+
+
+def _closed_class_frame(text: str, lemma: str, pos: str) -> bool:
+    """The function word is used as ``pos``: a preposition has an object,
+    a conjunction a clause, a determiner a noun after it, a pronoun stands
+    alone (``Each of us``, ``I like this``). Any such use in the sentence counts."""
+    raw, toks = _word_tokens(text, {lemma})
+    for i, t in enumerate(toks):
+        if t != lemma:
+            continue
+        nxt = toks[i + 1] if i + 1 < len(toks) else ""
+        prev = toks[i - 1] if i else ""
+        stops = bool(re.search(r"[,.;:!?)\"”]$", raw[i]))
+        if pos == "prep":
+            if not nxt or stops or prev in {"to"} or (i and raw[i - 1].endswith(",")):
+                continue
+            if nxt in DETERMINERS or nxt in _OBJECT or nxt[:1].isdigit() or (
+                    nxt not in PHRASE_END and not _lexical_verb(nxt) and nxt not in _SUBJECT):
+                return True
+        elif pos == "conj":
+            if not nxt or stops:
+                continue
+            if nxt in DETERMINERS or nxt in _SUBJECT or nxt in {"to"} or raw[i + 1][:1].isupper():
+                return True
+        elif pos == "det":
+            if not nxt or stops or prev in {"the", "of"} or nxt in PHRASE_END or nxt in _FINITE_VERB:
+                continue
+            if (nxt in _COPULA or _lexical_verb(nxt) or nxt in _OBJECT or nxt in DETERMINERS
+                    or nxt in _SUBJECT or nxt in {"about", "around", "more", "too", "so"}):
+                continue
+            return True
+        elif pos == "pron":
+            if lemma in {"he", "i", "there", "what", "when", "where", "who", "which", "anywhere"}:
+                return True
+            if (not nxt or stops or nxt in PHRASE_END or nxt in _FINITE_VERB or nxt in _COPULA
+                    or nxt in {"of", "and", "or"}):
+                return True
     return False
 
 
@@ -1409,7 +1464,9 @@ def _verb_frame(text: str, lemma: str, verb_only: frozenset) -> bool:
     for i, t in enumerate(toks):
         if t != lemma.lower() or i == 0:
             continue
-        if toks[i - 1] in _MODAL:
+        # "did everything", "did good": did/does right before the word is the
+        # main verb, so the word is its object (問題回報 #351).
+        if toks[i - 1] in _MODAL - {"did", "does"}:
             nxt = toks[i + 1] if i + 1 < len(toks) else ""
             # "Can orange trees" — the modal belongs to the later verb.
             if nxt in DETERMINERS or nxt in {"it", "him", "her", "them", "me", "us", "you"} or not nxt:
@@ -1510,10 +1567,15 @@ def _adv_frame(text: str, lemma: str, forms) -> bool:
     """
     w = lemma.lower()
     bag = _form_bag(forms)
-    if w in _NOT_LY_ADV or _noun_frame(text, bag | {w}):
+    if w in _NOT_LY_ADV or w in DETERMINERS or _noun_frame(text, bag | {w}):
         return False
     _raw, toks = _word_tokens(text, bag | {w})
     if w.endswith("ly"):
+        if "adj" in _listed_poses(w):
+            # "such a lovely day", "an early bird": the adjective (問題回報 #351).
+            for i, t in enumerate(toks):
+                if t in bag | {w} and (i and toks[i - 1] in DETERMINERS):
+                    return False
         return w in toks or any(t in bag and t.endswith("ly") for t in toks)
     if w not in toks and not any(t in bag for t in toks):
         return False
@@ -1539,6 +1601,8 @@ def _adv_frame(text: str, lemma: str, forms) -> bool:
         if ((listed_adv or not poses) and "adj" not in poses and "noun" not in poses
                 and not nxt and _lexical_verb(prev) and prev not in _COPULA):
             return True
+        if listed_adv and nxt in PHRASE_END and prev not in _COPULA and _lexical_verb(prev):
+            return True  # "She arrived early to help us."
         if (listed_adv and not nxt and prev not in _COPULA and not _lexical_verb(prev)):
             # "is not flat" / "basically flat" are adjectives. "o'clock sharp" is not.
             prev2 = toks[i - 2] if i > 1 else ""

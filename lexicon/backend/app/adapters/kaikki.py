@@ -331,6 +331,9 @@ class Kaikki(SourceAdapter):
                     labels.append(f"etymology-{ety}")
                 add({"pos": s["pos"], "gloss": s["gloss"], "sense_key": s["sense_key"],
                      "labels": labels,
+                     # Domain of the sense (nautical, finance …): sense_order
+                     # puts an unconfirmed domain sense after the plain ones.
+                     "topics": sorted(set(s["sense"].get("topics") or [])),
                      "gloss_language": gloss_lang},
                     s["sense_key"], slot=s["pos"], conf=0.5 if s["low"] or s["form_of"] else 1.0,
                     rid=s["sense"].get("senseid", [""])[0] if isinstance(

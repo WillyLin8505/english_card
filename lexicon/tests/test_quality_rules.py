@@ -141,3 +141,13 @@ def test_apply_pack_orders_and_attaches():
     assert "rejected" in hinged["examples"][-1]["quality_flags"]
     assert hinged["senses"][1]["priority"] == "low"
     assert chen["quality_flags"] == {"person_name": "人名"}
+
+def test_bind_example_sense_ex_reports_evidence():
+    senses = [{"sense_key": "main", "gloss": "touch with lips", "ordinal": 0},
+              {"sense_key": "candy", "gloss": "chocolate candy", "ordinal": 1}]
+    assert q.bind_example_sense_ex("She ate chocolate.", senses)[1] == "gloss"
+    assert q.bind_example_sense_ex("The door is red.", senses) == (None, "none")
+    sense, evidence = q.bind_example_sense_ex("The door is red.", senses, fallback_main=True)
+    assert (sense["sense_key"], evidence) == ("main", "fallback")
+    only = [{"sense_key": "main", "gloss": "x", "ordinal": 0}]
+    assert q.bind_example_sense_ex("The door is red.", only)[1] == "single"

@@ -1182,8 +1182,25 @@ def _english_items(text_: str | None) -> list[str | None]:
         part = re.sub(r"^(to|a|an|the)\s+", "", part.strip().lower())
         part = re.sub(r"[^a-z' -]", " ", part)
         words = part.split()
+        if len(words) > 3:
+            # 「skin of a person or animal」 → skin (card #352); a generic
+            # head (kind of…, part of the…) is no label.
+            head = _GLOSS_HEAD.match(" ".join(words))
+            words = [head.group(1)] if head and head.group(1) not in _GENERIC_HEADS else []
         items.append(" ".join(words) if words and len(words) <= 3 else None)
     return items
+
+
+_GLOSS_HEAD = re.compile(r"^([a-z][a-z'-]+) (?:of|in|on) (?:a|an|the|some|one's|any) ")
+_GENERIC_HEADS = frozenset({
+    "kind", "type", "sort", "act", "part", "piece", "set", "member", "person", "one",
+    "state", "quality", "manner", "way", "means", "thing", "something", "someone",
+    "action", "process", "result", "number", "amount", "group", "form", "unit",
+    "place", "time", "period", "name", "title", "term", "word", "use", "fact",
+    "condition", "degree", "measure", "lack", "absence", "presence", "series",
+    "collection", "portion", "section", "end", "side", "top", "bottom", "front",
+    "back", "edge", "sound", "feeling", "sense", "idea", "point", "position",
+})
 
 
 def auto_fetch(s, target, native, lemma, *, senses_per_lexeme=None, per_sense=3, sources=None,

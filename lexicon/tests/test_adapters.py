@@ -871,3 +871,17 @@ def test_compound_noun_is_matched_as_a_phrase():
                               {"spiral arms"}, frozenset())
     assert not matches_lexeme_pos("The bed was raised off the floor.", "raised bed", "noun",
                                   {"raised bed"}, frozenset())
+
+
+def test_closed_class_and_adverb_frames_issue_351():
+    from app.adapters.local import matches_lexeme_pos as m
+    assert m("We talked about the plan.", "about", "prep", {"about"}, ())
+    assert not m("It is up to you", "up", "prep", {"up"}, ())
+    assert m("He left before the bus came.", "before", "conj", {"before"}, ())
+    assert m("Each of us went.", "each", "pron", {"each"}, ())
+    assert not m("He swam.", "swim", "pron", {"swim"}, ())
+    assert m("She arrived early to help us.", "early", "adv", {"early"}, ())
+    assert not m("They did good.", "good", "verb", {"good"}, ())
+    assert not m("You did everything the doctor asked.", "everything", "verb", {"everything"}, ())
+    assert not m("Nara is a quiet city.", "a", "adv", {"a"}, ())
+    assert not m("I like such a lovely day.", "lovely", "adv", {"lovely"}, ())

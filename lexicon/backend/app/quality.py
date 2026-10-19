@@ -457,13 +457,15 @@ def example_preference(text: str) -> tuple:
     return (odd, abs(len(text or "") - 45))
 
 
-def bind_example_sense(text: str, senses: list[dict], forms: list[str] = (),
-                       fallback_main: bool = False) -> dict | None:
-    """The sense this sentence illustrates, or None when it matches none.
+def bind_example_sense_ex(text: str, senses: list[dict], forms: list[str] = (),
+                          fallback_main: bool = False) -> tuple[dict | None, str]:
+    """Like ``bind_example_sense`` but also says how the sense was chosen.
 
-    ``senses`` items need ``sense_key`` and may carry ``gloss``, ``labels``
-    and ``ordinal``. A gloss that shares a content word wins; a single
-    ordinary sense is used when the sentence does not point at a rival.
+    Evidence is ``gloss`` (a gloss shares a content word and beats every
+    rival), ``single`` (only one ordinary sense), ``fallback`` (the first
+    sense taken only because ``fallback_main`` allowed it: nothing in the
+    sentence points at it, so a different sense may be the real one; card
+    #354) or ``none`` (no sense bound).
     """
     skip = _STOP | {f.lower() for f in forms} | {w.lower() for w in (forms or [])}
     words = set(re.findall(r"[a-z]+", (text or "").lower())) - skip
@@ -475,17 +477,28 @@ def bind_example_sense(text: str, senses: list[dict], forms: list[str] = (),
         gloss = set(re.findall(r"[a-z]+", (sense.get("gloss") or "").lower())) - skip
         ranked.append((len(words & gloss), sense.get("ordinal") or 0, sense))
     if not ranked:
-        return None
+        return None, "none"
     ranked.sort(key=lambda row: (-row[0], row[1]))
     score, _ordinal, best = ranked[0]
     second = ranked[1][0] if len(ranked) > 1 else -1
     if score >= 1 and score > second:
-        return best
+        return best, "gloss"
     if len(ranked) == 1:
-        return best
+        return best, "single"
     if fallback_main:
-        return best
-    return None
+        return best, "fallback"
+    return None, "none"
+
+
+def bind_example_sense(text: str, senses: list[dict], forms: list[str] = (),
+                       fallback_main: bool = False) -> dict | None:
+    """The sense this sentence illustrates, or None when it matches none.
+
+    ``senses`` items need ``sense_key`` and may carry ``gloss``, ``labels``
+    and ``ordinal``. A gloss that shares a content word wins; a single
+    ordinary sense is used when the sentence does not point at a rival.
+    """
+    return bind_example_sense_ex(text, senses, forms, fallback_main)[0]
 
 
 def rank_examples(examples: list[dict], lemma: str, pos: str, forms: list[str],

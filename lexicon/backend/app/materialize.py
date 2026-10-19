@@ -20,6 +20,7 @@ from . import catalog
 from . import models as m
 from . import pos_exclusions
 from .audio import ensure_audio, prefetch_audio
+from .sense_order import order_senses
 from .text import example_key, normalize_lemma, text_hash
 
 FORM_POS = {"verb_base": "verb", "verb_past": "verb", "verb_past_participle": "verb",
@@ -285,6 +286,9 @@ def materialize(s: Session, target: str, lemma: str, display: str | None = None,
     display = display or lemma
     u = lambda f: _union(values, f)  # noqa: E731
     senses_items = [i for i in u("definition") if i.get("pos") not in gone]
+    # Current senses first, then unconfirmed domain senses, then out-of-use
+    # ones (card #352: Kaikki's order is historical, assiette's plate was 5th).
+    senses_items = order_senses(senses_items, target, lemma)
     poses = poses_with_senses([i for i in u("pos") if i.get("pos") not in gone], senses_items)
     if not poses:
         _stub_excluded(s, target, lemma, gone)
