@@ -292,7 +292,7 @@ commit `997d444`（Windows：flutter analyze 無 error、01:36 +443 ~1: All test
 - 卡 #389：問題回報 #382：[Mac] 2026-10-19 M23（iPhone 模擬器）：通過
   結果：問題回報 #382（#375 測試連線結果列）：Windows 重現為已修好；補一支 401 迴歸測試，全部通過，analyze 無問題。
 
-## M28（2026-10-20 00:17）狀態：待做
+## M28（2026-10-20 00:17）狀態：完成
 commit `751d1c5`（Windows：flutter analyze 無 error、01:12 +444 ~1: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #392：問題回報 #386：[Mac] 2026-10-20 M25（iPhone 模擬器）：iPhone 首次同步詞庫的下載量
   結果：全部完成：無需改碼——/api/lexicon 已支援 gzip／ETag 304／since 差異；Mac 量到的 238 MB 是「未帶 Accept-Encoding」的未壓縮大小，實際壓縮傳輸約 34 MB。
