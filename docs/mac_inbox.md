@@ -172,3 +172,10 @@ commit `7dac0dc`（Windows：flutter analyze 無 error、01:14 +433 ~1: All test
 commit `33f8830`（Windows：flutter analyze 無 error、01:16 +433 ~1: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #328：問題回報 #325：匯出到 Anki（.apkg 或 CSV），讓重度學習者在其他 App 複習
   結果：全部完成：設定 → 資料新增「匯出到 Anki」（全部單字／某相簿／某卡片集），產生 zip（Anki 文字匯入檔＋照片／音檔＋匯入說明），14 欄含授權欄；新測試 5 個全過，整套 flutter test 433 全過。
+
+## M11（2026-10-19 09:59）狀態：待做
+commit `807790b`（Windows：flutter analyze 無 error、01:06 +433 ~1: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #332：問題回報 #329：卡片集圖片沒有作者／授權資料：App 內長按與匯出到 Anki 都無法標示該張圖的授權
+  結果：已修：卡片集圖片現在帶作者／授權／來源頁，App 存進 Photo.credit，長按與 Anki 匯出都會顯示（無資料才退回舊文字）。；- 測試：flutter analyze 0 問題；card323/card328 Flutter 測試全過；testcard323decks.py 4 全過（更新斷言）。
+- 卡 #307：問題回報 #302：資料庫相片冊：搜尋命中其他程度的標籤，結果與詳情卻看不到搜尋的字
+  結果：完成：資料庫相片冊照 owner 決定（保留跨程度搜尋＋標出搜尋字和它的程度＋可以切換）修好；全庫 4,269 張圖中 4,166 張、1,867 個字會被影響（每組「搜尋字×程度×圖片」的結果有 79,860/106,579 組看不到搜尋字），現在都會出現提示。
