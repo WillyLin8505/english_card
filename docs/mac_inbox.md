@@ -402,3 +402,8 @@ commit `d1926720`（Windows：flutter analyze 無 error、02:57 +500 ~2: All tes
 commit `87a10604`（Windows：flutter analyze 無 error、02:13 +500 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #405：問題回報 #404：App 只呈現「我擁有的」：單字本與資料庫合成一個、相片冊與資料庫相片冊合成一個，相片冊分類自動產生
   結果：全部完成：App 正式版只剩一個單字本（只列我擁有的字）、一個相片冊（我的照片＋下載的圖片集），相片冊分類依內容自動分群、可改名；card405 測試 4/4、widgettest 4/4 通過。
+
+## M32（2026-10-20 22:49）狀態：待做
+commit `537f8f39`（Windows：flutter analyze 無 error、02:59 +500 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #406：問題回報 #405：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
+  結果：全部完成：flutter test 全過（+500 ~2 -0，分兩批跑：206+294），flutter analyze 0 個 error（22:30）；修了 8 個失敗（3 個程式錯、5 個過時測試），沒有刪任何測試。
