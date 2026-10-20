@@ -347,3 +347,10 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，等伺服器詞庫同步進
 | 可能的閃退原因：相簿原圖沒有縮小 | 不通過 | lib/screens/photo_picker_screen.dart:49 最近照片用 entity.originBytes，拿到的是原始檔（HEIC 或 48MP 原圖，解碼後可達 190 MB 以上）直接存檔、顯示、送 Apple Vision；「從相簿選擇」那條路有 maxWidth: 2048，最近照片這條沒有。建議用 entity.thumbnailDataWithSize 或先縮到長邊 2048 再處理 | — | 中 |
 | 最近照片第一次讀取很慢 | 不通過 | 相簿只有 19 張，第一次打開「選擇照片」要 14 秒才讀完最近照片（之後 1 秒）；期間只看到「正在讀取最近照片…」 | — | 低 |
 | 請 owner 提供實機 log | 未做 | 需要實機才知道真正原因。請把 iPhone 接到 Mac 跑 `flutter run -d <iPhone>`（我這邊可以收 log），或在 iPhone「設定 → 隱私權與安全性 → 分析與改進 → 分析資料」找 Runner-*.ips 或 JetsamEvent-*.ips 傳過來 | — | — |
+
+## 2026-10-20 M-ASK2 實機（iPhone 12）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| 實機重現：選照片辨識 | 不通過 | iPhone 12（iOS 26.6.1，4 GB 記憶體），commit bb73d03 的 profile 版、上架設定（不帶 iphone.json，本機 Apple Vision）。owner 在拍照／選照片→辨識時 App 消失；devicectl 回報「App terminated due to signal 9」。iPhone 上的 JetsamEvent-2026-10-20-081153：largestProcess = Runner，Runner reason = per-process-limit，被砍時常駐記憶體 2,098 MB（lifetimeMax 134,272 頁 × 16 KB），狀態 active／frontmost；同時 cameracaptured 用 258 MB。也就是 App 超過 iOS 單一 App 約 2 GB 的記憶體上限，被系統強制結束，沒有一般的 crash 報告 | — | 高 |
+| 記憶體可能的來源 | 不通過 | 對照 Mac 上的觀察：App 沙盒的 dictionary_cache_v1.hive 有 261 MB，整包讀進 Dart 字串會變成好幾倍大（10/19 在模擬器上就曾在讀這個 Hive 檔時 Out of Memory）；最近照片用 entity.originBytes 原圖（48MP／HEIC）沒有縮小，再交給相機與 Apple Vision。建議：1) 詞庫不要整包載入記憶體（分片、索引或 SQLite）；2) 選到的照片先縮到長邊 2048 再存檔、顯示、辨識；3) 用 Xcode Instruments 的 Allocations 在 iPhone 上量一次啟動後與辨識時的記憶體 | — | 高 |
