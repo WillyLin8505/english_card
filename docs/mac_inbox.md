@@ -417,3 +417,8 @@ commit `eaf80463`（Windows：flutter analyze 無 error、03:31 +501 ~2: All tes
 commit `c3d9cba4`（Windows：flutter analyze 無 error、02:08 +501 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #450：問題回報 #444：[Mac] 2026-10-20 M30、M31、M32（iPhone 模擬器＋iPhone：照片詳
   結果：照片詳情的單字難度在畫面上重複顯示兩次（#444）：已在 Windows 用 widget 測試重現，改掉重複的那一行；全部 Flutter 測試 501 通過，沒有資料改動。
+
+## M35（2026-10-21 04:36）狀態：待做
+commit `f1ae8c21`（Windows：flutter analyze 無 error、01:30 +501 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #228：模擬使用者・設定
+  結果：第 6 輪：1/1 通過（runround 第 102 輪，findings 0）；第 101 輪 findings 1 是模擬過時（#431 已拿掉衝突的語言選項），已改模擬；新問題 無；UX 建議 #446 #447。
