@@ -408,12 +408,12 @@ commit `537f8f39`（Windows：flutter analyze 無 error、02:59 +500 ~2: All tes
 - 卡 #406：問題回報 #405：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
   結果：全部完成：flutter test 全過（+500 ~2 -0，分兩批跑：206+294），flutter analyze 0 個 error（22:30）；修了 8 個失敗（3 個程式錯、5 個過時測試），沒有刪任何測試。
 
-## M33（2026-10-20 23:16）狀態：待做
+## M33（2026-10-20 23:16）狀態：完成
 commit `eaf80463`（Windows：flutter analyze 無 error、03:31 +501 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #449：問題回報 #443：[Mac] 2026-10-20 M30、M31、M32（iPhone 模擬器＋iPhone：ana
   結果：根因已修：SQLite 詞庫套用 delta 後，LexSource 的 senses／details 快取沒清，已讀過的字仍回舊意思（蘋果一）；card428 測試 4/4 通過。
 
-## M34（2026-10-20 23:30）狀態：待做
+## M34（2026-10-20 23:30）狀態：完成
 commit `c3d9cba4`（Windows：flutter analyze 無 error、02:08 +501 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #450：問題回報 #444：[Mac] 2026-10-20 M30、M31、M32（iPhone 模擬器＋iPhone：照片詳
   結果：照片詳情的單字難度在畫面上重複顯示兩次（#444）：已在 Windows 用 widget 測試重現，改掉重複的那一行；全部 Flutter 測試 501 通過，沒有資料改動。
