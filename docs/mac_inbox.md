@@ -422,3 +422,10 @@ commit `c3d9cba4`（Windows：flutter analyze 無 error、02:08 +501 ~2: All tes
 commit `f1ae8c21`（Windows：flutter analyze 無 error、01:30 +501 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #228：模擬使用者・設定
   結果：第 6 輪：1/1 通過（runround 第 102 輪，findings 0）；第 101 輪 findings 1 是模擬過時（#431 已拿掉衝突的語言選項），已改模擬；新問題 無；UX 建議 #446 #447。
+
+## M36（2026-10-21 04:41）狀態：待做
+commit `a21e869c`（Windows：flutter analyze 無 error、01:38 +501 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #452：問題回報 #446：設定還有「卡片集・瀏覽並下載卡片集」入口，跟 #440 相片冊的「＋ 下載相片冊」重複，而且名字不一
+  結果：全部完成：設定頁「卡片集／瀏覽並下載卡片集」區已移除（入口只剩相片冊格線最後一格「＋ 下載相片冊」）。；- flutter analyze 無問題；card446/card323 測試已跑。
+- 卡 #453：問題回報 #447：設定的「卡片樣式」排在資料、隱私、卡片集之後，常改的顯示選項被很少用的備份與隱私擋在前面
+  結果：完成：設定頁「卡片樣式」已從第 6 順位移到第 3（單字難度之後），相關 widget 測試全過（38 通過、0 失敗）。
