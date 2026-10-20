@@ -54,7 +54,8 @@ class Paused(OSError):
 class Gate:
     def __init__(self, name: str, hosts: tuple[str, ...], *, min_interval: float,
                  max_interval: float, backoff_base: float, backoff_max: float,
-                 calm_s: float, skip_when_paused: bool = False, state: Path | None = None):
+                 calm_s: float, skip_when_paused: bool = False, state: Path | None = None,
+                 timeout_limit: int = 3, timeout_pause: float = 600.0):
         self.name = name
         self.hosts = tuple(h.lower() for h in hosts)
         self.min_interval = min_interval
@@ -63,6 +64,8 @@ class Gate:
         self.backoff_max = backoff_max
         self.calm_s = calm_s
         self.skip_when_paused = skip_when_paused
+        self.timeout_limit = timeout_limit
+        self.timeout_pause = timeout_pause
         self.state = state or STATE_DIR / f"{name}_gate.json"
 
     # -- hosts -----------------------------------------------------------
@@ -157,12 +160,33 @@ class Gate:
             st["limited_total"] = int(st.get("limited_total", 0)) + 1
             return float(st["pause_until"]) - now
 
-    def succeeded(self) -> None:
-        """A good reply: after a calm period, take one strike back."""
+    def timed_out(self) -> float:
+        """A request that timed out (問題回報 #395): after `timeout_limit`
+        in a row (any process) a skip-when-paused source is paused for
+        `timeout_pause` seconds, so tasks skip it instead of each waiting out
+        its own 25 s timeouts.  Returns the pause started (0 for none)."""
+        if not self.skip_when_paused or not self.timeout_limit:
+            return 0.0
         now = time.time()
-        if not self._read().get("strikes"):  # the common case: no lock, no write
+        with self._locked() as st:
+            st["timeouts"] = int(st.get("timeouts", 0)) + 1
+            st["timeouts_total"] = int(st.get("timeouts_total", 0)) + 1
+            if st["timeouts"] < self.timeout_limit:
+                return 0.0
+            st["timeouts"] = 0
+            st["pause_until"] = max(float(st.get("pause_until", 0)), now + self.timeout_pause)
+            st["timeout_pauses"] = int(st.get("timeout_pauses", 0)) + 1
+            return float(st["pause_until"]) - now
+
+    def succeeded(self) -> None:
+        """A good reply: clears the timeout run and, after a calm period,
+        takes one strike back."""
+        now = time.time()
+        st0 = self._read()
+        if not st0.get("strikes") and not st0.get("timeouts"):  # the common case: no lock, no write
             return
         with self._locked() as st:
+            st["timeouts"] = 0
             if st.get("strikes") and now - float(st.get("last_limited", 0)) > self.calm_s:
                 st["strikes"] = int(st["strikes"]) - 1
                 st["last_limited"] = now

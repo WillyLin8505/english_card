@@ -11248,6 +11248,374 @@
    "ordinal": 1,
    "why": "activity, operation",
    "by": "card384 Claude review 2026-10-19"
+  },
+  "eau|noun|92b4266ca27d": {
+   "term": "rain",
+   "auto": null,
+   "meaning": "In particular, rain",
+   "ordinal": 1,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "ami|noun|51d6c70fdb97": {
+   "term": "car",
+   "auto": null,
+   "meaning": "Citroën Ami",
+   "ordinal": 1,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "bienvenu|noun|cbb1781e8374": {
+   "term": "guest",
+   "auto": null,
+   "meaning": "a person who is welcomed",
+   "ordinal": 0,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "impression|noun|4ee3ff25b5db": {
+   "term": "indentation",
+   "auto": null,
+   "meaning": "the indentation or depression made by the pressure of one object on another",
+   "ordinal": 1,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "malade|noun|fe1ccd24d0ac": {
+   "term": "patient",
+   "auto": null,
+   "meaning": "an ill or sick person; a patient",
+   "ordinal": 0,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "st|noun|2b58c26d819c": {
+   "term": "steam",
+   "auto": null,
+   "meaning": "ST (“steam”) abbreviation of vapeur",
+   "ordinal": 0,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "théorie|noun|2600a6e2b9e6": {
+   "term": "procession",
+   "auto": null,
+   "meaning": "solemn or sacred procession or embassy, especially in ancient Greece",
+   "ordinal": 1,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "chaîne|noun|0461596e9900": {
+   "term": "stereo",
+   "auto": null,
+   "meaning": "hi-fi or stereo system",
+   "ordinal": 1,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "parlement|noun|de284033789e": {
+   "term": "court",
+   "auto": null,
+   "meaning": "a provincial appellate court of the Ancien Régime",
+   "ordinal": 1,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "martin|noun|62a657627d9b": {
+   "term": "starling",
+   "auto": null,
+   "meaning": "bird of either the starling family, or of the kingfisher family",
+   "ordinal": 0,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "nez|noun|538488823ba4": {
+   "term": "perfumer",
+   "auto": null,
+   "meaning": "someone who invents perfumes",
+   "ordinal": 1,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "lait|noun|2ad55141e0fa": {
+   "term": "milk",
+   "auto": null,
+   "meaning": "an individual serving of milk",
+   "ordinal": 1,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "crime|noun|c6793c03503d": {
+   "term": "felony",
+   "auto": null,
+   "meaning": "a category of severe offences within French law, comparable to a felony under United States laws. Crime are tied to the strongest of penalties, 10 years and more according to law.",
+   "ordinal": 0,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "fleuve|noun|10e8f56d91b8": {
+   "term": "river",
+   "auto": null,
+   "meaning": "a river that flows into an ocean or sea (a river that flows into another river or body of water is called a rivière)",
+   "ordinal": 0,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "fleuve|noun|fc350b365e95": {
+   "term": "stream",
+   "auto": null,
+   "meaning": "a continuous and unstoppable stream of people, things, or words",
+   "ordinal": 1,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "tradition|noun|daee186a619d": {
+   "term": "baguette",
+   "auto": null,
+   "meaning": "a type of baguette or French stick",
+   "ordinal": 1,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "rang|noun|ab917a4878fb": {
+   "term": "row",
+   "auto": null,
+   "meaning": "row or line of things placed side-by-side",
+   "ordinal": 0,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "archives|noun|b8c461257042": {
+   "term": "archive",
+   "auto": null,
+   "meaning": "place for storing archives",
+   "ordinal": 1,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "lune|noun|ebb987402ef0": {
+   "term": "moon",
+   "auto": null,
+   "meaning": "any natural satellite of a planet",
+   "ordinal": 1,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "chaussette|noun|8302f4e12510": {
+   "term": "sock",
+   "auto": null,
+   "meaning": "woman's or child's sock",
+   "ordinal": 1,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "plat|noun|5b8b795c803e": {
+   "term": "plate",
+   "auto": null,
+   "meaning": "a flat area of ground; a flat thing; a flat dish or receptacle",
+   "ordinal": 0,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "viande|noun|b7d1db0f89fe": {
+   "term": "meat",
+   "auto": null,
+   "meaning": "an object of sexual desire; a piece of meat",
+   "ordinal": 1,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "pub|noun|31c21fdb017b": {
+   "term": "ad",
+   "auto": null,
+   "meaning": "Television ad or advert",
+   "ordinal": 0,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "colonel|noun|a96c81199d45": {
+   "term": "dessert",
+   "auto": null,
+   "meaning": "an ice cream dessert consisting of lemon sherbet and vodka",
+   "ordinal": 1,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "news|noun|06441a16f247": {
+   "term": "magazine",
+   "auto": null,
+   "meaning": "news magazine or programme",
+   "ordinal": 0,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "angle|noun|0071c30160c1": {
+   "term": "corner",
+   "auto": null,
+   "meaning": "a location at the corner of something, such as streets, buildings, furniture etc.",
+   "ordinal": 1,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "abri|noun|82c4fac89a93": {
+   "term": "shelter",
+   "auto": null,
+   "meaning": "a shelter or refuge against the elements or physical danger",
+   "ordinal": 0,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "abbé|noun|8bfac71f5a8b": {
+   "term": "priest",
+   "auto": null,
+   "meaning": "a low-ranking member of the Roman Catholic clergy in France who is not a member of a religious order, is not a priest, and can marry and inherit property; an honorific title for such a clergymember",
+   "ordinal": 1,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "roy|noun|cf6fc0ed4af2": {
+   "term": "king",
+   "auto": null,
+   "meaning": "archaic, formal spelling of roi",
+   "ordinal": 0,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "boite|noun|5263b51f77d5": {
+   "term": "box",
+   "auto": null,
+   "meaning": "post-1990 spelling of boîte",
+   "ordinal": 0,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "galerie|noun|f995c835100d": {
+   "term": "porch",
+   "auto": null,
+   "meaning": "a type of porch common in the American South, veranda",
+   "ordinal": 1,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "plateforme|noun|b94b7318ee83": {
+   "term": "platform",
+   "auto": null,
+   "meaning": "post-1990 spelling of plate-forme",
+   "ordinal": 0,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "barbe|noun|8e7f24cdb104": {
+   "term": "beard",
+   "auto": null,
+   "meaning": "longer hair growing on the chin or face of some animals",
+   "ordinal": 1,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "garde|noun|7e1b9f77ef28": {
+   "term": "guard",
+   "auto": null,
+   "meaning": "a battalion responsible for guarding, defending a sovereign, a prince, more generally, of an elite corps.",
+   "ordinal": 1,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "plastique|noun|f973d7ecb853": {
+   "term": "plastic",
+   "auto": null,
+   "meaning": "material that can be moulded into a desired form, plastic",
+   "ordinal": 0,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "relais|noun|110bc8b4433b": {
+   "term": "hotel",
+   "auto": null,
+   "meaning": "a hotel that is used as a stop on long journeys",
+   "ordinal": 1,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "alsace|noun|a167065ef811": {
+   "term": "wine",
+   "auto": null,
+   "meaning": "any of several wines produced in Alsace",
+   "ordinal": 0,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "universitaire|noun|8ba4363555c0": {
+   "term": "student",
+   "auto": null,
+   "meaning": "university student or employee",
+   "ordinal": 0,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "ile|noun|fa31df2a0d08": {
+   "term": "island",
+   "auto": null,
+   "meaning": "post-1990 spelling of île",
+   "ordinal": 0,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "expédition|noun|1e395bed3f5e": {
+   "term": "expedition",
+   "auto": null,
+   "meaning": "the act of expediting or hurrying",
+   "ordinal": 0,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "métropole|noun|1d02fe8235d7": {
+   "term": "metropolis",
+   "auto": null,
+   "meaning": "A major city other than a capital, particularly if it is more populous than the capital.",
+   "ordinal": 1,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "costume|noun|0bcfead993ab": {
+   "term": "disguise",
+   "auto": null,
+   "meaning": "an outfit or a disguise worn as fancy dress",
+   "ordinal": 1,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "câble|noun|c96ceb53172a": {
+   "term": "cable",
+   "auto": null,
+   "meaning": "synonym of câblogramme (“cable”) (cablegram)",
+   "ordinal": 1,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "souper|noun|d935ce5d03e5": {
+   "term": "supper",
+   "auto": null,
+   "meaning": "a light meal eaten at night, after the main evening meal",
+   "ordinal": 1,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "canapé|noun|d1a5d1654ec8": {
+   "term": "crostini",
+   "auto": null,
+   "meaning": "piece of bread covered with some savory (finger) food",
+   "ordinal": 1,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
+  },
+  "cuisine|noun|04c116b97b40": {
+   "term": "cooking",
+   "auto": null,
+   "meaning": "culinary art or cuisine",
+   "ordinal": 1,
+   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
+   "by": "card329 Qwen review 2026-10-20"
   }
  }
 }

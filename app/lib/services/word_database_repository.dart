@@ -815,18 +815,117 @@ class WordDatabaseRepository extends ChangeNotifier {
 
   // ── Photos, albums and labels ────────────────────────────────────────
 
-  Album addAlbum({required String name, String? category}) {
+  Album addAlbum({
+    required String name,
+    String? category,
+    String? deckSlug,
+    String? author,
+  }) {
     final album = Album(
       id: _newId('album'),
       name: name.trim(),
       category: category,
       createdAt: clock(),
+      deckSlug: deckSlug,
+      author: author,
     );
     _albums.add(album);
     _persist((s) => s.putAlbum(album));
     notifyListeners();
     return album;
   }
+
+  /// Renames an album; its group label is then the name the owner chose.
+  void renameAlbum(String albumId, String name) {
+    final i = _albums.indexWhere((a) => a.id == albumId);
+    final clean = name.trim();
+    if (i < 0 || clean.isEmpty) return;
+    final a = _albums[i];
+    _albums[i] = Album(
+      id: a.id,
+      name: clean,
+      category: a.category,
+      coverAsset: a.coverAsset,
+      createdAt: a.createdAt,
+      deckSlug: a.deckSlug,
+      author: a.author,
+    );
+    _persist((s) => s.putAlbum(_albums[i]));
+    notifyListeners();
+  }
+
+  /// The group an album sits in on the 相片冊, worked out from what is in
+  /// it (問題回報 #404): a stored [Album.category] from older data wins, a
+  /// 卡片集 album goes under 圖片集, otherwise the scene most of its
+  /// recognised words point to, otherwise the month it was made.
+  String albumGroup(Album album) {
+    if (album.category != null && album.category!.isNotEmpty) {
+      return album.category!;
+    }
+    if (album.deckSlug != null) return deckAlbumGroup;
+    final photoIds = {for (final p in photosInAlbum(album.id)) p.id};
+    final scores = <String, int>{};
+    for (final o in _occurrences) {
+      if (!photoIds.contains(o.photoId)) continue;
+      final word = entry(o.wordEntryId)?.word.toLowerCase();
+      if (word == null) continue;
+      for (final e in albumSceneWords.entries) {
+        if (e.value.contains(word)) scores[e.key] = (scores[e.key] ?? 0) + 1;
+      }
+    }
+    if (scores.isNotEmpty) {
+      return scores.entries.reduce((a, b) => b.value > a.value ? b : a).key;
+    }
+    final at = photosInAlbum(album.id).map((p) => p.takenAt).fold<DateTime>(
+        album.createdAt, (a, b) => b.isAfter(a) ? b : a);
+    return '${at.year} 年 ${at.month} 月';
+  }
+
+  /// Distinct groups of all albums, newest group first.
+  List<String> albumGroups() {
+    final seen = <String>[];
+    for (final a in _albums.reversed) {
+      final g = albumGroup(a);
+      if (!seen.contains(g)) seen.add(g);
+    }
+    return seen;
+  }
+
+  /// Takes the album out (a 卡片集 album goes with its deck). Its photos
+  /// are removed by the caller first.
+  void removeAlbum(String albumId) {
+    _albums.removeWhere((a) => a.id == albumId);
+    _persist((s) => s.deleteAlbum(albumId));
+    notifyListeners();
+  }
+
+  /// The cards of the album's words that are being learned: the 複習這本相簿
+  /// run draws only from these (問題回報 #403).
+  Set<String> cardIdsInAlbum(String albumId) {
+    final photoIds = {for (final p in photosInAlbum(albumId)) p.id};
+    return {
+      for (final o in _occurrences)
+        if (photoIds.contains(o.photoId))
+          if (cardOf(o.wordEntryId) case final c? when !c.archived) c.id,
+    };
+  }
+
+  /// Cards of words saved today (問題回報 #412 複習範圍「今天新加的」).
+  Set<String> cardIdsAddedToday() {
+    final now = clock();
+    return {
+      for (final e in _entries)
+        if (e.createdAt.year == now.year &&
+            e.createdAt.month == now.month &&
+            e.createdAt.day == now.day)
+          if (cardOf(e.id) case final c? when !c.archived) c.id,
+    };
+  }
+
+  /// Cards of the 學習洞察 weak words (問題回報 #412 複習範圍「弱項單字」).
+  Set<String> weakCardIds() => {
+        for (final w in insights().weakWords) w.cardId,
+      };
 
   void addPhoto(Photo photo) {
     _photos.add(photo);
@@ -890,12 +989,23 @@ class WordDatabaseRepository extends ChangeNotifier {
       final hit = pack.lookup(e.word, pos: e.pos);
       if (hit == null) continue;
       final x = hit.entry;
-      if (x.pos != LexiconPack.packPos(e.pos)) continue;
+      // The pack dropped this part of speech for the word (問題回報 #436):
+      // the card moves to the pos the pack kept, so it keeps updating. A pos
+      // the learner set themselves stays as it is.
+      final moved = x.pos != LexiconPack.packPos(e.pos);
+      if (moved && e.userEdited.contains(WordField.pos)) continue;
+      final pos = !moved
+          ? e.pos
+          : switch (x.pos) {
+              'adj' => 'adj.',
+              'adv' => 'adv.',
+              final p => p
+            };
       final detail = pack.detailFor(x);
       final fresh = WordEntry.fromUserInput(
         id: e.id,
         word: e.word,
-        pos: e.pos,
+        pos: pos,
         language: e.language,
         meaning: x.learnerMeaning ?? '',
         level: x.cefr,
@@ -933,6 +1043,7 @@ class WordDatabaseRepository extends ChangeNotifier {
       merged['lexeme_usages'] = [
         for (final u in pack.usagesFor(e.word)) u.toJson()
       ];
+      merged['pos'] = pos;
       merged['lexemeId'] = x.id;
       merged['entry_type'] = x.entryType;
       if (pack.mediaBase != null) {
@@ -1042,10 +1153,12 @@ class WordDatabaseRepository extends ChangeNotifier {
   void removeDeckContent({
     Iterable<String> photoIds = const [],
     Iterable<String> wordEntryIds = const [],
+    String? albumId,
   }) {
     for (final id in photoIds.toList()) {
       if (photo(id) != null) removePhoto(id);
     }
+    if (albumId != null) removeAlbum(albumId);
     for (final id in wordEntryIds) {
       _dropIfUnused(id);
     }
@@ -1401,7 +1514,8 @@ class WordDatabaseRepository extends ChangeNotifier {
         'card_reviewed',
         {
           'rating': rating.name,
-          'template': templateType,
+          // No exercise = the plain flip card (問題回報 #207 decision A).
+          'template': templateType ?? 'flip',
           'correct': correct,
           'hints': hintCount,
           'duration_ms': duration?.inMilliseconds,
@@ -1443,17 +1557,69 @@ class WordDatabaseRepository extends ChangeNotifier {
         .isAfter(DateTime(now.year, now.month, now.day));
   }
 
-  List<LearningCard> eligibleCards({bool includeFuture = false}) {
+  /// Cards already first-learned / reviewed today (distinct cards, from the
+  /// review log) — what the 每日上限 counts against (問題回報 #398).
+  ({int newCards, int reviews}) doneToday() {
+    final now = clock();
+    final start = DateTime(now.year, now.month, now.day);
+    final fresh = <String>{}, seen = <String>{};
+    for (var i = _reviewLogs.length - 1; i >= 0; i--) {
+      final l = _reviewLogs[i];
+      if (l.reviewedAt.isBefore(start)) {
+        if (l.reviewedAt.isBefore(start.subtract(const Duration(days: 1)))) {
+          break; // logs are appended in time order
+        }
+        continue;
+      }
+      if (l.before.state == FsrsCardState.newCard) {
+        fresh.add(l.cardId);
+      } else {
+        seen.add(l.cardId);
+      }
+    }
+    seen.removeAll(fresh);
+    return (newCards: fresh.length, reviews: seen.length);
+  }
+
+  /// Cards to schedule now. With [newLimit]/[reviewLimit] (每日上限) only the
+  /// remaining budget of today's new cards and due reviews is offered, the
+  /// most overdue first; the rest wait for tomorrow.
+  List<LearningCard> eligibleCards(
+      {bool includeFuture = false, int? newLimit, int? reviewLimit}) {
     final now = clock();
     // One lookup table, not a scan of every word per card: with a few
     // thousand words the 複習 tab waited seconds for each next card.
     final byId = {for (final e in _entries) e.id: e};
-    return [
+    var due = [
       for (final c in _cards)
-        if (_eligible(c, byId[c.wordEntryId], now) ||
-            (includeFuture &&
-                !c.archived &&
-                (byId[c.wordEntryId]?.meaning.trim().isNotEmpty ?? false)))
+        if (_eligible(c, byId[c.wordEntryId], now)) c,
+    ];
+    if (newLimit != null || reviewLimit != null) {
+      final done = doneToday();
+      bool isNew(LearningCard c) => c.fsrs.state == FsrsCardState.newCard;
+      DateTime dueOf(LearningCard c) =>
+          c.fsrs.due ?? DateTime.fromMillisecondsSinceEpoch(0);
+      List<LearningCard> cap(List<LearningCard> l, int? limit, int used) {
+        if (limit == null) return l;
+        final room = (limit - used).clamp(0, l.length);
+        l.sort((a, b) => dueOf(a).compareTo(dueOf(b)));
+        return l.take(room).toList();
+      }
+
+      due = [
+        ...cap(due.where(isNew).toList(), newLimit, done.newCards),
+        ...cap(due.where((c) => !isNew(c)).toList(), reviewLimit,
+            done.reviews),
+      ];
+    }
+    if (!includeFuture) return due;
+    final ids = {for (final c in due) c.id};
+    return [
+      ...due,
+      for (final c in _cards)
+        if (!ids.contains(c.id) &&
+            !c.archived &&
+            (byId[c.wordEntryId]?.meaning.trim().isNotEmpty ?? false))
           c,
     ];
   }

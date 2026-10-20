@@ -61,7 +61,7 @@ void main() {
     expect(find.text('apple'), findsOneWidget);
     await tester.tap(find.text('開始複習'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('開始複習'));
+    await tester.tap(find.text('綜合'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('顯示答案'));
     await tester.pumpAndSettle();

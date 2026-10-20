@@ -43,6 +43,7 @@ abstract interface class WordDatabaseStore {
   Future<void> putPhoto(Photo photo);
   Future<void> deletePhoto(String id);
   Future<void> putAlbum(Album album);
+  Future<void> deleteAlbum(String id);
   Future<void> putOccurrence(PhotoOccurrence occurrence);
   Future<void> deleteOccurrence(String id);
   Future<void> putCard(LearningCard card);
@@ -259,6 +260,9 @@ class HiveWordDatabaseStore
   @override
   Future<void> putAlbum(Album album) =>
       _albums.put(album.id, jsonEncode(album.toJson()));
+
+  @override
+  Future<void> deleteAlbum(String id) => _albums.delete(id);
 
   @override
   Future<void> putOccurrence(PhotoOccurrence occurrence) =>

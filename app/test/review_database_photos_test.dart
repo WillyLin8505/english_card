@@ -6,11 +6,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:photo_english_app/app/app_scope.dart';
 import 'package:photo_english_app/models/learning_card.dart';
 import 'package:photo_english_app/models/photo.dart';
+import 'package:photo_english_app/services/app_settings.dart';
 import 'package:photo_english_app/services/flashcard_session.dart';
 import 'package:photo_english_app/services/lexicon_pack.dart';
 import 'package:photo_english_app/services/word_database_repository.dart';
 import 'package:photo_english_app/widgets/mobile/photo_widgets.dart';
 import 'helpers.dart';
+
+/// Card #407 turned the back photo's word label on by default; these tests
+/// check the dot-only look a learner gets with the label switched off.
+AppSettings _dotOnly() => AppSettings.inMemory(showPhotoLabels: false);
 
 Map<String, dynamic> image(int id,
         {String review = 'approved', int word = 1}) =>
@@ -172,7 +177,7 @@ void main() {
     });
     final repo = repository(lexicon);
     await pumpApp(tester, initialTab: AppTab.review, repository: repo);
-    await tester.tap(find.text('開始複習'));
+    await tester.tap(find.text('綜合'));
     // One frame, not pumpAndSettle: the network request has not resolved
     // (to success or failure) yet, so the card must still be in the
     // loading state rather than skipping straight to an error or answer.
@@ -211,7 +216,7 @@ void main() {
     });
     final repo = repository(lexicon);
     await pumpApp(tester, initialTab: AppTab.review, repository: repo);
-    await tester.tap(find.text('開始複習'));
+    await tester.tap(find.text('綜合'));
     await tester.pumpAndSettle();
     expect(find.text('圖片暫時無法載入'), findsOneWidget);
     await tester.sendKeyEvent(LogicalKeyboardKey.space);
@@ -309,6 +314,7 @@ void main() {
     final session = FlashcardSession(repo, lexicon: lexicon);
     await pumpApp(tester,
         repository: repo,
+        settings: _dotOnly(),
         home: Scaffold(
             body: SingleChildScrollView(
                 child: FlashcardBack(
@@ -407,6 +413,7 @@ void main() {
     expect(session.anchor, isNotNull);
     await pumpApp(tester,
         repository: repo,
+        settings: _dotOnly(),
         home: Scaffold(
             body: SingleChildScrollView(
                 child: FlashcardBack(
@@ -441,6 +448,7 @@ void main() {
     expect(session.anchor, isNotNull);
     await pumpApp(tester,
         repository: repo,
+        settings: _dotOnly(),
         home: Scaffold(
             body: SingleChildScrollView(
                 child: FlashcardBack(

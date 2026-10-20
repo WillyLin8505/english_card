@@ -58,8 +58,13 @@ class DatabaseWordScreen extends StatelessWidget {
                 ],
               ),
             );
+        // Issue #399: a word already shown in an earlier section is skipped.
+        final shown = <String>{};
         Widget relationSection(String label, String kind) {
-          final items = relations.where((r) => r.relation == kind).toList();
+          final items = relations
+              .where((r) =>
+                  r.relation == kind && shown.add(r.word.toLowerCase()))
+              .toList();
           if (items.isEmpty) return const SizedBox.shrink();
           return section(label, [
             Wrap(
@@ -230,7 +235,10 @@ class DatabaseWordScreen extends StatelessWidget {
                     children: [
                       for (final form in forms)
                         TagChip(
-                            '${form.form}（${formLabel(form.label ?? form.field)}）',
+                            form.field == 'fr_gender'
+                                ? '${frenchWithArticle(word.lemma, form.form)}'
+                                    '（${frenchGenderLabel(form.form)}）'
+                                : '${form.form}（${formLabel(form.label ?? form.field)}）',
                             localize: false),
                     ],
                   ),

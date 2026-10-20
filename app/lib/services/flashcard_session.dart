@@ -79,10 +79,25 @@ class FlashcardSession extends ChangeNotifier {
   final LexiconPack _lexicon;
   final bool continuous;
 
+  /// 每日上限 (問題回報 #398): null = unlimited. Cards over the day's budget
+  /// wait for tomorrow and only come back as extra practice.
+  final int? newLimit;
+  final int? reviewLimit;
+
   /// Cards to show first, in this order, before the usual pick — the
   /// learner asked to practise these (學習洞察「複習這些字」, 問題回報 #307).
   /// A focus card that is not due is extra practice like any future card.
   final List<String> focus;
+
+  /// Limits the run to one 相片冊 album (問題回報 #403 複習這本相簿): only its
+  /// words' cards, and only its photos. Null for the whole database.
+  final String? albumId;
+  final Set<String>? _albumCards;
+  final Set<String>? _albumPhotos;
+
+  /// Limits the run to these cards (問題回報 #412 複習範圍: 今天新加的、弱項
+  /// 單字). Null for no limit; combines with [albumId].
+  final Set<String>? cardScope;
   final Set<String> _scheduledThisRun = {};
   bool _practice = false;
   bool get isExtraPractice => _practice;
@@ -91,12 +106,22 @@ class FlashcardSession extends ChangeNotifier {
       {math.Random? random,
       LexiconPack? lexicon,
       this.continuous = false,
-      this.focus = const []})
+      this.focus = const [],
+      this.albumId,
+      this.cardScope,
+      this.newLimit,
+      this.reviewLimit})
       : _random = random ?? math.Random(),
+        _albumCards = albumId == null ? null : repo.cardIdsInAlbum(albumId),
+        _albumPhotos = albumId == null
+            ? null
+            : {for (final p in repo.photosInAlbum(albumId)) p.id},
         _lexicon = lexicon ?? LexiconPack.instance {
     repo.addListener(_repositoryChanged);
     _advance();
   }
+
+  bool get _limited => newLimit != null || reviewLimit != null;
 
   bool _rating = false;
   bool _disposed = false;
@@ -319,7 +344,11 @@ class FlashcardSession extends ChangeNotifier {
     if (_cardId != null) {
       _practice = continuous &&
           (_scheduledThisRun.contains(_cardId) ||
-              !repo.isEligible(card!, repo.clock()));
+              !repo.isEligible(card!, repo.clock()) ||
+              (_limited &&
+                  !repo
+                      .eligibleCards(newLimit: newLimit, reviewLimit: reviewLimit)
+                      .any((c) => c.id == _cardId)));
       _shownAt[_cardId!] = _step;
       _appearances[_cardId!] = (_appearances[_cardId!] ?? 0) + 1;
       _choosePhoto();
@@ -592,6 +621,11 @@ class FlashcardSession extends ChangeNotifier {
   /// True once a word has used up its appearances in this run.
   bool _worn(String id) => (_appearances[id] ?? 0) >= maxRunAppearances;
 
+  /// Whether the card may be shown in this run (always, outside an album).
+  bool _inRun(String cardId) =>
+      (_albumCards?.contains(cardId) ?? true) &&
+      (cardScope?.contains(cardId) ?? true);
+
   String? _pick() {
     // A queued Again card may have been marked learned from word details.
     _again.removeWhere((id, _) {
@@ -617,8 +651,12 @@ class FlashcardSession extends ChangeNotifier {
     }
     final now = repo.clock();
     final eligible = [
-      for (final c in repo.eligibleCards())
-        if (!_shownAt.containsKey(c.id) && !_again.containsKey(c.id)) c,
+      for (final c in repo.eligibleCards(
+          newLimit: newLimit, reviewLimit: reviewLimit))
+        if (!_shownAt.containsKey(c.id) &&
+            !_again.containsKey(c.id) &&
+            _inRun(c.id))
+          c,
     ];
     if (eligible.isEmpty) {
       if (continuous) {
@@ -630,7 +668,7 @@ class FlashcardSession extends ChangeNotifier {
         // this pool (問題回報 #319); when no word is left the run ends.
         final pool = [
           for (final c in repo.eligibleCards(includeFuture: true))
-            if (!_again.containsKey(c.id) && !_worn(c.id)) c,
+            if (!_again.containsKey(c.id) && !_worn(c.id) && _inRun(c.id)) c,
         ];
         final practice = pool..shuffle(_random);
         practice.sort(
@@ -688,7 +726,7 @@ class FlashcardSession extends ChangeNotifier {
     final c = card;
     if (c == null) return;
     final seenIds = <String>{};
-    final options = _photoOptions = [
+    final all = [
       for (final o in [
         for (final o in repo.occurrencesOf(c.wordEntryId))
           // A learner's photo whose original file is gone is skipped, so the
@@ -699,6 +737,13 @@ class FlashcardSession extends ChangeNotifier {
       ])
         if (seenIds.add(o.$1.id)) o,
     ];
+    // An album run shows only the album's pictures of the word; when the
+    // album has none of them left, any picture of the word is shown.
+    final inAlbum = [
+      for (final o in all)
+        if (_albumPhotos?.contains(o.$1.id) ?? false) o,
+    ];
+    final options = _photoOptions = inAlbum.isEmpty ? all : inAlbum;
     if (options.isEmpty) {
       _photo = null;
       _anchor = null;

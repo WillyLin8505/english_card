@@ -2,12 +2,13 @@
 Flutter app can load on every platform (web builds can't open SQLite
 without extra plumbing). Same rows, same stable lexeme ids.
 
-    python lexicon/tools/install_app_pack.py   # copy the latest pack into app/assets/lexicon/
+    python lexicon/tools/install_app_pack.py   # media into app/assets/lexicon/, then the slim bundle
 """
 
 from __future__ import annotations
 
 import json
+import re
 from functools import lru_cache
 import math
 import shutil
@@ -108,9 +109,29 @@ def build(db_path: Path) -> dict:
     from . import quality
     quality.apply_pack(pack)
     quality.apply_decisions(pack)  # owner decision #191
+    move_compound_synonyms(pack)  # #400 / card 413
     from .picture_need import assign_picture_ids
     assign_picture_ids(pack["lexemes"])
     return pack
+
+
+def move_compound_synonyms(pack: dict) -> int:
+    """A synonym/antonym that is a multi-word phrase containing the headword
+    (apple -> orchard apple tree, force -> force play) is a compound or a
+    narrower term, not a substitute: file it under "related" (問題回報 #400)."""
+    moved = 0
+    for lx in pack.get("lexemes", []):
+        if lx.get("status") != "full":
+            continue
+        head = re.compile(r"\b" + re.escape((lx.get("lemma") or "").lower()) + r"\b")
+        for r in lx.get("relations") or []:
+            word = (r.get("word") or "").lower()
+            if (r["relation"] in ("synonyms", "antonyms") and not r.get("hide_by_default")
+                    and " " in word.strip() and head.search(word)):
+                r["detail"] = {**(r.get("detail") or {}), "moved_from": r["relation"]}
+                r["relation"] = "related"
+                moved += 1
+    return moved
 
 
 def assign_cards(lexemes: list[dict], language: str) -> None:
@@ -176,7 +197,14 @@ def share_forms(by_lex: dict[int, dict]) -> None:
 
         def own(lex, f):
             pos, of = lex["pos"], FORM_POS.get(f["field"])
+            if of is not None and f["field"].startswith("fr_") and pos not in ("noun", "verb", "adj"):
+                return False  # merci the interjection is not 「le merci」
             if of is None or pos not in ("noun", "verb", "adj", "adv"):
+                return True
+            # French gender / number forms belong to nouns and adjectives
+            # alike (card #429: chat lost chats, chatte).
+            either = catalog.FORM_POS.get(f["field"])
+            if isinstance(either, tuple) and pos in either:
                 return True
             return of == pos or (pos == "adj" and participle and of == "verb")
 
@@ -362,7 +390,10 @@ def rank_usages(lexemes: list[dict], cefr_by_pos: dict | None = None,
             if lx.get("zipf") is None:
                 continue
             share = share_of[id(lx)] / total
-            estimate = capped_frequency_level(word, lx["zipf"] + math.log10(share), language)
+            # Dictionary evidence overstates a minor part of speech's real use
+            # (out 感嘆詞「滾」 has ~4% of the entries but far less of the
+            # text), so the share counts twice (card #397).
+            estimate = capped_frequency_level(word, lx["zipf"] + 2 * math.log10(share), language)
             floor = main.get("cefr") or lx.get("cefr")
             if floor in _LEVELS and _LEVELS.index(estimate) < _LEVELS.index(floor):
                 # A rarer usage is never shown easier than the word's main
@@ -376,18 +407,17 @@ def rank_usages(lexemes: list[dict], cefr_by_pos: dict | None = None,
 
 
 def install(release_dir: Path, target: str, native: str, app_assets: Path = APP_ASSETS) -> dict:
-    """Copy a release's app pack, manifest and audio into the Flutter app's
-    assets (app/assets/lexicon/{target}-{native}.json …)."""
+    """Copy a release's audio and pictures into the Flutter app's assets
+    (app/assets/lexicon/media/ …). The pack JSON itself is the slim bundle
+    that lexicon/tools/card268_bundle_pack.py writes: a raw export (~250 MB,
+    every stub, no catalog pictures) is not shippable and once replaced the
+    bundle (問題回報 #405), so it is never copied over it."""
     base = release_dir.name
     pack = release_dir / f"{base}.json"
     if not pack.exists():
         raise FileNotFoundError(f"{pack.name} 不存在（請重新匯出）")
     app_assets.mkdir(parents=True, exist_ok=True)
     name = f"{target}-{native}"
-    tmp = app_assets / f".{name}.json.part"
-    shutil.copyfile(pack, tmp)
-    tmp.replace(app_assets / f"{name}.json")
-    shutil.copyfile(release_dir / "manifest.json", app_assets / f"{name}.manifest.json")
     copied = 0
     media = release_dir / "media" / "audio" / target
     if media.exists():
@@ -405,4 +435,9 @@ def install(release_dir: Path, target: str, native: str, app_assets: Path = APP_
                 dest.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(f, dest)
                 copied += 1
-    return {"pack": str(app_assets / f"{name}.json"), "release": base, "media_copied": copied}
+    return {"pack": str(app_assets / f"{name}.json"), "release": base, "media_copied": copied,
+            "bundle": BUNDLE_COMMAND}
+
+
+# How the shipped pack is rebuilt (card #268 settings: 480 px WebP, quality 60).
+BUNDLE_COMMAND = "python lexicon/tools/card268_bundle_pack.py --max-side 480 --quality 60"

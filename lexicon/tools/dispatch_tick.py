@@ -63,8 +63,14 @@ def is_swarm(agent: str | None) -> bool:
     return bool(agent) and agent.startswith(SWARM_PREFIX) and agent[len(SWARM_PREFIX):].isdigit()
 
 
+def is_card_alias(agent: str | None) -> bool:
+    """A launched CLI that renamed itself on the board ("Claude · card385", via task.py) —
+    still ours to collect, or its card would sit in_progress forever."""
+    return bool(agent) and re.fullmatch(r"Claude · card\d+", agent) is not None
+
+
 def quota_agent(agent: str) -> str:
-    return "Claude Code" if is_swarm(agent) else agent
+    return "Claude Code" if is_swarm(agent) or is_card_alias(agent) else agent
 
 
 def free_slot(used: set[str], limit: int) -> str | None:
@@ -84,6 +90,7 @@ DEFAULT_CFG = {
     "agents_order": AGENTS, "prefer": {}, "reserved": {}, "multi_round_tasks": [],
     "unblock_after": {}, "cooldown_hours": 12, "night_last_launch": "06:15",
     "night_safe_stop": "06:45", "finish_grace_minutes": 10, "alive_log_minutes": 45,
+    "finish_grace_alive_minutes": 45, "lingering_kill_minutes": 90,
     "limit_fallback_hours": {}, "max_failures": 2, "note_task": 13, "note_refresh_minutes": 120,
     "probe_cmd": {}, "probe_interval_minutes": 60,
 }
@@ -229,6 +236,16 @@ def classify_run(launched_at: float, result_mtime: float | None, alive: bool | N
     if alive:
         return "running"
     return "limit" if limit_line else "failed"
+
+
+def prior_cli_action(alive: bool, last_activity: float | None, now: float, kill_after_s: float) -> str:
+    """'free' | 'wait' | 'kill' for a card whose previous CLI may still run (card #431): while it is
+    alive the card is not launched again; quiet (log and result.md) for kill_after_s → it is hung."""
+    if not alive:
+        return "free"
+    if last_activity is not None and now - last_activity > kill_after_s:
+        return "kill"
+    return "wait"
 
 
 def in_cooldown(card: dict, now: datetime, hours: float, agent_names=()) -> bool:
@@ -461,7 +478,7 @@ class Tick:
         changed = False
         running = {}
         for b in board.get("bots", []):
-            if b.get("agent") in AGENTS or is_swarm(b.get("agent")):
+            if b.get("agent") in AGENTS or is_swarm(b.get("agent")) or is_card_alias(b.get("agent")):
                 for t in b.get("doing", []):
                     if t.get("status") == "in_progress":
                         running[str(t["id"])] = (b["agent"], t)
@@ -490,9 +507,14 @@ class Tick:
             lg = AG_LOGS / f"card{card_id}_{agent_kind(agent)}.log"
             log_text = lg.read_text(encoding="utf-8", errors="replace") if lg.exists() else ""
             alive = self.is_alive(card_id, agent, run)
-            limit_line = detect_limit(log_text) if alive is False else None
-            verdict = classify_run(run["launched_at"], rm, alive, limit_line, time.time(),
-                                   self.cfg["finish_grace_minutes"] * 60)
+            # a limit line in an old log (an adopted card from hours ago) says nothing about now
+            fresh_log = lg.exists() and time.time() - lg.stat().st_mtime < 5 * 3600
+            limit_line = detect_limit(log_text) if alive is False and fresh_log else None
+            # the CLI we launched is still running after writing result.md: it may be rewriting it
+            # (card #431), so wait longer before collecting the card
+            pid_up = bool(run.get("pid")) and pid_alive(run["pid"])
+            grace = self.cfg["finish_grace_alive_minutes" if pid_up else "finish_grace_minutes"]
+            verdict = classify_run(run["launched_at"], rm, alive, limit_line, time.time(), grace * 60)
             log(f"#{cid} {agent}: {verdict} (alive={alive}, result={'yes' if rm else 'no'})")
             if verdict == "finished":
                 self.finish(card_id, agent, t, res)
@@ -559,6 +581,12 @@ class Tick:
         self.event(kind, card=card_id, agent=agent, title=(t.get("title") or fresh.get("title") or "")[:60], action=action,
                    outcome=outcome, summary=re.sub(r"\s+", " ", text[:600]), result=rel)
         self.summary.append(f"#{card_id} 收卡→{action}")
+        run = self.state["runs"].get(str(card_id)) or {}
+        if run.get("pid") and pid_alive(run["pid"]):
+            from launch_agent import live_run, record_run
+            if not self.dry and not live_run(card_id):  # runs launched before card #431 had no pid file
+                record_run(card_id, run.get("agent") or agent, run["pid"], run.get("launched_at"))
+            log(f"#{card_id}: collected while its CLI (pid {run['pid']}) still runs; not relaunched until it ends")
         self.state["runs"].pop(str(card_id), None)
         self.state["failures"].pop(str(card_id), None)
 
@@ -683,6 +711,7 @@ class Tick:
                 continue
             cands = order_candidates(candidates(board, agent, self.caps, state=diff_state, now=self.now),
                                      agent, self.cfg, self.now, taken, self.night_tasks, full)
+            cands = [c for c in cands if not self.prior_busy(c.get("task_id"))]
             if not cands:
                 log(f"{agent}: nothing eligible → rest")
                 continue
@@ -744,6 +773,7 @@ class Tick:
         # 「[給 Mac]」 requests are for the Claude session on the owner's Mac, not for a CLI here
         issues = [c for c in issues if not str(c.get("title") or "").lstrip("問題回報 #0123456789：").startswith(MAC_PREFIX)
                   and MAC_PREFIX not in str(c.get("title") or "")[:40]]
+        issues = [c for c in issues if not self.prior_busy(c.get("task_id"))]
         taken = set()
         for c in issues:
             agent = free_slot(used, limit)
@@ -755,8 +785,42 @@ class Tick:
             self.launch(agent, c)
         return taken
 
+    def prior_busy(self, card_id) -> bool:
+        """True while the CLI last launched on this card still runs (card #431: one card, one CLI).
+        One that has been quiet for lingering_kill_minutes is hung: its process tree is ended."""
+        if not card_id:
+            return False
+        cache = self.__dict__.setdefault("_prior", {})
+        if card_id in cache:
+            return cache[card_id]
+        from launch_agent import agent_kind, live_run
+        info = live_run(int(card_id))
+        busy = False
+        if info:
+            files = [AG_LOGS / f"card{card_id}_{agent_kind(info.get('agent') or '')}.log",
+                     AG_LOGS / f"card{card_id}.result.md", latest_round_path(int(card_id))]
+            acts = [p.stat().st_mtime for p in files if p and p.exists()]
+            last = max(acts + [float(info.get("at") or 0)])
+            act = prior_cli_action(True, last, time.time(), self.cfg["lingering_kill_minutes"] * 60)
+            quiet = int((time.time() - last) / 60)
+            if act == "kill" and not self.dry:
+                subprocess.run(["taskkill", "/PID", str(info["pid"]), "/T", "/F"], capture_output=True,
+                               timeout=60, creationflags=NO_WINDOW if os.name == "nt" else 0)
+                busy = live_run(int(card_id)) is not None
+                log(f"#{card_id}: previous CLI pid {info['pid']} quiet {quiet} min → ended"
+                    + (" (still running!)" if busy else ""))
+                self.event("error", card=int(card_id), agent=info.get("agent"),
+                           outcome=f"上一個 CLI（pid {info['pid']}）收卡後 {quiet} 分鐘沒動靜，已結束它"
+                                   + ("，但還在跑" if busy else "，可以再派"))
+            else:
+                busy = True
+                log(f"#{card_id}: previous CLI pid {info['pid']} ({info.get('agent')}) still running "
+                    f"(quiet {quiet} min) → not launched again")
+        cache[card_id] = busy
+        return busy
+
     def launch(self, agent: str, c: dict):
-        label = f"#{c['task_id']}" if c.get("task_id") else f"問題回報 #{c['issue_id']}"
+        label =f"#{c['task_id']}" if c.get("task_id") else f"問題回報 #{c['issue_id']}"
         log(f"{agent}: pick {label} d{c['difficulty']} {(c.get('title') or '')[:50]}")
         if self.dry:
             log(f"DRY claim+launch {label} → {agent}")
@@ -849,6 +913,7 @@ class Tick:
             log("Grokbot paused on the board → skip tick")
             self.save()
             return 0
+        self.qwen_schedule()
         changed = self.check_running(board)
         changed |= self.unblock(board)
         if changed and not self.dry:
@@ -889,6 +954,26 @@ class Tick:
         except OSError:
             subprocess.Popen(cmd, cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                              creationflags=flags)
+
+    def qwen_schedule(self):
+        """owner 10/20: Qwen paused in the daytime, running at night (qwen_schedule in the config).
+        Acts only when the period changes, so a manual ⏸／▶ on the board holds until the next switch."""
+        cfg = self.cfg.get("qwen_schedule") or {}
+        if not cfg.get("enabled") or self.dry:
+            return
+        hm_now = self.now.strftime("%H:%M")
+        start, end = cfg.get("night_start", "19:00"), cfg.get("night_end", "07:00")
+        night = (hm_now >= start or hm_now < end) if start > end else (start <= hm_now < end)
+        want = "night" if night else "day"
+        if self.state.get("qwen_period") == want:
+            return
+        action = "resume" if night else "pause"
+        try:
+            http("POST", f"/agents/Qwen/{action}", {})
+            self.state["qwen_period"] = want
+            self.event("qwen", outcome=f"Qwen {'開始（晚上）' if night else '暫停（白天）'} {hm_now}")
+        except Exception as e:  # noqa: BLE001
+            log(f"Qwen {action} failed: {e}")
 
     def mac_sync(self):
         """Finished app cards → tested, pushed and listed for the Mac (mac_sync.py, own lock)."""

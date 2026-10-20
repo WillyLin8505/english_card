@@ -53,25 +53,13 @@ class PhotoDetailScreen extends StatefulWidget {
 
 class _PhotoDetailScreenState extends State<PhotoDetailScreen>
     with WidgetsBindingObserver {
-  // Positions from the mock, relative to the scrolling content (the nav
-  // bar ends at y=104; the photo sits 16px below it).
-  static const _photoTop = 16.0;
-  static const _dialTop = _photoTop + 274; // collapsed dial, y=394
-  static const _levelTop = _photoTop + 126; // expanded control, y=246
-  static const _sliderTop = _photoTop + 166; // difficulty-slider, y=286
-
   AppScope? _scope;
   PhotoWordSession? _session;
   bool _visible = false;
 
-  bool _dialOpen = false;
-
-  /// The dial was opened by a long press and follows the finger.
-  bool _dialDragging = false;
-  final _sliderKey = GlobalKey();
-
   /// An added word waiting for a tap on the photo to get its pin.
   SessionWord? _placing;
+  final _photoKey = GlobalKey();
 
   @override
   void initState() {
@@ -233,6 +221,16 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
     final w = session.add(word: word, meaning: result.zh, level: level);
     if (w == null) return;
     setState(() => _placing = w.placed ? null : w);
+    // 自己加字 sits under the list (問題回報 #438): bring the photo and its
+    // 「點一下放位置」 bar back into view so the learner can place the pin.
+    if (_placing == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final photo = _photoKey.currentContext;
+      if (photo != null && photo.mounted) {
+        Scrollable.ensureVisible(photo,
+            duration: const Duration(milliseconds: 250));
+      }
+    });
   }
 
   void _placeAt(LabelPoint at) {
@@ -242,27 +240,13 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
     setState(() => _placing = null);
   }
 
-  // ── Dial ──────────────────────────────────────────────────────────
+  // ── Difficulty bar (問題回報 #442) ───────────────────────────────
 
-  int? _levelAt(Offset global) {
-    final box = _sliderKey.currentContext?.findRenderObject() as RenderBox?;
-    if (box == null) return null;
-    final dy = box.globalToLocal(global).dy;
-    return ((dy - 12) / 40).floor().clamp(0, cefrLevels.length - 1);
-  }
+  /// While the thumb moves: only the photo's current pool is re-picked.
+  void _moveBar(int i) => _session!.setTarget(i, live: true);
 
-  void _dialTo(Offset global, {bool live = true}) {
-    final i = _levelAt(global);
-    if (i != null) _session!.setTarget(i, live: live);
-  }
-
-  void _closeDial({bool commit = true}) {
-    if (commit) _session!.setTarget(_session!.target);
-    setState(() {
-      _dialOpen = false;
-      _dialDragging = false;
-    });
-  }
+  /// A tap, or the end of a drag: the model may be asked for more words.
+  void _settleBar(int i) => _session!.setTarget(i);
 
   // ── Build ─────────────────────────────────────────────────────────
 
@@ -359,109 +343,47 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                 ),
                 Expanded(
                   child: SingleChildScrollView(
-                    child: Stack(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.all(MSpace.md),
-                              child: Container(
-                                height: 320,
-                                decoration:
-                                    MDecor.heroPhotoFrame(radius: MRadii.xxl),
-                                clipBehavior: Clip.antiAlias,
-                                child: PinnedPhoto(
-                                  photo: photo,
-                                  pins: pins,
-                                  onPinTap: (p) {
-                                    final w = wordOf(p);
-                                    if (w != null) _pinActions(w);
-                                  },
-                                  onPinMoved: (p, to) {
-                                    final w = wordOf(p);
-                                    if (w != null) session.move(w, to);
-                                  },
-                                  onPhotoTap:
-                                      _placing == null ? null : _placeAt,
-                                  overlay: _overlayFor(photo, session),
-                                  // Labels keep off the difficulty dial,
-                                  // which overlaps the photo's corner.
-                                  avoid: const [
-                                    Rect.fromLTWH(
-                                        13 - 16, _dialTop - _photoTop, 52, 58),
-                                  ],
-                                ),
-                              ),
+                        Padding(
+                          key: _photoKey,
+                          padding: const EdgeInsets.all(MSpace.md),
+                          child: Container(
+                            height: 320,
+                            decoration:
+                                MDecor.heroPhotoFrame(radius: MRadii.xxl),
+                            clipBehavior: Clip.antiAlias,
+                            child: PinnedPhoto(
+                              photo: photo,
+                              pins: pins,
+                              onPinTap: (p) {
+                                final w = wordOf(p);
+                                if (w != null) _pinActions(w);
+                              },
+                              onPinMoved: (p, to) {
+                                final w = wordOf(p);
+                                if (w != null) session.move(w, to);
+                              },
+                              onPhotoTap: _placing == null ? null : _placeAt,
+                              overlay: _overlayFor(photo, session),
+                              revealNew: true,
                             ),
-                            if (_placing case final w?)
-                              _PlacingBar(
-                                word: displayWord(w.word),
-                                onSkip: () => setState(() => _placing = null),
-                              ),
-                            _buildList(photo, session, old),
-                          ],
+                          ),
                         ),
-                        // Stays mounted (invisible) while a long press
-                        // drives the open dial, so the gesture continues.
-                        if (!_dialOpen || _dialDragging)
-                          Positioned(
-                            key: const ValueKey('dial'),
-                            left: 13,
-                            top: _dialTop,
-                            child: GestureDetector(
-                              onLongPressStart: (d) => setState(() {
-                                _dialOpen = true;
-                                _dialDragging = true;
-                              }),
-                              onLongPressMoveUpdate: (d) =>
-                                  _dialTo(d.globalPosition),
-                              onLongPressEnd: (_) => _closeDial(),
-                              child: Opacity(
-                                opacity: _dialOpen ? 0 : 1,
-                                child: _DifficultyDial(
-                                  level: session.targetLevel,
-                                  onTap: () => setState(() => _dialOpen = true),
-                                ),
-                              ),
-                            ),
+                        PhotoDifficultyBar(
+                          key: const ValueKey('difficulty-bar'),
+                          target: session.target,
+                          offset: session.offset,
+                          onMove: _moveBar,
+                          onSelect: _settleBar,
+                        ),
+                        if (_placing case final w?)
+                          _PlacingBar(
+                            word: displayWord(w.word),
+                            onSkip: () => setState(() => _placing = null),
                           ),
-                        if (_dialOpen) ...[
-                          Positioned(
-                            left: 16,
-                            top: _levelTop,
-                            child: _LevelCircle(
-                              level: session.targetLevel,
-                              onTap: () => _closeDial(),
-                            ),
-                          ),
-                          Positioned(
-                            left: 16,
-                            top: _sliderTop,
-                            child: GestureDetector(
-                              onVerticalDragUpdate: (d) =>
-                                  _dialTo(d.globalPosition),
-                              onVerticalDragEnd: (_) => _closeDial(),
-                              child: _DifficultySlider(
-                                key: _sliderKey,
-                                level: session.targetLevel,
-                                onSelect: (l) {
-                                  session.setTarget(cefrLevels.indexOf(l));
-                                  _closeDial(commit: false);
-                                },
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            left: 60,
-                            top: _sliderTop + 12 + session.target * 40 + 2,
-                            child: _DialBubble(
-                              text:
-                                  '${session.targetLevel} · ${relativeDifficulty(session.offset)}',
-                              hint: _dialDragging ? '放開手指完成' : null,
-                            ),
-                          ),
-                        ],
+                        _buildList(photo, session, old),
                       ],
                     ),
                   ),
@@ -479,7 +401,13 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
     if (scope.queue.current == photo.id ||
         (photo.taggingStatus == TaggingStatus.tagging &&
             photo.candidates.isEmpty)) {
-      return const _PhotoBadgeOverlay(icon: null, text: 'AI 辨識中…');
+      // 問題回報 #409: a light bar sweeps the photo while it is read.
+      return const Stack(
+        children: [
+          _PhotoBadgeOverlay(icon: null, text: 'AI 辨識中…'),
+          Positioned.fill(child: PhotoScanSweep()),
+        ],
+      );
     }
     if (photo.taggingStatus == TaggingStatus.pending &&
         photo.candidates.isEmpty) {
@@ -517,16 +445,6 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                 ),
               ),
             ],
-          ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              key: const ValueKey('add-word'),
-              onPressed: _addWord,
-              icon: const Icon(Icons.add_rounded, size: 18),
-              label: UiText('自己加字',
-                  style: MFont.manrope(13, FontWeight.w800, MColors.primary)),
-            ),
           ),
           // 問題回報 #276: the "no 建立 button, leaving saves" rule used to sit
           // under all five words; say it next to the list title instead.
@@ -598,6 +516,17 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
             ),
             const SizedBox(height: 12),
           ],
+          // 問題回報 #438: adding a missed word comes after reading the list.
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              key: const ValueKey('add-word'),
+              onPressed: _addWord,
+              icon: const Icon(Icons.add_rounded, size: 18),
+              label: UiText('自己加字',
+                  style: MFont.manrope(13, FontWeight.w800, MColors.primary)),
+            ),
+          ),
           if (old.isNotEmpty) ...[
             const SizedBox(height: 4),
             const SectionLabel('已學會與學習中的舊詞'),

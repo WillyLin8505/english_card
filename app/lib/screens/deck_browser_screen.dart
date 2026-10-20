@@ -7,6 +7,7 @@ import '../l10n/ui_text.dart';
 import '../services/deck_library.dart';
 import '../theme/mobile_theme.dart';
 import '../widgets/mobile/common.dart';
+import 'photo_grid_screen.dart';
 
 /// 卡片集 (card #323, 問題回報 #320). Layout choice: a full-screen list
 /// opened from 設定 and from the top of 單字本 — a fifth tab would crowd the
@@ -39,7 +40,8 @@ class _DeckBrowserScreenState extends State<DeckBrowserScreen> {
     if (_started) return;
     _started = true;
     final scope = AppScope.of(context);
-    unawaited(_library.load(scope.repository.language));
+    // Also gives picture decks installed before 相片冊 albums their album.
+    unawaited(_library.ensureAlbums(scope.repository));
     unawaited(_refresh());
   }
 
@@ -206,6 +208,7 @@ class _DeckCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final albumId = library.installedDeck(info.slug)?.albumId;
     final cover = info.coverAssetId;
     return Container(
       margin: const EdgeInsets.only(bottom: MSpace.md),
@@ -273,12 +276,32 @@ class _DeckCard extends StatelessWidget {
                           Text(progress),
                         ])
                       : installed
-                          ? OutlinedButton(
-                              onPressed: disabled ? null : onRemove,
-                              child: const UiText('移除'))
+                          ? Wrap(
+                              spacing: MSpace.xs,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                if (albumId != null) ...[
+                                  const UiText('已在相片冊'),
+                                  OutlinedButton(
+                                      onPressed: disabled
+                                          ? null
+                                          : () => Navigator.of(context).push(
+                                                MaterialPageRoute<void>(
+                                                  builder: (_) =>
+                                                      PhotoGridScreen.album(
+                                                          albumId: albumId),
+                                                ),
+                                              ),
+                                      child: const UiText('開啟相簿')),
+                                ],
+                                OutlinedButton(
+                                    onPressed: disabled ? null : onRemove,
+                                    child: const UiText('移除')),
+                              ],
+                            )
                           : FilledButton(
                               onPressed: disabled ? null : onAdd,
-                              child: const UiText('加入')),
+                              child: UiText(info.isPhotos ? '加入相片冊' : '加入')),
                 ),
               ],
             ),

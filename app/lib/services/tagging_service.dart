@@ -110,7 +110,9 @@ class EnrichResult {
 }
 
 /// A short Chinese explanation of a tagging failure, for the UI.
-String describeTaggingError(Object e, String url) {
+/// [showUrl] false (photo pages) keeps the internal address out of learner text;
+/// the address is shown only in 設定 → 照片辨識連線.
+String describeTaggingError(Object e, String url, {bool showUrl = true}) {
   if (e is TaggingApiException) {
     return switch (e.statusCode) {
       401 => 'API Key 不正確（設定 → 照片辨識連線）',
@@ -118,13 +120,19 @@ String describeTaggingError(Object e, String url) {
       451 => '這張照片含有成人內容，未加入相片冊',
       422 => '這張照片的辨識結果格式不完整，請稍後重新辨識',
       // 卡 #228：其他 HTTP 錯誤不再把英文的伺服器原文給學習者看。
-      404 => '這個網址找不到 AI 辨識服務（$url），請確認網址',
+      404 => showUrl
+          ? '這個網址找不到 AI 辨識服務（$url），請確認網址'
+          : '目前找不到 AI 辨識服務',
       503 => 'AI 辨識服務還在啟動，稍後會自動重試',
       final int code => 'AI 辨識服務回應錯誤（代碼 $code），請確認網址或稍後再試',
       null => e.message,
     };
   }
-  if (e is http.ClientException) return '連不到 AI 辨識服務（$url），請確認服務已啟動';
+  if (e is http.ClientException) {
+    return showUrl
+        ? '連不到 AI 辨識服務（$url），請確認服務已啟動'
+        : '目前連不到 AI 辨識服務';
+  }
   if (e is TimeoutException) return 'AI 辨識服務太久沒有回應，稍後會自動重試';
   return '$e';
 }

@@ -13,7 +13,7 @@ type HistoryEntry = { at: string; by: string; note: string | null; changes: { fi
 type MetricValue = { value: number | null; label: string; detail?: string };
 type Task = {
   id: number; title: string; detail: string | null; status: string; agent: string | null; requested_by: string;
-  progress: string | null; issue_ids: number[]; history: HistoryEntry[]; created_at: string; updated_at: string;
+  progress: string | null; issue_ids: number[]; history: HistoryEntry[]; history_n?: number; created_at: string; updated_at: string;
   started_at: string | null; finished_at: string | null; kind: string; interval_minutes: number | null;
   next_run_at: string | null; last_run_at: string | null; last_result: string | null; metric: string | null;
   position: number; stale: boolean; due: boolean; metric_value?: MetricValue;
@@ -727,6 +727,13 @@ function BackgroundStrip({ bg }: { bg: Background }) {
 function CardView({ t, meta, onClose, onEdit, onAct }: {
   t: Task; meta: Meta; onClose: () => void; onEdit: () => void; onAct: (fn: () => Promise<unknown>, ok: string) => void;
 }) {
+  // The board carries only the latest history entries (card #445); load the whole record.
+  const [history, setHistory] = useState<HistoryEntry[]>(t.history);
+  useEffect(() => {
+    let live = true;
+    api.get<Task>(`/tasks/${t.id}`).then((full) => { if (live) setHistory(full.history ?? []); }).catch(() => {});
+    return () => { live = false; };
+  }, [t.id, t.updated_at]);
   return (
     <Modal title={`${t.kind === "recurring" ? "常態卡" : "需求"} #${t.id}`} onClose={onClose}
       footer={
@@ -764,11 +771,11 @@ function CardView({ t, meta, onClose, onEdit, onAct }: {
           {t.finished_at && <span><dt>結束</dt><dd>{fmtTime(t.finished_at)}</dd></span>}
           {t.issue_ids.length > 0 && <span><dt>問題回報</dt><dd>{t.issue_ids.map((n) => <Link key={n} to="/issues">#{n} </Link>)}</dd></span>}
         </dl>
-        {t.history.length > 0 && (
+        {history.length > 0 && (
           <details className="issue-history" open>
-            <summary>紀錄（{t.history.length}）</summary>
+            <summary>紀錄（{Math.max(history.length, t.history_n ?? 0)}）</summary>
             <ol>
-              {t.history.map((h, k) => (
+              {history.map((h, k) => (
                 <li key={k}>
                   <small className="muted">{fmtTime(h.at)} · {who(h.by)}</small>{" "}
                   {h.changes.map((ch) => (

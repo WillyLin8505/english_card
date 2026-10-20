@@ -1,75 +1,398 @@
 {
-  "_note": "Card #381 (問題回報 #341, owner decision: 常用意思都要排在前面). Reviewed by Claude, A1/A2 learner meanings. Per 'lemma|pos': first = English gloss prefixes of the most common senses, in order (app.sense_order puts them first); zh = dictionary Chinese for a sense whose translation was missing, AI-only or misplaced, taken from ECDICT's entry for the word (source ecdict); zh_ai = Claude's translation where ECDICT has none (source ai_translate, marked AI); low = senses that must not be a card's meaning (quality/overrides.json low_priority_senses). Apply: python lexicon/tools/card381_common.py apply.",
-  "words": {
-    "a|adv": {"first": ["across"]},
-    "a|noun": {"first": ["The name of the Latin script letter"]},
-    "cell|noun": {"first": ["A room in a prison or jail", "A device which stores electrical power"]},
-    "hate|noun": {"first": ["Hatred."]},
-    "moment|noun": {"low": ["A particular point of space"]},
-    "personal|adj": {"first": ["Of or pertaining to a particular person"]},
-    "account|noun": {"zh": {"A registry of pecuniary transactions": "帳目、帳戶", "A statement in general of reasons": "解釋、理由"}},
-    "agency|noun": {"first": ["An establishment engaged in doing business"],
-                    "low": ["The capacity, condition, or state of acting", "The capacity of individuals to act"]},
-    "air|noun": {"low": ["A melody or song"]},
-    "appointment|noun": {"first": ["An arrangement between people to meet"]},
-    "argue|verb": {"first": ["To have an argument, a quarrel", "To debate, disagree"]},
-    "attitude|noun": {"first": ["A disposition or state of mind"]},
-    "ball|noun": {"zh": {"A solid or hollow sphere": "球"}},
-    "bar|noun": {"first": ["A business selling alcoholic drinks", "A solid, more or less rigid object"],
-                 "zh": {"A solid, more or less rigid object": "條、棒", "A business selling alcoholic drinks": "酒吧"}},
-    "borrow|verb": {"zh": {"To receive (something) from somebody temporarily": "借、借入、借用"}},
-    "can|verb": {"first": ["To be able to or know how to", "May; to be permitted"],
-                 "zh": {"To seal in a can": "裝罐"}, "zh_ai": {"To know how to.": "會（做某事）"}},
-    "capital|noun": {"first": ["A city designated as a legislative seat", "Money and wealth"],
-                     "zh": {"A city designated as a legislative seat": "首都"}},
-    "chest|noun": {"first": ["The portion of the human body from the base of the neck"],
-                   "zh": {"The portion of the human body from the base of the neck": "胸、胸部", "A box, now usually a large strong box": "箱子"}},
-    "club|noun": {"first": ["An association of members"]},
-    "coach|noun": {"first": ["A trainer or instructor", "A long-distance, or privately hired, bus"]},
-    "company|noun": {"first": ["An entity having legal personality", "Any business, whether"]},
-    "concern|noun": {"zh": {"A worry; a sense that something may be wrong": "憂慮"}},
-    "contest|noun": {"first": ["A competition"], "zh": {"A competition": "競賽"}},
-    "course|noun": {"first": ["A learning programme", "A path that something or someone moves along"],
-                    "zh": {"A learning programme": "課程", "A path that something or someone moves along": "路線", "A sequence of events": "過程"}},
-    "court|noun": {"first": ["An organization for the administration of law", "The hall, chamber, or place, where justice"],
-                   "zh": {"An organization for the administration of law": "法院"}},
-    "date|noun": {"first": ["A specific day in time", "A romantic meeting or outing", "A pre-arranged meeting"],
-                  "zh": {"A specific day in time": "日期", "A romantic meeting or outing": "約會"}},
-    "depend|verb": {"zh": {"To be contingent or conditioned": "視…而定、靠"}},
-    "driver|noun": {"first": ["A person who drives a motorized vehicle"], "zh": {"One who drives something": "駕駛員"}},
-    "easily|adv": {"first": ["Without difficulty."]},
-    "egg|noun": {"first": ["The (usually) non-developing, edible egg"]},
-    "exhibition|noun": {"first": ["A large-scale public showing"]},
-    "film|noun": {"first": ["The sequence of still images itself", "A medium used to capture images"],
-                  "zh": {"The sequence of still images itself": "電影", "A medium used to capture images": "軟片、膠捲"}},
-    "fire truck|noun": {"zh": {"A motor truck that serves as firefighting apparatus": "救火車"}},
-    "football|noun": {"first": ["Association football"], "zh": {"A sport played on foot": "足球、橄欖球"}},
-    "host|noun": {"zh": {"One which receives or entertains a guest": "主人"}},
-    "interest|noun": {"first": ["A great attention and concern"]},
-    "kid|noun": {"zh": {"A child, adolescent, or (loosely) a young adult": "小孩"}},
-    "level|noun": {"first": ["Degree or amount"], "zh": {"Degree or amount": "水準、水平"}},
-    "long|verb": {"first": ["To await, aspire, desire greatly"], "zh": {"To await, aspire, desire greatly": "渴望、熱望"}},
-    "lot|noun": {"zh": {"A large quantity or number": "許多、一堆"}},
-    "meter|noun": {"zh": {"A device that measures things": "儀表、計量器"}},
-    "office|noun": {"first": ["A position of responsibility"], "low": ["A ceremonial duty or service"]},
-    "party|noun": {"first": ["A social gathering"]},
-    "pen|noun": {"first": ["A tool, originally made from a feather"],
-                 "zh": {"A tool, originally made from a feather": "筆、鋼筆、原子筆"}},
-    "pilot|noun": {"first": ["A person who is in charge of the controls of an aircraft"]},
-    "pink|noun": {"zh": {"A color reminiscent of pinks": "粉紅色"}},
-    "place|noun": {"first": ["A location or position in space", "Proper or usual position"],
-                   "zh": {"Proper or usual position": "位置"}},
-    "plane|noun": {"first": ["An airplane; an aeroplane", "A level or flat surface"], "zh": {"An airplane; an aeroplane": "飛機"}},
-    "printer|noun": {"first": ["A device, usually attached to a computer"]},
-    "range|noun": {"first": ["The extent or space taken in by anything", "A line or series of mountains"]},
-    "ring|verb": {"first": ["Of a bell, etc., to produce a resonant sound", "To make (a bell, etc.) produce"],
-                  "zh": {"Of a bell, etc., to produce a resonant sound": "響、鳴", "To make (a bell, etc.) produce": "按鈴、敲鐘"}},
-    "screen|noun": {"first": ["A flat electronic panel"]},
-    "screw|noun": {"first": ["A (usually) metal fastener"], "zh": {"A simple machine, a helical inclined plane": "螺旋"}},
-    "staff|noun": {"first": ["People employed by a business"]},
-    "store|noun": {"first": ["A building (or portion thereof) where items may be purchas"],
-                   "zh": {"A building (or portion thereof) where items may be purchas": "商店"}},
-    "train|noun": {"first": ["A group of animals, vehicles, or people that follow"], "low": ["The elongated back portion of a dress"]},
-    "wind|noun": {"zh": {"Real or perceived movement of atmospheric air": "風、風力"}}
+ "_note": "Card #381 (問題回報 #341, owner decision: 常用意思都要排在前面). Reviewed by Claude, A1/A2 learner meanings. Per 'lemma|pos': first = English gloss prefixes of the most common senses, in order (app.sense_order puts them first); zh = dictionary Chinese for a sense whose translation was missing, AI-only or misplaced, taken from ECDICT's entry for the word (source ecdict); zh_ai = Claude's translation where ECDICT has none (source ai_translate, marked AI); low = senses that must not be a card's meaning (quality/overrides.json low_priority_senses). Apply: python lexicon/tools/card381_common.py apply.",
+ "words": {
+  "a|adv": {
+   "first": [
+    "across"
+   ]
+  },
+  "a|noun": {
+   "first": [
+    "The name of the Latin script letter"
+   ]
+  },
+  "cell|noun": {
+   "first": [
+    "A room in a prison or jail",
+    "A device which stores electrical power"
+   ]
+  },
+  "hate|noun": {
+   "first": [
+    "Hatred."
+   ]
+  },
+  "moment|noun": {
+   "low": [
+    "A particular point of space"
+   ]
+  },
+  "personal|adj": {
+   "first": [
+    "Of or pertaining to a particular person"
+   ]
+  },
+  "account|noun": {
+   "zh": {
+    "A registry of pecuniary transactions": "帳目、帳戶",
+    "A statement in general of reasons": "解釋、理由"
+   }
+  },
+  "agency|noun": {
+   "first": [
+    "An establishment engaged in doing business"
+   ],
+   "low": [
+    "The capacity, condition, or state of acting",
+    "The capacity of individuals to act"
+   ]
+  },
+  "air|noun": {
+   "low": [
+    "A melody or song"
+   ]
+  },
+  "appointment|noun": {
+   "first": [
+    "An arrangement between people to meet"
+   ]
+  },
+  "argue|verb": {
+   "first": [
+    "To have an argument, a quarrel",
+    "To debate, disagree"
+   ]
+  },
+  "attitude|noun": {
+   "first": [
+    "A disposition or state of mind"
+   ]
+  },
+  "ball|noun": {
+   "zh": {
+    "A solid or hollow sphere": "球"
+   }
+  },
+  "bar|noun": {
+   "first": [
+    "A business selling alcoholic drinks",
+    "A solid, more or less rigid object"
+   ],
+   "zh": {
+    "A solid, more or less rigid object": "條、棒",
+    "A business selling alcoholic drinks": "酒吧"
+   }
+  },
+  "borrow|verb": {
+   "zh": {
+    "To receive (something) from somebody temporarily": "借、借入、借用"
+   }
+  },
+  "can|verb": {
+   "first": [
+    "To be able to or know how to",
+    "May; to be permitted"
+   ],
+   "zh": {
+    "To seal in a can": "裝罐"
+   },
+   "zh_ai": {
+    "To know how to.": "會（做某事）"
+   }
+  },
+  "capital|noun": {
+   "first": [
+    "A city designated as a legislative seat",
+    "Money and wealth"
+   ],
+   "zh": {
+    "A city designated as a legislative seat": "首都"
+   }
+  },
+  "chest|noun": {
+   "first": [
+    "The portion of the human body from the base of the neck"
+   ],
+   "zh": {
+    "The portion of the human body from the base of the neck": "胸、胸部",
+    "A box, now usually a large strong box": "箱子"
+   }
+  },
+  "club|noun": {
+   "first": [
+    "An association of members"
+   ]
+  },
+  "coach|noun": {
+   "first": [
+    "A trainer or instructor",
+    "A long-distance, or privately hired, bus"
+   ]
+  },
+  "company|noun": {
+   "first": [
+    "An entity having legal personality",
+    "Any business, whether"
+   ]
+  },
+  "concern|noun": {
+   "zh": {
+    "A worry; a sense that something may be wrong": "憂慮"
+   }
+  },
+  "contest|noun": {
+   "first": [
+    "A competition"
+   ],
+   "zh": {
+    "A competition": "競賽"
+   }
+  },
+  "course|noun": {
+   "first": [
+    "A learning programme",
+    "A path that something or someone moves along"
+   ],
+   "zh": {
+    "A learning programme": "課程",
+    "A path that something or someone moves along": "路線",
+    "A sequence of events": "過程"
+   }
+  },
+  "court|noun": {
+   "first": [
+    "An organization for the administration of law",
+    "The hall, chamber, or place, where justice"
+   ],
+   "zh": {
+    "An organization for the administration of law": "法院"
+   }
+  },
+  "date|noun": {
+   "first": [
+    "A specific day in time",
+    "A romantic meeting or outing",
+    "A pre-arranged meeting"
+   ],
+   "zh": {
+    "A specific day in time": "日期",
+    "A romantic meeting or outing": "約會"
+   }
+  },
+  "depend|verb": {
+   "zh": {
+    "To be contingent or conditioned": "視…而定、靠"
+   }
+  },
+  "driver|noun": {
+   "first": [
+    "A person who drives a motorized vehicle"
+   ],
+   "zh": {
+    "One who drives something": "駕駛員"
+   }
+  },
+  "easily|adv": {
+   "first": [
+    "Without difficulty."
+   ]
+  },
+  "egg|noun": {
+   "first": [
+    "The (usually) non-developing, edible egg"
+   ]
+  },
+  "exhibition|noun": {
+   "first": [
+    "A large-scale public showing"
+   ]
+  },
+  "film|noun": {
+   "first": [
+    "The sequence of still images itself",
+    "A medium used to capture images"
+   ],
+   "zh": {
+    "The sequence of still images itself": "電影",
+    "A medium used to capture images": "軟片、膠捲"
+   }
+  },
+  "fire truck|noun": {
+   "zh": {
+    "A motor truck that serves as firefighting apparatus": "救火車"
+   }
+  },
+  "football|noun": {
+   "first": [
+    "Association football"
+   ],
+   "zh": {
+    "A sport played on foot": "足球、橄欖球"
+   }
+  },
+  "host|noun": {
+   "zh": {
+    "One which receives or entertains a guest": "主人"
+   }
+  },
+  "interest|noun": {
+   "first": [
+    "A great attention and concern"
+   ]
+  },
+  "kid|noun": {
+   "zh": {
+    "A child, adolescent, or (loosely) a young adult": "小孩"
+   }
+  },
+  "level|noun": {
+   "first": [
+    "Degree or amount"
+   ],
+   "zh": {
+    "Degree or amount": "水準、水平"
+   }
+  },
+  "long|verb": {
+   "first": [
+    "To await, aspire, desire greatly"
+   ],
+   "zh": {
+    "To await, aspire, desire greatly": "渴望、熱望"
+   }
+  },
+  "lot|noun": {
+   "zh": {
+    "A large quantity or number": "許多、一堆"
+   }
+  },
+  "meter|noun": {
+   "zh": {
+    "A device that measures things": "儀表、計量器"
+   }
+  },
+  "office|noun": {
+   "first": [
+    "A position of responsibility"
+   ],
+   "low": [
+    "A ceremonial duty or service"
+   ]
+  },
+  "party|noun": {
+   "first": [
+    "A social gathering"
+   ]
+  },
+  "pen|noun": {
+   "first": [
+    "A tool, originally made from a feather"
+   ],
+   "zh": {
+    "A tool, originally made from a feather": "筆、鋼筆、原子筆"
+   }
+  },
+  "pilot|noun": {
+   "first": [
+    "A person who is in charge of the controls of an aircraft"
+   ]
+  },
+  "pink|noun": {
+   "zh": {
+    "A color reminiscent of pinks": "粉紅色"
+   }
+  },
+  "place|noun": {
+   "first": [
+    "A location or position in space",
+    "Proper or usual position"
+   ],
+   "zh": {
+    "Proper or usual position": "位置"
+   }
+  },
+  "plane|noun": {
+   "first": [
+    "An airplane; an aeroplane",
+    "A level or flat surface"
+   ],
+   "zh": {
+    "An airplane; an aeroplane": "飛機"
+   }
+  },
+  "printer|noun": {
+   "first": [
+    "A device, usually attached to a computer"
+   ]
+  },
+  "range|noun": {
+   "first": [
+    "The extent or space taken in by anything",
+    "A line or series of mountains"
+   ]
+  },
+  "ring|verb": {
+   "first": [
+    "Of a bell, etc., to produce a resonant sound",
+    "To make (a bell, etc.) produce"
+   ],
+   "zh": {
+    "Of a bell, etc., to produce a resonant sound": "響、鳴",
+    "To make (a bell, etc.) produce": "按鈴、敲鐘"
+   }
+  },
+  "screen|noun": {
+   "first": [
+    "A flat electronic panel"
+   ]
+  },
+  "screw|noun": {
+   "first": [
+    "A (usually) metal fastener"
+   ],
+   "zh": {
+    "A simple machine, a helical inclined plane": "螺旋"
+   }
+  },
+  "staff|noun": {
+   "first": [
+    "People employed by a business"
+   ]
+  },
+  "store|noun": {
+   "first": [
+    "A building (or portion thereof) where items may be purchas"
+   ],
+   "zh": {
+    "A building (or portion thereof) where items may be purchas": "商店"
+   }
+  },
+  "train|noun": {
+   "first": [
+    "A group of animals, vehicles, or people that follow"
+   ],
+   "low": [
+    "The elongated back portion of a dress"
+   ]
+  },
+  "wind|noun": {
+   "zh": {
+    "Real or perceived movement of atmospheric air": "風、風力"
+   }
+  },
+  "top|verb": {
+   "first": [
+    "To excel, to surpass, to beat, to exceed."
+   ],
+   "zh": {
+    "To excel, to surpass, to beat, to exceed.": "超越、勝過",
+    "To cover on the top or with a top.": "加上頂部"
+   }
+  },
+  "out|prep": {
+   "zh_ai": {
+    "From the inside to the outside of; out of.": "從…裡面出來、向外"
+   }
   }
+ }
 }

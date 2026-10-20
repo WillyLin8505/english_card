@@ -17,7 +17,8 @@ void main() {
     expect(app.settings.shareUsageStats, isFalse);
     expect(Analytics.instance.sharing, isFalse);
 
-    final sw = find.byType(Switch);
+    // The 隱私 card's switch (設定 also has the photo-label switch).
+    final sw = find.byKey(const ValueKey('usage-stats-switch'));
     expect(sw, findsOneWidget);
     await tester.ensureVisible(sw);
     expect(tester.widget<Switch>(sw).value, isFalse);

@@ -3,8 +3,8 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
 import '../screens/album_screen.dart';
-import '../screens/database_library_screen.dart';
 import '../screens/camera_screen.dart';
+import '../screens/database_library_screen.dart';
 import '../screens/flashcard_screen.dart';
 import '../screens/photo_detail_screen.dart';
 import '../screens/photo_grid_screen.dart';
@@ -24,6 +24,8 @@ import '../services/analytics.dart';
 /// `AppScope.of(context).navigator`.
 class AppShell extends StatefulWidget {
   final AppTab initialTab;
+  /// The server-catalog browser. Off in the shipped app (問題回報 #404: the
+  /// app shows only what the learner owns); kept for the catalog tests.
   final bool databaseLibrary;
   final ValueChanged<AppNavigator> onNavigatorReady;
 

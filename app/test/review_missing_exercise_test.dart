@@ -46,7 +46,7 @@ void main() {
       });
     }
     await pumpApp(tester, repository: repo, initialTab: AppTab.review);
-    await tester.tap(find.text('開始複習'));
+    await tester.tap(find.text('綜合'));
     await tester.pumpAndSettle();
     // The only example leaks the answer (applecart contains apple), so no
     // interactive exercise can be built. The card still shows, as the
@@ -97,7 +97,7 @@ void main() {
       WordExample(text: 'This is a cup.', translation: '這是一個杯子。')
     ]));
     await pumpApp(tester, repository: repo, initialTab: AppTab.review);
-    await tester.tap(find.text('開始複習'));
+    await tester.tap(find.text('綜合'));
     await tester.pumpAndSettle();
     for (var i = 0; i < 3; i++) {
       await tester.enterText(find.byType(TextField), 'wrong');

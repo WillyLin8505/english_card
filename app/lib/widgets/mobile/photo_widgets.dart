@@ -1,10 +1,12 @@
 import '../../services/learning_content.dart';
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 
 import '../../app/app_scope.dart';
+import '../../l10n/ui_text.dart';
 import '../../models/learning_card.dart';
 import '../../models/photo.dart';
 import '../../theme/mobile_theme.dart';
@@ -279,6 +281,64 @@ class WordPin extends StatelessWidget {
   }
 }
 
+/// The light bar that sweeps down a photo while it is being read (問題回報
+/// #409). Only the bar repaints; the photo under it is not rebuilt.
+class PhotoScanSweep extends StatefulWidget {
+  const PhotoScanSweep({super.key});
+
+  @override
+  State<PhotoScanSweep> createState() => _PhotoScanSweepState();
+}
+
+class _PhotoScanSweepState extends State<PhotoScanSweep>
+    with SingleTickerProviderStateMixin {
+  static const _band = 40.0;
+  late final AnimationController _sweep = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1800),
+  )..repeat();
+
+  @override
+  void dispose() {
+    _sweep.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => IgnorePointer(
+        child: RepaintBoundary(
+          child: LayoutBuilder(
+            builder: (context, c) => AnimatedBuilder(
+              animation: _sweep,
+              builder: (context, _) => Stack(
+                children: [
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    height: _band,
+                    top: (c.maxHeight + _band) * _sweep.value - _band,
+                    child: const DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Color(0x00FFFFFF),
+                            Color(0x66FFFFFF),
+                            Color(0x00FFFFFF),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+}
+
 class PinData {
   final String id;
   final LabelPoint anchor;
@@ -334,6 +394,11 @@ class PinnedPhoto extends StatefulWidget {
   /// Rectangles over the photo (in its coordinates) that labels avoid.
   final List<Rect> avoid;
 
+  /// New labels that show up after the photo opened pop in one by one, in
+  /// reading order, then 「找到 N 個字」 (問題回報 #409). Labels already there
+  /// when the photo opens show at once.
+  final bool revealNew;
+
   const PinnedPhoto({
     super.key,
     required this.photo,
@@ -349,6 +414,7 @@ class PinnedPhoto extends StatefulWidget {
     this.reserveTop = 0,
     this.reserveBottom = 0,
     this.avoid = const [],
+    this.revealNew = false,
   });
 
   @override
@@ -358,6 +424,106 @@ class PinnedPhoto extends StatefulWidget {
 class _PinnedPhotoState extends State<PinnedPhoto> {
   String? _dragging;
   Offset _dragBy = Offset.zero;
+
+  // 問題回報 #409: `_queue` holds the ids still waiting to pop in, one every
+  // [_popGap]; `_popped` the ids that have popped in (they animate once).
+  static const _popGap = Duration(milliseconds: 200);
+  final List<String> _queue = [];
+  final Set<String> _popped = {};
+  Timer? _ticker;
+
+  /// Labels in the read that is popping in, and the 「找到 N 個字」 shown
+  /// after it (gone after [_foundFor]).
+  int _batch = 0;
+  int? _found;
+  Timer? _foundTimer;
+  static const _foundFor = Duration(milliseconds: 2500);
+
+  // 問題回報 #442: a label that drops off the photo fades out where it was;
+  // `_lastPlaced` keeps where each label was drawn last.
+  final Map<String, PinData> _leaving = {};
+  final Map<String, PinPlacement> _lastPlaced = {};
+
+  @override
+  void didUpdateWidget(PinnedPhoto old) {
+    super.didUpdateWidget(old);
+    final ids = {for (final p in widget.pins) p.id};
+    for (final p in old.pins) {
+      if (ids.contains(p.id) || !_lastPlaced.containsKey(p.id)) continue;
+      _leaving.putIfAbsent(p.id, () => p);
+    }
+    _leaving.removeWhere((id, _) => ids.contains(id));
+    _queue.removeWhere((id) => !ids.contains(id));
+    if (!widget.revealNew) return;
+    final known = {for (final p in old.pins) p.id};
+    final fresh = [
+      for (final p in widget.pins)
+        if (!p.muted && !known.contains(p.id) && !_queue.contains(p.id)) p,
+    ]..sort((a, b) => a.anchor.y != b.anchor.y
+        ? a.anchor.y.compareTo(b.anchor.y)
+        : a.anchor.x.compareTo(b.anchor.x));
+    if (fresh.isEmpty) return;
+    if (_queue.isEmpty) _batch = 0;
+    _batch += fresh.length;
+    _found = null;
+    _foundTimer?.cancel();
+    _queue.addAll(fresh.map((p) => p.id));
+    _ticker ??= Timer.periodic(_popGap, (_) => _pop());
+  }
+
+  @override
+  void dispose() {
+    _ticker?.cancel();
+    _foundTimer?.cancel();
+    super.dispose();
+  }
+
+  void _pop() => setState(() {
+        if (_queue.isNotEmpty) _popped.add(_queue.removeAt(0));
+        if (_queue.isEmpty) _endRead();
+      });
+
+  void _skipRead() => setState(() {
+        _popped.addAll(_queue);
+        _queue.clear();
+        _endRead();
+      });
+
+  void _endRead() {
+    _ticker?.cancel();
+    _ticker = null;
+    _found = _batch > 0 ? _batch : null;
+    _foundTimer = Timer(_foundFor, () {
+      if (mounted) setState(() => _found = null);
+    });
+  }
+
+  /// A label's first build after it pops in: scales up from its dot.
+  Widget _popIn(String id, Widget child) => !_popped.contains(id)
+      ? child
+      : TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0, end: 1),
+          duration: const Duration(milliseconds: 260),
+          curve: Curves.easeOutBack,
+          builder: (context, t, child) => Opacity(
+              opacity: t.clamp(0.0, 1.0),
+              child: Transform.scale(scale: t, child: child)),
+          child: child,
+        );
+
+  /// The bottom chip: 「跳過動畫」 while labels are still popping in, then
+  /// 「找到 N 個字」.
+  Widget _revealChip() {
+    final skipping = _queue.isNotEmpty;
+    final pill = Container(
+      padding: const EdgeInsets.symmetric(
+          horizontal: MSpace.md, vertical: MSpace.sm - 2),
+      decoration: MDecor.overlayPill(radius: MRadii.xl),
+      child: UiText(skipping ? '跳過動畫' : '找到 $_found 個字',
+          style: MFont.manrope(13, FontWeight.w700, Colors.white)),
+    );
+    return skipping ? GestureDetector(onTap: _skipRead, child: pill) : pill;
+  }
 
   // layoutPins tries a few hundred spots per label (~10 ms a photo), so the
   // result is kept until the labels, their dots or the photo's size change —
@@ -411,6 +577,9 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
                   pl.id, pl.anchor + _dragBy, pl.badge.shift(_dragBy))
               : pl;
           final visible = [for (final pl in placed) shown(pl)];
+          for (final pl in visible) {
+            _lastPlaced[pl.id] = pl;
+          }
           Offset clampToBox(Offset o) => Offset(
               o.dx.clamp(4.0, box.width - 4), o.dy.clamp(4.0, box.height - 4));
           return Stack(
@@ -422,21 +591,28 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
                 onTapUp: widget.onPhotoTap == null
                     ? null
                     : (d) => widget.onPhotoTap!(geo.fromBox(d.localPosition)),
-                child: PhotoImage(widget.photo,
-                    imageErrorBuilder: widget.imageErrorBuilder,
-                    onImageState: widget.onImageState),
+                // The photo stays still while labels pop in (#409).
+                child: RepaintBoundary(
+                  child: PhotoImage(widget.photo,
+                      imageErrorBuilder: widget.imageErrorBuilder,
+                      onImageState: widget.onImageState),
+                ),
               )),
               Positioned.fill(
                 child: IgnorePointer(
                   child: CustomPaint(
                     painter: _LeaderPainter([
-                      for (final pl in visible) (pl, byId[pl.id]!.muted),
+                      for (final pl in visible)
+                        if (!_queue.contains(pl.id)) (pl, byId[pl.id]!.muted),
                     ], frames: [
                       for (final p in widget.pins)
-                        if (p.frame case final f? when p.id != _dragging)
+                        if (p.frame case final f?
+                            when p.id != _dragging && !_queue.contains(p.id))
                           (
-                            Rect.fromPoints(geo.toBox(LabelPoint(f.left, f.top)),
-                                geo.toBox(LabelPoint(f.left + f.width, f.top + f.height))),
+                            Rect.fromPoints(
+                                geo.toBox(LabelPoint(f.left, f.top)),
+                                geo.toBox(LabelPoint(
+                                    f.left + f.width, f.top + f.height))),
                             p.muted,
                           ),
                     ]),
@@ -444,63 +620,135 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
                 ),
               ),
               for (final pl in visible)
-                Positioned(
-                  left: pl.badge.left,
-                  top: pl.badge.top,
-                  child: GestureDetector(
-                    onPanStart: widget.onPinMoved == null || byId[pl.id]!.muted
-                        ? null
-                        : (_) => setState(() {
-                              _dragging = pl.id;
-                              _dragBy = Offset.zero;
-                            }),
-                    onPanUpdate: widget.onPinMoved == null || byId[pl.id]!.muted
-                        ? null
-                        : (d) => setState(() {
-                              final base = placed
-                                  .firstWhere((x) => x.id == pl.id)
-                                  .anchor;
-                              _dragBy =
-                                  clampToBox(base + _dragBy + d.delta) - base;
-                            }),
-                    onPanEnd: widget.onPinMoved == null || byId[pl.id]!.muted
-                        ? null
-                        : (_) {
-                            final base =
-                                placed.firstWhere((x) => x.id == pl.id).anchor;
-                            final to = base + _dragBy;
-                            setState(() {
-                              _dragging = null;
-                              _dragBy = Offset.zero;
-                            });
-                            widget.onPinMoved!(byId[pl.id]!, geo.fromBox(to));
-                          },
-                    child: Tap(
-                      onTap: widget.onPinTap == null
-                          ? null
-                          : () => widget.onPinTap!(byId[pl.id]!),
-                      label: '${byId[pl.id]!.word} ${byId[pl.id]!.zh}',
-                      child: WordPin(
-                        word: byId[pl.id]!.word,
-                        zh: byId[pl.id]!.zh,
-                        entryType: byId[pl.id]!.entryType,
-                        large: widget.largePins,
-                        muted: byId[pl.id]!.muted,
-                        lifted: _dragging == pl.id,
-                        linked: byId[pl.id]!.linked,
-                        maxWidth: pl.badge.width,
+                if (!_queue.contains(pl.id))
+                  Positioned(
+                    key: ValueKey(pl.id),
+                    left: pl.badge.left,
+                    top: pl.badge.top,
+                    child: _popIn(
+                        pl.id,
+                        GestureDetector(
+                          onPanStart:
+                              widget.onPinMoved == null || byId[pl.id]!.muted
+                                  ? null
+                                  : (_) => setState(() {
+                                        _dragging = pl.id;
+                                        _dragBy = Offset.zero;
+                                      }),
+                          onPanUpdate: widget.onPinMoved == null ||
+                                  byId[pl.id]!.muted
+                              ? null
+                              : (d) => setState(() {
+                                    final base = placed
+                                        .firstWhere((x) => x.id == pl.id)
+                                        .anchor;
+                                    _dragBy =
+                                        clampToBox(base + _dragBy + d.delta) -
+                                            base;
+                                  }),
+                          onPanEnd:
+                              widget.onPinMoved == null || byId[pl.id]!.muted
+                                  ? null
+                                  : (_) {
+                                      final base = placed
+                                          .firstWhere((x) => x.id == pl.id)
+                                          .anchor;
+                                      final to = base + _dragBy;
+                                      setState(() {
+                                        _dragging = null;
+                                        _dragBy = Offset.zero;
+                                      });
+                                      widget.onPinMoved!(
+                                          byId[pl.id]!, geo.fromBox(to));
+                                    },
+                          child: Tap(
+                            onTap: widget.onPinTap == null
+                                ? null
+                                : () => widget.onPinTap!(byId[pl.id]!),
+                            label: '${byId[pl.id]!.word} ${byId[pl.id]!.zh}',
+                            child: WordPin(
+                              word: byId[pl.id]!.word,
+                              zh: byId[pl.id]!.zh,
+                              entryType: byId[pl.id]!.entryType,
+                              large: widget.largePins,
+                              muted: byId[pl.id]!.muted,
+                              lifted: _dragging == pl.id,
+                              linked: byId[pl.id]!.linked,
+                              maxWidth: pl.badge.width,
+                            ),
+                          ),
+                        )),
+                  ),
+              for (final e in _leaving.entries)
+                if (_lastPlaced[e.key] case final pl?)
+                  Positioned(
+                    key: ValueKey('leaving-${e.key}'),
+                    left: pl.badge.left,
+                    top: pl.badge.top,
+                    child: IgnorePointer(
+                      child: _FadeOutPin(
+                        onGone: () => setState(() => _leaving.remove(e.key)),
+                        child: WordPin(
+                          word: e.value.word,
+                          zh: e.value.zh,
+                          entryType: e.value.entryType,
+                          large: widget.largePins,
+                          muted: e.value.muted,
+                          linked: e.value.linked,
+                          maxWidth: pl.badge.width,
+                        ),
                       ),
                     ),
                   ),
-                ),
               if (widget.overlay != null)
                 Positioned.fill(child: widget.overlay!),
+              if (_queue.isNotEmpty || _found != null)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 12,
+                  child: Center(child: _revealChip()),
+                ),
             ],
           );
         },
       ),
     );
   }
+}
+
+/// 問題回報 #442: a label that has dropped off the photo fades out, then
+/// tells its photo to forget it ([onGone]).
+class _FadeOutPin extends StatefulWidget {
+  final Widget child;
+  final VoidCallback onGone;
+
+  const _FadeOutPin({required this.child, required this.onGone});
+
+  @override
+  State<_FadeOutPin> createState() => _FadeOutPinState();
+}
+
+class _FadeOutPinState extends State<_FadeOutPin>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _fade = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 220),
+  )..forward().whenComplete(() {
+      if (mounted) widget.onGone();
+    });
+
+  @override
+  void dispose() {
+    _fade.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => FadeTransition(
+        opacity: Tween<double>(begin: 1, end: 0).animate(_fade),
+        child: widget.child,
+      );
 }
 
 /// Leader lines and focal dots under the badges: a soft shadow, then a
@@ -517,7 +765,8 @@ class _LeaderPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     for (final (r, muted) in frames) {
       final a = muted ? 0.55 : 1.0;
-      final box = RRect.fromRectAndRadius(r.inflate(2), const Radius.circular(4));
+      final box =
+          RRect.fromRectAndRadius(r.inflate(2), const Radius.circular(4));
       canvas.drawRRect(
           box,
           Paint()
@@ -645,4 +894,62 @@ class HourglassBadge extends StatelessWidget {
               size: 14, color: Colors.white),
         ),
       );
+}
+
+/// A dot that is picked up with a long press and dragged to the right spot
+/// (問題回報 #410: the AI may put a label on the wrong object). [at] is the
+/// dot's centre in the parent Stack's box; [onMoved] gets the dropped
+/// centre in the same box. Plain taps and scrolls pass through untouched.
+class DraggableAnchorDot extends StatefulWidget {
+  final Offset at;
+  final ValueChanged<Offset> onMoved;
+
+  const DraggableAnchorDot(
+      {super.key, required this.at, required this.onMoved});
+
+  @override
+  State<DraggableAnchorDot> createState() => _DraggableAnchorDotState();
+}
+
+class _DraggableAnchorDotState extends State<DraggableAnchorDot> {
+  Offset? _drag;
+
+  @override
+  Widget build(BuildContext context) {
+    final lifted = _drag != null;
+    final at = _drag ?? widget.at;
+    final size = lifted ? 22.0 : 14.0;
+    return Positioned(
+      left: at.dx - 22,
+      top: at.dy - 22,
+      width: 44,
+      height: 44,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onLongPressStart: (_) => setState(() => _drag = widget.at),
+        onLongPressMoveUpdate: (d) =>
+            setState(() => _drag = widget.at + d.offsetFromOrigin),
+        onLongPressEnd: (_) {
+          final to = _drag;
+          setState(() => _drag = null);
+          if (to != null) widget.onMoved(to);
+        },
+        onLongPressCancel: () => setState(() => _drag = null),
+        child: Center(
+          child: AnimatedContainer(
+            key: const ValueKey('draggable-anchor-dot'),
+            duration: const Duration(milliseconds: 120),
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              color: MColors.primary,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 2.5),
+              boxShadow: MShadows.soft,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

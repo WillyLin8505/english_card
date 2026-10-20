@@ -122,6 +122,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.dispose();
   }
 
+  static const _levelInfo =
+      '累積至少 20 次使用紀錄後，程度會依你的評分、左滑與轉盤自動調整，一次最多一級。照片詳情的難度轉盤只影響那一張照片。';
+
   static String _sourceLabel(String source) => switch (source) {
         'check' => '快速詞彙檢查',
         'elo' => '依你的使用情況調整',
@@ -165,17 +168,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             runSpacing: 8,
                             children: [
                               for (final e in supportedLanguages.entries)
-                                ChoiceChip(
-                                  label: UiText(languageOptionLabel(e.key,
-                                      learning: true)),
-                                  selected: e.key == settings.learningLanguage,
-                                  onSelected: _switching ||
-                                          !learningLanguageAvailable(e.key)
-                                      ? null
-                                      : (_) => _switchLanguage(e.key),
-                                ),
+                                if (learningLanguageAvailable(e.key) &&
+                                    e.key != settings.nativeLanguage)
+                                  ChoiceChip(
+                                    label: UiText(languageOptionLabel(e.key,
+                                        learning: true)),
+                                    selected:
+                                        e.key == settings.learningLanguage,
+                                    onSelected: _switching
+                                        ? null
+                                        : (_) => _switchLanguage(e.key),
+                                  ),
                             ],
                           ),
+                          _note('更多學習語言即將推出'),
                           _note('每個學習語言有自己的相片冊、單字、卡片與程度。'),
                           const SizedBox(height: 12),
                           _label('母語'),
@@ -184,22 +190,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             runSpacing: 8,
                             children: [
                               for (final e in supportedLanguages.entries)
-                                ChoiceChip(
-                                  label: UiText(languageOptionLabel(e.key,
-                                      learning: false)),
-                                  selected: e.key == settings.nativeLanguage,
-                                  onSelected: !nativeLanguageAvailable(e.key)
-                                      ? null
-                                      : (_) {
-                                          if (e.key ==
-                                              settings.learningLanguage) {
-                                            showToast(context, '學習語言和母語不能相同');
-                                            return;
-                                          }
-                                          settings.nativeLanguage = e.key;
-                                          scope.enricher.process();
-                                        },
-                                ),
+                                if (nativeLanguageAvailable(e.key) &&
+                                    e.key != settings.learningLanguage)
+                                  ChoiceChip(
+                                    label: UiText(languageOptionLabel(e.key,
+                                        learning: false)),
+                                    selected: e.key == settings.nativeLanguage,
+                                    onSelected: (_) {
+                                      settings.nativeLanguage = e.key;
+                                      scope.enricher.process();
+                                    },
+                                  ),
                             ],
                           ),
                           _note('介面隨母語切換；學習內容依已發布的詞庫提供。'),
@@ -228,14 +229,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       _Card(
                         title: '單字難度',
                         children: [
-                          UiText(
-                            '目前程度 ${ui(context, levelLabel(profile.cefr))}',
-                            style:
-                                MFont.manrope(15, FontWeight.w800, MColors.ink),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: UiText(
+                                  '目前程度 ${ui(context, levelLabel(profile.cefr))}'
+                                  '${profile.source == 'elo' ? '（${ui(context, 'App 自動調整')}）' : ''}',
+                                  style: MFont.manrope(
+                                      15, FontWeight.w800, MColors.ink),
+                                ),
+                              ),
+                              Tooltip(
+                                message: ui(context, _levelInfo),
+                                triggerMode: TooltipTriggerMode.tap,
+                                showDuration: const Duration(seconds: 8),
+                                child: const Padding(
+                                  padding: EdgeInsets.all(6),
+                                  child: Icon(Icons.info_outline,
+                                      size: 18, color: MColors.muted),
+                                ),
+                              ),
+                            ],
                           ),
-                          _note(
-                              '來源：${ui(context, _sourceLabel(profile.source))}。新照片的單字會以這個程度為中心挑選；'
-                              '照片詳情的難度轉盤只影響那一張照片。'),
+                          _note('新照片的單字以這個程度為主，App 會依你的複習慢慢調整。'),
                           if (shift != 0) ...[
                             const SizedBox(height: 10),
                             Container(
@@ -277,8 +293,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 ),
                             ],
                           ),
-                          _note(
-                              '累積足夠的使用紀錄後（至少 20 次），程度會依你的評分、左滑與轉盤慢慢自動調整，一次最多一級。'),
                         ],
                       ),
                       // The store build has no server to point at (問題回報
@@ -302,12 +316,137 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ),
                             ],
                           ],
-                        )
-                      else
-                        _Card(
-                          title: '進階設定：照片辨識連線',
-                          collapsed: true,
-                          children: [
+                        ),
+                      // Connecting/connected and the polling interval are
+                      // debug chrome; learners only need to know when the
+                      // dictionary can't update (問題回報 #260, #306).
+                      if (DictionarySync.instance.hasError)
+                        _Card(title: '詞庫連線', children: [
+                          UiText(DictionarySync.instance.status),
+                          TextButton(
+                              onPressed: DictionarySync.instance.refresh,
+                              child: const UiText('重新連線')),
+                        ]),
+                      _Card(
+                        title: '資料',
+                        children: [
+                          UiText(
+                            '字卡和複習紀錄保存在${kIsWeb ? '此瀏覽器' : '此裝置'}。',
+                            style: MFont.manrope(
+                                14, FontWeight.w700, MColors.success),
+                          ),
+                          const SizedBox(height: 6),
+                          _note(
+                              '${ui(context, supportedLanguages[repo.language]!)}：'
+                              '${formatCount(repo.wordCount)} 個單字 · '
+                              '${formatCount(repo.photoCount)} 張照片 · '
+                              '已學會 ${formatCount(profile.learned.length)} 個'),
+                          const SizedBox(height: 6),
+                          const BackupButtons(),
+                          const AnkiExportButton(),
+                        ],
+                      ),
+                      _Card(
+                        title: '隱私',
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: UiText('分享使用統計',
+                                    style: MFont.manrope(
+                                        15, FontWeight.w800, MColors.ink)),
+                              ),
+                              Switch(
+                                key: const ValueKey('usage-stats-switch'),
+                                value: settings.shareUsageStats,
+                                onChanged: (v) => settings.shareUsageStats = v,
+                              ),
+                            ],
+                          ),
+                          _note('關閉時不會送出使用統計。打開後只送匿名的操作紀錄，用來了解功能好不好用，不影響任何功能。'),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton(
+                              onPressed: () => Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                      builder: (_) =>
+                                          const PrivacyPolicyScreen())),
+                              child: const UiText('查看隱私權政策'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      _Card(
+                        title: '卡片集',
+                        children: [
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton(
+                              onPressed: () => Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                      builder: (_) =>
+                                          const DeckBrowserScreen())),
+                              child: const UiText('瀏覽並下載卡片集'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      // 問題回報 #317: the review card's look only.
+                      _Card(
+                        title: '卡片樣式',
+                        children: [
+                          CardStylePicker(
+                            selected: settings.cardStyle,
+                            onChanged: (style) => settings.cardStyle = style,
+                          ),
+                          _note('只改變複習卡片的外觀，內容和複習方式不變。'),
+                          const Divider(height: 24),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: UiText('照片上的單字標示',
+                                    style: MFont.manrope(
+                                        15, FontWeight.w800, MColors.ink)),
+                              ),
+                              Switch(
+                                key: const ValueKey('photo-labels-switch'),
+                                value: settings.showPhotoLabels,
+                                onChanged: (v) => settings.showPhotoLabels = v,
+                              ),
+                            ],
+                          ),
+                          _note('複習卡片背面的照片上，顯示這個單字的標籤。預設打開。'),
+                        ],
+                      ),
+                      _Card(
+                        title: '關於',
+                        children: [
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton(
+                              onPressed: () => Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                      builder: (_) =>
+                                          const DataSourcesScreen())),
+                              child: const UiText('資料來源與授權'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      _insightsCard(repo.insights()),
+                      // 問題回報 #390: advanced settings sit at the bottom,
+                      // collapsed; a failed connection shows only as a hint.
+                      _Card(
+                        title: '進階設定',
+                        collapsed: true,
+                        hint: settings.showsTaggingServer &&
+                                (_check?.startsWith('✕') ?? false)
+                            ? '照片辨識連線失敗，點開查看'
+                            : null,
+                        children: [
+                          if (settings.showsTaggingServer) ...[
+                            const SectionLabel('照片辨識連線'),
+                            const SizedBox(height: 10),
                             _note(kIsWeb
                                 ? '網頁版會自動連接這台電腦的照片辨識服務，不用填網址或金鑰。只有使用其他服務時才需要修改。連不上時照片會先排隊，'
                                     '恢復連線後自動處理。'
@@ -371,12 +510,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     12, FontWeight.w700, MColors.muted),
                               ),
                             ],
+                            const SizedBox(height: 24),
                           ],
-                        ),
-                      _Card(
-                        title: '進階設定：複習安排',
-                        collapsed: true,
-                        children: [
+                          const SectionLabel('複習安排'),
+                          const SizedBox(height: 10),
                           UiText(
                             '希望記住的比例 ${(settings.desiredRetention * 100).round()}%',
                             style:
@@ -391,6 +528,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             label:
                                 '${(settings.desiredRetention * 100).round()}%',
                             onChanged: (v) => settings.desiredRetention = v,
+                          ),
+                          const Divider(height: 24),
+                          UiText(
+                            '每天最多 ${settings.dailyNewLimit} 張新卡',
+                            style:
+                                MFont.manrope(15, FontWeight.w800, MColors.ink),
+                          ),
+                          _note('超過的新卡順延到明天。預設 20 張。'),
+                          Slider(
+                            value: settings.dailyNewLimit.toDouble(),
+                            min: AppSettings.minDailyNew.toDouble(),
+                            max: AppSettings.maxDailyNew.toDouble(),
+                            divisions: (AppSettings.maxDailyNew -
+                                    AppSettings.minDailyNew) ~/
+                                5,
+                            label: '${settings.dailyNewLimit}',
+                            onChanged: (v) => settings.dailyNewLimit = v.round(),
+                          ),
+                          UiText(
+                            '每天最多複習 ${settings.dailyReviewLimit} 張',
+                            style:
+                                MFont.manrope(15, FontWeight.w800, MColors.ink),
+                          ),
+                          _note('超過的複習順延到明天。預設 100 張。'),
+                          Slider(
+                            value: settings.dailyReviewLimit.toDouble(),
+                            min: AppSettings.minDailyReview.toDouble(),
+                            max: AppSettings.maxDailyReview.toDouble(),
+                            divisions: (AppSettings.maxDailyReview -
+                                    AppSettings.minDailyReview) ~/
+                                10,
+                            label: '${settings.dailyReviewLimit}',
+                            onChanged: (v) =>
+                                settings.dailyReviewLimit = v.round(),
                           ),
                           const Divider(height: 24),
                           Tap(
@@ -414,106 +585,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                         ],
                       ),
-                      // Connecting/connected and the polling interval are
-                      // debug chrome; learners only need to know when the
-                      // dictionary can't update (問題回報 #260, #306).
-                      if (DictionarySync.instance.hasError)
-                        _Card(title: '詞庫連線', children: [
-                          UiText(DictionarySync.instance.status),
-                          TextButton(
-                              onPressed: DictionarySync.instance.refresh,
-                              child: const UiText('重新連線')),
-                        ]),
-                      _Card(
-                        title: '資料',
-                        children: [
-                          UiText(
-                            '字卡和複習紀錄保存在${kIsWeb ? '此瀏覽器' : '此裝置'}。',
-                            style: MFont.manrope(
-                                14, FontWeight.w700, MColors.success),
-                          ),
-                          const SizedBox(height: 6),
-                          _note(
-                              '${ui(context, supportedLanguages[repo.language]!)}：'
-                              '${formatCount(repo.wordCount)} 個單字 · '
-                              '${formatCount(repo.photoCount)} 張照片 · '
-                              '已學會 ${formatCount(profile.learned.length)} 個'),
-                          const SizedBox(height: 6),
-                          const BackupButtons(),
-                          const AnkiExportButton(),
-                        ],
-                      ),
-                      _Card(
-                        title: '隱私',
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: UiText('分享使用統計',
-                                    style: MFont.manrope(
-                                        15, FontWeight.w800, MColors.ink)),
-                              ),
-                              Switch(
-                                value: settings.shareUsageStats,
-                                onChanged: (v) => settings.shareUsageStats = v,
-                              ),
-                            ],
-                          ),
-                          _note('關閉時不會送出使用統計。打開後只送匿名的操作紀錄，用來了解功能好不好用，不影響任何功能。'),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: TextButton(
-                              onPressed: () => Navigator.of(context).push(
-                                  MaterialPageRoute<void>(
-                                      builder: (_) =>
-                                          const PrivacyPolicyScreen())),
-                              child: const UiText('查看隱私權政策'),
-                            ),
-                          ),
-                        ],
-                      ),
-                      _Card(
-                        title: '卡片集',
-                        children: [
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: TextButton(
-                              onPressed: () => Navigator.of(context).push(
-                                  MaterialPageRoute<void>(
-                                      builder: (_) =>
-                                          const DeckBrowserScreen())),
-                              child: const UiText('瀏覽並下載卡片集'),
-                            ),
-                          ),
-                        ],
-                      ),
-                      // 問題回報 #317: the review card's look only.
-                      _Card(
-                        title: '卡片樣式',
-                        children: [
-                          CardStylePicker(
-                            selected: settings.cardStyle,
-                            onChanged: (style) => settings.cardStyle = style,
-                          ),
-                          _note('只改變複習卡片的外觀，內容和複習方式不變。'),
-                        ],
-                      ),
-                      _Card(
-                        title: '關於',
-                        children: [
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: TextButton(
-                              onPressed: () => Navigator.of(context).push(
-                                  MaterialPageRoute<void>(
-                                      builder: (_) =>
-                                          const DataSourcesScreen())),
-                              child: const UiText('資料來源與授權'),
-                            ),
-                          ),
-                        ],
-                      ),
-                      _insightsCard(repo.insights()),
                     ],
                   ),
                 ),
@@ -527,51 +598,60 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _insightsCard(LearningInsights ins) {
     String bars(List<int> v) => v.join(' · ');
-    return _Card(title: '學習洞察', children: [
-      _label('複習次數'),
-      if (ins.total == 0)
-        _note('還沒有複習紀錄。')
-      else ...[
-        UiText('最近 7 天（每日）：${bars(ins.daily)}',
-            style: MFont.manrope(13, FontWeight.w600, MColors.ink)),
-        const SizedBox(height: 4),
-        UiText('最近 4 週（每週）：${bars(ins.weekly)}',
-            style: MFont.manrope(13, FontWeight.w600, MColors.ink)),
-        _note('共 ${ins.total} 次複習。'),
-      ],
-      const SizedBox(height: 12),
-      _label('CEFR 等級變化'),
-      // 問題回報 #345: clicking a level in 設定 is not progress.
-      if (ins.levelChanges.every((c) => c.source == 'user'))
-        _note('目前程度還沒有變動。')
-      else
-        for (final c in ins.levelChanges.reversed
-            .where((c) => c.source != 'user')
-            .take(5))
-          UiText(
-              '${c.at.toLocal().toString().substring(0, 10)}　'
-              '${cefrLevels[c.from]} → ${cefrLevels[c.to]}'
-              '（${_sourceLabel(c.source)}）',
+    // 問題回報 #345: clicking a level in 設定 is not progress.
+    final shownChanges =
+        ins.levelChanges.where((c) => c.source != 'user').toList();
+    // 問題回報 #430: with nothing to show, one line instead of three empty
+    // headings; sub-sections appear only once they have data.
+    if (ins.total == 0 && shownChanges.isEmpty && ins.weakWords.isEmpty) {
+      return _Card(title: '學習洞察', children: [
+        _note('複習幾次之後，這裡會顯示你的複習次數、程度變化和弱項單字。'),
+      ]);
+    }
+    final sections = <List<Widget>>[
+      if (ins.total > 0)
+        [
+          _label('複習次數'),
+          UiText('最近 7 天（每日）：${bars(ins.daily)}',
               style: MFont.manrope(13, FontWeight.w600, MColors.ink)),
-      const SizedBox(height: 12),
-      _label('弱項單字'),
-      if (ins.weakWords.isEmpty)
-        _note('還沒有常按「忘記」或「吃力」的字。')
-      else ...[
-        // 問題回報 #307: each word opens its details, and the list can be
-        // practised straight away instead of searching 單字本 for each.
-        for (final w in ins.weakWords) _weakWordRow(w),
-        const SizedBox(height: 4),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: TextButton.icon(
-            onPressed: () => AppScope.of(context)
-                .navigator
-                .reviewCards([for (final w in ins.weakWords) w.cardId]),
-            icon: const Icon(Icons.replay_rounded, size: 18),
-            label: const UiText('複習這些字'),
+          const SizedBox(height: 4),
+          UiText('最近 4 週（每週）：${bars(ins.weekly)}',
+              style: MFont.manrope(13, FontWeight.w600, MColors.ink)),
+          _note('共 ${ins.total} 次複習。'),
+        ],
+      if (shownChanges.isNotEmpty)
+        [
+          _label('CEFR 等級變化'),
+          for (final c in shownChanges.reversed.take(5))
+            UiText(
+                '${c.at.toLocal().toString().substring(0, 10)}　'
+                '${cefrLevels[c.from]} → ${cefrLevels[c.to]}'
+                '（${_sourceLabel(c.source)}）',
+                style: MFont.manrope(13, FontWeight.w600, MColors.ink)),
+        ],
+      if (ins.weakWords.isNotEmpty)
+        [
+          _label('弱項單字'),
+          // 問題回報 #307: each word opens its details, and the list can be
+          // practised straight away instead of searching 單字本 for each.
+          for (final w in ins.weakWords) _weakWordRow(w),
+          const SizedBox(height: 4),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () => AppScope.of(context)
+                  .navigator
+                  .reviewCards([for (final w in ins.weakWords) w.cardId]),
+              icon: const Icon(Icons.replay_rounded, size: 18),
+              label: const UiText('複習這些字'),
+            ),
           ),
-        ),
+        ],
+    ];
+    return _Card(title: '學習洞察', children: [
+      for (var i = 0; i < sections.length; i++) ...[
+        if (i > 0) const SizedBox(height: 12),
+        ...sections[i],
       ],
     ]);
   }
@@ -630,8 +710,14 @@ class _Card extends StatelessWidget {
   final List<Widget> children;
   final bool collapsed;
 
+  /// Shown under a collapsed title (e.g. a failed connection check).
+  final String? hint;
+
   const _Card(
-      {required this.title, required this.children, this.collapsed = false});
+      {required this.title,
+      required this.children,
+      this.collapsed = false,
+      this.hint});
 
   @override
   Widget build(BuildContext context) => Container(
@@ -646,7 +732,14 @@ class _Card extends StatelessWidget {
         child: collapsed
             ? Material(
                 color: Colors.transparent,
-                child: ExpansionTile(title: UiText(title), children: children))
+                child: ExpansionTile(
+                    title: UiText(title),
+                    subtitle: hint == null
+                        ? null
+                        : UiText(hint!,
+                            style: MFont.manrope(
+                                12, FontWeight.w700, MColors.againFg)),
+                    children: children))
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [

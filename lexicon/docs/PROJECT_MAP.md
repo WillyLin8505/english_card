@@ -53,9 +53,11 @@ Line counts as of 2026-10-17. **Big files: search first, then read a range** (se
   for French, a domain sense (Kaikki topics) after the plain ones unless English Wiktionary lists the word under one of
   the English word's first senses. Re-rank existing rows: `card352_reorder.py --lang fr|en --dry-run|--apply|--restore`;
   measure: `card352_measure.py --lang fr`. English (#381): reviewed common senses in `quality/en_common_senses.json`
-  → `card381_common.py check|apply|order|restore` (the pack's order is the definition items' order, not senses.ordinal);
+  → `card381_common.py check|apply|restore`. The exporter numbers senses by senses.ordinal (#389); after a re-rank run
+  `card395_def_order.py count|apply|restore` so the definition items follow the ordinals too (admin UI, old servers);
   card fronts: `card381_learner.py --cefr A1,A2 --out f.tsv` (port of learnerMeaning). `meaning_index` also labels pictures from deeper plain senses that English
   Wiktionary confirms (motif 「pattern」).
+- Gender / forms / morphemes (#429): the App pack reads field_values (not the forms table). `card429_forms.py` (fr_gender by main sense), `card429_morph.py` (Wiktionary affix templates), `card429_measure.py` (fr vs en coverage); all dry-run|apply|restore.
 - CEFR (#335, issue #332 decision C): `word_level(w, "fr")` = `backend/app/fr_cefr_reviewed.json` (法語基礎 3000 字,
   Claude-reviewed A1–B1, `cefr_source=ai_reviewed`, app shows 估算) else max(wordfreq, Lexique 3.83 lemma zipf in
   `fr_lexique_lemma_zipf.json`). Rebuild / rewrite DB: `tools/card335_fr_cefr.py build|apply [--dry-run]|restore`;

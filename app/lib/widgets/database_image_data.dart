@@ -14,11 +14,17 @@ List<Map<String, dynamic>> databaseEntryImages(
   ];
 }
 
-List<Map<String, dynamic>> databaseImageTags(Map<String, dynamic> image) => [
-      for (final tag in (image['tags'] as List? ?? []))
-        if ((tag as Map)['review_status'] == 'approved')
-          Map<String, dynamic>.from(tag)
-    ];
+/// Approved tags, one per word sense: a sense remap can leave the same
+/// lexeme + sense twice on a picture, which listed the word twice (卡 #225).
+List<Map<String, dynamic>> databaseImageTags(Map<String, dynamic> image) {
+  final seen = <(Object?, Object?)>{};
+  return [
+    for (final tag in (image['tags'] as List? ?? []))
+      if ((tag as Map)['review_status'] == 'approved' &&
+          seen.add((tag['lexeme_id'], tag['sense_id'])))
+        Map<String, dynamic>.from(tag)
+  ];
+}
 
 String databaseTagLabel(Map<String, dynamic> tag, LexiconPack pack) {
   final word = pack.byId((tag['lexeme_id'] as num).toInt());
@@ -33,23 +39,66 @@ String databaseImageLabels(Map<String, dynamic> image, LexiconPack pack) =>
         .toSet()
         .join('、');
 
+final _searchWordBreak = RegExp(r'[\s\-–—/、，,；;：:（）()「」]+');
+
+/// How [query] matches a tag (問題回報 #396 decision): 0 = a whole word or
+/// meaning, 1 = the start of one (cat → cats, catch), null = no match —
+/// letters inside a word (category, scatter) don't count.
+int? databaseTagMatch(
+    Map<String, dynamic> tag, LexiconPack pack, String query) {
+  final q = query.trim().toLowerCase();
+  if (q.isEmpty) return 0;
+  final word = pack.byId((tag['lexeme_id'] as num).toInt());
+  if (word == null) return null;
+  final sense = word.senses.where((s) => s.id == tag['sense_id']).firstOrNull;
+  int? best;
+  for (final text in [word.lemma, sense?.native ?? word.nativeMeaning ?? '']) {
+    final t = text.trim().toLowerCase();
+    for (final part in [t, ...t.split(_searchWordBreak)]) {
+      if (part == q) return 0;
+      if (part.startsWith(q)) best = 1;
+    }
+  }
+  return best;
+}
+
+/// The best [databaseTagMatch] among the picture's tags.
+int? databaseImageMatch(
+    Map<String, dynamic> image, LexiconPack pack, String query) {
+  int? best;
+  for (final tag in databaseImageTags(image)) {
+    final m = databaseTagMatch(tag, pack, query);
+    if (m != null && (best == null || m < best)) best = m;
+    if (best == 0) break;
+  }
+  return best;
+}
+
 /// The searched words on this picture and their levels (A1→C2, unleveled
 /// last as null). Search spans every level while the album shows one, so the
 /// hit can sit at a level the learner isn't looking at (問題回報 #302).
+/// Whole-word hits come before words that only start with the query (#396).
 List<(String word, String? level)> databaseSearchHits(
     Map<String, dynamic> image, LexiconPack pack, String query) {
   final q = query.trim().toLowerCase();
   if (q.isEmpty) return const [];
-  final hits = <(String, String?)>{
-    for (final tag in databaseImageTags(image))
-      if (databaseTagLabel(tag, pack).toLowerCase().contains(q))
-        (
-          pack.byId((tag['lexeme_id'] as num).toInt())?.lemma ?? query.trim(),
-          databaseTagLevel(tag, pack)
-        )
-  }.toList();
+  final matches = <(String, String?), int>{};
+  for (final tag in databaseImageTags(image)) {
+    final m = databaseTagMatch(tag, pack, q);
+    if (m == null) continue;
+    final key = (
+      pack.byId((tag['lexeme_id'] as num).toInt())?.lemma ?? query.trim(),
+      databaseTagLevel(tag, pack)
+    );
+    final seen = matches[key];
+    if (seen == null || m < seen) matches[key] = m;
+  }
   int rank(String? l) => l == null ? cefrLevels.length : cefrLevels.indexOf(l);
-  return hits..sort((a, b) => rank(a.$2).compareTo(rank(b.$2)));
+  return matches.keys.toList()
+    ..sort((a, b) {
+      final byMatch = matches[a]!.compareTo(matches[b]!);
+      return byMatch != 0 ? byMatch : rank(a.$2).compareTo(rank(b.$2));
+    });
 }
 
 /// The level to switch to so the searched word shows, or null when it

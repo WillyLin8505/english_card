@@ -15,6 +15,8 @@ from pathlib import Path
 import threading
 import time
 
+import pack_sqlite
+
 
 def encode(value):
     return json.dumps(value, ensure_ascii=False, separators=(',', ':')).encode()
@@ -50,8 +52,12 @@ def delta(old, new):
             'upserts': [row for row in new['lexemes'] if previous.get(row['id']) != row]}
 
 
+SQLITE_TYPE = 'application/vnd.sqlite3'
+JSON_TYPE = 'application/json; charset=utf-8'
+
+
 class Snapshot:
-    def __init__(self, body, compressed=None):
+    def __init__(self, body, compressed=None, sqlite_path=None):
         self.body = body
         self.pack = json.loads(body)
         self.version = self.pack['created_at']
@@ -60,11 +66,57 @@ class Snapshot:
         self.delta_from = None
         self.delta_body = None
         self.delta_gzip = None
+        # The phone form (card #428): the slim pack as one SQLite file, built
+        # once per version beside the JSON snapshot, and the delta between
+        # slim packs that a phone holding the previous version applies itself.
+        self.sqlite_path = sqlite_path
+        self._sqlite_bytes = None
+        self._slim = None
+        self._sqlite_lock = threading.Lock()
+        self.sqlite_delta_from = None
+        self.sqlite_delta_body = None
+        self.sqlite_delta_gzip = None
+
+    @property
+    def slim(self):
+        if self._slim is None:
+            self._slim = pack_sqlite.slim_pack(self.pack)
+        return self._slim
+
+    def sqlite(self):
+        """The SQLite pack bytes: reused from `sqlite_path` when that file is
+        this version, else built there (or in a temporary file) on first use."""
+        with self._sqlite_lock:
+            if self._sqlite_bytes is None:
+                path = Path(self.sqlite_path) if self.sqlite_path else None
+                if path is not None and path.is_file() and \
+                        pack_sqlite.read_meta(path).get('created_at') == self.version:
+                    self._sqlite_bytes = path.read_bytes()
+                elif path is not None:
+                    pack_sqlite.build(self.slim, path)
+                    self._sqlite_bytes = path.read_bytes()
+                else:
+                    import tempfile
+                    with tempfile.TemporaryDirectory(prefix='dictionary-sqlite-') as folder:
+                        target = pack_sqlite.build(self.slim, Path(folder) / 'pack.sqlite')
+                        self._sqlite_bytes = target.read_bytes()
+            return self._sqlite_bytes
 
     def representation(self, since, compressed):
         if since and since == self.delta_from:
             return self.delta_gzip if compressed else self.delta_body
         return self.gzip if compressed else self.body
+
+    def respond(self, since, compressed, fmt='json'):
+        """(body, content type, gzipped?) for a GET. `fmt` 'sqlite' answers a
+        phone: a JSON delta when it holds the previous version, else the
+        whole SQLite file (its rows are already compressed, never gzipped)."""
+        if fmt == 'sqlite':
+            if since and since == self.sqlite_delta_from:
+                return ((self.sqlite_delta_gzip if compressed else self.sqlite_delta_body),
+                        JSON_TYPE, compressed)
+            return self.sqlite(), SQLITE_TYPE, False
+        return self.representation(since, compressed), JSON_TYPE, compressed
 
 
 class Warming(RuntimeError):
@@ -93,10 +145,16 @@ class SnapshotStore:
         key = hashlib.sha256(encode(pair)).hexdigest()
         return (directory or self.directory) / (key + '.json.gz')
 
+    @staticmethod
+    def _sqlite_path(json_path: Path) -> Path:
+        return json_path.with_name(json_path.name[:-len('.json.gz')] + '.sqlite')
+
     def _load(self, pair, path=None):
         try:
-            compressed = (path or self._path(pair)).read_bytes()
-            snapshot = Snapshot(gzip.decompress(compressed), compressed)
+            path = path or self._path(pair)
+            compressed = path.read_bytes()
+            snapshot = Snapshot(gzip.decompress(compressed), compressed,
+                                sqlite_path=self._sqlite_path(path))
             if (snapshot.pack['target_language'], snapshot.pack['native_language']) != pair:
                 return None
             return snapshot
@@ -132,14 +190,25 @@ class SnapshotStore:
             if len(compressed) < len(snapshot.gzip) and len(patch) < len(body):
                 snapshot.delta_from = previous.version
                 snapshot.delta_body, snapshot.delta_gzip = patch, compressed
+            # Phones hold the slim pack (card #428): their delta is between
+            # slim packs, and always smaller than the SQLite file.
+            patch = encode(delta(previous.slim, snapshot.slim))
+            snapshot.sqlite_delta_from = previous.version
+            snapshot.sqlite_delta_body = patch
+            snapshot.sqlite_delta_gzip = gzip.compress(patch, compresslevel=6, mtime=0)
         try:
             self.directory.mkdir(parents=True, exist_ok=True)
             path = self._path(pair)
             temporary = path.with_suffix(f'.{os.getpid()}.{threading.get_ident()}.tmp')
             temporary.write_bytes(snapshot.gzip)
             temporary.replace(path)
+            snapshot.sqlite_path = self._sqlite_path(path)
         except OSError:
             logging.warning('Could not persist dictionary snapshot', exc_info=True)
+        try:
+            snapshot.sqlite()  # built now, in the refresh thread, not on a phone's request
+        except Exception:
+            logging.warning('Could not build the SQLite dictionary', exc_info=True)
         return snapshot
 
     def _refresh(self, pair, previous):

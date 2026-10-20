@@ -64,7 +64,7 @@ void main() {
         repository: smallRepo(2),
         initialTab: AppTab.review,
         size: const Size(402, 1400));
-    await tester.tap(find.text('開始複習'));
+    await tester.tap(find.text('綜合'));
     await tester.pumpAndSettle();
     expect(find.bySemanticsLabel('回報此卡片'), findsOneWidget);
     await tester.tap(find.bySemanticsLabel('回報此卡片'));

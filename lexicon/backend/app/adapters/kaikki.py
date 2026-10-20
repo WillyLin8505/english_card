@@ -176,23 +176,26 @@ def _accents(tags) -> list[str]:
     return out
 
 
-FR_GENDER_HEAD = {"m": "m", "f": "f", "mf": "m/f", "m-p": "m", "f-p": "f", "mf-p": "m/f"}
+FR_GENDER_HEAD = {"m": "m", "f": "f", "mf": "m/f", "m-p": "m", "f-p": "f", "mf-p": "m/f",
+                  "mfbysense": "m/f"}
 
 
 def fr_gender(noun_entries) -> str | None:
     """The noun's gender (card #367): the Wiktionary head template first
     (fr-noun 「m」「f」「mf」), else the sense tags. 'm/f' = epicene.
-    Plural-only nouns (tag plural-only) get 'pl'."""
-    head, tags = set(), set()
+    Homographs of both genders (livre m 'book' / f 'pound') take the first,
+    main entry's (card #429). Plural-only nouns (tag plural-only) get 'pl'."""
+    head, tags = [], set()
     for e in noun_entries:
         for h in e.get("head_templates", []):
-            head.add(FR_GENDER_HEAD.get((h.get("args") or {}).get("1", "")))
+            g = FR_GENDER_HEAD.get((h.get("args") or {}).get("1", ""))
+            if g:
+                head.append(g)
         for s in e.get("senses", []):
             tags |= set(s.get("tags", []))
         tags |= set(e.get("tags", []))
-    head.discard(None)
-    if len(head) == 1:
-        return head.pop()
+    if head:
+        return head[0]
     if "epicene" in tags or {"masculine", "feminine"} <= tags:
         return "m/f"
     if "masculine" in tags:
@@ -202,6 +205,22 @@ def fr_gender(noun_entries) -> str | None:
     if "plural-only" in tags:
         return "pl"
     return None
+
+
+FR_ELIDED = re.compile(r"^(?:[mtsl]['’]|(?:me|te|se|nous|vous)\s)", re.I)
+
+
+def fr_auxiliaries(verb_entries) -> list[str]:
+    """avoir / être for the compound tenses, from the conjugation table's
+    «être + past participle» infinitive (card #429). Both for passer, monter."""
+    out = []
+    for e in verb_entries:
+        for fo in e.get("forms", []):
+            tags = set(fo.get("tags", []))
+            m = re.match(r"(avoir|être)\s*\+", fo.get("form") or "")
+            if m and {"infinitive", "multiword-construction"} <= tags and m[1] not in out:
+                out.append(m[1])
+    return out
 
 
 def form_field(pos: str, tags: set[str], target: str) -> str | None:
@@ -226,8 +245,18 @@ def form_field(pos: str, tags: set[str], target: str) -> str | None:
                 return "adj_superlative"
     if target == "fr":
         if pos == "verb":
+            # «ayant + past participle», «futur antérieur»: compound tenses
+            if "multiword-construction" in tags:
+                return None
             if {"participle", "past"} <= tags and not tags & {"feminine", "plural"}:
                 return "fr_past_participle"
+            if {"participle", "present"} <= tags:
+                return "fr_present_participle"
+            if {"first-person", "singular", "indicative"} <= tags:
+                if "imperfect" in tags:
+                    return "fr_imperfect_1s"
+                if "future" in tags and "perfect" not in tags:
+                    return "fr_future_1s"
             if {"indicative", "present"} <= tags:
                 person = next((n for p, n in (("first-person", "1"), ("second-person", "2"),
                                               ("third-person", "3")) if p in tags), None)
@@ -414,6 +443,9 @@ class Kaikki(SourceAdapter):
             g = fr_gender([e for e in entries if _pos(e) == "noun"])
             if g:
                 add({"form": g}, g, rid=f"{word}#noun")
+        elif f == "fr_auxiliary":
+            for aux in fr_auxiliaries([e for e in entries if _pos(e) == "verb"]):
+                add({"form": aux}, aux, rid=f"{word}#verb")
         elif f in catalog.FORM_FIELDS:
             # A headword that is itself a form (grated, ate, eaten, apples,
             # better) shares its base word's whole table: eat, ate and eaten
@@ -440,6 +472,10 @@ class Kaikki(SourceAdapter):
                 for fo in e.get("forms", []):
                     form = (fo.get("form") or "").strip()
                     if not form or form.startswith("-") or (form == owner):
+                        continue
+                    # The pronominal table (m'acquiers, s'acquérant) is not
+                    # acquérir's own conjugation (card #429).
+                    if t == "fr" and FR_ELIDED.match(form) and not FR_ELIDED.match(owner):
                         continue
                     if form_field(pos or "", set(fo.get("tags", [])), t) == f:
                         add({"form": form, **({"base": owner} if shared else {})}, form.lower(),
@@ -761,7 +797,8 @@ class Kaikki(SourceAdapter):
                     rest = "".join(x.strip("-") for x in cleaned[n + 1:])
                     parts.append(_part(c, gloss, rest))
                 parts = expand(parts, Evidence(origin))
-                return breakdown_value(parts, "wiktionary")
+                bd = breakdown_value(parts, "wiktionary")
+                return _fr_part_meanings(bd, _pos(entries[0])) if ctx.target == "fr" else bd
         return None
 
     def _origins(self, entries):
@@ -777,6 +814,50 @@ class Kaikki(SourceAdapter):
                     term = re.sub(r"<[^>]*>", "", term)
                     yield code, LANG_NAMES.get(code, code), term
                     return
+
+
+FR_POS_WORD = {"adv": "adverb", "adj": "adjective", "noun": "noun", "verb": "verb"}
+
+
+def _fr_glosses(word: str, affix: bool) -> list[str]:
+    """First glosses of a French headword's current senses; an inflected form
+    (lente) reads as its base (lent 「slow」), not as a homograph (lente 「nit」)."""
+    ents = [e for e in (kaikki_index.lookup("fr", word) or [])
+            if e.get("lang_code") == "fr" and e.get("word") == word
+            and (e.get("pos") in ("prefix", "suffix")) == affix]
+    if not affix:
+        # a feminine / plural adjective only (analyse the noun is not 「to analyse」)
+        base = next((fo["word"] for e in ents if e.get("pos") == "adj" for se in e.get("senses", [])
+                     for fo in se.get("form_of", []) if fo.get("word") and fo["word"] != word), None)
+        if base:
+            return _fr_glosses(base, False)
+    out = [g.strip() for e in ents for se in e.get("senses", [])
+           if not se.get("form_of") and not set(se.get("tags", [])) & LOW_TAGS
+           for g in se.get("glosses", [])[:1] if not g.startswith("inflection of")]
+    # 「re-」 or 「-ist, -istic」 only names the English affix: no meaning in it
+    return [g for g in out if not all("-" in t for t in re.split(r"[\s,;/]+", g.strip(" ,;/")))]
+
+
+def _fr_part_meanings(bd: dict, pos: str | None) -> dict:
+    """French parts take their meaning from the French Wiktionary entries
+    (card #429): the English affix table reads -ment as 「result, act」, but
+    rapidement's -ment makes an adverb, classement's a noun (the gloss naming
+    the word's part of speech wins). Prefixes keep the table's meaning (in-
+    not, re- again) unless it has none; a root without one takes its word's."""
+    for p in bd["parts"]:
+        affix = p.get("kind") in ("prefix", "suffix")
+        if p.get("meaning") and p.get("kind") != "suffix":
+            continue
+        glosses = _fr_glosses(p.get("part") or "", affix)
+        if not glosses:
+            continue
+        # Another reading only when the first one is about another part of
+        # speech (-ment 「…adverb」 for classement), not -erie's 「a shop」.
+        hint, top = FR_POS_WORD.get(pos or ""), glosses[0].lower()
+        other = hint and hint not in top and any(w in top for w in FR_POS_WORD.values())
+        first = glosses[0] if hint and hint in top else             next((g for g in glosses if affix and other and hint in g.lower()), None)
+        p["meaning"] = (first or "; ".join(glosses[:2] if affix else glosses[:1]))[:80]
+    return bd
 
 
 def _stem(token: str) -> str:

@@ -24,6 +24,12 @@ from .base import Candidate, Context, SourceAdapter
 # near-homophone "fawn" had already cached that text).
 RELATION_MEANING = {"synonyms", "antonyms", "hypernyms", "hyponyms", "related", "derived_terms"}
 RELATION_FORM = {"homophones", "near_homophones", "similar_spelling"}
+# Same rule as exporter.zh_key: two glosses compared without spaces and punctuation.
+_GLOSS_NOISE = re.compile(r"[\s。．.、，,；;：:！!？?「」『』\"'“”()（）]")
+
+
+def same_gloss_key(text: str | None) -> str:
+    return _GLOSS_NOISE.sub("", text or "")
 
 
 def _activity(ctx: Context, kind: str, items: list[dict]) -> str:
@@ -103,9 +109,17 @@ class AITranslate(SourceAdapter):
             rel = "derived_terms" if f == "derived_native_meaning" \
                 else catalog.RELATION_NATIVE[f]
             sense = (ctx.items("definition") or [{}])[0]
-            context = (f"vocabulary connected to {ctx.display or ctx.lemma}; "
-                       f"{sense.get('pos', '')}: {sense.get('gloss', '')}")[:200]
             category = "form" if rel in RELATION_FORM else "meaning"
+            if category == "form":
+                # Never the headword's gloss here (問題回報 #441): with it the
+                # model glossed gulp's look-alike gul as gulp's own 「一口量」.
+                head = ctx.display or ctx.lemma
+                context = (f"a different word that only looks or sounds like '{head}'; "
+                           f"give this word's own meaning, not the meaning of '{head}'; "
+                           f"empty text if it is not a real English word")[:200]
+            else:
+                context = (f"vocabulary connected to {ctx.display or ctx.lemma}; "
+                           f"{sense.get('pos', '')}: {sense.get('gloss', '')}")[:200]
             return "word", [{"id": i["word"].lower(), "text": i["word"],
                              "context": context, "category": category}
                             for i in ctx.items(rel)
@@ -290,10 +304,15 @@ class AITranslate(SourceAdapter):
             got, tag = self._text_call(f, ctx, kind, items)
             got = self._repair_outlaw(items, got)
             from ..text import accept_native_gloss
+            # A look-alike word glossed with the headword's own meaning was
+            # copied, not translated (問題回報 #441); it stays missing instead.
+            rel = "derived_terms" if f == "derived_native_meaning" else catalog.RELATION_NATIVE[f]
+            head_zh = ({same_gloss_key(i.get("text")) for i in ctx.items("native_definition")}
+                       - {""}) if rel in RELATION_FORM else set()
             for w, text in got.items():
                 if ctx.native == "zh-TW":
                     text = accept_native_gloss(text)
-                if not text:
+                if not text or same_gloss_key(text) in head_zh:
                     continue
                 C.append(Candidate(f, ctx.native, {"word": w, "text": text, "ai": True}, w,
                                    slot=w, confidence=0.6, source_record_id=tag))

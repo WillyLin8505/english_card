@@ -1,5 +1,5 @@
-// Card 225, round 69: an explicit UX observation plus a photo-to-word flow.
-// Run manually; the search observation documents current behavior, not a spec.
+// Card 225: cross-level search hint (#302) plus a photo-to-word flow.
+// Run manually: flutter test test/simulation/card225_album_audit.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:photo_english_app/app/app_scope.dart';
@@ -24,22 +24,17 @@ void main() {
     await tester.enterText(find.byType(TextField), 'cluster');
     await tester.pumpAndSettle();
 
-    // Searching for a B1 label leaves a tile whose visible label is apple.
+    // Round 87 (#302 fixed by #307): a B1 hit at A1 is named on the tile and
+    // in the detail, whose 「切到 B1」 reveals the word without leaving it.
     expect(find.byType(DatabaseImageTile), findsOneWidget);
     expect(find.text('入門（A1）：apple · 蘋果'), findsOneWidget);
-    expect(find.text('中階（B1）：cluster · 串'), findsNothing);
+    expect(find.text('搜尋的字 cluster 在 中階（B1）'), findsOneWidget);
     await tester.tap(find.byType(DatabaseImageTile));
     await tester.pumpAndSettle();
-    await tester.drag(find.byType(ListView).last, const Offset(0, -1200));
-    await tester.pumpAndSettle();
-    expect(find.text('cluster · 串'), findsNothing);
-    expect(find.text('apple · 蘋果'), findsOneWidget);
+    expect(find.text('搜尋的字 cluster 在 中階（B1）'), findsOneWidget);
     expect(find.text('已確認'), findsNothing);
     expect(find.text('圖片與單字的配對待確認'), findsNothing);
-
-    await tester.drag(find.byType(ListView).last, const Offset(0, 1200));
-    await tester.pumpAndSettle();
-    await tester.tap(level('B1'));
+    await tester.tap(find.text('切到 B1'));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('cluster · 串'));
     await tester.tap(find.text('cluster · 串'));

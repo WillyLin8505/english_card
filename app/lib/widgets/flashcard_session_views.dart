@@ -1,19 +1,64 @@
 part of '../screens/flashcard_screen.dart';
 
+/// The album and card limits a saved 複習範圍 stands for (問題回報 #412).
+/// An album run pushed from the album page ([fixedAlbumId]) keeps its album;
+/// a scope whose album is gone falls back to everything.
+(String?, Set<String>?) reviewScopeOf(
+    WordDatabaseRepository repo, String? fixedAlbumId, String scope) {
+  if (fixedAlbumId != null) return (fixedAlbumId, null);
+  if (scope == 'new') return (null, repo.cardIdsAddedToday());
+  if (scope == 'weak') return (null, repo.weakCardIds());
+  if (scope.startsWith('album:')) {
+    final id = scope.substring(6);
+    if (repo.album(id) != null) return (id, null);
+  }
+  return (null, null);
+}
+
+/// Short name of a saved 複習範圍 for the picker button.
+String reviewScopeLabel(WordDatabaseRepository repo, String scope) {
+  if (scope == 'new') return '今天新加的單字';
+  if (scope == 'weak') return '弱項單字';
+  if (scope.startsWith('album:')) {
+    final a = repo.album(scope.substring(6));
+    if (a != null) return a.deckSlug != null ? '卡片集：${a.name}' : '相片冊：${a.name}';
+  }
+  return '全部';
+}
+
 class _Intro extends StatelessWidget {
   final VoidCallback onStart;
+  final String? fixedAlbumId;
 
-  const _Intro({required this.onStart});
+  const _Intro({required this.onStart, this.fixedAlbumId});
 
   @override
   Widget build(BuildContext context) {
-    final repo = AppScope.of(context).repository;
+    final scope = AppScope.of(context);
+    final repo = scope.repository;
+    final settings = scope.settings;
     return ListenableBuilder(
-      listenable: repo,
+      listenable: Listenable.merge([repo, settings]),
       builder: (context, _) {
-        final probe = FlashcardSession(repo, continuous: true);
+        final (albumId, cardScope) =
+            reviewScopeOf(repo, fixedAlbumId, settings.reviewScope);
+        final albumCards = albumId == null ? null : repo.cardIdsInAlbum(albumId);
+        final probe = FlashcardSession(repo,
+            continuous: true, albumId: albumId, cardScope: cardScope);
         final any = !probe.finished;
         probe.dispose();
+        // Something to review: pick which book (問題回報 #440).
+        if (fixedAlbumId == null && any) return _ScopeGrid(onStart: onStart);
+        // 每日上限 (問題回報 #398): today's share, not the whole backlog.
+        final today = repo
+            .eligibleCards(
+                newLimit: settings.dailyNewLimit,
+                reviewLimit: settings.dailyReviewLimit)
+            .where((c) =>
+                (albumCards?.contains(c.id) ?? true) &&
+                (cardScope?.contains(c.id) ?? true))
+            .length;
+        final minutes = math.max(1, (today * 25 / 60).round());
         final waiting = repo.hasCardsWaitingForMeaning;
         return Padding(
           padding: const EdgeInsets.all(MSpace.xl),
@@ -42,12 +87,14 @@ class _Intro extends StatelessWidget {
                   style: MFont.manrope(20, FontWeight.w800, MColors.ink)),
               const SizedBox(height: 8),
               UiText(
-                // No due count (spec: 不顯示欠卡數).
+                // Today's capped share, never the overdue backlog (spec: 不顯示欠卡數).
                 any
-                    ? '不限張數，會持續出題。想休息時，按左上角結束。'
+                    ? (today > 0
+                        ? '今天 $today 張，約 $minutes 分鐘。做完還可以繼續練習，想休息時按左上角結束。'
+                        : '今天的份量已完成。想多練習可以繼續，想休息時按左上角結束。')
                     : waiting
                         ? '單字的中文意思補齊後，會自動加入複習。'
-                        : '在照片詳情挑幾個單字，或從資料庫加入單字，就會變成卡片。',
+                        : '在照片詳情挑幾個單字，或下載卡片集，就會變成卡片。',
                 textAlign: TextAlign.center,
                 style: MFont.manrope(14, FontWeight.w600, MColors.muted),
               ),
@@ -71,6 +118,101 @@ class _Intro extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// 複習 landing (問題回報 #440): one tile per book to review — 綜合 first,
+/// then every 相片冊 (own and downloaded) — each with today's due count.
+/// Tapping a tile starts that run; the last choice is marked 上次複習.
+class _ScopeGrid extends StatelessWidget {
+  final VoidCallback onStart;
+
+  const _ScopeGrid({required this.onStart});
+
+  @override
+  Widget build(BuildContext context) {
+    final scope = AppScope.of(context);
+    final repo = scope.repository;
+    final settings = scope.settings;
+    final due = repo.eligibleCards(
+        newLimit: settings.dailyNewLimit, reviewLimit: settings.dailyReviewLimit);
+    int dueIn(Set<String>? ids) =>
+        ids == null ? due.length : due.where((c) => ids.contains(c.id)).length;
+    final tiles = <(String, String, int, bool)>[
+      ('all', '綜合', dueIn(null), false),
+      for (final a in repo.albums)
+        ('album:${a.id}', a.name, dueIn(repo.cardIdsInAlbum(a.id)),
+            a.deckSlug != null),
+      ('new', '今天新加的單字', dueIn(repo.cardIdsAddedToday()), false),
+      ('weak', '弱項單字', dueIn(repo.weakCardIds()), false),
+    ];
+    final saved = settings.reviewScope;
+    final last = saved.startsWith('album:') &&
+            repo.album(saved.substring(6)) == null
+        ? 'all'
+        : saved;
+    return ListView(
+      padding: const EdgeInsets.all(MSpace.md),
+      children: [
+        UiText('想複習哪一本？',
+            style: MFont.manrope(20, FontWeight.w800, MColors.ink)),
+        const SizedBox(height: 4),
+        UiText('點一格就開始；做完還可以繼續練習，想休息時按左上角結束。',
+            style: MFont.manrope(13, FontWeight.w600, MColors.muted)),
+        const SizedBox(height: MSpace.md),
+        GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 2,
+          mainAxisSpacing: MSpace.sm,
+          crossAxisSpacing: MSpace.sm,
+          childAspectRatio: 1.0,
+          children: [
+            for (final (value, name, count, downloaded) in tiles)
+              Tap(
+                label: '$name，今天 $count 張',
+                onTap: () {
+                  settings.reviewScope = value;
+                  onStart();
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(MSpace.sm),
+                  decoration: BoxDecoration(
+                    color: value == 'all' ? MColors.primarySoft : Colors.white,
+                    borderRadius: MRadii.rLg,
+                    boxShadow: MShadows.card,
+                    border: value == last
+                        ? Border.all(color: MColors.primary, width: 1.5)
+                        : null,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (value == last)
+                        UiText('上次複習',
+                            style: MFont.inter(
+                                11, FontWeight.w700, MColors.primary)),
+                      if (downloaded)
+                        UiText('卡片集',
+                            style:
+                                MFont.inter(11, FontWeight.w600, MColors.muted)),
+                      const Spacer(),
+                      UiText(name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: MFont.inter(15, FontWeight.w700, MColors.ink)),
+                      const SizedBox(height: 4),
+                      UiText(count > 0 ? '今天 $count 張' : '今天沒有到期',
+                          style: MFont.inter(12, FontWeight.w600, MColors.muted)),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ],
     );
   }
 }

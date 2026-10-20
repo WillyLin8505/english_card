@@ -86,6 +86,7 @@ const uiCatalog = <String, (String, String)>{
   ),
   '等待 AI 辨識': ('Waiting for AI recognition', 'En attente de reconnaissance IA'),
   'AI 辨識中…': ('AI recognition in progress…', 'Reconnaissance IA en cours…'),
+  '跳過動畫': ('Skip animation', 'Passer l’animation'),
   'AI 辨識沒有成功': ('AI recognition failed', 'Échec de la reconnaissance IA'),
   'AI 服務恢復連線後會自動處理，不用一直等在這裡。': (
     'Processing resumes when AI reconnects. You can leave this page.',
@@ -291,6 +292,10 @@ const uiCatalog = <String, (String, String)>{
   '語言': ('Languages', 'Langues'),
   '學習語言': ('Learning language', 'Langue étudiée'),
   '母語': ('Native language', 'Langue maternelle'),
+  '更多學習語言即將推出': (
+    'More learning languages coming soon',
+    'Davantage de langues bientôt disponibles'
+  ),
   '學習語言和母語不能相同': (
     'Choose different learning and native languages',
     'Choisissez deux langues différentes'
@@ -323,13 +328,14 @@ const uiCatalog = <String, (String, String)>{
   '依你的使用情況調整': ('Adjusted from your activity', 'Ajusté selon votre activité'),
   '你設定的': ('Set by you', 'Défini par vous'),
   '自評': ('Self-assessment', 'Autoévaluation'),
-  '累積足夠的使用紀錄後（至少 20 次），程度會依你的評分、左滑與轉盤慢慢自動調整，一次最多一級。': (
-    'After at least 20 interactions, your ratings, swipes and difficulty choices gradually adjust your level, one step at a time.',
-    'Après au moins 20 interactions, vos notes, balayages et choix de difficulté ajustent progressivement votre niveau, un palier à la fois.'
+  'App 自動調整': ('Auto-adjusted by the app', 'Ajusté par l’app'),
+  '新照片的單字以這個程度為主，App 會依你的複習慢慢調整。': (
+    'New photos pick words around this level; the app adjusts it as you review.',
+    'Les nouvelles photos utilisent ce niveau ; l’app l’ajuste au fil de vos révisions.'
   ),
-  '進階設定：照片辨識連線': (
-    'Advanced: photo recognition',
-    'Avancé : reconnaissance des photos'
+  '累積至少 20 次使用紀錄後，程度會依你的評分、左滑與轉盤自動調整，一次最多一級。照片詳情的難度轉盤只影響那一張照片。': (
+    'After at least 20 interactions, your ratings, swipes and difficulty dial adjust the level, one step at a time. The dial in photo details affects only that photo.',
+    'Après au moins 20 interactions, vos notes, balayages et le cadran ajustent le niveau, un palier à la fois. Le cadran des détails ne concerne que cette photo.'
   ),
   '網頁版會自動連接這台電腦的照片辨識服務，不用填網址或金鑰。只有使用其他服務時才需要修改。連不上時照片會先排隊，恢復連線後自動處理。': (
     'The web app connects to this computer’s recognition service automatically. Only change these settings for another service. Photos wait offline and resume when connected.',
@@ -355,7 +361,16 @@ const uiCatalog = <String, (String, String)>{
     '✕ Service is online, but the API key is incorrect',
     '✕ Le service fonctionne, mais la clé API est incorrecte'
   ),
-  '進階設定：複習安排': ('Advanced: review schedule', 'Avancé : calendrier de révision'),
+  '進階設定': ('Advanced settings', 'Réglages avancés'),
+  '照片辨識連線': (
+    'Photo recognition connection',
+    'Connexion à la reconnaissance photo'
+  ),
+  '照片辨識連線失敗，點開查看': (
+    'Photo recognition connection failed, tap to view',
+    'Échec de la connexion à la reconnaissance photo, ouvrir pour voir'
+  ),
+  '複習安排': ('Review schedule', 'Calendrier de révision'),
   '越高，單字越常出現。預設 90%。': (
     'Higher values mean more frequent reviews. Default: 90%.',
     'Une valeur élevée augmente la fréquence des révisions. Par défaut : 90 %.'
@@ -502,6 +517,21 @@ const uiCatalog = <String, (String, String)>{
   '未收錄': ('Not listed', 'Non répertorié'),
   '有你修改過的欄位': ('Contains your edits', 'Contient vos modifications'),
   '刪除此卡片': ('Remove this card', 'Retirer cette carte'),
+  '想複習哪一本？': ('Which one to review?', 'Quel paquet réviser ?'),
+  '點一格就開始；做完還可以繼續練習，想休息時按左上角結束。': (
+    'Tap a tile to start. Keep practising after you finish, or stop with the top-left button.',
+    'Touchez une tuile pour commencer. Continuez après la séance, ou arrêtez avec le bouton en haut à gauche.'
+  ),
+  '綜合': ('All together', 'Tout'),
+  '今天新加的單字': ('Added today', 'Ajoutés aujourd’hui'),
+  '弱項單字': ('Weak words', 'Mots faibles'),
+  '上次複習': ('Last reviewed', 'Dernière révision'),
+  '今天沒有到期': ('Nothing due today', 'Rien à réviser aujourd’hui'),
+  '＋ 下載相片冊': ('+ Download albums', '+ Télécharger des albums'),
+  '還沒有相片：去拍照，或下載別人的相片冊': (
+    'No photos yet: take some, or download someone else’s album',
+    'Pas encore de photos : prenez-en, ou téléchargez un album'
+  ),
   '想複習的時候就開始吧': ('Ready when you are', 'Révisez à votre rythme'),
   '先想答案，再翻面；隨時可以結束。': (
     'Think of the answer, then flip. Stop whenever you like.',
@@ -516,10 +546,21 @@ const uiCatalog = <String, (String, String)>{
     'Words enter review automatically when their Chinese meanings are ready.',
     'Les mots seront ajoutés aux révisions lorsque leur sens chinois sera disponible.'
   ),
-  '在照片詳情挑幾個單字，或從資料庫加入單字，就會變成卡片。': (
-    'Choose words from a photo or add them from the database to create cards.',
-    'Choisissez des mots sur une photo ou dans le dictionnaire pour créer des cartes.'
+  '在照片詳情挑幾個單字，或下載卡片集，就會變成卡片。': (
+    'Choose words from a photo or download a deck to create cards.',
+    'Choisissez des mots sur une photo ou téléchargez un paquet pour créer des cartes.'
   ),
+  '還沒有單字': ('No words yet', 'Pas encore de mots'),
+  '去拍照，或到卡片集下載卡片集，單字就會出現在這裡': (
+    'Take a photo or download a deck and your words will show up here',
+    'Prenez une photo ou téléchargez un paquet : vos mots apparaîtront ici'
+  ),
+  '重新命名相簿': ('Rename album', "Renommer l'album"),
+  '還沒有相片：去拍照，或到卡片集下載圖片集': (
+    'No photos yet: take one, or download a picture deck',
+    "Pas encore de photos : prenez-en une ou téléchargez un jeu d'images"
+  ),
+  '圖片集': ('Picture decks', "Jeux d'images"),
   '去拍照選單字': (
     'Take a photo to find words',
     'Photographier pour trouver des mots'
@@ -714,6 +755,7 @@ const _templateCopy = <String, (String, String)>{
     'Stability: {0} days · {1} reviews · {2} lapses',
     'Stabilité : {0} jours · {1} révisions · {2} oublis'
   ),
+  '今天 {0} 張': ('{0} due today', '{0} à réviser aujourd’hui'),
   '作者：{0}': ('Author: {0}', 'Auteur : {0}'),
   '授權：{0}': ('License: {0}', 'Licence : {0}'),
   '{0} 天後複習': ('Review in {0} days', 'Revoir dans {0} jours'),
@@ -756,11 +798,19 @@ const _templateCopy = <String, (String, String)>{
     '{0}: {1} photos with labels at this level',
     '{0} : {1} photos avec étiquettes de ce niveau'
   ),
+  '{0}：{1} 張圖片有這個程度的標籤 · {2} 張的搜尋字在其他程度': (
+    '{0}: {1} photos with labels at this level · {2} match at another level',
+    '{0} : {1} photos avec étiquettes de ce niveau · {2} correspondent à un autre niveau'
+  ),
+  '搜尋的字 {0} 在 {1}': ('Searched word {0} is at {1}', 'Le mot {0} est au niveau {1}'),
+  '搜尋的字 {0} 沒有分級': ('Searched word {0} has no level', 'Le mot {0} n’a pas de niveau'),
+  '切到 {0}': ('Switch to {0}', 'Passer à {0}'),
   '包含待補齊單字（{0}）': (
     'Include incomplete words ({0})',
     'Inclure les mots incomplets ({0})'
   ),
   '第 {0} 個，共 {1} 個': ('{0} of {1}', '{0} sur {1}'),
+  '找到 {0} 個字': ('Found {0} words', '{0} mots trouvés'),
   '{0} 個單字': ('{0} words', '{0} mots'),
   '{0} 張': ('{0} photos', '{0} photos'),
   '資料庫圖片（{0}）': ('Database photos ({0})', 'Photos du dictionnaire ({0})'),

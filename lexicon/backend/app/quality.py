@@ -575,6 +575,14 @@ def apply_decisions(pack: dict, decisions: dict | None = None) -> dict:
     for lid, level in set_cefr.items():
         lx = by_id.get(lid)
         if lx and lid not in redirect and lid not in strip:
+            cur = lx.get("cefr")
+            if (lx.get("rare_usage") and cur in LEVELS and level in LEVELS
+                    and LEVELS.index(level) < LEVELS.index(cur)):
+                # The rule's level is the word's (bright A1); a rare part of
+                # speech keeps its share-based estimate and is never made
+                # easier than it (card #397: out 感嘆詞「滾」 A1).
+                counts["set_cefr_rare_kept"] = counts.get("set_cefr_rare_kept", 0) + 1
+                continue
             if lx.get("cefr") != level:
                 lx.setdefault("cefr_before_rule", lx.get("cefr"))
             lx["cefr"], lx["cefr_source"] = level, "quality_rule"
@@ -772,6 +780,21 @@ def fix_catalog_senses(pack: dict) -> int:
                             lb["word"], lb["pos"] = best_lx.get("lemma"), best_lx.get("pos")
                     t["lexeme_id"] = best_lx["id"]
                 changed += 1
+        # Card #435: two tags remapped onto one (lexeme, sense) are one tag;
+        # keep the one that was not a fallback (or the first) and drop the rest.
+        seen: dict = {}
+        for t in list(tags):
+            key = (t.get("lexeme_id"), t.get("sense_id"))
+            if key[0] is None or key[1] is None:
+                continue
+            prev = seen.get(key)
+            if prev is None:
+                seen[key] = t
+            elif prev.get("sense_fallback") and not t.get("sense_fallback"):
+                tags.remove(prev)
+                seen[key] = t
+            else:
+                tags.remove(t)
         # P2: a photo tag's level is the card's level (after the pack's
         # CEFR decisions), never a separate value.
         for coll in (im.get("tags") or [], im.get("labels") or []):

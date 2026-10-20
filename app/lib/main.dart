@@ -245,7 +245,6 @@ class _PhotoEnglishAppState extends State<PhotoEnglishApp> {
             listenable: widget.settings,
             builder: (context, _) => widget.settings.onboarded
                 ? AppShell(
-                    databaseLibrary: widget.runWorkers,
                     onNavigatorReady: (n) => _navigator.target = n)
                 : OnboardingScreen(
                     lexicon: widget.lexicon, onDone: _finishOnboarding),

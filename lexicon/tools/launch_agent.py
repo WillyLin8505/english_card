@@ -55,14 +55,14 @@ _LIMIT_RE = re.compile("|".join(LIMIT_PATTERNS), re.I)
 
 
 def get(path):
-    with urllib.request.urlopen(API + path, timeout=10) as r:
+    with urllib.request.urlopen(API + path, timeout=60) as r:
         return json.loads(r.read())
 
 
 def post(path, body):
     req = urllib.request.Request(API + path, data=json.dumps(body, ensure_ascii=False).encode("utf-8"),
                                  method="POST", headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=10) as r:
+    with urllib.request.urlopen(req, timeout=60) as r:
         raw = r.read()
         return json.loads(raw) if raw else {}
 
@@ -84,6 +84,57 @@ def build_prompt(prompt_path: Path, preamble: str | None = None) -> str:
     if not head.endswith("\n"):
         head += "\n"
     return head + body
+
+
+def process_started(pid) -> float | None:
+    """Epoch start time of a running process, None if it is gone (Windows only; elsewhere 0.0 if alive)."""
+    if not pid:
+        return None
+    if os.name != "nt":
+        try:
+            os.kill(int(pid), 0)
+            return 0.0
+        except OSError:
+            return None
+    import ctypes
+    k = ctypes.windll.kernel32
+    h = k.OpenProcess(0x1000, False, int(pid))  # PROCESS_QUERY_LIMITED_INFORMATION
+    if not h:
+        return None
+    try:
+        code = ctypes.c_ulong()
+        if not k.GetExitCodeProcess(h, ctypes.byref(code)) or code.value != 259:  # STILL_ACTIVE
+            return None
+        t = [ctypes.c_ulonglong() for _ in range(4)]
+        if not k.GetProcessTimes(h, *(ctypes.byref(x) for x in t)):
+            return 0.0
+        return t[0].value / 1e7 - 11644473600
+    finally:
+        k.CloseHandle(h)
+
+
+def pid_file(card: int) -> Path:
+    return LOGS / f"card{card}.pid.json"
+
+
+def live_run(card: int) -> dict | None:
+    """The CLI last launched on this card if it is still running (card #431: never two CLIs on one
+    card). A reused pid (process started after the recorded launch) does not count."""
+    try:
+        info = json.loads(pid_file(card).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    st = process_started(info.get("pid"))
+    if st is None or (st and st > float(info.get("at") or 0) + 30):
+        return None
+    return info
+
+
+def record_run(card: int, agent: str, pid: int, at: float | None = None):
+    import time
+    LOGS.mkdir(parents=True, exist_ok=True)
+    pid_file(card).write_text(json.dumps({"pid": int(pid), "agent": agent, "at": at or time.time()}),
+                              encoding="utf-8")
 
 
 def agent_kind(agent: str) -> str:
@@ -224,6 +275,10 @@ def main():
     if t.get("status") != "in_progress" or t.get("agent") != a.agent:
         sys.exit(f"拒絕啟動：卡 #{a.card} 狀態={t.get('status')} 負責={t.get('agent')}，"
                  f"必須是 in_progress 且由 {a.agent} 認領（POST /api/schedule/claim）。")
+    prev = live_run(a.card)
+    if prev:
+        sys.exit(f"拒絕啟動：卡 #{a.card} 上一個 CLI 還在跑（pid {prev.get('pid')}，{prev.get('agent')}）；"
+                 f"等它結束再派，不要讓兩個 CLI 同做一張卡。")
     prompt = Path(a.prompt)
     if not prompt.is_file():
         sys.exit(f"找不到 prompt 檔：{prompt}")
@@ -288,6 +343,7 @@ def main():
                              creationflags=0x00000200 | 0x08000000)
         # prompt always via stdin: --allowedTools is variadic and cmd.exe cuts argv at newlines
         p.stdin.write(text.encode("utf-8")); p.stdin.close()
+    record_run(a.card, a.agent, p.pid)
     print(f"pid={p.pid}")
 
 

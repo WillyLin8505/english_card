@@ -5,7 +5,6 @@ import '../../models/card_template.dart';
 import '../../models/photo.dart';
 import '../../models/word_entry.dart';
 import '../../services/card_report.dart';
-import '../../services/text_scan.dart';
 import '../../services/word_database_repository.dart';
 import '../../services/word_selector.dart';
 import '../../theme/mobile_theme.dart';
@@ -236,46 +235,40 @@ typedef SavePhotoChoice = ({
   PhotoScanMode scanMode,
 });
 
-/// After picking a photo: its name, which album it goes in (spec:
-/// 存成本機英文相簿) and what to look for in it — things, printed text or
-/// both (問題回報 #324). Returns null if cancelled.
+/// After picking a photo: which album it goes in (spec: 存成本機英文相簿).
+/// The name is automatic (the default title; rename it in 照片詳情), and it
+/// always looks for both things and printed text (問題回報 #409: no name
+/// or 找什麼 questions). Returns null if cancelled.
 Future<SavePhotoChoice?> showSaveToAlbumDialog(
   BuildContext context, {
   required WordDatabaseRepository repository,
   required String defaultTitle,
   String? albumId,
-  PhotoScanMode scanMode = PhotoScanMode.objects,
 }) =>
     showDialog<SavePhotoChoice>(
       context: context,
-      builder: (_) =>
-          _SaveToAlbumDialog(repository, defaultTitle, albumId, scanMode),
+      builder: (_) => _SaveToAlbumDialog(repository, defaultTitle, albumId),
     );
 
 class _SaveToAlbumDialog extends StatefulWidget {
   final WordDatabaseRepository repository;
   final String defaultTitle;
   final String? albumId;
-  final PhotoScanMode scanMode;
 
-  const _SaveToAlbumDialog(
-      this.repository, this.defaultTitle, this.albumId, this.scanMode);
+  const _SaveToAlbumDialog(this.repository, this.defaultTitle, this.albumId);
 
   @override
   State<_SaveToAlbumDialog> createState() => _SaveToAlbumDialogState();
 }
 
 class _SaveToAlbumDialogState extends State<_SaveToAlbumDialog> {
-  late final _name = TextEditingController(text: widget.defaultTitle);
   final _newAlbum = TextEditingController();
   late String? _albumId =
       widget.albumId ?? widget.repository.albums.firstOrNull?.id;
   bool _creating = false;
-  late PhotoScanMode _scanMode = widget.scanMode;
 
   @override
   void dispose() {
-    _name.dispose();
     _newAlbum.dispose();
     super.dispose();
   }
@@ -287,10 +280,11 @@ class _SaveToAlbumDialogState extends State<_SaveToAlbumDialog> {
     if (_creating && _newAlbum.text.trim().isNotEmpty) {
       albumId = widget.repository.addAlbum(name: _newAlbum.text).id;
     }
-    final title =
-        _name.text.trim().isEmpty ? widget.defaultTitle : _name.text.trim();
-    Navigator.of(context)
-        .pop((title: title, albumId: albumId, scanMode: _scanMode));
+    Navigator.of(context).pop((
+      title: widget.defaultTitle,
+      albumId: albumId,
+      scanMode: PhotoScanMode.both,
+    ));
   }
 
   @override
@@ -303,10 +297,6 @@ class _SaveToAlbumDialogState extends State<_SaveToAlbumDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _fieldLabel('照片名稱'),
-            const SizedBox(height: 6),
-            TextField(controller: _name, style: _input),
-            const SizedBox(height: 14),
             _fieldLabel('相片冊'),
             const SizedBox(height: 6),
             Wrap(
@@ -339,30 +329,6 @@ class _SaveToAlbumDialogState extends State<_SaveToAlbumDialog> {
                 decoration: InputDecoration(hintText: ui(context, '相片冊名稱')),
               ),
             ],
-            const SizedBox(height: 14),
-            _fieldLabel('要找什麼'),
-            const SizedBox(height: 6),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: [
-                for (final m in PhotoScanMode.values)
-                  ChoiceChip(
-                    label: UiText(m.label),
-                    selected: m == _scanMode,
-                    onSelected: m.findsText && !TextScan.available
-                        ? null
-                        : (_) => setState(() => _scanMode = m),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            UiText(
-              TextScan.available
-                  ? '找文字：讀出招牌、菜單、書頁上的英文單字'
-                  : TextScan.unavailableMessage,
-              style: MFont.inter(12, FontWeight.w500, MColors.gray500),
-            ),
           ],
         ),
       ),

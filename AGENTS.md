@@ -71,6 +71,10 @@ launches a card for each idle AI (pick_card rules + `lexicon/tools/dispatch_conf
 - **Issue swarm** (owner, 2026-10-18): every new 問題回報 card (and every decision the owner has answered) gets its
   own new Claude CLI (`Claude CLI 1..N`, `issue_swarm.max_parallel` in dispatch_config.json, Claude Code's quota);
   a finished card marks its issues fixed. Agents read the issue's `decision` field and follow it.
+- One card, one CLI (card #431): `launch_agent.py` records each CLI in `lexicon/logs/agents/card<id>.pid.json`
+  and refuses to launch a card whose previous CLI still runs; the tick skips such cards, waits
+  `finish_grace_alive_minutes` (45) before collecting a card whose CLI is still alive, and ends a CLI quiet for
+  `lingering_kill_minutes` (90).
 - Dry run: `python lexicon/tools/dispatch_tick.py --dry-run`. Tests: `lexicon/tests/test_dispatch_tick.py`.
 
 ## Standing preamble (auto-attached on every launch)

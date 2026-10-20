@@ -26,7 +26,8 @@ from .text import example_key, normalize_lemma, text_hash
 FORM_POS = {"verb_base": "verb", "verb_past": "verb", "verb_past_participle": "verb",
             "verb_present_participle": "verb", "verb_third_person": "verb",
             "noun_plural": "noun", "adj_comparative": "adj", "adj_superlative": "adj",
-            "fr_past_participle": "verb", "fr_feminine": "adj", "fr_plural": "adj",
+            "fr_past_participle": "verb", "fr_present_participle": "verb", "fr_imperfect_1s": "verb",
+            "fr_future_1s": "verb", "fr_auxiliary": "verb", "fr_feminine": "adj", "fr_plural": "adj",
             "fr_feminine_plural": "adj", "fr_gender": "noun", **{f"fr_present_{p}": "verb" for p in
                                             ("1s", "2s", "3s", "1p", "2p", "3p")}}
 REL_FIELDS = catalog.RELATION_FIELDS + ["derived_terms"]
@@ -344,13 +345,20 @@ def materialize(s: Session, target: str, lemma: str, display: str | None = None,
         lx = lexemes.get(want) or (lexemes.get("noun") if want == "adj" else None)
         if lx is None:
             continue
+        # French gender / number forms go to the noun too (card #429:
+        # entier adj + noun, the noun showed no entiers).
+        targets = [lx] + [lexemes[p] for p in (catalog.FORM_POS.get(f) or ())
+                          if isinstance(catalog.FORM_POS.get(f), tuple)
+                          and p in lexemes and lexemes[p] is not lx]
         seen = set()
         for it in u(f):
             form = it.get("form", "")
             if form and form not in seen:
                 seen.add(form)
-                s.add(m.Form(lexeme_id=lx.id, field=f, form=form,
-                             normalized=normalize_lemma(form, target), source=it.get("source", "")))
+                for t in targets:
+                    s.add(m.Form(lexeme_id=t.id, field=f, form=form,
+                                 normalized=normalize_lemma(form, target),
+                                 source=it.get("source", "")))
 
     # Pronunciations (shared by every part of speech of the headword)
     materialize_pronunciations(s, target, values, lexemes, audio_fetched)
@@ -361,7 +369,7 @@ def materialize(s: Session, target: str, lemma: str, display: str | None = None,
     keep_rel: set[int] = set()
     # The headword's own forms are not relation words (apple → apples).
     own_forms = {lemma.lower()} | {(it.get("form") or "").lower()
-                                   for f in catalog.FORM_FIELDS for it in u(f)}
+                                   for f in catalog.INFLECTION_FIELDS for it in u(f)}
     for f in REL_FIELDS:
         for n, it in enumerate(u(f)):
             w = it.get("word", "")

@@ -59,7 +59,8 @@ final _cjk = RegExp(r'[一-鿿]');
 void checkFront(WordEntry e, Findings f) {
   final hint = firstLetterHint(e.word);
   final letters = _letter.allMatches(e.word).length;
-  if ('_'.allMatches(hint).length != letters - 1) {
+  // A one-letter word ("a", "I") hides its only letter (firstLetterHint).
+  if ('_'.allMatches(hint).length != (letters > 1 ? letters - 1 : letters)) {
     f.add('正面底線數和字母數不符', '${e.word} → $hint');
   }
   if (e.meaning.trim().isEmpty) {

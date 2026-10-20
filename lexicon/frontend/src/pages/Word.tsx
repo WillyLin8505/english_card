@@ -124,6 +124,7 @@ export default function Word({ target, native, lemma }: { target: string; native
         <div>
           <p><Link to="/coverage">← 單字資料庫</Link></p>
           <h1>{d.display}{d.entry_type === "phrase" && <span className="pill" title="多字詞條：目前不分片語動詞／慣用語">片語</span>}</h1>
+          {target === "fr" && <FrenchHead d={d} />}
           <p className="muted">
             {langName(target)} → {langName(native)} ·{" "}
             {d.lexemes.map((l) => (
@@ -290,6 +291,28 @@ export default function Word({ target, native, lemma }: { target: string; native
       {detail && <FieldDetailModal target={target} native={native} lemma={d.lemma} field={detail} onClose={() => setDetail(null)} onChanged={() => w.reload(true)} />}
     </div>
   );
+}
+
+const FR_GENDER: Record<string, [string, string, string]> = {
+  // gender → [definite, indefinite, label] (card #429: masculine headword first)
+  m: ["le", "un", "陽性名詞"], f: ["la", "une", "陰性名詞"], "m/f": ["le／la", "un／une", "陰陽同形名詞"], pl: ["les", "des", "只有複數"],
+};
+
+/** French headword line: le chat · 陽性名詞 · 陰性 chatte · 複數 chats. */
+function FrenchHead({ d }: { d: WordView }) {
+  const first = (f: string) => {
+    const it = d.fields.find((x) => x.field === f)?.items?.[0];
+    return it ? String(it.form ?? "") : "";
+  };
+  const g = FR_GENDER[first("fr_gender")];
+  const parts = [
+    g && `${/^[aeiouyhàâäéèêëîïôöùûüœæ]/i.test(d.display) && g[0] !== "les" ? g[1] : g[0]} ${d.display}`,
+    g && g[2],
+    first("fr_feminine") && `陰性 ${first("fr_feminine")}`,
+    first("fr_plural") && `複數 ${first("fr_plural")}`,
+    first("fr_feminine_plural") && `陰性複數 ${first("fr_feminine_plural")}`,
+  ].filter(Boolean);
+  return parts.length ? <p className="muted">{parts.join(" · ")}</p> : null;
 }
 
 function FieldDetailModal({ target, native, lemma, field, onClose, onChanged }: { target: string; native: string; lemma: string; field: string; onClose: () => void; onChanged: () => void }) {

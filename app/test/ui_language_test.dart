@@ -46,11 +46,11 @@ void main() {
     expect(find.text('My words'), findsOneWidget);
     await tester.tap(find.text('Review'));
     await tester.pumpAndSettle();
-    expect(find.text('Ready when you are'), findsOneWidget);
-    expect(find.text('Start review'), findsOneWidget);
+    expect(find.text('Which one to review?'), findsOneWidget);
+    expect(find.text('All together'), findsOneWidget);
     app.settings.nativeLanguage = 'zh-TW';
     await tester.pumpAndSettle();
-    expect(find.text('想複習的時候就開始吧'), findsOneWidget);
+    expect(find.text('想複習哪一本？'), findsOneWidget);
     semantics.dispose();
     expect(tester.takeException(), isNull);
   });
@@ -77,7 +77,7 @@ void main() {
     final app = await pumpApp(tester,
         initialTab: AppTab.review,
         settings: AppSettings.inMemory(nativeLanguage: 'fr'));
-    await tester.tap(find.text('Commencer la révision'));
+    await tester.tap(find.text('Tout'));
     await tester.pumpAndSettle();
     expect(find.text('Afficher la réponse'), findsOneWidget);
     await tester.tap(find.text('Afficher la réponse'));

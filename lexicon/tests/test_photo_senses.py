@@ -72,8 +72,9 @@ def test_fix_catalog_senses_follows_redirect_and_falls_back():
                                 "labels": [{"lexeme_id": 12}]}]}
     assert q.fix_catalog_senses(pack) == 3
     tags = pack["catalog_images"][0]["tags"]
-    assert [t["sense_id"] for t in tags] == [102, 102, 110]
-    assert tags[0]["sense_id_before"] == 100 and tags[2]["lexeme_id"] == 11
+    # Card #435: the two tags remapped onto sense 102 merge into one
+    assert [t["sense_id"] for t in tags] == [102, 110]
+    assert tags[0]["sense_id_before"] == 100 and tags[1]["lexeme_id"] == 11
     assert pack["catalog_images"][0]["labels"][0]["lexeme_id"] == 11
     assert q.fix_catalog_senses(pack) == 0  # idempotent
 

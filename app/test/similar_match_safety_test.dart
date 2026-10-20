@@ -107,7 +107,7 @@ void main() {
         const RelatedWord('warm', RelationType.associated)
       ]);
       await pumpApp(tester, repository: repo, initialTab: AppTab.review);
-      await tester.tap(find.text('開始複習'));
+      await tester.tap(find.text('綜合'));
       await tester.pumpAndSettle();
       expect(find.text('相似詞配對'), findsNothing);
       if (wrongFirst) {

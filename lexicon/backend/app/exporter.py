@@ -219,6 +219,41 @@ def unfit_relation(field: str, word: str, lemma: str) -> bool:
     return False
 
 
+_CONFUSABLE = ("near_homophones", "similar_spelling")  # the app's 「容易混淆的字」 section
+_ZH_NOISE = re.compile(r"[\s。．.、，,；;：:！!？?「」『』\"'“”()（）]")
+
+
+def zh_key(text: str | None) -> str:
+    """A Chinese gloss without spaces and punctuation, to compare two glosses."""
+    return _ZH_NOISE.sub("", text or "")
+
+
+def _spelling_key(word: str) -> str:
+    """British/American spellings map to one key: colour/color, centre/center, realise/realize."""
+    w = word.lower()
+    w = re.sub(r"(?<=[bclmnpstvgdkz])our", "or", w)
+    w = w.replace("ise", "ize")
+    if len(w) >= 5 and w.endswith("re"):
+        w = w[:-2] + "er"
+    return w
+
+
+def confusable_problem(word: str, head: str, target, zh: str | None,
+                       head_zh: set[str]) -> str | None:
+    """Why a 「容易混淆的字」 row is not shown to learners (問題回報 #420), or None.
+    not_in_lexicon: the word is only a link stub, a learner cannot open it; same_meaning: its
+    Chinese is the headword's own meaning (gulp→gul 「一口量」); spelling_variant: another
+    spelling of the headword (color→colour), not a confusable word. Names and swear words
+    are already dropped by unfit_relation."""
+    if target.status != "full":
+        return "not_in_lexicon"
+    if zh and zh_key(zh) in head_zh:
+        return "same_meaning"
+    if word.lower() != head.lower() and _spelling_key(word) == _spelling_key(head):
+        return "spelling_variant"
+    return None
+
+
 def per_level(found: list[tuple]) -> list[tuple]:
     """At most three shown words per CEFR level for synonyms and related
     words, those with a native meaning first, then in source order. Hidden
@@ -396,6 +431,7 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_saf
         native_def = {i.get("sense_key") or i.get("slot"): i for i in items(lemma, "native_definition")}
         registers = {i.get("sense_key") or i.get("slot"): i for i in items(lemma, "register")}
         sense_id_by_key: dict[str, int] = {}
+        head_zh: set[str] = set()  # the headword's own Chinese meanings (問題回報 #420)
         ord_by_lx: dict[int, int] = {}
         # 問題回報 #389: number the senses by senses.ordinal (materialize's
         # order_senses, card352_reorder.py), not by the definition item order,
@@ -434,6 +470,7 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_saf
             counts["senses"] += 1
             sense_id_by_key[sk] = sense.id
             if tr and native_text:
+                head_zh.add(zh_key(native_text))
                 con.execute("INSERT INTO sense_translations VALUES (?,?,?,?,?)",
                             (sense.id, native_text, tr.get("source", ""),
                              int(bool(tr.get("ai"))),
@@ -543,7 +580,7 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_saf
         # The headword's own forms are not relation words (spec 08: 詞條本身
         # 的詞形不算; apple's derived terms must not list apples).
         own_forms = {lemma.lower()} | {(it.get("form") or "").lower()
-                                       for ff in catalog.FORM_FIELDS for it in items(lemma, ff)}
+                                       for ff in catalog.INFLECTION_FIELDS for it in items(lemma, ff)}
         for f in catalog.RELATION_FIELDS + ["derived_terms"]:
             nat_field = "derived_native_meaning" if f == "derived_terms" else f"{f}_native"
             meanings = {(i.get("word") or i.get("slot") or "").lower(): i
@@ -563,11 +600,16 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_saf
                 target_zipf = tgt.zipf if tgt.zipf is not None else detail.get("zipf")
                 hidden = bool(detail.get("hide_by_default") or
                               (target_zipf is not None and target_zipf < 2.5))
-                found.append((n, it, w, row, tgt, meanings.get(w), detail, target_zipf,
-                              tgt.cefr or detail.get("cefr"), hidden))
+                mean = meanings.get(w)
+                zh = clean_native(repair_learner_gloss(row.target_word or w, mean.get("text"))) \
+                    if mean else None
+                if f in _CONFUSABLE and not hidden:
+                    hidden = confusable_problem(w, lemma, tgt, zh, head_zh) is not None
+                found.append((n, it, w, row, tgt, mean, detail, target_zipf,
+                              tgt.cefr or detail.get("cefr"), hidden, zh))
             if f in _PER_LEVEL:
                 found = per_level(found)
-            for n, it, w, row, tgt, mean, detail, target_zipf, target_cefr, hidden in found:
+            for n, it, w, row, tgt, mean, detail, target_zipf, target_cefr, hidden, zh in found:
                 if tgt.id not in exported and tgt.id not in stub_ids:
                     stub_ids.add(tgt.id)
                 con.execute("INSERT INTO relations VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
@@ -577,8 +619,7 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_saf
                              row.source_sense_id if row.source_sense_id in sense_id_by_key.values()
                              else None, row.strength, json.dumps(row.detail or {},
                                                                  ensure_ascii=False),
-                             clean_native(repair_learner_gloss(
-                                 row.target_word or w, mean.get("text"))) if mean else None,
+                             zh,
                              mean.get("source") if mean else None,
                              int(bool(mean and mean.get("ai"))), it.get("source", ""), n,
                              target_cefr, target_zipf, detail.get("rarity"), int(hidden)))

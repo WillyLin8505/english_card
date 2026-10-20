@@ -1228,6 +1228,9 @@ TRANSLATE_KIND = {
                'topic, parts, uses, kinds), comma-separated, spread over those levels: everyday '
                'words for A1-A2, and rarer, technical or literary words for C1-C2. Real '
                'dictionary words only, never the word itself or its forms.',
+    'pick': 'Each item is an English sentence, the target word, and lettered meanings of that '
+            'word (A, B, C...). Choose the letter of the meaning the word has in that sentence '
+            '(same part of speech and sense). If none fits, answer X. "text" is only the letter.',
     'bundle': 'Each item has its own "task". Apply that task independently: gloss means return '
               'a short {native} translation of the defined word; sentence means translate the '
               'sentence naturally into {native}; word means return the short {native} meaning '

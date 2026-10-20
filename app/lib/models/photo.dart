@@ -236,8 +236,27 @@ enum PhotoScanMode {
   bool get findsText => this != objects;
 }
 
-/// The 相片冊 filter pills (Figma photo-album-page, 17:19).
-const albumCategories = ['廚房', '客廳', '戶外', '食物', '動物'];
+/// Scenes the 相片冊 groups albums by (問題回報 #404): no fixed list of
+/// pills — a group exists only when some album's recognised words point to
+/// it. Words (lower-case English lemmas) that hint at each scene.
+const albumSceneWords = <String, Set<String>>{
+  '廚房': {'kitchen', 'cup', 'bowl', 'knife', 'fork', 'spoon', 'plate', 'pan',
+    'pot', 'stove', 'oven', 'fridge', 'refrigerator', 'kettle', 'mug', 'sink',
+    'microwave', 'toaster'},
+  '客廳': {'sofa', 'couch', 'tv', 'television', 'lamp', 'table', 'chair',
+    'carpet', 'rug', 'curtain', 'shelf', 'bed', 'pillow', 'clock'},
+  '戶外': {'tree', 'street', 'road', 'car', 'bus', 'bicycle', 'bike', 'building',
+    'sky', 'cloud', 'mountain', 'river', 'bridge', 'flower', 'grass', 'sun',
+    'traffic'},
+  '食物': {'apple', 'banana', 'bread', 'cake', 'pizza', 'rice', 'noodle',
+    'egg', 'fruit', 'vegetable', 'meat', 'coffee', 'tea', 'sandwich',
+    'orange', 'food', 'cookie', 'soup'},
+  '動物': {'dog', 'cat', 'bird', 'fish', 'horse', 'cow', 'rabbit', 'animal',
+    'duck', 'chicken', 'pig', 'sheep', 'butterfly', 'insect'},
+};
+
+/// 圖片集 albums (downloaded 卡片集) sit under this group.
+const deckAlbumGroup = '圖片集';
 
 class Album {
   final String id;
@@ -250,12 +269,19 @@ class Album {
   final String? coverAsset;
   final DateTime createdAt;
 
+  /// Set for the album of a downloaded 卡片集 picture deck (問題回報 #403):
+  /// its slug, and the author the deck names.
+  final String? deckSlug;
+  final String? author;
+
   const Album({
     required this.id,
     required this.name,
     this.category,
     this.coverAsset,
     required this.createdAt,
+    this.deckSlug,
+    this.author,
   });
 
   factory Album.fromJson(Map<String, dynamic> j) => Album(
@@ -264,6 +290,8 @@ class Album {
         category: j['category'] as String?,
         coverAsset: j['coverAsset'] as String?,
         createdAt: DateTime.parse(j['createdAt'] as String),
+        deckSlug: j['deckSlug'] as String?,
+        author: j['author'] as String?,
       );
 
   Map<String, dynamic> toJson() => {
@@ -272,5 +300,7 @@ class Album {
         'category': category,
         'coverAsset': coverAsset,
         'createdAt': createdAt.toIso8601String(),
+        'deckSlug': deckSlug,
+        'author': author,
       };
 }

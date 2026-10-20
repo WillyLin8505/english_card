@@ -17,7 +17,7 @@ void main() {
             : f
     ]));
     await pumpApp(tester, initialTab: AppTab.review, repository: repo, size: const Size(402, 1400));
-    await tester.tap(find.text('開始複習'));
+    await tester.tap(find.text('綜合'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('顯示答案'));
     await tester.pumpAndSettle();

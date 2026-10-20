@@ -55,6 +55,9 @@ class AppSettings extends ChangeNotifier {
   CardStyle _cardStyle;
   bool _onboarded;
   bool _shareUsageStats;
+  int _dailyNewLimit;
+  int _dailyReviewLimit;
+  bool _showPhotoLabels;
 
   /// Defaults for a build that knows where its tagger is:
   /// `flutter run --dart-define-from-file=tagging.local.json` (see
@@ -93,7 +96,17 @@ class AppSettings extends ChangeNotifier {
         _cardStyle = CardStyle.parse(_box?.get('cardStyle')),
         _onboarded = _box?.get('onboarded') == 'true',
         // Absent means off: existing installs stop sending until they opt in.
-        _shareUsageStats = _box?.get('shareUsageStats') == 'true';
+        _shareUsageStats = _box?.get('shareUsageStats') == 'true',
+        // Absent means on (問題回報 #406); a learner who switched it off keeps that.
+        _showPhotoLabels = _box?.get('showPhotoLabels') != 'false',
+        _reviewScope = _box?.get('reviewScope') ?? 'all',
+        _dailyNewLimit = (int.tryParse(_box?.get('dailyNewLimit') ?? '') ??
+                defaultDailyNewLimit)
+            .clamp(minDailyNew, maxDailyNew),
+        _dailyReviewLimit =
+            (int.tryParse(_box?.get('dailyReviewLimit') ?? '') ??
+                    defaultDailyReviewLimit)
+                .clamp(minDailyReview, maxDailyReview);
 
   /// Settings that live only in memory — for tests and previews.
   AppSettings.inMemory({
@@ -105,6 +118,7 @@ class AppSettings extends ChangeNotifier {
     CardStyle cardStyle = CardStyle.fallback,
     bool onboarded = true,
     bool shareUsageStats = false,
+    bool showPhotoLabels = true,
   })  : _box = null,
         _taggingUrl = taggingUrl,
         _apiKey = apiKey,
@@ -114,7 +128,11 @@ class AppSettings extends ChangeNotifier {
         _englishAccent = englishAccent,
         _cardStyle = cardStyle,
         _onboarded = onboarded,
-        _shareUsageStats = shareUsageStats;
+        _shareUsageStats = shareUsageStats,
+        _showPhotoLabels = showPhotoLabels,
+        _reviewScope = 'all',
+        _dailyNewLimit = defaultDailyNewLimit,
+        _dailyReviewLimit = defaultDailyReviewLimit;
 
   static Future<AppSettings> open() async {
     final box = await Hive.openBox<String>(_boxName);
@@ -156,6 +174,27 @@ class AppSettings extends ChangeNotifier {
   /// 期望記憶率 for FSRS.
   double get desiredRetention => _desiredRetention;
 
+  /// 每日上限 (問題回報 #398): at most this many first-time cards and due
+  /// reviews are scheduled per day; the rest wait for tomorrow.
+  static const defaultDailyNewLimit = 20, minDailyNew = 5, maxDailyNew = 100;
+  static const defaultDailyReviewLimit = 100,
+      minDailyReview = 20,
+      maxDailyReview = 500;
+
+  /// 複習範圍 (問題回報 #412), remembered between runs: `all`, `new`
+  /// (今天新加的), `weak` (弱項單字) or `album:<id>` (相片冊／卡片集).
+  String _reviewScope;
+  String get reviewScope => _reviewScope;
+  set reviewScope(String v) => _save('reviewScope', _reviewScope = v);
+
+  int get dailyNewLimit => _dailyNewLimit;
+  int get dailyReviewLimit => _dailyReviewLimit;
+
+  set dailyNewLimit(int v) => _save('dailyNewLimit',
+      '${_dailyNewLimit = v.clamp(minDailyNew, maxDailyNew)}');
+  set dailyReviewLimit(int v) => _save('dailyReviewLimit',
+      '${_dailyReviewLimit = v.clamp(minDailyReview, maxDailyReview)}');
+
   /// The language being learned; each has its own albums, words, cards
   /// and profile (語言資料隔離). Remembered across launches.
   String get learningLanguage => _learningLanguage;
@@ -176,6 +215,10 @@ class AppSettings extends ChangeNotifier {
 
   /// 設定 → 分享使用統計. Default off; PostHog sends nothing until this is on.
   bool get shareUsageStats => _shareUsageStats;
+
+  /// 設定 → 照片上的單字標示: the word's label on the photo of a review card.
+  /// Default on.
+  bool get showPhotoLabels => _showPhotoLabels;
 
   /// The level chosen in an older version's settings, used once to start
   /// the learner's profile.
@@ -227,6 +270,9 @@ class AppSettings extends ChangeNotifier {
   }
 
   set scanMode(PhotoScanMode v) => _save('scanMode', (_scanMode = v).name);
+
+  set showPhotoLabels(bool v) =>
+      _save('showPhotoLabels', '${_showPhotoLabels = v}');
 
   set onboarded(bool v) => _save('onboarded', '${_onboarded = v}');
 

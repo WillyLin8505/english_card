@@ -112,43 +112,70 @@ class _DatabaseLibraryScreenState extends State<DatabaseLibraryScreen> {
                                       )));
                             }
                             final allWords = pack.catalogWords;
-                            final words = allWords
-                                .where((w) =>
-                                    (_includeIncomplete || w.full) &&
-                                    w.searchText
-                                        .contains(_search.toLowerCase()))
-                                .toList()
-                              // Rarer parts of speech after the main ones
-                              // (問題回報 #16).
-                              ..sort((a, b) => a.rareUsage != b.rareUsage
-                                  ? (a.rareUsage ? 1 : -1)
-                                  : a.lemma.compareTo(b.lemma));
+                            // The word itself first, then words that start
+                            // with the search, letters inside a word last
+                            // (問題回報 #417: rat before accurate); rarer
+                            // parts of speech after the main ones (#16).
+                            final query = _search.trim().toLowerCase();
+                            final ranks = <LexEntry, int>{
+                              for (final w in allWords)
+                                if (_includeIncomplete || w.full)
+                                  if (w.searchRank(query) case final r?) w: r
+                            };
+                            final words = ranks.keys.toList()
+                              ..sort((a, b) {
+                                final byRank = ranks[a]!.compareTo(ranks[b]!);
+                                if (byRank != 0) return byRank;
+                                return a.rareUsage != b.rareUsage
+                                    ? (a.rareUsage ? 1 : -1)
+                                    : a.lemma.compareTo(b.lemma);
+                              });
                             // A chosen level shows only pictures with at least
                             // one drawable pin at that level. An approved word
                             // without model coordinates is metadata, not a
                             // visible photo label (問題回報 #143).
-                            final images = pack.catalogImages
-                                .where((image) =>
-                                    databaseImageLabels(image, pack)
-                                        .toLowerCase()
-                                        .contains(_search.toLowerCase()) &&
-                                    (_level == null ||
-                                        databasePins(image, pack,
-                                                max: 1, level: _level)
-                                            .isNotEmpty))
-                                .toList();
-                            // Search spans every level; say how many hits
-                            // sit at a level the album isn't showing (#302).
-                            final elsewhere = !widget.photos ||
+                            // Whole-word hits first, then words that start
+                            // with the search; letters inside a word don't
+                            // match (問題回報 #396: cat ≠ category).
+                            final exact = <Map<String, dynamic>>[];
+                            final prefix = <Map<String, dynamic>>[];
+                            for (final image in pack.catalogImages) {
+                              final match =
+                                  databaseImageMatch(image, pack, _search);
+                              if (match == null ||
+                                  (_level != null &&
+                                      databasePins(image, pack,
+                                              max: 1, level: _level)
+                                          .isEmpty)) {
+                                continue;
+                              }
+                              (match == 0 ? exact : prefix).add(image);
+                            }
+                            final images = [...exact, ...prefix];
+                            // Search spans every level; a result that hides
+                            // the searched word gets a hint (#302). When every
+                            // result has the same hint, the album says it once
+                            // under the search box instead of on each picture
+                            // (問題回報 #397); tiles keep their own hints only
+                            // when the results mix levels.
+                            final hints = !widget.photos ||
                                     _level == null ||
                                     _search.trim().isEmpty
-                                ? 0
-                                : images
-                                    .where((image) =>
-                                        databaseSearchElsewhere(
-                                            image, pack, _search, _level) !=
-                                        null)
-                                    .length;
+                                ? const <({String word, String? level})?>[]
+                                : [
+                                    for (final image in images)
+                                      databaseSearchElsewhere(
+                                          image, pack, _search, _level)
+                                  ];
+                            final shown = hints
+                                .whereType<({String word, String? level})>()
+                                .toList();
+                            final elsewhere = shown.length;
+                            final sharedHint = shown.isNotEmpty &&
+                                    shown.length == hints.length &&
+                                    shown.every((h) => h == shown.first)
+                                ? shown.first
+                                : null;
                             return Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
@@ -170,7 +197,7 @@ class _DatabaseLibraryScreenState extends State<DatabaseLibraryScreen> {
                                                     ? _level == null
                                                         ? '共 ${pack.catalogImages.length} 張圖片 · 每張都有單字標籤'
                                                         : '${levelLabel(_level!)}：${images.length} 張圖片有這個程度的標籤'
-                                                            '${elsewhere == 0 ? '' : ' · $elsewhere 張的搜尋字在其他程度'}'
+                                                            '${elsewhere == 0 || sharedHint != null ? '' : ' · $elsewhere 張的搜尋字在其他程度'}'
                                                     : '${allWords.where((w) => w.full).length} 筆正式單字 · 與資料庫同步',
                                                 style: MFont.bodyMuted),
                                             // Connecting/connected is debug
@@ -199,6 +226,18 @@ class _DatabaseLibraryScreenState extends State<DatabaseLibraryScreen> {
                                                         : '搜尋英文或中文'),
                                                     hintStyle:
                                                         MFont.bodyMuted)),
+                                            if (sharedHint != null) ...[
+                                              const SizedBox(height: MSpace.sm),
+                                              ClipRRect(
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                        MRadii.md),
+                                                child: DatabaseSearchHint(
+                                                    hit: sharedHint,
+                                                    onSwitch: (l) => setState(
+                                                        () => _level = l)),
+                                              ),
+                                            ],
                                             if (widget.photos) ...[
                                               const SizedBox(height: MSpace.sm),
                                               LabelLevelBar(
@@ -263,6 +302,9 @@ class _DatabaseLibraryScreenState extends State<DatabaseLibraryScreen> {
                                                           image: images[index],
                                                           level: _level,
                                                           search: _search,
+                                                          showSearchHint:
+                                                              sharedHint ==
+                                                                  null,
                                                           onLevelChanged: (l) =>
                                                               setState(() =>
                                                                   _level = l)))

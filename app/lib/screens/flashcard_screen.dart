@@ -19,6 +19,8 @@ import '../services/word_database_repository.dart';
 import '../theme/card_style.dart';
 import '../theme/mobile_theme.dart';
 import '../widgets/mobile/common.dart';
+import '../widgets/template_items.dart';
+import 'database_library_screen.dart' show DatabaseWordScreen;
 import '../widgets/mobile/dialogs.dart';
 import '../widgets/mobile/m_icon.dart';
 import '../widgets/mobile/photo_widgets.dart';
@@ -75,7 +77,11 @@ class FlashcardScreen extends StatefulWidget {
   /// and clears it.
   final ValueNotifier<List<String>?>? reviewRequest;
 
-  const FlashcardScreen({super.key, this.reviewRequest});
+  /// Set when 複習這本相簿 pushes this screen (問題回報 #403): the run only
+  /// uses that album's words and pictures, and 返回 goes back to the album.
+  final String? albumId;
+
+  const FlashcardScreen({super.key, this.reviewRequest, this.albumId});
 
   @override
   State<FlashcardScreen> createState() => _FlashcardScreenState();
@@ -146,10 +152,17 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     // A message from another tab (資料庫「已加入…」) would sit on the
     // grade buttons (問題回報 #97).
     ScaffoldMessenger.maybeOf(context)?.removeCurrentSnackBar();
+    final (albumId, cardScope) = reviewScopeOf(
+        scope.repository, widget.albumId, scope.settings.reviewScope);
     setState(() {
-      _session =
-          FlashcardSession(scope.repository, continuous: true, focus: focus)
-            ..addListener(_changed);
+      _session = FlashcardSession(scope.repository,
+          continuous: true,
+          focus: focus,
+          albumId: albumId,
+          cardScope: cardScope,
+          newLimit: scope.settings.dailyNewLimit,
+          reviewLimit: scope.settings.dailyReviewLimit)
+        ..addListener(_changed);
       _wasBack = false;
     });
     scope.navigator.setReviewing(true);
@@ -192,6 +205,12 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
   }
 
   void _dismissSummary() => setState(() => _lastRunReviewed = null);
+
+  /// Ends the run and leaves an album run's route (back to the album).
+  void _leave() {
+    _end();
+    Navigator.of(context).pop();
+  }
 
   // 問題回報 #262: 誤觸就直接封存、沒有回饋——先確認，封存後給 SnackBar +
   // 復原，呼應相片分頁的復原按鈕.
@@ -309,7 +328,9 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
                     ? BackNavButton(
                         onTap: _lastRunReviewed != null
                             ? _dismissSummary
-                            : () => scope.navigator.selectTab(AppTab.camera))
+                            : widget.albumId != null
+                                ? () => Navigator.of(context).pop()
+                                : () => scope.navigator.selectTab(AppTab.camera))
                     : BackNavButton(onTap: () => _end(summary: true)),
                 trailing: s == null || s.finished
                     ? null
@@ -339,9 +360,12 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
                         ? _Finished(
                             reviewed: _lastRunReviewed!,
                             onDone: _dismissSummary)
-                        : _Intro(onStart: _start)
+                        : _Intro(
+                            onStart: _start, fixedAlbumId: widget.albumId)
                     : s.finished
-                        ? _Finished(reviewed: s.reviewed, onDone: _end)
+                        ? _Finished(
+                            reviewed: s.reviewed,
+                            onDone: widget.albumId != null ? _leave : _end)
                         : CardLookScope(
                             look: look, child: FlashcardCardView(session: s)),
               ),

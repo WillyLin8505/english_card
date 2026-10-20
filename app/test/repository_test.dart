@@ -4,6 +4,7 @@ import 'package:photo_english_app/models/vocabulary_profile.dart';
 import 'package:photo_english_app/models/word_candidate.dart';
 import 'package:photo_english_app/models/word_detail.dart';
 import 'package:photo_english_app/models/word_entry.dart';
+import 'package:photo_english_app/services/analytics.dart';
 import 'package:photo_english_app/services/word_database_query.dart';
 import 'package:photo_english_app/services/word_database_repository.dart';
 
@@ -152,6 +153,23 @@ void main() {
       expect(coffee.meaning, '黑咖啡');
       expect(coffee.userEdited, contains(WordField.meaning));
     });
+  });
+
+  test('a review without an exercise is reported as the flip template', () {
+    final a = Analytics.instance;
+    final saved = a.recorder;
+    final events = <Map<String, Object?>>[];
+    a.recorder = events.add;
+    addTearDown(() => a.recorder = saved);
+    final card = repo.cardOf(repo.entryByWord('balcony')!.id)!;
+    repo.review(card.id, Rating.good);
+    repo.review(card.id, Rating.good, templateType: 'photoChoice');
+    final templates = [
+      for (final e in events)
+        if (e['event'] == 'card_reviewed')
+          (e['properties'] as Map)['template']
+    ];
+    expect(templates, ['flip', 'photoChoice']);
   });
 
   group('已學會 (archive) and 復原', () {

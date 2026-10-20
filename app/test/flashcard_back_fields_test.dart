@@ -34,12 +34,17 @@ void main() {
           'normalized': 'go',
           'pos': 'verb',
           'forms': [
-            for (final form in ['goes', 'going', 'went', 'gone'])
+            // The pack's real fields: one grid cell per kind of form.
+            for (final (field, form) in const [
+              ('verb_third_person', 'goes'),
+              ('verb_present_participle', 'going'),
+              ('verb_past', 'went'),
+              ('verb_past_participle', 'gone'),
+            ])
               {
-                'field': 'form',
+                'field': field,
                 'form': form,
                 'normalized': form,
-                'label': '變形'
               },
           ],
           'pronunciations': [

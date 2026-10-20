@@ -25,7 +25,7 @@ CC BY-SA 的「相同方式分享」只及於該筆資料本身（詞條文字�
 | 音檔 | Lingua Libre（Wikimedia Commons） | CC BY-SA 4.0（逐檔） | Commons 分類「Lingua Libre pronunciation-fra」439,614 個檔 | **已接**：Kaikki 詞條 `sounds` 直接列出 `LL-Q150 (fra)-<speaker>-<word>.wav` 的 ogg／mp3 網址 |
 | 音檔 | Wiktionary 傳統錄音（Commons `Fr-<mot>.ogg`、`Fr-Paris--<mot>.ogg`） | 逐檔（多為 CC BY-SA） | Commons 分類「French pronunciation」3,558 個檔 | **已接**（`adapters/commons.py` 法語檔名樣式） |
 | 圖片 | Wikidata＋Wikimedia Commons、Open Images、Smithsonian、Openverse | 同英文（只收 CC0／PD／CC BY） | 語言無關 | **已接**：法語字以該義項的英文詞義搜圖（`images.english_search_term`） |
-| 詞形變化 | Kaikki `forms`（英文版 Wiktionary 法語詞條） | CC BY-SA 4.0 | 動詞完整變位表、名詞／形容詞陰性與複數 | **已接**（`kaikki.form_field`：`fr_present_1s…3p`、`fr_past_participle`、`fr_feminine`、`fr_plural`、`fr_feminine_plural`） |
+| 詞形變化 | Kaikki `forms`（英文版 Wiktionary 法語詞條） | CC BY-SA 4.0 | 動詞完整變位表、名詞／形容詞陰性與複數 | **已接**（`kaikki.form_field`：`fr_present_1s…3p`、`fr_past_participle`、`fr_present_participle`、`fr_imperfect_1s`、`fr_future_1s`、`fr_auxiliary`（avoir／être，卡 #429）、`fr_feminine`、`fr_plural`、`fr_feminine_plural`） |
 | 詞形變化 | Lefff 3.4（Benoît Sagot） | LGPL-LR | 約 11 萬詞元／50 餘萬詞形（接入前再核對版本數字） | 未接；離線補洞用 |
 | 詞形變化 | Morphalou 3（ORTOLANG） | LGPL-LR | 約 16 萬詞元／97 萬詞形（接入前再核對） | 未接；與 Lefff 二選一 |
 | 詞形變化 | GLÀFF（Wiktionnaire 萃取） | CC BY-SA 3.0 | 約 140 萬詞形 | 未接 |
@@ -92,7 +92,7 @@ CC BY-SA 的「相同方式分享」只及於該筆資料本身（詞條文字�
   只查 `language='en'`）；法語圖片要以英文詞義比對標籤，下一張卡再做。
 
 ### 2.7 詞形變化
-- 名詞／形容詞：陰性、複數、陰性複數（Kaikki `forms` tags）。動詞：直陳式現在六個人稱＋過去分詞（欄位 `fr_present_1s…3p`、`fr_past_participle`）。
+- 名詞／形容詞：陰性、複數、陰性複數（Kaikki `forms` tags）。動詞：直陳式現在六個人稱＋過去分詞（欄位 `fr_present_1s…3p`、`fr_past_participle`）；卡 #429 加現在分詞、未完成過去式 je、簡單將來式 je、複合時態助動詞（Kaikki 變位表的「être + past participle」）。代動詞表的 m'acquiers／se douche 不算該動詞的變位。
   其他時態（imparfait、futur、passé composé 組合）暫不入欄位；要的話再加欄位（catalog `Field(..., languages=("fr",))`）。
 - 離線補洞：Lefff（https://github.com/sagot/lefff ，LGPL-LR）或 Morphalou（https://www.ortolang.fr/market/lexicons/morphalou ，LGPL-LR）。
 
@@ -165,9 +165,32 @@ CC BY-SA 的「相同方式分享」只及於該筆資料本身（詞條文字�
   `audio --budget 480` 連跑 6 批（workers 閒下來後約 2.3 秒一字）補 1,202 字；字表只剩 88 字沒錄音（68 字 Commons／Lingua Libre 根本沒檔，
   20 字 404），`relink`（同字其他詞性已有錄音就直接連過去，不下載）剩 7 字 IPA 不同。圖片：image worker 一天約 100 筆，瓶頸是
   Smithsonian 429（問題回報 #360），佇列 2,302 筆要等；法語圖打標 Qwen 佇列 ≤ 4，不需 Codex／Cursor 備援。
+- **第 4／5 輪（10/19 深夜–10/20 早）**：#360 修好後 image worker 約 40 字/小時，加上前景 `pictures --missing --budget 500`
+  （第 4 輪 7 批、第 5 輪 12 批）字表名詞有圖 347 → 957 → 1,180／2,097。根因修正：法語詞義的 gloss 存在 `definitions.language='en'`，
+  `images.auto_fetch` 卻用 `d.language = l.language`（'fr'）連結，法語永遠拿不到 gloss，71 個只有 gloss 沒有英文釋義的字表名詞詞義因此
+  「沒有英文詞義可用來搜圖」；已改成 `d.language IN (l.language, :native)`（其餘 4 處與 759 個 native_empty 開問題回報 #394）。
+  沒有自動搜尋詞的 127 個詞義交 Qwen（`card329_fr_terms.py`，沿用 card371 的 /translate 流程）：110 個單字答案，抽查後 46 個寫入
+  `quality/search_terms.json`（抽象字、族名、形容詞不收），38 個先前因無搜尋詞失敗的任務重排，31 字拿到圖。Openverse 逾時佔 23% 任務
+  （每次白等 25 秒）開問題回報 #395。打標：Qwen 約 230 張/小時，待打標 1,893 張（法語 963），Codex／Cursor 額度都用完，備援不可用。
 
 ## 5. 下一張卡（法語基礎 2000–3000 字）要先做的事
 1. 決定 CEFR 來源（§2.3）。2. 建 Kaikki 法語本機索引，不要逐字打 kaikki.org。3. 重啟 API 與 workers 載入法語程式
 （workers 會把舊程式留在記憶體，問題回報 #285）。4. 圖片標籤綁定支援法語（§2.6）。5. 字表：以 wordfreq fr 前 3000
 （排除專有名詞、功能詞）或 Lexique 4 頻率建 `wordlists(language='fr')`。6. 例句掛哪個詞條：法語例句對應義項只靠句長，
 試跑的 maison 20 句全掛到形容詞詞條、名詞 0 句，pack 因而把名詞排成罕用（CEFR 估成 B1）；要加「句子含該詞形 → 依主詞性」規則。
+
+## 7. 卡 #429／問題回報 #426：法語詞庫逐欄位對照英文（2026-10-20）
+
+量測：`python lexicon/tools/card429_measure.py`（前後數字 `lexicon/logs/agents/card429_before.json`）。結論：**來源大多已接對**
+（Kaikki 英文版 Wiktionary 法語詞條＋本機索引、Tatoeba、Lingua Libre、wordfreq＋Lexique 3.83），法語「看起來不齊」的原因是：
+1. 詞庫本身只有 4,142 個 full 詞（英文 8,731），其中 11,409 個 stub；來自 3000 字基礎表，不是全量。
+2. 義項 2.23／詞（英文 5.75）：低優先義項（俚語、貶義、第二詞源）依英文同一規則不給母語釋義（`local.is_rare_sense`），不是漏接。
+3. **陰陽性**：卡 #367 只接了欄位、只試跑 50 字（97 筆）；全庫名詞 2,456 個 → #429 用本機 Kaikki 索引回填 2,359（m 1,294、f 936、m/f 128、pl 1），不打網路。
+4. **構詞（morphemes）**：法語 0／英文 8,361：Kaikki 來源對法語沒開這個欄位（流程跳過非英文）。#429 第 2 輪：`_KAIKKI_FR_TARGET` 加 morphemes，部件意思取法語字綴／字根自己的 Wiktionary 釋義（英文字綴表會把 -ment 解成 result），`card429_morph.py` 回填 658 詞（App 包 731 個詞條）。其餘多半是單一詞素（chat）。
+4b. **陰陽性／名詞詞形沒進 App**：第 1 輪只寫 forms 表，但 App 包讀 field_values；`app_pack.share_forms` 又把 fr_plural／fr_feminine 當成只屬形容詞，名詞（chat→chats）全被丟掉。#429 第 2 輪修正＋`card429_forms.py` 回填。
+5. **圖片標籤**：資料裡每張圖其實有平均 15 個英文標籤；後台（#365）只顯示「指向這個字」的法文標籤，所以多半只有 1 個。
+   #429 起後台用 app 同一個 `meaning_index` 列出圖上所有對得到法文詞條的標籤（平均 1 → 6.7 個）。
+
+每欄位最佳來源（授權不變，§1）：詞形／陰陽性＝Kaikki（法文版 Wiktionnaire 的 frwiktionary 同授權，較完整時再補）；
+詞頻＝Lexique 3.83（CC BY-SA 4.0；Lexique 4 目前未釋出可下載版）＋wordfreq；OpenSubtitles 頻率與 wordfreq 重疊，不另接；
+詞形補洞＝Morphalou 3／Lefff（LGPL-LR，可用）；GLÀFF（CC BY-SA 3.0）可用但與 Kaikki 重疊；Tatoeba fr-en 例句、Lingua Libre 音檔維持。

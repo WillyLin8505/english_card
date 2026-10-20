@@ -21,6 +21,8 @@ the picture queue, and what the local Qwen model is answering this moment.
 from __future__ import annotations
 
 import json
+import threading
+import time
 import urllib.error
 import urllib.request
 from datetime import datetime, timedelta, timezone
@@ -197,7 +199,26 @@ class HelloBody(BaseModel):
     note: str | None = None
 
 
-def task_dict(t: m.AgentTask) -> dict:
+# The board lists 400+ cards; their full history made it ~800 KB and slow
+# (card #445). Board cards carry only the recent entries (a standing card: every
+# entry since its last run, which dispatch_tick's cooldown check reads); the
+# whole history comes with GET /tasks/<id>.
+BOARD_HISTORY = 3
+BOARD_HISTORY_SINCE_RUN = 50
+
+
+def _board_history(t: m.AgentTask) -> list:
+    h = list(t.history or [])
+    keep = h[-BOARD_HISTORY:]
+    if t.kind == "recurring" and t.last_run_at:
+        last = t.last_run_at.isoformat()
+        since = [e for e in h if str(e.get("at") or "") > last][-BOARD_HISTORY_SINCE_RUN:]
+        if len(since) > len(keep):
+            keep = since
+    return keep
+
+
+def task_dict(t: m.AgentTask, full: bool = True) -> dict:
     d = {c: getattr(t, c) for c in (
         "id", "title", "detail", "status", "agent", "requested_by", "progress", "issue_ids",
         "history", "created_at", "updated_at", "started_at", "finished_at", "kind",
@@ -207,7 +228,70 @@ def task_dict(t: m.AgentTask) -> dict:
     d["stale"] = bool(t.status == "in_progress" and t.updated_at and now - t.updated_at > STALE_AFTER)
     d["due"] = bool(t.kind == "recurring" and t.status == "scheduled"
                     and (t.next_run_at is None or t.next_run_at <= now))
+    if not full:
+        d["history_n"] = len(t.history or [])
+        d["history"] = _board_history(t)
     return d
+
+
+# ── Slow numbers, served from a cache refreshed in the background (card #445) ──
+# The standing cards' metrics scan every picture's tags (5–6 s) and the tagger's
+# /activity can take 2–3 s while Qwen is busy. The board serves the last value
+# and, once it is older than its TTL, refreshes it in a background thread, so a
+# board request never waits for them (only the very first one does).
+
+_slow: dict[str, dict] = {}
+_slow_lock = threading.Lock()
+SLOW_TTL = {"metric": 60.0, "qwen": 5.0}
+
+
+def _slow_refresh(key: str, compute) -> None:
+    try:
+        value = compute()
+    except Exception as e:  # noqa: BLE001 — keep the old value, note the error
+        value = None
+        err = f"{type(e).__name__}: {e}"
+    else:
+        err = None
+    with _slow_lock:
+        e = _slow.setdefault(key, {})
+        if err is None:
+            e.update(value=value, at=time.monotonic(), has=True)
+        e["busy"] = False
+        e["error"] = err
+
+
+def slow_value(key: str, ttl: float, compute, compute_now=None):
+    """[compute] runs in the background thread; [compute_now] (default: the same)
+    on the first request, which has nothing cached to serve."""
+    now = time.monotonic()
+    with _slow_lock:
+        e = _slow.get(key)
+        fresh = e is not None and e.get("has") and now - e["at"] < ttl
+        if e is not None and e.get("has") and not fresh and not e.get("busy"):
+            e["busy"] = True
+            threading.Thread(target=_slow_refresh, args=(key, compute), daemon=True,
+                             name=f"board-{key}").start()
+        if e is not None and e.get("has"):
+            return e["value"]
+    _slow_refresh(key, compute_now or compute)   # first request: compute now
+    with _slow_lock:
+        e = _slow[key]
+        if not e.get("has"):
+            raise RuntimeError(e.get("error") or "no value")
+        return e["value"]
+
+
+def clear_slow_cache() -> None:
+    with _slow_lock:
+        _slow.clear()
+
+
+def _metric_in_own_session(name: str):
+    def compute():
+        with db.session_scope() as s:
+            return METRICS[name][1](s)
+    return compute
 
 
 def _touch(s: Session, name: str | None, kind: str | None = None, note: str | None = None):
@@ -306,7 +390,7 @@ def deck(s: Session) -> list[dict]:
     open_issues = sorted((r for r in s.execute(select(m.IssueReport).where(
         m.IssueReport.status == "open", m.IssueReport.kind.in_(("bug", "todo")))).scalars()
         if r.id not in taken), key=lambda r: (sev.get(r.severity, 9), r.id))
-    return ([{"card": "task", **task_dict(t)} for t in due + queued]
+    return ([{"card": "task", **task_dict(t, full=False)} for t in due + queued]
             + [_issue_card(r) for r in open_issues])
 
 
@@ -326,7 +410,7 @@ def board(s: Session) -> dict:
             continue
         b = bots.setdefault(t.agent, {"agent": t.agent, "kind": "ai", "last_seen": t.updated_at,
                                       "note": None, "doing": [], "assigned": []})
-        b["assigned" if t.status == "queued" else "doing"].append(task_dict(t))
+        b["assigned" if t.status == "queued" else "doing"].append(task_dict(t, full=False))
     for b in bots.values():
         doing = b["doing"]
         seen = b["last_seen"]
@@ -339,7 +423,7 @@ def board(s: Session) -> dict:
         else:
             b["state"] = "offline" if seen and now - seen > OFFLINE_AFTER else "idle"
     # Always show the local model as a bot so the owner can pause/resume it.
-    qa = qwen_activity()
+    qa = slow_value("qwen", SLOW_TTL["qwen"], qwen_activity)
     slots = (qa.get("slots") or {}) if qa.get("ok") else {}
     reqs = list(qa.get("requests") or []) if qa.get("ok") else []
     busy_n = slots.get("busy")
@@ -378,12 +462,13 @@ def board(s: Session) -> dict:
     recurring = []
     for t in s.execute(select(m.AgentTask).where(m.AgentTask.kind == "recurring")
                        .order_by(m.AgentTask.position, m.AgentTask.id)).scalars():
-        d = task_dict(t)
+        d = task_dict(t, full=False)
         if t.metric in METRICS:
             try:
-                d["metric_value"] = METRICS[t.metric][1](s)
+                d["metric_value"] = slow_value("metric:" + t.metric, SLOW_TTL["metric"],
+                                               _metric_in_own_session(t.metric),
+                                               lambda f=METRICS[t.metric][1]: f(s))
             except Exception as e:  # noqa: BLE001 — a number, not worth failing the board
-                s.rollback()
                 d["metric_value"] = {"value": None, "label": f"算不出來：{type(e).__name__}"}
         recurring.append(d)
     done = s.execute(select(m.AgentTask).where(m.AgentTask.status.in_(CLOSED))
@@ -392,7 +477,7 @@ def board(s: Session) -> dict:
     return {"bots": sorted(bots.values(), key=lambda b: (order[b["state"]], b["agent"])),
             "deck": the_deck, "recurring": recurring,
             "issues": open_issues_elsewhere(s, the_deck),
-            "done": [task_dict(t) for t in done]}
+            "done": [task_dict(t, full=False) for t in done]}
 
 
 def open_issues_elsewhere(s: Session, the_deck: list[dict]) -> list[dict]:

@@ -66,7 +66,7 @@ void main() {
     expect(find.text('片語動詞・動詞'), findsOneWidget);
     app.navigator.selectTab(AppTab.review);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('開始複習'));
+    await tester.tap(find.text('綜合'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'turn off');
     await tester.tap(find.byTooltip('送出答案'));

@@ -26,11 +26,11 @@ void main() {
 
     await tester.tap(find.text('相片冊'));
     await tester.pumpAndSettle();
-    expect(find.text('我的相片冊'), findsOneWidget);
+    expect(find.text('相片冊'), findsNWidgets(2));
 
     await tester.tap(find.text('複習'));
     await tester.pumpAndSettle();
-    expect(find.text('想複習的時候就開始吧'), findsOneWidget);
+    expect(find.text('想複習哪一本？'), findsOneWidget);
 
     await tester.tap(find.text('單字本'));
     await tester.pumpAndSettle();

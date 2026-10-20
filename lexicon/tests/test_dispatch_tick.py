@@ -37,6 +37,39 @@ def test_unknown_when_process_state_unknown():
     assert dt.classify_run(1000, None, None, None, 2000) == "unknown"
 
 
+# card #431: one card, one CLI
+def test_prior_cli_blocks_relaunch_until_gone_or_hung():
+    assert dt.prior_cli_action(False, 1000, 99999, 5400) == "free"
+    assert dt.prior_cli_action(True, 1000, 1000 + 600, 5400) == "wait"
+    assert dt.prior_cli_action(True, 1000, 1000 + 5401, 5400) == "kill"
+
+
+def test_live_run_pid_file(tmp_path, monkeypatch):
+    import launch_agent as la
+    monkeypatch.setattr(la, "LOGS", tmp_path)
+    assert la.live_run(7) is None  # no pid file
+    la.record_run(7, "Claude Code", os.getpid())
+    assert la.live_run(7)["pid"] == os.getpid()  # this process is alive
+    la.record_run(7, "Claude Code", os.getpid(), at=1000.0)
+    if os.name == "nt":  # process started long after the recorded launch → a reused pid
+        assert la.live_run(7) is None
+    la.record_run(7, "Claude Code", 999999)
+    assert la.live_run(7) is None  # gone
+
+
+def test_dispatch_skips_card_whose_previous_cli_runs(tmp_path, monkeypatch):
+    import launch_agent as la
+    monkeypatch.setattr(la, "LOGS", tmp_path)
+    monkeypatch.setattr(dt, "AG_LOGS", tmp_path)
+    la.record_run(329, "Claude Code", os.getpid())
+    (tmp_path / "card329.result.md").write_text("x", encoding="utf-8")
+    tick = dt.Tick.__new__(dt.Tick)
+    tick.cfg, tick.dry, tick.events = dict(dt.DEFAULT_CFG), True, []
+    assert tick.prior_busy(329) is True
+    assert tick.prior_busy(330) is False
+    assert tick.prior_busy(None) is False
+
+
 # cooldown
 def _rec(last_hours_ago, history=()):
     return {"kind": "recurring", "last_run_at": (NOW - timedelta(hours=last_hours_ago)).isoformat(),

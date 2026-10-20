@@ -889,7 +889,7 @@ def word_level(word: str, language: str = "en") -> str:
 def word_forms(ctx: Context) -> frozenset[str]:
     """The headword and its inflected forms, lower case."""
     forms = {ctx.lemma.lower()}
-    for k in catalog.FORM_FIELDS:
+    for k in catalog.INFLECTION_FIELDS:
         for i in ctx.items(k):
             if i.get("form") and (ctx.target != "en" or plausible_form(ctx.lemma, i["form"])):
                 forms.add(i["form"].lower())
@@ -1111,7 +1111,7 @@ def _verb_only_forms(ctx: Context) -> frozenset[str]:
     """Forms that can only be the verb (mugged, wound), not the noun or
     adjective spelt the same (mugs, winds)."""
     verb, other = set(), {ctx.lemma.lower()}
-    for k in catalog.FORM_FIELDS:
+    for k in catalog.INFLECTION_FIELDS:
         for i in ctx.items(k):
             form = (i.get("form") or "").lower()
             if form:

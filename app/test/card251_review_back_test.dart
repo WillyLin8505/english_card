@@ -87,6 +87,8 @@ void main() {
           'relations': [
             {'relation': 'synonyms', 'word': 'sunshine', 'native': '陽光', 'cefr': 'B1'},
             {'relation': 'related', 'word': 'daylight', 'native': '日光', 'cefr': 'B2'},
+            // Card #226: also a synonym, so the 相關詞 block must skip it.
+            {'relation': 'related', 'word': 'Sunshine', 'native': '陽光', 'cefr': 'B1'},
             {'relation': 'near_homophones', 'word': 'sunlit', 'native': '陽光照耀的'},
             {'relation': 'similar_spelling', 'word': 'sunlike'},
             {
@@ -157,14 +159,13 @@ void main() {
     expect(find.textContaining('A2'), findsNothing);
   });
 
-  testWidgets('item 3: no 照片情境 title and no word label on the photo',
+  testWidgets('item 3: no 照片情境 title; the word label is on by default (#406)',
       (tester) async {
     await pumpBack(tester,
         photos: [(_photo('p1'), const LabelPoint(0.3, 0.4), null)]);
     expect(find.text('照片情境'), findsNothing);
     final view = tester.widget<PinnedPhoto>(find.byType(PinnedPhoto));
-    expect(view.pins, isEmpty);
-    expect(find.byKey(const ValueKey('back-anchor-dot')), findsOneWidget);
+    expect(view.pins.map((p) => p.word.toLowerCase()), ['sunlight']);
   });
 
   testWidgets('item 5: every form is listed with its label', (tester) async {
@@ -183,9 +184,13 @@ void main() {
     }
     expect(find.text('反義詞'), findsNothing);
     expect(find.text('相關字'), findsNothing);
-    for (final word in ['sunshine', 'daylight', 'sunlit', 'sunlike']) {
+    for (final word in ['sunshine', 'daylight', 'sunlit']) {
       expect(find.textContaining(word), findsOneWidget, reason: word);
     }
+    // No Chinese meaning, so it stays off the back (card #437).
+    expect(find.textContaining('sunlike'), findsNothing);
+    // A word already under 同義詞 is not repeated under 相關詞 (card #226).
+    expect(find.textContaining('Sunshine'), findsNothing);
     expect(find.textContaining('陽光照耀的'), findsOneWidget);
     expect(find.textContaining('obscurity'), findsNothing);
     // The chips sit in a Wrap, so they fill the row instead of one per line.
@@ -311,7 +316,7 @@ void main() {
         repository: repo,
         speaker: speaker,
         size: const Size(402, 1400));
-    await tester.tap(find.text('開始複習'));
+    await tester.tap(find.text('綜合'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('顯示答案'));
     await tester.pumpAndSettle();

@@ -89,6 +89,12 @@ FIELDS: list[Field] = [
     Field("fr_present_2p", "forms", "現在式 vous", languages=("fr",)),
     Field("fr_present_3p", "forms", "現在式 ils／elles", languages=("fr",)),
     Field("fr_past_participle", "forms", "過去分詞", languages=("fr",)),
+    # card #429: the other tenses a learner meets first, and avoir / être
+    # for the compound tenses (passé composé).
+    Field("fr_present_participle", "forms", "現在分詞", languages=("fr",)),
+    Field("fr_imperfect_1s", "forms", "未完成過去式 je", languages=("fr",)),
+    Field("fr_future_1s", "forms", "簡單將來式 je", languages=("fr",)),
+    Field("fr_auxiliary", "forms", "複合時態助動詞", languages=("fr",)),
     # card #367: m. / f. / m./f. (epicene); "pl" = plural-only noun (les gens)
     Field("fr_gender", "forms", "陰陽性", languages=("fr",)),
     Field("fr_feminine", "forms", "陰性", languages=("fr",)),
@@ -142,6 +148,10 @@ for _rel in reversed(RELATION_FIELDS):
 FIELD = {f.key: f for f in FIELDS}
 RELATION_NATIVE = {f"{r}_native": r for r in RELATION_FIELDS}
 FORM_FIELDS = [f.key for f in FIELDS if f.block == "forms"]
+# Forms-block fields whose value is grammar, not a spelling of the headword
+# (m / f, avoir / être): never one of the word's own forms (card #429).
+NOT_INFLECTIONS = {"fr_gender", "fr_auxiliary"}
+INFLECTION_FIELDS = [f for f in FORM_FIELDS if f not in NOT_INFLECTIONS]
 
 
 def fields_for(target: str) -> list[Field]:
@@ -175,12 +185,15 @@ _KAIKKI_EN_TARGET = {
 _KAIKKI_FR_TARGET = {
     "pos", "definition", "usage_labels", "register", "ipa", "audio", "fr_present_1s", "fr_present_2s",
     "fr_present_3s", "fr_present_1p", "fr_present_2p", "fr_present_3p", "fr_past_participle",
+    "fr_present_participle", "fr_imperfect_1s", "fr_future_1s", "fr_auxiliary",
     "fr_gender", "fr_feminine", "fr_plural", "fr_feminine_plural", "synonyms", "antonyms", "related",
     # The English Wiktionary's French entries carry hypernyms / hyponyms /
     # homophones and accent-tagged sounds too (chat: hypernyms félin; card #325).
     "hypernyms", "hyponyms", "homophones", "accent_labels",
     "derived_terms", "etymology_text", "origin_language", "original_form", "example_sentences",
     "example_sense",
+    # Wiktionary's affix templates (boulangerie = boulanger + -erie; card #429)
+    "morphemes",
 }
 _KAIKKI_ZH_TARGET = {"pos", "definition", "usage_labels", "register", "ipa", "audio", "synonyms", "antonyms",
                      "related", "derived_terms", "etymology_text", "example_sentences",
@@ -414,7 +427,8 @@ MAY_BE_EMPTY = {"antonyms", "hypernyms", "hyponyms", "homophones", "near_homopho
                 # adjective (orange) no feminine, a mass noun no plural.
                 "fr_present_1s", "fr_present_2s", "fr_present_3s", "fr_present_1p",
                 "fr_present_2p", "fr_present_3p", "fr_past_participle", "fr_feminine",
-                "fr_plural", "fr_feminine_plural"}
+                "fr_plural", "fr_feminine_plural", "fr_present_participle", "fr_imperfect_1s",
+                "fr_future_1s", "fr_auxiliary"}
 # Forms that belong to one part of speech (a tuple: any of these).
 FORM_POS = {"verb_base": "verb", "verb_past": "verb", "verb_past_participle": "verb",
             "verb_present_participle": "verb", "verb_third_person": "verb",
@@ -422,7 +436,8 @@ FORM_POS = {"verb_base": "verb", "verb_past": "verb", "verb_past_participle": "v
             # French: conjugation is the verb's; gender / number forms belong to
             # nouns and adjectives alike (chat → chatte, grand → grande).
             **{f"fr_present_{p}": "verb" for p in ("1s", "2s", "3s", "1p", "2p", "3p")},
-            "fr_past_participle": "verb",
+            "fr_past_participle": "verb", "fr_present_participle": "verb",
+            "fr_imperfect_1s": "verb", "fr_future_1s": "verb", "fr_auxiliary": "verb",
             "fr_feminine": ("adj", "noun"), "fr_plural": ("adj", "noun"),
             "fr_feminine_plural": ("adj", "noun"), "fr_gender": "noun"}
 for _f in LEVELED:

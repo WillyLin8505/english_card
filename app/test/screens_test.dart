@@ -12,6 +12,7 @@ import 'package:photo_english_app/models/photo.dart';
 import 'package:photo_english_app/models/word_entry.dart';
 import 'package:photo_english_app/screens/flashcard_screen.dart';
 import 'package:photo_english_app/screens/onboarding_screen.dart';
+import 'package:photo_english_app/screens/photo_picker_screen.dart';
 import 'package:photo_english_app/services/app_settings.dart';
 import 'package:photo_english_app/services/dictionary_sync.dart';
 import 'package:photo_english_app/services/speaker.dart';
@@ -67,7 +68,7 @@ void main() {
       await pumpApp(tester, initialTab: AppTab.words);
       await tester.tap(find.text('開始複習'));
       await tester.pumpAndSettle();
-      expect(find.text('想複習的時候就開始吧'), findsOneWidget);
+      expect(find.text('想複習哪一本？'), findsOneWidget);
     });
   });
 
@@ -112,17 +113,15 @@ void main() {
       final app = await openBreakfast(tester);
       expect(find.text('辨識單字列表 (5)'), findsOneWidget);
       expect(find.text('Coffee'), findsNWidgets(2)); // pin + card
-      expect(find.text('單字難度 入門（A1） · 剛好'), findsOneWidget);
+      expect(find.text('入門（A1） · 剛好'), findsOneWidget);
 
       // ☆ Apple, then turn the dial to B2.
       await tester.tap(find.bySemanticsLabel('鎖定（調整難度時保留）').at(1));
       await tester.pump();
-      await tester.tap(find.bySemanticsLabel(RegExp('^單字難度 入門（A1），')));
+      // The difficulty bar under the photo (問題回報 #442): tap the B2 tick.
+      await tester.tap(find.text('B2'));
       await tester.pumpAndSettle();
-      expect(find.text('A1 · 剛好'), findsOneWidget);
-      await tester.tap(find.bySemanticsLabel(RegExp('^難度 B2')));
-      await tester.pumpAndSettle();
-      expect(find.text('單字難度 中高階（B2） · 挑戰'), findsOneWidget);
+      expect(find.text('中高階（B2） · 挑戰'), findsOneWidget);
       expect(find.text('Apple'), findsNWidgets(2), reason: 'starred');
       expect(find.text('Coffee'), findsNothing,
           reason: 'A1 is too far from B2');
@@ -203,6 +202,9 @@ void main() {
       // Not set up is said plainly — not an hourglass that looks like progress.
       expect(find.text('這台裝置沒有照片辨識'), findsNWidgets(2)); // photo badge + list
       expect(find.text('等待 AI 辨識'), findsNothing);
+      // The notice sits under the difficulty bar, below the fold.
+      await tester.ensureVisible(find.text('前往設定'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('前往設定'));
       await tester.pumpAndSettle();
       await tester.scrollUntilVisible(find.text('目前程度 入門（A1）'), 200,
@@ -353,6 +355,18 @@ void main() {
       expect(find.text('Cutting Board'), findsOneWidget);
       expect(find.text('Plate'), findsNothing, reason: 'five words per photo');
     });
+
+    testWidgets('with no photo yet, the bottom chip opens the picker',
+        (tester) async {
+      await pumpApp(tester,
+          repository: WordDatabaseRepository(clock: () => testNow));
+      await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 100)));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('先選一張照片開始學習'));
+      await tester.pumpAndSettle();
+      expect(find.byType(PhotoPickerScreen), findsOneWidget);
+    });
   });
 
   group('複習 (Flashcard)', () {
@@ -365,14 +379,14 @@ void main() {
           repository: repo,
           size: const Size(402, 900));
       expect(find.text('等待詞庫補齊'), findsOneWidget);
-      expect(find.text('開始複習'), findsNothing);
+      expect(find.text('綜合'), findsNothing);
 
       repo.applyWordData(word.id,
           meaning: '尚未填寫的', status: WordDataStatus.complete);
       await tester.pump();
       // No photo, example or related word yet: review falls back to the
       // traditional flip card instead of waiting (問題回報 #207 decision A).
-      expect(find.text('開始複習'), findsOneWidget);
+      expect(find.text('綜合'), findsOneWidget);
     });
 
     testWidgets('front without photo; flip plays the word; Again comes back',
@@ -382,7 +396,7 @@ void main() {
           initialTab: AppTab.review,
           repository: repo,
           size: const Size(402, 1400));
-      await tester.tap(find.text('開始複習'));
+      await tester.tap(find.text('綜合'));
       await tester.pumpAndSettle();
 
       String currentWord() => repo
@@ -453,7 +467,8 @@ void main() {
         createTagger: (uri, key) =>
             TaggingService(endpoint: uri, apiKey: key, client: client),
       );
-      await tester.tap(find.text('進階設定：照片辨識連線'));
+      await tester.scrollUntilVisible(find.text('進階設定'), 300);
+      await tester.tap(find.text('進階設定'));
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('測試連線'));
       await tester.pump();
@@ -523,17 +538,19 @@ void main() {
         (tester) async {
       final app = await pumpApp(tester,
           initialTab: AppTab.settings, size: const Size(402, 1600));
-      final frenchLearning = tester.widget<ChoiceChip>(
-          find.widgetWithText(ChoiceChip, '法文（Français） · 即將推出').first);
+      // Unpublished learning languages are left out, with one note instead
+      // of disabled chips.
+      expect(find.widgetWithText(ChoiceChip, '法文（Français） · 即將推出'),
+          findsNothing);
+      expect(find.text('更多學習語言即將推出'), findsOneWidget);
       final frenchNative = tester.widget<ChoiceChip>(
           find.widgetWithText(ChoiceChip, '法文（Français）'));
-      expect(frenchLearning.onSelected, isNull);
       expect(frenchNative.onSelected, isNotNull);
       expect(app.settings.learningLanguage, 'en');
       expect(app.settings.nativeLanguage, 'zh-TW');
       // Store build without a server: no address / key fields (問題回報 #265).
       expect(app.settings.showsTaggingServer, isFalse);
-      expect(find.text('進階設定：照片辨識連線'), findsNothing);
+      expect(find.text('照片辨識連線'), findsNothing);
       expect(find.text('照片辨識'), findsOneWidget);
     });
 
@@ -547,9 +564,10 @@ void main() {
           initialTab: AppTab.settings,
           settings: settings,
           size: const Size(402, 1600));
-      await tester.tap(find.text('進階設定：複習安排'));
+      await tester.scrollUntilVisible(find.text('進階設定'), 300);
+      await tester.tap(find.text('進階設定'));
       await tester.pumpAndSettle();
-      expect(find.byType(Slider), findsOneWidget);
+      expect(find.byType(Slider), findsNWidgets(3)); // + 每日上限 x2 (#398)
       expect(tester.takeException(), isNull);
     });
 

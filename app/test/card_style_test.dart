@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:photo_english_app/widgets/mobile/photo_widgets.dart';
 import 'package:photo_english_app/app/app_scope.dart';
 import 'package:photo_english_app/models/learning_card.dart';
 import 'package:photo_english_app/models/photo.dart';
@@ -188,7 +189,16 @@ void main() {
       expect(find.byTooltip('播放英式發音'), findsOneWidget);
       expect(find.byTooltip('播放美式發音'), findsOneWidget);
       expect(find.textContaining('breakfasts'), findsOneWidget);
-      expect(find.byKey(const ValueKey('back-anchor-dot')), findsOneWidget);
+      // 問題回報 #406: the photo label is on by default (it marks the spot).
+      // 圖片沉浸 writes the word on the photo itself and keeps the dot.
+      if (CardLook.forStyle(style).photoHero) {
+        expect(tester.widget<PinnedPhoto>(find.byType(PinnedPhoto)).pins,
+            isEmpty);
+        expect(find.byKey(const ValueKey('hero-word')), findsOneWidget);
+      } else {
+        expect(tester.widget<PinnedPhoto>(find.byType(PinnedPhoto)).pins,
+            isNotEmpty);
+      }
       // Scroll the back to its end: nothing overflows on the way.
       final scroll = find.byType(Scrollable).first;
       for (var i = 0; i < 6; i++) {

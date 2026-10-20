@@ -14,7 +14,7 @@ def test_main_usage_keeps_its_level_and_rare_ones_are_marked():
     rank_usages([adj, verb, noun, stub])
     assert (noun["usage_rank"], noun["rare_usage"], noun["cefr"]) == (0, False, "A1")
     assert verb["rare_usage"] and adj["rare_usage"]
-    assert verb["cefr"] == "C1" and verb["headword_cefr"] == "A1"
+    assert verb["cefr"] == "C2" and verb["headword_cefr"] == "A1"
     assert verb["cefr_source"] == "frequency_estimate"
     assert "usage_rank" not in stub
 
@@ -55,3 +55,24 @@ def test_an_ed_word_not_in_the_list_is_the_adjective_before_the_verb():
     verb, adj = l(1, "verb", 1, 9), l(2, "adj", 3, 1)
     rank_usages([verb, adj], {})
     assert adj["usage_rank"] == 0 and verb["rare_usage"]
+
+
+def test_set_cefr_decision_never_makes_a_rare_usage_easier():
+    """Card #397: #191's word-level set_cefr (bright A1) must not lift bright's
+    rare verb from its share-based C1 back to A1."""
+    from app import quality
+    lxs = [{"id": 1, "cefr": "A1", "rare_usage": False}, {"id": 2, "cefr": "C1", "rare_usage": True},
+           {"id": 3, "cefr": "B2", "rare_usage": True}]
+    pack = {"lexemes": lxs}
+    counts = quality.apply_decisions(pack, {"set_cefr": {"1": "A1", "2": "A1", "3": "C1"}})
+    assert [x["cefr"] for x in lxs] == ["A1", "C1", "C1"]
+    assert counts["set_cefr_rare_kept"] == 1
+
+
+def test_compound_synonyms_move_to_related():
+    from app.app_pack import move_compound_synonyms
+    rel = lambda w, r="synonyms", h=False: {"relation": r, "word": w, "hide_by_default": h, "detail": {}}
+    lx = {"status": "full", "lemma": "apple", "relations": [
+        rel("orchard apple tree"), rel("pome"), rel("apple pie", "antonyms"), rel("apple tree", h=True)]}
+    assert move_compound_synonyms({"lexemes": [lx]}) == 2
+    assert [r["relation"] for r in lx["relations"]] == ["related", "synonyms", "related", "synonyms"]

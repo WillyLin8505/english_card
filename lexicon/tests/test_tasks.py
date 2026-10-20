@@ -9,8 +9,10 @@ H = {"X-API-Key": "test-key"}
 @pytest.fixture
 def client(session, monkeypatch):
     from app import config
+    from app import tasks
     from app.main import app
     monkeypatch.setattr(config, "API_KEY", "test-key")
+    tasks.clear_slow_cache()
     with TestClient(app) as c:
         yield c
 
@@ -158,3 +160,15 @@ def test_cards_carry_a_difficulty_and_the_ai_panel_has_capabilities(client, monk
     monkeypatch.setattr(agent_usage, "collect", lambda force=False: {"agents": {"Codex": {"five_hour": None}}})
     info = client.get("/schedule/agents-info", headers=H).json()
     assert "Claude Code" in info["capabilities"]["agents"] and "Codex" in info["usage"]["agents"]
+
+
+def test_board_cards_carry_only_recent_history(client):
+    """Card #445: the board stays small; GET /tasks/<id> has the whole record."""
+    t = client.post("/tasks", headers=H, json={"title": "很多紀錄的卡"}).json()
+    for k in range(8):
+        client.put(f"/tasks/{t['id']}", headers=H, json={"progress": f"第 {k} 步", "by": "Codex 桌面版"})
+    deck = {c.get("id"): c for c in client.get("/schedule/board", headers=H).json()["deck"]}
+    card = deck[t["id"]]
+    full = client.get(f"/tasks/{t['id']}", headers=H).json()
+    assert len(full["history"]) == card["history_n"] >= 9
+    assert card["history"] == full["history"][-3:]

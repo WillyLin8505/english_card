@@ -5,9 +5,8 @@ part of '../screens/flashcard_screen.dart';
 /// means the speaker falls back to TTS in that accent.
 String? accentAudioUrl(WordEntry entry, String accent) {
   final pack = LexiconPack.instance;
-  final source =
-      (entry.lexemeId == null ? null : pack.byId(entry.lexemeId!)) ??
-          pack.lookup(entry.word, pos: entry.pos)?.entry;
+  final source = (entry.lexemeId == null ? null : pack.byId(entry.lexemeId!)) ??
+      pack.lookup(entry.word, pos: entry.pos)?.entry;
   final aliases = accent == 'en-GB' ? {'uk', 'gb', 'en-gb'} : {'us', 'en-us'};
   final recording = source?.recordings
       .where((r) => aliases.contains(r.accent?.toLowerCase()))
@@ -80,14 +79,26 @@ class WordLinks {
 
   static final _token = RegExp(r"[A-Za-z]+(?:['’-][A-Za-z]+)*");
 
-  /// The entry spelled [text] (a word or phrase), if any.
+  /// The target spelled [text] (a word or phrase): the learner's entry id,
+  /// else `pack:<id>` for a word only the dictionary has (問題回報 #406: every
+  /// word on the card opens, in the learner's words or not), else null.
   String? idFor(String text) {
     final key = text.trim().toLowerCase();
-    return _idByText[key] ??
+    final own = _idByText[key] ??
         (key.endsWith("'s") || key.endsWith('’s')
             ? _idByText[key.substring(0, key.length - 2)]
             : null);
+    if (own != null) return own;
+    final lemma = key.endsWith("'s") || key.endsWith('’s')
+        ? key.substring(0, key.length - 2)
+        : key;
+    final hit = LexiconPack.instance.isEmpty
+        ? null
+        : LexiconPack.instance.lookup(lemma);
+    return hit == null ? null : '$packPrefix${hit.entry.id}';
   }
+
+  static const packPrefix = 'pack:';
 
   /// [text] cut into runs: plain text, and linked words with the entry
   /// each one opens. The longest phrase in the database wins at each spot.
@@ -128,6 +139,21 @@ class WordLinks {
     plain(text.length);
     return out;
   }
+}
+
+/// Opens what [id] (from [WordLinks.idFor]) names: the learner's word, or
+/// the dictionary's page for a word that is not in their database yet.
+void openWordLink(BuildContext context, String id,
+    [ValueChanged<String>? custom]) {
+  if (custom != null) return custom(id);
+  if (id.startsWith(WordLinks.packPrefix)) {
+    final wordId = int.tryParse(id.substring(WordLinks.packPrefix.length));
+    if (wordId == null) return;
+    Navigator.of(context).push(MaterialPageRoute<void>(
+        builder: (_) => DatabaseWordScreen(wordId: wordId)));
+    return;
+  }
+  AppScope.of(context).navigator.openWord(id);
 }
 
 /// Text in which every English word that is in the learner's database is a
@@ -180,16 +206,10 @@ class _LinkedTextState extends State<LinkedText> {
         continue;
       }
       final recognizer = TapGestureRecognizer()
-        ..onTap = () {
-          final open = widget.onOpenWord;
-          if (open != null) {
-            open(id);
-          } else {
-            AppScope.of(context).navigator.openWord(id);
-          }
-        };
+        ..onTap = () => openWordLink(context, id, widget.onOpenWord);
       _recognizers.add(recognizer);
-      spans.add(TextSpan(text: s.text, style: linkStyle, recognizer: recognizer));
+      spans.add(
+          TextSpan(text: s.text, style: linkStyle, recognizer: recognizer));
     }
     return Text.rich(TextSpan(style: widget.style, children: spans));
   }
@@ -263,29 +283,35 @@ class FlashcardBack extends StatelessWidget {
     return byId ?? pack.lookup(entry.word, pos: entry.pos)?.entry;
   }
 
-  Widget _items(CardBackField field, List<Widget> items) =>
-      Column(crossAxisAlignment: CrossAxisAlignment.start, children: items);
+  /// Card #416: the first [initial] items, the rest behind 顯示更多.
+  Widget _items(CardBackField field, List<Widget> items, {int initial = 10000}) =>
+      ShowMoreItems(initial: initial, children: items);
 
-  Widget? _configuredField(
-      TemplateField setting, WordLinks links, CardLook look) {
-    final block = _field(setting.field, links, look);
+  Widget? _configuredField(BuildContext context, TemplateField setting,
+      WordLinks links, CardLook look) {
+    final block = _field(context, setting.field, links, look);
     if (block is _Block) return _Block(block.label, block.child);
     return block;
   }
 
   /// Related words of [kinds] with their native meaning: the learner's own
   /// edits when there are any, else the pack's (very rare ones stay hidden).
+  /// Words without a native meaning are left off the back (#437; they stay
+  /// on the word detail page). Words already in [shown] (an earlier block)
+  /// are skipped, and the returned ones are added to it, so one word is
+  /// never on the back twice.
   List<({String word, String meaning})> _relations(List<String> kinds,
-      {required int maxItems}) {
-    final seen = <String>{entry.word.toLowerCase()};
+      {required int maxItems, Set<String>? shown}) {
+    final seen = <String>{entry.word.toLowerCase(), ...?shown};
     final out = <({String word, String meaning, int level})>[];
     if (entry.userEdited.contains(WordField.related)) {
       final types = {for (final k in kinds) relationTypeFromKey(k)};
       for (final r in entry.related) {
         if (types.contains(r.type) &&
             !r.hideByDefault &&
+            (r.native ?? '').trim().isNotEmpty &&
             seen.add(r.word.toLowerCase())) {
-          out.add((word: r.word, meaning: r.native ?? '', level: 0));
+          out.add((word: r.word, meaning: r.native!.trim(), level: 0));
         }
       }
     } else {
@@ -295,16 +321,13 @@ class FlashcardBack extends StatelessWidget {
           if (kinds.contains(r.relation) &&
               !r.hideByDefault &&
               r.word.trim().isNotEmpty &&
+              (r.native ?? '').trim().isNotEmpty &&
               seen.add(r.word.toLowerCase())) {
             out.add((
               word: r.word,
-              meaning: (r.native ?? '').trim(),
-              // Easier words first; ones without a meaning last.
-              level: (r.native ?? '').trim().isEmpty
-                  ? 99
-                  : r.cefr == null
-                      ? 50
-                      : levelIndex(r.cefr),
+              meaning: r.native!.trim(),
+              // Easier words first.
+              level: r.cefr == null ? 50 : levelIndex(r.cefr),
             ));
           }
         }
@@ -315,13 +338,110 @@ class FlashcardBack extends StatelessWidget {
         final c = a.$2.level.compareTo(b.$2.level);
         return c != 0 ? c : a.$1.compareTo(b.$1);
       });
-    return [
+    final picked = [
       for (final (_, r) in order.take(maxItems))
         (word: r.word, meaning: r.meaning)
     ];
+    shown?.addAll(picked.map((r) => r.word.toLowerCase()));
+    return picked;
   }
 
-  Widget? _field(CardBackField field, WordLinks links, CardLook look) {
+  static const _formOrder = [
+    '第三人稱單數',
+    '過去式',
+    '過去分詞',
+    '現在分詞',
+    '複數',
+    '比較級',
+    '最高級',
+    '名詞',
+    '形容詞',
+    '副詞',
+    '動詞',
+  ];
+
+  static String? _formKind(String field, String? label) {
+    switch (field) {
+      case 'verb_base':
+        return null; // the headword itself
+      case 'noun_plural':
+        return '複數';
+      case 'verb_past':
+        return '過去式';
+      case 'verb_past_participle':
+        return '過去分詞';
+      case 'verb_present_participle':
+        return '現在分詞';
+      case 'verb_third_person':
+        return '第三人稱單數';
+      case 'adj_comparative':
+        return '比較級';
+      case 'adj_superlative':
+        return '最高級';
+    }
+    final l = formLabel(label ?? field);
+    return l == '變化形' ? null : l;
+  }
+
+  /// The kinds of form this word has, each with one word, in the fixed
+  /// order of [_formOrder]: the pack's inflections, the learner's own
+  /// forms for kinds the pack lacks, then the word family (decide →
+  /// decision, decisive, decisively) by part of speech.
+  List<({String kind, String word})> _formCells() {
+    final pack = LexiconPack.instance;
+    final source = _source;
+    // Only the lemma itself is left out: a card saved as 「went」 still lists
+    // went as go's 過去式, so the lemma's forms stay complete (card #251).
+    final head = (source?.lemma ?? entry.word).trim().toLowerCase();
+    final byKind = <String, String>{};
+    void add(String? kind, String form) {
+      final f = form.trim();
+      if (kind == null || f.isEmpty || f.toLowerCase() == head) return;
+      byKind.putIfAbsent(kind, () => f);
+    }
+
+    for (final f in source?.forms ?? const <LexForm>[]) {
+      add(_formKind(f.field, f.label), f.form);
+    }
+    for (final f in entry.forms) {
+      add(_formKind('', f.label), f.form);
+    }
+    if (source != null) {
+      const posKind = {
+        'noun': '名詞',
+        'adj': '形容詞',
+        'adv': '副詞',
+        'verb': '動詞',
+      };
+      final best = <String, ({String word, double zipf})>{};
+      for (final r in source.relations) {
+        if (r.relation != 'derived_terms' || r.hideByDefault) continue;
+        final w = r.word.trim();
+        final hit = pack.lookup(w)?.entry;
+        if (w.isEmpty ||
+            hit == null ||
+            hit.normalized != LexiconPack.normalize(w)) {
+          continue;
+        }
+        final kind = posKind[hit.pos];
+        if (kind == null || hit.pos == source.pos) continue;
+        final z = hit.zipf ?? r.zipf ?? 0;
+        if (z > (best[kind]?.zipf ?? -1)) best[kind] = (word: w, zipf: z);
+      }
+      for (final e in best.entries) {
+        add(e.key, e.value.word);
+      }
+    }
+    return [
+      for (final k in _formOrder)
+        if (byKind.containsKey(k)) (kind: k, word: byKind[k]!),
+      for (final e in byKind.entries)
+        if (!_formOrder.contains(e.key)) (kind: e.key, word: e.value),
+    ];
+  }
+
+  Widget? _field(BuildContext context, CardBackField field, WordLinks links,
+      CardLook look) {
     switch (field) {
       case CardBackField.word:
       case CardBackField.pronunciation:
@@ -342,7 +462,7 @@ class FlashcardBack extends StatelessWidget {
                   Text(meaning)
                 else
                   for (final sense in meanings) Text(sense.native!),
-              ]));
+              ], initial: 3));
         }
         // Card #251 item 2: the part of speech only — no CEFR level chip.
         return _Block(
@@ -376,14 +496,34 @@ class FlashcardBack extends StatelessWidget {
             photos: all,
             initialIndex: initial,
             onSelected: onPhotoSelected,
+            onAnchorMoved: (o, to) {
+              final repo = AppScope.of(context).repository;
+              for (final occ in repo.occurrencesOf(entry.id)) {
+                if (occ.photoId == o.$1.id) {
+                  repo.moveLabel(occ.id, to);
+                  break;
+                }
+              }
+            },
             height: look.photoHeight,
             radius: look.photoRadius,
             // 圖片沉浸 (#317): the word is written on the photo.
-            overlay: look.photoHero ? _HeroWord(entry.word, look) : null);
+            overlay: look.photoHero ? _HeroWord(entry.word, look) : null,
+            // 圖片沉浸 already writes the word on the photo.
+            pinFor: AppScope.of(context).settings.showPhotoLabels &&
+                    !look.photoHero
+                ? (o) => o.$2 == null
+                    ? null
+                    : PinData(
+                        id: entry.word,
+                        anchor: o.$2!,
+                        word: displayWord(entry.word),
+                        zh: activeMeaning ?? entry.meaning)
+                : null);
       case CardBackField.example:
         // Spec sections 4 and 7: 3–5 examples at the learner's level.
         final recommended = learningExamples(entry, learnerLevel,
-            maxItems: template.publishedLayout == null ? 2 : 10000);
+            maxItems: 10000);
         if (recommended.isEmpty) return null;
         return _Block(
           '例句與翻譯',
@@ -401,49 +541,26 @@ class FlashcardBack extends StatelessWidget {
                     showTranslation:
                         template.publishedLayout?['show_translation'] != false),
               ),
-          ]),
+          ], initial: 5),
         );
       case CardBackField.formsAndDerivations:
-        // Item 5: every form the pack and the entry know, each listed once
-        // with all its labels (複數、過去式、分詞、比較級…).
-        final pack = LexiconPack.instance;
-        final source = _source;
-        final forms = <String, Set<String>>{};
-        void add(String form, String label) {
-          if (form.trim().isEmpty) return;
-          (forms[form.trim()] ??= {}).add(formLabel(label));
-        }
-        if (source != null) {
-          for (final f in pack.detailFor(source).inflections) {
-            add(f.form, f.label);
-          }
-        }
-        for (final f in entry.forms) {
-          add(f.form, f.label);
-        }
-        return forms.isEmpty
+        // 問題回報 #406: one cell per kind of form (過去式、過去分詞、現在分詞、
+        // 第三人稱、複數、比較級… and the family's other parts of speech),
+        // laid out in an even grid; kinds without a word are left out.
+        final cells = _formCells();
+        return cells.isEmpty
             ? null
             : _Block(
                 '詞形變化',
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    for (final f in forms.entries)
-                      _WordChip(f.key,
-                          meaning:
-                              f.value.where((s) => s.isNotEmpty).join('；'),
-                          links: links,
-                          onOpenWord: onOpenWord),
-                  ],
-                ),
+                _FormGrid(cells: cells, links: links, onOpenWord: onOpenWord),
               );
       case CardBackField.related:
         // Item 6: one block per relation type, each filling the width;
         // blocks without data are left out.
-        final limits = template.publishedLayout?['relation_limits'] as Map?;
-        int limit(String kind) => limits?[kind] as int? ?? 4;
+        // #416: related blocks start fully open (published limits ignored).
+        int limit(String kind) => 10000;
         final blocks = <Widget>[];
+        final shown = <String>{};
         for (final (label, kinds) in const [
           ('同義詞', ['synonyms']),
           ('反義詞', ['antonyms']),
@@ -451,7 +568,8 @@ class FlashcardBack extends StatelessWidget {
           ('近音字', ['homophones']),
           ('容易混淆的字', ['near_homophones', 'similar_spelling']),
         ]) {
-          final words = _relations(kinds, maxItems: limit(kinds.first));
+          final words =
+              _relations(kinds, maxItems: limit(kinds.first), shown: shown);
           if (words.isEmpty) continue;
           blocks.add(_Block(
             label,
@@ -514,8 +632,8 @@ class FlashcardBack extends StatelessWidget {
           for (final raw in text.split(RegExp(r'\s*[＋+]\s*')))
             if (raw.trim().isNotEmpty)
               () {
-                final m = RegExp(r'^(.*?)(?:[（(](.*)[）)])?$')
-                    .firstMatch(raw.trim())!;
+                final m =
+                    RegExp(r'^(.*?)(?:[（(](.*)[）)])?$').firstMatch(raw.trim())!;
                 final part = m.group(1)!.trim();
                 return LexMorpheme(
                     part,
@@ -556,7 +674,7 @@ class FlashcardBack extends StatelessWidget {
     // 欄位沒有內容時自動省略).
     final fields = [
       for (final f in template.backFields)
-        if (f.visible) _configuredField(f, links, look),
+        if (f.visible) _configuredField(context, f, links, look),
     ].whereType<Widget>().toList();
     // 圖片沉浸 (#317): the photo leads, the word written on it.
     final hero =
@@ -648,6 +766,90 @@ class FlashcardBack extends StatelessWidget {
   }
 }
 
+/// 詞形變化 as an even grid (問題回報 #406): equal-width cells, the kind in
+/// small type above the word. A word that can be opened is underlined.
+class _FormGrid extends StatelessWidget {
+  final List<({String kind, String word})> cells;
+  final WordLinks links;
+  final ValueChanged<String>? onOpenWord;
+
+  const _FormGrid({required this.cells, required this.links, this.onOpenWord});
+
+  @override
+  Widget build(BuildContext context) {
+    final look = CardLook.of(context);
+    return LayoutBuilder(builder: (context, c) {
+      const gap = 8.0;
+      final columns = c.maxWidth >= 420 ? 3 : 2;
+      final width = (c.maxWidth - gap * (columns - 1)) / columns;
+      return Wrap(
+        spacing: gap,
+        runSpacing: gap,
+        children: [
+          for (final cell in cells)
+            SizedBox(
+              width: width,
+              child: _FormCell(
+                  kind: cell.kind,
+                  word: cell.word,
+                  links: links,
+                  look: look,
+                  onOpenWord: onOpenWord),
+            ),
+        ],
+      );
+    });
+  }
+}
+
+class _FormCell extends StatelessWidget {
+  final String kind;
+  final String word;
+  final WordLinks links;
+  final CardLook look;
+  final ValueChanged<String>? onOpenWord;
+
+  const _FormCell(
+      {required this.kind,
+      required this.word,
+      required this.links,
+      required this.look,
+      this.onOpenWord});
+
+  @override
+  Widget build(BuildContext context) {
+    final id = links.idFor(word);
+    return Tap(
+      label: id == null ? '$kind $word' : '$kind $word，查看單字',
+      onTap: id == null ? null : () => openWordLink(context, id, onOpenWord),
+      child: Container(
+        key: ValueKey('form-cell-$kind'),
+        constraints: BoxConstraints(minHeight: look.chipMinHeight),
+        padding: look.chipPadding,
+        decoration: look.chip(id != null),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            UiText(kind,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: look.chipMeaning),
+            const SizedBox(height: 2),
+            Text(word,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: look.chipWord.copyWith(
+                    decoration: id == null ? null : TextDecoration.underline,
+                    decorationColor:
+                        look.chipWord.color?.withValues(alpha: 0.45))),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// A word with its meaning in one chip (forms, related words); tapping a
 /// word that is in the learner's database opens it (item 9).
 class _WordChip extends StatelessWidget {
@@ -665,9 +867,7 @@ class _WordChip extends StatelessWidget {
     final look = CardLook.of(context);
     return Tap(
       label: id == null ? null : '$word，查看單字',
-      onTap: id == null
-          ? null
-          : () => (onOpenWord ?? AppScope.of(context).navigator.openWord)(id),
+      onTap: id == null ? null : () => openWordLink(context, id, onOpenWord),
       child: Container(
         constraints: BoxConstraints(minHeight: look.chipMinHeight),
         padding: look.chipPadding,
@@ -713,7 +913,10 @@ class _MorphologyParts extends StatelessWidget {
             bg: MColors.hardBg,
             border: MColors.hardFg.withValues(alpha: 0.35)
           ),
-        _ => (bg: MColors.successSoft, border: MColors.success.withValues(alpha: 0.4)),
+        _ => (
+            bg: MColors.successSoft,
+            border: MColors.success.withValues(alpha: 0.4)
+          ),
       };
 
   @override
@@ -746,9 +949,7 @@ class _MorphemeBox extends StatelessWidget {
     final id = links.idFor(m.part.replaceAll('-', ''));
     return Tap(
       label: id == null ? null : '${m.part}，查看單字',
-      onTap: id == null
-          ? null
-          : () => (onOpenWord ?? AppScope.of(context).navigator.openWord)(id),
+      onTap: id == null ? null : () => openWordLink(context, id, onOpenWord),
       child: Container(
         constraints: const BoxConstraints(minWidth: 72),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -773,14 +974,13 @@ class _MorphemeBox extends StatelessWidget {
                 if (m.nativeAi) ...[
                   const SizedBox(width: 4),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 4, vertical: 1),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                     decoration: BoxDecoration(
                         color: MColors.primary,
                         borderRadius: BorderRadius.circular(4)),
                     child: Text('AI',
-                        style: MFont.manrope(
-                            9, FontWeight.w800, Colors.white)),
+                        style: MFont.manrope(9, FontWeight.w800, Colors.white)),
                   ),
                 ],
               ]),
@@ -796,14 +996,26 @@ class _AnchorDot extends StatelessWidget {
   final Photo photo;
   final LabelPoint anchor;
 
-  const _AnchorDot({required this.photo, required this.anchor});
+  /// Set when the learner may correct the spot (問題回報 #410): long-press
+  /// the dot and drag it.
+  final ValueChanged<LabelPoint>? onMoved;
+
+  const _AnchorDot({required this.photo, required this.anchor, this.onMoved});
 
   @override
-  Widget build(BuildContext context) => IgnorePointer(
-        child: LayoutBuilder(builder: (context, c) {
-          final at = CoverGeometry(Size(c.maxWidth, c.maxHeight), photo)
-              .toBox(anchor);
+  Widget build(BuildContext context) => LayoutBuilder(builder: (context, c) {
+        final geo = CoverGeometry(Size(c.maxWidth, c.maxHeight), photo);
+        final at = geo.toBox(anchor);
+        if (onMoved != null) {
           return Stack(children: [
+            DraggableAnchorDot(
+                key: const ValueKey('back-anchor-dot'),
+                at: at,
+                onMoved: (to) => onMoved!(geo.fromBox(to))),
+          ]);
+        }
+        return IgnorePointer(
+          child: Stack(children: [
             Positioned(
               left: at.dx - 7,
               top: at.dy - 7,
@@ -819,9 +1031,9 @@ class _AnchorDot extends StatelessWidget {
                 ),
               ),
             ),
-          ]);
-        }),
-      );
+          ]),
+        );
+      });
 }
 
 /// The word's photos, swiped left and right (card #251 item 8), each
@@ -837,13 +1049,21 @@ class _PhotoPager extends StatefulWidget {
   /// Drawn over the photo, not swiped with it; taps pass through.
   final Widget? overlay;
 
+  /// The word's label on the photo (設定 → 照片上的單字標示).
+  final PinData? Function(CardPhoto photo)? pinFor;
+
+  /// The learner dragged the word's dot on [photo] to a new spot.
+  final void Function(CardPhoto photo, LabelPoint to)? onAnchorMoved;
+
   const _PhotoPager(
-      {required this.photos,
+      {this.onAnchorMoved,
+      required this.photos,
       required this.initialIndex,
       this.onSelected,
       this.height = 200,
       this.radius = 16,
-      this.overlay});
+      this.overlay,
+      this.pinFor});
 
   @override
   State<_PhotoPager> createState() => _PhotoPagerState();
@@ -874,8 +1094,15 @@ class _PhotoPagerState extends State<_PhotoPager> {
           : (_) => const Center(child: UiText('圖片暫時無法載入，稍後再試')),
       // No word label on the photo (item 3); the word's spot is still
       // marked with a dot so the learner sees where it was.
-      pins: const [],
-      overlay: a == null ? null : _AnchorDot(photo: p, anchor: a),
+      pins: [if (widget.pinFor?.call(o) case final pin?) pin],
+      overlay: a == null || widget.pinFor?.call(o) != null
+          ? null
+          : _AnchorDot(
+              photo: p,
+              anchor: a,
+              onMoved: widget.onAnchorMoved == null
+                  ? null
+                  : (to) => widget.onAnchorMoved!(o, to)),
     );
     final credit = o.$3?.trim();
     if (credit == null || credit.isEmpty) return photoWidget;

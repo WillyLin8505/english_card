@@ -38,7 +38,7 @@ def meaning_index(session, target, with_candidates=False):
         " (SELECT t.text FROM sense_translations t WHERE t.sense_id = sn.id"
         "  AND t.native_language = 'en' ORDER BY t.id LIMIT 1),"
         " (SELECT d.text FROM definitions d WHERE d.sense_id = sn.id"
-        "  AND d.language = :lang ORDER BY d.id LIMIT 1),"
+        "  AND d.language IN (:lang, 'en') ORDER BY (d.language = :lang) DESC, d.id LIMIT 1),"
         " l.lemma, sn.labels, l.normalized, sn.sense_key"
         " FROM lexemes l JOIN senses sn ON sn.lexeme_id = l.id"
         " WHERE l.language = :lang AND l.status = 'full'"),
@@ -117,7 +117,7 @@ def cached_index(session, target):
         " sn.id, sn.ordinal, sn.labels, t.text, d.text)::text, 0)::numeric)"
         " FROM lexemes l JOIN senses sn ON sn.lexeme_id = l.id"
         " LEFT JOIN sense_translations t ON t.sense_id = sn.id AND t.native_language = 'en'"
-        " LEFT JOIN definitions d ON d.sense_id = sn.id AND d.language = :lang"
+        " LEFT JOIN definitions d ON d.sense_id = sn.id AND d.language IN (:lang, 'en')"
         " WHERE l.language = :lang AND l.status = 'full'"), {'lang': target}).one())
     cache = session.info.setdefault('meaning_label_indexes', {})
     hit = cache.get(target)

@@ -26,3 +26,29 @@ class _TemplateItemsState extends State<TemplateItems> {
     ]);
   }
 }
+
+/// Shows the first [initial] children, the rest behind 顯示更多 / 收起.
+class ShowMoreItems extends StatefulWidget {
+  final int initial;
+  final List<Widget> children;
+  const ShowMoreItems({super.key, required this.initial, required this.children});
+  @override
+  State<ShowMoreItems> createState() => _ShowMoreItemsState();
+}
+
+class _ShowMoreItemsState extends State<ShowMoreItems> {
+  bool open = false;
+  @override
+  Widget build(BuildContext context) {
+    final hidden = widget.children.length - widget.initial;
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      ...(open || hidden <= 0
+          ? widget.children
+          : widget.children.take(widget.initial)),
+      if (hidden > 0)
+        TextButton(
+            onPressed: () => setState(() => open = !open),
+            child: Text(open ? '收起' : '顯示更多（$hidden）')),
+    ]);
+  }
+}

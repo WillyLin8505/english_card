@@ -203,7 +203,9 @@ void main() {
     await s.start(AppSettings.inMemory(), () => repo);
     await s.refresh();
     expect(repo.entry(id)!.meaning, '增量蘋果');
-    expect(jsonDecode(Hive.box<String>('dictionary_cache_v1').get('en-zh-TW')!),
+    expect(
+        jsonDecode((await Hive.lazyBox<String>('dictionary_cache_v1')
+            .get('en-zh-TW'))!),
         updated);
     LexiconPack.instance.clear();
     final restarted = service(MockClient((request) async {

@@ -13,6 +13,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:photo_english_app/app/app_scope.dart';
@@ -123,16 +124,26 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    // --- 進階設定：展開照片辨識區塊（flutter test 以 VM 執行，kIsWeb 為
+    // --- 進階設定（展開一次即可看到照片辨識連線）（flutter test 以 VM 執行，kIsWeb 為
     // false，說明文字不該再講「網頁版會自動連接」—— card228 修正）---
     current = '展開辨識連線';
-    final advanced = find.text('進階設定：照片辨識連線');
+    await tester.scrollUntilVisible(find.text('進階設定'), 300,
+        maxScrolls: 50);
+    final advanced = find.text('進階設定'); // 問題回報 #390: one collapsed section
     if (advanced.evaluate().isEmpty) {
       f.add('找不到辨識連線設定', current);
     } else {
+      // 第 5 輪：頁底的「進階設定」會被前面操作留下的提示條（SnackBar）蓋住，
+      // 點擊打不到（學習者等提示消失再點即可）——先收掉提示條再點。
+      ScaffoldMessenger.of(tester.element(advanced)).clearSnackBars();
+      await tester.pumpAndSettle();
       await tester.ensureVisible(advanced);
       await tester.tap(advanced);
       await tester.pumpAndSettle();
+      if (find.text('照片辨識連線').evaluate().isEmpty &&
+          find.text('複習安排').evaluate().isEmpty) {
+        f.add('進階設定點了沒有展開', current);
+      }
       if (find.textContaining('網頁版會自動連接').evaluate().isNotEmpty) {
         f.add('非網頁版仍顯示「網頁版會自動連接」說明', current);
       }
@@ -171,7 +182,10 @@ void main() {
     // --- 測試連線：網址連不到時的提示（本機沒人聽的 port，不呼叫真的 AI）---
     current = '測試連線到打不開的網址';
     if (testBtn.evaluate().isNotEmpty) {
+      ScaffoldMessenger.of(tester.element(testBtn)).clearSnackBars();
+      await tester.pumpAndSettle();
       await tester.ensureVisible(testBtn);
+      await tester.pumpAndSettle(); // 金鑰欄聚焦時的捲動動畫要先停
       await tester.tap(testBtn);
       await settle(tester);
       final hasResult = find.textContaining('✕').evaluate().isNotEmpty ||
@@ -190,7 +204,7 @@ void main() {
 
     // --- 進階設定：複習安排 ---
     current = '展開複習安排';
-    final reviewAdvanced = find.text('進階設定：複習安排');
+    final reviewAdvanced = find.text('複習安排'); // inside 進階設定, already open
     if (reviewAdvanced.evaluate().isEmpty) {
       f.add('找不到複習安排設定', current);
     } else {
@@ -235,6 +249,17 @@ void main() {
       }
     }
     checkNoNull();
+
+    // 第 5 輪：看完收起進階設定，上方的資料卡才不會被清單回收。
+    if (advanced.evaluate().isNotEmpty) {
+      ScaffoldMessenger.of(tester.element(advanced)).clearSnackBars();
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(advanced);
+      await tester.tap(advanced);
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(find.text('匯出備份'), -300,
+          maxScrolls: 50);
+    }
 
     // --- 詞庫連線：只在失敗時出現（問題回報 #306）；正常時不該有輪詢頻率、
     // 上次確認時間或「你的資料庫」這類除錯文字 ---
@@ -294,7 +319,8 @@ void main() {
     // --- 卡片樣式：每個樣式都點一次，要真的換掉 settings.cardStyle ---
     current = '卡片樣式';
     for (final style in [...CardStyle.values.skip(1), CardStyle.values.first]) {
-      final chip = find.widgetWithText(ChoiceChip, style.label);
+      // #346：樣式改成附縮圖的方塊（CardStylePicker），不再是 ChoiceChip。
+      final chip = find.byKey(ValueKey('cardStyle-${style.name}'));
       if (chip.evaluate().isEmpty) {
         f.add('找不到卡片樣式「${style.label}」', current);
         continue;
@@ -335,11 +361,37 @@ void main() {
     }
 
     // 學習者由上往下讀到的文字（易用性評估用）。
-    final screenText = <String>[
-      for (final t in tester.widgetList<Text>(find.byType(Text)))
-        if ((t.data ?? t.textSpan?.toPlainText() ?? '').trim().isNotEmpty)
-          (t.data ?? t.textSpan!.toPlainText()).trim(),
-    ];
+    // ListView 會把看不到的區塊丟掉，所以從頂端分段往下捲，每段接上前一段
+    // 重疊的部分（只收清單裡的字，底部導覽列不算）。
+    final list = find.byType(ListView).first;
+    List<String> visibleText() => [
+          for (final t in tester.widgetList<Text>(
+              find.descendant(of: list, matching: find.byType(Text))))
+            if ((t.data ?? t.textSpan?.toPlainText() ?? '').trim().isNotEmpty)
+              (t.data ?? t.textSpan!.toPlainText()).trim(),
+        ];
+    final listState = tester.state<ScrollableState>(
+        find.descendant(of: list, matching: find.byType(Scrollable)).first);
+    listState.position.jumpTo(0);
+    await tester.pumpAndSettle();
+    final screenText = <String>[];
+    for (var step = 0; step < 40; step++) {
+      final snap = visibleText();
+      var overlap = 0;
+      for (var k = snap.length < screenText.length ? snap.length : screenText.length;
+          k > 0;
+          k--) {
+        if (listEquals(screenText.sublist(screenText.length - k), snap.sublist(0, k))) {
+          overlap = k;
+          break;
+        }
+      }
+      screenText.addAll(snap.skip(overlap));
+      final pos = listState.position;
+      if (pos.pixels >= pos.maxScrollExtent) break;
+      pos.jumpTo((pos.pixels + 300).clamp(0, pos.maxScrollExtent));
+      await tester.pumpAndSettle();
+    }
 
     final report = {
       'learningLanguage': settings.learningLanguage,

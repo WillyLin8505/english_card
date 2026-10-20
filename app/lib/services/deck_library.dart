@@ -6,6 +6,7 @@ import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 
 import '../models/learning_card.dart';
+import '../models/photo.dart';
 import '../models/word_candidate.dart';
 import '../models/word_entry.dart';
 import 'dictionary_sync.dart';
@@ -141,18 +142,32 @@ class InstalledDeck {
   final List<String> photoIds;
   final List<String> wordEntryIds;
 
+  /// The 相片冊 album of a picture deck (問題回報 #403); null for word
+  /// decks and for picture decks installed before albums existed.
+  final String? albumId;
+
   const InstalledDeck({
     required this.info,
     required this.installedAt,
     this.photoIds = const [],
     this.wordEntryIds = const [],
+    this.albumId,
   });
+
+  InstalledDeck withAlbum(String id) => InstalledDeck(
+        info: info,
+        installedAt: installedAt,
+        photoIds: photoIds,
+        wordEntryIds: wordEntryIds,
+        albumId: id,
+      );
 
   factory InstalledDeck.fromJson(Map<String, dynamic> j) => InstalledDeck(
         info: DeckInfo.fromJson(j['info'] as Map<String, dynamic>),
         installedAt: DateTime.parse(j['installedAt'] as String),
         photoIds: (j['photoIds'] as List).cast<String>(),
         wordEntryIds: (j['wordEntryIds'] as List).cast<String>(),
+        albumId: j['albumId'] as String?,
       );
 
   Map<String, dynamic> toJson() => {
@@ -160,6 +175,7 @@ class InstalledDeck {
         'installedAt': installedAt.toIso8601String(),
         'photoIds': photoIds,
         'wordEntryIds': wordEntryIds,
+        'albumId': albumId,
       };
 }
 
@@ -171,7 +187,7 @@ class DeckException implements Exception {
 }
 
 class DeckLibrary extends ChangeNotifier {
-  static final instance = DeckLibrary();
+  static DeckLibrary instance = DeckLibrary();
 
   final http.Client client;
   final bool? _remoteOverride;
@@ -281,8 +297,11 @@ class DeckLibrary extends ChangeNotifier {
     if (_installed.containsKey(slug)) return const [];
     final created = <WordEntry>[];
     final photoIds = <String>[];
+    String? albumId;
     try {
       if (deck.info.isPhotos) {
+        // The deck's own 相片冊 album holds its pictures (問題回報 #403).
+        albumId = _addAlbum(repository, deck.info).id;
         for (var i = 0; i < deck.pictures.length; i++) {
           onProgress?.call(i, deck.pictures.length);
           final p = deck.pictures[i];
@@ -291,7 +310,8 @@ class DeckLibrary extends ChangeNotifier {
               title: deck.info.title,
               place: deck.info.topic,
               labels: p.labels,
-              credit: p.credit);
+              credit: p.credit,
+              albumId: albumId);
           photoIds.add(saved.photo.id);
           created.addAll(saved.created);
         }
@@ -301,7 +321,9 @@ class DeckLibrary extends ChangeNotifier {
       }
     } catch (e) {
       repository.removeDeckContent(
-          photoIds: photoIds, wordEntryIds: [for (final w in created) w.id]);
+          photoIds: photoIds,
+          wordEntryIds: [for (final w in created) w.id],
+          albumId: albumId);
       if (e is DeckException) rethrow;
       throw const DeckException('下載失敗，請檢查網路後再試');
     }
@@ -310,10 +332,36 @@ class DeckLibrary extends ChangeNotifier {
       installedAt: repository.clock(),
       photoIds: photoIds,
       wordEntryIds: [for (final w in created) w.id],
+      albumId: albumId,
     );
     await _save(repository.language);
     notifyListeners();
     return created;
+  }
+
+  Album _addAlbum(WordDatabaseRepository repository, DeckInfo info) =>
+      repository.addAlbum(
+          name: info.title, deckSlug: info.slug, author: info.author);
+
+  /// Picture decks installed before their 相片冊 album (問題回報 #403) get
+  /// one now, and their pictures join it.
+  Future<void> ensureAlbums(WordDatabaseRepository repository) async {
+    await load(repository.language);
+    var changed = false;
+    for (final deck in _installed.values.toList()) {
+      if (!deck.info.isPhotos || deck.albumId != null) continue;
+      final albumId = _addAlbum(repository, deck.info).id;
+      for (final id in deck.photoIds) {
+        if (repository.photo(id) case final p?) {
+          repository.updatePhoto(p.copyWith(albumId: () => albumId));
+        }
+      }
+      _installed[deck.info.slug] = deck.withAlbum(albumId);
+      changed = true;
+    }
+    if (!changed) return;
+    await _save(repository.language);
+    notifyListeners();
   }
 
   Future<Uint8List> _picture(int assetId) async {
@@ -334,7 +382,9 @@ class DeckLibrary extends ChangeNotifier {
     final deck = _installed.remove(slug);
     if (deck == null) return;
     repository.removeDeckContent(
-        photoIds: deck.photoIds, wordEntryIds: deck.wordEntryIds);
+        photoIds: deck.photoIds,
+        wordEntryIds: deck.wordEntryIds,
+        albumId: deck.albumId);
     await _save(repository.language);
     notifyListeners();
   }

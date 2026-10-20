@@ -70,7 +70,7 @@ void main() {
         repository: repo,
         initialTab: AppTab.review,
         size: const Size(402, 1400));
-    await tester.tap(find.text('開始複習'));
+    await tester.tap(find.text('綜合'));
     await tester.pumpAndSettle();
     final first =
         tester.widget<FlashcardFront>(find.byType(FlashcardFront)).entry;
@@ -103,7 +103,7 @@ void main() {
         repository: repo,
         initialTab: AppTab.review,
         size: const Size(402, 1400));
-    await tester.tap(find.text('開始複習'));
+    await tester.tap(find.text('綜合'));
     await tester.pumpAndSettle();
     final first =
         tester.widget<FlashcardFront>(find.byType(FlashcardFront)).entry;

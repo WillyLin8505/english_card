@@ -194,7 +194,9 @@ void main() {
     });
 
     // 問題回報 #302: search spans every level; a hit the chosen level hides
-    // is named with its level and a switch, on the tile and in the detail.
+    // is named with its level and a switch. 問題回報 #397: when every result
+    // has the same hit, the album says it once under the search box, not on
+    // each tile; the detail keeps its own hint.
     testWidgets('a search hit at another level says where it is',
         (tester) async {
       await pumpApp(tester,
@@ -206,9 +208,15 @@ void main() {
       await tester.enterText(find.byType(TextField), 'cluster');
       await tester.pumpAndSettle();
       expect(find.byType(DatabaseImageTile), findsOneWidget);
-      expect(find.text('入門（A1）：1 張圖片有這個程度的標籤 · 1 張的搜尋字在其他程度'),
-          findsOneWidget);
+      expect(find.text('入門（A1）：1 張圖片有這個程度的標籤'), findsOneWidget);
+      expect(find.textContaining('張的搜尋字在其他程度'), findsNothing);
       expect(find.text('搜尋的字 cluster 在 中階（B1）'), findsOneWidget);
+      expect(find.byType(DatabaseSearchHint), findsOneWidget);
+      expect(
+          find.descendant(
+              of: find.byType(DatabaseImageTile),
+              matching: find.byType(DatabaseSearchHint)),
+          findsNothing);
 
       // The detail opens at A1 and offers the same switch.
       await tester.tap(find.byType(PinnedPhoto));
@@ -223,8 +231,8 @@ void main() {
       await tester.pageBack();
       await tester.pumpAndSettle();
 
-      // The tile's switch moves the album to B1; a hit at the chosen level
-      // needs no hint.
+      // The album's switch moves it to B1; a hit at the chosen level needs
+      // no hint.
       await tester.tap(find.text('切到 B1'));
       await tester.pumpAndSettle();
       expect(find.text('中階（B1）：1 張圖片有這個程度的標籤'), findsOneWidget);
@@ -232,6 +240,47 @@ void main() {
       await tester.tap(level('全部'));
       await tester.pumpAndSettle();
       expect(find.byType(DatabaseSearchHint), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
+    // 問題回報 #397: results at mixed levels keep the hint on each affected
+    // tile, with the count in the summary and nothing under the search box.
+    testWidgets('mixed-level results keep their own hints', (tester) async {
+      final catalog = leveledCatalog();
+      // A third picture shows cluster at A1 itself: no hint for it.
+      (catalog['catalog_images'] as List).add({
+        'id': 12,
+        'url': 'http://127.0.0.1/api/image?id=12',
+        'tags': [
+          {
+            'lexeme_id': 3,
+            'sense_id': 31,
+            'review_status': 'approved',
+            'cefr': 'A1'
+          },
+        ],
+        'labels': [
+          {'word': 'cluster', 'point': [0.5, 0.5], 'lexeme_id': 3},
+        ],
+      });
+      LexiconPack.instance.loadJson(catalog);
+      await pumpApp(tester,
+          initialTab: AppTab.album,
+          databaseLibrary: true,
+          size: const Size(360, 740));
+      await tester.pumpAndSettle();
+      await tester.tap(level('A1'));
+      await tester.enterText(find.byType(TextField), 'cluster');
+      await tester.pumpAndSettle();
+      expect(find.byType(DatabaseImageTile), findsNWidgets(2));
+      expect(find.text('入門（A1）：2 張圖片有這個程度的標籤 · 1 張的搜尋字在其他程度'),
+          findsOneWidget);
+      expect(find.byType(DatabaseSearchHint), findsOneWidget);
+      expect(
+          find.descendant(
+              of: find.byType(DatabaseImageTile),
+              matching: find.text('搜尋的字 cluster 在 中階（B1）')),
+          findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   });

@@ -28,18 +28,18 @@ void main() {
   testWidgets('leaving without grading goes straight back to the intro',
       (tester) async {
     await pump(tester);
-    await tester.tap(find.text('開始複習'));
+    await tester.tap(find.text('綜合'));
     await tester.pumpAndSettle();
     await tester.tap(find.bySemanticsLabel('返回'));
     await tester.pumpAndSettle();
-    expect(find.text('開始複習'), findsOneWidget);
+    expect(find.text('綜合'), findsOneWidget);
     expect(find.textContaining('這次複習了'), findsNothing);
   });
 
   testWidgets('leaving after grading shows the count, then 完成 → intro',
       (tester) async {
     await pump(tester);
-    await tester.tap(find.text('開始複習'));
+    await tester.tap(find.text('綜合'));
     await tester.pumpAndSettle();
     for (var i = 0; i < 2; i++) {
       await tester.sendKeyEvent(LogicalKeyboardKey.space); // 顯示答案
@@ -55,11 +55,11 @@ void main() {
     // Nothing that nags: no due count, streak or score wording.
     expect(find.textContaining('到期'), findsNothing);
     expect(find.textContaining('連續'), findsNothing);
-    expect(find.text('開始複習'), findsNothing);
+    expect(find.text('綜合'), findsNothing);
 
     await tester.tap(find.text('完成'));
     await tester.pumpAndSettle();
-    expect(find.text('開始複習'), findsOneWidget);
+    expect(find.text('綜合'), findsOneWidget);
     expect(find.textContaining('這次複習了'), findsNothing);
   });
 }

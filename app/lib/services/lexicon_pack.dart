@@ -1,22 +1,36 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show AssetBundle, rootBundle;
+import 'package:path_provider/path_provider.dart';
 
 import '../models/word_candidate.dart';
 import '../models/card_template.dart';
 import '../models/word_detail.dart';
 import '../models/word_entry.dart';
-import 'learning_content.dart' show formLabel, posLabel;
+import 'learning_content.dart'
+    show formLabel, frenchGenderLabel, frenchWithArticle, posLabel;
+import 'lexicon_sqlite_stub.dart' if (dart.library.ffi) 'lexicon_sqlite.dart';
+
+export 'lexicon_sqlite_stub.dart'
+    if (dart.library.ffi) 'lexicon_sqlite.dart' show LexiconSqlite;
 
 /// The downloaded language pack (spec section 08, 資料比對階段): one
 /// direction (target → native) exported by the lexicon admin as
-/// `assets/lexicon/{target}-{native}.json` — the same rows and stable
-/// lexeme ids as the SQLite package.
+/// `assets/lexicon/{target}-{native}.sqlite` (phones; card #428) with the
+/// JSON twin `{target}-{native}.json` for the web page and tests — the same
+/// rows and stable lexeme ids.
 ///
 /// Recognized words are looked up here, never online: target language +
 /// normalized lemma + part of speech first, then the lemma alone, then
 /// the forms table (apples → apple).
+///
+/// Memory (問題回報 #423, owner decision B): from a SQLite pack only each
+/// word's head (lemma, pos, forms, CEFR…) is kept in memory; senses and the
+/// rest are read from the file when a screen asks ([LexEntry.senses],
+/// [LexEntry.examples]…) and kept in small caches.
 class LexiconPack extends ChangeNotifier {
   LexiconPack();
 
@@ -43,25 +57,51 @@ class LexiconPack extends ChangeNotifier {
   /// (missing_localization_requests), for the admin to fill.
   final Map<String, MissingRequest> requests = {};
 
+  /// The open SQLite pack with its per-word caches, or null for a pack
+  /// parsed from JSON. Lazy entries point at this object, so [replaceWith]
+  /// hands it over to the instance together with them.
+  LexSource? _source;
+  LexiconSqlite? get _db => _source?.db;
+
+  /// Path of the SQLite pack this instance reads, or null.
+  String? get sqlitePath => _db?.path;
+  bool get fromSqlite => _source != null;
+
   bool get isEmpty => _byLemma.isEmpty;
   int get size => _byId.values.where((e) => e.full).length;
 
   static String assetFor(String target, String native) =>
       'assets/lexicon/$target-$native.json';
+  static String sqliteAssetFor(String target, String native) =>
+      'assets/lexicon/$target-$native.sqlite';
+  static String manifestAssetFor(String target, String native) =>
+      'assets/lexicon/$target-$native.manifest.json';
+
+  /// Where pack files live on the device (`<support dir>/lexicon/`). Tests
+  /// point it at a temporary directory; without path_provider (tests, web)
+  /// the JSON asset is used instead.
+  static Future<Directory> Function() storageDirectory = () async =>
+      Directory('${(await getApplicationSupportDirectory()).path}/lexicon');
 
   /// Loads the pack for this direction; an app without one simply links
   /// nothing (every word becomes a missing-word request).
+  ///
+  /// Phones copy the bundled SQLite pack to [storageDirectory] once per
+  /// version and open it there; the web page (no dart:ffi) and a build
+  /// without the SQLite asset parse the JSON twin as before.
   Future<void> load(
       {required String target,
       required String native,
       AssetBundle? bundle}) async {
     if (this.target == target && this.native == native && !isEmpty) return;
     try {
-      final raw =
-          await (bundle ?? rootBundle).loadString(assetFor(target, native));
-      // The bundled pack is tens of MB (問題回報 #265): parse it off the
-      // UI thread (compute runs inline on the web).
-      loadJson(await compute(jsonDecode, raw) as Map<String, dynamic>);
+      if (!await _loadBundledSqlite(target, native, bundle ?? rootBundle)) {
+        final raw =
+            await (bundle ?? rootBundle).loadString(assetFor(target, native));
+        // The bundled pack is tens of MB (問題回報 #265): parse it off the
+        // UI thread (compute runs inline on the web).
+        loadJson(await compute(jsonDecode, raw) as Map<String, dynamic>);
+      }
     } catch (e) {
       debugPrint('No language pack for $target-$native: $e');
       clear();
@@ -71,7 +111,96 @@ class LexiconPack extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// The bundled SQLite pack, copied beside the app's data once per version
+  /// (`{pair}.bundled.sqlite`; the asset bundle has no file paths). False
+  /// when this build has no SQLite pack or no file system.
+  Future<bool> _loadBundledSqlite(
+      String target, String native, AssetBundle bundle) async {
+    if (!LexiconSqlite.supported) return false;
+    final Directory dir;
+    final String bundledVersion;
+    try {
+      dir = await storageDirectory();
+      final manifest = jsonDecode(
+              await bundle.loadString(manifestAssetFor(target, native)))
+          as Map<String, dynamic>;
+      bundledVersion = manifest['created_at'] as String;
+    } catch (e) {
+      debugPrint('LexiconPack: no bundled SQLite pack for $target-$native: $e');
+      return false;
+    }
+    final path = bundledSqlitePath(dir, target, native);
+    final current = LexiconSqlite.inspect(path);
+    if (current == null ||
+        current.version != bundledVersion ||
+        current.target != target ||
+        current.native != native) {
+      final data = await bundle.load(sqliteAssetFor(target, native));
+      await dir.create(recursive: true);
+      final tmp = File('$path.part');
+      await tmp.writeAsBytes(
+          data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+          flush: true);
+      if (_db?.path == path) _closeDb();
+      await tmp.rename(path);
+    }
+    loadSqlite(path);
+    return true;
+  }
+
+  static String bundledSqlitePath(Directory dir, String target, String native) =>
+      '${dir.path}/$target-$native.bundled.sqlite';
+
+  /// Opens a SQLite pack file and indexes its heads. Throws when the file is
+  /// not a pack (the caller keeps the previous pack).
+  void loadSqlite(String path) {
+    final db = _db?.path == path && !(_db?.closed ?? true)
+        ? _db!
+        : LexiconSqlite.open(path);
+    _installFromDb(db);
+  }
+
+  void _installFromDb(LexiconSqlite db) {
+    final source =
+        identical(db, _source?.db) ? _source! : LexSource(db);
+    _install(db.meta(), db.heads(),
+        (raw) => LexEntry.fromJson(raw, lazyFrom: source),
+        source: source);
+  }
+
+  /// Applies a server delta to the open SQLite pack and re-indexes it.
+  void applySqliteDelta(Map<String, dynamic> patch) {
+    final db = _db;
+    if (db == null || db.closed) {
+      throw StateError('No SQLite pack to patch');
+    }
+    db.applyDelta(patch);
+    _installFromDb(db);
+  }
+
+  void _closeDb() {
+    _source?.close();
+    _source = null;
+  }
+
+  /// Computes every word's [LexEntry.learnerMeaning] in the background, a
+  /// few hundred words per frame, so the first search in the 資料庫單字本
+  /// does not read 9k sense rows at once. Stops when the pack changes.
+  Future<void> warmMeanings({int chunk = 300}) async {
+    final source = _source;
+    if (source == null) return;
+    final words = catalogWords;
+    for (var i = 0; i < words.length; i += chunk) {
+      if (!identical(source, _source)) return;
+      for (final e in words.skip(i).take(chunk)) {
+        if (e.full) e.learnerMeaning;
+      }
+      await Future<void>.delayed(Duration.zero);
+    }
+  }
+
   void clear() {
+    _closeDb();
     _byId.clear();
     _byLemma.clear();
     _byForm.clear();
@@ -85,12 +214,23 @@ class LexiconPack extends ChangeNotifier {
     catalogImages = [];
   }
 
-  void loadJson(Map<String, dynamic> j) {
+  void loadJson(Map<String, dynamic> j) =>
+      _install(j, (j['lexemes'] as List? ?? const []).cast<Map>(),
+          (raw) => LexEntry.fromJson(raw));
+
+  /// Replaces the pack: metadata from [j] (a JSON pack or SQLite meta), one
+  /// entry per row of [rows] (pointer rows become redirects).
+  void _install(Map<String, dynamic> j, Iterable<Map> rows,
+      LexEntry Function(Map<String, dynamic>) make,
+      {LexSource? source}) {
     final template = j['card_template'] == null
         ? null
         : CardTemplate.fromPublished(
             j['card_template'] as Map<String, dynamic>);
+    // clear() must not close the pack being re-read (delta, same path).
+    if (source != null && identical(source, _source)) _source = null;
     clear();
+    _source = source;
     cardTemplate = template;
     target = j['target_language'] as String?;
     native = j['native_language'] as String?;
@@ -107,14 +247,16 @@ class LexiconPack extends ChangeNotifier {
     // 問題回報 #191: an inflected form (tore) is a pointer to its lemma
     // (tear), not a card: its id resolves to the lemma, its spelling finds it.
     final pointers = <String, int>{};
-    for (final raw in (j['lexemes'] as List? ?? const [])) {
-      final to = (raw as Map)['redirect_to'];
+    for (final raw in rows) {
+      final to = raw['redirect_to'];
       if (to is num) {
         _redirects[(raw['id'] as num).toInt()] = to.toInt();
         pointers['${raw['normalized']}'] = to.toInt();
         continue;
       }
-      final e = LexEntry.fromJson(raw as Map<String, dynamic>);
+      final e = make(raw is Map<String, dynamic>
+          ? raw
+          : Map<String, dynamic>.from(raw));
       _byId[e.id] = e;
       if (!e.full) continue;
       _byLemma.putIfAbsent(e.normalized, () => []).add(e);
@@ -142,8 +284,12 @@ class LexiconPack extends ChangeNotifier {
   }
 
   /// Install an already validated pack without parsing every entry twice.
+  /// A SQLite pack moves over with its entries; [candidate] is left empty.
   void replaceWith(LexiconPack candidate) {
+    if (identical(candidate._source, _source)) candidate._source = null;
     clear();
+    _source = candidate._source;
+    candidate._source = null;
     target = candidate.target;
     native = candidate.native;
     version = candidate.version;
@@ -297,6 +443,44 @@ class LexiconPack extends ChangeNotifier {
       };
 }
 
+/// An open SQLite pack and the per-word data read from it, most recently
+/// used last (internal to [LexiconPack] and [LexEntry]). Senses are asked for every word of the 資料庫單字本
+/// (learnerMeaning, then cached as a string on the entry); the body
+/// (examples, relations…) only for the word on screen.
+class LexSource {
+  LexSource(this.db);
+
+  final LexiconSqlite db;
+  final _senses = <int, List<LexSense>>{};
+  final _details = <int, LexDetail>{};
+  static const senseCacheSize = 3000;
+  static const detailCacheSize = 400;
+
+  List<LexSense> senses(int id) {
+    final cached = _senses.remove(id);
+    if (cached != null) return _senses[id] = cached;
+    final parsed = LexEntry.parseSenses(db.senses(id));
+    if (_senses.length >= senseCacheSize) _senses.remove(_senses.keys.first);
+    return _senses[id] = parsed;
+  }
+
+  LexDetail detail(int id) {
+    final cached = _details.remove(id);
+    if (cached != null) return _details[id] = cached;
+    final parsed = LexDetail.fromJson(db.body(id) ?? const {});
+    if (_details.length >= detailCacheSize) {
+      _details.remove(_details.keys.first);
+    }
+    return _details[id] = parsed;
+  }
+
+  void close() {
+    _senses.clear();
+    _details.clear();
+    db.close();
+  }
+}
+
 class LexiconHit {
   final LexEntry entry;
 
@@ -424,6 +608,105 @@ class LexEtymology {
       {this.originLanguage, this.originalForm});
 }
 
+/// The per-word data a SQLite pack reads on demand (everything but the head
+/// that [LexiconPack] indexes at launch).
+class LexDetail {
+  final String? ipa;
+  final String? audio; // relative to assets/lexicon/media/
+  final List<({String path, String? accent})> recordings;
+  final String? audioCredit;
+  final List<LexExample> examples;
+  final List<LexRelation> relations;
+  final List<LexMorpheme> morphemes;
+  final LexEtymology? etymology;
+  final Map<String, String> missing;
+
+  const LexDetail({
+    this.ipa,
+    this.audio,
+    this.recordings = const [],
+    this.audioCredit,
+    this.examples = const [],
+    this.relations = const [],
+    this.morphemes = const [],
+    this.etymology,
+    this.missing = const {},
+  });
+
+  static const empty = LexDetail();
+
+  /// From a pack row or its body (`examples`, `relations`, `morphemes`,
+  /// `etymology`, `pronunciations`, `missing`).
+  factory LexDetail.fromJson(Map<String, dynamic> j) {
+    List<Map<String, dynamic>> list(String k) => [
+          for (final x in (j[k] as List? ?? const [])) x as Map<String, dynamic>
+        ];
+    final prons = list('pronunciations');
+    final ipa = prons.where((p) => p['kind'] == 'ipa').firstOrNull;
+    final audio = prons
+        .where((p) => p['kind'] == 'audio' && p['audio'] != null)
+        .toList()
+      ..sort((a, b) =>
+          (b['default'] == true ? 1 : 0) - (a['default'] == true ? 1 : 0));
+    final ety = j['etymology'] as Map<String, dynamic>?;
+    final etyText = (ety?['text'] as String? ?? '').trim();
+    final etyNative = (ety?['native'] as String? ?? '').trim();
+    return LexDetail(
+      ipa: ipa?['value'] as String?,
+      audio: audio.firstOrNull?['audio'] as String?,
+      recordings: [
+        for (final p in audio)
+          if ((p['audio'] as String).isNotEmpty)
+            (path: p['audio'] as String, accent: p['accent'] as String?),
+      ],
+      audioCredit: () {
+        final first = audio.firstOrNull;
+        final parts = [
+          for (final k in ['license', 'attribution'])
+            if ((first?[k] as String? ?? '').trim().isNotEmpty)
+              (first![k] as String).trim(),
+        ];
+        return parts.isEmpty ? null : parts.join(' · ');
+      }(),
+      examples: [
+        for (final e in list('examples'))
+          LexExample(
+              e['text'] as String,
+              e['translation'] as String?,
+              e['translation_ai'] == true,
+              e['source'] as String?,
+              (e['level'] ?? e['difficulty']) as String?,
+              senseId: (e['sense_id'] as num?)?.toInt(),
+              license: e['license'] as String?),
+      ],
+      relations: [
+        for (final r in list('relations'))
+          LexRelation(r['relation'] as String, r['word'] as String,
+              (r['lexeme_id'] as num?)?.toInt(), r['native'] as String?,
+              cefr: r['cefr'] as String?,
+              zipf: (r['zipf'] as num?)?.toDouble(),
+              rarity: r['rarity'] as String?,
+              hideByDefault: r['hide_by_default'] == true),
+      ],
+      morphemes: [
+        for (final m in list('morphemes'))
+          LexMorpheme(m['part'] as String, m['kind'] as String,
+              m['meaning'] as String?, m['native'] as String?,
+              free: m['free'] == true, nativeAi: m['native_ai'] == true),
+      ],
+      etymology: etyText.isEmpty && etyNative.isEmpty
+          ? null
+          : LexEtymology(etyText, etyNative.isEmpty ? null : etyNative,
+              originLanguage: ety?['origin_language'] as String?,
+              originalForm: ety?['original_form'] as String?),
+      missing: {
+        for (final e in (j['missing'] as Map? ?? {}).entries)
+          '${e.key}': '${e.value}',
+      },
+    );
+  }
+}
+
 class LexEntry {
   final String entryType;
   final int id;
@@ -433,20 +716,50 @@ class LexEntry {
   final String status;
   final String? cefr;
   final double? zipf;
-  final List<LexSense> senses;
   final List<LexForm> forms;
-  final String? ipa;
-  final String? audio; // relative to assets/lexicon/media/
-  final List<({String path, String? accent})> recordings;
+
+  // A JSON entry holds its senses and detail; a SQLite entry reads them
+  // from [_source] when asked (card #428). A hand-made (const) entry gives
+  // the detail fields one by one.
+  final List<LexSense>? _senses;
+  final LexDetail? _detail;
+  final LexSource? _source;
+  final String? _ipa;
+  final String? _audio;
+  final List<({String path, String? accent})> _recordings;
+  final String? _audioCredit;
+  final List<LexExample> _examples;
+  final List<LexRelation> _relations;
+  final List<LexMorpheme> _morphemes;
+  final LexEtymology? _etymology;
+  final Map<String, String> _missing;
+
+  List<LexSense> get senses => _senses ?? _source?.senses(id) ?? const [];
+  LexDetail get detail => _detail ??
+      _source?.detail(id) ??
+      LexDetail(
+          ipa: _ipa,
+          audio: _audio,
+          recordings: _recordings,
+          audioCredit: _audioCredit,
+          examples: _examples,
+          relations: _relations,
+          morphemes: _morphemes,
+          etymology: _etymology,
+          missing: _missing);
+
+  String? get ipa => detail.ipa;
+  String? get audio => detail.audio; // relative to assets/lexicon/media/
+  List<({String path, String? accent})> get recordings => detail.recordings;
 
   /// License and attribution of [audio] ("CC BY-SA 4.0 · Own work"), for
   /// credits outside the app (匯出到 Anki, 問題回報 #325).
-  final String? audioCredit;
-  final List<LexExample> examples;
-  final List<LexRelation> relations;
-  final List<LexMorpheme> morphemes;
-  final LexEtymology? etymology;
-  final Map<String, String> missing;
+  String? get audioCredit => detail.audioCredit;
+  List<LexExample> get examples => detail.examples;
+  List<LexRelation> get relations => detail.relations;
+  List<LexMorpheme> get morphemes => detail.morphemes;
+  LexEtymology? get etymology => detail.etymology;
+  Map<String, String> get missing => detail.missing;
 
   /// A rarer part of speech of a spelling (問題回報 #16): its CEFR is a
   /// frequency estimate and database lists put it after the main usages.
@@ -481,24 +794,38 @@ class LexEntry {
     required this.status,
     this.cefr,
     this.zipf,
-    this.senses = const [],
+    List<LexSense>? senses,
     this.forms = const [],
-    this.ipa,
-    this.audio,
-    this.recordings = const [],
-    this.audioCredit,
-    this.examples = const [],
-    this.relations = const [],
-    this.morphemes = const [],
-    this.etymology,
-    this.missing = const {},
+    LexDetail? detail,
+    LexSource? source,
+    // Detail fields given one by one (tests, hand-made entries).
+    String? ipa,
+    String? audio,
+    List<({String path, String? accent})> recordings = const [],
+    String? audioCredit,
+    List<LexExample> examples = const [],
+    List<LexRelation> relations = const [],
+    List<LexMorpheme> morphemes = const [],
+    LexEtymology? etymology,
+    Map<String, String> missing = const {},
     this.rareUsage = false,
     this.usageRank = 0,
     this.cefrEstimated = false,
     this.card,
     this.cardForm = false,
     this.pictureIds,
-  });
+  })  : _senses = senses ?? (source == null ? const [] : null),
+        _detail = detail,
+        _source = source,
+        _ipa = ipa,
+        _audio = audio,
+        _recordings = recordings,
+        _audioCredit = audioCredit,
+        _examples = examples,
+        _relations = relations,
+        _morphemes = morphemes,
+        _etymology = etymology,
+        _missing = missing;
 
   bool get full => status == 'full';
 
@@ -553,6 +880,30 @@ class LexEntry {
   /// The headword and its meaning, lower case, for search boxes.
   String get searchText =>
       _searchCache[this] ??= '$lemma ${learnerMeaning ?? ''}'.toLowerCase();
+
+  static final _searchPartsCache = Expando<List<String>>('searchParts');
+  static final _searchWordBreak = RegExp(r'[\s\-–—/、，,；;：:（）()「」]+');
+
+  /// How the 資料庫單字本 search box matches this entry (問題回報 #417):
+  /// 0 = the headword or meaning itself (rat), 1 = a word of it (rat race),
+  /// 2 = the start of a word (rate), 3 = letters inside a word (accurate),
+  /// null = no match. [query] is trimmed and lower case; empty matches all.
+  int? searchRank(String query) {
+    if (query.isEmpty) return 0;
+    final head = lemma.trim().toLowerCase();
+    final meaning = (learnerMeaning ?? '').trim().toLowerCase();
+    if (head == query || meaning == query) return 0;
+    final parts = _searchPartsCache[this] ??= [
+      for (final text in [head, meaning])
+        ...text.split(_searchWordBreak).where((p) => p.isNotEmpty)
+    ];
+    int? best;
+    for (final part in parts) {
+      if (part == query) return 1;
+      if (part.startsWith(query)) best = 2;
+    }
+    return best ?? (searchText.contains(query) ? 3 : null);
+  }
 
   String? _learnerMeaning() {
     final usable = [
@@ -626,21 +977,27 @@ class LexEntry {
   /// 構詞拆解 as one line: ex- + -ter + -ior.
   String get breakdown => morphemes.map((m) => m.part).join(' + ');
 
-  factory LexEntry.fromJson(Map<String, dynamic> j) {
+  /// The senses of a pack row (`senses` list), in pack order.
+  static List<LexSense> parseSenses(List<dynamic>? raw) => [
+        for (final s in (raw ?? const []).cast<Map<String, dynamic>>())
+          LexSense((s['id'] as num).toInt(), s['definition'] as String? ?? '',
+              s['native'] as String?, s['native_ai'] == true,
+              register: s['register'] as String?,
+              labels: [
+                for (final l in (s['labels'] as List? ?? const [])) '$l'
+              ]),
+      ];
+
+  /// A full pack row, or — with [lazyFrom] — only its head: senses and the
+  /// rest are read from that SQLite pack when first asked.
+  factory LexEntry.fromJson(Map<String, dynamic> j, {LexSource? lazyFrom}) {
     List<Map<String, dynamic>> list(String k) => [
           for (final x in (j[k] as List? ?? const [])) x as Map<String, dynamic>
         ];
-    final prons = list('pronunciations');
-    final ipa = prons.where((p) => p['kind'] == 'ipa').firstOrNull;
-    final audio = prons
-        .where((p) => p['kind'] == 'audio' && p['audio'] != null)
-        .toList()
-      ..sort((a, b) =>
-          (b['default'] == true ? 1 : 0) - (a['default'] == true ? 1 : 0));
-    final ety = j['etymology'] as Map<String, dynamic>?;
-    final etyText = (ety?['text'] as String? ?? '').trim();
-    final etyNative = (ety?['native'] as String? ?? '').trim();
     return LexEntry(
+      source: lazyFrom,
+      senses: lazyFrom == null ? parseSenses(j['senses'] as List?) : null,
+      detail: lazyFrom == null ? LexDetail.fromJson(j) : null,
       id: (j['id'] as num).toInt(),
       lemma: j['lemma'] as String,
       entryType: j['entry_type'] as String? ?? 'word',
@@ -654,71 +1011,11 @@ class LexEntry {
       card: j['card'] as String?,
       cardForm: j['card_form'] == true,
       zipf: (j['zipf'] as num?)?.toDouble(),
-      senses: [
-        for (final s in list('senses'))
-          LexSense((s['id'] as num).toInt(), s['definition'] as String? ?? '',
-              s['native'] as String?, s['native_ai'] == true,
-              register: s['register'] as String?,
-              labels: [
-                for (final l in (s['labels'] as List? ?? const [])) '$l'
-              ]),
-      ],
       forms: [
         for (final f in list('forms'))
           LexForm(f['field'] as String, f['form'] as String,
               f['normalized'] as String? ?? '', f['label'] as String?),
       ],
-      ipa: ipa?['value'] as String?,
-      audio: audio.firstOrNull?['audio'] as String?,
-      recordings: [
-        for (final p in audio)
-          if ((p['audio'] as String).isNotEmpty)
-            (path: p['audio'] as String, accent: p['accent'] as String?),
-      ],
-      audioCredit: () {
-        final first = audio.firstOrNull;
-        final parts = [
-          for (final k in ['license', 'attribution'])
-            if ((first?[k] as String? ?? '').trim().isNotEmpty)
-              (first![k] as String).trim(),
-        ];
-        return parts.isEmpty ? null : parts.join(' · ');
-      }(),
-      examples: [
-        for (final e in list('examples'))
-          LexExample(
-              e['text'] as String,
-              e['translation'] as String?,
-              e['translation_ai'] == true,
-              e['source'] as String?,
-              (e['level'] ?? e['difficulty']) as String?,
-              senseId: (e['sense_id'] as num?)?.toInt(),
-              license: e['license'] as String?),
-      ],
-      relations: [
-        for (final r in list('relations'))
-          LexRelation(r['relation'] as String, r['word'] as String,
-              (r['lexeme_id'] as num?)?.toInt(), r['native'] as String?,
-              cefr: r['cefr'] as String?,
-              zipf: (r['zipf'] as num?)?.toDouble(),
-              rarity: r['rarity'] as String?,
-              hideByDefault: r['hide_by_default'] == true),
-      ],
-      morphemes: [
-        for (final m in list('morphemes'))
-          LexMorpheme(m['part'] as String, m['kind'] as String,
-              m['meaning'] as String?, m['native'] as String?,
-              free: m['free'] == true, nativeAi: m['native_ai'] == true),
-      ],
-      etymology: etyText.isEmpty && etyNative.isEmpty
-          ? null
-          : LexEtymology(etyText, etyNative.isEmpty ? null : etyNative,
-              originLanguage: ety?['origin_language'] as String?,
-              originalForm: ety?['original_form'] as String?),
-      missing: {
-        for (final e in (j['missing'] as Map? ?? {}).entries)
-          '${e.key}': '${e.value}',
-      },
       rareUsage: j['rare_usage'] == true,
       usageRank: (j['usage_rank'] as num?)?.toInt() ?? 0,
       pictureIds: j.containsKey('picture_ids')
@@ -769,9 +1066,18 @@ class LexEntry {
       homophones: rel('homophones'),
       similarSpelling: rel('similarSpelling'),
       inflections: [
+        // French noun gender (card #429): the headword with its article first
+        // — le chat（陽性）, la table（陰性）, un arbre（陽性）.
+        for (final f in forms)
+          if (f.field == 'fr_gender')
+            Inflection(
+                form: frenchWithArticle(normalized, f.form),
+                label: frenchGenderLabel(f.form)),
         for (final f in [
-          ...forms.where((f) => ownMeaning.containsKey(f.normalized)),
-          ...forms.where((f) => !ownMeaning.containsKey(f.normalized)),
+          ...forms.where((f) =>
+              f.field != 'fr_gender' && ownMeaning.containsKey(f.normalized)),
+          ...forms.where((f) =>
+              f.field != 'fr_gender' && !ownMeaning.containsKey(f.normalized)),
         ])
           Inflection(
               form: f.form,

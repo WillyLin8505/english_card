@@ -10,7 +10,6 @@ import '../models/word_entry.dart';
 import '../services/word_database_query.dart';
 import '../services/word_database_repository.dart';
 import '../theme/mobile_theme.dart';
-import 'deck_browser_screen.dart';
 import '../widgets/mobile/common.dart';
 import '../widgets/mobile/dialogs.dart';
 
@@ -250,17 +249,6 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
                             ),
                           ],
                         ),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: TextButton.icon(
-                            onPressed: () => Navigator.of(context).push(
-                                MaterialPageRoute<void>(
-                                    builder: (_) => const DeckBrowserScreen())),
-                            icon: const Icon(Icons.collections_bookmark_outlined,
-                                size: 18),
-                            label: const UiText('卡片集：下載別人整理好的單字集與圖片集'),
-                          ),
-                        ),
                         const SizedBox(height: MSpace.xxs),
                         Wrap(
                           spacing: MSpace.xs,
@@ -407,6 +395,9 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
 
   Widget _buildTable(PageSlice<DatabaseRow> slice) {
     final scope = AppScope.of(context);
+    // Whether the learner owns any word at all (else the empty state tells
+    // them where words come from, 問題回報 #404).
+    final owned = scope.repository.query(const WordDatabaseFilter()).isNotEmpty;
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: MDecor.card(radius: MRadii.lg),
@@ -431,10 +422,14 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
                         size: 32, color: MColors.primary),
                   ),
                   const SizedBox(height: MSpace.md),
-                  UiText('沒有符合條件的單字',
+                  UiText(owned ? '沒有符合條件的單字' : '還沒有單字',
                       style: MFont.titleSm.copyWith(color: MColors.ink)),
                   const SizedBox(height: MSpace.xxs),
-                  UiText('請嘗試調整搜尋關鍵字或進階篩選條件',
+                  UiText(
+                      owned
+                          ? '請嘗試調整搜尋關鍵字或進階篩選條件'
+                          : '去拍照，或到卡片集下載卡片集，單字就會出現在這裡',
+                      textAlign: TextAlign.center,
                       style: MFont.bodyMuted),
                 ],
               ),

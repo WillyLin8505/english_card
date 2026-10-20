@@ -70,7 +70,12 @@ void main() {
         l['senses'] = senses;
         changed['${l['normalized']}|${l['pos']}'] = senses[0]['native'] as String;
       }
-      final gone = lexemes.where((l) => l['status'] == 'full').toList()[rnd.nextInt(50)];
+      // One of the learner's own words, so the check below has a card to look at.
+      final saved = {for (final e in repo.entries) e.word};
+      final owned = lexemes.where((l) => l['status'] == 'full' && saved.contains(l['normalized'])).toList();
+      final gone = owned.isNotEmpty
+          ? owned[rnd.nextInt(owned.length)]
+          : lexemes.where((l) => l['status'] == 'full').toList()[rnd.nextInt(50)];
       final goneWord = gone['normalized'];
       lexemes.remove(gone);
       final next = {...json, 'lexemes': lexemes, 'created_at': 'v$version'};
@@ -96,6 +101,9 @@ void main() {
         }
       }
       for (final e in repo.entries) {
+        if (e.word == goneWord && e.meaning.isEmpty) {
+          f.add('詞庫刪掉的字，學習中的卡失去中文意思', e.word);
+        }
         if (edited.containsKey(e.id) || e.word == goneWord) continue;
         final want = changed['${e.word}|${LexiconPack.packPos(e.pos)}'];
         // Only when the changed sense is one the front uses (rare and
@@ -103,9 +111,6 @@ void main() {
         final front = shown['${e.word}|${LexiconPack.packPos(e.pos)}'] ?? '';
         if (want != null && front.contains(want) && !e.meaning.contains(want)) {
           f.add('沒改過的字沒有拿到新版意思', '${e.word}：${e.meaning}（新版 $want）');
-        }
-        if (e.word == goneWord && e.meaning.isEmpty) {
-          f.add('詞庫刪掉的字，學習中的卡失去中文意思', e.word);
         }
       }
       now = now.add(const Duration(days: 2));

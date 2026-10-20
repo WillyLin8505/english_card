@@ -1,12 +1,15 @@
-"""Copy the latest exported language pack into the Flutter app.
+"""Install the latest exported language pack in the Flutter app.
 
-    python lexicon/tools/install_app_pack.py [--target en] [--native zh-TW] [--export]
+    python lexicon/tools/install_app_pack.py [--target en] [--native zh-TW] [--export] [--no-bundle]
 
---export builds a fresh export first. The pack lands in
-app/assets/lexicon/{target}-{native}.json (+ manifest and audio).
+--export builds a fresh export first. The release's audio and pictures are
+copied to app/assets/lexicon/media/, then card268_bundle_pack.py rebuilds the
+slim app/assets/lexicon/{target}-{native}.json from the live pack on 8123
+(the raw export is never shipped, 問題回報 #405).
 """
 
 import argparse
+import subprocess
 import sys
 from pathlib import Path
 
@@ -25,6 +28,7 @@ def main():
     ap.add_argument("--target", default="en")
     ap.add_argument("--native", default="zh-TW")
     ap.add_argument("--export", action="store_true", help="export a fresh pack first")
+    ap.add_argument("--no-bundle", action="store_true", help="copy media only")
     args = ap.parse_args()
     with db.session_scope() as s:
         if args.export:
@@ -38,6 +42,10 @@ def main():
         if rel is None:
             sys.exit("no ready export for this direction (use --export)")
         print(install(EXPORTS / rel.file_name, args.target, args.native))
+    if not args.no_bundle:
+        source = f"http://127.0.0.1:8123/api/lexicon?target={args.target}&native={args.native}"
+        sys.exit(subprocess.call([sys.executable, str(Path(__file__).with_name("card268_bundle_pack.py")),
+                                  "--source", source, "--max-side", "480", "--quality", "60"]))
 
 
 if __name__ == "__main__":

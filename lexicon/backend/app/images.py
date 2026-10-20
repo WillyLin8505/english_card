@@ -284,7 +284,7 @@ def promote_rejected_refetch(s, limit: int = 1) -> int:
         SELECT t.id, t.lemma, t.rejected_retries,
           (SELECT d.text FROM lexemes l
            JOIN senses sn ON sn.lexeme_id = l.id AND sn.ordinal < :k
-           LEFT JOIN definitions d ON d.sense_id = sn.id AND d.language = l.language
+           LEFT JOIN definitions d ON d.id = (SELECT d2.id FROM definitions d2 WHERE d2.sense_id = sn.id AND d2.language IN (l.language, 'en') ORDER BY (d2.language = l.language) DESC, d2.id LIMIT 1)
            WHERE l.language = t.target_language AND l.normalized = lower(t.lemma)
              AND l.status = 'full' AND l.pos = :pos
            ORDER BY l.id, sn.ordinal LIMIT 1) AS gloss
@@ -555,6 +555,14 @@ def fetch(url, limit=MAX_BYTES, validate=check_url):
                 raise
             retry = e.headers.get('Retry-After', '')
             time.sleep(min(60.0, float(retry) if retry.isdigit() else 5.0 * 2 ** attempt))
+        except (OSError, urllib.error.URLError) as e:
+            # A timeout is not retried here; on a fallback source's gate a run
+            # of them pauses the source for every process (問題回報 #395).
+            if gate is not None and _is_timeout_error(e):
+                gate_timed_out = getattr(gate, 'timed_out', None)
+                if gate_timed_out:
+                    gate_timed_out()
+            raise
     if len(data) > limit:
         raise ValueError('圖片或回應超過大小限制')
     return data
@@ -1084,7 +1092,8 @@ def search_openverse(s, sense_id, lemma):
                   'download_url': download_url, 'page_url': r.get('foreign_landing_url') or download_url,
                   'license_code': license_code, 'license_url': r.get('license_url') or '',
                   'author': r.get('creator') or r.get('provider') or '',
-                  'attribution': r.get('attribution') or '', 'description': f"{r.get('title', '')} {tags}".strip()}
+                  'attribution': r.get('attribution') or '', 'description': f"{r.get('title', '')} {tags}".strip(),
+                  'checked_at': time.time()}
         cand = existing.get(oid)
         if cand is None:
             cand = m.ImageCandidate(sense_id=sense_id, source='openverse', query=lemma,
@@ -1098,6 +1107,9 @@ def search_openverse(s, sense_id, lemma):
     return sorted(out, key=lambda c: -c['score'])
 
 
+OPENVERSE_RECHECK_S = 900.0  # a search's licence counts as checked for 15 min
+
+
 def ingest_openverse(s, candidate_id):
     c = s.get(m.ImageCandidate, candidate_id)
     if not c:
@@ -1108,10 +1120,16 @@ def ingest_openverse(s, candidate_id):
         raise ValueError('圖片授權不符合允許清單')
     # Openverse is a last-resort aggregator over many providers' own pages
     # (catalog: 須回原站核對授權): re-ask its own index right before
-    # downloading, instead of scraping each provider's HTML ourselves.
-    detail = json.loads(fetch(f'https://api.openverse.org/v1/images/{c.concept_id}/',
-                              validate=check_openverse_api_url))
-    license_now = _cc_code_from_slug(detail.get('license'), detail.get('license_version'))
+    # downloading, instead of scraping each provider's HTML ourselves. A
+    # search that just returned this record already is that answer: the
+    # detail call (10–15 s each, half the Openverse timeouts, 問題回報 #395)
+    # is only made for a record older than OPENVERSE_RECHECK_S.
+    if time.time() - float(meta.get('checked_at') or 0) <= OPENVERSE_RECHECK_S:
+        license_now = meta['license_code']
+    else:
+        detail = json.loads(fetch(f'https://api.openverse.org/v1/images/{c.concept_id}/',
+                                  validate=check_openverse_api_url))
+        license_now = _cc_code_from_slug(detail.get('license'), detail.get('license_version'))
     if license_now != meta['license_code'] or not allowed_license(license_now):
         raise ValueError('來源授權已改變，請重新搜尋')
     raw = fetch(meta['download_url'], validate=check_public_image_url)
@@ -1278,9 +1296,15 @@ def auto_fetch(s, target, native, lemma, *, senses_per_lexeme=None, per_sense=3,
     term = (query or lemma).strip() or lemma
     chain = [src for src in (sources if sources is not None else
                              _enabled_image_sources(s, target, native)) if src in IMAGE_SOURCES]
-    rows = s.execute(text('''SELECT sn.id, d.text AS gloss, l.pos, t.text AS native, sn.sense_key
+    # The gloss is the dictionary's own text: Kaikki writes it in English for
+    # every target, so a French sense keeps it under language 'en' (the native
+    # side), not 'fr' (card #329: 759 fr senses have only that gloss).
+    rows = s.execute(text('''SELECT sn.id,
+          (SELECT d.text FROM definitions d WHERE d.sense_id = sn.id
+             AND d.language IN (l.language, :native)
+           ORDER BY (d.language = l.language) DESC, d.id LIMIT 1) AS gloss,
+          l.pos, t.text AS native, sn.sense_key
         FROM senses sn JOIN lexemes l ON l.id = sn.lexeme_id
-        LEFT JOIN definitions d ON d.sense_id = sn.id AND d.language = l.language
         LEFT JOIN sense_translations t ON t.sense_id = sn.id AND t.native_language = :native
         WHERE l.language = :target AND l.normalized = :lemma AND l.status = 'full'
           AND l.pos = :pos AND sn.ordinal < :k ORDER BY l.id, sn.ordinal'''),
@@ -3238,7 +3262,7 @@ def register(app, auth):
             (SELECT count(*) FROM sense_images o WHERE o.image_asset_id=a.id)-1 AS shared
             FROM sense_images si JOIN image_assets a ON a.id=si.image_asset_id
             JOIN senses sn ON sn.id=si.sense_id JOIN lexemes l ON l.id=sn.lexeme_id
-            LEFT JOIN definitions d ON d.sense_id=sn.id AND d.language=l.language
+            LEFT JOIN definitions d ON d.id = (SELECT d2.id FROM definitions d2 WHERE d2.sense_id = sn.id AND d2.language IN (l.language, 'en') ORDER BY (d2.language = l.language) DESC, d2.id LIMIT 1)
             LEFT JOIN sense_translations t ON t.sense_id=sn.id AND t.native_language='zh-TW'
             ''' + where + '''
             ORDER BY l.normalized,l.id,sn.ordinal,si.review_status,si.id'''

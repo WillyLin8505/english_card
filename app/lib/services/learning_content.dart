@@ -54,8 +54,48 @@ String formLabel(String value) => switch (value) {
       'third-person singular' || 'verb_third_person' => '第三人稱單數',
       'comparative' || 'adjective_comparative' => '比較級',
       'superlative' || 'adjective_superlative' => '最高級',
+      // French (card #429): the pack labels them 「fr plural」 for native en.
+      'fr_plural' || 'fr plural' => '複數',
+      'fr_feminine' || 'fr feminine' => '陰性',
+      'fr_feminine_plural' || 'fr feminine plural' => '陰性複數',
+      'fr_past_participle' || 'fr past participle' => '過去分詞',
+      'fr_present_participle' || 'fr present participle' => '現在分詞',
+      'fr_imperfect_1s' || 'fr imperfect 1s' => '未完成過去式 je',
+      'fr_future_1s' || 'fr future 1s' => '簡單將來式 je',
+      'fr_auxiliary' || 'fr auxiliary' => '複合時態助動詞',
+      'fr_present_1s' || 'fr present 1s' => '現在式 je',
+      'fr_present_2s' || 'fr present 2s' => '現在式 tu',
+      'fr_present_3s' || 'fr present 3s' => '現在式 il／elle',
+      'fr_present_1p' || 'fr present 1p' => '現在式 nous',
+      'fr_present_2p' || 'fr present 2p' => '現在式 vous',
+      'fr_present_3p' || 'fr present 3p' => '現在式 ils／elles',
+      'fr_gender' || 'fr gender' => '陰陽性',
       _ => RegExp(r'[\u4e00-\u9fff]').hasMatch(value) ? value : '變化形',
     };
+
+/// fr_gender value (m / f / m/f / pl) as a label: 陽性名詞, 陰性名詞…
+String frenchGenderLabel(String gender) => switch (gender) {
+      'm' => '陽性名詞',
+      'f' => '陰性名詞',
+      'm/f' => '陰陽同形名詞',
+      'pl' => '只有複數',
+      _ => '陰陽性',
+    };
+
+/// The noun with its article: le chat, la table, les gens. Before a vowel
+/// or h the definite article may elide (l'arbre, l'homme but le héros), so
+/// those take the indefinite one, which always shows the gender: un arbre.
+String frenchWithArticle(String noun, String gender) {
+  final elides = RegExp(r'^[aeiouyhàâäéèêëîïôöùûüœæ]', caseSensitive: false)
+      .hasMatch(noun);
+  return switch (gender) {
+    'm' => elides ? 'un $noun' : 'le $noun',
+    'f' => elides ? 'une $noun' : 'la $noun',
+    'm/f' => elides ? 'un／une $noun' : 'le／la $noun',
+    'pl' => 'les $noun',
+    _ => noun,
+  };
+}
 
 // Keep in sync with lexicon/backend/app/quality.py example_is_charged.
 final _chargedSex = RegExp(

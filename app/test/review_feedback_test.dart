@@ -33,7 +33,7 @@ void main() {
     );
 
     await pumpApp(tester, repository: repo, initialTab: AppTab.review);
-    await tester.tap(find.text('開始複習'));
+    await tester.tap(find.text('綜合'));
     await tester.pumpAndSettle();
     expect(find.text('句子填空'), findsNothing);
     expect(find.text('送出答案'), findsNothing);

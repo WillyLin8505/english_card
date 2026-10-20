@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 
 import 'app_settings.dart';
 import 'background_errors.dart';
@@ -68,7 +70,9 @@ class DictionarySync extends ChangeNotifier {
       : client = client ?? http.Client(),
         _remoteOverride = remote;
   Timer? _timer;
-  Box<String>? _cache;
+  /// A healthy cache holds one pack (~30-60 MB); anything bigger is leftover.
+  static const maxCacheFileBytes = 100 * 1024 * 1024;
+  LazyBox<String>? _cache;
   AppSettings? _settings;
   WordDatabaseRepository Function()? _repository;
   bool _running = false;
@@ -159,9 +163,32 @@ class DictionarySync extends ChangeNotifier {
   /// added later and a bundled-only build starts to qualify for updates.
   Future<void> _startPolling() async {
     if (_timer != null) return;
-    _cache ??= await Hive.openBox<String>('dictionary_cache_v1');
+    // Lazy + always-compact: the pack is one ~30 MB string rewritten on each
+    // update, and Hive only appends, so an eager Box grew to 261 MB and ran
+    // out of memory on open on a phone (問題回報 #414).
+    await _dropOversizedCache();
+    _cache ??= await Hive.openLazyBox<String>('dictionary_cache_v1',
+        compactionStrategy: (entries, deleted) => deleted > 0);
     if (_disposed) return;
     _timer ??= Timer.periodic(const Duration(seconds: 30), (_) => refresh());
+  }
+
+  /// Old builds appended every update to one file (261 MB on an iPhone, #425).
+  /// Opening such a file scans all of it and compacting copies it in memory,
+  /// which iOS kills at launch. The cache is only a copy of the server pack,
+  /// so an oversized file is deleted and the next sync rebuilds it.
+  Future<void> _dropOversizedCache() async {
+    if (kIsWeb) return;
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final file = File('${dir.path}/dictionary_cache_v1.hive');
+      if (await file.exists() && await file.length() > maxCacheFileBytes) {
+        await Hive.deleteBoxFromDisk('dictionary_cache_v1');
+        if (await file.exists()) await file.delete();
+      }
+    } catch (e) {
+      debugPrint('DictionarySync: cache size check failed: $e');
+    }
   }
 
   void _kick() {
@@ -186,6 +213,7 @@ class DictionarySync extends ChangeNotifier {
             native == _settings!.nativeLanguage) {
           repo.linkLexicon(LexiconPack.instance);
           _activePair = pair;
+          unawaited(LexiconPack.instance.warmMeanings());
         }
       }
       lastSuccess = DateTime.now();
@@ -204,6 +232,60 @@ class DictionarySync extends ChangeNotifier {
     BackgroundErrors.instance.clear(this);
   }
 
+  /// Phones take the dictionary as a SQLite file (card #428, 問題回報 #423):
+  /// `format=sqlite` downloads go to [LexiconPack.storageDirectory] as
+  /// `{pair}.server.<time>.sqlite` and are opened there, deltas are applied
+  /// to that file. The web page (no dart:ffi) keeps the JSON pack in Hive;
+  /// a server that answers JSON is still handled the old way.
+  static bool useSqlite = LexiconSqlite.supported && !kIsWeb;
+
+  /// The newest usable downloaded SQLite pack for [pair], or null.
+  static Future<String?> _serverCopy(
+      String pair, String target, String native) async {
+    final dir = await LexiconPack.storageDirectory();
+    if (!await dir.exists()) return null;
+    final copies = <File>[
+      for (final f in dir.listSync())
+        if (f is File && _isServerCopy(f.path, pair)) f
+    ]..sort((a, b) => b.path.compareTo(a.path)); // newest time stamp first
+    for (final f in copies) {
+      final info = LexiconSqlite.inspect(f.path);
+      if (info != null && info.target == target && info.native == native) {
+        return f.path;
+      }
+      try {
+        await f.delete();
+      } catch (_) {}
+    }
+    return null;
+  }
+
+  static bool _isServerCopy(String path, String pair) {
+    final name = path.split(Platform.pathSeparator).last;
+    return name.startsWith('$pair.server.') && name.endsWith('.sqlite');
+  }
+
+  static String _newServerCopyPath(Directory dir, String pair) =>
+      '${dir.path}/$pair.server.${DateTime.now().millisecondsSinceEpoch}.sqlite';
+
+  /// Deletes downloaded packs other than [keep] (a replaced file that is
+  /// still open is deleted on a later run).
+  static Future<void> _pruneServerCopies(String pair, String? keep) async {
+    try {
+      final dir = await LexiconPack.storageDirectory();
+      if (!await dir.exists()) return;
+      for (final f in dir.listSync()) {
+        if (f is File && _isServerCopy(f.path, pair) && f.path != keep) {
+          try {
+            await f.delete();
+          } catch (_) {}
+        }
+      }
+    } catch (e) {
+      debugPrint('DictionarySync: prune failed: $e');
+    }
+  }
+
   Future<void> refresh() async {
     if (!remote) return _useBundled();
     if (_timer == null && _settings != null) await _startPolling();
@@ -220,11 +302,31 @@ class DictionarySync extends ChangeNotifier {
         native == _settings!.nativeLanguage;
     try {
       if (_activePair != pair) {
-        final saved = _cache?.get(pair);
-        if (saved != null) {
+        String? saved;
+        var opened = false;
+        if (useSqlite) {
+          // The last downloaded SQLite pack, else the bundled one; the JSON
+          // cache a phone kept before #428 is dropped (~60 MB).
+          try {
+            final copy = await _serverCopy(pair, target, native);
+            if (copy != null) {
+              final candidate = LexiconPack()..loadSqlite(copy);
+              LexiconPack.instance.replaceWith(candidate);
+              repo.linkLexicon(LexiconPack.instance);
+              opened = true;
+              if (_cache?.containsKey(pair) ?? false) await _cache?.delete(pair);
+            }
+          } catch (e) {
+            debugPrint('DictionarySync: downloaded pack unusable: $e');
+          }
+        }
+        if (!opened) saved = await _cache?.get(pair);
+        if (opened) {
+          // ready
+        } else if (saved != null) {
           try {
             final candidate = LexiconPack()
-              ..loadJson(jsonDecode(saved) as Map<String, dynamic>);
+              ..loadJson(await compute(_decodeBody, utf8.encode(saved)));
             if (candidate.target != target || candidate.native != native) {
               throw const FormatException('Wrong cached dictionary language');
             }
@@ -244,39 +346,78 @@ class DictionarySync extends ChangeNotifier {
         if (!kIsWeb || saved != null) _activePair = pair;
       }
       final cachedVersion = LexiconPack.instance.version;
-      final saved = _cache?.get(pair);
-      final canReuse = !_forceFull.contains(pair) &&
-          saved != null &&
-          cachedVersion != null &&
+      final samePair = cachedVersion != null &&
           LexiconPack.instance.target == target &&
           LexiconPack.instance.native == native;
+      // Only a flag here: reading the cached pack (~60 MB of text) on every
+      // 30 s tick allocated a huge string each time, even on a 304 (#419).
+      final hasSaved = _cache?.containsKey(pair) ?? false;
+      // A SQLite pack (downloaded or bundled) can take a delta too: the
+      // bundled file is copied beside the downloads first.
+      final sqliteBase = useSqlite && LexiconPack.instance.fromSqlite;
+      final canReuse =
+          !_forceFull.contains(pair) && samePair && (hasSaved || sqliteBase);
       final uri = endpoint(target, native);
-      final response = await client.get(
+      final request = http.Request(
+          'GET',
           uri.replace(queryParameters: {
             ...uri.queryParameters,
+            if (useSqlite) 'format': 'sqlite',
             if (canReuse) 'since': cachedVersion,
-          }),
-          headers: {
-            ..._keyHeader,
-            if (canReuse) 'If-None-Match': '"$cachedVersion"',
-          }).timeout(const Duration(seconds: 60));
-      if (!current()) return;
+          }))
+        ..headers.addAll({
+          ..._keyHeader,
+          if (canReuse) 'If-None-Match': '"$cachedVersion"',
+        });
+      final response =
+          await client.send(request).timeout(const Duration(seconds: 60));
+      if (!current()) {
+        unawaited(response.stream.drain<void>().catchError((_) {}));
+        return;
+      }
       if (response.statusCode == 304 && canReuse) {
+        unawaited(response.stream.drain<void>().catchError((_) {}));
         _succeeded();
         await _sendMissingQuietly();
         return;
       }
       if (response.statusCode != 200) {
+        unawaited(response.stream.drain<void>().catchError((_) {}));
         throw StateError('Dictionary unavailable');
       }
-      var raw = utf8.decode(response.bodyBytes);
-      var json = jsonDecode(raw) as Map<String, dynamic>;
+      final contentType = response.headers['content-type'] ?? '';
+      if (useSqlite && contentType.contains('sqlite')) {
+        // The whole pack as a file: streamed to disk, never held in memory.
+        await _installSqliteDownload(response.stream, pair, target, native,
+            repo, current);
+        _forceFull.remove(pair);
+        _succeeded();
+        await _sendMissingQuietly();
+        return;
+      }
+      final bodyBytes =
+          await response.stream.toBytes().timeout(const Duration(minutes: 5));
+      if (!current()) return;
+      // Decode off the UI thread and keep only one big copy alive at a time:
+      // body bytes + string + tree + a second pack hit iOS's 2 GB limit
+      // right after launch (問題回報 #424).
+      String? raw;
+      var json = await compute(_decodeBody, bodyBytes);
       if (json.containsKey('delta_version')) {
         try {
           if (!canReuse) throw const FormatException('No base for delta');
-          json = applyDictionaryDelta(
-              jsonDecode(saved) as Map<String, dynamic>, json);
-          raw = jsonEncode(json);
+          if (sqliteBase) {
+            await _applySqliteDelta(json, pair, target, native, repo);
+            _forceFull.remove(pair);
+            _succeeded();
+            await _sendMissingQuietly();
+            return;
+          }
+          final base = await _cache?.get(pair);
+          if (base == null) throw const FormatException('No base for delta');
+          final merged = await compute(_mergeDelta, (base, json));
+          json = merged.$1;
+          raw = merged.$2;
         } catch (_) {
           // Recover with a full request next time, preserving the last good data.
           _forceFull.add(pair);
@@ -290,11 +431,13 @@ class DictionarySync extends ChangeNotifier {
           json['lexemes'] is! List) {
         throw const FormatException('Wrong dictionary language');
       }
-      if (LexiconPack.instance.version != candidate.version ||
-          _cache?.get(pair) != raw) {
+      // The same version means the same pack, so the cache is not re-read
+      // and compared (another ~60 MB string) just to skip the write.
+      if (LexiconPack.instance.version != candidate.version || !hasSaved) {
         LexiconPack.instance.replaceWith(candidate);
         repo.linkLexicon(LexiconPack.instance);
-        await _cache?.put(pair, raw);
+        await _cache?.put(pair, raw ?? utf8.decode(bodyBytes));
+        await _cache?.compact();
       }
       _forceFull.remove(pair);
       _succeeded();
@@ -323,6 +466,72 @@ class DictionarySync extends ChangeNotifier {
     }
   }
 
+  /// Writes a `format=sqlite` response to a new `{pair}.server.*.sqlite`
+  /// file, checks it, opens it and drops the older downloads. A bad file
+  /// is deleted and the current pack stays.
+  Future<void> _installSqliteDownload(
+      Stream<List<int>> body,
+      String pair,
+      String target,
+      String native,
+      WordDatabaseRepository repo,
+      bool Function() current) async {
+    final dir = await LexiconPack.storageDirectory();
+    await dir.create(recursive: true);
+    final path = _newServerCopyPath(dir, pair);
+    final part = File('$path.part');
+    try {
+      final sink = part.openWrite();
+      try {
+        await body.pipe(sink).timeout(const Duration(minutes: 10));
+      } catch (_) {
+        await sink.close().catchError((_) {});
+        rethrow;
+      }
+      final info = LexiconSqlite.inspect(part.path);
+      if (info == null ||
+          info.target != target ||
+          info.native != native ||
+          info.version == null) {
+        throw const FormatException('Wrong dictionary language');
+      }
+      await part.rename(path);
+    } catch (_) {
+      try {
+        if (await part.exists()) await part.delete();
+      } catch (_) {}
+      rethrow;
+    }
+    if (!current()) return;
+    final candidate = LexiconPack()..loadSqlite(path);
+    LexiconPack.instance.replaceWith(candidate);
+    repo.linkLexicon(LexiconPack.instance);
+    if (_cache?.containsKey(pair) ?? false) await _cache?.delete(pair);
+    await _pruneServerCopies(pair, path);
+    unawaited(LexiconPack.instance.warmMeanings());
+  }
+
+  /// Applies a server delta to the open SQLite pack. The bundled pack is
+  /// never patched in place (its version must keep matching the asset):
+  /// it is copied beside the downloads first.
+  Future<void> _applySqliteDelta(Map<String, dynamic> patch, String pair,
+      String target, String native, WordDatabaseRepository repo) async {
+    final active = LexiconPack.instance.sqlitePath;
+    if (active == null) throw const FormatException('No base for delta');
+    if (!_isServerCopy(active, pair)) {
+      final dir = await LexiconPack.storageDirectory();
+      await dir.create(recursive: true);
+      final path = _newServerCopyPath(dir, pair);
+      await File(active).copy(path);
+      final candidate = LexiconPack()..loadSqlite(path);
+      LexiconPack.instance.replaceWith(candidate);
+    }
+    LexiconPack.instance.applySqliteDelta(patch);
+    repo.linkLexicon(LexiconPack.instance);
+    await _pruneServerCopies(pair, LexiconPack.instance.sqlitePath);
+    unawaited(LexiconPack.instance.warmMeanings());
+  }
+
   @override
   void dispose() {
     _disposed = true;
@@ -332,4 +541,14 @@ class DictionarySync extends ChangeNotifier {
     BackgroundErrors.instance.clear(this);
     super.dispose();
   }
+}
+
+
+Map<String, dynamic> _decodeBody(List<int> bytes) =>
+    jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>;
+
+(Map<String, dynamic>, String) _mergeDelta((String, Map<String, dynamic>) a) {
+  final merged =
+      applyDictionaryDelta(jsonDecode(a.$1) as Map<String, dynamic>, a.$2);
+  return (merged, jsonEncode(merged));
 }

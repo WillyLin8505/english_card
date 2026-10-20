@@ -61,4 +61,16 @@ void main() {
     await tester.pump();
     expect(find.text('two'), findsOneWidget);
   });
+  testWidgets('ShowMoreItems shows 5 then 顯示更多 (card 416)', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+            body: ShowMoreItems(initial: 5, children: [
+      for (var i = 0; i < 7; i++) Text('s$i'),
+    ]))));
+    expect(find.text('s4'), findsOneWidget);
+    expect(find.text('s5'), findsNothing);
+    await tester.tap(find.text('顯示更多（2）'));
+    await tester.pump();
+    expect(find.text('s6'), findsOneWidget);
+  });
 }

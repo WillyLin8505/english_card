@@ -1,6 +1,35 @@
 import Flutter
 import UIKit
 import Vision
+import ImageIO
+
+/// Vision decodes the whole file it is given: a 12 MP camera photo costs
+/// ~48 MB, and the accurate text reader several times that, which pushed the
+/// app past iOS's ~2 GB per-app limit on a 4 GB iPhone (問題回報 #418, signal
+/// 9 / Jetsam per-process-limit). The classifier works on a ~300 px copy and
+/// text stays legible at 2048 px, so both read a copy with the long side at
+/// most [maxSide]. The thumbnail has EXIF rotation applied; boxes are
+/// fractions of the image, so they still match the picture as shown.
+func downsampledImage(_ data: Data, maxSide: Int = 2048) -> CGImage? {
+  let opts = [kCGImageSourceShouldCache: false] as CFDictionary
+  guard let source = CGImageSourceCreateWithData(data as CFData, opts) else { return nil }
+  let thumbOpts = [
+    kCGImageSourceCreateThumbnailFromImageAlways: true,
+    kCGImageSourceCreateThumbnailWithTransform: true,
+    kCGImageSourceShouldCacheImmediately: true,
+    kCGImageSourceThumbnailMaxPixelSize: maxSide,
+  ] as CFDictionary
+  return CGImageSourceCreateThumbnailAtIndex(source, 0, thumbOpts)
+}
+
+/// A request handler on the downsampled picture, or on the raw data if it
+/// cannot be decoded that way.
+func visionHandler(_ data: Data) -> VNImageRequestHandler {
+  if let image = downsampledImage(data) {
+    return VNImageRequestHandler(cgImage: image, options: [:])
+  }
+  return VNImageRequestHandler(data: data, options: [:])
+}
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
@@ -64,17 +93,18 @@ enum LocalVisionChannel {
   /// rates as reliable (90% precision) plus anything it is at least half
   /// sure of, so a plain photo still yields a handful of words.
   static func classify(_ data: Data, maxResults: Int) throws -> [[String: Any]] {
-    let request = VNClassifyImageRequest()
-    let handler = VNImageRequestHandler(data: data, options: [:])
-    try handler.perform([request])
-    let observations = (request.results as? [VNClassificationObservation]) ?? []
-    var out: [[String: Any]] = []
-    for o in observations {
-      guard o.hasMinimumRecall(0.01, forPrecision: 0.9) || o.confidence >= 0.5 else { continue }
-      out.append(["label": o.identifier, "confidence": Double(o.confidence)])
-      if out.count >= maxResults { break }
+    try autoreleasepool {
+      let request = VNClassifyImageRequest()
+      try visionHandler(data).perform([request])
+      let observations = (request.results as? [VNClassificationObservation]) ?? []
+      var out: [[String: Any]] = []
+      for o in observations {
+        guard o.hasMinimumRecall(0.01, forPrecision: 0.9) || o.confidence >= 0.5 else { continue }
+        out.append(["label": o.identifier, "confidence": Double(o.confidence)])
+        if out.count >= maxResults { break }
+      }
+      return out
     }
-    return out
   }
 }
 
@@ -133,8 +163,7 @@ enum TextRecognitionChannel {
     request.usesLanguageCorrection = true
     // Photos from the camera carry their rotation in EXIF; Vision reads it
     // from the image data, so boxes match the picture as shown.
-    let handler = VNImageRequestHandler(data: data, options: [:])
-    try handler.perform([request])
+    try visionHandler(data).perform([request])
     var out: [[String: Any]] = []
     for o in request.results ?? [] {
       guard let top = o.topCandidates(1).first else { continue }

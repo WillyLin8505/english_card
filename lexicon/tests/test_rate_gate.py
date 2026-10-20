@@ -143,3 +143,74 @@ def test_auto_fetch_treats_a_paused_source_as_skipped_not_rate_limited(session, 
     images.run_fetch(session, task.id)
     assert task.status == "completed_with_errors", "not requeued: the other sources ran"
     assert task.retry_at is None and task.finished_at is not None
+
+
+def test_a_run_of_timeouts_pauses_openverse_for_every_process(monkeypatch):
+    """問題回報 #395: ~23% of picture tasks each waited out one to three 25 s
+    Openverse timeouts; three in a row now skip the source for 10 minutes."""
+    calls = []
+
+    class Opener:
+        def open(self, request, timeout):
+            calls.append(request.full_url)
+            raise TimeoutError("The read operation timed out")
+
+    monkeypatch.setattr(images.urllib.request, "build_opener", lambda *a, **k: Opener())
+    monkeypatch.setattr(images.time, "sleep", lambda s: None)
+    gate = rate_gate.OPENVERSE
+    for _ in range(gate.timeout_limit):
+        with pytest.raises(TimeoutError):
+            images.fetch(OV, validate=images.check_openverse_api_url)
+    assert len(calls) == gate.timeout_limit, "a timeout is never retried in-process"
+    assert 590 < gate.paused_for() <= 600
+    with pytest.raises(rate_gate.Paused):
+        images.fetch(OV, validate=images.check_openverse_api_url)
+    assert len(calls) == gate.timeout_limit
+    st = gate.status()
+    assert st["timeout_pauses"] == 1 and st["timeouts"] == 0 and not st.get("strikes")
+
+
+def test_a_good_reply_clears_the_timeout_run():
+    gate = rate_gate.OPENVERSE
+    for _ in range(gate.timeout_limit - 1):
+        assert gate.timed_out() == 0.0
+    gate.succeeded()
+    assert gate.timed_out() == 0.0, "the run starts over after a success"
+    assert gate.paused_for() == 0.0
+    assert rate_gate.SMITHSONIAN.timed_out() == 0.0
+
+
+def test_ingest_openverse_trusts_a_fresh_search_and_rechecks_an_old_one(session, monkeypatch):
+    """問題回報 #395: the per-candidate licence re-ask (10–15 s, half the
+    timeouts) is skipped when the search just returned that licence."""
+    import json
+    from app import models as m
+    lx = m.Lexeme(language="en", lemma="cat", normalized="cat", pos="noun", status="full")
+    session.add(lx)
+    session.flush()
+    sense = m.Sense(lexeme_id=lx.id, sense_key="cat", ordinal=0)
+    session.add(sense)
+    session.flush()
+    payload = {"results": [{"id": "ov1", "title": "cat", "license": "by", "license_version": "2.0",
+                            "url": "https://example.com/cat.jpg", "creator": "Someone"}]}
+    fetched = []
+
+    def fake_fetch(url, validate=None):
+        fetched.append(url)
+        if "/v1/images/?" in url:
+            return json.dumps(payload).encode()
+        if "/v1/images/ov1/" in url:
+            return json.dumps({"license": "by", "license_version": "2.0"}).encode()
+        return b"img"
+
+    monkeypatch.setattr(images, "fetch", fake_fetch)
+    monkeypatch.setattr(images, "_finalize_image", lambda s, c, **kw: {"license": kw["license_code"]})
+    cid = images.search_openverse(session, sense.id, "cat")[0]["id"]
+    fetched.clear()
+    assert images.ingest_openverse(session, cid) == {"license": "CC BY 2.0"}
+    assert fetched == ["https://example.com/cat.jpg"], "no detail call right after the search"
+    cand = session.get(m.ImageCandidate, cid)
+    cand.metadata_ = dict(cand.metadata_, checked_at=time.time() - images.OPENVERSE_RECHECK_S - 1)
+    fetched.clear()
+    images.ingest_openverse(session, cid)
+    assert fetched == ["https://api.openverse.org/v1/images/ov1/", "https://example.com/cat.jpg"]

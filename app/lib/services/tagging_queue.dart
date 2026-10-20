@@ -162,7 +162,29 @@ class TaggingQueue extends ChangeNotifier {
         final next = waiting.where(_canTag).firstOrNull;
         if (next == null) break;
         _total = _completed + waiting.length;
-        final ok = await _tag(repo, next);
+        bool ok;
+        try {
+          ok = await _tag(repo, next);
+        } catch (e) {
+          // Whatever went wrong inside one photo (a bad picture, a platform
+          // error while recording the failure) must not escape: process()
+          // runs unawaited, so an escaped error would crash the app
+          // (問題回報 #408). The photo is marked failed and the queue goes on.
+          debugPrint('Tagging ${next.id} crashed: $e');
+          _failed++;
+          try {
+            final latest = repo.photo(next.id);
+            if (latest != null) {
+              repo.updatePhoto(latest.copyWith(
+                taggingStatus: TaggingStatus.failed,
+                taggingError: () => '這張照片暫時無法辨識，請換一張再試',
+              ));
+            }
+          } catch (_) {
+            break;
+          }
+          ok = true;
+        }
         if (!ok) break;
         _completed++;
       }
@@ -225,7 +247,7 @@ class TaggingQueue extends ChangeNotifier {
       if (latest != null) {
         repo.updatePhoto(latest.copyWith(
           taggingStatus: offline ? TaggingStatus.pending : TaggingStatus.failed,
-          taggingError: () => describeTaggingError(e, settings.taggingUrl),
+          taggingError: () => describeTaggingError(e, settings.taggingUrl, showUrl: false),
         ));
       }
       debugPrint('Tagging ${photo.id} failed: $e');

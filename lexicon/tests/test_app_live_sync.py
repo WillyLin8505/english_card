@@ -161,3 +161,25 @@ def test_shared_picture_names_target_words_by_meaning(session, fakes):
         (pomme.id, 'binding'), (chat.id, 'meaning')]
     assert [t['sense_id'] for t in image['tags']] == [pomme_sense.id, chat_sense.id]
     assert [lb['point'] for lb in image['labels']] == [[0.4, 0.5], [0.8, 0.7]]
+
+
+def test_approved_label_keeps_spot_the_tagger_set_aside(session, fakes):
+    """Card #408 / 問題回報 #407: a tag dropped by the tagger (no CEFR level, over
+    the per-picture cap) still has its spot; an approved binding draws there."""
+    apple_data(fakes)
+    pipeline.process_word(session, 'en', 'zh-TW', 'apple', None, 'fill_missing')
+    session.flush()
+    sense = session.scalars(select(m.Sense)).first()
+    word = session.get(m.Lexeme, sense.lexeme_id)
+    asset = m.ImageAsset(
+        source='test', source_image_id='dropped-spot', status='ready', path='images/test.jpg',
+        tags=[{'word': 'hand', 'pos': 'noun', 'point': [0.8, 0.7]}],
+        dropped_tags=[{'word': word.normalized, 'pos': 'noun', 'point': [0.3, 0.6],
+                       'dropReason': 'missing CEFR level'}])
+    session.add(asset)
+    session.flush()
+    session.add(m.SenseImage(sense_id=sense.id, image_asset_id=asset.id,
+                             role='representative', review_status='approved'))
+    session.flush()
+    label = serve_app.catalog_snapshot(session, 'en')[1][0]['labels'][0]
+    assert label['point'] == [0.3, 0.6]

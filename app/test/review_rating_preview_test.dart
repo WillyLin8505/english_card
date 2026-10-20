@@ -113,7 +113,7 @@ void main() {
         (tester) async {
       final repo = ratingRepo();
       await pumpApp(tester, repository: repo, initialTab: AppTab.review);
-      await tester.tap(find.text('開始複習'));
+      await tester.tap(find.text('綜合'));
       await tester.pumpAndSettle();
       var front = tester.widget<FlashcardFront>(find.byType(FlashcardFront));
       await tester.enterText(find.byType(TextField), front.entry.word);

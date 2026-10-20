@@ -86,7 +86,7 @@ void main() {
         .showSnackBar(const SnackBar(content: Text('已加入我的單字本與複習')));
     await tester.pump();
     expect(find.text('已加入我的單字本與複習'), findsOneWidget);
-    await tester.tap(find.text('開始複習'));
+    await tester.tap(find.text('綜合'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('已加入我的單字本與複習'), findsNothing);

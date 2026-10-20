@@ -172,6 +172,21 @@ def test_export_sqlite_with_manifest(session, fakes, tmp_path, monkeypatch):
     assert all(c["level"] != "error" for c in rel.checks)
 
 
+def test_export_numbers_senses_by_ordinal_not_definition_item_order(session, fakes, tmp_path):
+    """問題回報 #389: card352_reorder.py / order_senses only change
+    senses.ordinal; the definition items keep the source's order."""
+    apple_data(fakes)
+    pipeline.process_word(session, "en", "zh-TW", "apple", None, "fill_missing")
+    by_key = {s.sense_key: s for s in session.execute(select(m.Sense)).scalars()}
+    by_key["s1"].ordinal, by_key["s2"].ordinal = 1, 0
+    session.flush()
+    exporter._build(session, tmp_path / "pack.sqlite", "en", "zh-TW", None, False, tmp_path)
+    con = sqlite3.connect(tmp_path / "pack.sqlite")
+    rows = con.execute("SELECT definition, ordinal FROM senses ORDER BY ordinal").fetchall()
+    con.close()
+    assert rows == [("An apple tree.", 0), ("A round fruit.", 1)]
+
+
 def test_export_excludes_examples_without_verified_sense(session, fakes, tmp_path, monkeypatch):
     """Unresolved master examples must not be flattened into learner cards."""
     monkeypatch.setattr(config, "EXPORTS", tmp_path)

@@ -45,8 +45,29 @@ class _Candidate {
   ImageProvider get image =>
       asset != null ? AssetImage(asset!) as ImageProvider : MemoryImage(bytes!);
 
+  /// Longest edge kept for a device photo (same cap as the gallery picker).
+  /// A 48MP original decodes to ~190 MB of pixels — several in a row used to
+  /// take the app past the iOS memory limit (問題回報 #413).
+  static const maxEdge = 2048;
+
+  static Future<Uint8List?> _loadDevice(AssetEntity e) async {
+    final longest = e.width > e.height ? e.width : e.height;
+    if (longest <= maxEdge) return e.originBytes;
+    // A box, not an exact size: it keeps the aspect ratio whatever the EXIF
+    // orientation. iOS must be told to fit, its default fills and crops.
+    // No fallback to originBytes here — that read is what crashed (#415).
+    const box = ThumbnailSize.square(maxEdge);
+    final option = defaultTargetPlatform == TargetPlatform.iOS
+        ? ThumbnailOption.ios(
+            size: box,
+            quality: 90,
+            resizeContentMode: ResizeContentMode.fit)
+        : const ThumbnailOption(size: box, quality: 90);
+    return e.thumbnailDataWithOption(option);
+  }
+
   Future<Uint8List> load() async {
-    if (entity != null) return await entity!.originBytes ?? bytes!;
+    if (entity != null) return await _loadDevice(entity!) ?? bytes!;
     return bytes ?? (await rootBundle.load(asset!)).buffer.asUint8List();
   }
 }
@@ -101,17 +122,31 @@ class _PhotoPickerScreenState extends State<PhotoPickerScreen> {
           type: RequestType.image, onlyAll: true);
       if (albums.isEmpty) return;
       final entities = await albums.first.getAssetListPaged(page: 0, size: 30);
-      final device = <_Candidate>[];
-      for (final entity in entities) {
-        final thumbnail = await entity.thumbnailDataWithSize(
-            const ThumbnailSize.square(360), quality: 85);
-        if (thumbnail != null) device.add(_Candidate.device(entity, thumbnail));
+      // Thumbnails used to be read one by one: on iOS the first read of each
+      // asset is slow (14 s for 19 photos, 問題回報 #416). Read a few at a
+      // time and show every batch as soon as it is ready.
+      const batch = 6;
+      var shown = 0;
+      for (var i = 0; i < entities.length; i += batch) {
+        final chunk = entities.skip(i).take(batch);
+        final thumbs = await Future.wait(chunk.map((e) => e
+            .thumbnailDataWithSize(const ThumbnailSize.square(360),
+                quality: 85)
+            .catchError((_) => null)));
+        if (!mounted) return;
+        final device = <_Candidate>[
+          for (var j = 0; j < thumbs.length; j++)
+            if (thumbs[j] != null)
+              _Candidate.device(chunk.elementAt(j), thumbs[j]!),
+        ];
+        if (device.isEmpty) continue;
+        setState(() {
+          _candidates.insertAll(shown, device);
+          if (shown == 0) _selected = 0;
+          shown += device.length;
+          _loadingDevice = false;
+        });
       }
-      if (!mounted || device.isEmpty) return;
-      setState(() {
-        _candidates.insertAll(0, device);
-        _selected = 0;
-      });
     } on MissingPluginException {
       // Desktop tests and unsupported platforms keep the file picker.
     } catch (e) {
@@ -151,7 +186,12 @@ class _PhotoPickerScreenState extends State<PhotoPickerScreen> {
     if (!mounted) return;
     // The same picture again (spec §7 deferred this; card #217): offer the
     // existing photo instead of a second copy, but let the learner insist.
-    final existing = scope.intake.findDuplicate(bytes);
+    Photo? existing;
+    try {
+      existing = scope.intake.findDuplicate(bytes);
+    } catch (e) {
+      debugPrint('duplicate check failed: $e');
+    }
     if (existing != null) {
       final again = await showDuplicatePhotoDialog(context,
           existing: existing, repository: scope.repository);
@@ -167,10 +207,8 @@ class _PhotoPickerScreenState extends State<PhotoPickerScreen> {
       repository: scope.repository,
       defaultTitle: defaultPhotoTitle(now),
       albumId: widget.albumId,
-      scanMode: scope.settings.scanMode,
     );
     if (choice == null || !mounted) return;
-    scope.settings.scanMode = choice.scanMode;
     setState(() => _saving = true);
     try {
       final Photo photo = await scope.intake.addPhoto(

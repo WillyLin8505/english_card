@@ -39,7 +39,18 @@ POS = {"n": "noun", "v": "verb", "vt": "verb", "vi": "verb", "a": "adj", "adj": 
 _LINE = re.compile(r"^(?P<pos>[a-z]{1,6})\.\s*(?P<text>.+)$")
 # Notes inside a meaning: （布质）, (马,鹰等), [诗歌用语], <口>, = between.
 _NOTE = re.compile(r"[（(][^）)]*[）)]|\[[^\]]*\]|<[^>]*>|=\s*\S+")
+_PAREN_NOTE = re.compile(r"[（(][^）)]*[）)]|<[^>]*>|=\s*\S+")
 _SPLIT = re.compile(r"\s*[,，;；]\s*")
+# usage labels, not subjects: 「[口] 钱」 is still an ordinary sense (#434)
+_REGISTER_TAGS = frozenset({"口", "口语", "俚", "俚语", "非正式", "古语", "旧", "废", "罕",
+                            "诗歌用语", "方言", "俗", "书面语", "婉", "美国", "英国",
+                            "美国英语", "英国英语", "主美国英语", "主英国英语"})
+_TAG = re.compile(r"\[([^\]]*)\]")
+
+
+def _is_domain(part: str) -> bool:
+    """A subject tag like [计] [医] [人名] — the words after it are not the ordinary sense."""
+    return any(tag not in _REGISTER_TAGS for tag in _TAG.findall(part))
 _FORM_NOTE = re.compile(r"的(过去式|过去分词|现在分词|复数|比较级|最高级|第三人称|变形)")
 
 _lock = threading.Lock()
@@ -139,8 +150,16 @@ def meanings(translation: str) -> list[tuple[str | None, list[str]]]:
         if pos == "":
             continue  # an unknown prefix: not worth a guess
         words = []
-        for part in _SPLIT.split(_NOTE.sub("", m.group("text"))):
-            part = part.strip(" .…·")
+        tagged = False
+        # the notes that are not tags go first, so a comma inside one stays inside it
+        for part in _SPLIT.split(_PAREN_NOTE.sub("", m.group("text"))):
+            # 問題回報 #434: "art. [计] 累加器" is computing, not the article's sense;
+            # a domain tag ends the ordinary senses of the line (register tags stay)
+            if _is_domain(part):
+                tagged = True
+            if tagged:
+                continue
+            part = _NOTE.sub("", part).strip(" .…·")
             if part and re.search(r"[㐀-鿿]", part) and part not in words:
                 words.append(part)
         if words:

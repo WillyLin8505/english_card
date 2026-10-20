@@ -3,6 +3,9 @@ part of '../screens/database_library_screen.dart';
 /// 「搜尋的字 cluster 在 中階（B1）」 with a switch to that level, for a picture
 /// found by a word the chosen level hides (問題回報 #302 decision: keep the
 /// cross-level search, name the hit and its level, offer the switch).
+///
+/// The album shows it once under the search box when every result has the
+/// same hit (問題回報 #397), on each tile only when the results are mixed.
 class DatabaseSearchHint extends StatelessWidget {
   final ({String word, String? level}) hit;
   final ValueChanged<String?> onSwitch;
@@ -57,16 +60,23 @@ class DatabaseImageTile extends StatelessWidget {
 
   /// Switches the album's level (the hint's 「切到 B1」).
   final ValueChanged<String?>? onLevelChanged;
+
+  /// Whether this tile explains its own cross-level hit. The album turns it
+  /// off when every result shares one hint, which it then shows once under
+  /// the search box instead of on each picture (問題回報 #397).
+  final bool showSearchHint;
   const DatabaseImageTile(
       {super.key,
       required this.image,
       this.level,
       this.search = '',
-      this.onLevelChanged});
+      this.onLevelChanged,
+      this.showSearchHint = true});
   @override
   Widget build(BuildContext context) {
-    final elsewhere =
-        databaseSearchElsewhere(image, LexiconPack.instance, search, level);
+    final elsewhere = showSearchHint
+        ? databaseSearchElsewhere(image, LexiconPack.instance, search, level)
+        : null;
     return Container(
       decoration: MDecor.card(radius: MRadii.lg),
       clipBehavior: Clip.antiAlias,

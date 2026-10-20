@@ -28,7 +28,9 @@
     325,
     329,
     344,
-    371
+    371,
+    405,
+    429
   ],
   "unblock_after": {
     "166": [
@@ -42,6 +44,8 @@
   "night_last_launch": "06:15",
   "night_safe_stop": "06:45",
   "finish_grace_minutes": 10,
+  "finish_grace_alive_minutes": 45,
+  "lingering_kill_minutes": 90,
   "alive_log_minutes": 45,
   "limit_fallback_hours": {
     "Claude Code": 5,
@@ -90,5 +94,11 @@
   "mac_sync": {
     "enabled": true
   },
-  "_mac_sync_note": "owner 10/18：每張改到 App 的卡都要在 Mac 的 iPhone 模擬器／實機驗證。每輪巡檢後跑 mac_sync.py：flutter analyze＋test 過了才 commit/push，並在 docs/mac_inbox.md 加 M 項。"
+  "_mac_sync_note": "owner 10/18：每張改到 App 的卡都要在 Mac 的 iPhone 模擬器／實機驗證。每輪巡檢後跑 mac_sync.py：flutter analyze＋test 過了才 commit/push，並在 docs/mac_inbox.md 加 M 項。",
+  "qwen_schedule": {
+    "enabled": true,
+    "night_start": "19:00",
+    "night_end": "07:00"
+  },
+  "_qwen_schedule_note": "owner 10/20：白天 Qwen 暫停、晚上開始。只在時段切換時動作，看板上手動暫停／開始會維持到下一次切換。"
 }

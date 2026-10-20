@@ -21,14 +21,14 @@ void main() {
         status: WordDataStatus.complete);
     await tester.pumpAndSettle();
     expect(find.byType(MobileTabBar), findsOneWidget);
-    await tester.tap(find.text('開始複習'));
+    await tester.tap(find.text('綜合'));
     await tester.pumpAndSettle();
     expect(find.byType(MobileTabBar), findsNothing);
     await tester.tap(find.bySemanticsLabel('返回'));
     await tester.pumpAndSettle();
     expect(find.byType(MobileTabBar), findsOneWidget);
     // Finishing due cards keeps reviewing until the learner exits.
-    await tester.tap(find.text('開始複習'));
+    await tester.tap(find.text('綜合'));
     await tester.pumpAndSettle();
     await tester.sendKeyEvent(LogicalKeyboardKey.space); // 顯示答案
     await tester.pumpAndSettle();

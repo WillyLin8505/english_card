@@ -27,8 +27,7 @@ TextLine line(String text, double top, {double height = 0.05}) =>
 
 LexiconPack? _bundled;
 LexiconPack bundledPack() => _bundled ??= LexiconPack()
-  ..loadJson(jsonDecode(
-          File('assets/lexicon/en-zh-TW.json').readAsStringSync())
+  ..loadJson(jsonDecode(File('assets/lexicon/en-zh-TW.json').readAsStringSync())
       as Map<String, dynamic>);
 
 void main() {
@@ -69,9 +68,9 @@ void main() {
       // back to a word of the pack (not necessarily the same one: "left"
       // is both leave's form and a word of its own).
       final pack = bundledPack();
-      final raw = jsonDecode(
-              File('assets/lexicon/en-zh-TW.json').readAsStringSync())
-          as Map<String, dynamic>;
+      final raw =
+          jsonDecode(File('assets/lexicon/en-zh-TW.json').readAsStringSync())
+              as Map<String, dynamic>;
       var forms = 0, found = 0;
       final missed = <String>[];
       for (final e in (raw['lexemes'] as List)) {
@@ -149,8 +148,14 @@ void main() {
       'confidence': 0.8,
       'box': [0.2, 0.4, 0.5, 0.1],
       'words': [
-        {'text': 'Exit', 'box': [0.2, 0.4, 0.2, 0.1]},
-        {'text': 'only', 'box': [0.45, 0.4, 0.25, 0.1]},
+        {
+          'text': 'Exit',
+          'box': [0.2, 0.4, 0.2, 0.1]
+        },
+        {
+          'text': 'only',
+          'box': [0.45, 0.4, 0.25, 0.1]
+        },
       ],
     })!;
     final ws = wordsOf(l);
@@ -180,7 +185,8 @@ void main() {
         createdAt: testNow,
         scanMode: PhotoScanMode.both);
     expect(Photo.fromJson(p.toJson()).scanMode, PhotoScanMode.both);
-    final old = Photo(id: 'q', title: 'q', takenAt: testNow, createdAt: testNow);
+    final old =
+        Photo(id: 'q', title: 'q', takenAt: testNow, createdAt: testNow);
     expect(old.toJson().containsKey('scanMode'), isFalse);
     expect(Photo.fromJson(old.toJson()).scanMode, PhotoScanMode.objects);
   });
@@ -231,7 +237,8 @@ void main() {
   test('兩者都找 merges things in the picture with printed words', () async {
     AppSettings.localRecognition = true;
     TextScan.available = true;
-    LocalVision.classifier = (_, __) async => [(label: 'apple', confidence: 0.9)];
+    LocalVision.classifier =
+        (_, __) async => [(label: 'apple', confidence: 0.9)];
     TextScan.recognizer = (_) async => [line('Organic apples', 0.7)];
     final (repo, queue) =
         await queueWith(PhotoScanMode.both, AppSettings.inMemory());
@@ -252,47 +259,32 @@ void main() {
     expect(p.taggingStatus, TaggingStatus.failed);
   });
 
-  testWidgets('the save dialog offers 找物品／找文字／兩者都找', (tester) async {
-    TextScan.available = true;
-    final repository = WordDatabaseRepository();
-    repository.addAlbum(name: '旅行');
-    SavePhotoChoice? result;
-    await tester.pumpWidget(MaterialApp(
-      home: Builder(
-        builder: (context) => FilledButton(
-          onPressed: () async => result = await showSaveToAlbumDialog(context,
-              repository: repository, defaultTitle: '照片'),
-          child: const Text('開啟'),
-        ),
-      ),
-    ));
-    await tester.tap(find.text('開啟'));
-    await tester.pumpAndSettle();
-    expect(find.text('找物品'), findsOneWidget);
-    expect(find.text('兩者都找'), findsOneWidget);
-    await tester.tap(find.text('找文字'));
-    await tester.pump();
-    await tester.tap(find.text('儲存'));
-    await tester.pumpAndSettle();
-    expect(result!.scanMode, PhotoScanMode.text);
-  });
-
-  testWidgets('without a text reader 找文字 is disabled and explained',
+  // 問題回報 #409: the dialog no longer asks 找什麼; it always looks for both.
+  testWidgets('the save dialog does not ask 找什麼 and always finds both',
       (tester) async {
-    final repository = WordDatabaseRepository();
-    await tester.pumpWidget(MaterialApp(
-      home: Builder(
-        builder: (context) => FilledButton(
-          onPressed: () => showSaveToAlbumDialog(context,
-              repository: repository, defaultTitle: '照片'),
-          child: const Text('開啟'),
+    for (final available in [true, false]) {
+      TextScan.available = available;
+      final repository = WordDatabaseRepository();
+      repository.addAlbum(name: '旅行');
+      SavePhotoChoice? result;
+      await tester.pumpWidget(MaterialApp(
+        home: Builder(
+          builder: (context) => FilledButton(
+            onPressed: () async => result = await showSaveToAlbumDialog(context,
+                repository: repository, defaultTitle: '照片'),
+            child: const Text('開啟'),
+          ),
         ),
-      ),
-    ));
-    await tester.tap(find.text('開啟'));
-    await tester.pumpAndSettle();
-    final chip = tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, '找文字'));
-    expect(chip.onSelected, isNull);
-    expect(find.text(TextScan.unavailableMessage), findsOneWidget);
+      ));
+      await tester.tap(find.text('開啟'));
+      await tester.pumpAndSettle();
+      expect(find.text('找物品'), findsNothing);
+      expect(find.text('找文字'), findsNothing);
+      expect(find.text('兩者都找'), findsNothing);
+      await tester.tap(find.text('儲存'));
+      await tester.pumpAndSettle();
+      expect(result!.scanMode, PhotoScanMode.both);
+    }
+    TextScan.available = true;
   });
 }

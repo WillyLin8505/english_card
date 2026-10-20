@@ -7,6 +7,7 @@ import '../theme/mobile_theme.dart';
 import '../widgets/mobile/common.dart';
 import '../widgets/mobile/m_icon.dart';
 import '../widgets/mobile/photo_widgets.dart';
+import 'deck_browser_screen.dart';
 import 'photo_grid_screen.dart';
 import 'photo_picker_screen.dart';
 
@@ -37,6 +38,33 @@ class _AlbumScreenState extends State<AlbumScreen> {
         builder: (_) => const PhotoGridScreen.search(),
       ));
 
+  Future<void> _rename(Album album) async {
+    final repo = AppScope.of(context).repository;
+    final controller = TextEditingController(text: album.name);
+    final name = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const UiText('重新命名相簿'),
+        content: TextField(controller: controller, autofocus: true),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const UiText('取消')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, controller.text),
+              child: const UiText('儲存')),
+        ],
+      ),
+    );
+    if (name != null) repo.renameAlbum(album.id, name);
+  }
+
+  /// 卡片集 (別人的相片冊) download entry (問題回報 #440): lives here, and a
+  /// downloaded deck comes back as one tile in the grid below.
+  void _downloadAlbums() => Navigator.of(context).push(MaterialPageRoute<void>(
+        builder: (_) => const DeckBrowserScreen(),
+      ));
+
   void _pickPhoto() => Navigator.of(context).push(MaterialPageRoute<void>(
         builder: (_) => const PhotoPickerScreen(),
       ));
@@ -48,9 +76,11 @@ class _AlbumScreenState extends State<AlbumScreen> {
     return ListenableBuilder(
       listenable: repo,
       builder: (context, _) {
+        final groups = repo.albumGroups();
+        if (_category != null && !groups.contains(_category)) _category = null;
         final albums = [
           for (final a in repo.albums)
-            if (_category == null || a.category == _category) a,
+            if (_category == null || repo.albumGroup(a) == _category) a,
         ];
         return Scaffold(
           backgroundColor: MColors.canvas,
@@ -59,7 +89,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
             child: Column(
               children: [
                 AlbumTopBar(
-                  title: '我的相片冊',
+                  title: '相片冊',
                   leading: RoundIconButton(
                     label: '返回',
                     icon: const MSvg(MIcon.arrowLeft, size: 20),
@@ -79,7 +109,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 12),
                     children: [
-                      for (final c in [null, ...albumCategories]) ...[
+                      for (final c in [null, ...groups]) ...[
                         AlbumPill(
                           label: c ?? '全部',
                           active: c == _category,
@@ -91,32 +121,36 @@ class _AlbumScreenState extends State<AlbumScreen> {
                   ),
                 ),
                 Expanded(
-                  child: albums.isEmpty
-                      ? Center(
-                          child: UiText('這個分類還沒有相片冊',
-                              style: MFont.inter(
-                                  14, FontWeight.w500, MColors.albumMuted)),
-                        )
-                      : GridView.builder(
-                          padding: const EdgeInsets.all(MSpace.md),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            mainAxisSpacing: MSpace.sm,
-                            crossAxisSpacing: MSpace.sm,
-                            mainAxisExtent: 180,
-                          ),
-                          itemCount: albums.length,
-                          itemBuilder: (context, i) => _AlbumCard(
-                            album: albums[i],
-                            cover: repo.albumCoverPhoto(albums[i].id),
-                            wordCount: repo.albumWordCount(albums[i].id),
-                            waiting: repo
-                                .photosInAlbum(albums[i].id)
-                                .any((p) => p.awaitingTagging),
-                            onTap: () => _openAlbum(albums[i]),
-                          ),
-                        ),
+                  child: GridView.builder(
+                    padding: const EdgeInsets.all(MSpace.md),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: MSpace.sm,
+                      crossAxisSpacing: MSpace.sm,
+                      mainAxisExtent: 180,
+                    ),
+                    itemCount: albums.length + 1,
+                    itemBuilder: (context, i) {
+                      if (i == albums.length) {
+                        return _DownloadAlbumTile(
+                            hint: repo.albums.isEmpty
+                                ? '還沒有相片：去拍照，或到卡片集下載圖片集'
+                                : null,
+                            onTap: _downloadAlbums);
+                      }
+                      return _AlbumCard(
+                        album: albums[i],
+                        cover: repo.albumCoverPhoto(albums[i].id),
+                        wordCount: repo.albumWordCount(albums[i].id),
+                        waiting: repo
+                            .photosInAlbum(albums[i].id)
+                            .any((p) => p.awaitingTagging),
+                        onTap: () => _openAlbum(albums[i]),
+                        onLongPress: () => _rename(albums[i]),
+                      );
+                    },
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -155,8 +189,10 @@ class _AlbumCard extends StatelessWidget {
   final int wordCount;
   final bool waiting;
   final VoidCallback onTap;
+  final VoidCallback onLongPress;
 
   const _AlbumCard({
+    required this.onLongPress,
     required this.album,
     required this.cover,
     required this.wordCount,
@@ -173,6 +209,7 @@ class _AlbumCard extends StatelessWidget {
             : const ColoredBox(color: MColors.albumPill);
     return Tap(
       onTap: onTap,
+      onLongPress: onLongPress,
       label: '${album.name}，$wordCount 個單字',
       child: Container(
         decoration: BoxDecoration(
@@ -187,6 +224,28 @@ class _AlbumCard extends StatelessWidget {
               image,
               if (waiting)
                 const Positioned(top: 8, right: 8, child: HourglassBadge()),
+              // A 卡片集 picture deck says where it came from (問題回報 #403).
+              if (album.deckSlug != null)
+                Positioned(
+                  top: 8,
+                  left: 8,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 140),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: MSpace.xs, vertical: 2),
+                      decoration: MDecor.softPanel(
+                        color: MColors.frost,
+                        radius: 10,
+                      ),
+                      child: UiText(
+                          album.author == null
+                              ? '卡片集'
+                              : '卡片集 · ${album.author}',
+                          style: MFont.inter(11, FontWeight.w600, Colors.white)),
+                    ),
+                  ),
+                ),
               const DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -230,4 +289,41 @@ class _AlbumCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The last tile of the 相片冊 grid: 下載相片冊 (問題回報 #440).
+class _DownloadAlbumTile extends StatelessWidget {
+  final String? hint;
+  final VoidCallback onTap;
+
+  const _DownloadAlbumTile({required this.onTap, this.hint});
+
+  @override
+  Widget build(BuildContext context) => Tap(
+        onTap: onTap,
+        label: '下載相片冊',
+        child: Container(
+          decoration: BoxDecoration(
+            color: MColors.albumPill,
+            borderRadius: MRadii.rLg,
+          ),
+          padding: const EdgeInsets.all(MSpace.sm),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.add_rounded, size: 32, color: MColors.primary),
+              const SizedBox(height: 4),
+              UiText('＋ 下載相片冊',
+                  textAlign: TextAlign.center,
+                  style: MFont.inter(14, FontWeight.w700, MColors.primary)),
+              if (hint != null) ...[
+                const SizedBox(height: 6),
+                UiText(hint!,
+                    textAlign: TextAlign.center,
+                    style: MFont.inter(11, FontWeight.w500, MColors.albumMuted)),
+              ],
+            ],
+          ),
+        ),
+      );
 }

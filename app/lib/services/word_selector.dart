@@ -259,6 +259,24 @@ class WordSelector {
     }
     slots.removeWhere((s) => s == null);
 
+    // 問題回報 #442: every position shows five labels when the photo has
+    // them. Short of five, take the nearest levels whatever their fit score:
+    // the next level easier first, then the next harder, and so on.
+    int distance(ScoredCandidate s) {
+      final lv = levelIndex(s.candidate.level);
+      return (lv - target).abs() * 2 + (lv > target ? 1 : 0);
+    }
+
+    final nearest = [...scored]..sort((a, b) {
+        final d = distance(a).compareTo(distance(b));
+        return d != 0 ? d : b.base.compareTo(a.base);
+      });
+    for (final s in nearest) {
+      if (picked().length >= maxWords) break;
+      if (s.rejected != null || !allowed(s)) continue;
+      slots.add(s);
+    }
+
     bool isLocked(ScoredCandidate s) => locked.contains(s.word);
     ScoredCandidate? weakest(bool Function(ScoredCandidate) where) {
       ScoredCandidate? w;
@@ -319,6 +337,9 @@ class WordSelector {
     if (topUp == null && words.length < maxWords && nounCount >= maxNouns) {
       topUp = bias == PosBias.descriptions ? 'descriptions' : 'actions';
     }
+    // The whole pool is short of five labels: all of them show, and the
+    // model is asked for more in the background (問題回報 #442).
+    if (topUp == null && pool.length < maxWords) topUp = 'harder';
     return Selection(words, scored, topUp);
   }
 }

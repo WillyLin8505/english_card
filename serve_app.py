@@ -141,7 +141,15 @@ def catalog_snapshot(session, target):
         if asset.id not in tags:
             continue
         positioned = {}
+        positioned_dropped = {}
         model_cefr = {}
+        # Card #408 (問題回報 #407): the tagger sets aside a tag it will not
+        # offer for review (no CEFR level, over the per-picture cap) but keeps
+        # its spot. A reviewer-approved binding still has that spot to draw.
+        for item in asset.dropped_tags or []:
+            name = str(item.get('word', '')).strip().lower()
+            if name and item.get('point') and name not in positioned_dropped:
+                positioned_dropped[name] = item
         for item in asset.tags or []:
             name = str(item.get('word', '')).strip().lower()
             if not name:
@@ -161,8 +169,11 @@ def catalog_snapshot(session, target):
             # An explicit approved sense/image binding is sufficient to
             # publish the label. Vision coordinates improve the overlay but
             # must not erase a human-approved label when tagging is pending.
-            item = next((positioned[name] for name in sense_label.get(binding['sense_id'], [word.normalized])
-                         if name in positioned), {})
+            names = sense_label.get(binding['sense_id'], [word.normalized])
+            item = next((positioned[name] for name in names if name in positioned), None)
+            if item is None:
+                item = next((positioned_dropped[name] for name in names
+                             if name in positioned_dropped), {})
             seen_words.add(word.id)
             # Decision 2 / P2: the photo tag's level is the card's level
             # (lexicon), never the vision model's guess.
@@ -877,15 +888,27 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_error(503, 'Dictionary temporarily unavailable')
             return
         unchanged = matches_etag(self.headers.get('If-None-Match', ''), snapshot.etag)
-        self.send_response(304 if unchanged else 200)
+        # format=sqlite (card #428): phones take the slim pack as one SQLite
+        # file, or a JSON delta when they hold the previous version.
+        fmt = 'sqlite' if query.get('format', ['json'])[0] == 'sqlite' else 'json'
+        body, ctype, gz = b'', 'application/json; charset=utf-8', False
+        status = 304 if unchanged else 200
+        if not unchanged:
+            try:
+                body, ctype, gz = snapshot.respond(
+                    query.get('since', [None])[0],
+                    accepts_gzip(self.headers.get('Accept-Encoding', '')), fmt)
+            except Exception:
+                logging.exception('Dictionary representation unavailable')
+                self.send_error(503, 'Dictionary temporarily unavailable')
+                return
+        self.send_response(status)
         self.send_header('ETag', snapshot.etag)
         self.send_header('Cache-Control', 'private, no-cache')
         self.send_header('Vary', 'Accept-Encoding')
-        self.send_header('Content-Type', 'application/json; charset=utf-8')
+        self.send_header('Content-Type', ctype)
         self.send_header('X-Content-Type-Options', 'nosniff')
         if not unchanged:
-            gz = accepts_gzip(self.headers.get('Accept-Encoding', ''))
-            body = snapshot.representation(query.get('since', [None])[0], gz)
             if gz:
                 self.send_header('Content-Encoding', 'gzip')
             self.send_header('Content-Length', str(len(body)))

@@ -10,6 +10,7 @@ import '../theme/mobile_theme.dart';
 import '../widgets/mobile/common.dart';
 import '../services/photo_store.dart';
 import '../widgets/mobile/photo_widgets.dart';
+import 'flashcard_screen.dart';
 
 /// 項目照片 — Figma "Project Photos · Mobile" (39:65): a searchable grid
 /// of photo cards. Three sources use it:
@@ -181,6 +182,26 @@ class _PhotoGridScreenState extends State<PhotoGridScreen> {
                           ),
                         ),
                 ),
+                if (albumId != null)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    child: Tap(
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) =>
+                              FlashcardScreen(albumId: albumId),
+                        ),
+                      ),
+                      label: '複習這本相簿',
+                      child: Container(
+                        height: 52,
+                        decoration: MDecor.primaryPill(),
+                        alignment: Alignment.center,
+                        child: UiText('複習這本相簿',
+                            style: MFont.inter(16, FontWeight.w700, Colors.white)),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),

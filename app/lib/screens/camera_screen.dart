@@ -143,10 +143,8 @@ class _CameraScreenState extends State<CameraScreen>
         context,
         repository: scope.repository,
         defaultTitle: defaultPhotoTitle(now),
-        scanMode: scope.settings.scanMode,
       );
       if (choice == null) return;
-      scope.settings.scanMode = choice.scanMode;
       final photo = await scope.intake.addPhoto(bytes,
           title: choice.title,
           albumId: choice.albumId,
@@ -176,10 +174,9 @@ class _CameraScreenState extends State<CameraScreen>
   }
 
   void _openLatest(Photo? latest) {
-    if (latest == null) {
-      showToast(context, '還沒有照片，先拍一張吧！');
-      return;
-    }
+    // No photo yet: the chip reads 「先選一張照片開始學習」, so open the
+    // picker instead of only telling the learner to take one.
+    if (latest == null) return _openPicker();
     AppScope.of(context).navigator.openPhoto(latest.id);
   }
 
@@ -268,13 +265,19 @@ class _CameraScreenState extends State<CameraScreen>
                     child: Column(
                       children: [
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          mainAxisAlignment: _controller == null
+                              ? MainAxisAlignment.center
+                              : MainAxisAlignment.spaceBetween,
                           children: [
-                            _RoundButton(
-                              label: '從相簿選擇',
-                              icon: MIcon.gallery20,
-                              onTap: _openPicker,
-                            ),
+                            // Without a camera the big middle button is the
+                            // one 選擇照片 entry; gallery and flash are hidden
+                            // (問題回報 #402).
+                            if (_controller != null)
+                              _RoundButton(
+                                label: '從相簿選擇',
+                                icon: MIcon.gallery20,
+                                onTap: _openPicker,
+                              ),
                             Tap(
                               onTap: _capture,
                               label: _controller == null ? '選擇照片' : '拍照',
@@ -315,12 +318,13 @@ class _CameraScreenState extends State<CameraScreen>
                                 ),
                               ),
                             ),
-                            _RoundButton(
-                              label: _torch ? '關閉閃光燈' : '開啟閃光燈',
-                              icon: MIcon.zap,
-                              highlighted: _torch,
-                              onTap: _toggleTorch,
-                            ),
+                            if (_controller != null)
+                              _RoundButton(
+                                label: _torch ? '關閉閃光燈' : '開啟閃光燈',
+                                icon: MIcon.zap,
+                                highlighted: _torch,
+                                onTap: _toggleTorch,
+                              ),
                           ],
                         ),
                         if (_controller == null ||
@@ -336,11 +340,6 @@ class _CameraScreenState extends State<CameraScreen>
                               runSpacing: MSpace.xxs,
                               children: [
                                 if (_controller == null) ...[
-                                  TextButton.icon(
-                                    onPressed: _openPicker,
-                                    icon: const MSvg(MIcon.gallery20, size: 16),
-                                    label: const UiText('選擇照片'),
-                                  ),
                                   TextButton.icon(
                                     onPressed: _starting ? null : _start,
                                     icon: const MSvg(MIcon.pulseDot, size: 16),
@@ -379,10 +378,12 @@ class _CameraScreenState extends State<CameraScreen>
                                 // longer than the Chinese (問題回報 #363).
                                 Flexible(
                                   child: UiText(
-                                      latest == null ? '先選一張照片開始學習' : '查看這張照片的單字',
+                                      latest == null
+                                          ? '先選一張照片開始學習'
+                                          : '查看這張照片的單字',
                                       textAlign: TextAlign.center,
-                                      style: MFont.manrope(
-                                          13, FontWeight.w700, MColors.primary)),
+                                      style: MFont.manrope(13, FontWeight.w700,
+                                          MColors.primary)),
                                 ),
                               ],
                             ),

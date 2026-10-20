@@ -93,6 +93,15 @@ class WordDetailScreen extends StatelessWidget {
   }
 }
 
+/// Label for a non-neutral register; null for neutral or unknown (#421).
+String? _registerLabel(String? register) => switch (register) {
+      'written' => '書面語',
+      'spoken' => '口語',
+      'slang' => '俚語',
+      'vulgar' => '粗俗',
+      _ => null,
+    };
+
 class _WordBody extends StatelessWidget {
   final WordEntry entry;
   final String? occurrenceId;
@@ -133,19 +142,21 @@ class _WordBody extends StatelessWidget {
       return words;
     }
 
+    // Same as the review back (issue #399): a word shown in an earlier
+    // section (近義詞) is not repeated in a later one (衍生詞、相關詞).
+    final shown = <String>{};
     Widget relatedSection(String label, List<String> kinds,
-        {bool collapsed = false}) {
-      final seen = <String>{};
+        ) {
       final words = [
         for (final kind in kinds)
           for (final w in relatedWords(kind))
-            if (seen.add(w.word.toLowerCase())) w
+            if (shown.add(w.word.toLowerCase())) w
       ];
       if (words.isEmpty) return const SizedBox.shrink();
       return _Section(
           label: label,
           child: _MoreList(
-            initial: collapsed ? 0 : 3,
+            initial: 10000,
             wrap: true,
             children: [
               for (final w in words)
@@ -213,16 +224,15 @@ class _WordBody extends StatelessWidget {
                   children: [
                     if (entry.entryType != 'word')
                       TagChip(entryTypeLabel(entry.entryType)),
-                    if (entry.pos.isNotEmpty) TagChip(posLabel(entry.pos)),
+                    // Several parts of speech: the 詞性與意思 section below
+                    // labels each group, so the header shows no POS (#421).
+                    if (entry.effectiveUsages.length <= 1 &&
+                        entry.pos.isNotEmpty)
+                      TagChip(posLabel(entry.pos)),
                     if (entry.level != null) LevelBadge(entry.level!),
-                    if (entry.register != null)
-                      TagChip(switch (entry.register) {
-                        'written' => '書面語',
-                        'spoken' => '口語',
-                        'slang' => '俚語',
-                        'vulgar' => '粗俗',
-                        _ => '中性／通用',
-                      }),
+                    // Neutral register is the default: only label the rest (#421).
+                    if (_registerLabel(entry.register) case final label?)
+                      TagChip(label),
                   ],
                 ),
               ],
@@ -258,7 +268,7 @@ class _WordBody extends StatelessWidget {
                 TagChip(posLabel(usage.pos)),
                 const SizedBox(height: MSpace.xxs),
                 _MoreList(
-                  initial: 2,
+                  initial: 3,
                   children: [
                     for (final sense in usage.senses)
                       if (sense.meaning.trim().isNotEmpty)
@@ -317,7 +327,14 @@ class _WordBody extends StatelessWidget {
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        _ContextCrop(photo: c.photo, anchor: c.occ.anchor),
+                        _ContextCrop(
+                            photo: c.photo,
+                            anchor: c.occ.anchor,
+                            // 問題回報 #410: the AI may mark the wrong
+                            // spot; long-press the dot and drag it.
+                            onMoved: (to) => AppScope.of(context)
+                                .repository
+                                .moveLabel(c.occ.id, to)),
                         Positioned(
                           left: MSpace.xs,
                           bottom: MSpace.xs,
@@ -346,7 +363,7 @@ class _WordBody extends StatelessWidget {
         _Section(
           label: '例句',
           child: _MoreList(
-            initial: 3,
+            initial: 5,
             children: [
               for (final example in examples)
                 Padding(
@@ -361,8 +378,7 @@ class _WordBody extends StatelessWidget {
       relatedSection('同音詞', ['homophones']),
       relatedSection('衍生詞', ['derived_terms']),
       relatedSection('相關詞', ['related']),
-      relatedSection('容易混淆的字', ['near_homophones', 'similar_spelling'],
-          collapsed: true),
+      relatedSection('容易混淆的字', ['near_homophones', 'similar_spelling']),
       if (forms.isNotEmpty)
         _Section(
             label: '詞形變化',
@@ -449,7 +465,9 @@ class _ContextCrop extends StatelessWidget {
   final Photo photo;
   final LabelPoint anchor;
 
-  const _ContextCrop({required this.photo, required this.anchor});
+  final ValueChanged<LabelPoint>? onMoved;
+
+  const _ContextCrop({required this.photo, required this.anchor, this.onMoved});
 
   static const _zoom = 2.0;
 
@@ -465,17 +483,25 @@ class _ContextCrop extends StatelessWidget {
           final dy =
               (box.height / 2 - at.dy).clamp(box.height - big.height, 0.0);
           return ClipRect(
-            child: OverflowBox(
-              alignment: Alignment.topLeft,
-              minWidth: big.width,
-              maxWidth: big.width,
-              minHeight: big.height,
-              maxHeight: big.height,
-              child: Transform.translate(
-                offset: Offset(dx, dy),
-                child: SizedBox.fromSize(size: big, child: PhotoImage(photo)),
+            child: Stack(fit: StackFit.expand, children: [
+              OverflowBox(
+                alignment: Alignment.topLeft,
+                minWidth: big.width,
+                maxWidth: big.width,
+                minHeight: big.height,
+                maxHeight: big.height,
+                child: Transform.translate(
+                  offset: Offset(dx, dy),
+                  child: SizedBox.fromSize(size: big, child: PhotoImage(photo)),
+                ),
               ),
-            ),
+              if (onMoved != null)
+                DraggableAnchorDot(
+                  at: at + Offset(dx, dy),
+                  onMoved: (to) => onMoved!(
+                      CoverGeometry(big, photo).fromBox(to - Offset(dx, dy))),
+                ),
+            ]),
           );
         },
       );
@@ -502,22 +528,22 @@ class _MoreListState extends State<_MoreList> {
   Widget build(BuildContext context) {
     final all = widget.children;
     final hidden = all.length - widget.initial;
-    final shown = _open || hidden <= 0 ? all : all.take(widget.initial).toList();
+    final shown =
+        _open || hidden <= 0 ? all : all.take(widget.initial).toList();
     final body = widget.wrap
         ? Wrap(spacing: MSpace.xs, runSpacing: MSpace.xs, children: shown)
-        : Column(
-            crossAxisAlignment: CrossAxisAlignment.start, children: shown);
+        : Column(crossAxisAlignment: CrossAxisAlignment.start, children: shown);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (shown.isNotEmpty) body,
         if (hidden > 0)
           Tap(
-            label: _open ? '收起' : '更多',
+            label: _open ? '收起' : '顯示更多',
             onTap: () => setState(() => _open = !_open),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: MSpace.xxs),
-              child: UiText(_open ? '收起' : '更多（$hidden）',
+              child: UiText(_open ? '收起' : '顯示更多（$hidden）',
                   style: MFont.manrope(14, FontWeight.w800, MColors.primary)),
             ),
           ),

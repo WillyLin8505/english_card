@@ -198,6 +198,8 @@ void main() {
       app.navigator.openPhoto('photo-breakfast');
       await tester.pumpAndSettle();
 
+      await tester.ensureVisible(find.byKey(const ValueKey('add-word')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('add-word')));
       await tester.pumpAndSettle();
       expect(find.text('自己加字'), findsWidgets);
@@ -214,6 +216,8 @@ void main() {
       expect(pinsBefore, isNot(contains('teapot')), reason: '還沒放就沒有標籤');
 
       // Tap an empty spot of the photo (its lower-left part).
+      await tester.ensureVisible(find.byType(PinnedPhoto));
+      await tester.pumpAndSettle();
       final photo = tester.getRect(find.byType(PinnedPhoto));
       await tester.tapAt(photo.bottomLeft + const Offset(90, -30));
       await tester.pumpAndSettle();
@@ -244,11 +248,15 @@ void main() {
       final app = await pumpApp(tester, initialTab: AppTab.album);
       app.navigator.openPhoto('photo-breakfast');
       await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(const ValueKey('add-word')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('add-word')));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField).first, 'napkin');
       await tester.enterText(find.byType(TextField).last, '餐巾');
       await tester.tap(find.text('儲存'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('不放位置'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('不放位置'));
       await tester.pumpAndSettle();
