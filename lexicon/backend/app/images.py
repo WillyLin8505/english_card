@@ -2834,9 +2834,13 @@ def label_word(s, sense_id, language, lemma) -> str | None:
 
 
 def sense_shows_word(s, asset, sense_id, language, lemma) -> tuple[str | None, bool]:
-    """(the English word looked for, whether the picture's labels name it)."""
+    """(the English word looked for, whether the picture's labels name it).
+    A label that is a synonym of the word (dad for father, refrigerator for
+    fridge: quality/label_synonyms.json, #427) names it too."""
+    from .label_synonyms import synonyms
     word = label_word(s, sense_id, language, lemma)
-    return word, bool(word and shows_word(asset.tags, word, lemma_forms(s, word)))
+    return word, bool(word and shows_word(asset.tags, word,
+                                          lemma_forms(s, word) | synonyms(word)))
 
 
 AUTO_ACCEPT_MIN = 0.35  # #34: below this only the no-Chinese fallback binding (0.3)

@@ -82,12 +82,16 @@
    "by": "card371 Claude review 2026-10-19"
   },
   "agenda|noun|1aec318c90c7": {
-   "term": "appointment book",
-   "auto": "organiser",
+   "term": "planner",
+   "auto": "appointment book",
    "meaning": "organiser, appointment book, engagement book",
    "ordinal": 0,
-   "why": "organiser is a person",
-   "by": "card384 Claude review 2026-10-19"
+   "why": "搜尋詞改成更能拍到的 planner",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)",
+   "prev": {
+    "term": "appointment book",
+    "by": "card384 Claude review 2026-10-19"
+   }
   },
   "age|noun|063eff9affb6": {
    "term": "plough beam",
@@ -2626,12 +2630,16 @@
    "by": "card384 Claude review 2026-10-19"
   },
   "dossier|noun|39a554f8582b": {
-   "term": "backrest",
-   "auto": "back of furniture",
+   "term": null,
+   "auto": "backrest",
    "meaning": "back of furniture, to rest the sitter's back on",
    "ordinal": 0,
-   "why": "back of furniture",
-   "by": "card384 Claude review 2026-10-19"
+   "why": "罕見義項（不是字表要教的意思），照片認不出",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)",
+   "prev": {
+    "term": "backrest",
+    "by": "card384 Claude review 2026-10-19"
+   }
   },
   "doucement|adv|2a6c0b3913fb": {
    "term": null,
@@ -4098,12 +4106,16 @@
    "by": "card384 Claude review 2026-10-19"
   },
   "grand|noun|b4cae209dc82": {
-   "term": "adult",
-   "auto": "grown-up",
+   "term": null,
+   "auto": "adult",
    "meaning": "grown-up",
    "ordinal": 0,
-   "why": "grown-up",
-   "by": "card384 Claude review 2026-10-19"
+   "why": "形容詞當名詞（某種人），照片認不出",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)",
+   "prev": {
+    "term": "adult",
+    "by": "card384 Claude review 2026-10-19"
+   }
   },
   "gratuitement|adv|55603bd39e15": {
    "term": null,
@@ -4610,12 +4622,16 @@
    "by": "card371 Claude review 2026-10-19"
   },
   "jacques|noun|54c6c8d0b213": {
-   "term": "crowbar",
-   "auto": "jemmy or crowbar",
+   "term": null,
+   "auto": "crowbar",
    "meaning": "a jemmy or crowbar",
    "ordinal": 1,
-   "why": "jemmy or crowbar",
-   "by": "card384 Claude review 2026-10-19"
+   "why": "罕見義項（不是字表要教的意思），照片認不出",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)",
+   "prev": {
+    "term": "crowbar",
+    "by": "card384 Claude review 2026-10-19"
+   }
   },
   "jacques|noun|5d99d96f6a12": {
    "term": null,
@@ -6522,12 +6538,16 @@
    "by": "card384 Claude review 2026-10-19"
   },
   "outre|noun|9a551db7c9c4": {
-   "term": "wineskin",
-   "auto": "goatskin",
+   "term": null,
+   "auto": "wineskin",
    "meaning": "goatskin, wine skin, water skin",
    "ordinal": 0,
-   "why": "goatskin, wine skin",
-   "by": "card384 Claude review 2026-10-19"
+   "why": "罕見義項（不是字表要教的意思），照片認不出",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)",
+   "prev": {
+    "term": "wineskin",
+    "by": "card384 Claude review 2026-10-19"
+   }
   },
   "outre|prep|b7c64aad7a45": {
    "term": null,
@@ -9418,12 +9438,16 @@
    "by": "card371 Claude review 2026-10-19"
   },
   "suisse|noun|5fdce7554d6e": {
-   "term": "swiss guard",
-   "auto": "guard",
+   "term": null,
+   "auto": "swiss guard",
    "meaning": "guard",
    "ordinal": 1,
-   "why": "guard (suisse)",
-   "by": "card384 Claude review 2026-10-19"
+   "why": "罕見義項（不是字表要教的意思），照片認不出",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)",
+   "prev": {
+    "term": "swiss guard",
+    "by": "card384 Claude review 2026-10-19"
+   }
   },
   "suite|noun|0e94e160642e": {
    "term": null,
@@ -11616,6 +11640,726 @@
    "ordinal": 1,
    "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
    "by": "card329 Qwen review 2026-10-20"
+  },
+  "administration|noun|116cfb28f790": {
+   "term": null,
+   "auto": "management",
+   "meaning": "management (administration; the process or practice of manag",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "âge|noun|236f1400ca58": {
+   "term": null,
+   "auto": "age",
+   "meaning": "age",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "amour|noun|783ef2b53795": {
+   "term": null,
+   "auto": "love",
+   "meaning": "love",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "ancien|noun|13445295b2b4": {
+   "term": null,
+   "auto": "old person",
+   "meaning": "an old person",
+   "ordinal": 0,
+   "why": "形容詞當名詞（某種人），照片認不出",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "août|noun|789f89037295": {
+   "term": null,
+   "auto": "august",
+   "meaning": "August",
+   "ordinal": 0,
+   "why": "月份／星期，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "appel|noun|c2209e0550fd": {
+   "term": null,
+   "auto": "call",
+   "meaning": "call",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "armes|noun|e629b35d936e": {
+   "term": null,
+   "auto": "coat of arms",
+   "meaning": "coat of arms",
+   "ordinal": 0,
+   "why": "罕見義項（不是字表要教的意思），照片認不出",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "attaque|noun|00317bc0cadf": {
+   "term": null,
+   "auto": "attack",
+   "meaning": "attack",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "attention|noun|45a76dca0dd2": {
+   "term": null,
+   "auto": "attention",
+   "meaning": "attention (mental focus)",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "attention|noun|0a35047160c4": {
+   "term": null,
+   "auto": "vigilance",
+   "meaning": "vigilance",
+   "ordinal": 1,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "avenir|noun|a4f16ce916d0": {
+   "term": null,
+   "auto": "future",
+   "meaning": "future",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "avoir|noun|22a11b2179cf": {
+   "term": null,
+   "auto": "asset",
+   "meaning": "asset, possession",
+   "ordinal": 0,
+   "why": "罕見義項（不是字表要教的意思），照片認不出",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "avril|noun|6f047abbecbb": {
+   "term": null,
+   "auto": "april",
+   "meaning": "April, the fourth month of the Gregorian calendar, having 30",
+   "ordinal": 0,
+   "why": "月份／星期，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "beau|noun|c298dd8e3e8a": {
+   "term": null,
+   "auto": "boyfriend",
+   "meaning": "boyfriend",
+   "ordinal": 0,
+   "why": "形容詞當名詞（某種人），照片認不出",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "beauté|noun|bc35b1f45807": {
+   "term": null,
+   "auto": "beauty",
+   "meaning": "beauty",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "besoin|noun|7f5f9e881f2e": {
+   "term": null,
+   "auto": "need",
+   "meaning": "need",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "besoin|noun|e8a675fcba60": {
+   "term": null,
+   "auto": "want",
+   "meaning": "want (state of being in need)",
+   "ordinal": 1,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "bon|noun|de61bc3b4f73": {
+   "term": null,
+   "auto": "voucher",
+   "meaning": "voucher, ticket, coupon",
+   "ordinal": 0,
+   "why": "罕見義項（不是字表要教的意思），照片認不出",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "budget|noun|a2a022e07972": {
+   "term": null,
+   "auto": "budget",
+   "meaning": "a budget",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "cartable|noun|69e5802b515b": {
+   "term": "schoolbag",
+   "auto": "satchel",
+   "meaning": "satchel; schoolbag",
+   "ordinal": 0,
+   "why": "搜尋詞改成更能拍到的 schoolbag",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "chambre|noun|17a6876ced23": {
+   "term": "bedroom",
+   "auto": "room",
+   "meaning": "a room.",
+   "ordinal": 0,
+   "why": "搜尋詞改成更能拍到的 bedroom",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "chambre|noun|ff8098cfae32": {
+   "term": "bedroom",
+   "auto": "hotel room",
+   "meaning": "a hotel room.",
+   "ordinal": 1,
+   "why": "搜尋詞改成更能拍到的 bedroom",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "choix|noun|f3cfe27b8365": {
+   "term": null,
+   "auto": "choice",
+   "meaning": "choice",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "chose|noun|88aa1f1790cd": {
+   "term": null,
+   "auto": "thing",
+   "meaning": "thing",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "classe|noun|055306403f78": {
+   "term": "classroom",
+   "auto": "class",
+   "meaning": "class, type, group",
+   "ordinal": 0,
+   "why": "搜尋詞改成更能拍到的 classroom",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "classe|noun|bea7f89b1926": {
+   "term": "classroom",
+   "auto": "class",
+   "meaning": "class, cohort (all the recruits conscripted in a particular ",
+   "ordinal": 1,
+   "why": "搜尋詞改成更能拍到的 classroom",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "conseil|noun|20c191d3fb08": {
+   "term": null,
+   "auto": "piece of advice",
+   "meaning": "piece of advice",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "conseil|noun|738b5c7908f6": {
+   "term": null,
+   "auto": "council",
+   "meaning": "council",
+   "ordinal": 1,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "consommation|noun|48be1921a308": {
+   "term": null,
+   "auto": "consumption",
+   "meaning": "consumption",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "couple|noun|d00ba475a59a": {
+   "term": null,
+   "auto": "force couple",
+   "meaning": "a force couple; a pure moment",
+   "ordinal": 1,
+   "why": "罕見義項（不是字表要教的意思），照片認不出",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "courage|noun|635e6a5ac335": {
+   "term": null,
+   "auto": "courage",
+   "meaning": "courage",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "création|noun|9a35a1bdd692": {
+   "term": null,
+   "auto": "creation",
+   "meaning": "creation",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "début|noun|b307116d1fbf": {
+   "term": null,
+   "auto": "start",
+   "meaning": "start, beginning",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "décembre|noun|5151058cd566": {
+   "term": null,
+   "auto": "december",
+   "meaning": "December",
+   "ordinal": 0,
+   "why": "月份／星期，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "dieu|noun|c37a8b2a2d11": {
+   "term": null,
+   "auto": "god",
+   "meaning": "a god, male divinity",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "dimanche|noun|b7d7543f7c8f": {
+   "term": null,
+   "auto": "sunday",
+   "meaning": "Sunday",
+   "ordinal": 0,
+   "why": "月份／星期，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "doute|noun|4eac7b3983f0": {
+   "term": null,
+   "auto": "doubt",
+   "meaning": "doubt",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "durée|noun|9bd13adccc46": {
+   "term": null,
+   "auto": "duration",
+   "meaning": "duration, period, time taken",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "économie|noun|a79f6973d708": {
+   "term": null,
+   "auto": "economy",
+   "meaning": "economy",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "économie|noun|ddd79743bf9e": {
+   "term": null,
+   "auto": "economics",
+   "meaning": "economics (the study of resource and wealth allocation, cons",
+   "ordinal": 1,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "entier|noun|2adc6b3d1a61": {
+   "term": null,
+   "auto": "integer",
+   "meaning": "integer, whole number",
+   "ordinal": 0,
+   "why": "罕見義項（不是字表要教的意思），照片認不出",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "épisode|noun|ff5dae369f2f": {
+   "term": null,
+   "auto": "episode",
+   "meaning": "episode",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "ex|noun|e302065e35dd": {
+   "term": null,
+   "auto": "ex",
+   "meaning": "ex (former partner)",
+   "ordinal": 0,
+   "why": "形容詞當名詞（某種人），照片認不出",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "fait|noun|a8e85d01c24e": {
+   "term": null,
+   "auto": "fact",
+   "meaning": "fact",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "faveur|noun|bb1d78c4e8e3": {
+   "term": null,
+   "auto": "favour",
+   "meaning": "favour",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "foi|noun|9db8cf68d2a3": {
+   "term": null,
+   "auto": "faith",
+   "meaning": "Faith.",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "futur|noun|72bdd242e550": {
+   "term": null,
+   "auto": "future",
+   "meaning": "future (what will happen)",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "futur|noun|91288a9359c5": {
+   "term": null,
+   "auto": "future",
+   "meaning": "future, future tense",
+   "ordinal": 1,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "goût|noun|0e003fe5fbc6": {
+   "term": null,
+   "auto": "taste",
+   "meaning": "taste, flavour",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "gouvernement|noun|89824b0fdd1e": {
+   "term": null,
+   "auto": "government",
+   "meaning": "government",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "gros|noun|f6c81657b684": {
+   "term": null,
+   "auto": "overweight person",
+   "meaning": "an overweight person",
+   "ordinal": 0,
+   "why": "形容詞當名詞（某種人），照片認不出",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "internet|noun|07f9bf731948": {
+   "term": null,
+   "auto": "internet",
+   "meaning": "the Internet",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "janvier|noun|ed2f2e1a8ca0": {
+   "term": null,
+   "auto": "january",
+   "meaning": "January",
+   "ordinal": 0,
+   "why": "月份／星期，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "juillet|noun|13c116c6de67": {
+   "term": null,
+   "auto": "july",
+   "meaning": "July",
+   "ordinal": 0,
+   "why": "月份／星期，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "juin|noun|7f0fa744f491": {
+   "term": null,
+   "auto": "june",
+   "meaning": "June",
+   "ordinal": 0,
+   "why": "月份／星期，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "justice|noun|f249da2188d6": {
+   "term": null,
+   "auto": "justice",
+   "meaning": "justice",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "légende|noun|ca6a4dc11fb9": {
+   "term": null,
+   "auto": "legend",
+   "meaning": "legend (story of unknown origin describing plausible but ext",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "légende|noun|12ea0b0c9741": {
+   "term": null,
+   "auto": "legend",
+   "meaning": "legend (key to the symbols and color codes on a map)",
+   "ordinal": 1,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "liberté|noun|4e16bc31213c": {
+   "term": null,
+   "auto": "liberty",
+   "meaning": "liberty, freedom. 1688, Guy Miège, The Great French Dictiona",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "lire|noun|4d81158d30c7": {
+   "term": null,
+   "auto": "lira",
+   "meaning": "lira (unit of currency)",
+   "ordinal": 0,
+   "why": "罕見義項（不是字表要教的意思），照片認不出",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "lundi|noun|678c928044c0": {
+   "term": null,
+   "auto": "monday",
+   "meaning": "Monday",
+   "ordinal": 0,
+   "why": "月份／星期，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "mai|noun|11069fd59d00": {
+   "term": null,
+   "auto": "may",
+   "meaning": "May (month)",
+   "ordinal": 0,
+   "why": "月份／星期，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "manière|noun|798d59b5ebbe": {
+   "term": null,
+   "auto": "manner",
+   "meaning": "manner, way",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "membre|noun|a4343e366f7a": {
+   "term": null,
+   "auto": "member",
+   "meaning": "member (of a group or organization)",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "mètre|noun|f43c3e6c7aa8": {
+   "term": null,
+   "auto": "metre",
+   "meaning": "metre/meter",
+   "ordinal": 0,
+   "why": "長度單位，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "noël|noun|54b5c73e4718": {
+   "term": "christmas",
+   "auto": "christmas song",
+   "meaning": "A Christmas song.",
+   "ordinal": 1,
+   "why": "搜尋詞改成更能拍到的 christmas",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "noir|noun|94987ff87783": {
+   "term": null,
+   "auto": "black person",
+   "meaning": "a black person",
+   "ordinal": 0,
+   "why": "形容詞當名詞（某種人），照片認不出",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "novembre|noun|01241f7ca79e": {
+   "term": null,
+   "auto": "november",
+   "meaning": "November",
+   "ordinal": 0,
+   "why": "月份／星期，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "octobre|noun|2404e0d3c1eb": {
+   "term": null,
+   "auto": "october",
+   "meaning": "October",
+   "ordinal": 0,
+   "why": "月份／星期，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "opposition|noun|f3af10fe45c7": {
+   "term": null,
+   "auto": "opposition",
+   "meaning": "opposition",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "ordre|noun|35741dacbb9c": {
+   "term": null,
+   "auto": "order",
+   "meaning": "order (way in which things are arranged)",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "ordre|noun|c1ec391b91a6": {
+   "term": null,
+   "auto": "order",
+   "meaning": "order (group)",
+   "ordinal": 1,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "pauvre|noun|1969138f8199": {
+   "term": null,
+   "auto": "poor person",
+   "meaning": "poor person; pauper",
+   "ordinal": 0,
+   "why": "形容詞當名詞（某種人），照片認不出",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "peur|noun|fbc8b373ab60": {
+   "term": null,
+   "auto": "fear",
+   "meaning": "fear",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "porter|noun|3985799391fb": {
+   "term": null,
+   "auto": "porter",
+   "meaning": "porter (beer)",
+   "ordinal": 0,
+   "why": "罕見義項（不是字表要教的意思），照片認不出",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "pratique|noun|6661e3859cc3": {
+   "term": null,
+   "auto": "practice",
+   "meaning": "practice",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "présence|noun|23cfe760914b": {
+   "term": null,
+   "auto": "presence",
+   "meaning": "presence",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "religion|noun|f97f05377f52": {
+   "term": null,
+   "auto": "religion",
+   "meaning": "religion",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "riche|noun|5a4cd5d9b2da": {
+   "term": null,
+   "auto": "rich person",
+   "meaning": "rich person",
+   "ordinal": 0,
+   "why": "形容詞當名詞（某種人），照片認不出",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "santé|noun|a17df0ced6d0": {
+   "term": null,
+   "auto": "health",
+   "meaning": "health",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "septembre|noun|ce664324fc3d": {
+   "term": null,
+   "auto": "september",
+   "meaning": "September (the ninth month of the Gregorian calendar, follow",
+   "ordinal": 0,
+   "why": "月份／星期，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "situation|noun|ea90eed3962e": {
+   "term": null,
+   "auto": "situation",
+   "meaning": "situation (all meanings)",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "suisse|noun|38ba6589f5d4": {
+   "term": null,
+   "auto": "chipmunk",
+   "meaning": "chipmunk",
+   "ordinal": 0,
+   "why": "罕見義項（不是字表要教的意思），照片認不出",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "théorie|noun|19976fafe749": {
+   "term": null,
+   "auto": "theory",
+   "meaning": "theory",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "total|noun|6e0bbe9dabac": {
+   "term": null,
+   "auto": "total",
+   "meaning": "total",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "travaux|noun|39dfeb686367": {
+   "term": "roadworks",
+   "auto": "roadwork",
+   "meaning": "roadwork",
+   "ordinal": 0,
+   "why": "搜尋詞改成更能拍到的 roadworks",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "union|noun|c10ce19516e6": {
+   "term": null,
+   "auto": "union",
+   "meaning": "union",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "vente|noun|f2df6c407e45": {
+   "term": null,
+   "auto": "sale",
+   "meaning": "sale",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "victime|noun|a32a69130595": {
+   "term": null,
+   "auto": "victim",
+   "meaning": "victim",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "victoire|noun|74cd2e031408": {
+   "term": null,
+   "auto": "victory",
+   "meaning": "victory; win",
+   "ordinal": 0,
+   "why": "抽象名詞，照片拍不到",
+   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
   }
  }
 }

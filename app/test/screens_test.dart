@@ -168,6 +168,9 @@ void main() {
       await tester.tap(find.byType(Switch));
       await tester.pumpAndSettle();
       expect(find.text('已學會與學習中的舊詞'), findsOneWidget);
+      // Scroll it clear of the bottom edge first (the list's height changed in #444).
+      await tester.ensureVisible(find.bySemanticsLabel(RegExp('^復原 Bread')));
+      await tester.pumpAndSettle();
       await tester.tap(find.bySemanticsLabel(RegExp('^復原 Bread')));
       await tester.pumpAndSettle();
       expect(app.repository.isArchived(app.repository.entryByWord('bread')!.id),

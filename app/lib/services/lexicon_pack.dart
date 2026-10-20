@@ -175,6 +175,8 @@ class LexiconPack extends ChangeNotifier {
       throw StateError('No SQLite pack to patch');
     }
     db.applyDelta(patch);
+    // Same file, new rows: cached senses/details are stale (card #449).
+    _source?.invalidate();
     _installFromDb(db);
   }
 
@@ -474,9 +476,13 @@ class LexSource {
     return _details[id] = parsed;
   }
 
-  void close() {
+  void invalidate() {
     _senses.clear();
     _details.clear();
+  }
+
+  void close() {
+    invalidate();
     db.close();
   }
 }

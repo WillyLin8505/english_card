@@ -461,8 +461,6 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
           ),
           const SizedBox(height: 4),
           _LevelRow(
-            level: session.targetLevel,
-            offset: session.offset,
             bias: session.bias,
             busy: topping,
             onBias: session.setBias,
@@ -624,9 +622,6 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
     );
   }
 }
-
-/// The level line under the list title, with the spec's shortcuts:
-/// 「更多動作」「更多描述」「簡單一點」「難一點」.
 
 /// Under the photo while an added word waits for its spot (問題回報 #323:
 /// 可在照片上點一下放位置，沒放就不標位置).
