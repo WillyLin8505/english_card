@@ -393,3 +393,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，等伺服器詞庫同步進
 | analyze／test（commit eaf80463） | 通過 | flutter analyze 0 error、0 warning；flutter test 500 通過、3 略過；card428_sqlite_sync_test 與 card450_level_row_dup_test 在 Mac 單獨跑 5/5 通過 | — | — |
 | #449（上一輪 M30 的 SQLite delta 測試） | 通過 | Mac 上 card428「a phone downloads the pack as SQLite, then takes deltas」現在通過，delta 後卡片意思會更新 | — | — |
 | #450 照片詳情難度不再重複 | 通過 | 模擬器新安裝、選照片存檔後的照片詳情只剩上方 A1–C2 滑桿（入門（A1）· 剛好），下方重複的「單字難度」列已拿掉 | mac_verify_shots/2026-10-20/m33_450_photo_detail.png | — |
+
+## 2026-10-20 M34（iPhone 模擬器）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #450 | 通過 | M33 已在模擬器驗過：照片詳情只剩上方 A1–C2 滑桿，下方重複的「單字難度」列已拿掉；這次沒有改到 app/lib | mac_verify_shots/2026-10-20/m33_450_photo_detail.png | — |
