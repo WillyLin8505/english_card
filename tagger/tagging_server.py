@@ -29,7 +29,9 @@ POST /tag?level=B1&lang=en&native=zh-TW[&focus=harder][&exclude=cup,mug]\n      
             Meanings, CEFR, pronunciation, examples and relations come from
             the downloaded offline word database, never from this model.
 
-GET /health  -> {"ok": true, "model": ..., "ollama": true, "keyOk": true|false|null}
+GET /health  -> {"ok": true, "model": ..., "ollama": true, "keyOk": true|false|null,
+                 "backend": "llamacpp", "backendUrl": ..., "backendError": null|"why"}
+                (ok/ollama are false when llama-server/Ollama is down)
 
 Standard library only; `wordfreq` (pip) and data/raw/cmudict.dict are
 used when present. Run:  python tagger/tagging_server.py
@@ -871,14 +873,25 @@ class Tagger:
             with self._inference():
                 yield
 
-    def ollama_ok(self) -> bool:
+    def backend_url(self) -> str:
+        """Where the model actually runs (llama-server or Ollama)."""
+        return LLAMACPP_URL if BACKEND == 'llamacpp' else self.ollama_url
+
+    def backend_error(self) -> str | None:
+        """None when the model backend answers its health check, else why not."""
         url = (f'{LLAMACPP_URL}/health' if BACKEND == 'llamacpp'
                else f'{self.ollama_url}/api/version')
         try:
             with urllib.request.urlopen(url, timeout=3):
-                return True
-        except (urllib.error.URLError, OSError):
-            return False
+                return None
+        except urllib.error.HTTPError as e:  # llama-server answers 503 while loading
+            return f'{BACKEND} at {self.backend_url()} answered HTTP {e.code}'
+        except (urllib.error.URLError, OSError) as e:
+            return (f'{BACKEND} not reachable at {self.backend_url()}: '
+                    f'{getattr(e, "reason", e)}')
+
+    def ollama_ok(self) -> bool:
+        return self.backend_error() is None
 
     def _chat(self, prompt: str, schema: dict, image: bytes | None = None,
               temperature: float = 0, max_tokens: int | None = None,
@@ -1389,8 +1402,13 @@ def make_handler(tagger: Tagger, api_key: str):
             if urlparse(self.path).path == '/health':
                 sent = self.headers.get('X-API-Key')
                 key_ok = None if sent is None else secrets.compare_digest(sent, api_key)
-                self._json(200, {'ok': True, 'model': tagger.model,
-                                 'ollama': tagger.ollama_ok(), 'keyOk': key_ok,
+                # ok follows the model backend (card #451): the tagger alone
+                # answering is not enough — every model call 502s without it.
+                backend_error = tagger.backend_error()
+                self._json(200, {'ok': backend_error is None, 'model': tagger.model,
+                                 'ollama': backend_error is None, 'keyOk': key_ok,
+                                 'backend': BACKEND, 'backendUrl': tagger.backend_url(),
+                                 'backendError': backend_error,
                                  'prep': IMAGE_PREP_VERSION,
                                  'cefrNumPredict': CEFR_MAX_TOKENS,
                                  'keepAlive': KEEP_ALIVE,
@@ -1416,7 +1434,10 @@ def make_handler(tagger: Tagger, api_key: str):
                                  'code': 'unsafe_image'})
                 return
             except urllib.error.URLError as e:
-                self._json(502, {'error': f'Ollama not reachable at {tagger.ollama_url}: {e.reason}'})
+                where = ('llama-server' if BACKEND == 'llamacpp' else 'Ollama')
+                self._json(502, {'error': f'{where} not reachable at '
+                                          f'{tagger.backend_url()}: {e.reason}',
+                                 'code': 'backend_unreachable'})
                 return
             except (KeyError, ValueError, TypeError, json.JSONDecodeError) as e:
                 # The service is up; this photo's reply was unusable. 422,

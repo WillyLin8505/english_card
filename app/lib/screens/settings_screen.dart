@@ -1,7 +1,6 @@
 import '../l10n/ui_text.dart';
 import '../screens/connection_scan_screen.dart';
 import '../screens/data_sources_screen.dart';
-import '../screens/deck_browser_screen.dart';
 import '../screens/privacy_policy_screen.dart';
 import '../services/learning_content.dart';
 import '../services/learning_insights.dart';
@@ -295,6 +294,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                         ],
                       ),
+                      // 問題回報 #317: the review card's look only.
+                      _Card(
+                        title: '卡片樣式',
+                        children: [
+                          CardStylePicker(
+                            selected: settings.cardStyle,
+                            onChanged: (style) => settings.cardStyle = style,
+                          ),
+                          _note('只改變複習卡片的外觀，內容和複習方式不變。'),
+                          const Divider(height: 24),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: UiText('照片上的單字標示',
+                                    style: MFont.manrope(
+                                        15, FontWeight.w800, MColors.ink)),
+                              ),
+                              Switch(
+                                key: const ValueKey('photo-labels-switch'),
+                                value: settings.showPhotoLabels,
+                                onChanged: (v) => settings.showPhotoLabels = v,
+                              ),
+                            ],
+                          ),
+                          _note('複習卡片背面的照片上，顯示這個單字的標籤。預設打開。'),
+                        ],
+                      ),
+                      _insightsCard(repo.insights()),
                       // The store build has no server to point at (問題回報
                       // #265): photos are recognized on the phone, so the
                       // address / key fields are a developer and web thing.
@@ -377,48 +404,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ],
                       ),
                       _Card(
-                        title: '卡片集',
-                        children: [
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: TextButton(
-                              onPressed: () => Navigator.of(context).push(
-                                  MaterialPageRoute<void>(
-                                      builder: (_) =>
-                                          const DeckBrowserScreen())),
-                              child: const UiText('瀏覽並下載卡片集'),
-                            ),
-                          ),
-                        ],
-                      ),
-                      // 問題回報 #317: the review card's look only.
-                      _Card(
-                        title: '卡片樣式',
-                        children: [
-                          CardStylePicker(
-                            selected: settings.cardStyle,
-                            onChanged: (style) => settings.cardStyle = style,
-                          ),
-                          _note('只改變複習卡片的外觀，內容和複習方式不變。'),
-                          const Divider(height: 24),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: UiText('照片上的單字標示',
-                                    style: MFont.manrope(
-                                        15, FontWeight.w800, MColors.ink)),
-                              ),
-                              Switch(
-                                key: const ValueKey('photo-labels-switch'),
-                                value: settings.showPhotoLabels,
-                                onChanged: (v) => settings.showPhotoLabels = v,
-                              ),
-                            ],
-                          ),
-                          _note('複習卡片背面的照片上，顯示這個單字的標籤。預設打開。'),
-                        ],
-                      ),
-                      _Card(
                         title: '關於',
                         children: [
                           Align(
@@ -433,7 +418,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                         ],
                       ),
-                      _insightsCard(repo.insights()),
                       // 問題回報 #390: advanced settings sit at the bottom,
                       // collapsed; a failed connection shows only as a hint.
                       _Card(

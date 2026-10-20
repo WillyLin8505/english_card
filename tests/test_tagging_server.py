@@ -85,8 +85,16 @@ class _StubTagger:
     def _background_inference(self):
         return nullcontext()
 
+    backend_down = None
+
     def ollama_ok(self):
-        return True
+        return self.backend_down is None
+
+    def backend_url(self):
+        return 'http://127.0.0.1:8790'
+
+    def backend_error(self):
+        return self.backend_down
 
     def _inference(self, *_):
         return nullcontext()
@@ -180,6 +188,31 @@ def test_preflight_and_health(server):
         req = urllib.request.Request(f'{base}/health', headers={'X-API-Key': key})
         with urllib.request.urlopen(req) as r:
             assert json.loads(r.read())['keyOk'] is ok
+
+
+def test_health_and_model_calls_say_when_llama_server_is_down(server, monkeypatch):
+    """Card #451: tagger up but llama-server dead must not look healthy."""
+    base, stub = server
+    stub.backend_down = 'llamacpp not reachable at http://127.0.0.1:8790: refused'
+    with urllib.request.urlopen(f'{base}/health') as r:
+        body = json.loads(r.read())
+    assert body['ok'] is False and body['ollama'] is False
+    assert '8790' in body['backendError'] and body['backendUrl'].endswith(':8790')
+
+    def refused(*_, **__):
+        raise urllib.error.URLError('connection refused')
+    monkeypatch.setattr(ts, 'BACKEND', 'llamacpp')
+    monkeypatch.setattr(stub, '_chat', refused)
+    with pytest.raises(urllib.error.HTTPError) as e:
+        _post(f'{base}/translate',
+              json.dumps({'lang': 'en', 'native': 'zh-TW', 'kind': 'word',
+                          'items': [{'id': '0', 'text': 'pasta'}]}).encode(),
+              {'X-API-Key': 'secret', 'Content-Type': 'application/json'})
+    assert e.value.code == 502
+    err = json.loads(e.value.read())
+    assert err['code'] == 'backend_unreachable'
+    assert 'llama-server' in err['error'] and '8790' in err['error']
+    assert 'Ollama' not in err['error']
 
 
 def test_label_area_is_kept_as_fractions():

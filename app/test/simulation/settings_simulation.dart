@@ -50,19 +50,15 @@ void main() {
       }
     }
 
-    // --- 語言：相同語言不能互換（母語區塊的「英文」是第二個出現，學習語言
-    // 區塊同樣有一個「英文（English）」chip，用 .last 取母語那一個）---
-    current = '母語選成學習語言';
+    // --- 語言：不列出衝突的組合（#431：母語不列正在學的英文，學習語言不列
+    // 自己的母語「繁體中文」，所以整頁只有學習語言那一個「英文」chip）---
+    current = '語言不列衝突選項';
     final enChips = find.widgetWithText(ChoiceChip, '英文（English）');
-    if (enChips.evaluate().length < 2) {
-      f.add('找不到母語的英文選項', '$current（找到 ${enChips.evaluate().length} 個）');
-    } else {
-      await tester.tap(enChips.last);
-      await tester.pump();
-      if (find.text('學習語言和母語不能相同').evaluate().isEmpty) {
-        f.add('母語與學習語言相同時沒有提示', current);
-      }
-      await tester.pump(const Duration(seconds: 3));
+    if (enChips.evaluate().length != 1) {
+      f.add('語言選項列出衝突組合', '$current（英文 chip ${enChips.evaluate().length} 個）');
+    }
+    if (find.textContaining('繁體中文 · 即將推出').evaluate().isNotEmpty) {
+      f.add('語言選項列出衝突組合', '$current（學習語言列出自己的母語）');
     }
     if (settings.nativeLanguage != 'zh-TW') {
       f.add('提示後母語被誤改', settings.nativeLanguage);
@@ -333,11 +329,10 @@ void main() {
       }
     }
 
-    // --- 子頁面：隱私權政策、資料來源與授權要能開、能回來。卡片集頁用
-    // DeckLibrary.instance（Hive），這裡只看入口；頁面本身由
-    // card323_deck_library_test 測 ---
-    if (find.text('瀏覽並下載卡片集').evaluate().isEmpty) {
-      f.add('找不到「瀏覽並下載卡片集」', '卡片集');
+    // --- 子頁面：隱私權政策、資料來源與授權要能開、能回來。下載入口只在相片冊
+    // （問題回報 #446），設定頁不能再有 ---
+    if (find.text('瀏覽並下載卡片集').evaluate().isNotEmpty) {
+      f.add('設定頁不該再有「瀏覽並下載卡片集」（入口只在相片冊）', '卡片集');
     }
     for (final label in ['查看隱私權政策', '資料來源與授權']) {
       current = '開「$label」';

@@ -84,8 +84,11 @@ For imports, `kind: "bundle"` accepts up to 80 mixed `gloss`, `sentence`,
 The lexicon uses it only after dictionary sources fill everything they can,
 and automatically falls back to individual requests if a bundle fails.
 
-`GET /health` — `{"ok", "model", "ollama", "keyOk"}`; `keyOk` checks the
-`X-API-Key` you send (null if none).
+`GET /health` — `{"ok", "model", "ollama", "keyOk", "backend", "backendUrl",
+"backendError"}`; `keyOk` checks the `X-API-Key` you send (null if none).
+`ok`/`ollama` are false and `backendError` says why when the model backend
+(llama-server :8790 or Ollama) does not answer — every model call then 502s
+with `code: backend_unreachable`; restart with `start_tagger.bat`.
 
 ## Speed and quality
 

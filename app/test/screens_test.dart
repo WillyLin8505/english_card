@@ -554,6 +554,8 @@ void main() {
       // Store build without a server: no address / key fields (問題回報 #265).
       expect(app.settings.showsTaggingServer, isFalse);
       expect(find.text('照片辨識連線'), findsNothing);
+      // 卡 #453: the photo card sits below 卡片樣式 / 學習洞察 / 資料 now.
+      await tester.scrollUntilVisible(find.text('照片辨識'), 300);
       expect(find.text('照片辨識'), findsOneWidget);
     });
 
