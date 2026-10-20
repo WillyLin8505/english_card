@@ -354,3 +354,10 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，等伺服器詞庫同步進
 |----|----|----|----|----|
 | 實機重現：選照片辨識 | 不通過 | iPhone 12（iOS 26.6.1，4 GB 記憶體），commit bb73d03 的 profile 版、上架設定（不帶 iphone.json，本機 Apple Vision）。owner 在拍照／選照片→辨識時 App 消失；devicectl 回報「App terminated due to signal 9」。iPhone 上的 JetsamEvent-2026-10-20-081153：largestProcess = Runner，Runner reason = per-process-limit，被砍時常駐記憶體 2,098 MB（lifetimeMax 134,272 頁 × 16 KB），狀態 active／frontmost；同時 cameracaptured 用 258 MB。也就是 App 超過 iOS 單一 App 約 2 GB 的記憶體上限，被系統強制結束，沒有一般的 crash 報告 | — | 高 |
 | 記憶體可能的來源 | 不通過 | 對照 Mac 上的觀察：App 沙盒的 dictionary_cache_v1.hive 有 261 MB，整包讀進 Dart 字串會變成好幾倍大（10/19 在模擬器上就曾在讀這個 Hive 檔時 Out of Memory）；最近照片用 entity.originBytes 原圖（48MP／HEIC）沒有縮小，再交給相機與 Apple Vision。建議：1) 詞庫不要整包載入記憶體（分片、索引或 SQLite）；2) 選到的照片先縮到長邊 2048 再存檔、顯示、辨識；3) 用 Xcode Instruments 的 Allocations 在 iPhone 上量一次啟動後與辨識時的記憶體 | — | 高 |
+
+## 2026-10-20 M-ASK2 實機補充（不碰手機的對照組）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| 實機：不碰手機也會被砍 | 不通過 | 同一台 iPhone 12（iOS 26.6.1）、上架設定 profile 版：08:20:07 從 Mac 啟動 App 後完全不碰手機，08:20:33（26 秒後）App 就以 signal 9 結束；08:17:36 的 JetsamEvent 也是 Runner per-process-limit 2,098 MB，當時相機服務 cameracaptured 只是背景閒置（17 MB）。三次被砍（08:11:52、08:14:27、08:17:36）都是 Runner 2,098 MB。所以不是選照片造成，而是 App 啟動後（載入或同步詞庫時）記憶體就衝到上限；owner 剛好在那段時間選照片才以為是辨識閃退 | — | 高 |
+| 建議修法方向 | 不通過 | 優先查啟動時的詞庫載入：沙盒 dictionary_cache_v1.hive 約 261 MB，用 Hive 整包讀成 Dart 物件會遠超過 2 GB 上限的一半以上。建議改成只讀需要的欄位或分片／索引（例如 SQLite），或至少在背景同步完成前不要同時保留新舊兩份詞庫；修好後請 mac_sync 開新的 M 項，Mac 會在這台 iPhone 上重驗（啟動後放 5 分鐘＋選照片辨識） | — | 高 |
