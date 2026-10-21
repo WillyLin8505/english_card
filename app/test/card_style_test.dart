@@ -182,7 +182,7 @@ void main() {
       await showBack(tester, s);
       expect(find.byType(FlashcardBack), findsOneWidget);
       // #251's items are all still there.
-      for (final text in ['中文意思', '例句與翻譯', '詞形變化', '同義詞', '相關詞',
+      for (final text in ['詞性與意思', '例句與翻譯', '詞形變化', '同義詞', '相關詞',
         '容易混淆的字', '構詞拆解']) {
         expect(find.text(text), findsOneWidget, reason: '$style $text');
       }

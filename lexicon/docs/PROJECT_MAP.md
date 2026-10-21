@@ -57,6 +57,7 @@ Line counts as of 2026-10-17. **Big files: search first, then read a range** (se
   `card395_def_order.py count|apply|restore` so the definition items follow the ordinals too (admin UI, old servers);
   card fronts: `card381_learner.py --cefr A1,A2 --out f.tsv` (port of learnerMeaning). `meaning_index` also labels pictures from deeper plain senses that English
   Wiktionary confirms (motif 「pattern」).
+- Relation-word Chinese after the word enters the lexicon (#462/#468): `backend/app/relation_backfill.py` — `process_word` calls `backfill_for_word` after materialize (fills other headwords' `*_native` slots still in `missing` + relation_translations, no AI); sweep `tools/card468_backfill.py measure|apply|restore`.
 - Gender / forms / morphemes (#429): the App pack reads field_values (not the forms table). `card429_forms.py` (fr_gender by main sense), `card429_morph.py` (Wiktionary affix templates), `card429_measure.py` (fr vs en coverage); all dry-run|apply|restore.
 - CEFR (#335, issue #332 decision C): `word_level(w, "fr")` = `backend/app/fr_cefr_reviewed.json` (法語基礎 3000 字,
   Claude-reviewed A1–B1, `cefr_source=ai_reviewed`, app shows 估算) else max(wordfreq, Lexique 3.83 lemma zipf in

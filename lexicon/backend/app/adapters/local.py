@@ -1742,9 +1742,6 @@ class LexiconLookup(SourceAdapter):
             return []
         C = []
         s = ctx.session
-        from .ai import RELATION_FORM, same_gloss_key
-        head_zh = ({same_gloss_key(i.get("text")) for i in ctx.items("native_definition")}
-                   - {""}) if rel in RELATION_FORM else set()
         for item in (words if f == "morphemes_native" else ctx.items(rel)):
             w = item.get("word", "")
             from ..text import normalize_lemma
@@ -1791,12 +1788,6 @@ class LexiconLookup(SourceAdapter):
                     for l in (r.labels or []))]
                 # A dictionary translation before an AI one (問題回報 #84:
                 # surface 表面, not 「物件之外圍」).
-                # A look-alike word is shown to tell it apart from the
-                # headword (問題回報 #441): prefer its sense whose Chinese
-                # differs from the headword's (track 軌道, not trace's 追蹤).
-                if rel in RELATION_FORM and head_zh:
-                    other = [r for r in common if same_gloss_key(r.text) not in head_zh]
-                    common = other or common
                 row = next((r for r in common if not r.is_ai),
                            common[0] if common else (rows[0] if rows else None))
                 if row:

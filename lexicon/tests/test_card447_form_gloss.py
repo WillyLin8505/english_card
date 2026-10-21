@@ -43,3 +43,33 @@ def test_meaning_relation_may_share_headword_meaning(monkeypatch):
         {"swallow": "一口量"}, "qwen/test"))
     got = {c.value["word"]: c.value["text"] for c in adapter.lookup("synonyms_native", _ctx())}
     assert got == {"swallow": "一口量"}
+
+
+def _track(s):
+    from app import models as m
+    track = m.Lexeme(language="en", lemma="track", normalized="track", pos="noun", status="full")
+    s.add(track)
+    s.flush()
+    for i, zh in enumerate(("追蹤", "軌道")):
+        sense = m.Sense(lexeme_id=track.id, sense_key=f"s{i}", ordinal=i, labels=[])
+        s.add(sense)
+        s.flush()
+        s.add(m.SenseTranslation(sense_id=sense.id, native_language="zh-TW", text=zh,
+                                 source="kaikki"))
+    s.flush()
+
+
+def _lookup(s, field, rel):
+    from app.adapters.local import LexiconLookup
+    ctx = Context("en", "zh-TW", "trace", "trace", session=s, resolved={
+        "native_definition": [{"sense_key": "s1", "text": "追蹤"}], rel: [{"word": "track"}]})
+    return [c.value["text"] for c in LexiconLookup().normalize(field, None, ctx)]
+
+
+def test_lexicon_lookup_keeps_full_entry_own_meaning(session):
+    # A full look-alike entry gets its own first meaning even when it equals the
+    # headword's (derived forms: independence/independent 獨立); the exporter hides
+    # such rows (card #438) instead of showing a rare other sense (card #447 r2).
+    _track(session)
+    assert _lookup(session, "similar_spelling_native", "similar_spelling") == ["追蹤"]
+    assert _lookup(session, "synonyms_native", "synonyms") == ["追蹤"]

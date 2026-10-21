@@ -272,8 +272,10 @@ class FlashcardBack extends StatelessWidget {
     // A saved lexeme id can name another part of speech of the same spelling
     // (out 「出」 the adverb, id of out the adjective): its synonyms (knocked
     // out, forbidden…) belong to a different meaning. Follow the card's own
-    // part of speech then (問題回報 #384).
-    final pos = entry.pos.trim();
+    // part of speech then (問題回報 #384). The usage tested this round wins:
+    // sweep saved as a noun but reviewed as the verb lists swept/sweeping,
+    // not 複數 sweeps (卡 #227 第 109 輪).
+    final pos = (activePos ?? entry.pos).trim();
     if (byId != null &&
         pos.isNotEmpty &&
         byId.pos != LexiconPack.packPos(pos)) {
@@ -403,7 +405,11 @@ class FlashcardBack extends StatelessWidget {
     for (final f in source?.forms ?? const <LexForm>[]) {
       add(_formKind(f.field, f.label), f.form);
     }
-    for (final f in entry.forms) {
+    // The entry's own forms belong to its saved part of speech; reviewed as
+    // another one they would mix 複數 sweeps into the verb's forms.
+    final otherPos = activePos != null &&
+        LexiconPack.packPos(activePos!) != LexiconPack.packPos(entry.pos);
+    for (final f in otherPos ? const <WordForm>[] : entry.forms) {
       add(_formKind('', f.label), f.form);
     }
     if (source != null) {
@@ -465,8 +471,9 @@ class FlashcardBack extends StatelessWidget {
               ], initial: 3));
         }
         // Card #251 item 2: the part of speech only — no CEFR level chip.
+        // 問題回報 #469: same title as the word detail's meaning section.
         return _Block(
-          '中文意思',
+          '詞性與意思',
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

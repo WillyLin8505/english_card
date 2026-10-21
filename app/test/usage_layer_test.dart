@@ -56,7 +56,7 @@ void main() {
     await tester.enterText(find.byType(TextField), 'match');
     await tester.tap(find.byTooltip('送出答案'));
     await tester.pumpAndSettle();
-    expect(find.text('中文意思'), findsOneWidget);
+    expect(find.text('詞性與意思'), findsOneWidget);
     expect(find.text('各詞性釋義'), findsNothing);
     expect(find.text('名詞'), findsOneWidget);
     expect(find.text('動詞'), findsNothing);

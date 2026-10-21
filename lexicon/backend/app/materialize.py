@@ -277,6 +277,17 @@ def materialize_pronunciations(s: Session, target: str, values: dict[str, dict[s
             n += 1
 
 
+def common_display(display: str, lemma: str, poses: list[str]) -> str:
+    """A common word is stored lower-case (問題回報 #460): a word typed or listed
+    as 「Fairy」/「Porch」 is still the dictionary word fairy/porch, otherwise photo
+    tags and favourites show it capitalised. Proper nouns (pos name), acronyms and
+    other mixed-case spellings keep what was typed."""
+    if display and display != lemma and display.lower() == lemma and "name" not in poses \
+            and display[:1].isupper() and display[1:] == display[1:].lower():
+        return lemma
+    return display
+
+
 def materialize(s: Session, target: str, lemma: str, display: str | None = None,
                 audio_fetched: dict[str, dict] | None = None) -> list[int]:
     values = _values(s, target, lemma)
@@ -294,6 +305,7 @@ def materialize(s: Session, target: str, lemma: str, display: str | None = None,
     if not poses:
         _stub_excluded(s, target, lemma, gone)
         return []
+    display = common_display(display, lemma, poses)
     lexemes = _upgrade(s, target, lemma, display, poses)
     main = lexemes[poses[0]]
     ids = [lx.id for lx in lexemes.values()]

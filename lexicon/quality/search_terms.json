@@ -8870,12 +8870,12 @@
    "by": "card384 Claude review 2026-10-19"
   },
   "saint|noun|af804e56a6ef": {
-   "term": "saint",
+   "term": "holy man",
    "auto": "male saint",
    "meaning": "a male saint; masculine of sainte",
    "ordinal": 0,
-   "why": "a male saint",
-   "by": "card384 Claude review 2026-10-19"
+   "why": "r10 all pictures rejected with 'saint'; Qwen phrase",
+   "by": "card329 r10 Qwen 2026-10-21"
   },
   "salope|adj|0e0713914eb6": {
    "term": null,
@@ -11322,12 +11322,12 @@
    "by": "card329 Qwen review 2026-10-20"
   },
   "théorie|noun|2600a6e2b9e6": {
-   "term": "procession",
-   "auto": null,
-   "meaning": "solemn or sacred procession or embassy, especially in ancient Greece",
+   "term": "religious procession",
+   "auto": "procession",
+   "meaning": "",
    "ordinal": 1,
-   "why": "Qwen word for a sense without an automatic term (card #329 round 5)",
-   "by": "card329 Qwen review 2026-10-20"
+   "why": "r10 all pictures rejected with 'procession'; Qwen phrase",
+   "by": "card329 r10 Qwen 2026-10-21"
   },
   "chaîne|noun|0461596e9900": {
    "term": "stereo",
@@ -11794,12 +11794,12 @@
    "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
   },
   "cartable|noun|69e5802b515b": {
-   "term": "schoolbag",
+   "term": "backpack",
    "auto": "satchel",
    "meaning": "satchel; schoolbag",
    "ordinal": 0,
-   "why": "搜尋詞改成更能拍到的 schoolbag",
-   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+   "why": "r10 all pictures rejected with 'schoolbag'; Qwen phrase",
+   "by": "card329 r10 Qwen 2026-10-21"
   },
   "chambre|noun|17a6876ced23": {
    "term": "bedroom",
@@ -12162,12 +12162,12 @@
    "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
   },
   "noël|noun|54b5c73e4718": {
-   "term": "christmas",
+   "term": "christmas carolers",
    "auto": "christmas song",
    "meaning": "A Christmas song.",
    "ordinal": 1,
-   "why": "搜尋詞改成更能拍到的 christmas",
-   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+   "why": "r10 all pictures rejected with 'christmas'; Qwen phrase",
+   "by": "card329 r10 Qwen 2026-10-21"
   },
   "noir|noun|94987ff87783": {
    "term": null,
@@ -12322,12 +12322,12 @@
    "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
   },
   "travaux|noun|39dfeb686367": {
-   "term": "roadworks",
+   "term": "road construction",
    "auto": "roadwork",
    "meaning": "roadwork",
    "ordinal": 0,
-   "why": "搜尋詞改成更能拍到的 roadworks",
-   "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+   "why": "r10 all pictures rejected with 'roadworks'; Qwen phrase",
+   "by": "card329 r10 Qwen 2026-10-21"
   },
   "union|noun|c10ce19516e6": {
    "term": null,
@@ -12360,6 +12360,134 @@
    "ordinal": 0,
    "why": "抽象名詞，照片拍不到",
    "by": "card329 r9 Claude review 2026-10-20 (#427 B)"
+  },
+  "bonne|noun|67ac2db3eae5": {
+   "term": "housekeeper",
+   "auto": "maid",
+   "meaning": "maid",
+   "ordinal": 0,
+   "why": "r10 all pictures rejected with 'maid'; Qwen phrase",
+   "by": "card329 r10 Qwen 2026-10-21"
+  },
+  "directeur|noun|6ad838f1b883": {
+   "term": "principal",
+   "auto": "school principal",
+   "meaning": "school principal",
+   "ordinal": 1,
+   "why": "r10 all pictures rejected with 'school principal'; Qwen phrase",
+   "by": "card329 r10 Qwen 2026-10-21"
+  },
+  "dossier|noun|6ab75c3365c6": {
+   "term": "file",
+   "auto": "dossier",
+   "meaning": "dossier",
+   "ordinal": 1,
+   "why": "r10 all pictures rejected with 'dossier'; Qwen phrase",
+   "by": "card329 r10 Qwen 2026-10-21"
+  },
+  "euro|noun|709a21b622ae": {
+   "term": "one euro coin",
+   "auto": "euro",
+   "meaning": "euro (currency)",
+   "ordinal": 0,
+   "why": "r10 all pictures rejected with 'euro'; Qwen phrase",
+   "by": "card329 r10 Qwen 2026-10-21"
+  },
+  "médecin|noun|bd24d36b757d": {
+   "term": "doctor",
+   "auto": "physician",
+   "meaning": "physician; (medical) doctor",
+   "ordinal": 0,
+   "why": "r10 all pictures rejected with 'physician'; Qwen phrase",
+   "by": "card329 r10 Qwen 2026-10-21"
+  },
+  "noël|noun|0ebf2f51cabb": {
+   "term": "gift",
+   "auto": "christmas gift",
+   "meaning": "A Christmas gift.",
+   "ordinal": 0,
+   "why": "r10 all pictures rejected with 'christmas gift'; Qwen phrase",
+   "by": "card329 r10 Qwen 2026-10-21"
+  },
+  "noir|noun|943c51bd35d7": {
+   "term": "black man",
+   "auto": "",
+   "meaning": "a person whose hair is dark",
+   "ordinal": 1,
+   "why": "r10 all pictures rejected with ''; Qwen phrase",
+   "by": "card329 r10 Qwen 2026-10-21"
+  },
+  "pauvre|noun|bec4f971a446": {
+   "term": "beggar",
+   "auto": "",
+   "meaning": "person deserving of pity",
+   "ordinal": 1,
+   "why": "r10 all pictures rejected with ''; Qwen phrase",
+   "by": "card329 r10 Qwen 2026-10-21"
+  },
+  "poster|noun|58a2c12e6437": {
+   "term": "billboard",
+   "auto": "poster",
+   "meaning": "poster (A billboard to be posted on a public or pr",
+   "ordinal": 0,
+   "why": "r10 all pictures rejected with 'poster'; Qwen phrase",
+   "by": "card329 r10 Qwen 2026-10-21"
+  },
+  "premier|noun|ca4b84cb6e02": {
+   "term": "prime minister",
+   "auto": "premier",
+   "meaning": "premier",
+   "ordinal": 1,
+   "why": "r10 all pictures rejected with 'premier'; Qwen phrase",
+   "by": "card329 r10 Qwen 2026-10-21"
+  },
+  "prince|noun|c1798e646e53": {
+   "term": "royal prince",
+   "auto": "prince",
+   "meaning": "prince",
+   "ordinal": 0,
+   "why": "r10 all pictures rejected with 'prince'; Qwen phrase",
+   "by": "card329 r10 Qwen 2026-10-21"
+  },
+  "roi|noun|e023274a0da7": {
+   "term": "medieval king",
+   "auto": "king",
+   "meaning": "king",
+   "ordinal": 0,
+   "why": "r10 all pictures rejected with 'king'; Qwen phrase; r12 'king on throne' 0 images -> manual 'medieval king'",
+   "by": "card329 r10 Qwen 2026-10-21"
+  },
+  "salle|noun|bb7c2f926707": {
+   "term": "grand hall",
+   "auto": "hall",
+   "meaning": "hall",
+   "ordinal": 0,
+   "why": "r10 all pictures rejected with 'hall'; Qwen phrase",
+   "by": "card329 r10 Qwen 2026-10-21"
+  },
+  "salle|noun|5c832300adf4": {
+   "term": "living room",
+   "auto": "room",
+   "meaning": "room (in a house)",
+   "ordinal": 1,
+   "why": "r10 all pictures rejected with 'room'; Qwen phrase",
+   "by": "card329 r10 Qwen 2026-10-21"
+  },
+  "secrétaire|noun|113139c4fd99": {
+   "term": "office secretary",
+   "auto": "secretary",
+   "meaning": "secretary",
+   "ordinal": 0,
+   "why": "r10 all pictures rejected with 'secretary'; Qwen phrase",
+   "by": "card329 r10 Qwen 2026-10-21"
+  },
+  "sport|noun|0034573466c2": {
+   "term": "sports event",
+   "auto": "sport",
+   "meaning": "sport",
+   "ordinal": 0,
+   "why": "r10 all pictures rejected with 'sport'; Qwen phrase",
+   "by": "card329 r10 Qwen 2026-10-21"
   }
  }
 }

@@ -17,6 +17,7 @@ direction's policy never overwrites another's.
 
 from __future__ import annotations
 
+import logging
 import re
 import time
 from dataclasses import dataclass, field
@@ -826,6 +827,14 @@ def process_word(s: Session, target: str, native: str, word: str, fields: list[s
         if s.bind is not None and s.bind.dialect.name == "postgresql":
             s.execute(sql_text("SELECT pg_advisory_xact_lock(770000002)"))
         materialize(s, target, lemma, word.strip(), audio_fetched=audio_fetched)
+        # Headwords whose relation meaning was still waiting for this word
+        # (secrete → secret: 「secret」 was no entry yet) get it now, #462.
+        from .relation_backfill import backfill_for_word
+        try:
+            with s.begin_nested():
+                backfill_for_word(s, target, lemma)
+        except Exception as e:  # noqa: BLE001 — the word itself is stored; log only
+            logging.getLogger(__name__).warning("relation backfill for %s failed: %s", lemma, e)
         if images_wanted:
             from . import images
             if images.enqueue_fetch(s, target, native, lemma, images_wanted) is not None:

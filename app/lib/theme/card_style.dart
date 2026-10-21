@@ -365,7 +365,7 @@ class CardLook {
   ];
 
   static IconData? _playfulIcon(String label) => switch (label) {
-        '中文意思' || '逐義釋義' => Icons.translate_rounded,
+        '詞性與意思' || '逐義釋義' => Icons.translate_rounded,
         '例句與翻譯' => Icons.chat_bubble_outline_rounded,
         '詞形變化' => Icons.auto_fix_high_rounded,
         '同義詞' => Icons.favorite_border_rounded,

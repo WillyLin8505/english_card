@@ -238,6 +238,42 @@ def degree_form_implausible(lemma: str, form: str) -> bool:
     return syllables >= 3
 
 
+# Card #465 (issue #459): reviewed exceptions to degree_entry_unused.
+DEGREE_KEEP = {"common", "opaque", "base", "brief", "pink", "choice", "minute", "fancy",
+               "fit", "trim", "rad", "remote"}
+DEGREE_DROP = {"awful", "male", "country", "dusk", "left", "lying", "trick", "well",
+               "gold", "swear"}
+
+
+def degree_entry_unused(owner: str, entry: dict, entries: list[dict]) -> bool:
+    """True when this adjective entry's -er / -est forms are not real English (card #465,
+    issue #459). Wiktionary tags them "comparative" anyway:
+    - it lists more / most first (anxious: more anxious, anxiouser) — curiouser, okayer;
+    - the entry is not comparable (head "-": perfect → perfecter, middle → middlest);
+    - the adjective is a minor sense of a noun / verb (≤ 1/3 of its senses): game → gamer,
+      stick → sticker, fool → fooler, mug → mugger, trig → trigger, fly → flier.
+    -ly words keep theirs (likelier, card #463). Only one-word forms are meant."""
+    w = owner.lower()
+    if (w.endswith("ly") and re.search(r"[aeiouy]", w[:-2])) or w in DEGREE_KEEP:
+        return False
+    if w in DEGREE_DROP:
+        return True
+    if entry.get("senses") and all(set(s.get("tags", [])) & RARE_FORM_TAGS
+                                   for s in entry["senses"]):
+        return True  # trig → trigger: every sense dialectal / obsolete
+    heads = [(h.get("args") or {}).get("1") for h in entry.get("head_templates", [])
+             if h.get("name") in ("en-adj", "en-adjective")]
+    heads = [h for h in heads if h]
+    if "-" in heads or (heads and all(h.split(",")[0] == "more" for h in heads)):
+        return True
+    senses: dict[str, int] = {}
+    for e in entries:
+        if e.get("pos") != "name":
+            senses[e.get("pos")] = senses.get(e.get("pos"), 0) + len(e.get("senses", []))
+    other = max((n for p, n in senses.items() if p != "adj"), default=0)
+    return senses.get("adj", 0) * 4 <= other
+
+
 def form_field(pos: str, tags: set[str], target: str) -> str | None:
     if tags & LOW_TAGS or tags & FORM_SKIP:
         return None
@@ -493,8 +529,11 @@ class Kaikki(SourceAdapter):
                     if t == "fr" and FR_ELIDED.match(form) and not FR_ELIDED.match(owner):
                         continue
                     if form_field(pos or "", set(fo.get("tags", [])), t) == f:
-                        if f in ("adj_comparative", "adj_superlative") and \
-                                degree_form_implausible(word, form):
+                        if f in ("adj_comparative", "adj_superlative") and (
+                                degree_form_implausible(word, form) or (
+                                    " " not in form and degree_entry_unused(
+                                        owner, e, entries if owner == word
+                                        else self.other(ctx, owner)))):
                             continue
                         add({"form": form, **({"base": owner} if shared else {})}, form.lower(),
                             conf=(0.6 if " " in form else 1.0) * (0.95 if shared else 1),

@@ -6,7 +6,6 @@ import '../app/app_scope.dart';
 import '../models/learning_card.dart';
 import '../models/photo.dart';
 import '../models/word_entry.dart';
-import '../services/app_settings.dart';
 import '../services/lexicon_pack.dart';
 import '../services/word_database_query.dart';
 import '../theme/mobile_theme.dart';
@@ -224,9 +223,11 @@ class _WordBody extends StatelessWidget {
                   children: [
                     if (entry.entryType != 'word')
                       TagChip(entryTypeLabel(entry.entryType)),
-                    // Several parts of speech: the 詞性與意思 section below
-                    // labels each group, so the header shows no POS (#421).
-                    if (entry.effectiveUsages.length <= 1 &&
+                    // The 詞性與意思 section below labels each part of speech,
+                    // so the header shows none (#421); with no meaning yet
+                    // that section is absent and the header keeps it (#469).
+                    if (entry.meaning.isEmpty &&
+                        entry.effectiveUsages.length <= 1 &&
                         entry.pos.isNotEmpty)
                       TagChip(posLabel(entry.pos)),
                     if (entry.level != null) LevelBadge(entry.level!),
@@ -286,12 +287,17 @@ class _WordBody extends StatelessWidget {
           ),
         )
       else if (entry.meaning.isNotEmpty)
+        // 問題回報 #469: one part of speech uses the same 詞性與意思 title and
+        // POS chip as several (it used to be titled with the language name).
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SectionLabel(
-                supportedLanguages[scope.settings.nativeLanguage] ?? '釋義'),
-            const SizedBox(height: MSpace.xxs),
+            const SectionLabel('詞性與意思'),
+            const SizedBox(height: MSpace.xs),
+            if (entry.pos.isNotEmpty) ...[
+              TagChip(posLabel(entry.pos)),
+              const SizedBox(height: MSpace.xxs),
+            ],
             Text(entry.meaning,
                 style: MFont.manrope(22, FontWeight.w800, MColors.ink)),
             if (entry.definition != null &&

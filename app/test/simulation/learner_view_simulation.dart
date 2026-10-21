@@ -70,8 +70,9 @@ void main() {
     final rnd = Random(int.parse(_opt('SIM_SEED', '1')));
     final li = _levels.indexOf(level);
     // Words a learner at this level would pick: their level and one either side.
+    // Not rare usages: the 資料庫 lists them last, labelled 罕見用法 without a level.
     final near = pack.catalogWords
-        .where((w) => w.full && w.cefr != null &&
+        .where((w) => w.full && w.cefr != null && !w.rareUsage &&
             (_levels.indexOf(w.cefr!) - li).abs() <= 1)
         .toList()
       ..shuffle(rnd);

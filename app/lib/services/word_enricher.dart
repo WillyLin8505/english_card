@@ -56,8 +56,16 @@ class WordEnricher extends ChangeNotifier {
     if (queue?.current == null) unawaited(process());
   }
 
+  bool _disposed = false;
+
+  @override
+  void notifyListeners() {
+    if (!_disposed) super.notifyListeners();
+  }
+
   @override
   void dispose() {
+    _disposed = true;
     _timer?.cancel();
     settings.removeListener(_kick);
     queue?.removeListener(_kick);
@@ -83,7 +91,8 @@ class WordEnricher extends ChangeNotifier {
   }
 
   Future<void> process() async {
-    if (_running) return;
+    // A save queued while the App is torn down may call this late.
+    if (_running || _disposed) return;
     _running = true;
     try {
       final pack = LexiconPack.instance;
