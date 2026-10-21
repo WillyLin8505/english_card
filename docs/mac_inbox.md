@@ -504,12 +504,12 @@ commit `bcf9238b`（Windows：flutter analyze 無 error、02:17 +509 ~2: All tes
 - 卡 #474：問題回報 #473：[Mac] 2026-10-21 M44（iPhone 模擬器）：通過
   結果：全部完成：問題回報 #473 是 Mac 對 #470 的「通過」回報（flutter test 508 通過、3 略過，card428sqlitesync 單獨跑也通過），沒有 bug，無需修復。
 
-## M46（2026-10-21 16:53）狀態：待做
+## M46（2026-10-21 16:53）狀態：完成
 commit `0c63c0fa`（Windows：flutter analyze 無 error、02:44 +509 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #228：模擬使用者・設定
   結果：第 7 輪：1/1 通過（runround 第 111 輪，findings 0）；新問題 無；UX 建議 #474 #475；上輪的 #446 #447 已確認生效。
 
-## M47（2026-10-21 17:01）狀態：待做
+## M47（2026-10-21 17:01）狀態：完成
 commit `7a969a3a`（Windows：flutter analyze 無 error、02:45 +509 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #476：問題回報 #474：設定「語言」區兩句說明是雜訊：只有一個學習語言時說「每個學習語言有自己的相片冊…」，「學習內容依已發
   結果：全部完成：設定「語言」區 3 句雜訊說明已處理（純 UI 文字，無詞庫資料變動）。
