@@ -454,3 +454,8 @@ commit `808e5d72`（Windows：flutter analyze 無 error、01:57 +503 ~2: All tes
 commit `430c7369`（Windows：flutter analyze 無 error、01:54 +505 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #454：問題回報 #448：[Mac] 2026-10-21 M30 補驗（上一輪未能驗證的 16 張新介面卡）：#413 同義
   結果：全部完成：App 內建詞庫已重建，1813 筆含主字的複合詞同義/反義改放「相關」；force 不再有 force out／force play。
+
+## M39（2026-10-21 09:18）狀態：待做
+commit `8bec11f7`（Windows：flutter analyze 無 error、05:59 +505 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #460：問題回報 #453：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
+  結果：全部完成：flutter test 505 全過（2 skipped）、flutter analyze 0 error（12 個 info）。
