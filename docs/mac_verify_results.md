@@ -464,3 +464,12 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 |----|----|----|----|----|
 | #226 | 通過 | Windows 端模擬使用者・複習；iPhone 模擬器上複習流程（M35 回歸）照舊 | — | — |
 | #461 | 通過 | 匯出時濾掉只靠另一個詞性變化形的例句，屬詞庫資料，iPhone 上不需另驗 | — | — |
+
+## 2026-10-21 M41（iPhone 模擬器）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #467 照片詳情離開時 | 通過 | Mac 上 flutter test 508 通過、3 略過；在 iPhone 模擬器跑完照片詳情流程再拆掉 App，log 裡「A WordEnricher was used after being disposed」0 次，整個 integration test 通過 | — | — |
+| #464 | 通過 | 詞庫例句規則收斂，屬資料，iPhone 上不需另驗 | — | — |
+| #225 | 通過 | Windows 端模擬使用者・相片冊；iPhone 模擬器上相片冊流程（M30 補驗）照舊 | — | — |
+| 公開網址被擋（驗證時發現） | 不通過 | 10:30 左右 https://api.willylinai.com 的 /api/lexicon?format=sqlite、/api/decks、/health 全部回 403，回應是 serve_app（Python http.server）的錯誤頁「Request forbidden -- authorization will not help」，不是 Cloudflare 擋的。App 因此顯示「暫時無法連線 · 使用已儲存的詞庫」、圖片「暫時無法載入」、卡片集清單抓不到。看起來 serve_app 重啟時沒帶 --public-host api.willylinai.com（Host 檢查擋掉公開網址）。iPhone 現在無法同步詞庫、下載圖片集、播伺服器錄音 | — | 高 |
