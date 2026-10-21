@@ -71,6 +71,8 @@ void main() {
           entry: entry,
           card: const LearningCard(
               id: 'card', wordEntryId: 'w-happy', templateId: 't'),
+          photo: null,
+          anchor: null,
           template: repo.template,
           learnerLevel: 'A2',
           onPlay: () {},
