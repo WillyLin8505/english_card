@@ -1,6 +1,6 @@
 part of '../screens/photo_detail_screen.dart';
 
-/// The shortcuts above the word list: 「多看動詞」「多看形容詞」「簡單一點」
+/// The shortcuts under the word list: 「多看動詞」「多看形容詞」「簡單一點」
 /// 「難一點」, and a note while more candidates load. The level itself is on
 /// the difficulty bar under the photo (問題回報 #444: it used to be repeated here).
 class _LevelRow extends StatelessWidget {

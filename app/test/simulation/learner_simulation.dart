@@ -319,16 +319,21 @@ void main() {
     final errors = <String>[];
     final original = FlutterError.onError;
     String current = '';
-    FlutterError.onError = (d) =>
-        errors.add('$current：${d.exceptionAsString().split('\n').first}');
+    FlutterError.onError = (d) {
+      errors.add('$current：${d.exceptionAsString().split('\n').first}');
+      // An uncaught async error trips the binding's assertion right after
+      // this handler and the log would show only that (round 103), so print
+      // the real exception first.
+      // ignore: avoid_print
+      print('render error at $current: ${d.exceptionAsString()}\n${d.stack}');
+    };
     addTearDown(() => FlutterError.onError = original);
 
     await pumpApp(tester,
         initialTab: AppTab.review,
         repository: repo,
         size: const Size(390, 844));
-    await tester.tap(find.text('開始複習'));
-    await tester.pumpAndSettle();
+    if (!await startReview(tester)) errors.add('複習分頁沒有「綜合」或「開始複習」');
     var n = 0;
     while (find.byType(FlashcardFront).evaluate().isNotEmpty && n < limit * 3) {
       final front = tester.widget<FlashcardFront>(find.byType(FlashcardFront));

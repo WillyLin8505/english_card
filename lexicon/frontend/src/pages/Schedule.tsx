@@ -3,8 +3,8 @@ import { api } from "../api";
 import { layoutPins } from "../pinLayout";
 import { Empty, ErrorBox, Link, Loading, Modal, Progress, fmtDuration, fmtTime, useLoad, useToast } from "../ui";
 
-// 排程看板: the AIs on the left, then two piles an idle AI pulls from, top
-// first: one-off cards (the owner's requests and open 問題回報) and standing
+// 排程看板: the AIs on the left, then two piles side by side an idle AI pulls
+// from: one-off cards (the owner's requests and every open 問題回報, by status) and standing
 // cards (recurring checks with their live numbers; due ones on top). Drag a
 // card onto an AI to hand it over. Below, what runs in the background and
 // recent results.
@@ -49,6 +49,20 @@ const STATE: Record<string, [string, string]> = {
 };
 const STATUS_TONE: Record<string, string> = { queued: "muted", in_progress: "info", waiting: "bad", blocked: "warn", scheduled: "muted", done: "ok", cancelled: "muted" };
 const SEV: Record<string, string> = { high: "高", medium: "中", low: "低" };
+// One-off list order (card #459): 進行中 → 等你決定 → 排隊 → 卡住.
+type OneOffGroup = "doing" | "waiting" | "queued" | "blocked";
+type OneOff = { c: DeckCard | OpenIssue; group: OneOffGroup; pull?: number };
+const ONE_OFF_GROUPS: [OneOffGroup, string, string][] = [
+  ["doing", "進行中", "info"], ["waiting", "等你決定", "bad"], ["queued", "排隊", "muted"], ["blocked", "卡住", "warn"],
+];
+const issueGroup = (c: OpenIssue): OneOffGroup => {
+  const st = c.linked.map((t) => t.status);
+  if (st.includes("in_progress")) return "doing";
+  if (c.kind === "decision" || st.includes("waiting")) return "waiting";
+  if (st.length === 0 || st.some((s) => s === "queued" || s === "scheduled")) return "queued";
+  return "blocked";
+};
+const ISSUE_KIND: Record<string, string> = { decision: "待你決定", bug: "問題", todo: "未完成需求" };
 const QWEN_KIND: Record<string, string> = { translate: "翻譯", tag: "圖片標籤", score: "標籤評分", enrich: "單字補充" };
 const FIELD_LABEL: Record<string, string> = { status: "狀態", agent: "負責的 AI", progress: "進度", title: "內容" };
 const who = (by: string) => (by === "owner" ? "你" : by);
@@ -180,7 +194,15 @@ export default function Schedule() {
   const togglePause = (x: Bot) => act(
     () => api.post(`/agents/${encodeURIComponent(x.agent)}/${x.paused ? "resume" : "pause"}`, {}),
     x.paused ? `${x.agent} 已開始` : `${x.agent} 已暫停（手上的卡做完後不再接新卡）`);
-  const onceCards = (b?.deck ?? []).filter((c) => c.card === "issue" || c.kind !== "recurring");
+  // Card #459: one list of one-off work — the deck's requests and untaken 問題回報 plus
+  // the open reports already on a card or waiting for the owner — grouped by status.
+  const oneOff: OneOff[] = [
+    ...(b?.deck ?? []).filter((c) => c.card === "issue" || c.kind !== "recurring")
+      .map((c, i) => ({ c, group: "queued" as const, pull: i + 1 })),
+    ...(b?.issues ?? []).map((c) => ({ c, group: issueGroup(c) })),
+  ];
+  const oneOffGroups = ONE_OFF_GROUPS.map(([g, label, tone]) => ({ g, label, tone, items: oneOff.filter((x) => x.group === g) }))
+    .filter((x) => x.items.length > 0);
   // Due first (oldest due on top), then the ones being worked on, then by next run.
   const rank = (t: Task) => (t.due ? 0 : t.status === "scheduled" ? 2 : 1);
   const standing = [...(b?.recurring ?? [])].sort((x, y) => rank(x) - rank(y)
@@ -267,76 +289,57 @@ export default function Schedule() {
           </aside>
 
           <main className="deck" aria-label="一次性卡">
-            <h2>一次性卡 <small className="muted">{onceCards.length} 張 · 需求與問題回報，做完就結束</small></h2>
-            {onceCards.length === 0 ? <Empty>沒有排隊的需求，也沒有未處理的問題回報。</Empty> : (
-              <ol className="deck-list">
-                {onceCards.map((c, i) => {
-                  const d: Drag = c.card === "issue" ? { issue_id: c.issue_id } : { task_id: c.id };
-                  const key = c.card === "issue" ? `i${c.issue_id}` : `t${c.id}`;
-                  return (
-                    <li key={key} className={`deck-card deck-${c.card === "issue" ? "issue" : c.kind}`} draggable
-                      onDragStart={(e) => { e.dataTransfer.setData(dragKey, JSON.stringify(d)); e.dataTransfer.effectAllowed = "move"; }}>
-                      <div className="deck-top">
-                        <span className="muted mono">{i + 1}</span>
-                        {c.card === "issue" ? (
-                          <>
-                            <Tag tone="warn">問題回報 #{c.issue_id}</Tag>
-                            <Tag tone={c.severity === "high" ? "bad" : "muted"}>{c.kind === "bug" ? "問題" : "未完成需求"} · {SEV[c.severity] ?? c.severity}</Tag>
-                          </>
-                        ) : (
-                          <Tag tone="muted">需求 #{c.id}</Tag>
-                        )}
-                        <Difficulty level={c.difficulty} reason={c.difficulty_reason} onSet={(n) => setDifficulty(d, n)} />
-                        <span className="deck-handle" aria-hidden title="拖到左邊的 AI 上">⠿</span>
-                      </div>
-                      <button className="deck-title" onClick={() => c.card === "task" ? setViewing(c) : undefined}>{c.title}</button>
-                      {c.detail && <p className="muted deck-detail">{c.detail}</p>}
-                      {c.difficulty_reason && <small className="muted diff-reason">{c.difficulty_reason}</small>}
-                      <div className="deck-foot">
-                        <small className="muted">
-                          {c.card === "issue" ? <Link to="/issues">在問題回報查看</Link> : `${who(c.requested_by)} 提出 · ${fmtTime(c.created_at)}`}
-                        </small>
-                        {bots.length > 0 && (
-                          <select aria-label="交給哪個 AI" value="" onChange={(e) => e.target.value && assign(e.target.value, d)}>
-                            <option value="">交給…</option>
-                            {bots.map((x) => <option key={x.agent} value={x.agent}>{x.agent}</option>)}
-                          </select>
-                        )}
-                      </div>
-                    </li>
-                  );
-                })}
-              </ol>
-            )}
+            <h2>一次性卡 <small className="muted">{oneOff.length} 張 · 需求與問題回報，做完就結束</small></h2>
+            {oneOff.length === 0 ? <Empty>沒有排隊的需求，也沒有未處理的問題回報。</Empty> : oneOffGroups.map(({ g, label, tone, items }) => (
+              <section key={g} className="deck-group" aria-label={label}>
+                <h3><Tag tone={tone}>{label}</Tag> <small className="muted">{items.length} 張</small></h3>
+                <ol className="deck-list">
+                  {items.map(({ c, pull }) => {
+                    const d: Drag = c.card === "issue" ? { issue_id: c.issue_id } : { task_id: c.id };
+                    const key = c.card === "issue" ? `i${c.issue_id}` : `t${c.id}`;
+                    const linked = "linked" in c ? c.linked : null;  // an open report already on a card, or a decision
+                    return (
+                      <li key={key} className={`deck-card deck-${c.card === "issue" ? "issue" : c.kind} ${linked ? "deck-busy" : ""}`} draggable={!linked}
+                        onDragStart={(e) => { e.dataTransfer.setData(dragKey, JSON.stringify(d)); e.dataTransfer.effectAllowed = "move"; }}>
+                        <div className="deck-top">
+                          {pull && <span className="muted mono" title="閒置的 AI 拉卡的順序">{pull}</span>}
+                          {c.card === "issue" ? (
+                            <>
+                              <Tag tone="warn">問題回報 #{c.issue_id}</Tag>
+                              <Tag tone={c.kind === "decision" || c.severity === "high" ? "bad" : "muted"}>{ISSUE_KIND[c.kind] ?? c.kind} · {SEV[c.severity] ?? c.severity}</Tag>
+                            </>
+                          ) : (
+                            <Tag tone="muted">需求 #{c.id}</Tag>
+                          )}
+                          <Difficulty level={c.difficulty} reason={c.difficulty_reason} onSet={(n) => setDifficulty(d, n)} />
+                          {!linked && <span className="deck-handle" aria-hidden title="拖到左邊的 AI 上">⠿</span>}
+                        </div>
+                        <button className="deck-title" onClick={() => c.card === "task" ? setViewing(c) : undefined}>{c.title}</button>
+                        {c.detail && <p className="muted deck-detail">{c.detail}</p>}
+                        {c.difficulty_reason && <small className="muted diff-reason">{c.difficulty_reason}</small>}
+                        <div className="deck-foot">
+                          <small className="muted">
+                            {c.card === "task" ? `${who(c.requested_by)} 提出 · ${fmtTime(c.created_at)}` : <>
+                              {linked && (linked.length > 0
+                                ? <>處理中的卡：{linked.map((t) => `#${t.id}（${t.kind === "recurring" ? "常態" : "一次性"}·${m.statuses[t.status] ?? t.status}${t.agent ? `·${t.agent}` : ""}）`).join("、")} · </>
+                                : c.kind === "decision" ? "等你在問題回報頁決定 · " : "尚未排入任何卡 · ")}
+                              <Link to="/issues">在問題回報查看</Link>
+                            </>}
+                          </small>
+                          {!linked && bots.length > 0 && (
+                            <select aria-label="交給哪個 AI" value="" onChange={(e) => e.target.value && assign(e.target.value, d)}>
+                              <option value="">交給…</option>
+                              {bots.map((x) => <option key={x.agent} value={x.agent}>{x.agent}</option>)}
+                            </select>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </section>
+            ))}
           </main>
-
-          {(b.issues ?? []).length > 0 && (
-            <main className="deck" aria-label="其他未結問題回報">
-              <h2>其他未結問題回報 <small className="muted">{(b.issues ?? []).length} 件 · 待你決定，或已掛在某張卡上處理</small></h2>
-              <ol className="deck-list">
-                {(b.issues ?? []).map((c) => (
-                  <li key={`oi${c.issue_id}`} className="deck-card deck-issue">
-                    <div className="deck-top">
-                      <Tag tone="warn">問題回報 #{c.issue_id}</Tag>
-                      <Tag tone={c.kind === "decision" ? "bad" : c.severity === "high" ? "bad" : "muted"}>
-                        {c.kind === "decision" ? "待你決定" : c.kind === "bug" ? "問題" : "待辦"} · {SEV[c.severity] ?? c.severity}
-                      </Tag>
-                      <Difficulty level={c.difficulty} reason={c.difficulty_reason} onSet={(n) => setDifficulty({ issue_id: c.issue_id }, n)} />
-                    </div>
-                    <div className="deck-title">{c.title}</div>
-                    <div className="deck-foot">
-                      <small className="muted">
-                        {c.linked.length > 0
-                          ? <>處理中的卡：{c.linked.map((t) => `#${t.id}（${t.kind === "recurring" ? "常態" : "一次性"}·${t.status}${t.agent ? `·${t.agent}` : ""}）`).join("、")}</>
-                          : c.kind === "decision" ? "等你在問題回報頁決定" : "尚未排入任何卡"}
-                        {" · "}<Link to="/issues">在問題回報查看</Link>
-                      </small>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            </main>
-          )}
 
           <main className="deck" aria-label="常態卡">
             <h2>常態卡 <small className="muted">{dueCount} 張到期 · 共 {b.recurring.length} 張，定期回到最上面</small></h2>

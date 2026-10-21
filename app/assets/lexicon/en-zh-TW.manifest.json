@@ -2,8 +2,8 @@
  "schema_version": 5,
  "target_language": "en",
  "native_language": "zh-TW",
- "created_at": "0b9f4b9c181064ea642e3e3ed825ac8228bbb645c99ab8c087039b60e0c46832",
- "bundled_at": "2026-10-20T07:40:11+0800",
+ "created_at": "65347fa8b3f1cc14f0cc80c0c3b3022b754c05ec978a4069bcf4c2f87e78549f",
+ "bundled_at": "2026-10-21T08:35:13+0800",
  "bundle": "card268_bundle_pack.py",
  "settings": {
   "examples": 6,
@@ -13,25 +13,26 @@
   "quality": 60
  },
  "counts": {
-  "lexemes": 9842,
-  "full": 9185,
-  "examples": 38511,
-  "relations": 165699,
-  "recordings": 10577,
-  "lexemes_with_picture": 3473,
-  "catalog_images": 2571,
-  "images_bytes": 46909720,
-  "pack_bytes": 61497341,
-  "source_created_at": "0b9f4b9c181064ea642e3e3ed825ac8228bbb645c99ab8c087039b60e0c46832",
-  "source_bytes": 261298416
+  "lexemes": 9286,
+  "full": 8660,
+  "examples": 38415,
+  "relations": 164486,
+  "recordings": 9952,
+  "lexemes_with_picture": 3637,
+  "catalog_images": 2600,
+  "images_bytes": 47386852,
+  "pack_bytes": 60718387,
+  "source_created_at": "65347fa8b3f1cc14f0cc80c0c3b3022b754c05ec978a4069bcf4c2f87e78549f",
+  "source_bytes": 273248199,
+  "sqlite_bytes": 31465472
  },
  "cefr": {
-  "A1": 1189,
-  "B1": 1889,
-  "B2": 2190,
-  "A2": 1322,
-  "C1": 1214,
-  "C2": 1270,
-  "-": 111
+  "A1": 1163,
+  "B1": 1803,
+  "B2": 2027,
+  "A2": 1271,
+  "C1": 1086,
+  "C2": 1221,
+  "-": 89
  }
 }

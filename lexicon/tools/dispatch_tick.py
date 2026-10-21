@@ -936,6 +936,7 @@ class Tick:
             board = http("GET", "/schedule/board")
         self.dispatch(board)
         self.heartbeats(board)
+        self.sync_issues()
         self.mac_sync()
         self.tag_fallback()
         self.save()
@@ -956,24 +957,45 @@ class Tick:
                              creationflags=flags)
 
     def qwen_schedule(self):
-        """owner 10/20: Qwen paused in the daytime, running at night (qwen_schedule in the config).
+        """owner 10/21: Qwen runs only inside qwen_schedule.windows (09:30–19:30, 00:00–06:00), paused otherwise.
         Acts only when the period changes, so a manual ⏸／▶ on the board holds until the next switch."""
         cfg = self.cfg.get("qwen_schedule") or {}
         if not cfg.get("enabled") or self.dry:
             return
         hm_now = self.now.strftime("%H:%M")
-        start, end = cfg.get("night_start", "19:00"), cfg.get("night_end", "07:00")
-        night = (hm_now >= start or hm_now < end) if start > end else (start <= hm_now < end)
-        want = "night" if night else "day"
+        # run windows ["09:30-19:30", "00:00-06:00"] (owner 10/21); older configs use night_start/end
+        windows = cfg.get("windows") or [f'{cfg.get("night_start", "19:00")}-{cfg.get("night_end", "07:00")}']
+        def inside(w):
+            start, end = w.split("-")
+            return (hm_now >= start or hm_now < end) if start > end else (start <= hm_now < end)
+        night = any(inside(w) for w in windows)
+        want = "on" if night else "off"
         if self.state.get("qwen_period") == want:
             return
         action = "resume" if night else "pause"
         try:
             http("POST", f"/agents/Qwen/{action}", {})
             self.state["qwen_period"] = want
-            self.event("qwen", outcome=f"Qwen {'開始（晚上）' if night else '暫停（白天）'} {hm_now}")
+            self.event("qwen", outcome=f"Qwen {'開始（工作時段）' if night else '暫停（非工作時段）'} {hm_now}")
         except Exception as e:  # noqa: BLE001
             log(f"Qwen {action} failed: {e}")
+
+    def sync_issues(self):
+        """owner 10/21: 處理中 issues whose cards all ended get 已修正／待處理 (sync_issue_status.py), ~every 10 min."""
+        if self.dry:
+            return
+        n = int(self.state.get("issue_sync_n", 0)) + 1
+        self.state["issue_sync_n"] = n
+        if n % 5:
+            return
+        try:
+            r = subprocess.run([python_exe(), str(TOOLS / "sync_issue_status.py")], cwd=ROOT, capture_output=True,
+                               timeout=300, creationflags=NO_WINDOW if os.name == "nt" else 0)
+            out = r.stdout.decode("utf-8", "replace").strip()
+            if out:
+                log(f"issue sync: {out[-200:]}")
+        except Exception as e:  # noqa: BLE001
+            log(f"issue sync failed: {e}")
 
     def mac_sync(self):
         """Finished app cards → tested, pushed and listed for the Mac (mac_sync.py, own lock)."""

@@ -217,12 +217,10 @@ void main() {
     await settleUp();
     final tabs = <String, List<String>>{'review_start': screenTexts(tester)};
     current = 'review start';
-    final start = find.text(_en('開始複習'));
-    if (start.evaluate().isEmpty) {
-      errors.add('review: no "${_en('開始複習')}" button');
-    } else {
-      await tester.tap(start.first);
+    if (await startReview(tester, label: _en)) {
       await settleUp();
+    } else {
+      errors.add('review: no "${_en('綜合')}" / "${_en('開始複習')}" button');
     }
     var n = 0;
     while (find.byType(FlashcardFront).evaluate().isNotEmpty && n < want * 2) {

@@ -141,16 +141,17 @@ void main() {
       expect(app.repository.cardOf(apple.id), isNotNull);
     });
 
-    testWidgets('自動保存提示在列表標題旁，不在所有單字之後（問題回報 #276）',
+    testWidgets('自動保存提示在單字列表之後，第一個字緊接列表標題（問題回報 #276／#451）',
         (tester) async {
       await openBreakfast(tester);
       final hint = find.text('返回時自動保存，不用再按建立。');
       expect(hint, findsOneWidget);
       final titleY = tester.getTopLeft(find.text('辨識單字列表 (5)')).dy;
-      final hintY = tester.getTopLeft(hint).dy;
       final firstWordY = tester.getTopLeft(find.byType(Dismissible).first).dy;
-      expect(hintY, greaterThan(titleY));
-      expect(hintY, lessThan(firstWordY), reason: 'visible before any word');
+      final lastWordY = tester.getTopLeft(find.byType(Dismissible).last).dy;
+      final hintY = tester.getTopLeft(hint).dy;
+      expect(firstWordY, greaterThan(titleY));
+      expect(hintY, greaterThan(lastWordY), reason: '#451: hint sits under the list');
       expect(find.textContaining('離開這一頁時會自動保存'), findsNothing,
           reason: 'the bottom hint no longer repeats the save rule');
     });

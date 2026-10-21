@@ -98,8 +98,7 @@ void main() {
     final words = <String, Map<String, dynamic>>{};
     final app = await pumpApp(tester,
         initialTab: AppTab.review, repository: repo, size: const Size(390, 844));
-    await tester.tap(find.text('開始複習'));
-    await tester.pumpAndSettle();
+    expect(await startReview(tester), isTrue, reason: '複習分頁沒有可開始的卡片');
     var n = 0;
     while (find.byType(FlashcardFront).evaluate().isNotEmpty && n < want * 2) {
       final front = tester.widget<FlashcardFront>(find.byType(FlashcardFront));

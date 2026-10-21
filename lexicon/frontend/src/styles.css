@@ -393,6 +393,8 @@ pre.raw { max-height: 280px; overflow: auto; background: var(--surface-2); paddi
 .deck-metric { margin: 0; }
 .deck-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .deck-foot select { max-width: 55%; }
+.deck-group { display: flex; flex-direction: column; gap: 8px; }
+.deck-group > h3 { font-size: 13px; margin: 4px 0 0; display: flex; align-items: center; gap: 6px; }
 .shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
 .standing { display: flex; flex-direction: column; gap: 8px; border-top: 4px solid #7c3aed; }
 .standing-due { box-shadow: 0 0 0 2px var(--bad, #dc2626) inset; }

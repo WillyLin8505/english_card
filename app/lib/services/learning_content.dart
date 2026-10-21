@@ -47,13 +47,16 @@ String levelLabel(String value) => '${switch (value) {
     }}（$value）';
 
 String formLabel(String value) => switch (value) {
-      'plural' || 'noun_plural' => '複數',
+      // The pack's own Chinese labels (名詞複數…) name the same kinds as its
+      // fields; left as they were, the 複習 back showed each form twice
+      // (複數 maximums + 名詞複數 maximums, card #226 round 105).
+      'plural' || 'noun_plural' || '名詞複數' => '複數',
       'past' || 'past tense' || 'verb_past' => '過去式',
       'present participle' || 'gerund' || 'verb_present_participle' => '現在分詞',
       'past participle' || 'verb_past_participle' => '過去分詞',
       'third-person singular' || 'verb_third_person' => '第三人稱單數',
-      'comparative' || 'adjective_comparative' => '比較級',
-      'superlative' || 'adjective_superlative' => '最高級',
+      'comparative' || 'adjective_comparative' || '形容詞比較級' => '比較級',
+      'superlative' || 'adjective_superlative' || '形容詞最高級' => '最高級',
       // French (card #429): the pack labels them 「fr plural」 for native en.
       'fr_plural' || 'fr plural' => '複數',
       'fr_feminine' || 'fr feminine' => '陰性',

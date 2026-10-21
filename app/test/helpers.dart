@@ -122,3 +122,22 @@ Future<void> settle(WidgetTester tester, {int rounds = 3}) async {
     await tester.pumpAndSettle();
   }
 }
+
+/// Starts a 複習 run from the 複習 tab: since #440/#446 the tab opens on a
+/// grid of books (tap 綜合); an album-scoped screen still shows 開始複習.
+/// [label] maps a Chinese label to the UI language under test. Returns false
+/// when neither is on screen (nothing to review).
+Future<bool> startReview(WidgetTester tester,
+    {String Function(String) label = _same}) async {
+  for (final text in ['綜合', '開始複習']) {
+    final f = find.text(label(text));
+    if (f.evaluate().isNotEmpty) {
+      await tester.tap(f.first);
+      await tester.pumpAndSettle();
+      return true;
+    }
+  }
+  return false;
+}
+
+String _same(String s) => s;

@@ -53,4 +53,88 @@ void main() {
     expect(find.textContaining('多看動詞'), findsOneWidget);
     expect(find.textContaining('剛好'), findsOneWidget);
   });
+
+  // 問題回報 #451: the shortcut pills sit under the word list, so the first
+  // word is the first row under the list title.
+  testWidgets('the first word comes before the level shortcuts', (tester) async {
+    final repo = WordDatabaseRepository(
+        clock: () => testNow,
+        profile: UserVocabularyProfile.start('A1', now: testNow));
+    repo.addPhoto(Photo(
+        id: 'p1',
+        title: 'p1',
+        takenAt: testNow,
+        createdAt: testNow,
+        placeholderColors: const [0xFF8899AA, 0xFF334455],
+        width: 1200,
+        height: 900,
+        taggingStatus: TaggingStatus.done,
+        candidates: [
+          const WordCandidate(
+            word: 'cat',
+            pos: 'noun',
+            meaning: 'cat 義',
+            level: 'A1',
+            levelSource: 'cefr-j',
+            evidence: 'seen',
+            point: LabelPoint(0.1, 0.2),
+            visualConfidence: 0.9,
+            usefulness: 0.8,
+          ),
+        ]));
+
+    final app = await pumpApp(tester,
+        initialTab: AppTab.album,
+        repository: repo,
+        size: const Size(390, 844));
+    app.navigator.openPhoto('p1');
+    await tester.pumpAndSettle();
+
+    final word = tester.getTopLeft(find.byKey(const ValueKey('word:cat')));
+    final pills = tester.getTopLeft(find.textContaining('多看動詞'));
+    expect(word.dy, lessThan(pills.dy));
+  });
+
+  // 問題回報 #451 (owner 10/21): the auto-save note moves below the list too,
+  // so under the photo only the difficulty bar is left.
+  testWidgets('the auto-save note sits below the first word', (tester) async {
+    final repo = WordDatabaseRepository(
+        clock: () => testNow,
+        profile: UserVocabularyProfile.start('A1', now: testNow));
+    repo.addPhoto(Photo(
+        id: 'p1',
+        title: 'p1',
+        takenAt: testNow,
+        createdAt: testNow,
+        placeholderColors: const [0xFF8899AA, 0xFF334455],
+        width: 1200,
+        height: 900,
+        taggingStatus: TaggingStatus.done,
+        candidates: [
+          const WordCandidate(
+            word: 'cat',
+            pos: 'noun',
+            meaning: 'cat 義',
+            level: 'A1',
+            levelSource: 'cefr-j',
+            evidence: 'seen',
+            point: LabelPoint(0.1, 0.2),
+            visualConfidence: 0.9,
+            usefulness: 0.8,
+          ),
+        ]));
+
+    final app = await pumpApp(tester,
+        initialTab: AppTab.album,
+        repository: repo,
+        size: const Size(390, 844));
+    app.navigator.openPhoto('p1');
+    await tester.pumpAndSettle();
+
+    final bar = tester.getTopLeft(find.byKey(const ValueKey('difficulty-bar')));
+    final word = tester.getTopLeft(find.byKey(const ValueKey('word:cat')));
+    final note = tester.getTopLeft(find.textContaining('返回時自動保存'));
+    expect(bar.dy, lessThan(word.dy));
+    expect(word.dy, lessThan(note.dy));
+  });
 }

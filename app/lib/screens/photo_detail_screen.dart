@@ -446,31 +446,6 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
               ),
             ],
           ),
-          // 問題回報 #276: the "no 建立 button, leaving saves" rule used to sit
-          // under all five words; say it next to the list title instead.
-          Row(
-            children: [
-              const Icon(Icons.check_circle_outline_rounded,
-                  size: 14, color: MColors.label),
-              const SizedBox(width: 4),
-              Expanded(
-                child: UiText('返回時自動保存，不用再按建立。',
-                    style: MFont.manrope(12, FontWeight.w600, MColors.label)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          _LevelRow(
-            bias: session.bias,
-            busy: topping,
-            onBias: session.setBias,
-            onEasier: session.target > 0
-                ? () => session.setTarget(session.target - 1)
-                : null,
-            onHarder: session.target < cefrLevels.length - 1
-                ? () => session.setTarget(session.target + 1)
-                : null,
-          ),
           const SizedBox(height: 12),
           if (session.words.isEmpty) _emptyState(photo, session),
           for (final w in session.words) ...[
@@ -524,6 +499,34 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
               label: UiText('自己加字',
                   style: MFont.manrope(13, FontWeight.w800, MColors.primary)),
             ),
+          ),
+          // 問題回報 #451: the list's shortcuts sit under the words too, so
+          // the first word is the first thing under the list title.
+          const SizedBox(height: 4),
+          _LevelRow(
+            bias: session.bias,
+            busy: topping,
+            onBias: session.setBias,
+            onEasier: session.target > 0
+                ? () => session.setTarget(session.target - 1)
+                : null,
+            onHarder: session.target < cefrLevels.length - 1
+                ? () => session.setTarget(session.target + 1)
+                : null,
+          ),
+          // 問題回報 #276: the "no 建立 button, leaving saves" rule used to sit
+          // under all five words; #451 (owner 10/21) moved it below the list too.
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(Icons.check_circle_outline_rounded,
+                  size: 14, color: MColors.label),
+              const SizedBox(width: 4),
+              Expanded(
+                child: UiText('返回時自動保存，不用再按建立。',
+                    style: MFont.manrope(12, FontWeight.w600, MColors.label)),
+              ),
+            ],
           ),
           if (old.isNotEmpty) ...[
             const SizedBox(height: 4),
