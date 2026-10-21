@@ -489,3 +489,12 @@ commit `48495cd7`（Windows：flutter analyze 無 error、02:58 +509 ~2: All tes
   結果：全部完成：根因是 8123 服務還載著 10/19 的舊程式；重啟後新快照可見的「容易混淆的字」lexemeid 為空 = 0（舊 19,865）。
 - 卡 #465：問題回報 #459：形容詞比較級／最高級：2 音節以下的非形容詞也有 -er/-est 形式（例 game→gamer、
   結果：全部完成：2 音節以下不存在的 -er/-est 形式共 130 個（124 列、61 字）已從資料移除，匯入規則同步修好；QC／golden 無退步。
+
+## M44（2026-10-21 10:47）狀態：待做
+commit `72101f9a`（Windows：flutter analyze 無 error、02:37 +509 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #471：問題回報 #469：同一塊「意思」三種標題：卡片背面「中文意思」、多詞性詳情「詞性與意思」、單一詞性詳情卻是語言名「繁體
+  結果：全部完成：意思區塊標題統一為「詞性與意思」＋詞性標籤——learnerview 60 字中「繁體中文」27→0、「中文意思」60→0、「詞性與意思」33→60；全庫 6041 lemma 中 3367 個單一詞性字的詳情頁都由此修正。
+- 卡 #472：問題回報 #470：形容詞比較級：名詞被當形容詞，存了 more tea／more tomato 等 more/most
+  結果：全部完成：比照 #465 的「次要形容詞」規則清空——全庫 621 列 complete 比較級／最高級中，只有 more/most 形式且形容詞是次要義項的共 12 列（apply、metal、street、tea、texture、tomato 各 2 列）清成 none；根因在 kaikki 轉接器，新增 degr
+- 卡 #470：問題回報 #464：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
+  結果：無法重現：卡上兩個失敗檔單獨跑全過（fsrsoptimizer 5/5、card428sqlitesync 5/5，合計 13 通過），判定為並行執行的偶發失敗，未改任何程式或資料。
