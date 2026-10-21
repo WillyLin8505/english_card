@@ -59,6 +59,7 @@ Line counts as of 2026-10-17. **Big files: search first, then read a range** (se
   Wiktionary confirms (motif 「pattern」).
 - Relation-word Chinese after the word enters the lexicon (#462/#468): `backend/app/relation_backfill.py` — `process_word` calls `backfill_for_word` after materialize (fills other headwords' `*_native` slots still in `missing` + relation_translations, no AI); sweep `tools/card468_backfill.py measure|apply|restore`.
 - Gender / forms / morphemes (#429): the App pack reads field_values (not the forms table). `card429_forms.py` (fr_gender by main sense), `card429_morph.py` (Wiktionary affix templates), `card429_measure.py` (fr vs en coverage); all dry-run|apply|restore.
+- English -er/-est and more/most forms Wiktionary over-reports (#463/#465/#472): `adapters/kaikki.py` `degree_form_implausible` (3+ syllables), `degree_entry_unused` (one-word: more-first / not comparable / minor adjective), `degree_pos_minor` (minor adjective sense ≤ 1/4 → no more/most either; reviewed `DEGREE_KEEP`/`DEGREE_DROP`); DB sweeps `tools/card463_…`, `card465_…`, `card472_adj_degree_forms.py` dry-run|apply|restore.
 - CEFR (#335, issue #332 decision C): `word_level(w, "fr")` = `backend/app/fr_cefr_reviewed.json` (法語基礎 3000 字,
   Claude-reviewed A1–B1, `cefr_source=ai_reviewed`, app shows 估算) else max(wordfreq, Lexique 3.83 lemma zipf in
   `fr_lexique_lemma_zipf.json`). Rebuild / rewrite DB: `tools/card335_fr_cefr.py build|apply [--dry-run]|restore`;

@@ -1,7 +1,7 @@
 """-er / -est forms English does not use (card #465, issue #459)."""
 import pytest
 
-from app.adapters.kaikki import degree_entry_unused
+from app.adapters.kaikki import degree_entry_unused, degree_pos_minor
 
 
 def adj(head, senses=1, tags=None):
@@ -28,3 +28,21 @@ def other(pos, senses):
 ])
 def test_degree_entry_unused(word, entry, rest, unused):
     assert degree_entry_unused(word, entry, [entry, *rest]) is unused
+
+
+# Card #472 (issue #470): more / most of a word that is not really an adjective.
+@pytest.mark.parametrize("word, entry, rest, minor", [
+    ("tea", adj({}, 2), [other("noun", 19), other("verb", 3)], True),      # more tea
+    ("tomato", adj({}, 1), [other("noun", 5), other("verb", 2)], True),    # most tomato
+    ("street", adj({}, 1), [other("noun", 13), other("verb", 5)], True),   # more street
+    ("apply", adj({}, 1), [other("verb", 10)], True),                      # -ly verb, not likely
+    ("trig", adj({"1": "er"}, 5, ["dialectal"]), [other("noun", 2)], True),
+    ("orange", adj({"1": "er,more"}, 2), [other("noun", 14), other("verb", 2)], False),  # colour
+    ("likely", adj({"1": "more,er"}, 7), [other("adv", 3)], False),
+    ("fun", adj({"1": "more,er"}, 2), [other("noun", 2), other("verb", 1)], False),
+    ("plastic", adj({}, 10), [other("noun", 8)], False),
+    ("fit", adj({"1": "er"}, 5), [other("noun", 16)], False),             # reviewed keep
+    ("anxious", adj({"1": "more,er"}, 4), [], False),  # more anxious stays; anxiouser is #465's
+])
+def test_degree_pos_minor(word, entry, rest, minor):
+    assert degree_pos_minor(word, entry, [entry, *rest]) is minor
