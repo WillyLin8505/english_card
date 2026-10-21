@@ -154,6 +154,18 @@ def validate(pack: dict) -> dict[str, list]:
     return dict(v)
 
 
+CEFR_LEVELS = ("A1", "A2", "B1", "B2", "C1", "C2")
+
+
+def _levels_under(tags: list | None, need: int) -> list[str]:
+    """CEFR levels that have fewer than `need` tags on one picture (card #448)."""
+    counts = {level: 0 for level in CEFR_LEVELS}
+    for t in tags or []:
+        if t.get("cefr") in counts:
+            counts[t["cefr"]] += 1
+    return [level for level in CEFR_LEVELS if counts[level] < need]
+
+
 def metrics(pack: dict, violations: dict | None = None) -> dict:
     violations = validate(pack) if violations is None else violations
     lexemes = pack.get("lexemes") or []
@@ -168,6 +180,9 @@ def metrics(pack: dict, violations: dict | None = None) -> dict:
         "full_cefr_estimated": sum(1 for lx in full if lx.get("cefr") and lx.get("cefr_source") in ESTIMATE_SOURCES),
         "catalog_images": len(images),
         "photo_tags": len(tags),
+        # Card #448 standard (5 per CEFR level). Informational only: not a v.* rule,
+        # so compare() does not gate on it until the owner decides to switch.
+        "photos_level_under_5": sum(1 for im in images if _levels_under(im.get("tags"), 5)),
         "pack_mb": round(len(json.dumps(pack, ensure_ascii=False).encode()) / 1e6, 1),
     }
     out.update({f"v.{k}": len(x) for k, x in sorted(violations.items())})
