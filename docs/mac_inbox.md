@@ -443,24 +443,24 @@ owner：每天晚上睡覺時會把 iPhone 接上 Mac。**00:00–06:00 這段�
 3. 結果寫進 results 檔（註明「實機 iPhone 型號／iOS 版本」），不通過的會自動變成問題回報。
 4. 其他時間照常用模擬器驗證（不限時間）。
 
-## M37（2026-10-21 08:52）狀態：待做
+## M37（2026-10-21 08:52）狀態：完成
 commit `808e5d72`（Windows：flutter analyze 無 error、01:57 +503 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #457：問題回報 #451：[Mac] 2026-10-21 M30 補驗（上一輪未能驗證的 16 張新介面卡）：#441 照片
   結果：項目 · 上一輪 r1 後 · 本輪後
 - 卡 #458：問題回報 #433：資料庫相片冊搜尋：字首相符的圖常比整字多 3 倍且不相干（car 整字 68、字首 219：carv
   結果：全部完成：問題回報 #433 owner 已決定「維持現狀」，所以沒改任何程式或資料（car 整字 68／字首 219 的排序與呈現照舊）。
 
-## M38（2026-10-21 09:00）狀態：待做
+## M38（2026-10-21 09:00）狀態：完成
 commit `430c7369`（Windows：flutter analyze 無 error、01:54 +505 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #454：問題回報 #448：[Mac] 2026-10-21 M30 補驗（上一輪未能驗證的 16 張新介面卡）：#413 同義
   結果：全部完成：App 內建詞庫已重建，1813 筆含主字的複合詞同義/反義改放「相關」；force 不再有 force out／force play。
 
-## M39（2026-10-21 09:18）狀態：待做
+## M39（2026-10-21 09:18）狀態：完成
 commit `8bec11f7`（Windows：flutter analyze 無 error、05:59 +505 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #460：問題回報 #453：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
   結果：全部完成：flutter test 505 全過（2 skipped）、flutter analyze 0 error（12 個 info）。
 
-## M40（2026-10-21 09:29）狀態：待做
+## M40（2026-10-21 09:29）狀態：完成
 commit `93e376e5`（Windows：flutter analyze 無 error、04:00 +505 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #226：模擬使用者・複習
   結果：第 105 輪：learner/restart 2/2 通過（第 103、104 輪 0/2 是模擬器壞掉，已修）；新問題 #454（已修）、#455、#456、#457；UX 建議 #455、#457；補註 #253、#420。
