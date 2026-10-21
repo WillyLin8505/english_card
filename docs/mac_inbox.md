@@ -481,7 +481,7 @@ commit `fb9debc7`（Windows：flutter analyze 無 error、03:45 +509 ~2: All tes
 - 卡 #468：問題回報 #462：關聯詞中文不會回填：主字擷取時關聯字還不是詞條，之後入庫也不補（missing 槽 384 個可用字
   結果：全部完成：關聯詞中文回填從根因修好——字入庫時自動回頭補引用它的主字（pipeline 掛勾），並一次清掉全庫累積：補 360 個 missing 槽（fieldvalues 332 列）、relationtranslations +338 列；golden/QC 前後完全相同，regressions = []。
 
-## M43（2026-10-21 10:39）狀態：待做
+## M43（2026-10-21 10:39）狀態：完成（公開網址 403，待補驗）
 commit `48495cd7`（Windows：flutter analyze 無 error、02:58 +509 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #466：問題回報 #460：詞庫有 145 個首字大寫的詞條（Porch、Skull、Fairy…），其中 74 個另有小寫同字
   結果：全部完成：140 個「首字大寫的一般詞」lexeme（104 個字）改成小寫 lemma；之後重跑/匯入不再產生。
