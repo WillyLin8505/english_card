@@ -57,6 +57,10 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
   PhotoWordSession? _session;
   bool _visible = false;
 
+  /// 問題回報 #490: the word list (cards, lookups, swipe wrappers) is built one
+  /// frame after the photo, so opening the page doesn't hitch on iPhone 12.
+  bool _listReady = false;
+
   /// An added word waiting for a tap on the photo to get its pin.
   SessionWord? _placing;
   final _photoKey = GlobalKey();
@@ -65,6 +69,9 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _listReady = true);
+    });
   }
 
   @override
@@ -383,7 +390,10 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                             word: displayWord(w.word),
                             onSkip: () => setState(() => _placing = null),
                           ),
-                        _buildList(photo, session, old),
+                        if (_listReady)
+                          _buildList(photo, session, old)
+                        else
+                          const SizedBox(height: 360),
                       ],
                     ),
                   ),

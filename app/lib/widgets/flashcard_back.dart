@@ -765,13 +765,43 @@ class FlashcardBack extends StatelessWidget {
             ],
           ],
         ),
-        for (final w in fields) ...[
+        for (final (i, w) in fields.indexed) ...[
           SizedBox(height: look.sectionGap),
-          section(w),
+          // Only the top of the back is built in the flip frame; the rest
+          // follows one frame later (問題回報 #491: a frame of 68 ms on
+          // iPhone 12 when every block was built at once).
+          i < _eagerBlocks ? section(w) : _DeferredBuild(child: section(w)),
         ],
       ],
     );
   }
+}
+
+const _eagerBlocks = 2;
+
+/// Builds [child] on the frame after this one; [SizedBox.shrink] until then.
+class _DeferredBuild extends StatefulWidget {
+  final Widget child;
+  const _DeferredBuild({required this.child});
+
+  @override
+  State<_DeferredBuild> createState() => _DeferredBuildState();
+}
+
+class _DeferredBuildState extends State<_DeferredBuild> {
+  bool _ready = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _ready = true);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      _ready ? widget.child : const SizedBox.shrink();
 }
 
 /// 詞形變化 as an even grid (問題回報 #406): equal-width cells, the kind in
