@@ -573,3 +573,12 @@ commit `5fdc79d7`（Windows：flutter analyze 無 error、02:25 +516 ~2: All tes
   結果：第113輪（修正後重跑第114輪）：主模擬 1/1、補充測試 19/19 通過；新問題 #488（247 個照片標籤掛在變化形詞條、全部未分級），已修 #489（從相片冊加入的字沒送 wordadded，修後 album 模擬 0→824 筆事件）。
 - 卡 #486：問題回報 #488：相片冊 247 個照片標籤掛在「變化形」詞條（gazing＝gaze 的現在分詞），沒有 CEFR，
   結果：全部完成：照片標籤不再掛在純變化形詞條——round 113 pack 上「變化形詞條上的 approved tag」247 → 8、未分級 tag 281 → 42；golden／QC 無退步。
+
+## M58（2026-10-21 23:05）狀態：待做
+commit `b45eb584`（Windows：flutter analyze 無 error、05:12 +516 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #225：模擬使用者・相片冊
+  結果：第113輪（修正後重跑第114輪）：主模擬 1/1、補充測試 19/19 通過；新問題 #488（247 個照片標籤掛在變化形詞條、全部未分級），已修 #489（從相片冊加入的字沒送 wordadded，修後 album 模擬 0→824 筆事件）。
+- 卡 #486：問題回報 #488：相片冊 247 個照片標籤掛在「變化形」詞條（gazing＝gaze 的現在分詞），沒有 CEFR，
+  結果：全部完成：照片標籤不再掛在純變化形詞條——round 113 pack 上「變化形詞條上的 approved tag」247 → 8、未分級 tag 281 → 42；golden／QC 無退步。
+- 卡 #487：問題回報 #490：[Mac] 2026-10-21 實機 iPhone 12：畫面流暢度量測（owner 反映：E 照
+  結果：修正完成（待 Mac 重測）：照片詳情的單字列表延後一個畫面建立，第一幀只建照片＋難度條。；- 原因：Windows 無法量 iPhone 12 的 frame time；從程式判斷，開頁第一幀同時建 PinnedPhoto、難度條與整個單字列表（每字 Dismissible + WordCard + LexiconP
