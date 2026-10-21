@@ -497,6 +497,8 @@ void main() {
     testWidgets('測試連線: wrong key / not running', (tester) async {
       await check(tester, MockClient((r) async => health(false)),
           '✕ 服務正常，但 API Key 不正確');
+      // 問題回報 #475：要學習者處理時，標題下的提示要說後果與「點開修正」。
+      expect(find.text('照片辨識設定有誤，新照片無法辨識，點開修正'), findsOneWidget);
     });
 
     testWidgets('測試連線: 401 shows the key error without the settings hint',
@@ -514,6 +516,10 @@ void main() {
             (r) async => throw http.ClientException('Connection refused')),
         '✕ 連不到 AI 辨識服務（http://127.0.0.1:8765/tag），請確認服務已啟動',
       );
+      // 問題回報 #475：只是暫時連不上時，提示說照片會排隊、之後自動辨識。
+      expect(find.text('照片辨識暫時連不上：新照片會先排隊，連上後自動辨識，不用處理'),
+          findsOneWidget);
+      expect(find.textContaining('點開修正'), findsNothing);
     });
 
     testWidgets('level by hand; a dial habit suggests a new default level',

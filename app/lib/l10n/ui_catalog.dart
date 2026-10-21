@@ -304,9 +304,9 @@ const uiCatalog = <String, (String, String)>{
     'Each learning language has its own albums, words, cards and level.',
     'Chaque langue étudiée a ses albums, mots, cartes et niveau.'
   ),
-  '介面隨母語切換；學習內容依已發布的詞庫提供。': (
-    'The interface follows your native language; learning content depends on published dictionaries.',
-    'L’interface suit votre langue maternelle ; le contenu dépend des dictionnaires publiés.'
+  '介面語言跟著母語切換。': (
+    'The interface language follows your native language.',
+    'La langue de l’interface suit votre langue maternelle.'
   ),
   '英文（English）': ('English', 'Anglais (English)'),
   '法文（Français）': ('French (Français)', 'Français'),
@@ -366,9 +366,13 @@ const uiCatalog = <String, (String, String)>{
     'Photo recognition connection',
     'Connexion à la reconnaissance photo'
   ),
-  '照片辨識連線失敗，點開查看': (
-    'Photo recognition connection failed, tap to view',
-    'Échec de la connexion à la reconnaissance photo, ouvrir pour voir'
+  '照片辨識暫時連不上：新照片會先排隊，連上後自動辨識，不用處理': (
+    'Photo recognition is offline for now: new photos wait in line and are recognised once it reconnects. Nothing to do.',
+    'Reconnaissance photo hors ligne pour l’instant : les nouvelles photos attendent et seront reconnues à la reconnexion. Rien à faire.'
+  ),
+  '照片辨識設定有誤，新照片無法辨識，點開修正': (
+    'Photo recognition settings are wrong, so new photos can’t be recognised. Open to fix.',
+    'Les réglages de reconnaissance photo sont incorrects : les nouvelles photos ne peuvent pas être reconnues. Ouvrir pour corriger.'
   ),
   '複習安排': ('Review schedule', 'Calendrier de révision'),
   '越高，單字越常出現。預設 90%。': (

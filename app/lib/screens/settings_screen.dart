@@ -36,6 +36,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   TextEditingController? _url;
   TextEditingController? _key;
   String? _check;
+  // 問題回報 #475: a failed check either just delays photos (they queue and
+  // are recognised once the service is back) or needs the learner to fix the
+  // URL/key; the collapsed hint says which.
+  bool _checkNeedsFix = false;
   bool _checking = false;
   bool _switching = false;
 
@@ -67,14 +71,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final tagger = scope.intake
         .createTagger(Uri.parse(settings.taggingUrl), settings.apiKey);
     String result;
+    var needsFix = false;
     try {
       final h = await tagger.checkHealth();
+      needsFix = h.ollama && h.keyOk == false;
       result = !h.ollama
           ? '✕ 服務有回應，但 AI 模型沒有啟動'
           : h.keyOk == false
               ? '✕ 服務正常，但 API Key 不正確'
               : '✓ 已連線 · ${h.model}';
     } catch (e) {
+      needsFix = !isOffline(e);
       result = '✕ ${describeTaggingError(e, settings.taggingUrl)}';
     } finally {
       tagger.close();
@@ -87,6 +94,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       setState(() {
         _checking = false;
         _check = result;
+        _checkNeedsFix = needsFix;
       });
     }
   }
@@ -181,7 +189,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ],
                           ),
                           _note('更多學習語言即將推出'),
-                          _note('每個學習語言有自己的相片冊、單字、卡片與程度。'),
+                          if (availableLearningLanguages.length > 1)
+                            _note('每個學習語言有自己的相片冊、單字、卡片與程度。'),
                           const SizedBox(height: 12),
                           _label('母語'),
                           Wrap(
@@ -202,7 +211,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   ),
                             ],
                           ),
-                          _note('介面隨母語切換；學習內容依已發布的詞庫提供。'),
+                          _note('介面語言跟著母語切換。'),
                           if (settings.learningLanguage == 'en') ...[
                             const SizedBox(height: 12),
                             _label('發音腔調'),
@@ -318,7 +327,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ),
                             ],
                           ),
-                          _note('複習卡片背面的照片上，顯示這個單字的標籤。預設打開。'),
+                          _note('複習卡片背面的照片上，顯示這個單字的標籤。'),
                         ],
                       ),
                       _insightsCard(repo.insights()),
@@ -425,7 +434,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         collapsed: true,
                         hint: settings.showsTaggingServer &&
                                 (_check?.startsWith('✕') ?? false)
-                            ? '照片辨識連線失敗，點開查看'
+                            ? (_checkNeedsFix
+                                ? '照片辨識設定有誤，新照片無法辨識，點開修正'
+                                : '照片辨識暫時連不上：新照片會先排隊，連上後自動辨識，不用處理')
                             : null,
                         children: [
                           if (settings.showsTaggingServer) ...[
