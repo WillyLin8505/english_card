@@ -480,3 +480,12 @@ commit `9034548a`（Windows：flutter analyze 無 error、05:05 +507 ~2: All tes
 commit `fb9debc7`（Windows：flutter analyze 無 error、03:45 +509 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #468：問題回報 #462：關聯詞中文不會回填：主字擷取時關聯字還不是詞條，之後入庫也不補（missing 槽 384 個可用字
   結果：全部完成：關聯詞中文回填從根因修好——字入庫時自動回頭補引用它的主字（pipeline 掛勾），並一次清掉全庫累積：補 360 個 missing 槽（fieldvalues 332 列）、relationtranslations +338 列；golden/QC 前後完全相同，regressions = []。
+
+## M43（2026-10-21 10:39）狀態：待做
+commit `48495cd7`（Windows：flutter analyze 無 error、02:58 +509 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #466：問題回報 #460：詞庫有 145 個首字大寫的詞條（Porch、Skull、Fairy…），其中 74 個另有小寫同字
+  結果：全部完成：140 個「首字大寫的一般詞」lexeme（104 個字）改成小寫 lemma；之後重跑/匯入不再產生。
+- 卡 #469：問題回報 #463：學習 App 拿到的詞庫快照仍含 19,865 筆沒有詞條的「容易混淆的字」（與現行程式產出不一致）
+  結果：全部完成：根因是 8123 服務還載著 10/19 的舊程式；重啟後新快照可見的「容易混淆的字」lexemeid 為空 = 0（舊 19,865）。
+- 卡 #465：問題回報 #459：形容詞比較級／最高級：2 音節以下的非形容詞也有 -er/-est 形式（例 game→gamer、
+  結果：全部完成：2 音節以下不存在的 -er/-est 形式共 130 個（124 列、61 字）已從資料移除，匯入規則同步修好；QC／golden 無退步。
