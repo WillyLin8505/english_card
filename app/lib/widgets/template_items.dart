@@ -28,10 +28,16 @@ class _TemplateItemsState extends State<TemplateItems> {
 }
 
 /// Shows the first [initial] children, the rest behind 顯示更多 / 收起.
+/// [wrap] lays the children out as flowing chips instead of a column.
 class ShowMoreItems extends StatefulWidget {
   final int initial;
   final List<Widget> children;
-  const ShowMoreItems({super.key, required this.initial, required this.children});
+  final bool wrap;
+  const ShowMoreItems(
+      {super.key,
+      required this.initial,
+      required this.children,
+      this.wrap = false});
   @override
   State<ShowMoreItems> createState() => _ShowMoreItemsState();
 }
@@ -41,14 +47,23 @@ class _ShowMoreItemsState extends State<ShowMoreItems> {
   @override
   Widget build(BuildContext context) {
     final hidden = widget.children.length - widget.initial;
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      ...(open || hidden <= 0
-          ? widget.children
-          : widget.children.take(widget.initial)),
-      if (hidden > 0)
-        TextButton(
+    final shown = open || hidden <= 0
+        ? widget.children
+        : widget.children.take(widget.initial).toList();
+    final toggle = hidden > 0
+        ? TextButton(
             onPressed: () => setState(() => open = !open),
-            child: Text(open ? '收起' : '顯示更多（$hidden）')),
+            child: Text(open ? '收起' : '顯示更多（$hidden）'))
+        : null;
+    if (widget.wrap) {
+      return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Wrap(spacing: 8, runSpacing: 8, children: shown),
+        if (toggle != null) toggle,
+      ]);
+    }
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      ...shown,
+      if (toggle != null) toggle,
     ]);
   }
 }

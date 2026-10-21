@@ -643,6 +643,10 @@ const uiCatalog = <String, (String, String)>{
     'Photo recognition is offline',
     'Reconnaissance des photos hors ligne'
   ),
+  '只找照片裡的英文字・物品辨識未連線': (
+    'Printed English only · object recognition off',
+    'Texte anglais seulement · objets non reconnus'
+  ),
   '設定辨識': ('Set up recognition', 'Configurer la reconnaissance'),
   '照片詳情': ('Photo details', 'Détails de la photo'),
   '照片名稱': ('Photo name', 'Nom de la photo'),

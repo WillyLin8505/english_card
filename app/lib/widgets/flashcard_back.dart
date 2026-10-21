@@ -564,8 +564,10 @@ class FlashcardBack extends StatelessWidget {
       case CardBackField.related:
         // Item 6: one block per relation type, each filling the width;
         // blocks without data are left out.
-        // #416: related blocks start fully open (published limits ignored).
-        int limit(String kind) => 10000;
+        // Card #416 opened these fully; problem report #467 caps each block
+        // at its first 5 words (easier first), the rest behind 顯示更多.
+        // The word detail page still lists them all.
+        const initial = 5;
         final blocks = <Widget>[];
         final shown = <String>{};
         for (final (label, kinds) in const [
@@ -575,14 +577,13 @@ class FlashcardBack extends StatelessWidget {
           ('近音字', ['homophones']),
           ('容易混淆的字', ['near_homophones', 'similar_spelling']),
         ]) {
-          final words =
-              _relations(kinds, maxItems: limit(kinds.first), shown: shown);
+          final words = _relations(kinds, maxItems: 10000, shown: shown);
           if (words.isEmpty) continue;
           blocks.add(_Block(
             label,
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
+            ShowMoreItems(
+              initial: initial,
+              wrap: true,
               children: [
                 for (final w in words)
                   _WordChip(w.word,

@@ -198,8 +198,12 @@ class _CameraScreenState extends State<CameraScreen>
                   ? '正在開啟相機…'
                   : '相機未啟用';
         } else {
+          // Say the limit, not the capability: with only on-device text
+          // scanning a cup or a plant finds nothing (問題回報 #472).
           badge = !scope.settings.taggingConfigured
-              ? (TextScan.available ? '可找照片裡的文字' : '照片辨識尚未連線')
+              ? (TextScan.available
+                  ? '只找照片裡的英文字・物品辨識未連線'
+                  : '照片辨識尚未連線')
               : scope.queue.offline
                   ? 'AI 離線 · 照片會先排隊'
                   : 'AI 辨識就緒';
@@ -254,6 +258,12 @@ class _CameraScreenState extends State<CameraScreen>
                           fallback: latest,
                           cameraError: _cameraError,
                           badge: badge,
+                          onBadgeTap: _controller != null &&
+                                  !_busy &&
+                                  !scope.settings.taggingConfigured
+                              ? () =>
+                                  scope.navigator.selectTab(AppTab.settings)
+                              : null,
                           onOpenFallback: () => _openLatest(latest),
                         ),
                       ),
@@ -447,6 +457,9 @@ class _Viewfinder extends StatelessWidget {
   final Photo? fallback;
   final String? cameraError;
   final String badge;
+
+  /// Recognition not set up: the badge opens 設定 → 照片辨識.
+  final VoidCallback? onBadgeTap;
   final VoidCallback onOpenFallback;
 
   const _Viewfinder({
@@ -454,6 +467,7 @@ class _Viewfinder extends StatelessWidget {
     required this.fallback,
     required this.cameraError,
     required this.badge,
+    this.onBadgeTap,
     required this.onOpenFallback,
   });
 
@@ -518,21 +532,36 @@ class _Viewfinder extends StatelessWidget {
           Positioned(
             left: MSpace.lg,
             top: MSpace.lg,
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: MSpace.sm, vertical: MSpace.xxs),
-              decoration: MDecor.overlayPill(
-                color: MColors.ink.withValues(alpha: 0.75),
-                radius: MRadii.xl,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const MSvg(MIcon.pulseDot, size: 8),
-                  const SizedBox(width: MSpace.xxs),
-                  Text(badge,
-                      style: MFont.manrope(12, FontWeight.w700, Colors.white)),
-                ],
+            right: MSpace.lg,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Tap(
+                onTap: onBadgeTap,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: MSpace.sm, vertical: MSpace.xxs),
+                  decoration: MDecor.overlayPill(
+                    color: MColors.ink.withValues(alpha: 0.75),
+                    radius: MRadii.xl,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const MSvg(MIcon.pulseDot, size: 8),
+                      const SizedBox(width: MSpace.xxs),
+                      Flexible(
+                        child: UiText(badge,
+                            style: MFont.manrope(
+                                12, FontWeight.w700, Colors.white)),
+                      ),
+                      if (onBadgeTap != null) ...[
+                        const SizedBox(width: MSpace.xxs),
+                        const Icon(Icons.chevron_right_rounded,
+                            size: 14, color: Colors.white),
+                      ],
+                    ],
+                  ),
+                ),
               ),
             ),
           ),

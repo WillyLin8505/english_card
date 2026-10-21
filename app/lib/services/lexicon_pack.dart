@@ -313,6 +313,7 @@ class LexiconPack extends ChangeNotifier {
           LexemeUsage(
               id: 'pack:$target:${e.id}',
               pos: shortPos(e.pos),
+              rare: e.rareUsage,
               senses: [
                 for (final s in e.senses)
                   WordSense(

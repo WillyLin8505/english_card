@@ -215,16 +215,22 @@ class LexemeUsage {
   final String pos;
   final List<WordSense> senses;
   final List<WordExample> examples;
+
+  /// A rarer part of speech of the spelling (問題回報 #468): review skips it.
+  /// Stored with the usage; absent in older data means common.
+  final bool rare;
   const LexemeUsage({required this.id, required this.pos,
-      this.senses = const [], this.examples = const []});
+      this.senses = const [], this.examples = const [], this.rare = false});
   factory LexemeUsage.fromJson(Map<String, dynamic> j) => LexemeUsage(
       id: j['id'] as String, pos: j['pos'] as String,
+      rare: j['rare'] == true,
       senses: [for (final s in j['senses'] as List? ?? [])
         WordSense.fromJson(Map<String, dynamic>.from(s as Map))],
       examples: [for (final e in j['examples'] as List? ?? [])
         WordExample.fromJson(Map<String, dynamic>.from(e as Map))]);
   Map<String, dynamic> toJson() => {
     'id': id, 'pos': pos,
+    if (rare) 'rare': true,
     'senses': [for (final s in senses) s.toJson()],
     'examples': [for (final e in examples) e.toJson()],
   };
@@ -248,7 +254,7 @@ class WordEntry {
       if (shortPos(u.pos) == shortPos(pos) &&
           (u.id.startsWith('local:') || userEdited.contains(WordField.meaning) ||
               userEdited.contains(WordField.examples)))
-        LexemeUsage(id: u.id, pos: pos,
+        LexemeUsage(id: u.id, pos: pos, rare: u.rare,
           senses: [for (var i = 0; i < u.senses.length; i++)
             if (i == 0 && (u.id.startsWith('local:') || userEdited.contains(WordField.meaning)))
               WordSense(id: u.senses[i].id, meaning: meaning,

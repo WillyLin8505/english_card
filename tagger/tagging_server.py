@@ -1459,7 +1459,9 @@ def make_handler(tagger: Tagger, api_key: str):
                 self._json(401, {'error': 'missing or wrong X-API-Key'})
                 return
             # New inference only: in-flight requests (already past this check) finish.
-            if is_qwen_paused():
+            # The board pause / Qwen schedule only holds back batch work: a learner's own
+            # photo from the App is never refused (owner 10/21).
+            if is_qwen_paused() and is_background(url.path, self.headers):
                 self._json(503, {'error': 'Qwen 已暫停', 'code': 'qwen_paused'})
                 return
             body = self._body()

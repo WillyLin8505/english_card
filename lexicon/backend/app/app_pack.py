@@ -60,7 +60,7 @@ def build(db_path: Path) -> dict:
     for r in q("SELECT * FROM relations ORDER BY lexeme_id, relation, ordinal"):
         by_lex[r["lexeme_id"]]["relations"].append({
             "relation": r["relation"], "word": r["target_word"], "lexeme_id": r["target_lexeme_id"],
-            "pos": r["target_pos"], "native": r["native_meaning"], "native_ai": bool(r["native_is_ai"]),
+            "pos": r["target_pos"], "sense_id": r["source_sense_id"], "native": r["native_meaning"], "native_ai": bool(r["native_is_ai"]),
             "cefr": r["target_cefr"], "zipf": r["target_zipf"], "rarity": r["rarity"],
             "hide_by_default": bool(r["hide_by_default"]),
             "detail": json.loads(r["detail"] or "{}")})
@@ -110,6 +110,7 @@ def build(db_path: Path) -> dict:
     quality.apply_pack(pack)
     quality.apply_decisions(pack)  # owner decision #191
     move_compound_synonyms(pack)  # #400 / card 413
+    hide_minor_sense_synonyms(pack)  # #466 / card 481
     drop_unlisted_confusables(pack)  # #457 / card 462
     from .picture_need import assign_picture_ids
     assign_picture_ids(pack["lexemes"])
@@ -137,6 +138,34 @@ def drop_unlisted_confusables(pack: dict) -> int:
             kept.append(r)
         lx["relations"] = kept
     return dropped
+
+
+MAIN_SENSES = 3
+
+
+def hide_minor_sense_synonyms(pack: dict) -> int:
+    """A synonym belongs to one meaning of the headword (問題回報 #466, option A): shown only
+    when that meaning is among the first MAIN_SENSES, or when the meaning is not known yet.
+    possession→enthusiasm (the 著魔 sense) and inert→soggy are hidden, not deleted."""
+    hidden = 0
+    for lx in pack.get("lexemes", []):
+        if lx.get("status") != "full":
+            continue
+        rank = {sn["id"]: n for n, sn in enumerate(lx.get("senses") or [])}
+        for r in lx.get("relations") or []:
+            if r["relation"] != "synonyms" or r.get("hide_by_default"):
+                continue
+            sense_id = r.get("sense_id")
+            if (r.get("detail") or {}).get("sense_match") == "none":
+                reason = "no_sense"
+            elif sense_id is not None and rank.get(sense_id, 0) >= MAIN_SENSES:
+                reason = "minor_sense"
+            else:
+                continue
+            r["hide_by_default"] = True
+            r["detail"] = {**(r.get("detail") or {}), "hidden_reason": reason}
+            hidden += 1
+    return hidden
 
 
 def move_compound_synonyms(pack: dict) -> int:
@@ -223,8 +252,15 @@ def share_forms(by_lex: dict[int, dict]) -> None:
             pos, of = lex["pos"], FORM_POS.get(f["field"])
             if of is not None and f["field"].startswith("fr_") and pos not in ("noun", "verb", "adj"):
                 return False  # merci the interjection is not 「le merci」
-            if of is None or pos not in ("noun", "verb", "adj", "adv"):
+            if of is None:
                 return True
+            if pos not in ("noun", "verb", "adj", "adv"):
+                # good / sage the interjection, ample the determiner: a form that
+                # belongs to a noun / verb / adjective sibling of the spelling is
+                # that sibling's (better/best on the 感嘆詞 card, 問題回報 #479);
+                # a determiner with no such sibling (many → more) keeps it.
+                owners = (of,) if isinstance(of, str) else tuple(of)
+                return not any(o.get("pos") in owners for o in group if o is not lex)
             # French gender / number forms belong to nouns and adjectives
             # alike (card #429: chat lost chats, chatte).
             either = catalog.FORM_POS.get(f["field"])

@@ -420,9 +420,15 @@ def materialize(s: Session, target: str, lemma: str, display: str | None = None,
                                                      "to_pos") if d.get(k)})
                 if pos:
                     detail["pos"] = pos
+            old_match = (rel.detail or {}).get("sense_match")
+            if old_match:  # card 481: a sense the AI picked survives a re-import
+                detail["sense_match"] = old_match
             rel.detail = detail
             sk = it.get("sense_key")
-            rel.source_sense_id = sense_rows[sk][0].id if sk and sk in sense_rows else None
+            if sk and sk in sense_rows:
+                rel.source_sense_id = sense_rows[sk][0].id
+            elif not old_match:
+                rel.source_sense_id = None
             s.flush()
             keep_rel.add(rel.id)
     q = delete(m.LexemeRelation).where(m.LexemeRelation.lexeme_id.in_(ids))

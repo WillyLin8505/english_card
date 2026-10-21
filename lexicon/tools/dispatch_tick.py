@@ -558,6 +558,7 @@ class Tick:
         elif DECISION_RE.search(text[:800]):
             action = "waiting"
             self.write("PUT", f"/tasks/{card_id}", {"by": "Grokbot", "status": "waiting", "progress": progress}, "decision")
+            self.ask_owner(card_id, fresh, text, rel)
         elif BLOCKER_RE.search(text[:800]):
             action = "blocked"
             self.write("PUT", f"/tasks/{card_id}", {"by": "Grokbot", "status": "blocked", "progress": progress}, "blocker")
@@ -604,6 +605,51 @@ class Tick:
                        "resolution": f"卡 #{task.get('id')}：{outcome}（{rel}）"[:600]}, "issue fixed")
 
     # 3. dependencies
+    def ask_owner(self, card_id: int, task: dict, text: str, rel: str):
+        """owner 10/21: every 「需要你決定」 is a decision issue on the 問題回報 page, where the owner answers."""
+        if self.dry:
+            return
+        q = DECISION_RE.split(text, maxsplit=1)[-1].lstrip("：: ").split("\n")[0].strip()[:200]
+        detail = (f"卡 #{card_id}「{(task.get('title') or '')[:80]}」需要你決定（派工程式自動開）。\n\n"
+                  + text[:2500] + f"\n\n完整結果：{rel}\n在本頁「決定」欄回答後，派工程式會自動把卡 #{card_id} 排回去照你的決定做。")
+        try:
+            i = http("POST", "/issues", {"kind": "decision", "severity": "high", "area": "app",
+                                        "title": f"[待決定] 卡 #{card_id}：{q}"[:300], "detail": detail,
+                                        "reporter": "派工程式"})
+            asks = self.state.setdefault("asks", {})
+            asks[str(i["id"])] = card_id
+            log(f"#{card_id}: decision asked as issue #{i['id']}")
+        except Exception as e:  # noqa: BLE001
+            log(f"ask_owner #{card_id}: {e}")
+
+    def answered(self) -> bool:
+        """A [待決定] issue the owner answered → its waiting card goes back to the queue with the answer."""
+        asks = self.state.get("asks") or {}
+        changed = False
+        for iid, cid in list(asks.items()):
+            try:
+                i = http("GET", f"/issues/{int(iid)}")
+            except Exception:  # noqa: BLE001
+                continue
+            if not i.get("decision") and i.get("status") not in ("fixed", "wont_fix"):
+                continue
+            asks.pop(iid, None)
+            if self.dry:
+                continue
+            try:
+                t = http("GET", f"/tasks/{cid}")
+                if t.get("status") == "waiting":
+                    self.write("PUT", f"/tasks/{cid}", {
+                        "by": "Grokbot", "status": "queued", "agent": None,
+                        "detail": (t.get("detail") or "") + f"\n\n【owner 決定（問題回報 #{iid}）】{i.get('decision') or i.get('resolution') or ''}",
+                        "progress": f"owner 已在問題回報 #{iid} 決定，排回待辦"}, "answered")
+                    changed = True
+                self.write("PUT", f"/issues/{int(iid)}", {"by": "Grokbot", "status": "fixed",
+                           "resolution": f"已回答，卡 #{cid} 照決定繼續"}, "ask closed")
+            except Exception as e:  # noqa: BLE001
+                log(f"answered #{iid}: {e}")
+        return changed
+
     def unblock(self, board: dict) -> bool:
         changed = False
         for cid, deps in (self.cfg.get("unblock_after") or {}).items():
@@ -752,7 +798,7 @@ class Tick:
                    if t.get("card", "task") == "task" for i in (t.get("issue_ids") or [])}
         skip_i = set(self.caps.get("skip_issues", []))
         for i in open_issues:
-            if (i.get("kind") == "decision" and i.get("decision") and i.get("status") in ("open", "in_progress")
+            if (i.get("kind") == "decision" and i.get("decision") and i.get("status") in ("open", "in_progress", "needs_decision")
                     and i["id"] not in seen and i["id"] not in working and i["id"] not in skip_i):
                 issues.append({"key": f"i{i['id']}", "issue_id": i["id"], "task_id": None,
                                "difficulty": i.get("difficulty") or 3, "title": i.get("title")})
@@ -772,7 +818,8 @@ class Tick:
                 issues.append(c)
         # 「[給 Mac]」 requests are for the Claude session on the owner's Mac, not for a CLI here
         issues = [c for c in issues if not str(c.get("title") or "").lstrip("問題回報 #0123456789：").startswith(MAC_PREFIX)
-                  and MAC_PREFIX not in str(c.get("title") or "")[:40]]
+                  and MAC_PREFIX not in str(c.get("title") or "")[:40]
+                  and "[待決定]" not in str(c.get("title") or "")[:12]]
         issues = [c for c in issues if not self.prior_busy(c.get("task_id"))]
         taken = set()
         for c in issues:
@@ -916,6 +963,7 @@ class Tick:
         self.qwen_schedule()
         changed = self.check_running(board)
         changed |= self.unblock(board)
+        changed |= self.answered()
         if changed and not self.dry:
             board = http("GET", "/schedule/board")
         self.grade_if_needed(board)
@@ -973,6 +1021,17 @@ class Tick:
         if self.state.get("qwen_period") == want:
             return
         action = "resume" if night else "pause"
+        if night:
+            # cards parked until Qwen's window (qwen_wait_tasks) go back to the queue now
+            waiting = [int(x) for x in (self.cfg.get("qwen_wait_tasks") or [])]
+            for cid in waiting:
+                try:
+                    t = http("GET", f"/tasks/{cid}")
+                    if t.get("status") == "blocked":
+                        self.write("PUT", f"/tasks/{cid}", {"by": "Grokbot", "status": "queued", "agent": None,
+                                   "progress": f"Qwen 工作時段開始（{hm_now}），排回待辦"}, "qwen window")
+                except Exception as e:  # noqa: BLE001
+                    log(f"qwen wait #{cid}: {e}")
         try:
             http("POST", f"/agents/Qwen/{action}", {})
             self.state["qwen_period"] = want

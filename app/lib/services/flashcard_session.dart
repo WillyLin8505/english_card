@@ -373,7 +373,13 @@ class FlashcardSession extends ChangeNotifier {
     final c = card;
     final original = c == null ? null : repo.entry(c.wordEntryId);
     if (original == null) return null;
-    final usages = original.effectiveUsages;
+    // Rotate only through the common parts of speech (問題回報 #468); the
+    // card's own part of speech stays, and a word with only rare ones is kept.
+    final all = original.effectiveUsages;
+    final own = shortPos(original.pos);
+    final common =
+        all.where((u) => !u.rare || shortPos(u.pos) == own).toList();
+    final usages = common.isEmpty ? all : common;
     for (var i = 0; i < usages.length; i++) {
       final usage = usages[(_step + i) % usages.length];
       final senses =
