@@ -30,6 +30,10 @@ def test_stale_missing_rule():
     assert pipeline.stale_missing("native_definition", ctx, "partial", ["s2"], items[:1]) is None
     assert pipeline.stale_missing("example_sentences", ctx, "partial", ["Z9"], []) is None
     assert pipeline.stale_missing("native_definition", ctx, "complete", ["old1"], items) is None
+    # 問題回報 #210: a complete gloss whose word gained a sense is partial again
+    ctx.resolved["definition"].append({"pos": "noun", "gloss": "A city.", "sense_key": "s3"})
+    assert pipeline.stale_missing("native_definition", ctx, "complete", [], items) \
+        == ("partial", ["s3"], [])
 
 
 def test_partial_run_refreshes_dependents(session, fakes):

@@ -318,9 +318,16 @@ class _DownloadAlbumTile extends StatelessWidget {
                   style: MFont.inter(14, FontWeight.w700, MColors.primary)),
               if (hint != null) ...[
                 const SizedBox(height: 6),
-                UiText(hint!,
-                    textAlign: TextAlign.center,
-                    style: MFont.inter(11, FontWeight.w500, MColors.albumMuted)),
+                // Flexible: the English hint is longer and overflowed the
+                // tile by 6 px on a 390-wide phone (French simulation, #363).
+                Flexible(
+                  child: UiText(hint!,
+                      textAlign: TextAlign.center,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style:
+                          MFont.inter(11, FontWeight.w500, MColors.albumMuted)),
+                ),
               ],
             ],
           ),

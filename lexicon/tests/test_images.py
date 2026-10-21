@@ -200,6 +200,7 @@ def test_old_labels_are_leveled_from_the_list_scored_and_settled(session, tmp_pa
 
 def test_tag_asset_defaults_to_cefr_mode(session, tmp_path, monkeypatch):
     """CEFR mode keeps asking until every band has three verified labels."""
+    _pin_old_standard(monkeypatch)
     import io
     import json
     from urllib.parse import parse_qs, urlsplit
@@ -251,11 +252,24 @@ def test_tag_asset_defaults_to_cefr_mode(session, tmp_path, monkeypatch):
     assert by_stage["cefr-1"]["tagger"] == [{"queueMs": 5, "modelMs": 900, "modelCalls": 1}]
 
 
-def test_cefr_picture_stays_pending_when_any_band_has_fewer_than_three():
+def _pin_old_standard(monkeypatch):
+    """The tests below were written for the three-per-level standard (card #448
+    moved the default to five); they pin the old numbers so their logic still holds."""
+    monkeypatch.setattr(images, "CEFR_PER_LEVEL", 3)
+    monkeypatch.setattr(images, "CEFR_LEVEL_MAX", 4)
+
+
+def test_card448_default_standard_is_five_per_level():
+    assert images.CEFR_PER_LEVEL == 5
+    assert images.CEFR_LEVEL_MAX == 5
+
+
+def test_cefr_picture_stays_pending_when_any_band_has_fewer_than_per_level():
+    per_level = images.CEFR_PER_LEVEL
     tags = [{"word": f"{level}-{i}", "cefr": level, "score": 0.9}
-            for level in images.CEFR_LEVELS for i in range(3)]
+            for level in images.CEFR_LEVELS for i in range(per_level)]
     assert images.cefr_complete(tags)
-    assert images.cefr_counts(tags) == {level: 3 for level in images.CEFR_LEVELS}
+    assert images.cefr_counts(tags) == {level: per_level for level in images.CEFR_LEVELS}
     assert not images.cefr_complete(tags[:-1])
 
 
@@ -337,6 +351,7 @@ def test_a_harder_other_pos_entry_never_outranks_a_lower_guess(session, monkeypa
 def test_a_level_the_picture_cannot_fill_is_a_gap_not_a_retry(session, tmp_path, monkeypatch):
     """Owner decision A: only listed levels; an unfillable level stays a gap
     and the picture is done after one full labelling attempt."""
+    _pin_old_standard(monkeypatch)
     import io
     import json
     from urllib.parse import parse_qs, urlsplit
@@ -377,6 +392,7 @@ def test_a_level_the_picture_cannot_fill_is_a_gap_not_a_retry(session, tmp_path,
 def test_the_pictures_own_word_is_never_capped_out(session, monkeypatch):
     """balcony A2 scored 99.9% but the A2 band was full (column, furniture,
     plant): the picture's own word stays, the others fill up to three."""
+    _pin_old_standard(monkeypatch)
     from app import models as m
     lx = m.Lexeme(language="en", lemma="balcony", normalized="balcony", pos="noun", status="full")
     session.add(lx)

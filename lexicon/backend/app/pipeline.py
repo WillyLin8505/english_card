@@ -621,7 +621,15 @@ def stale_missing(field_key: str, ctx: Context, status: str, missing: list, item
     report #288. Returns ``(status, missing, stale)`` recomputed from the
     current expected slots, or None when nothing is stale / the field has no
     per-slot targets. Per-level fields (example sentences, audio) keep their
-    own 「缺漏」 bookkeeping and are left alone."""
+    own 「缺漏」 bookkeeping and are left alone.
+
+    A complete Chinese gloss whose word gained senses since (definition
+    re-fetched under new keys, 問題回報 #210) is partial again, so the next
+    fill_missing asks for the new senses instead of skipping it forever."""
+    if status == "complete" and field_key == "native_definition" and items:
+        expected = expected_slots(field_key, ctx) or set()
+        now_missing = sorted(expected - {item_slot(field_key, i) for i in items})
+        return ("partial", now_missing, []) if now_missing else None
     if status not in ("partial", "missing") or not missing or field_key in catalog.TARGETED:
         return None
     expected = expected_slots(field_key, ctx)
