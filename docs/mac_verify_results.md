@@ -526,3 +526,14 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 |----|----|----|----|----|
 | analyze／test（commit 20ed5fc4） | 通過 | flutter analyze 0 error、0 warning；flutter test 510 通過、3 略過 | — | — |
 | #478 伺服器 403 的提示 | 通過 | 公開網址此時仍回 403；模擬器新安裝、進階設定按「測試連線」再收合，提示變成「照片辨識暫時連不上：新照片會先排隊，連上後自動辨識，不用處理」，不再叫學習者點開修正 | mac_verify_shots/2026-10-21/m48_478_hint.png | — |
+
+## 2026-10-21 補驗：等公開網址恢復的 5 張詞庫卡（M42、M43、M44）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| 環境 | 通過 | 21:00 公開網址恢復（/api/decks、/api/lexicon?format=sqlite 回 200）。iPhone 18 Pro 模擬器新安裝、帶 iphone.json，等 App 把內建包 65347fa8… 同步成伺服器 SQLite 版 642f82bb…（8,660 個詞條）後直接讀詞庫 | — | — |
+| #468（M42）關聯詞中文回填 | 通過 | 有詞條的關聯詞 56,695 筆，只剩 14 筆沒有中文（例：meaning→pregnant、small→shall、well→hell） | — | — |
+| #466（M43）首字大寫詞條改小寫 | 通過 | 首字大寫的詞條只剩 2 個，而且都沒有小寫同字；Porch、Skull、Fairy 都已不是大寫 | — | — |
+| #469（M43）容易混淆的字沒有詞條 | 通過 | 容易混淆的字（near_homophones＋similar_spelling）共 39,488 筆，沒有詞條的 28,969 筆全部預設隱藏，預設顯示又沒有詞條的 0 筆 | — | — |
+| #465（M43）非形容詞的比較級／最高級 | 不通過 | 仍有 38 筆不是形容詞／副詞的詞條帶比較級、最高級，例如 good（感嘆詞）better／best、great（感嘆詞）greater／greatest、quiet（感嘆詞）quieter／quietest、sage（感嘆詞）sager／sagest、ample（限定詞）ampler／amplest。另外 tea 動詞的過去式有 tea'd、tead、teaed 三種怪拼法 | — | 低 |
+| #472（M44）more／most 形式 | 通過 | tea、tomato、metal、street、apply、texture 都已沒有 more／most 開頭的比較級 | — | — |
