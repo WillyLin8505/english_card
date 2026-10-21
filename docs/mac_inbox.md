@@ -476,7 +476,7 @@ commit `9034548a`（Windows：flutter analyze 無 error、05:05 +507 ~2: All tes
 - 卡 #225：模擬使用者・相片冊
   結果：第110輪：主模擬 1/1、補充 17/17 通過，新問題 #460（145 個首字大寫詞條、74 組大小寫重複），#432 補註（資料仍有 45 筆重複 tag）；本輪沒改程式或資料。
 
-## M42（2026-10-21 10:32）狀態：待做
+## M42（2026-10-21 10:32）狀態：完成（公開網址 403，待補驗）
 commit `fb9debc7`（Windows：flutter analyze 無 error、03:45 +509 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #468：問題回報 #462：關聯詞中文不會回填：主字擷取時關聯字還不是詞條，之後入庫也不補（missing 槽 384 個可用字
   結果：全部完成：關聯詞中文回填從根因修好——字入庫時自動回頭補引用它的主字（pipeline 掛勾），並一次清掉全庫累積：補 360 個 missing 槽（fieldvalues 332 列）、relationtranslations +338 列；golden/QC 前後完全相同，regressions = []。

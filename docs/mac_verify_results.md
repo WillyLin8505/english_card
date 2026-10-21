@@ -473,3 +473,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #464 | 通過 | 詞庫例句規則收斂，屬資料，iPhone 上不需另驗 | — | — |
 | #225 | 通過 | Windows 端模擬使用者・相片冊；iPhone 模擬器上相片冊流程（M30 補驗）照舊 | — | — |
 | 公開網址被擋（驗證時發現） | 不通過 | 10:30 左右 https://api.willylinai.com 的 /api/lexicon?format=sqlite、/api/decks、/health 全部回 403，回應是 serve_app（Python http.server）的錯誤頁「Request forbidden -- authorization will not help」，不是 Cloudflare 擋的。App 因此顯示「暫時無法連線 · 使用已儲存的詞庫」、圖片「暫時無法載入」、卡片集清單抓不到。看起來 serve_app 重啟時沒帶 --public-host api.willylinai.com（Host 檢查擋掉公開網址）。iPhone 現在無法同步詞庫、下載圖片集、播伺服器錄音 | — | 高 |
+
+## 2026-10-21 M42（iPhone 模擬器）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #468 | 未能驗證 | 關聯詞中文回填屬伺服器詞庫，要 iPhone 同步新詞庫後才看得到；10:35 時 https://api.willylinai.com/api/decks 仍回 403（見 M41 公開網址被擋那列），App 拿不到新詞庫。公開網址恢復後再補驗 | — | — |
