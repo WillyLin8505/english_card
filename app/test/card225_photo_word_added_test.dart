@@ -1,6 +1,7 @@
 // Card #225 r6: words added from a photo (own album or 資料庫相片冊) were
 // never reported — only manual adds sent word_added.
 import 'package:flutter_test/flutter_test.dart';
+import 'package:photo_english_app/models/learning_card.dart';
 import 'package:photo_english_app/models/photo.dart';
 import 'package:photo_english_app/models/word_candidate.dart';
 import 'package:photo_english_app/services/analytics.dart';
@@ -50,7 +51,9 @@ void main() {
   });
 
   test('a 資料庫相片冊 picture reports source database_album', () {
-    final photo = repo.photo('photo-breakfast')!.copyWith(id: 'deck-1');
+    final at = DateTime(2026, 10, 21);
+    final photo =
+        Photo(id: 'deck-1', title: 'deck', takenAt: at, createdAt: at);
     repo.addDeckPhoto(photo, [cand('teapot')]);
     expect(sources(), ['database_album']);
   });

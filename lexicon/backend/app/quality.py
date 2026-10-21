@@ -735,6 +735,60 @@ def photo_sense_candidates(lexemes: list[dict]) -> list[dict]:
     return out
 
 
+# Card #486 (問題回報 #488): a photo tag never sits on a lexeme whose every
+# sense is only "present participle of gaze" — it has no level and nothing
+# to learn. The tag moves to the same spelling's real entry (embossed adj,
+# railing noun) or else to the base word (gazing verb -> gaze).
+_FORM_DEF_RE = re.compile(
+    r"^(?:simple past(?: tense)?(?: and past participle)?|past participle|"
+    r"present participle(?: and gerund)?|plural|third-person singular(?: simple present(?: indicative)?)?|"
+    r"comparative|superlative).*?of\s+([A-Za-z][A-Za-z' -]*?)\.?$", re.I)
+
+
+def _form_only_base(lx: dict) -> str | None:
+    """The base word when every sense of ``lx`` is a bare inflection note."""
+    bases = []
+    for se in lx.get("senses") or []:
+        m = _FORM_DEF_RE.match((se.get("definition") or "").strip())
+        if not m:
+            return None
+        bases.append(m.group(1).strip().lower())
+    return bases[0] if bases else None
+
+
+def _rebind_form_tags(im: dict, by_id: dict, sisters: dict) -> int:
+    tags = im.get("tags") or []
+    moved = 0
+    for t in list(tags):
+        lx = by_id.get(t.get("lexeme_id"))
+        base = _form_only_base(lx) if lx else None
+        if not base:
+            continue
+        pool = [c for c in sisters.get(lx.get("normalized") or "", [])
+                if c is not lx and not _form_only_base(c) and _publishable(c.get("senses") or [])]
+        pool.sort(key=lambda c: (c.get("cefr") is None,
+                                 c.get("usage_rank") if c.get("usage_rank") is not None else 9, c["id"]))
+        if not pool:
+            pool = [c for c in sisters.get(base, []) if not _form_only_base(c)
+                    and _publishable(c.get("senses") or [])]
+            pool.sort(key=lambda c: (c.get("pos") != "verb", c.get("cefr") is None,
+                                     c.get("usage_rank") if c.get("usage_rank") is not None else 9, c["id"]))
+        if not pool:
+            continue
+        new = pool[0]
+        if any(o is not t and o.get("lexeme_id") == new["id"] for o in tags):
+            tags.remove(t)  # the base word is already on this photo
+            moved += 1
+            continue
+        t.setdefault("lexeme_id_before", t.get("lexeme_id"))
+        for lb in im.get("labels") or []:
+            if lb.get("lexeme_id") == t["lexeme_id"]:
+                lb["lexeme_id"], lb["word"], lb["pos"] = new["id"], new.get("lemma"), new.get("pos")
+        t["lexeme_id"] = new["id"]
+        moved += 1
+    return moved
+
+
 def fix_catalog_senses(pack: dict) -> int:
     """Pack-time guard (#195): a photo tag never shows a low-priority or
     Chinese-less sense. Tags on a redirected lexeme follow the redirect.
@@ -762,6 +816,7 @@ def fix_catalog_senses(pack: dict) -> int:
                 target = by_id.get(redirects.get(lid))
                 if target and target.get("status", "full") == "full":
                     t["lexeme_id"] = target["id"]
+        changed += _rebind_form_tags(im, by_id, sisters)
         tags = im.get("tags") or []
         for t in tags:
             lx = by_id.get(t.get("lexeme_id")) or {}

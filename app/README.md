@@ -175,7 +175,7 @@ flutter run --dart-define-from-file=posthog.local.json   # run_web.bat 會自動
 # posthog.local.json：{"POSTHOG_API_KEY": "phc_…", "POSTHOG_HOST": "https://us.i.posthog.com"}（不進 git）
 ```
 
-事件：`app_opened`、`$screen`（切換分頁）、`onboarding_completed`、`photo_added`、`word_added`、
+事件：`app_opened`、`$screen`（切換分頁）、`onboarding_completed`、`photo_added`、`word_added`（source：manual／photo／database_album）、
 `review_started`／`review_finished`、`card_reviewed`（rating、題型、答對、提示數、作答毫秒、下次間隔天數）。
 每台裝置一個匿名 id（Hive `analytics` box），不送照片、單字內容或個人資料。
 
