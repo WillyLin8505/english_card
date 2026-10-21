@@ -445,3 +445,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #457 照片詳情單字列表前的控制列 | 通過 | 照片詳情第一個單字前只剩難度滑桿與「辨識單字列表 (5)＋顯示已學會單字」；「自己加字」與「多看動詞／多看形容詞／簡單一點／難一點」都移到列表後面，自動保存提示已拿掉 | mac_verify_shots/2026-10-21/m37_x_photo_detail.png | — |
 | #458 | 通過 | owner 決定維持現狀，沒有改程式或資料；App 已沒有資料庫相片冊搜尋畫面（#405） | — | — |
 | 照片詳情離開時 | 不通過 | 測試結束、App 被拆掉時，照片詳情的 dispose 存檔（photo_detail_screen.dart:106 → _saveWith:122）呼叫 WordEnricher.process（word_enricher.dart:105），但 WordEnricher 已 dispose，觸發 debug assertion「A WordEnricher was used after being disposed」。正常使用只有在整個 App 被拆掉時才會遇到，影響小 | — | 低 |
+
+## 2026-10-21 M38（iPhone 模擬器）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #454 同義詞不含主字的複合詞 | 通過 | 新安裝後 force 單字詳情的近義詞已沒有 force out、force play（畫面上含 force 的只剩例句裡的片語） | mac_verify_shots/2026-10-21/m37_x_force_detail_0.png | — |
