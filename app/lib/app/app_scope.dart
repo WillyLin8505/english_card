@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../models/word_entry.dart';
+import '../services/accent_audio.dart';
 import '../services/app_settings.dart';
 import '../services/cefr_lexicon.dart';
 import '../services/photo_intake.dart';
@@ -136,6 +138,19 @@ class AppScope extends InheritedNotifier<AppSettings> {
       showToast(context, '播放發音失敗，請檢查音量或稍後再試');
     }
   }
+
+  /// Plays [entry] in 設定's English accent (問題回報 #510): the pack
+  /// recording in that accent, else an unlabelled one, else TTS in that
+  /// accent — never the other accent's recording, which the entry's
+  /// default audio often is.
+  Future<void> speakEntry(BuildContext context, WordEntry entry,
+          {required String language}) =>
+      speak(context, entry.word,
+          language: language,
+          audioUrl: language == 'en'
+              ? accentAudioUrl(entry, settings.englishAccent,
+                  allowUnlabelled: true)
+              : entry.audioUrl);
 
   @override
   bool updateShouldNotify(AppScope oldWidget) =>

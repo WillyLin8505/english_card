@@ -5,6 +5,7 @@ import '../app/app_scope.dart';
 import '../models/learning_card.dart';
 import '../models/photo.dart';
 import '../models/word_entry.dart';
+import '../services/accent_audio.dart';
 import '../services/dictionary_sync.dart';
 import '../services/learning_content.dart';
 import '../services/license_links.dart';

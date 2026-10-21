@@ -337,8 +337,8 @@ class FlashcardCardView extends StatelessWidget {
                       correctAnswer: session.exercise?.answer,
                       template: repo.template,
                       learnerLevel: repo.profile.cefr,
-                      onPlay: () => scope.speak(context, entry.word,
-                          language: repo.language, audioUrl: entry.audioUrl),
+                      onPlay: () => scope.speakEntry(context, entry,
+                          language: repo.language),
                       onOpen: () => scope.navigator.openWord(entry.id),
                     )
                   : FlashcardFront(

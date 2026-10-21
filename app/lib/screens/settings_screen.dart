@@ -10,8 +10,10 @@ import 'package:flutter/material.dart';
 
 import '../app/app_scope.dart';
 import '../models/word_entry.dart';
+import '../services/accent_audio.dart';
 import '../services/app_settings.dart';
 import '../services/connection_qr.dart';
+import '../services/lexicon_pack.dart';
 import '../services/tagging_service.dart';
 import '../services/word_database_query.dart';
 import '../theme/mobile_theme.dart';
@@ -42,6 +44,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _checkNeedsFix = false;
   bool _checking = false;
   bool _switching = false;
+
+  /// 問題回報 #510: picking an accent (or tapping it again) says a word
+  /// whose British and American sounds clearly differ, so the learner
+  /// hears the choice without hunting for a word in another tab.
+  static const _accentDemoWord = 'water';
+
+  Future<void> _previewAccent(String accent) async {
+    final scope = AppScope.of(context);
+    final source = LexiconPack.instance.lookup(_accentDemoWord)?.entry;
+    final ok = await scope.speaker.say(_accentDemoWord,
+        language: 'en',
+        accent: accent,
+        audioUrl: source == null ? null : packAccentAudioUrl(source, accent));
+    if (!ok && mounted) showToast(context, '播放發音失敗，請檢查音量或稍後再試');
+  }
 
   /// 掃描後台 QR code，帶入網址與金鑰後直接測試連線（手動輸入仍可用）。
   Future<void> _scanConnection() async {
@@ -226,26 +243,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   ChoiceChip(
                                     label: UiText(a.value),
                                     selected: a.key == settings.englishAccent,
-                                    onSelected: (_) =>
-                                        settings.englishAccent = a.key,
+                                    onSelected: (_) {
+                                      settings.englishAccent = a.key;
+                                      _previewAccent(a.key);
+                                    },
                                   ),
                               ],
                             ),
+                            _note('點一下會用這個腔調唸「water」。單字頁、單字本和'
+                                '複習卡正面的發音都用這個腔調；複習卡翻到背面時'
+                                '英式、美式各唸一次。'),
                           ],
                         ],
                       ),
                       _Card(
                         title: '單字難度',
                         children: [
+                          // 問題回報 #511: a level the user picked is already
+                          // the lit chip below; only an App change gets a line.
                           Row(
                             children: [
                               Expanded(
-                                child: UiText(
-                                  '目前程度 ${ui(context, levelLabel(profile.cefr))}'
-                                  '${profile.source == 'elo' ? '（${ui(context, 'App 自動調整')}）' : ''}',
-                                  style: MFont.manrope(
-                                      15, FontWeight.w800, MColors.ink),
-                                ),
+                                child: profile.source == 'elo'
+                                    ? UiText(
+                                        'App 已依你的複習調成 ${ui(context, levelLabel(profile.cefr))}',
+                                        style: MFont.manrope(
+                                            15, FontWeight.w800, MColors.ink),
+                                      )
+                                    : _note(
+                                        '新照片的單字以下面選的程度為主，App 會依你的複習慢慢調整。'),
                               ),
                               Tooltip(
                                 message: ui(context, _levelInfo),
@@ -259,7 +285,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ),
                             ],
                           ),
-                          _note('新照片的單字以這個程度為主，App 會依你的複習慢慢調整。'),
+                          if (profile.source == 'elo')
+                            _note('新照片的單字以這個程度為主，App 會依你的複習慢慢調整。'),
                           if (shift != 0) ...[
                             const SizedBox(height: 10),
                             Container(

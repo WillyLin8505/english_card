@@ -247,8 +247,8 @@ class _WordBody extends StatelessWidget {
           ),
           Tap(
             label: '播放發音',
-            onTap: () => scope.speak(context, entry.word,
-                language: repo.language, audioUrl: entry.audioUrl),
+            onTap: () =>
+                scope.speakEntry(context, entry, language: repo.language),
             child: Container(
               width: 56,
               height: 56,

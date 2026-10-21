@@ -38,9 +38,9 @@ void main() {
 
     await tester.tap(find.text('設定'));
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(find.text('目前程度 入門（A1）'), 200,
+    await tester.scrollUntilVisible(find.text('新照片的單字以下面選的程度為主，App 會依你的複習慢慢調整。'), 200,
         scrollable: find.byType(Scrollable).last);
-    expect(find.text('目前程度 入門（A1）'), findsOneWidget);
+    expect(find.text('新照片的單字以下面選的程度為主，App 會依你的複習慢慢調整。'), findsOneWidget);
   });
 
   testWidgets('a word\'s 出現這個單字的照片 opens its photo in the 相片冊 tab',

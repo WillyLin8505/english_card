@@ -327,12 +327,20 @@ const uiCatalog = <String, (String, String)>{
   ),
   '英式（en-GB）': ('British (en-GB)', 'Britannique (en-GB)'),
   '美式（en-US）': ('American (en-US)', 'Américain (en-US)'),
+  '點一下會用這個腔調唸「water」。單字頁、單字本和複習卡正面的發音都用這個腔調；複習卡翻到背面時英式、美式各唸一次。': (
+    'Tap to hear “water” in this accent. Word pages, the Words tab and the front of review cards use this accent; the back of a review card plays British, then American.',
+    'Touchez pour entendre « water » avec cet accent. Les fiches de mots, l’onglet Mots et le recto des cartes utilisent cet accent ; le verso joue l’accent britannique puis américain.'
+  ),
   '單字難度': ('Word difficulty', 'Difficulté des mots'),
   '快速詞彙檢查': ('Quick vocabulary check', 'Test rapide de vocabulaire'),
   '依你的使用情況調整': ('Adjusted from your activity', 'Ajusté selon votre activité'),
   '你設定的': ('Set by you', 'Défini par vous'),
   '自評': ('Self-assessment', 'Autoévaluation'),
   'App 自動調整': ('Auto-adjusted by the app', 'Ajusté par l’app'),
+  '新照片的單字以下面選的程度為主，App 會依你的複習慢慢調整。': (
+    'New photos pick words around the level chosen below; the app adjusts it as you review.',
+    'Les nouvelles photos utilisent le niveau choisi ci-dessous ; l’app l’ajuste au fil de vos révisions.'
+  ),
   '新照片的單字以這個程度為主，App 會依你的複習慢慢調整。': (
     'New photos pick words around this level; the app adjusts it as you review.',
     'Les nouvelles photos utilisent ce niveau ; l’app l’ajuste au fil de vos révisions.'
@@ -869,7 +877,10 @@ const _templateCopy = <String, (String, String)>{
   '{0} 個月後複習': ('Review in {0} months', 'Revoir dans {0} mois'),
   '{0} 年後複習': ('Review in {0} years', 'Revoir dans {0} ans'),
   '{0} · 即將推出': ('{0} · Coming soon', '{0} · Bientôt'),
-  '目前程度 {0}': ('Current level: {0}', 'Niveau actuel : {0}'),
+  'App 已依你的複習調成 {0}': (
+    'The app moved your level to {0} based on your reviews',
+    'L’app a réglé votre niveau sur {0} selon vos révisions'
+  ),
   '來源：{0}。新照片的單字會以這個程度為中心挑選；照片詳情的難度轉盤只影響那一張照片。': (
     'Source: {0}. New photos use this level; the photo difficulty dial affects only that photo.',
     'Source : {0}. Les nouvelles photos utilisent ce niveau ; le réglage d’une photo ne concerne que celle-ci.'

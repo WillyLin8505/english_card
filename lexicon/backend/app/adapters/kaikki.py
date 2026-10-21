@@ -178,6 +178,38 @@ def inflection_only_pos(entries) -> set[str]:
     return form - real if real else set()
 
 
+OUT_OF_USE_TAGS = {"obsolete", "archaic"}
+
+
+def out_of_use_pos(entries) -> set[str]:
+    """Parts of speech whose every meaning is obsolete / archaic (consist the
+    verb is current, consist the noun only 「(obsolete) consistence」) while
+    another part of speech of the word is current. They get no entry: an old
+    part of speech should not take a card (問題回報 #512). Empty when no part
+    of speech has a current meaning (the word keeps what it has)."""
+    real, current, old = set(), set(), set()
+    for e in entries:
+        p = _pos(e)
+        if not p or p == "name":
+            continue
+        for s in e.get("senses", []):
+            if not _gloss(s):
+                continue
+            if OUT_OF_USE_TAGS & set(s.get("tags", [])):
+                old.add(p)
+            else:
+                current.add(p)  # a current form (dried: past of dry) is #51's case
+                if not _is_form_of(s):
+                    real.add(p)
+    return old - current if real else set()
+
+
+def dropped_pos(entries) -> set[str]:
+    """Parts of speech the adapter imports nothing for: another word's form
+    (問題回報 #51) or out of use beside a current one (#512)."""
+    return inflection_only_pos(entries) | out_of_use_pos(entries)
+
+
 # Recording file names say the accent when the tags don't
 # (en-uk-London-bottle.ogg, EN-AU ck1 bench.ogg, en-us-bird.ogg).
 FILE_ACCENTS = {"uk": "UK", "gb": "UK", "us": "US", "au": "AU", "ca": "CA", "nz": "NZ",
@@ -446,7 +478,7 @@ class Kaikki(SourceAdapter):
 
     def senses(self, entries, ctx) -> list[dict]:
         out, seen = [], set()
-        forms_only = inflection_only_pos(entries)
+        forms_only = dropped_pos(entries)
         # Homographs can occupy separate entries. A fallback is needed only
         # when the entire part of speech lacks independent meanings.
         real_pos = {_pos(e) for e in entries
@@ -482,7 +514,7 @@ class Kaikki(SourceAdapter):
 
         word = entries[0].get("word", ctx.lemma)
         if f == "pos":
-            forms_only = inflection_only_pos(entries)
+            forms_only = dropped_pos(entries)
             for e in entries:
                 p = _pos(e)
                 if p and p != "name" and p not in forms_only:

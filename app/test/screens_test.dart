@@ -7,8 +7,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:photo_english_app/app/app_scope.dart';
+import 'package:photo_english_app/data/sample_word_database.dart';
 import 'package:photo_english_app/models/learning_card.dart';
 import 'package:photo_english_app/models/photo.dart';
+import 'package:photo_english_app/models/vocabulary_profile.dart';
 import 'package:photo_english_app/models/word_entry.dart';
 import 'package:photo_english_app/screens/flashcard_screen.dart';
 import 'package:photo_english_app/screens/onboarding_screen.dart';
@@ -211,9 +213,9 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('前往設定'));
       await tester.pumpAndSettle();
-      await tester.scrollUntilVisible(find.text('目前程度 入門（A1）'), 200,
+      await tester.scrollUntilVisible(find.text('新照片的單字以下面選的程度為主，App 會依你的複習慢慢調整。'), 200,
           scrollable: find.byType(Scrollable).last);
-      expect(find.text('目前程度 入門（A1）'), findsOneWidget);
+      expect(find.text('新照片的單字以下面選的程度為主，App 會依你的複習慢慢調整。'), findsOneWidget);
 
       // Set up but unreachable: waiting, with the reason.
       app.settings.taggingUrl = 'http://127.0.0.1:8765/tag';
@@ -537,7 +539,9 @@ void main() {
         (tester) async {
       final app = await pumpApp(tester,
           initialTab: AppTab.settings, size: const Size(402, 1600));
-      expect(find.text('目前程度 入門（A1）'), findsOneWidget);
+      // 問題回報 #511: no line repeating the lit chip.
+      expect(find.textContaining('目前程度'), findsNothing);
+      expect(find.text('新照片的單字以下面選的程度為主，App 會依你的複習慢慢調整。'), findsOneWidget);
       await tester.tap(find.widgetWithText(ChoiceChip, '基礎（A2）'));
       await tester.pump();
       expect(app.repository.profile.cefr, 'A2');
@@ -553,6 +557,23 @@ void main() {
       await tester.tap(find.text('好'));
       await tester.pump();
       expect(app.repository.profile.cefr, 'B1');
+    });
+
+    testWidgets('a level the app adjusted gets its own line (問題回報 #511)',
+        (tester) async {
+      await pumpApp(tester,
+          initialTab: AppTab.settings,
+          size: const Size(402, 1600),
+          repository: WordDatabaseRepository.fromData(
+              sampleWordDatabaseData(now: testNow, lexicon: testLexicon()),
+              clock: () => testNow,
+              profile: UserVocabularyProfile.start('C1',
+                  source: 'elo', now: testNow)));
+      expect(find.text('App 已依你的複習調成 進階（C1）'), findsOneWidget);
+      expect(find.text('新照片的單字以這個程度為主，App 會依你的複習慢慢調整。'),
+          findsOneWidget);
+      expect(find.text('新照片的單字以下面選的程度為主，App 會依你的複習慢慢調整。'),
+          findsNothing);
     });
 
     testWidgets('unpublished learning languages stay disabled; native UI languages are available',

@@ -1,23 +1,5 @@
 part of '../screens/flashcard_screen.dart';
 
-/// The language pack's recording of [entry] in [accent] ("en-GB" /
-/// "en-US"), or the entry's own audio when it is in that accent; null
-/// means the speaker falls back to TTS in that accent.
-String? accentAudioUrl(WordEntry entry, String accent) {
-  final pack = LexiconPack.instance;
-  final source = (entry.lexemeId == null ? null : pack.byId(entry.lexemeId!)) ??
-      pack.lookup(entry.word, pos: entry.pos)?.entry;
-  final aliases = accent == 'en-GB' ? {'uk', 'gb', 'en-gb'} : {'us', 'en-us'};
-  final recording = source?.recordings
-      .where((r) => aliases.contains(r.accent?.toLowerCase()))
-      .firstOrNull;
-  if (recording != null) {
-    return packRecordingUrl(pack.mediaBase, recording.path);
-  }
-  if (aliases.contains(entry.accent?.toLowerCase())) return entry.audioUrl;
-  return null;
-}
-
 /// Plays [entry] in one accent; tells the learner when nothing was heard.
 Future<bool> playAccent(
     BuildContext context, WordEntry entry, String accent) async {

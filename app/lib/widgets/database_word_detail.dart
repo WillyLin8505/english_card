@@ -119,9 +119,13 @@ class DatabaseWordScreen extends StatelessWidget {
                 child: Tap(
                   onTap: () => scope.speak(context, word.lemma,
                       language: pack.target ?? 'en',
-                      audioUrl: word.audio == null
-                          ? null
-                          : packRecordingUrl(pack.mediaBase, word.audio!)),
+                      // 問題回報 #510: the recording in 設定's accent.
+                      audioUrl: (pack.target ?? 'en') == 'en'
+                          ? packAccentAudioUrl(word, scope.settings.englishAccent,
+                              allowUnlabelled: true)
+                          : word.audio == null
+                              ? null
+                              : packRecordingUrl(pack.mediaBase, word.audio!)),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: MSpace.sm, vertical: 6),

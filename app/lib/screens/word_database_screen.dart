@@ -453,9 +453,8 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
                 });
                 scope.navigator.openWord(row.entry.id);
               },
-              onToggle: () => scope.speak(context, row.entry.word,
-                  language: scope.repository.language,
-                  audioUrl: row.entry.audioUrl),
+              onToggle: () => scope.speakEntry(context, row.entry,
+                  language: scope.repository.language),
             ),
           _buildFooter(slice),
         ],
