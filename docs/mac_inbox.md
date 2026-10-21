@@ -459,3 +459,10 @@ commit `430c7369`（Windows：flutter analyze 無 error、01:54 +505 ~2: All tes
 commit `8bec11f7`（Windows：flutter analyze 無 error、05:59 +505 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #460：問題回報 #453：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
   結果：全部完成：flutter test 505 全過（2 skipped）、flutter analyze 0 error（12 個 info）。
+
+## M40（2026-10-21 09:29）狀態：待做
+commit `93e376e5`（Windows：flutter analyze 無 error、04:00 +505 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #226：模擬使用者・複習
+  結果：第 105 輪：learner/restart 2/2 通過（第 103、104 輪 0/2 是模擬器壞掉，已修）；新問題 #454（已修）、#455、#456、#457；UX 建議 #455、#457；補註 #253、#420。
+- 卡 #461：問題回報 #456：例句用的是別的詞性：394 句（0.56%）只出現另一個詞性的變化形（charge 名詞配 fast
+  結果：全部完成（程式面）：匯出時濾掉 1,172 句「只靠另一個詞性的變化形」的例句；剩 106 句無姊妹詞性可歸屬，另開問題回報。
