@@ -431,7 +431,11 @@ def resolve_field(s: Session, ctx: Context, field_key: str, policy, steps, *, mo
                    cap_per_slot=field_key in catalog.PER_SLOT_CAP,
                    order_key=(lambda c: _sense_key(c, ctx)) if field_key == "definition" else None,
                    # Learners read phonemic /…/ IPA: narrow […] alone asks on (#24).
-                   enough=_phonemic if field_key == "ipa" else None)
+                   enough=_phonemic if field_key == "ipa" else None,
+                   # Obscure senses are not asked for, but a translation a
+                   # source already has is kept (re-resolving dropped them, #210).
+                   accept={i["sense_key"] for i in ctx.items("definition") if i.get("sense_key")}
+                   if field_key == "native_definition" else set())
     rep = FieldReport(field_key, "missing", strategy=policy.strategy)
     asked = errors = unavailable = 0
     stop = False

@@ -61,3 +61,17 @@ def test_partial_run_refreshes_dependents(session, fakes):
     session.expire_all()
     et = _fv(session, "example_translation")
     assert (et.status, et.missing) == ("partial", ["ex2"])
+
+
+def test_fill_missing_keeps_accepted_slot():
+    """問題回報 #210: re-resolving must not drop an obscure sense's existing
+    Chinese just because that sense is no longer asked for."""
+    from types import SimpleNamespace
+    from app.resolver import Resolver
+    res = Resolver("FILL_MISSING", None, {"s1"}, accept={"s1", "s2"})
+    c1 = SimpleNamespace(slot="s1", key="k1", valid=True, confidence=1)
+    c2 = SimpleNamespace(slot="s2", key="k2", valid=True, confidence=1)
+    c3 = SimpleNamespace(slot="s9", key="k9", valid=True, confidence=1)
+    res.add(0, "ai_translate", [c1, c2, c3])
+    assert sorted(a.candidate.slot for a in res.adopted) == ["s1", "s2"]
+    assert res.missing() == set()

@@ -55,6 +55,9 @@ class Resolver:
     # Sort key applied (stable) before the limit cuts: Kaikki's own order is
     # historical, so the limit must not decide which senses survive (#388).
     order_key: Callable[[object], object] | None = None
+    # FILL_MISSING: slots kept when a source has them, though not required
+    # (an obscure sense's existing Chinese, 問題回報 #210). Never asked for.
+    accept: set[str] = field(default_factory=set)
     adopted: list[Adopted] = field(default_factory=list)
     _keys: set = field(default_factory=set)
     _filled: set = field(default_factory=set)
@@ -120,7 +123,8 @@ class Resolver:
             for c in candidates:
                 if c.slot in self._filled:
                     continue
-                if self.expected is not None and c.slot not in self.expected:
+                if self.expected is not None and c.slot not in self.expected \
+                        and c.slot not in self.accept:
                     continue
                 if self._take(c, position, source):
                     new_slots.add(c.slot)
