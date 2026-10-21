@@ -544,3 +544,8 @@ commit `83c26c05`（Windows：flutter analyze 無 error、02:33 +514 ~2: All tes
 commit `dd5a866d`（Windows：flutter analyze 無 error、01:53 +516 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #226：模擬使用者・複習
   結果：第 112 輪：learner 通過、restart 在輪中「did not complete」但單獨重跑通過（2/2 實質通過）；新問題 #484 #485（待決定）、#486 #487（已修）；UX 建議 #486、#484；補註 #466。
+
+## M53（2026-10-21 22:35）狀態：待做
+commit `c1bdf13c`（Windows：flutter analyze 無 error、01:27 +516 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #225：模擬使用者・相片冊
+  結果：第113輪（修正後重跑第114輪）：主模擬 1/1、補充測試 19/19 通過；新問題 #488（247 個照片標籤掛在變化形詞條、全部未分級），已修 #489（從相片冊加入的字沒送 wordadded，修後 album 模擬 0→824 筆事件）。
