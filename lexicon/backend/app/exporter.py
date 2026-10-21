@@ -27,6 +27,7 @@ from sqlalchemy.orm import Session
 
 from . import catalog, config
 from . import models as m
+from .quality import example_other_pos_only
 from .text import example_key, text_hash, is_column_word_list
 
 SCHEMA_VERSION = 5  # 5: per-sense register (neutral / written / spoken / slang)
@@ -376,6 +377,9 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_saf
     examples_index = index_rows(m.Example, lambda row: row.text_hash)
     relations_index = index_rows(m.LexemeRelation,
                                 lambda row: (row.relation, row.target_word.lower()))
+    forms_by_lexeme: dict[int, set[str]] = {}
+    for lxid, form in s.execute(select(m.Form.lexeme_id, m.Form.form).where(m.Form.lexeme_id.in_(full_ids))):
+        forms_by_lexeme.setdefault(lxid, set()).add(form)
     audio_by_url = {row.source_url: row for row in s.scalars(select(m.AudioAsset))}
 
     def first_for_ids(index, ids, key):
@@ -431,6 +435,7 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_saf
         native_def = {i.get("sense_key") or i.get("slot"): i for i in items(lemma, "native_definition")}
         registers = {i.get("sense_key") or i.get("slot"): i for i in items(lemma, "register")}
         sense_id_by_key: dict[str, int] = {}
+        sense_lexeme: dict[int, int] = {}
         head_zh: set[str] = set()  # the headword's own Chinese meanings (問題回報 #420)
         ord_by_lx: dict[int, int] = {}
         # 問題回報 #389: number the senses by senses.ordinal (materialize's
@@ -469,6 +474,7 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_saf
             used(it.get("source"))
             counts["senses"] += 1
             sense_id_by_key[sk] = sense.id
+            sense_lexeme[sense.id] = sense.lexeme_id
             if tr and native_text:
                 head_zh.add(zh_key(native_text))
                 con.execute("INSERT INTO sense_translations VALUES (?,?,?,?,?)",
@@ -561,6 +567,13 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_saf
             # examples in the master database for review, but never flatten
             # them into a card where they could illustrate the wrong sense.
             if sid is None:
+                continue
+            # 問題回報 #456: the sentence uses another part of speech's inflection.
+            own_lx = sense_lexeme.get(sid)
+            if own_lx is not None and example_other_pos_only(
+                    it.get("text", ""), lemma, forms_by_lexeme.get(own_lx, ()),
+                    {f for i in ids if i != own_lx for f in forms_by_lexeme.get(i, ())}):
+                counts["examples_other_pos"] = counts.get("examples_other_pos", 0) + 1
                 continue
             con.execute("INSERT INTO examples VALUES (?,?,?,?,?,?,?,?,?)",
                         (ex.id, ex.lexeme_id, sid, ex.text, ex_level.get(k), it.get("source", ""),

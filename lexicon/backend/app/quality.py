@@ -340,7 +340,13 @@ def _sense_key(s: dict) -> str:
 # ---------------------------------------------------------------- examples
 def inflections(lemma: str, forms: list[str] = ()) -> set[str]:
     w = lemma.lower()
-    out = {w, w + "s", w + "es", w + "ed", w + "d", w + "ing", w + "er", w + "est", *map(str.lower, forms)}
+    out = {w, w + "s", w + "ed", w + "ing", w + "er", w + "est", *map(str.lower, forms)}
+    # -es only after a sibilant/o, -d only after e: otherwise fin→"fines"/"find",
+    # ban→"band", ski→"skid", rat→"rates", plan→"planes" are other words (問題回報 #458).
+    if w.endswith(("s", "x", "z", "ch", "sh", "o")):
+        out.add(w + "es")
+    if w.endswith("e"):
+        out.add(w + "d")
     if w.endswith("e"):
         out |= {w[:-1] + "ing", w[:-1] + "ed", w[:-1] + "er", w[:-1] + "est"}
     if w.endswith("y"):
@@ -438,6 +444,20 @@ def example_flags(text: str, lemma: str, pos: str, forms: list[str] = ()) -> lis
     if example_is_charged(t, lemma):
         flags.append("charged")
     return flags
+
+
+def example_other_pos_only(text: str, lemma: str, own_forms, sibling_forms) -> bool:
+    """The sentence reaches this entry only through a rule inflection (-ed/-ing/-s/
+    -est…) that a sibling entry of the same word (another part of speech) owns:
+    charge noun + "fast charging", base noun + "based on", sweet adj + "sweets"
+    (問題回報 #456). The word itself or one of this entry's own forms settles it."""
+    toks = {x.lower() for x in re.findall(r"[A-Za-z]+(?:['\-][A-Za-z]+)*", text or "")}
+    toks |= {re.sub(r"'s$", "", x) for x in toks}
+    toks |= {p for x in list(toks) if "-" in x for p in x.split("-")}
+    own = {lemma.lower(), *map(str.lower, own_forms)}
+    if toks & own or not toks & inflections(lemma):
+        return False
+    return bool(toks & {f.lower() for f in sibling_forms} - own)
 
 
 def example_reject_reason(text: str, lemma: str, pos: str, forms: list[str] = ()) -> str | None:

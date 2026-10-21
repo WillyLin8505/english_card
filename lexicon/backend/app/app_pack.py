@@ -110,9 +110,33 @@ def build(db_path: Path) -> dict:
     quality.apply_pack(pack)
     quality.apply_decisions(pack)  # owner decision #191
     move_compound_synonyms(pack)  # #400 / card 413
+    drop_unlisted_confusables(pack)  # #457 / card 462
     from .picture_need import assign_picture_ids
     assign_picture_ids(pack["lexemes"])
     return pack
+
+
+_CONFUSABLE_RELATIONS = ("near_homophones", "similar_spelling")
+
+
+def drop_unlisted_confusables(pack: dict) -> int:
+    """「容易混淆的字」 shows only words that are entries in the lexicon (問題回報 #457, option A):
+    a candidate with no lexeme_id is a word the learner cannot open (apple→ipl/apl, bread→brad,
+    quick→buick). The exporter already skips these (exporter.export: tgt is None); the app pack
+    kept them. Hidden rows stay as they are; the database rows are not touched."""
+    dropped = 0
+    for lx in pack.get("lexemes", []):
+        if lx.get("status") != "full" or not lx.get("relations"):
+            continue
+        kept = []
+        for r in lx["relations"]:
+            if (r["relation"] in _CONFUSABLE_RELATIONS and r.get("lexeme_id") is None
+                    and not r.get("hide_by_default")):
+                dropped += 1
+                continue
+            kept.append(r)
+        lx["relations"] = kept
+    return dropped
 
 
 def move_compound_synonyms(pack: dict) -> int:

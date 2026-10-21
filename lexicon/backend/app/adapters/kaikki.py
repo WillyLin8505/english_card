@@ -223,6 +223,21 @@ def fr_auxiliaries(verb_entries) -> list[str]:
     return out
 
 
+def degree_form_implausible(lemma: str, form: str) -> bool:
+    """A -er / -est form that English does not use (card #463, issue #455): comfortabler,
+    wonderfuller, absolutest. Words of 3+ syllables take more / most, so their -er/-est forms
+    tagged "comparative" by Wiktionary are junk. Vowel groups count the syllables (trailing
+    silent e dropped); -ly words keep theirs (likelier, lovelier)."""
+    if " " in form or not form.endswith(("er", "est")) or lemma.endswith("ly"):
+        return False
+    if lemma.lower() in ("unique",):  # absolute adjective: no degrees (2 syllables, so not counted)
+        return True
+    syllables = len(re.findall(r"[aeiouy]+", lemma.lower()))
+    if lemma.endswith("e") and not lemma.endswith("le") and syllables > 1:
+        syllables -= 1
+    return syllables >= 3
+
+
 def form_field(pos: str, tags: set[str], target: str) -> str | None:
     if tags & LOW_TAGS or tags & FORM_SKIP:
         return None
@@ -478,6 +493,9 @@ class Kaikki(SourceAdapter):
                     if t == "fr" and FR_ELIDED.match(form) and not FR_ELIDED.match(owner):
                         continue
                     if form_field(pos or "", set(fo.get("tags", [])), t) == f:
+                        if f in ("adj_comparative", "adj_superlative") and \
+                                degree_form_implausible(word, form):
+                            continue
                         add({"form": form, **({"base": owner} if shared else {})}, form.lower(),
                             conf=(0.6 if " " in form else 1.0) * (0.95 if shared else 1),
                             rid=f"{owner}#{e.get('pos')}", raw=fo)
