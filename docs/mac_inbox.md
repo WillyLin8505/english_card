@@ -540,7 +540,7 @@ commit `83c26c05`（Windows：flutter analyze 無 error、02:33 +514 ~2: All tes
 - 卡 #485：問題回報 #483：[Mac] 2026-10-21 實機 iPhone 12：詞庫卡重驗（同一批 5 張）：#465
   結果：重複回報，不需新修改：根因已由卡 #484 修好（apppack.shareforms）；用目前程式重建 pack，非核心詞性（感嘆詞／限定詞…）帶比較級／最高級的詞條 = 0；Mac 看到的 70 筆是 08:35 打包的舊 pack，尚未重新匯出。
 
-## M52（2026-10-21 22:30）狀態：待做
+## M52（2026-10-21 22:30）狀態：完成
 commit `dd5a866d`（Windows：flutter analyze 無 error、01:53 +516 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #226：模擬使用者・複習
   結果：第 112 輪：learner 通過、restart 在輪中「did not complete」但單獨重跑通過（2/2 實質通過）；新問題 #484 #485（待決定）、#486 #487（已修）；UX 建議 #486、#484；補註 #466。
