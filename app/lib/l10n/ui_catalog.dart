@@ -80,9 +80,9 @@ const uiCatalog = <String, (String, String)>{
     'AI proposes words from the photo. This device scores level, familiarity, relevance, usefulness and variety, choosing up to five words, at most three nouns, and one of each synonym group.',
     'L’IA propose des mots. Cet appareil évalue le niveau, la familiarité, la pertinence, l’utilité et la variété pour choisir au plus cinq mots, dont trois noms et un seul mot par groupe de synonymes.'
   ),
-  '拖曳調整順序；關閉的欄位不會出現在卡片背面。英文單字固定為標題。': (
-    'Drag to reorder. Hidden fields are omitted from the back. The English word remains the title.',
-    'Faites glisser pour réorganiser. Les champs masqués sont omis du verso. Le mot anglais reste le titre.'
+  '拖曳調整順序；關閉的欄位不會出現在卡片背面。{L}單字固定為標題。': (
+    'Drag to reorder. Hidden fields are omitted from the back. The {L} word remains the title.',
+    'Faites glisser pour réorganiser. Les champs masqués sont omis du verso. Le mot en {L} reste le titre.'
   ),
   '等待 AI 辨識': ('Waiting for AI recognition', 'En attente de reconnaissance IA'),
   'AI 辨識中…': ('AI recognition in progress…', 'Reconnaissance IA en cours…'),
@@ -432,11 +432,11 @@ const uiCatalog = <String, (String, String)>{
     'Modifiez la recherche ou les filtres'
   ),
   '單字詳情': ('Word details', 'Détails du mot'),
-  '中文意思尚未補齊': ('Chinese meaning pending', 'Sens chinois en attente'),
-  '中文意思待補齊': ('Chinese meaning pending', 'Sens chinois en attente'),
-  '中文意思尚未補齊，連線後會自動更新。': (
-    'Chinese meaning pending; it will update when connected.',
-    'Le sens chinois sera ajouté à la connexion.'
+  '{N}意思尚未補齊': ('{N} meaning pending', 'Sens en {N} en attente'),
+  '{N}意思待補齊': ('{N} meaning pending', 'Sens en {N} en attente'),
+  '{N}意思尚未補齊，連線後會自動更新。': (
+    '{N} meaning pending; it will update when connected.',
+    'Le sens en {N} sera ajouté à la connexion.'
   ),
   '部分內容待補齊': ('Some content is pending', 'Contenu partiellement en attente'),
   '部分內容尚未補齊，詞庫更新後會自動補上。': (
@@ -455,9 +455,9 @@ const uiCatalog = <String, (String, String)>{
     'Added to my words and review',
     'Ajouté à mes mots et aux révisions'
   ),
-  '已加入我的單字本；中文意思補齊後會自動排進複習': (
-    'Added to my words; review starts when the Chinese meaning is ready',
-    'Ajouté à mes mots ; la révision commencera lorsque le sens chinois sera disponible'
+  '已加入我的單字本；{N}意思補齊後會自動排進複習': (
+    'Added to my words; review starts when the {N} meaning is ready',
+    'Ajouté à mes mots ; la révision commencera lorsque le sens en {N} sera disponible'
   ),
   '這個單字已在我的單字本': (
     'This word is already in my words',
@@ -494,9 +494,11 @@ const uiCatalog = <String, (String, String)>{
   '  AI 翻譯': ('  AI translation', '  Traduction IA'),
   '中文': ('Chinese', 'Chinois'),
   '英文': ('English', 'Anglais'),
-  '英文單字': ('English word', 'Mot anglais'),
-  '中文意思': ('Chinese meaning', 'Sens chinois'),
-  '中文釋義': ('Chinese definition', 'Définition chinoise'),
+  '{L}單字': ('{L} word', 'Mot en {L}'),
+  '照片裡的{L}單字：': ('{L} words in this photo: ', 'Mots en {L} de cette photo : '),
+  '詞庫尚未提供{N}意思': ('The dictionary has no {N} meaning yet', 'Le dictionnaire n’a pas encore le sens en {N}'),
+  '{N}意思': ('{N} meaning', 'Sens en {N}'),
+  '{N}釋義': ('{N} definition', 'Définition en {N}'),
   '釋義': ('Definition', 'Définition'),
   '逐義釋義': ('Definitions by sense', 'Définitions par sens'),
   '各詞性釋義': ('Definitions by part of speech', 'Définitions par catégorie'),
@@ -550,9 +552,9 @@ const uiCatalog = <String, (String, String)>{
     'No cards to review right now',
     'Aucune carte à réviser pour le moment'
   ),
-  '單字的中文意思補齊後，會自動加入複習。': (
-    'Words enter review automatically when their Chinese meanings are ready.',
-    'Les mots seront ajoutés aux révisions lorsque leur sens chinois sera disponible.'
+  '單字的{N}意思補齊後，會自動加入複習。': (
+    'Words enter review automatically when their {N} meanings are ready.',
+    'Les mots seront ajoutés aux révisions lorsque leur sens en {N} sera disponible.'
   ),
   '在照片詳情挑幾個單字，或下載卡片集，就會變成卡片。': (
     'Choose words from a photo or download a deck to create cards.',
@@ -706,9 +708,9 @@ const uiCatalog = <String, (String, String)>{
     'Vous pouvez quitter cette page ; gardez l’application ouverte pour poursuivre le traitement.'
   ),
   '等級（可不選）': ('Level (optional)', 'Niveau (facultatif)'),
-  '請填寫英文單字與中文釋義': (
-    'Enter an English word and Chinese definition',
-    'Saisissez un mot anglais et sa définition chinoise'
+  '請填寫{L}單字與{N}釋義': (
+    'Enter a {L} word and {N} definition',
+    'Saisissez un mot en {L} et sa définition en {N}'
   ),
   '音標、例句與翻譯會在背景自動補上。': (
     'Pronunciation, examples and translations are added in the background.',
@@ -807,8 +809,8 @@ String translateUi(String source, String language, {String learning = 'en'}) {
     final match = template.pattern.firstMatch(source);
     if (match == null) continue;
     final translation = language == 'fr' ? template.fr : template.en;
-    return translation.replaceAllMapped(
-        RegExp(r'\{(\d+)\}'), (m) => match.group(int.parse(m[1]!) + 1)!);
+    return fill(translation.replaceAllMapped(
+        RegExp(r'\{(\d+)\}'), (m) => match.group(int.parse(m[1]!) + 1)!));
   }
   return fill(_labelParts(source, language) ?? source);
 }

@@ -55,7 +55,7 @@ class _AddWordDialogState extends State<_AddWordDialog> {
     final word = _word.text.trim();
     final meaning = _meaning.text.trim();
     if (word.isEmpty || meaning.isEmpty) {
-      setState(() => _error = '請填寫英文單字與中文釋義');
+      setState(() => _error = '請填寫{L}單字與{N}釋義');
       return;
     }
     try {
@@ -80,7 +80,7 @@ class _AddWordDialogState extends State<_AddWordDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _fieldLabel('英文單字'),
+            _fieldLabel('{L}單字'),
             const SizedBox(height: 6),
             TextField(
               controller: _word,
@@ -89,7 +89,7 @@ class _AddWordDialogState extends State<_AddWordDialog> {
               decoration: const InputDecoration(hintText: 'e.g. balcony'),
             ),
             const SizedBox(height: 14),
-            _fieldLabel('中文釋義'),
+            _fieldLabel('{N}釋義'),
             const SizedBox(height: 6),
             TextField(
               controller: _meaning,
@@ -200,11 +200,11 @@ class _LabelDialogState extends State<_LabelDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _fieldLabel('英文'),
+            _fieldLabel('{L}'),
             const SizedBox(height: 6),
             TextField(controller: _word, autofocus: true, style: _input),
             const SizedBox(height: 14),
-            _fieldLabel('中文'),
+            _fieldLabel('{N}'),
             const SizedBox(height: 6),
             TextField(
                 controller: _zh, style: _input, onSubmitted: (_) => _submit()),
@@ -433,7 +433,7 @@ class _TemplateOrderDialogState extends State<_TemplateOrderDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             UiText(
-              '拖曳調整順序；關閉的欄位不會出現在卡片背面。英文單字固定為標題。',
+              '拖曳調整順序；關閉的欄位不會出現在卡片背面。{L}單字固定為標題。',
               style: MFont.inter(13, FontWeight.w400, MColors.gray500),
             ),
             const SizedBox(height: 12),

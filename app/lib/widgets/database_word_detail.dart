@@ -167,7 +167,7 @@ class DatabaseWordScreen extends StatelessWidget {
                         repo.linkLexicon(pack);
                         messenger.showSnackBar(SnackBar(
                             content: UiText(waiting
-                                ? '已加入我的單字本；中文意思補齊後會自動排進複習'
+                                ? '已加入我的單字本；{N}意思補齊後會自動排進複習'
                                 : '已加入我的單字本與複習')));
                       } on DuplicateWordException {
                         // Swiped away as 已學會 earlier: adding it again means

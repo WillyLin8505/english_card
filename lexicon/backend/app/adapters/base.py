@@ -222,6 +222,108 @@ def minor_sense(sense: dict) -> bool:
     return bool(MINOR_SENSE_TAGS & set(sense.get("tags") or []))
 
 
+# Kaikki marks an inflection with `form_of` + the form-of tag — but many
+# French senses carry neither and only say so in the gloss: aimez
+# 「second-person plural present indicative/imperative of aimer」, content
+# 「third-person plural present/subjunctive of conter」, plait 「post-1990
+# spelling of plaît (third-person singular present indicative of plaire)」
+# (問題回報 #504; the same gap in English: quality.py, #217). The gloss is
+# read as an inflection only when everything before 「of」 is inflection
+# vocabulary and names a person / number / participle / tense — never
+# 「Indicative of unkind intentions」 (ill) or 「a form of cancer」.
+_INFLECTION_VOCAB = {
+    "first-person", "second-person", "third-person", "first", "second", "third", "person",
+    "singular", "plural", "masculine", "feminine", "neuter", "present", "past", "simple",
+    "historic", "preterite", "imperfect", "future", "conditional", "subjunctive",
+    "imperative", "indicative", "participle", "gerund", "infinitive", "tense", "form",
+    "inflection", "and", "or", "the", "comparative", "superlative", "definite",
+    "indefinite", "nominative", "accusative", "genitive", "dative", "vocative", "perfect",
+    "pluperfect", "informal", "formal", "polite", "familiar", "possessive", "reflexive",
+    "pronominal", "negative", "positive", "active", "passive"}
+_INFLECTION_STRONG = {
+    "first-person", "second-person", "third-person", "singular", "plural", "participle",
+    "inflection", "preterite", "imperfect", "gerund", "comparative", "superlative",
+    "simple past", "past historic", "past tense", "present tense", "pluperfect"}
+_SPELLING_GLOSS_RE = re.compile(
+    r"^(?:(?:post|pre)-\d{4}|(?:post|pre)-reform|alternative|alternate|nonstandard|non-standard|"
+    r"obsolete|archaic|dated|rare|informal|misspelling|standard|traditional|reformed|old|older|"
+    r"former|variant|proscribed|colloquial|eye-dialect|pronunciation|simplified|hypercorrect|"
+    r"superseded|uncommon|less common|common|us|uk|british|american|canadian|australian|irish|"
+    r"oxford|non-oxford|english|and|hyphenated|unhyphenated)(?:[ ,]+(?:" + "|".join([
+        "alternative", "alternate", "nonstandard", "obsolete", "archaic", "dated", "rare",
+        "informal", "standard", "common", "and", "us", "uk", "british", "american", "english"])
+    + r"))*\s+(?:spelling|form|typography|misspelling)s?\s+of\s+(\S+)", re.I)
+# 「only used in laisse béton」 (béton the verb), 「only used in quant à」: a
+# word bound to one phrase, not a meaning of its own.
+_BOUND_GLOSS_RE = re.compile(r"^only\s+(?:used|found)\s+in\b", re.I)
+_PARENS = re.compile(r"\(([^()]*)\)")
+
+
+def _base_word(raw: str) -> str:
+    return raw.strip().rstrip(".,;:").strip("「」“”\"'")
+
+
+def gloss_inflection_base(gloss: str) -> str | None:
+    """The base word of an inflection gloss (「past participle of accuser」 →
+    accuser), from the gloss itself or a parenthesis in it; None when the
+    gloss is not written like an inflection."""
+    g = (gloss or "").strip()
+    if not g:
+        return None
+    for part in [g] + _PARENS.findall(g):
+        head, sep, rest = part.partition(" of ")
+        if not sep or not rest.strip():
+            continue
+        words = [w for w in re.split(r"[\s/,]+", head.strip().lower()) if w]
+        if not words or not all(w in _INFLECTION_VOCAB for w in words):
+            continue
+        joined = " ".join(words)
+        if not ({w for w in words} & _INFLECTION_STRONG
+                or any(k in joined for k in _INFLECTION_STRONG if " " in k)):
+            continue
+        base = _base_word(rest.split("(")[0].split(",")[0].split(";")[0])
+        if base and len(base.split()) <= 4:
+            return base
+    return None
+
+
+def gloss_spelling_base(gloss: str) -> str | None:
+    """「post-1990 spelling of plaît」 → plaît; None otherwise."""
+    m = _SPELLING_GLOSS_RE.match((gloss or "").strip())
+    return _base_word(m.group(1)) if m else None
+
+
+def _first_gloss(sense: dict) -> str:
+    return str((sense.get("glosses") or sense.get("raw_glosses") or [""])[0]).strip()
+
+
+def is_form_sense(sense: dict) -> bool:
+    """A sense that is another word's inflection or spelling (by Kaikki's
+    metadata or, failing that, by its gloss) or bound to one phrase — not a
+    meaning of its own."""
+    if sense.get("form_of") or sense.get("alt_of"):
+        return True
+    tags = set(sense.get("tags") or [])
+    if "form-of" in tags or "alt-of" in tags:
+        return True
+    g = _first_gloss(sense)
+    return bool(g) and (gloss_inflection_base(g) is not None
+                        or gloss_spelling_base(g) is not None
+                        or _BOUND_GLOSS_RE.match(g) is not None)
+
+
+def form_bases(sense: dict) -> list[str]:
+    """The words a sense says it is an inflection of: Kaikki's `form_of`
+    links, else the base read from the gloss (never a spelling variant's
+    base: connaitre keeps its own conjugation)."""
+    words = [str(f.get("word") or "") for f in sense.get("form_of") or []]
+    words = [w for w in words if w]
+    if words:
+        return words
+    base = gloss_inflection_base(_first_gloss(sense))
+    return [base] if base else []
+
+
 @lru_cache(maxsize=50_000)
 def inflection_bases(word: str, language: str) -> tuple[str, ...]:
     """The words an inflected form belongs to, when the dictionary gives it
@@ -238,13 +340,15 @@ def inflection_bases(word: str, language: str) -> tuple[str, ...]:
     for e in entries:
         for s in e.get("senses") or []:
             tags = set(s.get("tags") or [])
-            if s.get("form_of"):
-                words = [str(f.get("word") or "") for f in s["form_of"]]
+            words = form_bases(s)
+            if words:
                 if STALE_FORM_TAGS & tags:
                     stale += words
                 else:
                     bases += words
-            elif (s.get("glosses") or [""])[0].strip():
+            elif is_form_sense(s):
+                continue  # another spelling (boite → boîte): no base, no meaning of its own
+            elif _first_gloss(s):
                 if not minor_sense(s):
                     return ()  # a meaning of its own
                 live = live or not (tags & NOT_A_LIVE_SENSE)  # ought: minor-tagged but current
@@ -289,8 +393,8 @@ def card_base(word: str, language: str) -> str | None:
                if str(e.get("word", "")).lower() == w and e.get("pos") != "name"]
 
     def own(e):
-        return [s for s in e.get("senses") or [] if not s.get("form_of")
-                and (s.get("glosses") or [""])[0].strip() and not minor_sense(s)]
+        return [s for s in e.get("senses") or [] if not is_form_sense(s)
+                and _first_gloss(s) and not minor_sense(s)]
 
     first = next((e for e in entries if own(e)), None)
     if first is None:
@@ -302,8 +406,7 @@ def card_base(word: str, language: str) -> str | None:
             if e.get("pos") not in ("adj", "adv") and not (
                     e.get("pos") == "noun" and ACT_NOUN.match(s["glosses"][0])):
                 return None  # a thing of its own (building, glasses)
-    bases = [str(f.get("word") or "") for e in same for s in e.get("senses") or []
-             for f in s.get("form_of") or []]
+    bases = [b for e in same for s in e.get("senses") or [] for b in form_bases(s)]
     bases = [b for b in dict.fromkeys(bases)
              if b and b == b.lower() and b != w and zipf(b, language) >= 2.5]
     if not bases:

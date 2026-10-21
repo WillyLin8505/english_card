@@ -377,7 +377,7 @@ class _DatabaseLibraryScreenState extends State<DatabaseLibraryScreen> {
                                                                         height:
                                                                             2),
                                                                     Text(
-                                                                        '${word.learnerMeaning ?? ui(context, '中文意思待補齊')}\n${[
+                                                                        '${word.learnerMeaning ?? ui(context, '{N}意思待補齊')}\n${[
                                                                           if (word.entryType !=
                                                                               'word')
                                                                             entryTypeLabel(word.entryType),

@@ -370,7 +370,7 @@ class _WordBody extends StatelessWidget {
             ),
           ),
         ),
-      if (entry.meaning.isEmpty) const UiText('中文意思尚未補齊，連線後會自動更新。'),
+      if (entry.meaning.isEmpty) const UiText('{N}意思尚未補齊，連線後會自動更新。'),
       if (examples.isNotEmpty)
         _Section(
           label: '例句',

@@ -30,7 +30,7 @@ String databaseTagLabel(Map<String, dynamic> tag, LexiconPack pack) {
   final word = pack.byId((tag['lexeme_id'] as num).toInt());
   if (word == null) return '單字待補齊';
   final sense = word.senses.where((s) => s.id == tag['sense_id']).firstOrNull;
-  return '${word.lemma} · ${sense?.native ?? word.nativeMeaning ?? '中文意思待補齊'}';
+  return '${word.lemma} · ${sense?.native ?? word.nativeMeaning ?? '{N}意思待補齊'}';
 }
 
 String databaseImageLabels(Map<String, dynamic> image, LexiconPack pack) =>

@@ -12,7 +12,7 @@ void main() {
     final repo = WordDatabaseRepository(clock: () => testNow);
     final e = repo.addWord(word: 'nebula', pos: 'noun', meaning: '', level: 'B1');
     repo.editEntry(e.copyWith(dataStatus: WordDataStatus.failed), {});
-    expect(missingFieldNames(repo.entry(e.id)!), ['中文意思', '音標', '真人發音', '例句']);
+    expect(missingFieldNames(repo.entry(e.id)!), ['{N}意思', '音標', '真人發音', '例句']);
     await pumpApp(tester, initialTab: AppTab.words, repository: repo, size: const Size(402, 1200));
     await tester.pumpAndSettle();
     expect(find.text('待補：中文意思、音標、真人發音、例句'), findsOneWidget);

@@ -2,7 +2,7 @@
 /// (背面預設順序). [word] is always the card title, so it isn't
 /// reorderable — every other field can be moved and hidden.
 enum CardBackField {
-  word('英文單字'),
+  word('{L}單字'),
   pronunciation('發音與 IPA'),
   posAndMeaning('詞性與釋義'),
   photoContext('照片情境'),

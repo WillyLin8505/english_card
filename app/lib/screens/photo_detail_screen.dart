@@ -343,7 +343,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                   trailing: ShareNavButton(
                     onTap: () => SharePlus.instance.share(ShareParams(
                       title: photo.title,
-                      text: '照片「${photo.title}」裡的英文單字：'
+                      text: '${ui(context, '照片裡的{L}單字：')}'
                           '${session.words.map((w) => '${displayWord(w.word)} ${w.candidate.meaning}').join('、')}',
                     )),
                   ),

@@ -102,7 +102,7 @@ class _Intro extends StatelessWidget {
                         ? '今天 $today 張，約 $minutes 分鐘。做完還可以繼續練習，想休息時按左上角結束。'
                         : '今天的份量已完成。想多練習可以繼續，想休息時按左上角結束。')
                     : waiting
-                        ? '單字的中文意思補齊後，會自動加入複習。'
+                        ? '單字的{N}意思補齊後，會自動加入複習。'
                         : '在照片詳情挑幾個單字，或下載卡片集，就會變成卡片。',
                 textAlign: TextAlign.center,
                 style: MFont.manrope(14, FontWeight.w600, MColors.muted),

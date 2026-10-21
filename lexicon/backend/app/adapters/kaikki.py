@@ -18,7 +18,8 @@ from ..morphology import (Evidence, Part, _prefix_meaning, expand, normalize_aff
                           template_gloss, zipf as en_zipf)
 from ..text import fold, normalize_lemma, opencc, sense_key, example_key, tokens
 from . import http
-from .base import Candidate, Context, SourceAdapter, by_frequency, zipf
+from .base import (Candidate, Context, SourceAdapter, by_frequency, form_bases, is_form_sense,
+                   zipf)
 
 DICT_NAME = {"en": "English", "fr": "French", "zh-TW": "Chinese"}
 LANG_CODE = {"en": "en", "fr": "fr", "zh-TW": "zh"}
@@ -116,7 +117,47 @@ RARE_FORM_TAGS = {"dialectal", "obsolete", "archaic", "rare", "nonstandard", "ey
 
 
 def _is_form_of(s: dict) -> bool:
-    return bool(s.get("form_of") or s.get("alt_of")) or "form-of" in s.get("tags", [])
+    """Another word's inflection / spelling, or bound to one phrase — by
+    Kaikki's metadata or, when a French sense lacks it, by the gloss
+    (aimez 「second-person plural … of aimer」, 問題回報 #504)."""
+    return is_form_sense(s)
+
+
+CONJUGATION_TAGS = {"infinitive", "indicative", "subjunctive", "imperative", "conditional",
+                    "first-person", "second-person", "third-person"}
+
+
+def _own_forms(e: dict) -> list[dict]:
+    """The entry's own conjugation (a real verb always has one). A participle's
+    agreement forms (accusé: accusée, accusés) are not a conjugation."""
+    return [fo for fo in e.get("forms", [])
+            if set(fo.get("tags", [])) & CONJUGATION_TAGS
+            and not (set(fo.get("tags", [])) & FORM_SKIP)]
+
+
+def _form_entry_bases(e: dict, word: str) -> list[str]:
+    """The words whose inflection table this entry shares: a headword that is
+    only a form (grated, aimez) — or a verb entry with a form-of sense and no
+    conjugation of its own (permettant 「allowing」 is still permettre's
+    participle, doutes douter's; ought keeps nothing: its 「past of owe」 is
+    obsolete). Empty for a word with its own table or a dialect / old form
+    (book as the Northern English past of bake, 問題回報 #504)."""
+    senses = e.get("senses", [])
+    if not senses:
+        return []
+    rare = all(RARE_FORM_TAGS & set(s.get("tags", [])) for s in senses)
+    if rare:
+        return []
+    of = [b for s in senses for b in form_bases(s) if b and b.lower() != word.lower()]
+    if not of:
+        return []
+    if all(_is_form_of(s) for s in senses):
+        return list(dict.fromkeys(of))
+    if _pos(e) == "verb" and not _own_forms(e):
+        live = [b for s in senses if not (RARE_FORM_TAGS & set(s.get("tags", [])))
+                for b in form_bases(s) if b and b.lower() != word.lower()]
+        return list(dict.fromkeys(live))
+    return []
 
 
 def inflection_only_pos(entries) -> set[str]:
@@ -505,8 +546,8 @@ class Kaikki(SourceAdapter):
             for e in entries:
                 if _pos(e) != "verb":
                     continue
-                bases = [fo.get("word") for s in e.get("senses", []) for fo in s.get("form_of", [])]
-                if bases and all(_is_form_of(s) for s in e.get("senses", [])):
+                bases = _form_entry_bases(e, word)
+                if bases:
                     for b in bases:
                         add({"form": b}, b.lower(), conf=0.9, rid=f"{word}#verb")
                 else:
@@ -527,12 +568,12 @@ class Kaikki(SourceAdapter):
             sources, bases = [], []
             for e in entries:
                 senses = e.get("senses", [])
-                of = [fo.get("word") for s in senses for fo in s.get("form_of", []) if fo.get("word")]
                 # Not a dialect / old form (book as the Northern English past of
                 # bake would give book baked / baking).
                 rare = bool(senses) and all(RARE_FORM_TAGS & set(s.get("tags", [])) for s in senses)
-                if senses and of and all(_is_form_of(s) for s in senses) and not rare:
-                    bases += [(b, _pos(e)) for b in of if b.lower() != word.lower()]
+                shared_from = _form_entry_bases(e, word)
+                if shared_from:
+                    bases += [(b, _pos(e)) for b in shared_from]
                 elif rare:
                     continue
                 else:
@@ -905,13 +946,13 @@ def _fr_glosses(word: str, affix: bool) -> list[str]:
             and (e.get("pos") in ("prefix", "suffix")) == affix]
     if not affix:
         # a feminine / plural adjective only (analyse the noun is not 「to analyse」)
-        base = next((fo["word"] for e in ents if e.get("pos") == "adj" for se in e.get("senses", [])
-                     for fo in se.get("form_of", []) if fo.get("word") and fo["word"] != word), None)
+        base = next((b for e in ents if e.get("pos") == "adj" for se in e.get("senses", [])
+                     for b in form_bases(se) if b and b != word), None)
         if base:
             return _fr_glosses(base, False)
     out = [g.strip() for e in ents for se in e.get("senses", [])
-           if not se.get("form_of") and not set(se.get("tags", [])) & LOW_TAGS
-           for g in se.get("glosses", [])[:1] if not g.startswith("inflection of")]
+           if not _is_form_of(se) and not set(se.get("tags", [])) & LOW_TAGS
+           for g in se.get("glosses", [])[:1]]
     # 「re-」 or 「-ist, -istic」 only names the English affix: no meaning in it
     return [g for g in out if not all("-" in t for t in re.split(r"[\s,;/]+", g.strip(" ,;/")))]
 

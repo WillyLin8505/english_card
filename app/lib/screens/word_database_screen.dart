@@ -609,7 +609,7 @@ class _WordRow extends StatelessWidget {
                       style: MFont.manrope(16, FontWeight.w800, MColors.ink)),
                   const SizedBox(height: MSpace.xxs),
                   Text(
-                    meaning.isEmpty ? ui(context, '中文意思尚未補齊') : meaning,
+                    meaning.isEmpty ? ui(context, '{N}意思尚未補齊') : meaning,
                     style: MFont.manrope(
                       14,
                       FontWeight.w600,
