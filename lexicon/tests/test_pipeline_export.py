@@ -506,6 +506,11 @@ def test_unfit_example_sentences_are_not_exported():
     assert not unfit_example("Dick promised to come back by three o'clock.")
     assert not unfit_example("Magnus and Big Dick are over in the bullpen.")
     assert not unfit_example("Kill two birds with one stone.")
+    # 卡 #226 r112: plurals of listed words.
+    assert unfit_example("I don't like using dildos, I prefer real cocks.", "prefer")
+    assert unfit_example("Elections, shmelections; the candidates are fags.", "candidate")
+    assert unfit_example("I don't like using dildos, I prefer real cocks.", "cock")
+    assert not unfit_example("He wears glasses and plays the bass.")
 
 
 

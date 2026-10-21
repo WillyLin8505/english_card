@@ -15,6 +15,15 @@ part of '../screens/flashcard_screen.dart';
   return (null, null);
 }
 
+/// Whether keyboard shortcut hints (空白鍵) mean anything: desktop only.
+bool _hasKeyboard(BuildContext context) => switch (Theme.of(context).platform) {
+      TargetPlatform.windows ||
+      TargetPlatform.macOS ||
+      TargetPlatform.linux =>
+        true,
+      _ => false,
+    };
+
 /// Short name of a saved 複習範圍 for the picker button.
 String reviewScopeLabel(WordDatabaseRepository repo, String scope) {
   if (scope == 'new') return '今天新加的單字';
@@ -356,10 +365,13 @@ class FlashcardCardView extends StatelessWidget {
                   decoration: look.answerButton,
                   height: look.answerHeight,
                   textStyle: look.answerText,
-                  shortcut:
-                      session.exercise?.type == ReviewExerciseType.photoRecall
-                          ? '空白鍵'
-                          : null,
+                  // 卡 #226 r112: phones have no space key, so the hint
+                  // shows only on desktop.
+                  shortcut: session.exercise?.type ==
+                              ReviewExerciseType.photoRecall &&
+                          _hasKeyboard(context)
+                      ? '空白鍵'
+                      : null,
                   onTap: !session.canAnswer
                       ? null
                       : () {

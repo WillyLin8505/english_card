@@ -168,6 +168,9 @@ def profane_token(token: str, *, name_dick: bool = False) -> bool:
         return False
     if low in OFFENSIVE or _PROFANE_TOKEN.fullmatch(low):
         return True
+    # Plurals of listed words (卡 #226 r112: 「dildos」「fags」「cocks」 got through).
+    if low.endswith("s") and (low[:-1] in OFFENSIVE or low.endswith("es") and low[:-2] in OFFENSIVE):
+        return True
     return bool(_PROFANE_STEM.search(low) or _DICK_SLUR.search(low))
 
 

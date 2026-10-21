@@ -1144,6 +1144,7 @@ class WordDatabaseRepository extends ChangeNotifier {
           ListedWord(c, c.point),
       ],
       difficultyOffset: 0,
+      source: 'database_album',
     );
   }
 
@@ -1315,6 +1316,7 @@ class WordDatabaseRepository extends ChangeNotifier {
     List<ListedWord> words, {
     required int difficultyOffset,
     List<ListedWord> alsoSeen = const [],
+    String source = 'photo',
   }) {
     final photo = this.photo(photoId);
     if (photo == null) return const [];
@@ -1392,10 +1394,15 @@ class WordDatabaseRepository extends ChangeNotifier {
       difficultyOffset: difficultyOffset,
       wordsSavedAt: photo.wordsSavedAt ?? now,
     ));
-    return [
+    final created = [
       for (final e in _entries)
         if (!before.contains(e.id)) e,
     ];
+    for (final e in created) {
+      Analytics.instance
+          .capture('word_added', {'source': source, 'pos': e.pos}, now);
+    }
+    return created;
   }
 
   /// Drags a label to a new spot (spec: 照片標籤可拖曳重新定位).
