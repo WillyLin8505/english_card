@@ -508,3 +508,10 @@ commit `bcf9238b`（Windows：flutter analyze 無 error、02:17 +509 ~2: All tes
 commit `0c63c0fa`（Windows：flutter analyze 無 error、02:44 +509 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #228：模擬使用者・設定
   結果：第 7 輪：1/1 通過（runround 第 111 輪，findings 0）；新問題 無；UX 建議 #474 #475；上輪的 #446 #447 已確認生效。
+
+## M47（2026-10-21 17:01）狀態：待做
+commit `7a969a3a`（Windows：flutter analyze 無 error、02:45 +509 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #476：問題回報 #474：設定「語言」區兩句說明是雜訊：只有一個學習語言時說「每個學習語言有自己的相片冊…」，「學習內容依已發
+  結果：全部完成：設定「語言」區 3 句雜訊說明已處理（純 UI 文字，無詞庫資料變動）。
+- 卡 #475：問題回報 #475：設定「進階設定」的「照片辨識連線失敗，點開查看」沒說對學習者有什麼影響，看起來像壞掉
+  結果：全部完成：設定「進階設定」的失敗提示從 1 種（「連線失敗，點開查看」）改成依後果分 2 種，並補 2 個測試斷言；4/4 測試連線 widget 測試、設定模擬、uilanguage 測試全過。
