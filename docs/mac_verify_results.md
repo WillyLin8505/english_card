@@ -537,3 +537,14 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #469（M43）容易混淆的字沒有詞條 | 通過 | 容易混淆的字（near_homophones＋similar_spelling）共 39,488 筆，沒有詞條的 28,969 筆全部預設隱藏，預設顯示又沒有詞條的 0 筆 | — | — |
 | #465（M43）非形容詞的比較級／最高級 | 不通過 | 仍有 38 筆不是形容詞／副詞的詞條帶比較級、最高級，例如 good（感嘆詞）better／best、great（感嘆詞）greater／greatest、quiet（感嘆詞）quieter／quietest、sage（感嘆詞）sager／sagest、ample（限定詞）ampler／amplest。另外 tea 動詞的過去式有 tea'd、tead、teaed 三種怪拼法 | — | 低 |
 | #472（M44）more／most 形式 | 通過 | tea、tomato、metal、street、apply、texture 都已沒有 more／most 開頭的比較級 | — | — |
+
+## 2026-10-21 實機 iPhone 12：詞庫卡重驗（同一批 5 張）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| 環境 | 通過 | iPhone 12（iOS 26.6.1）profile 版，把 integration test 直接編進 App（flutter build -t），結果寫在 App 的 Documents 再用 devicectl 拷回 Mac。App 把內建包同步成伺服器 SQLite 版 2bc4f1d6…（8,660 個詞條），整段期間 App 沒有被系統結束 | — | — |
+| #468 關聯詞中文 | 通過 | 實機上有詞條的關聯詞 56,695 筆，缺中文 14 筆（同模擬器） | — | — |
+| #466 首字大寫詞條 | 通過 | 實機上首字大寫只剩 2 個、沒有小寫同字；Porch、Skull、Fairy 都已改小寫 | — | — |
+| #469 容易混淆的字 | 通過 | 實機上預設顯示的容易混淆的字都有詞條（39,488 筆中沒有詞條的 28,969 筆都預設隱藏） | — | — |
+| #465 非形容詞的比較級／最高級（實機、較新詞庫） | 不通過 | 實機同步到的較新詞庫 2bc4f1d6… 反而有 70 筆（模擬器 642f82bb… 是 38 筆），新增像 well（感嘆詞）more well／most well；其他例：good（感嘆詞）better／best、quiet（感嘆詞）quieter／quietest、ample（限定詞）ampler／amplest。tea 動詞過去式已只剩 teaed | — | 低 |
+| #472 more／most 形式 | 通過 | 實機上 tea、tomato、metal、street、apply、texture 都沒有 more／most 形式 | — | — |
