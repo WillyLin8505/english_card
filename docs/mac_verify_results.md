@@ -451,3 +451,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
 |----|----|----|----|----|
 | #454 同義詞不含主字的複合詞 | 通過 | 新安裝後 force 單字詳情的近義詞已沒有 force out、force play（畫面上含 force 的只剩例句裡的片語） | mac_verify_shots/2026-10-21/m37_x_force_detail_0.png | — |
+
+## 2026-10-21 M39（iPhone 模擬器）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #460 analyze／test | 通過 | Mac 上 flutter analyze 0 error、0 warning；flutter test 504 通過、3 略過 | — | — |
