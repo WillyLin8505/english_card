@@ -460,7 +460,7 @@ void main() {
 
   group('設定', () {
     Future<void> check(
-        WidgetTester tester, MockClient client, String expected) async {
+        WidgetTester tester, MockClient client, String? expected) async {
       final settings = AppSettings.inMemory(
           taggingUrl: 'http://127.0.0.1:8765/tag', apiKey: 'k');
       await pumpApp(
@@ -478,7 +478,7 @@ void main() {
       await tester.pump();
       await tester.tap(find.text('測試連線'));
       await settle(tester, rounds: 1);
-      expect(find.text(expected), findsOneWidget);
+      if (expected != null) expect(find.text(expected), findsOneWidget);
     }
 
     http.Response health(bool? keyOk) => jsonResponse(
@@ -521,6 +521,17 @@ void main() {
           findsOneWidget);
       expect(find.textContaining('點開修正'), findsNothing);
     });
+
+    for (final code in [403, 500]) {
+      testWidgets('測試連線: $code 是伺服器端狀況，歸到暫時連不上 (問題回報 #476)',
+          (tester) async {
+        await check(tester, MockClient((r) async => jsonResponse({}, code)),
+            null);
+        expect(find.text('照片辨識暫時連不上：新照片會先排隊，連上後自動辨識，不用處理'),
+            findsOneWidget);
+        expect(find.textContaining('點開修正'), findsNothing);
+      });
+    }
 
     testWidgets('level by hand; a dial habit suggests a new default level',
         (tester) async {

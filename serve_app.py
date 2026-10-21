@@ -940,7 +940,8 @@ if __name__ == '__main__':
         logging.warning('Card studio could not start: %s', error)
     server = ThreadingHTTPServer(('0.0.0.0' if args.lan else '127.0.0.1', args.port), Handler)
     server.lan = args.lan
-    server.public_hosts = {h.strip().lower() for h in
+    # The owner's internet name is always served (card #477: a restart without the flag answers 403).
+    server.public_hosts = {'api.willylinai.com'} | {h.strip().lower() for h in
                            args.public_host + os.environ.get('PUBLIC_HOSTS', '').split(',') if h.strip()}
     threading.Thread(target=warm_snapshots, daemon=True, name='dictionary-warm').start()
     server.serve_forever()

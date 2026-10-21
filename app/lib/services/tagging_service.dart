@@ -143,7 +143,13 @@ String describeTaggingError(Object e, String url, {bool showUrl = true}) {
 bool isOffline(Object e) =>
     e is http.ClientException ||
     e is TimeoutException ||
-    (e is TaggingApiException && (e.statusCode == 502 || e.statusCode == 503));
+    (e is TaggingApiException && _isServerSideStatus(e.statusCode));
+
+/// 問題回報 #476: a 403 from the public gateway (serve_app Forbidden) or any
+/// 5xx is the server's state, not the learner's URL/key — treat as "temporarily
+/// unreachable" so photos queue instead of telling them to fix settings.
+bool _isServerSideStatus(int? code) =>
+    code != null && (code == 403 || (code >= 500 && code <= 599));
 
 class TaggingApiException implements Exception {
   final String message;
