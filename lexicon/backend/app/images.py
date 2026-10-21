@@ -1398,10 +1398,11 @@ TAG_PASS = 0.8
 # Default import/tag path uses one CEFR-band call (~3 labels per A1–C2).
 # Set LEXICON_TAG_MODE=legacy to restore the multi-focus TAG_LOOKS loop.
 TAG_MODE = os.environ.get('LEXICON_TAG_MODE', 'cefr').strip().lower() or 'cefr'
-CEFR_PER_LEVEL = int(os.environ.get('LEXICON_CEFR_PER_LEVEL', '3'))
-# Owner decision #114 C: up to 24 labels a picture — at most four a level;
-# a level under three (CEFR_PER_LEVEL) is still a gap.
-CEFR_LEVEL_MAX = int(os.environ.get('LEXICON_CEFR_LEVEL_MAX', '4'))
+CEFR_PER_LEVEL = int(os.environ.get('LEXICON_CEFR_PER_LEVEL', '5'))
+# Card #448 (manager 10/21): every level needs five labels, so the per-level cap
+# moved from four to five (owner decision #114 C was ≤4 a level, ≤24 a picture).
+# A level under five (CEFR_PER_LEVEL) is still a gap.
+CEFR_LEVEL_MAX = int(os.environ.get('LEXICON_CEFR_LEVEL_MAX', '5'))
 TAGS_WANTED = CEFR_PER_LEVEL * len(CEFR_LEVELS)
 TAGS_MAX = CEFR_LEVEL_MAX * len(CEFR_LEVELS)
 # Empty difficulty bands are valid. Repeated requests to fill them amplify
@@ -2060,7 +2061,7 @@ def _tag_asset(s, asset_id):
                         dropped.append(tag)
                 passed, overflow = _select_cefr_tags(passed, keep)
                 for tag in overflow:
-                    tag.setdefault('dropReason', '該等級已滿 4 個')
+                    tag.setdefault('dropReason', f'該等級已滿 {CEFR_LEVEL_MAX} 個')
                 dropped.extend(overflow)
                 if cefr_complete(passed):
                     break
@@ -2074,7 +2075,7 @@ def _tag_asset(s, asset_id):
             dropped.extend(rejected)
             passed, overflow = _select_cefr_tags(passed, keep)
             for tag in overflow:
-                tag.setdefault('dropReason', '該等級已滿 4 個')
+                tag.setdefault('dropReason', f'該等級已滿 {CEFR_LEVEL_MAX} 個')
             dropped.extend(overflow)
             if model and 'cefr' not in (model or '').lower():
                 model = f'cefr+{model}'
@@ -2180,7 +2181,7 @@ def _settle(s, asset, passed, dropped, model, done=True):
     if any(tag_level(tag) for tag in passed):
         passed, overflow = _select_cefr_tags(passed, own_words(s, asset))
         for tag in overflow:
-            tag.setdefault('dropReason', '該等級已滿 4 個')
+            tag.setdefault('dropReason', f'該等級已滿 {CEFR_LEVEL_MAX} 個')
         dropped = [*dropped, *overflow]
         asset.tags = sorted(passed, key=lambda tag: (
             CEFR_LEVELS.index(tag_level(tag)), -(tag.get('score') or 0)))
@@ -2511,7 +2512,7 @@ def share(s, asset, only_lemma=None, require_publishable: bool = False) -> int:
                 continue
         level = tag_level(tag) or str(lexeme.cefr or '').upper()
         if level in levels and levels[level] >= CEFR_LEVEL_MAX:
-            skips[word] = '該等級已滿 4 個'
+            skips[word] = f'該等級已滿 {CEFR_LEVEL_MAX} 個'
             continue
         from app import quality as _q
         # Context = the other AI labels on this photo (#195 / P2).
