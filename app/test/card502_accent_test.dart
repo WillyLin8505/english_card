@@ -57,7 +57,13 @@ void main() {
       () {
     _loadPack();
     String? url(String word, String accent) => accentAudioUrl(
-        WordEntry(id: 'w', word: word, language: 'en'), accent,
+        WordEntry(
+            id: 'w',
+            word: word,
+            pos: 'noun',
+            meaning: '',
+            createdAt: DateTime(2026),
+            updatedAt: DateTime(2026)), accent,
         allowUnlabelled: true);
     expect(url('balcony', 'en-GB'), endsWith('balcony-UK.mp3'));
     expect(url('balcony', 'en-US'), endsWith('balcony-US.mp3'));
