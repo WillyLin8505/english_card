@@ -66,7 +66,7 @@ def is_swarm(agent: str | None) -> bool:
 def is_card_alias(agent: str | None) -> bool:
     """A launched CLI that renamed itself on the board ("Claude · card385", via task.py) —
     still ours to collect, or its card would sit in_progress forever."""
-    return bool(agent) and re.fullmatch(r"Claude · card\d+", agent) is not None
+    return bool(agent) and re.fullmatch(r"Claude · card\d+|Claude CLI", agent) is not None
 
 
 def quota_agent(agent: str) -> str:
@@ -964,6 +964,7 @@ class Tick:
         changed = self.check_running(board)
         changed |= self.unblock(board)
         changed |= self.answered()
+        changed |= self.sweep_orphans()
         if changed and not self.dry:
             board = http("GET", "/schedule/board")
         self.grade_if_needed(board)
@@ -989,6 +990,39 @@ class Tick:
         self.tag_fallback()
         self.save()
         return 0
+
+    def sweep_orphans(self) -> bool:
+        """Cards left in_progress by a holder that went away (a closed session, an unnamed CLI)
+        stop the swarm from ever retrying them (owner 10/21: 「cli 不要停 有工作就派工」).
+        After orphan_hours without an update and no live CLI: result.md newer than the last
+        update → collect it; otherwise back to the pile (standing cards → scheduled)."""
+        hours = float(self.cfg.get("orphan_hours", 24))
+        try:
+            tasks = http("GET", "/tasks").get("items", [])
+        except Exception as e:  # noqa: BLE001
+            log(f"orphan sweep: /tasks failed ({e})")
+            return False
+        from launch_agent import live_run
+        changed = False
+        for t in tasks:
+            cid, agent = t.get("id"), t.get("agent")
+            if t.get("status") != "in_progress" or str(cid) in self.state["runs"] or agent == "Claude · Manager":
+                continue
+            upd = parse_iso(t.get("updated_at"))
+            if not upd or (self.now - upd).total_seconds() < hours * 3600 or live_run(int(cid)):
+                continue
+            res = AG_LOGS / f"card{cid}.result.md"
+            if res.exists() and res.stat().st_mtime >= upd.timestamp() - 3600:
+                log(f"#{cid}: orphan of {agent} with result.md → collect")
+                self.finish(int(cid), agent or "Claude CLI", t, res)
+            else:
+                status = "scheduled" if t.get("kind") == "recurring" else "queued"
+                log(f"#{cid}: orphan of {agent} (quiet since {hm(upd)}) → {status}")
+                self.write("PUT", f"/tasks/{cid}", {"by": "Grokbot", "status": status, "agent": None,
+                           "progress": f"{agent or '無人'} 超過 {hours:g} 小時沒動、沒有 CLI 在跑，"
+                                       f"放回待辦重派（dispatch_tick {hm(self.now)}）"}, f"orphan → {status}")
+            changed = True
+        return changed
 
     def tag_fallback(self):
         """問題回報 #327: Codex/Cursor photo tagging when Qwen is paused or ≥ threshold photos wait.
