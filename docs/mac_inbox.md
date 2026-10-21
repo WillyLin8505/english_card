@@ -498,3 +498,8 @@ commit `72101f9a`（Windows：flutter analyze 無 error、02:37 +509 ~2: All tes
   結果：全部完成：比照 #465 的「次要形容詞」規則清空——全庫 621 列 complete 比較級／最高級中，只有 more/most 形式且形容詞是次要義項的共 12 列（apply、metal、street、tea、texture、tomato 各 2 列）清成 none；根因在 kaikki 轉接器，新增 degr
 - 卡 #470：問題回報 #464：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
   結果：無法重現：卡上兩個失敗檔單獨跑全過（fsrsoptimizer 5/5、card428sqlitesync 5/5，合計 13 通過），判定為並行執行的偶發失敗，未改任何程式或資料。
+
+## M45（2026-10-21 11:06）狀態：待做
+commit `bcf9238b`（Windows：flutter analyze 無 error、02:17 +509 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #474：問題回報 #473：[Mac] 2026-10-21 M44（iPhone 模擬器）：通過
+  結果：全部完成：問題回報 #473 是 Mac 對 #470 的「通過」回報（flutter test 508 通過、3 略過，card428sqlitesync 單獨跑也通過），沒有 bug，無需修復。
