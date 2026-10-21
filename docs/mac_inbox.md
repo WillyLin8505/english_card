@@ -521,12 +521,12 @@ commit `7b140a38`（Windows：flutter analyze 無 error、02:18 +511 ~2: All tes
 - 卡 #478：問題回報 #476：[Mac] 2026-10-21 M46（iPhone 模擬器）：#475 伺服器 403 被歸成「
   結果：全部完成：伺服器 403／5xx 現在歸為「暫時連不上」（不再叫學習者「點開修正」）；screenstest 29 項全過（新增 403、500 兩項）。
 
-## M49（2026-10-21 21:38）狀態：完成
+## M49（2026-10-21 21:38）狀態：待做
 commit `c46c32f0`（Windows：flutter analyze 無 error、07:31 +512 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #482：問題回報 #472：拍照頁徽章「可找照片裡的文字」沒說物品辨識未連線，學習者拍杯子、植物等沒有字的東西會什麼都找不到
   結果：全部完成：拍照頁徽章依 #472 決定改為「只找照片裡的英文字・物品辨識未連線」，未設定照片辨識時徽章可點進設定（改 2 個檔，0 筆資料）。
 
-## M50（2026-10-21 21:48）狀態：完成
+## M50（2026-10-21 21:48）狀態：待做
 commit `da0c2d88`（Windows：flutter analyze 無 error、03:26 +512 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #483：問題回報 #467：複習背面「相關詞」太長：60 字中位 9 個、29 字 ≥10 個、最多 25 個（同義詞中位 6、
   結果：完成：問題回報 #467 的背面「同義詞／相關詞」改為每區先顯示 5 個（依程度由易到難），其餘收在「顯示更多（N）」；單字詳情頁維持全部。已通過 flutter analyze 與相關 widget 測試（3 個檔、全部通過）。
@@ -535,12 +535,12 @@ commit `da0c2d88`（Windows：flutter analyze 無 error、03:26 +512 ~2: All tes
 - 卡 #484：問題回報 #479：[Mac] 2026-10-21 補驗：等公開網址恢復的 5 張詞庫卡（M42、M43、M4：#46
   結果：部分完成：根因是 App pack 匯出把「同拼字」所有詞性的形態共享給非核心詞性（感嘆詞／限定詞），已修；tea／coffee 的怪拼法已清。pack 需重新匯出，Mac 才看得到。；全庫受影響拼字：17 個有同拼字形容詞詞條的非核心詞性詞條（Mac 數到 38 筆是 pack 內的詞條數）。
 
-## M51（2026-10-21 22:19）狀態：完成
+## M51（2026-10-21 22:19）狀態：待做
 commit `83c26c05`（Windows：flutter analyze 無 error、02:33 +514 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #485：問題回報 #483：[Mac] 2026-10-21 實機 iPhone 12：詞庫卡重驗（同一批 5 張）：#465
   結果：重複回報，不需新修改：根因已由卡 #484 修好（apppack.shareforms）；用目前程式重建 pack，非核心詞性（感嘆詞／限定詞…）帶比較級／最高級的詞條 = 0；Mac 看到的 70 筆是 08:35 打包的舊 pack，尚未重新匯出。
 
-## M52（2026-10-21 22:30）狀態：完成
+## M52（2026-10-21 22:30）狀態：待做
 commit `dd5a866d`（Windows：flutter analyze 無 error、01:53 +516 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #226：模擬使用者・複習
   結果：第 112 輪：learner 通過、restart 在輪中「did not complete」但單獨重跑通過（2/2 實質通過）；新問題 #484 #485（待決定）、#486 #487（已修）；UX 建議 #486、#484；補註 #466。
@@ -582,3 +582,14 @@ commit `b45eb584`（Windows：flutter analyze 無 error、05:12 +516 ~2: All tes
   結果：全部完成：照片標籤不再掛在純變化形詞條——round 113 pack 上「變化形詞條上的 approved tag」247 → 8、未分級 tag 281 → 42；golden／QC 無退步。
 - 卡 #487：問題回報 #490：[Mac] 2026-10-21 實機 iPhone 12：畫面流暢度量測（owner 反映：E 照
   結果：修正完成（待 Mac 重測）：照片詳情的單字列表延後一個畫面建立，第一幀只建照片＋難度條。；- 原因：Windows 無法量 iPhone 12 的 frame time；從程式判斷，開頁第一幀同時建 PinnedPhoto、難度條與整個單字列表（每字 Dismissible + WordCard + LexiconP
+
+## M59（2026-10-22 03:40）狀態：待做
+commit `0ac47b8b`（Windows：flutter analyze 無 error、04:27 +516 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #225：模擬使用者・相片冊
+  結果：第113輪（修正後重跑第114輪）：主模擬 1/1、補充測試 19/19 通過；新問題 #488（247 個照片標籤掛在變化形詞條、全部未分級），已修 #489（從相片冊加入的字沒送 wordadded，修後 album 模擬 0→824 筆事件）。
+- 卡 #486：問題回報 #488：相片冊 247 個照片標籤掛在「變化形」詞條（gazing＝gaze 的現在分詞），沒有 CEFR，
+  結果：全部完成：照片標籤不再掛在純變化形詞條——round 113 pack 上「變化形詞條上的 approved tag」247 → 8、未分級 tag 281 → 42；golden／QC 無退步。
+- 卡 #487：問題回報 #490：[Mac] 2026-10-21 實機 iPhone 12：畫面流暢度量測（owner 反映：E 照
+  結果：修正完成（待 Mac 重測）：照片詳情的單字列表延後一個畫面建立，第一幀只建照片＋難度條。；- 原因：Windows 無法量 iPhone 12 的 frame time；從程式判斷，開頁第一幀同時建 PinnedPhoto、難度條與整個單字列表（每字 Dismissible + WordCard + LexiconP
+- 卡 #488：問題回報 #491：[Mac] 2026-10-21 實機 iPhone 12：畫面流暢度量測（owner 反映：F 複
+  結果：修好（待 Mac 驗證）：F 複習翻卡的背面原本一次建立所有區塊（iPhone 12 build 最大 67.8ms，7/3,295 張超過 33ms）；改成前 2 個區塊翻卡當幀建立，其餘延後一幀再建。
