@@ -437,3 +437,11 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #306 左滑已學會有復原 | 通過 | 在圖片集照片詳情把 Bread 左滑，列表從 5 個變 4 個，畫面出現「復原」 | mac_verify_shots/2026-10-21/x_306_swipe.png | — |
 | #442 等待辨識不顯示內部網址 | 通過 | 照片詳情畫面沒有任何 http 網址 | — | — |
 | #410、#411 資料庫相片冊搜尋 | 通過 | #405 之後 App 已沒有資料庫相片冊畫面，這兩張的情境不再存在；相片冊改成「搜尋照片」 | — | — |
+
+## 2026-10-21 M37（iPhone 模擬器）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #457 照片詳情單字列表前的控制列 | 通過 | 照片詳情第一個單字前只剩難度滑桿與「辨識單字列表 (5)＋顯示已學會單字」；「自己加字」與「多看動詞／多看形容詞／簡單一點／難一點」都移到列表後面，自動保存提示已拿掉 | mac_verify_shots/2026-10-21/m37_x_photo_detail.png | — |
+| #458 | 通過 | owner 決定維持現狀，沒有改程式或資料；App 已沒有資料庫相片冊搜尋畫面（#405） | — | — |
+| 照片詳情離開時 | 不通過 | 測試結束、App 被拆掉時，照片詳情的 dispose 存檔（photo_detail_screen.dart:106 → _saveWith:122）呼叫 WordEnricher.process（word_enricher.dart:105），但 WordEnricher 已 dispose，觸發 debug assertion「A WordEnricher was used after being disposed」。正常使用只有在整個 App 被拆掉時才會遇到，影響小 | — | 低 |
