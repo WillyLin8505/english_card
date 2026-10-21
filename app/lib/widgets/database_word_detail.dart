@@ -122,7 +122,7 @@ class DatabaseWordScreen extends StatelessWidget {
                       // 問題回報 #510: the recording in 設定's accent.
                       audioUrl: (pack.target ?? 'en') == 'en'
                           ? packAccentAudioUrl(word, scope.settings.englishAccent,
-                              allowUnlabelled: true)
+                              orDefault: true)
                           : word.audio == null
                               ? null
                               : packRecordingUrl(pack.mediaBase, word.audio!)),

@@ -140,16 +140,16 @@ class AppScope extends InheritedNotifier<AppSettings> {
   }
 
   /// Plays [entry] in 設定's English accent (問題回報 #510): the pack
-  /// recording in that accent, else an unlabelled one, else TTS in that
-  /// accent — never the other accent's recording, which the entry's
-  /// default audio often is.
+  /// recording in that accent rather than the entry's default one (which is
+  /// British whenever a British clip exists); a word with no recording in
+  /// that accent keeps its default recording, then TTS in that accent.
   Future<void> speakEntry(BuildContext context, WordEntry entry,
           {required String language}) =>
       speak(context, entry.word,
           language: language,
           audioUrl: language == 'en'
               ? accentAudioUrl(entry, settings.englishAccent,
-                  allowUnlabelled: true)
+                  orDefault: true)
               : entry.audioUrl);
 
   @override

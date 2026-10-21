@@ -327,9 +327,9 @@ const uiCatalog = <String, (String, String)>{
   ),
   '英式（en-GB）': ('British (en-GB)', 'Britannique (en-GB)'),
   '美式（en-US）': ('American (en-US)', 'Américain (en-US)'),
-  '點一下會用這個腔調唸「water」。單字頁、單字本和複習卡正面的發音都用這個腔調；複習卡翻到背面時英式、美式各唸一次。': (
-    'Tap to hear “water” in this accent. Word pages, the Words tab and the front of review cards use this accent; the back of a review card plays British, then American.',
-    'Touchez pour entendre « water » avec cet accent. Les fiches de mots, l’onglet Mots et le recto des cartes utilisent cet accent ; le verso joue l’accent britannique puis américain.'
+  '點一下會用這個腔調唸「water」。單字頁、單字本和複習卡正面的發音都用這個腔調；複習卡翻到背面時英式、美式各唸一次。沒有這個腔調錄音的字，播現有的錄音。': (
+    'Tap to hear “water” in this accent. Word pages, the Words tab and the front of review cards use this accent; the back of a review card plays British, then American. Words with no recording in this accent play the one they have.',
+    'Touchez pour entendre « water » avec cet accent. Les fiches de mots, l’onglet Mots et le recto des cartes utilisent cet accent ; le verso joue l’accent britannique puis américain. Un mot sans enregistrement dans cet accent joue celui qu’il a.'
   ),
   '單字難度': ('Word difficulty', 'Difficulté des mots'),
   '快速詞彙檢查': ('Quick vocabulary check', 'Test rapide de vocabulaire'),

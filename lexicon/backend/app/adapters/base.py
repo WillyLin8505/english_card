@@ -404,7 +404,7 @@ def card_base(word: str, language: str) -> str | None:
     for e in same:
         for s in own(e):
             if e.get("pos") not in ("adj", "adv") and not (
-                    e.get("pos") == "noun" and ACT_NOUN.match(s["glosses"][0])):
+                    e.get("pos") == "noun" and ACT_NOUN.match(_first_gloss(s))):
                 return None  # a thing of its own (building, glasses)
     bases = [b for e in same for s in e.get("senses") or [] for b in form_bases(s)]
     bases = [b for b in dict.fromkeys(bases)

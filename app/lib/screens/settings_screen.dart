@@ -252,7 +252,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                             _note('點一下會用這個腔調唸「water」。單字頁、單字本和'
                                 '複習卡正面的發音都用這個腔調；複習卡翻到背面時'
-                                '英式、美式各唸一次。'),
+                                '英式、美式各唸一次。沒有這個腔調錄音的字，'
+                                '播現有的錄音。'),
                           ],
                         ],
                       ),

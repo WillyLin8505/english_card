@@ -6,38 +6,33 @@ import 'pack_media.dart';
 Set<String> _aliases(String accent) =>
     accent == 'en-GB' ? const {'uk', 'gb', 'en-gb'} : const {'us', 'en-us'};
 
-/// The pack recording of [source] in [accent]. With [allowUnlabelled], a
-/// recording without an accent label is used when none is labelled
-/// [accent]; one labelled with another accent never is (問題回報 #510).
+/// The pack recording of [source] in [accent]. With [orDefault], a word
+/// without one plays its default recording (British first, #20/#56) rather
+/// than TTS: 有該腔調的音檔就用，否則用現有音檔，最後才用 TTS.
 String? packAccentAudioUrl(LexEntry source, String accent,
-    {bool allowUnlabelled = false}) {
+    {bool orDefault = false}) {
   final aliases = _aliases(accent);
   final recording = source.recordings
           .where((r) => aliases.contains(r.accent?.toLowerCase()))
           .firstOrNull ??
-      (allowUnlabelled
-          ? source.recordings
-              .where((r) => (r.accent ?? '').trim().isEmpty)
-              .firstOrNull
-          : null);
+      (orDefault ? source.recordings.firstOrNull : null);
   if (recording == null) return null;
   return packRecordingUrl(LexiconPack.instance.mediaBase, recording.path);
 }
 
 /// The language pack's recording of [entry] in [accent] ("en-GB" /
-/// "en-US"), or the entry's own audio when it is in that accent; null
-/// means the speaker falls back to TTS in that accent.
+/// "en-US"), or the entry's own audio when it is in that accent (or, with
+/// [orDefault], whatever its accent); null means TTS in that accent.
 String? accentAudioUrl(WordEntry entry, String accent,
-    {bool allowUnlabelled = false}) {
+    {bool orDefault = false}) {
   final pack = LexiconPack.instance;
   final source = (entry.lexemeId == null ? null : pack.byId(entry.lexemeId!)) ??
       pack.lookup(entry.word, pos: entry.pos)?.entry;
   if (source != null && source.recordings.isNotEmpty) {
-    return packAccentAudioUrl(source, accent,
-        allowUnlabelled: allowUnlabelled);
+    return packAccentAudioUrl(source, accent, orDefault: orDefault);
   }
-  final own = entry.accent?.toLowerCase();
-  if (_aliases(accent).contains(own)) return entry.audioUrl;
-  if (allowUnlabelled && (own ?? '').isEmpty) return entry.audioUrl;
+  if (orDefault || _aliases(accent).contains(entry.accent?.toLowerCase())) {
+    return entry.audioUrl;
+  }
   return null;
 }

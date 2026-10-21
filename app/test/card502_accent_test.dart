@@ -45,7 +45,6 @@ void _loadPack() => LexiconPack.instance.loadJson({
       'lexemes': [
         _lexeme(1, 'water', ['UK', 'US']),
         _lexeme(2, 'balcony', ['US', 'UK']),
-        _lexeme(3, 'zebra', ['US', null]),
         _lexeme(4, 'yak', ['US']),
       ],
     });
@@ -53,7 +52,7 @@ void _loadPack() => LexiconPack.instance.loadJson({
 void main() {
   tearDown(() => LexiconPack.instance.clear());
 
-  test('a word plays the recording in the chosen accent, never the other one',
+  test('a word plays the recording in the chosen accent, else its default one',
       () {
     _loadPack();
     String? url(String word, String accent) => accentAudioUrl(
@@ -64,13 +63,24 @@ void main() {
             meaning: '',
             createdAt: DateTime(2026),
             updatedAt: DateTime(2026)), accent,
-        allowUnlabelled: true);
+        orDefault: true);
     expect(url('balcony', 'en-GB'), endsWith('balcony-UK.mp3'));
     expect(url('balcony', 'en-US'), endsWith('balcony-US.mp3'));
-    // No British recording: an unlabelled one, else TTS (null).
-    expect(url('zebra', 'en-GB'), endsWith('zebra-none.mp3'));
-    expect(url('yak', 'en-GB'), isNull);
+    // No British recording: the default one (#20/#56), not TTS.
+    expect(url('yak', 'en-GB'), endsWith('yak-US.mp3'));
     expect(url('yak', 'en-US'), endsWith('yak-US.mp3'));
+    // The card back's per-accent buttons stay strict: TTS in that accent.
+    expect(
+        accentAudioUrl(
+            WordEntry(
+                id: 'w',
+                word: 'yak',
+                pos: 'noun',
+                meaning: '',
+                createdAt: DateTime(2026),
+                updatedAt: DateTime(2026)),
+            'en-GB'),
+        isNull);
   });
 
   testWidgets('choosing an accent in 設定 plays "water" in it, with a note',
