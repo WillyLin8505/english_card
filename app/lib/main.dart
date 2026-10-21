@@ -244,10 +244,12 @@ class _PhotoEnglishAppState extends State<PhotoEnglishApp> {
           home: ListenableBuilder(
             listenable: widget.settings,
             builder: (context, _) => widget.settings.onboarded
-                ? AppShell(
-                    onNavigatorReady: (n) => _navigator.target = n)
+                ? AppShell(onNavigatorReady: (n) => _navigator.target = n)
                 : OnboardingScreen(
-                    lexicon: widget.lexicon, onDone: _finishOnboarding),
+                    lexicon: widget.lexicon,
+                    onDone: _finishOnboarding,
+                    uiLanguage: deviceLanguage(
+                        WidgetsBinding.instance.platformDispatcher.locale)),
           ),
         ),
       ),

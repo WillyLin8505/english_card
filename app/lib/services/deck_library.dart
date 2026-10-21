@@ -214,8 +214,13 @@ class DeckLibrary extends ChangeNotifier {
   Uri imageUri(int assetId) => _api('/api/image', {'id': '$assetId'});
 
   /// The decks the server offers. Throws [DeckException] when it can't be reached.
-  Future<List<DeckInfo>> fetchList() async {
-    final j = await _getJson(_api('/api/decks'));
+  /// [target] is the learning language: the server lists only that language's
+  /// decks (問題回報 #501).
+  Future<List<DeckInfo>> fetchList({String? target, String? native}) async {
+    final j = await _getJson(_api('/api/decks', {
+      if (target != null) 'target': target,
+      if (native != null) 'native': native,
+    }));
     return [
       for (final d in (j['decks'] as List).cast<Map<String, dynamic>>())
         DeckInfo.fromJson(d),

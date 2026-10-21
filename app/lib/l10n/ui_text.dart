@@ -9,7 +9,8 @@ String ui(BuildContext context, String source) {
   final preview = context.dependOnInheritedWidgetOfExactType<UiLanguageScope>();
   final scope = context.dependOnInheritedWidgetOfExactType<AppScope>();
   return translateUi(
-      source, preview?.language ?? scope?.settings.nativeLanguage ?? 'zh-TW');
+      source, preview?.language ?? scope?.settings.nativeLanguage ?? 'zh-TW',
+      learning: scope?.settings.learningLanguage ?? 'en');
 }
 
 /// First-run language preview, without persisting an unfinished onboarding.

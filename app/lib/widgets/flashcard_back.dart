@@ -742,7 +742,13 @@ class FlashcardBack extends StatelessWidget {
                   if (hero == null)
                     // 圖片沉浸 without a photo: the headword is white (made for
                     // the dark scrim), so it needs the dark ink on the canvas.
-                    Text(displayWord(entry.word),
+                    Text(
+                        headword(entry.word, entry.language,
+                            inflections: source == null
+                                ? const []
+                                : LexiconPack.instance
+                                    .detailFor(source)
+                                    .inflections),
                         style: look.photoHero
                             ? look.headword.copyWith(color: look.meaning.color)
                             : look.headword),
@@ -751,7 +757,16 @@ class FlashcardBack extends StatelessWidget {
                 ],
               ),
             ),
-            if (showPronunciation) ...[
+            // 英式／美式 only for English; other languages get one play button
+            // (問題回報 #495).
+            if (showPronunciation && entry.language != 'en')
+              IconButton(
+                tooltip: '播放發音',
+                onPressed: () => AppScope.of(context).speak(context, entry.word,
+                    language: entry.language, audioUrl: entry.audioUrl),
+                icon: const Icon(Icons.volume_up_outlined),
+              ),
+            if (showPronunciation && entry.language == 'en') ...[
               for (final accent in const ['en-GB', 'en-US'])
                 IconButton(
                   tooltip: accent == 'en-GB' ? '播放英式發音' : '播放美式發音',

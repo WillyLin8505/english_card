@@ -23,9 +23,9 @@ const uiCatalog = <String, (String, String)>{
   '圖片與單字標籤': ('Photo and word labels', 'Photo et étiquettes'),
   '圖片標籤': ('Photo labels', 'Étiquettes de la photo'),
   '圖片資訊': ('Photo information', 'Informations sur la photo'),
-  '點標籤查看中文意思與例句。': (
-    'Tap a label for its Chinese meaning and examples.',
-    'Touchez une étiquette pour voir le sens chinois et les exemples.'
+  '點標籤查看{N}意思與例句。': (
+    'Tap a label for its {N} meaning and examples.',
+    'Touchez une étiquette pour voir son sens en {N} et les exemples.'
   ),
   '這張圖片已從資料庫移除': (
     'This photo was removed from the database',
@@ -195,6 +195,10 @@ const uiCatalog = <String, (String, String)>{
   '你對英文熟悉嗎？': (
     'How well do you know English?',
     'Quel est votre niveau d’anglais ?'
+  ),
+  '你對法文熟悉嗎？': (
+    'How well do you know French?',
+    'Quel est votre niveau de français ?'
   ),
   '用來決定一開始建議的單字難度，之後會依你的使用情況慢慢調整。': (
     'This sets your starting difficulty, which gradually adapts to your activity.',
@@ -397,13 +401,13 @@ const uiCatalog = <String, (String, String)>{
   '資料庫相片冊': ('Database photos', 'Photos du dictionnaire'),
   '正在取得資料庫內容': ('Loading database content', 'Chargement du dictionnaire'),
   '重新連線': ('Reconnect', 'Reconnecter'),
-  '搜尋英文或中文': (
-    'Search English or Chinese',
-    'Rechercher en anglais ou en chinois'
+  '搜尋{L}或{N}': (
+    'Search {L} or {N}',
+    'Rechercher en {L} ou en {N}'
   ),
-  '搜尋圖片上的英文或中文標籤': (
-    'Search photo labels in English or Chinese',
-    'Rechercher les étiquettes en anglais ou en chinois'
+  '搜尋圖片上的{L}或{N}標籤': (
+    'Search photo labels in {L} or {N}',
+    'Rechercher les étiquettes en {L} ou en {N}'
   ),
   '搜尋照片': ('Search photos', 'Rechercher des photos'),
   '新增單字': ('Add word', 'Ajouter un mot'),
@@ -601,9 +605,9 @@ const uiCatalog = <String, (String, String)>{
   ),
   '稍後再出現': ('Appears again later', 'Réapparaît plus tard'),
   '拍照學單字': ('Learn words with photos', 'Apprendre avec des photos'),
-  '拍照或選一張照片，找出生活中的英文單字': (
-    'Take or choose a photo to find English words around you',
-    'Prenez ou choisissez une photo pour trouver les mots anglais autour de vous'
+  '拍照或選一張照片，找出生活中的{L}單字': (
+    'Take or choose a photo to find {L} words around you',
+    'Prenez ou choisissez une photo pour trouver les mots {L} autour de vous'
   ),
   '先選一張照片開始學習': (
     'Choose a photo to start learning',
@@ -643,9 +647,9 @@ const uiCatalog = <String, (String, String)>{
     'Photo recognition is offline',
     'Reconnaissance des photos hors ligne'
   ),
-  '只找照片裡的英文字・物品辨識未連線': (
-    'Printed English only · object recognition off',
-    'Texte anglais seulement · objets non reconnus'
+  '只找照片裡的{L}字・物品辨識未連線': (
+    'Printed {L} text only · object recognition off',
+    'Texte {L} imprimé seulement · objets non reconnus'
   ),
   '設定辨識': ('Set up recognition', 'Configurer la reconnaissance'),
   '照片詳情': ('Photo details', 'Détails de la photo'),
@@ -718,14 +722,85 @@ const uiCatalog = <String, (String, String)>{
     'This photo was removed from the album.\nThe original in your gallery is unchanged.',
     'Cette photo a été retirée de l’album.\nL’original dans votre galerie est conservé.'
   ),
+  '學習洞察': ('Learning insights', 'Aperçu d’apprentissage'),
+  '複習次數': ('Reviews', 'Révisions'),
+  '關於': ('About', 'À propos'),
+  '資料來源與授權': ('Data sources and licenses', 'Sources de données et licences'),
+  '照片上的單字標示': ('Word labels on photos', 'Étiquettes de mots sur les photos'),
+  '複習卡片背面的照片上，顯示這個單字的標籤。': ('On the back of review cards, show this word’s label on the photo.', 'Au dos des cartes, affiche l’étiquette de ce mot sur la photo.'),
+  '複習幾次之後，這裡會顯示你的複習次數、程度變化和弱項單字。': ('After a few reviews, your review counts, level changes and weak words appear here.', 'Après quelques révisions, vos révisions, changements de niveau et mots faibles apparaîtront ici.'),
+  '複習這些字': ('Review these words', 'Réviser ces mots'),
+  'CEFR 等級變化': ('CEFR level changes', 'Changements de niveau CECR'),
+  '蘋果': ('Apple', 'Pomme'),
+  '同義詞': ('Synonyms', 'Synonymes'),
+  '近音字': ('Homophones', 'Homophones'),
+  '容易混淆的字': ('Easily confused words', 'Mots souvent confondus'),
+  '構詞拆解': ('Word parts', 'Décomposition'),
+  '字首': ('Prefix', 'Préfixe'),
+  '字根': ('Root', 'Racine'),
+  '字尾': ('Suffix', 'Suffixe'),
+  '單字': ('Word', 'Mot'),
+  '英式': ('British', 'Britannique'),
+  '美式': ('American', 'Américain'),
+  '收起': ('Show less', 'Réduire'),
+  '哪個單字最適合這張照片？': ('Which word fits this photo best?', 'Quel mot correspond le mieux à cette photo ?'),
+  '等級為詞頻估算': ('Level is estimated from word frequency', 'Niveau estimé d’après la fréquence'),
+  '等級為詞頻估算。': ('Level is estimated from word frequency.', 'Niveau estimé d’après la fréquence.'),
+  '估': ('est.', 'est.'),
+  '入門': ('Beginner', 'Débutant'),
+  '基礎': ('Elementary', 'Élémentaire'),
+  '中階': ('Intermediate', 'Intermédiaire'),
+  '中高階': ('Upper intermediate', 'Intermédiaire supérieur'),
+  '進階': ('Advanced', 'Avancé'),
+  '精通': ('Proficient', 'Maîtrise'),
+  '複數': ('plural', 'pluriel'),
+  '過去式': ('past tense', 'passé'),
+  '過去分詞': ('past participle', 'participe passé'),
+  '現在分詞': ('present participle', 'participe présent'),
+  '第三人稱單數': ('third-person singular', '3e personne du singulier'),
+  '比較級': ('comparative', 'comparatif'),
+  '最高級': ('superlative', 'superlatif'),
+  '變化形': ('inflected form', 'forme fléchie'),
+  '陰性': ('feminine', 'féminin'),
+  '陰性複數': ('feminine plural', 'féminin pluriel'),
+  '陰陽性': ('gender', 'genre'),
+  '陽性名詞': ('masculine noun', 'nom masculin'),
+  '陰性名詞': ('feminine noun', 'nom féminin'),
+  '陰陽同形名詞': ('masculine/feminine noun', 'nom masculin/féminin'),
+  '只有複數': ('plural only', 'pluriel seulement'),
+  '現在式 je': ('present je', 'présent je'),
+  '現在式 tu': ('present tu', 'présent tu'),
+  '現在式 il／elle': ('present il／elle', 'présent il／elle'),
+  '現在式 nous': ('present nous', 'présent nous'),
+  '現在式 vous': ('present vous', 'présent vous'),
+  '現在式 ils／elles': ('present ils／elles', 'présent ils／elles'),
+  '未完成過去式 je': ('imperfect je', 'imparfait je'),
+  '簡單將來式 je': ('simple future je', 'futur simple je'),
+  '複合時態助動詞': ('auxiliary (compound tenses)', 'auxiliaire (temps composés)'),
 };
 
-String translateUi(String source, String language) {
-  if (language != 'en' && language != 'fr') return source;
+/// Language names for copy that names the language being learned (`{L}`) or
+/// the meaning language, i.e. the learner's native one (`{N}`), each written
+/// in the interface language (問題回報 #495: a French learner must not see
+/// 「英文單字」 or 「find English words」).
+const _languageNames = <String, Map<String, String>>{
+  'en': {'zh-TW': '英文', 'en': 'English', 'fr': 'anglais'},
+  'fr': {'zh-TW': '法文', 'en': 'French', 'fr': 'français'},
+  'zh-TW': {'zh-TW': '中文', 'en': 'Chinese', 'fr': 'chinois'},
+};
+
+String translateUi(String source, String language, {String learning = 'en'}) {
+  String fill(String text) => text
+      .replaceAll('{L}', _languageNames[learning]?[language] ?? '')
+      .replaceAll('{N}', _languageNames[language]?[language] ?? '');
+  if (language != 'en' && language != 'fr') return fill(source);
   final entry = uiCatalog[source];
-  if (entry != null) return language == 'fr' ? entry.$2 : entry.$1;
+  if (entry != null) {
+    return fill(language == 'fr' ? entry.$2 : entry.$1);
+  }
   if (source.endsWith(' · 即將推出')) {
-    final name = translateUi(source.replaceFirst(' · 即將推出', ''), language);
+    final name = translateUi(source.replaceFirst(' · 即將推出', ''), language,
+        learning: learning);
     return '$name · ${language == 'fr' ? 'Bientôt' : 'Coming soon'}';
   }
   for (final template in _templates) {
@@ -735,7 +810,23 @@ String translateUi(String source, String language) {
     return translation.replaceAllMapped(
         RegExp(r'\{(\d+)\}'), (m) => match.group(int.parse(m[1]!) + 1)!);
   }
-  return source;
+  return fill(_labelParts(source, language) ?? source);
+}
+
+/// 「un exemple（陽性名詞）」, 「動詞・名詞」: grammar labels joined by
+/// （ ） ・ ； around untouched words. Only whole catalog entries are swapped.
+String? _labelParts(String source, String language) {
+  if (!RegExp(r'[一-鿿]').hasMatch(source)) return null;
+  var changed = false;
+  final out = source.splitMapJoin(RegExp(r'[（）；・]'),
+      onMatch: (m) => m[0]!,
+      onNonMatch: (piece) {
+        final e = uiCatalog[piece.trim()];
+        if (e == null) return piece;
+        changed = true;
+        return language == 'fr' ? e.$2 : e.$1;
+      });
+  return changed ? out : null;
 }
 
 // Anchored templates preserve interpolated values verbatim: names, answers,
@@ -756,6 +847,12 @@ class _UiTemplate {
 }
 
 const _templateCopy = <String, (String, String)>{
+  '顯示更多（{0}）': ('Show more ({0})', 'Afficher plus ({0})'),
+  '第 {0} / {1} 張　·　左右滑動換照片': ('Photo {0} of {1} · swipe to change photo', 'Photo {0} sur {1} · balayez pour changer de photo'),
+  '最近 7 天（每日）：{0}': ('Last 7 days (daily): {0}', '7 derniers jours (par jour) : {0}'),
+  '最近 4 週（每週）：{0}': ('Last 4 weeks (weekly): {0}', '4 dernières semaines (par semaine) : {0}'),
+  '共 {0} 次複習。': ('{0} reviews in total.', '{0} révisions au total.'),
+  '{0}・估': ('{0} · est.', '{0} · est.'),
   '單字難度 {0} · {1}': ('Difficulty: {0} · {1}', 'Difficulté : {0} · {1}'),
   '圖片來源：{0}': ('Photo source: {0}', 'Source de la photo : {0}'),
   '這次複習了 {0} 張卡': ('You reviewed {0} cards', 'Vous avez révisé {0} cartes'),

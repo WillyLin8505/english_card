@@ -51,7 +51,9 @@ class _DeckBrowserScreenState extends State<DeckBrowserScreen> {
       _error = null;
     });
     try {
-      final decks = await _library.fetchList();
+      final repo = AppScope.of(context).repository;
+      final decks = await _library.fetchList(
+          target: repo.language, native: AppScope.of(context).settings.nativeLanguage);
       if (!mounted) return;
       setState(() => _available = decks);
     } on DeckException catch (e) {

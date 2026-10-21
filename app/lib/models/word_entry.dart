@@ -18,6 +18,23 @@ String displayWord(String word) => word
     .map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1))
     .join(' ');
 
+/// The headword on a card. French keeps its lowercase spelling (a capital
+/// makes a noun look like a proper noun) and a noun shows with its article —
+/// "un exemple" — taken from the gender inflection the pack builds as
+/// `frenchWithArticle` (問題回報 #499).
+String headword(String word, String language,
+    {Iterable<Inflection> inflections = const []}) {
+  if (language != 'fr') return displayWord(word);
+  final lower = word.toLowerCase();
+  for (final i in inflections) {
+    final form = i.form.toLowerCase();
+    if (form.endsWith(' $lower') && form.length > lower.length + 1) {
+      return i.form;
+    }
+  }
+  return word;
+}
+
 /// How a related word relates to its [WordEntry]. Spec section 5
 /// (完整單字資訊欄位 · 詞彙關係): "關係需保存類型，不把所有相關字混成同一
 /// 清單". [associated] covers topical neighbours that are none of the

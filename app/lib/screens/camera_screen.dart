@@ -202,7 +202,7 @@ class _CameraScreenState extends State<CameraScreen>
           // scanning a cup or a plant finds nothing (問題回報 #472).
           badge = !scope.settings.taggingConfigured
               ? (TextScan.available
-                  ? '只找照片裡的英文字・物品辨識未連線'
+                  ? '只找照片裡的{L}字・物品辨識未連線'
                   : '照片辨識尚未連線')
               : scope.queue.offline
                   ? 'AI 離線 · 照片會先排隊'
@@ -230,7 +230,7 @@ class _CameraScreenState extends State<CameraScreen>
                             children: [
                               UiText('拍照學單字', style: MFont.display),
                               const SizedBox(height: MSpace.xxs),
-                              UiText('拍照或選一張照片，找出生活中的英文單字',
+                              UiText('拍照或選一張照片，找出生活中的{L}單字',
                                   style: MFont.caption),
                             ],
                           ),

@@ -733,7 +733,7 @@ class Handler(SimpleHTTPRequestHandler):
                     return {'ok': True}
         raise accounts.AccountError(404, 'not found')
 
-    def send_decks(self, slug: str) -> None:
+    def send_decks(self, slug: str, target: str | None = None) -> None:
         """卡片集 (card #323): the published decks, read-only and keyless like
         the dictionary; one deck carries everything the app downloads."""
         token = (self.headers.get('Authorization') or '').removeprefix('Bearer ').strip() or None
@@ -744,7 +744,7 @@ class Handler(SimpleHTTPRequestHandler):
                     viewer = accounts.user_from_token(session, token)
                 except accounts.AccountError:
                     pass
-            data = decks.public_deck(session, slug) if slug else accounts.public_list(session, viewer)
+            data = decks.public_deck(session, slug) if slug else accounts.public_list(session, viewer, target)
             if data is not None and slug:
                 accounts.count_download(session, slug)
         if data is None:
@@ -840,7 +840,8 @@ class Handler(SimpleHTTPRequestHandler):
             self.handle_account('GET', url.path)
             return
         if url.path == '/api/decks' or url.path.startswith('/api/decks/'):
-            self.send_decks(url.path[len('/api/decks'):].strip('/'))
+            self.send_decks(url.path[len('/api/decks'):].strip('/'),
+                            (parse_qs(url.query).get('target', [''])[0] or None))
             return
         if url.path in ('/privacy', '/privacy.html'):
             body = (ROOT / 'docs' / 'privacy.html').read_bytes()

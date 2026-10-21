@@ -267,12 +267,12 @@ def withdraw(s: Session, user: m.User, slug: str) -> None:
 
 # ---- browsing, downloads, reports, blocks ------------------------------------
 
-def public_list(s: Session, viewer: m.User | None = None) -> dict:
+def public_list(s: Session, viewer: m.User | None = None, target: str | None = None) -> dict:
     """decks.public_list minus decks by authors the viewer blocked; also settles pending shares."""
     for d in s.scalars(select(m.Deck).where(m.Deck.share_status == "pending")).all():
         _live_state(s, d)
     s.flush()
-    data = decks.public_list(s)
+    data = decks.public_list(s, target)
     blocked = set()
     if viewer:
         blocked = set(s.scalars(select(m.UserBlock.blocked_user_id).where(m.UserBlock.user_id == viewer.id)))

@@ -284,7 +284,7 @@ class _DatabaseImageScreenState extends State<DatabaseImageScreen> {
                     const SizedBox(height: MSpace.md),
                     UiText('圖片標籤', style: MFont.titleSm),
                     const SizedBox(height: 2),
-                    UiText('點標籤查看中文意思與例句。', style: MFont.caption),
+                    UiText('點標籤查看{N}意思與例句。', style: MFont.caption),
                     const SizedBox(height: MSpace.sm),
                     DatabaseTagSections(
                         image: image, pack: pack, level: _level),

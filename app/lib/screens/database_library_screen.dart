@@ -222,8 +222,8 @@ class _DatabaseLibraryScreenState extends State<DatabaseLibraryScreen> {
                                                         Icons.search,
                                                         color: MColors.muted),
                                                     hintText: ui(context, widget.photos
-                                                        ? '搜尋圖片上的英文或中文標籤'
-                                                        : '搜尋英文或中文'),
+                                                        ? '搜尋圖片上的{L}或{N}標籤'
+                                                        : '搜尋{L}或{N}'),
                                                     hintStyle:
                                                         MFont.bodyMuted)),
                                             if (sharedHint != null) ...[

@@ -1,3 +1,5 @@
+import 'dart:ui' show Locale;
+
 import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 
@@ -16,9 +18,14 @@ const supportedLanguages = {
   'zh-TW': '繁體中文'
 };
 
+/// French as a learning language (問題回報 #496): off until the owner opens it;
+/// `--dart-define=FRENCH_LEARNING=true` builds a version that offers it.
+const frenchLearning = bool.fromEnvironment('FRENCH_LEARNING');
+
 /// The data model already supports multiple languages, but the first
-/// published bilingual pack is English → Traditional Chinese only.
-const availableLearningLanguages = {'en'};
+/// published bilingual pack is English → Traditional Chinese only. Not const
+/// so tests and the French simulation can add 'fr' without a special build.
+final availableLearningLanguages = {'en', if (frenchLearning) 'fr'};
 // Interface languages are available independently of published learning packs.
 const availableNativeLanguages = {'zh-TW', 'en', 'fr'};
 
@@ -32,6 +39,15 @@ String languageOptionLabel(String language, {required bool learning}) {
       : nativeLanguageAvailable(language);
   return '${supportedLanguages[language] ?? language}${available ? '' : ' · 即將推出'}';
 }
+
+/// The supported language closest to the device's, for the first onboarding
+/// page before a native language is chosen (問題回報 #496). A device in a
+/// language the app doesn't have gets English.
+String deviceLanguage(Locale locale) => switch (locale.languageCode) {
+      'zh' => 'zh-TW',
+      'fr' => 'fr',
+      _ => 'en',
+    };
 
 /// The language's name inside a Chinese sentence ("你對英文熟悉嗎？").
 const languageNameZh = {'en': '英文', 'fr': '法文', 'zh-TW': '中文'};
@@ -190,8 +206,8 @@ class AppSettings extends ChangeNotifier {
   int get dailyNewLimit => _dailyNewLimit;
   int get dailyReviewLimit => _dailyReviewLimit;
 
-  set dailyNewLimit(int v) => _save('dailyNewLimit',
-      '${_dailyNewLimit = v.clamp(minDailyNew, maxDailyNew)}');
+  set dailyNewLimit(int v) => _save(
+      'dailyNewLimit', '${_dailyNewLimit = v.clamp(minDailyNew, maxDailyNew)}');
   set dailyReviewLimit(int v) => _save('dailyReviewLimit',
       '${_dailyReviewLimit = v.clamp(minDailyReview, maxDailyReview)}');
 
@@ -259,8 +275,8 @@ class AppSettings extends ChangeNotifier {
   /// read text but has no picture recognizer. Text is never offered where
   /// the device can't read it (the web build).
   PhotoScanMode get scanMode {
-    final saved = _scanMode ??
-        PhotoScanMode.values.asNameMap()[_box?.get('scanMode')];
+    final saved =
+        _scanMode ?? PhotoScanMode.values.asNameMap()[_box?.get('scanMode')];
     if (saved != null && (!saved.findsText || TextScan.available)) {
       return saved;
     }

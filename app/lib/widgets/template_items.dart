@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/card_template.dart';
+import '../l10n/ui_text.dart';
 
 /// Applies published item counts, retaining an explicit expand-all control.
 class TemplateItems extends StatefulWidget {
@@ -53,7 +54,7 @@ class _ShowMoreItemsState extends State<ShowMoreItems> {
     final toggle = hidden > 0
         ? TextButton(
             onPressed: () => setState(() => open = !open),
-            child: Text(open ? '收起' : '顯示更多（$hidden）'))
+            child: UiText(open ? '收起' : '顯示更多（$hidden）'))
         : null;
     if (widget.wrap) {
       return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

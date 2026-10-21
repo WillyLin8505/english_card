@@ -46,28 +46,9 @@ String levelFromCheck(Map<String, List<bool>> knownByLevel) {
   return level;
 }
 
-/// First launch: learning language, native language, background, and an
-/// optional 18-word check (spec section 7: 首次詢問學習語言、母語與自評背景
-/// …首次可由自評及 15–20 題快速詞彙檢查估計). No Figma frames exist for
-/// these; they use the app's card and pill style.
-class OnboardingScreen extends StatefulWidget {
-  final CefrLexicon lexicon;
-  final ValueChanged<OnboardingResult> onDone;
-
-  const OnboardingScreen(
-      {super.key, required this.lexicon, required this.onDone});
-
-  @override
-  State<OnboardingScreen> createState() => _OnboardingScreenState();
-}
-
-class _OnboardingScreenState extends State<OnboardingScreen> {
-  int _step = 0;
-  int _checkLevel = 0;
-  String _learning = 'en';
-  String _native = 'zh-TW';
-  String? _self;
-  late final Map<String, List<String>> _checkWords = {
+/// The quick check's words, three per level, for each learning language.
+const placementCheckWords = {
+  'en': {
     'A1': ['apple', 'book', 'water'],
     'A2': ['kitchen', 'travel', 'weather'],
     'B1': ['improve', 'prepare', 'explain'],
@@ -76,11 +57,77 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     'B2': ['reluctant', 'ambiguous', 'eloquent'],
     'C1': ['scrutiny', 'candid', 'profound'],
     'C2': ['meticulous', 'superfluous', 'ephemeral'],
-  };
+  },
+  // 問題回報 #496: French words in the French lexicon at that CEFR level
+  // (A1–B1 from the reviewed list fr_cefr_reviewed.json, B2–C2 estimated).
+  'fr': {
+    'A1': ['pomme', 'livre', 'eau'],
+    'A2': ['épaule', 'casserole', 'vitesse'],
+    'B1': ['résoudre', 'comportement', 'survivre'],
+    'B2': ['mépris', 'discerner', 'ampleur'],
+    'C1': ['cramoisi', 'verdoyant', 'belligérant'],
+    'C2': ['chevronné', 'dénoter', 'canopée'],
+  },
+};
+
+/// First launch: learning language, native language, background, and an
+/// optional 18-word check (spec section 7: 首次詢問學習語言、母語與自評背景
+/// …首次可由自評及 15–20 題快速詞彙檢查估計). No Figma frames exist for
+/// these; they use the app's card and pill style.
+class OnboardingScreen extends StatefulWidget {
+  final CefrLexicon lexicon;
+  final ValueChanged<OnboardingResult> onDone;
+
+  /// The device's language ([deviceLanguage]): the first page speaks it and
+  /// it is the preselected native language when it can be one.
+  final String uiLanguage;
+
+  const OnboardingScreen(
+      {super.key,
+      required this.lexicon,
+      required this.onDone,
+      this.uiLanguage = 'zh-TW'});
+
+  @override
+  State<OnboardingScreen> createState() => _OnboardingScreenState();
+}
+
+class _OnboardingScreenState extends State<OnboardingScreen> {
+  int _step = 0;
+  int _checkLevel = 0;
+  late String _native =
+      nativeLanguageAvailable(widget.uiLanguage) ? widget.uiLanguage : 'zh-TW';
+  late String _learning = _learningFor(_native);
+  // Until a native language is tapped the page speaks the device's language,
+  // even when that language is the only one to learn (English phone, English
+  // only: the native preselection falls back to Chinese).
+  bool _nativeChosen = false;
+  String? _self;
   final Map<String, List<bool>> _known = {};
 
+  @override
+  void initState() {
+    super.initState();
+    if (_learning == _native) _native = _nativeFor(_learning);
+  }
+
+  /// A learning language other than [native], English first.
+  String _learningFor(String native) => ['en', ...supportedLanguages.keys]
+      .firstWhere((l) => l != native && learningLanguageAvailable(l),
+          orElse: () => 'en');
+
+  /// A native language other than [learning], the device's first.
+  String _nativeFor(String learning) => [
+        widget.uiLanguage,
+        'zh-TW',
+        ...supportedLanguages.keys
+      ].firstWhere((l) => l != learning && nativeLanguageAvailable(l));
+
+  Map<String, List<String>>? get _checkWords => placementCheckWords[_learning];
+
   bool get _canCheck =>
-      _learning == 'en' && _checkWords.values.every((w) => w.length == 3);
+      _checkWords != null &&
+      cefrLevels.every((l) => _checkWords![l]?.length == 3);
 
   void _finish({required bool checked}) {
     final self = _self ?? 'A1';
@@ -95,44 +142,46 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final steps = [_languages, _background, if (_canCheck) _check];
-    return UiLanguageScope(language: _native, child: Scaffold(
-      backgroundColor: MColors.canvas,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
-              child: Row(
-                children: [
-                  for (var i = 0; i < steps.length; i++) ...[
-                    if (i > 0) const SizedBox(width: 6),
-                    Expanded(
-                      child: Container(
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: i <= _step
-                              ? MColors.primary
-                              : MColors.primarySoft,
-                          borderRadius: BorderRadius.circular(2),
+    return UiLanguageScope(
+        language: _nativeChosen ? _native : widget.uiLanguage,
+        child: Scaffold(
+          backgroundColor: MColors.canvas,
+          body: SafeArea(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+                  child: Row(
+                    children: [
+                      for (var i = 0; i < steps.length; i++) ...[
+                        if (i > 0) const SizedBox(width: 6),
+                        Expanded(
+                          child: Container(
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: i <= _step
+                                  ? MColors.primary
+                                  : MColors.primarySoft,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
+                      ],
+                    ],
+                  ),
+                ),
+                if (_step > 0)
+                  Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton.icon(
+                          onPressed: () => setState(() => _step--),
+                          icon: const Icon(Icons.arrow_back),
+                          label: const UiText('上一步'))),
+                Expanded(child: steps[_step]()),
+              ],
             ),
-            if (_step > 0)
-              Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton.icon(
-                      onPressed: () => setState(() => _step--),
-                      icon: const Icon(Icons.arrow_back),
-                      label: const UiText('上一步'))),
-            Expanded(child: steps[_step]()),
-          ],
-        ),
-      ),
-    ));
+          ),
+        ));
   }
 
   Widget _page({
@@ -227,7 +276,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               subtitle: learningLanguageAvailable(e.key) ? null : '第一階段尚未提供詞庫',
               selected: _learning == e.key,
               onTap: learningLanguageAvailable(e.key)
-                  ? () => setState(() => _learning = e.key)
+                  ? () => setState(() {
+                        _learning = e.key;
+                        // Learning the native language makes no sense: move
+                        // the native choice (問題回報 #496).
+                        if (_native == e.key) _native = _nativeFor(e.key);
+                      })
                   : null,
             ),
           const SizedBox(height: 12),
@@ -239,7 +293,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               subtitle: nativeLanguageAvailable(e.key) ? null : '第一階段尚未提供翻譯資料',
               selected: _native == e.key,
               onTap: nativeLanguageAvailable(e.key) && e.key != _learning
-                  ? () => setState(() => _native = e.key)
+                  ? () => setState(() {
+                        _native = e.key;
+                        _nativeChosen = true;
+                      })
                   : null,
             ),
         ],
@@ -289,7 +346,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             runSpacing: 10,
             children: [
               for (final l in [cefrLevels[_checkLevel]])
-                for (final (i, w) in _checkWords[l]!.indexed)
+                for (final (i, w) in _checkWords![l]!.indexed)
                   _CheckChip(
                     word: w,
                     known: _known[l]?[i] ?? false,
@@ -310,7 +367,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               final answers =
                   _known.putIfAbsent(level, () => List.filled(3, false));
               if (answers.where((v) => v).length >= 2 &&
-                  _checkLevel < _checkWords.length - 1) {
+                  _checkLevel < cefrLevels.length - 1) {
                 setState(() => _checkLevel++);
               } else {
                 _finish(checked: true);

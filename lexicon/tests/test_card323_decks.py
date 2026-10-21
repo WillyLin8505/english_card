@@ -37,6 +37,8 @@ def test_word_deck_lifecycle_and_public_view(client):
     from app import db, decks
     with db.session_scope() as s:
         assert [d["slug"] for d in decks.public_list(s)["decks"]] == ["basic"]
+        assert decks.public_list(s, "fr")["decks"] == []   # 問題回報 #501: filtered by learning language
+        assert [d["slug"] for d in decks.public_list(s, "en")["decks"]] == ["basic"]
         deck = decks.public_deck(s, "basic")
         assert deck["items"][0] == {"word": "apple", "pos": "noun", "cefr": "A1"}
         assert decks.public_deck(s, "nope") is None

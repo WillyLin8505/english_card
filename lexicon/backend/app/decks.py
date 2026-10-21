@@ -33,8 +33,12 @@ def summary(s: Session, deck: m.Deck) -> dict:
             "updated_at": deck.updated_at.isoformat() if deck.updated_at else None}
 
 
-def public_list(s: Session) -> dict:
-    decks = s.scalars(select(m.Deck).where(m.Deck.published.is_(True)).order_by(m.Deck.id)).all()
+def public_list(s: Session, target: str | None = None) -> dict:
+    """Published decks; with `target` only that learning language's (問題回報 #501)."""
+    q = select(m.Deck).where(m.Deck.published.is_(True))
+    if target:
+        q = q.where(m.Deck.target_language == target)
+    decks = s.scalars(q.order_by(m.Deck.id)).all()
     return {"decks": [summary(s, d) for d in decks]}
 
 

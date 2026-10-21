@@ -31,7 +31,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Mes mots'), findsOneWidget);
     expect(find.text('Ajouter un mot'), findsOneWidget);
-    expect(find.text('Rechercher en anglais ou en chinois'), findsOneWidget);
+    // Native French: the meaning language is French, not Chinese (#495).
+    expect(find.text('Rechercher en anglais ou en français'), findsOneWidget);
     await tester.tap(find.text('Ajouter un mot'));
     await tester.pumpAndSettle();
     expect(find.text('Annuler'), findsOneWidget);
@@ -145,6 +146,33 @@ void main() {
     expect(translateUi('a learner’s custom text', 'fr'),
         'a learner’s custom text');
     expect(translateUi('設定', 'de'), '設定');
+  });
+
+  test('copy names the learning language (問題回報 #495)', () {
+    // English native, learning French: nothing says English words.
+    expect(translateUi('搜尋{L}或{N}', 'en', learning: 'fr'),
+        'Search French or English');
+    expect(translateUi('點標籤查看{N}意思與例句。', 'en'),
+        'Tap a label for its English meaning and examples.');
+    expect(translateUi('拍照或選一張照片，找出生活中的{L}單字', 'en', learning: 'fr'),
+        'Take or choose a photo to find French words around you');
+    expect(translateUi('搜尋圖片上的{L}或{N}標籤', 'fr', learning: 'en'),
+        'Rechercher les étiquettes en anglais ou en français');
+    // Chinese native, learning French.
+    expect(translateUi('搜尋{L}或{N}', 'zh-TW', learning: 'fr'), '搜尋法文或中文');
+    expect(translateUi('點標籤查看{N}意思與例句。', 'zh-TW', learning: 'fr'),
+        '點標籤查看中文意思與例句。');
+    expect(translateUi('搜尋{L}或{N}', 'zh-TW'), '搜尋英文或中文');
+  });
+
+  test('catalog copy has no unfilled placeholders', () {
+    for (final entry in uiCatalog.entries) {
+      for (final learning in const ['en', 'fr']) {
+        final out = translateUi(entry.key, 'en', learning: learning);
+        expect(out.contains('{L}') || out.contains('{N}'), isFalse,
+            reason: entry.key);
+      }
+    }
     for (final entry in uiCatalog.entries) {
       expect(entry.value.$1.trim(), isNotEmpty, reason: entry.key);
       expect(entry.value.$2.trim(), isNotEmpty, reason: entry.key);

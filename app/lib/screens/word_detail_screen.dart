@@ -209,7 +209,13 @@ class _WordBody extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(displayWord(entry.word),
+                Text(
+                    headword(entry.word, entry.language, inflections: [
+                      for (final u in entry.effectiveUsages)
+                        if (pack.lookup(entry.word, pos: u.pos)?.entry
+                            case final s?)
+                          ...pack.detailFor(s).inflections
+                    ]),
                     style: MFont.manrope(32, FontWeight.w800, MColors.ink)),
                 if (entry.ipa != null) ...[
                   const SizedBox(height: MSpace.xxs),
@@ -394,8 +400,7 @@ class _WordBody extends StatelessWidget {
               children: [
                 for (final form in forms.entries)
                   TagChip(
-                      '${form.key}（${form.value.where((x) => x.isNotEmpty).join('；')}）',
-                      localize: false)
+                      '${form.key}（${form.value.where((x) => x.isNotEmpty).join('；')}）')
               ],
             )),
       if (learningMorphology(entry) case final parts?)

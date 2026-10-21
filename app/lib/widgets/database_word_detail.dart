@@ -238,8 +238,7 @@ class DatabaseWordScreen extends StatelessWidget {
                             form.field == 'fr_gender'
                                 ? '${frenchWithArticle(word.lemma, form.form)}'
                                     '（${frenchGenderLabel(form.form)}）'
-                                : '${form.form}（${formLabel(form.label ?? form.field)}）',
-                            localize: false),
+                                : '${form.form}（${formLabel(form.label ?? form.field)}）'),
                     ],
                   ),
                 ]),

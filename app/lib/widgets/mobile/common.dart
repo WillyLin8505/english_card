@@ -480,7 +480,7 @@ class SdsSearchField extends StatelessWidget {
     super.key,
     required this.controller,
     required this.onChanged,
-    this.hint = '搜尋英文或中文',
+    this.hint = '搜尋{L}或{N}',
   });
 
   @override
