@@ -12488,6 +12488,70 @@
    "ordinal": 0,
    "why": "r10 all pictures rejected with 'sport'; Qwen phrase",
    "by": "card329 r10 Qwen 2026-10-21"
+  },
+  "autorisation|noun|e2e3b59d0781": {
+   "term": "permit",
+   "auto": "authorization",
+   "meaning": "authorization (attestation of authorization)",
+   "ordinal": 1,
+   "why": "r13 no usable picture with 'authorization' (never_img); Qwen phrase",
+   "by": "card329 r13 Qwen 2026-10-21"
+  },
+  "commune|noun|b363b42b741c": {
+   "term": "town",
+   "auto": "commune",
+   "meaning": "commune (administrative subdivision)",
+   "ordinal": 0,
+   "why": "r13 no usable picture with 'commune' (never_img); Qwen phrase",
+   "by": "card329 r13 Qwen 2026-10-21"
+  },
+  "domicile|noun|511c61ae2e26": {
+   "term": "home",
+   "auto": "domicile",
+   "meaning": "domicile",
+   "ordinal": 0,
+   "why": "r13 no usable picture with 'domicile' (all_rejected); Qwen phrase",
+   "by": "card329 r13 Qwen 2026-10-21"
+  },
+  "employeur|noun|ede85400dd09": {
+   "term": "boss",
+   "auto": "employer",
+   "meaning": "employer",
+   "ordinal": 0,
+   "why": "r13 no usable picture with 'employer' (never_img); Qwen phrase",
+   "by": "card329 r13 Qwen 2026-10-21"
+  },
+  "japon|noun|467630fbe3ed": {
+   "term": "lacquerware",
+   "auto": "japanware",
+   "meaning": "japanware",
+   "ordinal": 0,
+   "why": "r13 no usable picture with 'japanware' (all_rejected); Qwen phrase",
+   "by": "card329 r13 Qwen 2026-10-21"
+  },
+  "naissance|noun|e890e5ca1199": {
+   "term": "newborn baby",
+   "auto": "birth",
+   "meaning": "birth",
+   "ordinal": 0,
+   "why": "r13 no usable picture with 'birth' (all_rejected); Qwen phrase",
+   "by": "card329 r13 Qwen 2026-10-21"
+  },
+  "salon|noun|517fb5d66c2f": {
+   "term": "beauty salon",
+   "auto": "salon",
+   "meaning": "salon",
+   "ordinal": 1,
+   "why": "r13 no usable picture with 'salon' (all_rejected); Qwen phrase",
+   "by": "card329 r13 Qwen 2026-10-21"
+  },
+  "voyageur|noun|2e0281444668": {
+   "term": "traveler",
+   "auto": "traveller",
+   "meaning": "traveller",
+   "ordinal": 0,
+   "why": "r13 no usable picture with 'traveller' (never_img); Qwen phrase",
+   "by": "card329 r13 Qwen 2026-10-21"
   }
  }
 }

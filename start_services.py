@@ -8,6 +8,9 @@ import time
 from urllib.request import urlopen
 
 ROOT = Path(__file__).resolve().parent
+# The internet name served through the Cloudflare tunnel (serve_app --public-host).
+# Restarts must carry it, or every request on that name gets 403 (card #473).
+PUBLIC_HOST = 'api.willylinai.com'
 
 
 def ready(port, title):
@@ -18,7 +21,7 @@ def ready(port, title):
         return False
 
 
-def ensure_service(script, port, title):
+def ensure_service(script, port, title, extra_args=()):
     if ready(port, title):
         return 'already running'
     with socket.socket() as probe:
@@ -30,7 +33,7 @@ def ensure_service(script, port, title):
     log_path = logs / f'{port}.log'
     with log_path.open('ab') as log:
         process = subprocess.Popen(
-            [sys.executable, str(ROOT / script), '--port', str(port)],
+            [sys.executable, str(ROOT / script), '--port', str(port), *extra_args],
             cwd=ROOT, stdin=subprocess.DEVNULL, stdout=log, stderr=log,
             creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0,
             start_new_session=os.name != 'nt',
@@ -51,7 +54,7 @@ def ensure_studio():
 
 def main():
     print(f'Studio: {ensure_studio()} - http://127.0.0.1:8772/')
-    print(f'App: {ensure_service("serve_app.py", 8123, "拍照學單字")} - http://127.0.0.1:8123/')
+    print(f'App: {ensure_service("serve_app.py", 8123, "拍照學單字", ["--public-host", PUBLIC_HOST])} - http://127.0.0.1:8123/')
 
 
 if __name__ == '__main__':
