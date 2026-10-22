@@ -20,6 +20,33 @@ String? packAccentAudioUrl(LexEntry source, String accent,
   return packRecordingUrl(LexiconPack.instance.mediaBase, recording.path);
 }
 
+/// The IPA of [source] in [accent] (卡 #227 第 147 輪): the first pack IPA
+/// in that accent, else the default one — 美式 used to show the British
+/// /ˈkʌvə/ next to the American recording.
+String? packAccentIpa(LexEntry source, String accent) {
+  final aliases = _aliases(accent);
+  return source.ipas
+          .where((p) => aliases.contains(p.accent?.toLowerCase()))
+          .firstOrNull
+          ?.value ??
+      source.ipa;
+}
+
+/// [entry]'s IPA in [accent], from its pack lexeme when there is one. An
+/// IPA the learner typed, or one the pack doesn't have, is kept as is.
+String? accentIpa(WordEntry entry, String accent) {
+  if (entry.ipaSource == 'user') return entry.ipa;
+  final pack = LexiconPack.instance;
+  final source = (entry.lexemeId == null ? null : pack.byId(entry.lexemeId!)) ??
+      pack.lookup(entry.word, pos: entry.pos)?.entry;
+  if (source == null || source.ipas.isEmpty) return entry.ipa;
+  final own = entry.ipa?.trim();
+  if (own != null && own.isNotEmpty && !source.ipas.any((p) => p.value == own)) {
+    return entry.ipa;
+  }
+  return packAccentIpa(source, accent) ?? entry.ipa;
+}
+
 /// The language pack's recording of [entry] in [accent] ("en-GB" /
 /// "en-US"), or the entry's own audio when it is in that accent (or, with
 /// [orDefault], whatever its accent); null means TTS in that accent.

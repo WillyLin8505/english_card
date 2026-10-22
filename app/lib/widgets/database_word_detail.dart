@@ -109,9 +109,13 @@ class DatabaseWordScreen extends StatelessWidget {
                   ],
                 ],
               ),
-              if (word.ipa != null) ...[
+              // 卡 #227 第 147 輪: the IPA in 設定's accent, like the audio.
+              if (((pack.target ?? 'en') == 'en'
+                      ? packAccentIpa(word, scope.settings.englishAccent)
+                      : word.ipa)
+                  case final ipa?) ...[
                 const SizedBox(height: 2),
-                Text(word.ipa!, style: MFont.caption),
+                Text(ipa, style: MFont.caption),
               ],
               const SizedBox(height: MSpace.sm),
               Align(

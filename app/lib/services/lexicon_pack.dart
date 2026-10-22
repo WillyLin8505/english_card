@@ -628,6 +628,10 @@ class LexEtymology {
 /// that [LexiconPack] indexes at launch).
 class LexDetail {
   final String? ipa;
+
+  /// Every IPA with its accent, pack order (卡 #227 第 147 輪): the screens
+  /// show the one in 設定's accent rather than always the first ([ipa]).
+  final List<({String value, String? accent})> ipas;
   final String? audio; // relative to assets/lexicon/media/
   final List<({String path, String? accent})> recordings;
   final String? audioCredit;
@@ -639,6 +643,7 @@ class LexDetail {
 
   const LexDetail({
     this.ipa,
+    this.ipas = const [],
     this.audio,
     this.recordings = const [],
     this.audioCredit,
@@ -669,6 +674,11 @@ class LexDetail {
     final etyNative = (ety?['native'] as String? ?? '').trim();
     return LexDetail(
       ipa: ipa?['value'] as String?,
+      ipas: [
+        for (final p in prons)
+          if (p['kind'] == 'ipa' && p['value'] is String)
+            (value: p['value'] as String, accent: p['accent'] as String?),
+      ],
       audio: audio.firstOrNull?['audio'] as String?,
       recordings: [
         for (final p in audio)
@@ -765,6 +775,7 @@ class LexEntry {
           missing: _missing);
 
   String? get ipa => detail.ipa;
+  List<({String value, String? accent})> get ipas => detail.ipas;
   String? get audio => detail.audio; // relative to assets/lexicon/media/
   List<({String path, String? accent})> get recordings => detail.recordings;
 

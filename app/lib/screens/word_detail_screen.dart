@@ -1,5 +1,6 @@
 import '../l10n/ui_text.dart';
 import '../services/learning_content.dart';
+import '../services/accent_audio.dart';
 import 'package:flutter/material.dart';
 
 import '../app/app_scope.dart';
@@ -271,9 +272,13 @@ class _WordBody extends StatelessWidget {
                               ...pack.detailFor(s).inflections
                         ]),
                     style: MFont.manrope(32, FontWeight.w800, MColors.ink)),
-                if (entry.ipa != null) ...[
+                // 卡 #227 第 147 輪: the IPA in 設定's accent, like the audio.
+                if ((repo.language == 'en'
+                        ? accentIpa(entry, scope.settings.englishAccent)
+                        : entry.ipa)
+                    case final ipa?) ...[
                   const SizedBox(height: MSpace.xxs),
-                  Text(entry.ipa!,
+                  Text(ipa,
                       style: MFont.manrope(16, FontWeight.w600, MColors.muted)),
                 ],
                 const SizedBox(height: MSpace.xxs + 2),
