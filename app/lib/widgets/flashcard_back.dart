@@ -41,6 +41,21 @@ Future<void> playBothAccents(BuildContext context, WordEntry entry) async {
   }
 }
 
+// 問題回報：Mac 實機量測翻卡 108ms（M-PERF）: what the back works out from
+// the pack is kept, so it must know when the pack is another one (loaded,
+// replaced or cleared).
+int _packGeneration = 0;
+bool _watchingPack = false;
+
+Object _packStamp() {
+  final pack = LexiconPack.instance;
+  if (!_watchingPack) {
+    _watchingPack = true;
+    pack.addListener(() => _packGeneration++);
+  }
+  return (_packGeneration, pack.isEmpty, pack.version, pack.target);
+}
+
 /// Which English words on the card back are in the learner's own word
 /// database (card #251 item 9): tapping one opens that word's details; a
 /// word that is not there is plain text. Headwords and their forms, with
@@ -51,7 +66,30 @@ class WordLinks {
 
   WordLinks._(this._idByText, this._maxWords);
 
+  // 問題回報：Mac 實機量測翻卡 108ms（M-PERF）: one table per word database
+  // and pack, kept until either changes, instead of one per build.
+  static WordLinks? _cached;
+  static WordDatabaseRepository? _cachedRepo;
+  static Object? _cachedStamp;
+
+  static void _drop() => _cached = null;
+
   factory WordLinks.of(WordDatabaseRepository repo) {
+    final stamp = _packStamp();
+    final hit = _cached;
+    if (hit != null && identical(_cachedRepo, repo) && _cachedStamp == stamp) {
+      return hit;
+    }
+    if (!identical(_cachedRepo, repo)) {
+      _cachedRepo?.removeListener(_drop);
+      repo.addListener(_drop);
+      _cachedRepo = repo;
+    }
+    _cachedStamp = stamp;
+    return _cached = WordLinks._build(repo);
+  }
+
+  factory WordLinks._build(WordDatabaseRepository repo) {
     final pack = LexiconPack.instance;
     final byText = <String, String>{};
     var maxWords = 1;
@@ -78,11 +116,22 @@ class WordLinks {
   }
 
   static final _token = RegExp(r"[A-Za-z]+(?:['’-][A-Za-z]+)*");
+  static final _notPhrase = RegExp(r'[^A-Za-z\x27’\- ]');
+  static final _spaces = RegExp(r'\s+');
+
+  // M-PERF: each word and text is looked up once per table.
+  final _ids = <String, String?>{};
+  final _segments = <String, List<({String text, String? id})>>{};
 
   /// The target spelled [text] (a word or phrase): the learner's entry id,
   /// else `pack:<id>` for a word only the dictionary has (問題回報 #406: every
   /// word on the card opens, in the learner's words or not), else null.
   String? idFor(String text) {
+    if (_ids.length > 20000) _ids.clear();
+    return _ids.putIfAbsent(text, () => _idFor(text));
+  }
+
+  String? _idFor(String text) {
     final key = text.trim().toLowerCase();
     final own = _idByText[key] ??
         (key.endsWith("'s") || key.endsWith('’s')
@@ -103,6 +152,11 @@ class WordLinks {
   /// [text] cut into runs: plain text, and linked words with the entry
   /// each one opens. The longest phrase in the database wins at each spot.
   List<({String text, String? id})> segments(String text) {
+    if (_segments.length > 2000) _segments.clear();
+    return _segments.putIfAbsent(text, () => _segmentsOf(text));
+  }
+
+  List<({String text, String? id})> _segmentsOf(String text) {
     final tokens = _token.allMatches(text).toList();
     final out = <({String text, String? id})>[];
     var cursor = 0;
@@ -118,8 +172,8 @@ class WordLinks {
       for (var len = math.min(_maxWords, tokens.length - i); len >= 1; len--) {
         final span = text.substring(tokens[i].start, tokens[i + len - 1].end);
         // A phrase is its words joined by single spaces only.
-        if (len > 1 && span.contains(RegExp(r'[^A-Za-z\x27’\- ]'))) continue;
-        final hit = idFor(span.replaceAll(RegExp(r'\s+'), ' '));
+        if (len > 1 && span.contains(_notPhrase)) continue;
+        final hit = idFor(span.replaceAll(_spaces, ' '));
         if (hit != null) {
           id = hit;
           n = len;
@@ -266,7 +320,20 @@ class FlashcardBack extends StatelessWidget {
     this.onOpenWord,
   });
 
-  LexEntry? get _source {
+  // 問題回報：Mac 實機量測翻卡 108ms（M-PERF）: the lookups, sorts and lists
+  // below are worked out once per word, usage and pack, not on every build.
+  static final _cache = Expando<_BackData>('FlashcardBack');
+
+  _BackData get _data {
+    final stamp = (activePos, _packStamp());
+    final hit = _cache[entry];
+    if (hit != null && hit.stamp == stamp) return hit;
+    return _cache[entry] = _BackData(stamp, _findSource());
+  }
+
+  LexEntry? get _source => _data.source;
+
+  LexEntry? _findSource() {
     final pack = LexiconPack.instance;
     final byId = entry.lexemeId == null ? null : pack.byId(entry.lexemeId!);
     // A saved lexeme id can name another part of speech of the same spelling
@@ -286,7 +353,8 @@ class FlashcardBack extends StatelessWidget {
   }
 
   /// Card #416: the first [initial] items, the rest behind 顯示更多.
-  Widget _items(CardBackField field, List<Widget> items, {int initial = 10000}) =>
+  Widget _items(CardBackField field, List<Widget> items,
+          {int initial = 10000}) =>
       ShowMoreItems(initial: initial, children: items);
 
   Widget? _configuredField(BuildContext context, TemplateField setting,
@@ -348,6 +416,25 @@ class FlashcardBack extends StatelessWidget {
     return picked;
   }
 
+  /// The related-word blocks that have words, in their fixed order
+  /// (M-PERF: kept per word).
+  List<(String, List<({String word, String meaning})>)> _relatedBlocks() =>
+      _data.related ??= () {
+        final shown = <String>{};
+        return [
+          for (final (label, kinds) in const [
+            ('同義詞', ['synonyms']),
+            ('反義詞', ['antonyms']),
+            ('相關詞', ['related', 'derived_terms']),
+            ('近音字', ['homophones']),
+            ('容易混淆的字', ['near_homophones', 'similar_spelling']),
+          ])
+            if (_relations(kinds, maxItems: 10000, shown: shown)
+                case final words when words.isNotEmpty)
+              (label, words),
+        ];
+      }();
+
   static const _formOrder = [
     '第三人稱單數',
     '過去式',
@@ -389,7 +476,10 @@ class FlashcardBack extends StatelessWidget {
   /// order of [_formOrder]: the pack's inflections, the learner's own
   /// forms for kinds the pack lacks, then the word family (decide →
   /// decision, decisive, decisively) by part of speech.
-  List<({String kind, String word})> _formCells() {
+  List<({String kind, String word})> _formCells() =>
+      _data.formCells ??= _findFormCells();
+
+  List<({String kind, String word})> _findFormCells() {
     final pack = LexiconPack.instance;
     final source = _source;
     // Only the lemma itself is left out: a card saved as 「went」 still lists
@@ -463,12 +553,15 @@ class FlashcardBack extends StatelessWidget {
               source?.senses.where((s) => (s.native ?? '').isNotEmpty).toList();
           return _Block(
               '逐義釋義',
-              _items(field, [
-                if (meanings == null || meanings.isEmpty)
-                  Text(meaning)
-                else
-                  for (final sense in meanings) Text(sense.native!),
-              ], initial: 3));
+              _items(
+                  field,
+                  [
+                    if (meanings == null || meanings.isEmpty)
+                      Text(meaning)
+                    else
+                      for (final sense in meanings) Text(sense.native!),
+                  ],
+                  initial: 3));
         }
         // Card #251 item 2: the part of speech only — no CEFR level chip.
         // 問題回報 #469: same title as the word detail's meaning section.
@@ -517,38 +610,41 @@ class FlashcardBack extends StatelessWidget {
             // 圖片沉浸 (#317): the word is written on the photo.
             overlay: look.photoHero ? _HeroWord(entry.word, look) : null,
             // 圖片沉浸 already writes the word on the photo.
-            pinFor: AppScope.of(context).settings.showPhotoLabels &&
-                    !look.photoHero
-                ? (o) => o.$2 == null
-                    ? null
-                    : PinData(
-                        id: entry.word,
-                        anchor: o.$2!,
-                        word: displayWord(entry.word),
-                        zh: activeMeaning ?? entry.meaning)
-                : null);
+            pinFor:
+                AppScope.of(context).settings.showPhotoLabels && !look.photoHero
+                    ? (o) => o.$2 == null
+                        ? null
+                        : PinData(
+                            id: entry.word,
+                            anchor: o.$2!,
+                            word: displayWord(entry.word),
+                            zh: activeMeaning ?? entry.meaning)
+                    : null);
       case CardBackField.example:
         // Spec sections 4 and 7: 3–5 examples at the learner's level.
-        final recommended = learningExamples(entry, learnerLevel,
-            maxItems: 10000);
+        final recommended = _examples();
         if (recommended.isEmpty) return null;
         return _Block(
           '例句與翻譯',
-          _items(field, [
-            // Item 4: the sentences sit close together.
-            for (final x in recommended)
-              Container(
-                margin: EdgeInsets.only(bottom: look.exampleGap),
-                padding: look.examplePadding,
-                decoration: look.example,
-                child: ExampleText(
-                    example: x,
-                    links: links,
-                    onOpenWord: onOpenWord,
-                    showTranslation:
-                        template.publishedLayout?['show_translation'] != false),
-              ),
-          ], initial: 5),
+          _items(
+              field,
+              [
+                // Item 4: the sentences sit close together.
+                for (final x in recommended)
+                  Container(
+                    margin: EdgeInsets.only(bottom: look.exampleGap),
+                    padding: look.examplePadding,
+                    decoration: look.example,
+                    child: ExampleText(
+                        example: x,
+                        links: links,
+                        onOpenWord: onOpenWord,
+                        showTranslation:
+                            template.publishedLayout?['show_translation'] !=
+                                false),
+                  ),
+              ],
+              initial: 5),
         );
       case CardBackField.formsAndDerivations:
         // 問題回報 #406: one cell per kind of form (過去式、過去分詞、現在分詞、
@@ -569,16 +665,7 @@ class FlashcardBack extends StatelessWidget {
         // The word detail page still lists them all.
         const initial = 5;
         final blocks = <Widget>[];
-        final shown = <String>{};
-        for (final (label, kinds) in const [
-          ('同義詞', ['synonyms']),
-          ('反義詞', ['antonyms']),
-          ('相關詞', ['related', 'derived_terms']),
-          ('近音字', ['homophones']),
-          ('容易混淆的字', ['near_homophones', 'similar_spelling']),
-        ]) {
-          final words = _relations(kinds, maxItems: 10000, shown: shown);
-          if (words.isEmpty) continue;
+        for (final (label, words) in _relatedBlocks()) {
           blocks.add(_Block(
             label,
             ShowMoreItems(
@@ -606,7 +693,7 @@ class FlashcardBack extends StatelessWidget {
         // Item 7: the admin's 構詞拆解 look — one rounded box per part,
         // joined by 「+」.
         final parts = _morphemes();
-        final origin = learningEtymology(entry);
+        final origin = _origin();
         return parts.isEmpty && origin == null
             ? null
             : _Block(
@@ -635,7 +722,22 @@ class FlashcardBack extends StatelessWidget {
 
   /// The parts of the word: the pack's, or the learner's own edit / the
   /// stored root and affixes read as prefix (ends with -), root, suffix.
-  List<LexMorpheme> _morphemes() {
+  List<LexMorpheme> _morphemes() => _data.morphemes ??= _findMorphemes();
+
+  /// The examples for the learner's level, best first (M-PERF: sorted once).
+  List<WordExample> _examples() => _data.examples.putIfAbsent(learnerLevel,
+      () => learningExamples(entry, learnerLevel, maxItems: 10000));
+
+  String? _origin() {
+    final data = _data;
+    if (!data.hasOrigin) {
+      data.origin = learningEtymology(entry);
+      data.hasOrigin = true;
+    }
+    return data.origin;
+  }
+
+  List<LexMorpheme> _findMorphemes() {
     List<LexMorpheme> fromText(String text) => [
           for (final raw in text.split(RegExp(r'\s*[＋+]\s*')))
             if (raw.trim().isNotEmpty)
@@ -680,22 +782,47 @@ class FlashcardBack extends StatelessWidget {
     final look = CardLook.of(context);
     // Every visible template field that has data (spec: 可用時一併顯示；
     // 欄位沒有內容時自動省略).
-    final fields = [
+    // 問題回報：Mac 實機量測翻卡 108ms（M-PERF）: the frame that turns the
+    // card builds the top — the word, its sound, 詞性與意思 and the photo;
+    // the sections under them follow one frame later.
+    final visible = [
       for (final f in template.backFields)
-        if (f.visible) _configuredField(context, f, links, look),
+        if (f.visible) f,
+    ];
+    var split = visible.indexWhere((f) => !_topFields.contains(f.field));
+    if (split < 0) split = visible.length;
+    var later = visible.sublist(split);
+    final fields = [
+      for (final f in visible.take(split))
+        _configuredField(context, f, links, look),
     ].whereType<Widget>().toList();
     // 圖片沉浸 (#317): the photo leads, the word written on it.
-    final hero =
+    Widget? hero =
         look.photoHero ? fields.whereType<_PhotoPager>().firstOrNull : null;
-    if (hero != null) fields.remove(hero);
-    var panel = 0;
-    Widget section(Widget w) {
+    if (hero != null) {
+      fields.remove(hero);
+    } else if (look.photoHero) {
+      final i = later.indexWhere((f) => f.field == CardBackField.photoContext);
+      if (i >= 0) {
+        hero = _configuredField(context, later[i], links, look);
+        later = [...later]..removeAt(i);
+      }
+    }
+    Widget section(Widget w, int panel) {
       // A photo needs no panel behind it.
-      final decoration = w is _PhotoPager ? null : look.sectionPanel(panel++);
+      final decoration = w is _PhotoPager ? null : look.sectionPanel(panel);
       if (decoration == null) return w;
       return Container(
           decoration: decoration, padding: look.sectionPadding, child: w);
     }
+
+    List<Widget> sections(Iterable<Widget> ws, int panel) => [
+          for (final w in ws) ...[
+            SizedBox(height: look.sectionGap),
+            section(w, w is _PhotoPager ? panel : panel++),
+          ],
+        ];
+    final laterPhoto = later.any((f) => f.field == CardBackField.photoContext);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -765,12 +892,185 @@ class FlashcardBack extends StatelessWidget {
             ],
           ],
         ),
-        for (final w in fields) ...[
-          SizedBox(height: look.sectionGap),
-          section(w),
-        ],
+        ...sections(fields, 0),
+        if (later.isNotEmpty)
+          _NextFrame(
+            // Unchanged, a rebuild (a photo swipe) keeps the built sections.
+            cacheKey: (
+              entry,
+              activePos,
+              activeMeaning,
+              activeDefinition,
+              template,
+              learnerLevel,
+              links,
+              look,
+              onOpenWord,
+              laterPhoto
+                  ? (
+                      photo,
+                      anchor,
+                      photos,
+                      photoCredit,
+                      onPhotoSelected,
+                      AppScope.of(context).settings.showPhotoLabels
+                    )
+                  : null,
+            ),
+            builder: (context) => Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: sections(
+                  [
+                    for (final f in later)
+                      _configuredField(context, f, links, look),
+                  ].whereType<Widget>(),
+                  fields.where((w) => w is! _PhotoPager).length),
+            ),
+          ),
       ],
     );
+  }
+
+  /// Fields cheap enough for the frame that turns the card (M-PERF).
+  static const _topFields = {
+    CardBackField.word,
+    CardBackField.pronunciation,
+    CardBackField.posAndMeaning,
+    CardBackField.photoContext,
+    CardBackField.source,
+    CardBackField.learningInfo,
+  };
+
+  /// Works out [entry]'s back while its front is up (M-PERF): the word
+  /// links, the pack's body (read from SQLite), the sorted examples and
+  /// related words, one piece after each frame, so turning the card only
+  /// builds and lays it out.
+  static void prepare(
+    BuildContext context,
+    WordDatabaseRepository repo,
+    WordEntry entry, {
+    required LearningCard card,
+    required CardTemplate template,
+    required String learnerLevel,
+    String? activePos,
+    String? activeDefinition,
+  }) {
+    if (identical(_preparing, entry)) return;
+    _preparing = entry;
+    final back = FlashcardBack(
+      entry: entry,
+      activePos: activePos,
+      activeDefinition: activeDefinition,
+      card: card,
+      photo: null,
+      anchor: null,
+      template: template,
+      learnerLevel: learnerLevel,
+      onPlay: _noop,
+      onOpen: _noop,
+    );
+    final steps = <void Function()>[
+      () => WordLinks.of(repo),
+      () => back._source?.relations,
+      back._examples,
+      back._relatedBlocks,
+      back._formCells,
+      back._morphemes,
+      back._origin,
+      () {
+        final links = WordLinks.of(repo);
+        final definition = activeDefinition ?? entry.definition;
+        if (definition != null) links.segments(definition);
+        for (final x in back._examples().take(5)) {
+          links.segments(x.text);
+        }
+        for (final (_, words) in back._relatedBlocks()) {
+          for (final w in words.take(5)) {
+            links.idFor(w.word);
+          }
+        }
+        for (final c in back._formCells()) {
+          links.idFor(c.word);
+        }
+        for (final m in back._morphemes()) {
+          links.idFor(m.part.replaceAll('-', ''));
+        }
+      },
+    ];
+    final binding = WidgetsBinding.instance;
+    // One step after each frame, starting after the frame that shows the
+    // front; a step no longer wanted (another card, screen gone) stops.
+    void after(int i) {
+      binding.addPostFrameCallback((_) {
+        if (!identical(_preparing, entry)) return;
+        if (i >= steps.length || !context.mounted) {
+          _preparing = null;
+          return;
+        }
+        steps[i]();
+        after(i + 1);
+        binding.scheduleFrame();
+      }, debugLabel: 'FlashcardBack.prepare');
+    }
+
+    binding.addPostFrameCallback((_) {
+      after(0);
+      binding.scheduleFrame();
+    }, debugLabel: 'FlashcardBack.prepare');
+  }
+
+  static WordEntry? _preparing;
+  static void _noop() {}
+}
+
+/// What the back shows for one word and usage, worked out once
+/// (問題回報：Mac 實機量測翻卡 108ms（M-PERF）).
+class _BackData {
+  final Object stamp;
+  final LexEntry? source;
+  List<(String, List<({String word, String meaning})>)>? related;
+  List<({String kind, String word})>? formCells;
+  List<LexMorpheme>? morphemes;
+  final examples = <String, List<WordExample>>{};
+  String? origin;
+  bool hasOrigin = false;
+
+  _BackData(this.stamp, this.source);
+}
+
+/// Builds [builder] from the frame after it first appears (M-PERF); the
+/// last build is kept while [cacheKey] stays the same.
+class _NextFrame extends StatefulWidget {
+  final Object cacheKey;
+  final WidgetBuilder builder;
+
+  const _NextFrame({required this.cacheKey, required this.builder});
+
+  @override
+  State<_NextFrame> createState() => _NextFrameState();
+}
+
+class _NextFrameState extends State<_NextFrame> {
+  bool _ready = false;
+  Widget? _built;
+  Object? _builtFor;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _ready = true);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_ready) return const SizedBox.shrink();
+    if (_built == null || _builtFor != widget.cacheKey) {
+      _built = widget.builder(context);
+      _builtFor = widget.cacheKey;
+    }
+    return _built!;
   }
 }
 

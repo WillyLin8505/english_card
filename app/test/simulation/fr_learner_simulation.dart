@@ -48,8 +48,6 @@ String _en(String zh) => translateUi(zh, 'en');
 /// Chinese characters in an English interface.
 final _cjk = RegExp(r'[一-鿿]');
 final _leakedNull = RegExp(r'^null$|[：:]\s*null$|^null\s*[：:]');
-final _article =
-    RegExp(r"(^|\s|\()(le|la|l'|l’|un|une|les|des)\s?\S", caseSensitive: false);
 final _gender = RegExp(r'\b(masculine|feminine|masc\.|fem\.|m\.|f\.|nm|nf)\b',
     caseSensitive: false);
 

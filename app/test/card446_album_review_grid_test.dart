@@ -53,7 +53,7 @@ void main() {
       (tester) async {
     final lib = DeckLibrary(client: server(), remote: true, persist: false);
     DeckLibrary.instance = lib;
-    final app = await pumpApp(tester,
+    await pumpApp(tester,
         initialTab: AppTab.album, size: const Size(402, 1200));
     await tester.pumpAndSettle();
     expect(find.text('＋ 下載相片冊'), findsOneWidget);
