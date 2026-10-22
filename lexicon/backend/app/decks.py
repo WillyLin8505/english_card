@@ -25,21 +25,29 @@ def _count(s: Session, deck: m.Deck) -> int:
     return s.scalar(select(func.count()).select_from(m.DeckItem).where(m.DeckItem.deck_id == deck.id)) or 0
 
 
-def summary(s: Session, deck: m.Deck) -> dict:
-    return {"slug": deck.slug, "kind": deck.kind, "title": deck.title, "cefr": deck.cefr,
-            "topic": deck.topic, "description": deck.description, "author": deck.author,
+I18N_FIELDS = ("title", "topic", "description", "author")
+
+
+def summary(s: Session, deck: m.Deck, native: str | None = None) -> dict:
+    """`native` swaps in the deck's text for that language when it has one
+    (問題回報 #537); decks without a translation keep the zh-TW original."""
+    tr = ((deck.i18n or {}).get(native) or {}) if native else {}
+    def pick(f):
+        return tr.get(f) or getattr(deck, f)
+    return {"slug": deck.slug, "kind": deck.kind, "title": pick("title"), "cefr": deck.cefr,
+            "topic": pick("topic"), "description": pick("description"), "author": pick("author"),
             "cover_asset_id": deck.cover_asset_id, "count": _count(s, deck),
             "target_language": deck.target_language,
             "updated_at": deck.updated_at.isoformat() if deck.updated_at else None}
 
 
-def public_list(s: Session, target: str | None = None) -> dict:
+def public_list(s: Session, target: str | None = None, native: str | None = None) -> dict:
     """Published decks; with `target` only that learning language's (問題回報 #501)."""
     q = select(m.Deck).where(m.Deck.published.is_(True))
     if target:
         q = q.where(m.Deck.target_language == target)
     decks = s.scalars(q.order_by(m.Deck.id)).all()
-    return {"decks": [summary(s, d) for d in decks]}
+    return {"decks": [summary(s, d, native) for d in decks]}
 
 
 def _credit(a) -> dict:
@@ -126,6 +134,7 @@ class DeckIn(BaseModel):
     published: bool = False
     words: list[dict] | None = None
     asset_ids: list[int] | None = None
+    i18n: dict | None = None
 
 
 class DeckPatch(BaseModel):
@@ -138,6 +147,7 @@ class DeckPatch(BaseModel):
     published: bool | None = None
     words: list[dict] | None = None
     asset_ids: list[int] | None = None
+    i18n: dict | None = None
 
 
 def _check(kind: str | None = None, cefr: str | None = None) -> None:

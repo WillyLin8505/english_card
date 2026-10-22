@@ -898,6 +898,9 @@ class Deck(Base):
     author: Mapped[str | None] = mapped_column(Text)
     cover_asset_id: Mapped[int | None] = mapped_column(ForeignKey("image_assets.id", ondelete="SET NULL"))
     target_language: Mapped[str] = mapped_column(String(16), default="en")
+    # Title/topic/description/author per learner native language (問題回報 #537):
+    # {"en": {"title": ..., "topic": ..., "description": ..., "author": ...}}; AI-filled, zh-TW stays in the columns above.
+    i18n: Mapped[dict | None] = mapped_column(Json)
     published: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     # Shared by a user (card #324): owner, state (private/shared/removed/hidden), download count.
     owner_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), index=True)

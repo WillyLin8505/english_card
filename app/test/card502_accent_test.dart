@@ -1,5 +1,6 @@
 // 問題回報 #510 (card #502): 設定's 發音腔調 is heard where it applies, and
 // choosing it plays a sample word.
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:photo_english_app/app/app_scope.dart';
 import 'package:photo_english_app/models/word_entry.dart';
@@ -89,7 +90,15 @@ void main() {
     final speaker = _RecordingSpeaker();
     final app =
         await pumpApp(tester, initialTab: AppTab.settings, speaker: speaker);
-    expect(find.textContaining('複習卡正面的發音都用這個腔調'), findsOneWidget);
+    // 問題回報 #520: one short line; the exceptions sit behind the info icon.
+    final note = find.textContaining('單字本和複習卡都用這個腔調');
+    expect(note, findsOneWidget);
+    expect(tester.widget<Text>(note).data!.length, lessThanOrEqualTo(40));
+    expect(find.textContaining('各唸一次'), findsNothing);
+    expect(
+        find.byWidgetPredicate((w) =>
+            w is Tooltip && (w.message ?? '').contains('英式、美式各唸一次')),
+        findsOneWidget);
 
     await tester.tap(find.text('美式（en-US）'));
     await tester.pump();

@@ -249,12 +249,12 @@ class _DeckCard extends StatelessWidget {
                   if (info.cefr != null) LevelBadge(info.cefr!),
                 ]),
                 const SizedBox(height: MSpace.xxs),
-                UiText(
+                Text(
                   [
-                    info.isPhotos ? '圖片集' : '單字集',
-                    if (info.topic != null) info.topic!,
-                    '${info.count} ${info.isPhotos ? '張' : '字'}',
-                    if (info.author != null) info.author!,
+                    ui(context, info.isPhotos ? '圖片集' : '單字集'),
+                    if (info.topic != null) ui(context, info.topic!),
+                    '${info.count} ${ui(context, info.isPhotos ? '張' : '字')}',
+                    if (info.author != null) ui(context, info.author!),
                   ].join('　·　'),
                   style: const TextStyle(fontSize: 12, color: MColors.muted),
                 ),

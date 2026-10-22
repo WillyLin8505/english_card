@@ -133,6 +133,11 @@ def catalog_snapshot(session, target):
     # approved English words (#347: chat → cat, table → table).
     sense_label, by_meaning, rivals = ({}, {}, {}) if target == 'en' else meaning_index(session, target, True)
     add_meaning_tags(session, target, tags, full_words, by_meaning, rivals)
+    # Card #510 (問題回報 #524): the tagger names what it sees in the form it
+    # sees it (holding, trees, clouds, glasses) while the binding hangs on the
+    # entry (hold, tree, cloud, glass). Matching the entry's spelling alone left
+    # 13% of approved labels without a position, so the app drew no pin.
+    form_lemmas = english_form_lemmas(session)
     # The vision model supplies positions, but only approved bindings decide
     # which labels are visible. This prevents foreign, rejected and unrelated
     # suggestions from appearing in the app.
@@ -142,6 +147,7 @@ def catalog_snapshot(session, target):
             continue
         positioned = {}
         positioned_dropped = {}
+        positioned_alias = {}
         model_cefr = {}
         # Card #408 (問題回報 #407): the tagger sets aside a tag it will not
         # offer for review (no CEFR level, over the per-picture cap) but keeps
@@ -159,6 +165,11 @@ def catalog_snapshot(session, target):
             band = str(item.get('cefr') or item.get('modelLevel') or '').strip().upper()
             if band in levels:
                 model_cefr[name] = band
+        # The entries a positioned tag also places (#510): its tags first, then
+        # the set-aside ones; the first tag naming an entry keeps it.
+        for item in list(positioned.values()) + list(positioned_dropped.values()):
+            for alias in tag_aliases(item, form_lemmas):
+                positioned_alias.setdefault(alias, item)
         enriched_tags = []
         labels = []
         seen_words = set()
@@ -733,7 +744,7 @@ class Handler(SimpleHTTPRequestHandler):
                     return {'ok': True}
         raise accounts.AccountError(404, 'not found')
 
-    def send_decks(self, slug: str, target: str | None = None) -> None:
+    def send_decks(self, slug: str, target: str | None = None, native: str | None = None) -> None:
         """卡片集 (card #323): the published decks, read-only and keyless like
         the dictionary; one deck carries everything the app downloads."""
         token = (self.headers.get('Authorization') or '').removeprefix('Bearer ').strip() or None
@@ -744,7 +755,7 @@ class Handler(SimpleHTTPRequestHandler):
                     viewer = accounts.user_from_token(session, token)
                 except accounts.AccountError:
                     pass
-            data = decks.public_deck(session, slug) if slug else accounts.public_list(session, viewer, target)
+            data = decks.public_deck(session, slug) if slug else accounts.public_list(session, viewer, target, native)
             if data is not None and slug:
                 accounts.count_download(session, slug)
         if data is None:
@@ -841,7 +852,8 @@ class Handler(SimpleHTTPRequestHandler):
             return
         if url.path == '/api/decks' or url.path.startswith('/api/decks/'):
             self.send_decks(url.path[len('/api/decks'):].strip('/'),
-                            (parse_qs(url.query).get('target', [''])[0] or None))
+                            (parse_qs(url.query).get('target', [''])[0] or None),
+                            (parse_qs(url.query).get('native', [''])[0] or None))
             return
         if url.path in ('/privacy', '/privacy.html'):
             body = (ROOT / 'docs' / 'privacy.html').read_bytes()

@@ -149,6 +149,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   static const _levelInfo =
       '累積至少 20 次使用紀錄後，程度會依你的評分、左滑與轉盤自動調整，一次最多一級。照片詳情的難度轉盤只影響那一張照片。';
 
+  // 問題回報 #520: the exceptions to the accent setting, behind the info icon.
+  static const _accentInfo = '複習卡翻到背面時英式、美式各唸一次。沒有這個腔調錄音的字，播現有的錄音。';
+
   static String _sourceLabel(String source) => switch (source) {
         'check' => '快速詞彙檢查',
         'elo' => '依你的使用情況調整',
@@ -250,10 +253,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   ),
                               ],
                             ),
-                            _note('點一下會用這個腔調唸「water」。單字頁、單字本和'
-                                '複習卡正面的發音都用這個腔調；複習卡翻到背面時'
-                                '英式、美式各唸一次。沒有這個腔調錄音的字，'
-                                '播現有的錄音。'),
+                            // 問題回報 #520: one line for the learner; the
+                            // exceptions live behind the info icon, as for
+                            // 單字難度 (#391).
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _note(
+                                      '點一下試聽「water」；單字頁、單字本和複習卡都用這個腔調。'),
+                                ),
+                                Tooltip(
+                                  message: ui(context, _accentInfo),
+                                  triggerMode: TooltipTriggerMode.tap,
+                                  showDuration: const Duration(seconds: 8),
+                                  child: const Padding(
+                                    padding: EdgeInsets.all(6),
+                                    child: Icon(Icons.info_outline,
+                                        size: 18, color: MColors.muted),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ],
                         ],
                       ),

@@ -45,7 +45,8 @@ class _StyleTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final look = CardLook.forStyle(style);
-    final border = selected ? MColors.primary : MColors.label.withValues(alpha: 0.4);
+    final border =
+        selected ? MColors.primary : MColors.label.withValues(alpha: 0.4);
     return Semantics(
       button: true,
       selected: selected,
@@ -103,8 +104,8 @@ class _Mini extends StatelessWidget {
     );
     final word =
         Text('apple', style: look.headword.copyWith(fontSize: 16, height: 1.1));
-    final meaning =
-        Text('蘋果', style: look.meaning.copyWith(fontSize: 12, height: 1.2));
+    final meaning = Text(ui(context, '蘋果'),
+        style: look.meaning.copyWith(fontSize: 12, height: 1.2));
     final panel = look.sectionPanel(0);
     final section = Container(
       width: double.infinity,
@@ -116,7 +117,7 @@ class _Mini extends StatelessWidget {
             padding: const EdgeInsets.only(right: 2),
             child: Icon(icon, size: 10, color: look.sectionIconColor),
           ),
-        Text('例句', style: look.sectionLabel.copyWith(fontSize: 9)),
+        Text(ui(context, '例句'), style: look.sectionLabel.copyWith(fontSize: 9)),
       ]),
     );
     final content = Column(

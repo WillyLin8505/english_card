@@ -2,7 +2,10 @@
 /// content. Missing keys/languages deliberately retain the original copy.
 const uiCatalog = <String, (String, String)>{
   '卡片集': ('Decks', 'Paquets'),
-  '瀏覽並下載卡片集': ('Browse and download decks', 'Parcourir et télécharger des paquets'),
+  '瀏覽並下載卡片集': (
+    'Browse and download decks',
+    'Parcourir et télécharger des paquets'
+  ),
   '卡片集：下載別人整理好的單字集與圖片集': (
     'Decks: download word and picture sets made by others',
     'Paquets : télécharger des listes de mots et d’images'
@@ -260,12 +263,14 @@ const uiCatalog = <String, (String, String)>{
     'Cette politique explique comment 拍照學單字 traite les données. Le partage des statistiques est désactivé par défaut.'
   ),
   '使用統計': ('Usage statistics', 'Statistiques d’usage'),
-  '打開「分享使用統計」之後，操作紀錄會送到 PostHog（主機 us.i.posthog.com）。送出的只有：這次安裝產生的隨機代號、開啟 App、所在分頁、學習語言、母語、程度與程度來源、有沒有加入照片或單字（不含照片和單字本身）、複習開始與結束，以及單次作答的評分、題型、對錯、提示次數、作答時間與下次間隔天數。不送姓名、帳號、電子郵件或廣告識別碼。隨時可以在設定裡關掉；還沒送出的紀錄會一併捨棄。': (
+  '打開「分享使用統計」之後，操作紀錄會送到 PostHog（主機 us.i.posthog.com）。送出的只有：這次安裝產生的隨機代號、開啟 App、所在分頁、學習語言、母語、程度與程度來源、有沒有加入照片或單字（不含照片和單字本身）、複習開始與結束，以及單次作答的評分、題型、對錯、提示次數、作答時間與下次間隔天數。不送姓名、帳號、電子郵件或廣告識別碼。隨時可以在設定裡關掉；還沒送出的紀錄會一併捨棄。':
+      (
     'After you turn on Share usage statistics, activity is sent to PostHog (host us.i.posthog.com). We send only: a random id created for this install, app opens, the current tab, learning language, native language, level and how the level was chosen, whether a photo or word was added (not the photo or the word), review start and finish, and for each answer the rating, exercise type, right or wrong, hint count, time spent and the next interval in days. We do not send your name, account, email or advertising id. You can turn this off in Settings at any time; events not yet sent are discarded.',
     'Après avoir activé le partage, l’activité est envoyée à PostHog (hôte us.i.posthog.com). Nous envoyons seulement : un identifiant aléatoire créé pour cette installation, les ouvertures, l’onglet affiché, la langue étudiée, la langue maternelle, le niveau et son origine, l’ajout d’une photo ou d’un mot (sans la photo ni le mot), le début et la fin d’une révision, et pour chaque réponse la note, le type d’exercice, juste ou faux, le nombre d’indices, le temps et le prochain intervalle en jours. Pas de nom, de compte, d’e-mail ni d’identifiant publicitaire. Vous pouvez désactiver cela dans Réglages ; ce qui n’est pas encore envoyé est effacé.'
   ),
   '照片與辨識': ('Photos and recognition', 'Photos et reconnaissance'),
-  '照片和字卡保存在這台裝置。使用辨識時，照片會傳到你設定的辨識伺服器，只在記憶體裡即時辨識，不會存成照片檔。伺服器可能留下辨識結果的文字快取（單字與分數，不含照片），以免同一張照片重複運算。照片不會送到分析服務。': (
+  '照片和字卡保存在這台裝置。使用辨識時，照片會傳到你設定的辨識伺服器，只在記憶體裡即時辨識，不會存成照片檔。伺服器可能留下辨識結果的文字快取（單字與分數，不含照片），以免同一張照片重複運算。照片不會送到分析服務。':
+      (
     'Photos and cards stay on this device. When you use recognition, the photo is sent to the recognition server you configured, processed in memory at that moment, and not saved as a photo file. The server may keep a text cache of the result (words and scores, not the photo) so the same photo is not processed twice. Photos are not sent to the analytics service.',
     'Les photos et les cartes restent sur cet appareil. Pour la reconnaissance, la photo est envoyée au serveur que vous avez indiqué, traitée en mémoire sur le moment, et n’est pas enregistrée comme fichier photo. Le serveur peut garder un cache texte du résultat (mots et scores, pas la photo) pour ne pas retraiter la même photo. Les photos ne vont pas au service d’analyse.'
   ),
@@ -327,9 +332,13 @@ const uiCatalog = <String, (String, String)>{
   ),
   '英式（en-GB）': ('British (en-GB)', 'Britannique (en-GB)'),
   '美式（en-US）': ('American (en-US)', 'Américain (en-US)'),
-  '點一下會用這個腔調唸「water」。單字頁、單字本和複習卡正面的發音都用這個腔調；複習卡翻到背面時英式、美式各唸一次。沒有這個腔調錄音的字，播現有的錄音。': (
-    'Tap to hear “water” in this accent. Word pages, the Words tab and the front of review cards use this accent; the back of a review card plays British, then American. Words with no recording in this accent play the one they have.',
-    'Touchez pour entendre « water » avec cet accent. Les fiches de mots, l’onglet Mots et le recto des cartes utilisent cet accent ; le verso joue l’accent britannique puis américain. Un mot sans enregistrement dans cet accent joue celui qu’il a.'
+  '點一下試聽「water」；單字頁、單字本和複習卡都用這個腔調。': (
+    'Tap to hear “water”; word pages, the Words tab and review cards use this accent.',
+    'Touchez pour entendre « water » ; fiches de mots, onglet Mots et cartes utilisent cet accent.'
+  ),
+  '複習卡翻到背面時英式、美式各唸一次。沒有這個腔調錄音的字，播現有的錄音。': (
+    'The back of a review card plays British, then American. Words with no recording in this accent play the one they have.',
+    'Le verso d’une carte joue l’accent britannique puis américain. Un mot sans enregistrement dans cet accent joue celui qu’il a.'
   ),
   '單字難度': ('Word difficulty', 'Difficulté des mots'),
   '快速詞彙檢查': ('Quick vocabulary check', 'Test rapide de vocabulaire'),
@@ -409,10 +418,7 @@ const uiCatalog = <String, (String, String)>{
   '資料庫相片冊': ('Database photos', 'Photos du dictionnaire'),
   '正在取得資料庫內容': ('Loading database content', 'Chargement du dictionnaire'),
   '重新連線': ('Reconnect', 'Reconnecter'),
-  '搜尋{L}或{N}': (
-    'Search {L} or {N}',
-    'Rechercher en {L} ou en {N}'
-  ),
+  '搜尋{L}或{N}': ('Search {L} or {N}', 'Rechercher en {L} ou en {N}'),
   '搜尋圖片上的{L}或{N}標籤': (
     'Search photo labels in {L} or {N}',
     'Rechercher les étiquettes en {L} ou en {N}'
@@ -504,7 +510,10 @@ const uiCatalog = <String, (String, String)>{
   '英文': ('English', 'Anglais'),
   '{L}單字': ('{L} word', 'Mot en {L}'),
   '照片裡的{L}單字：': ('{L} words in this photo: ', 'Mots en {L} de cette photo : '),
-  '詞庫尚未提供{N}意思': ('The dictionary has no {N} meaning yet', 'Le dictionnaire n’a pas encore le sens en {N}'),
+  '詞庫尚未提供{N}意思': (
+    'The dictionary has no {N} meaning yet',
+    'Le dictionnaire n’a pas encore le sens en {N}'
+  ),
   '{N}意思': ('{N} meaning', 'Sens en {N}'),
   '{N}釋義': ('{N} definition', 'Définition en {N}'),
   '釋義': ('Definition', 'Définition'),
@@ -579,6 +588,10 @@ const uiCatalog = <String, (String, String)>{
     "Pas encore de photos : prenez-en une ou téléchargez un jeu d'images"
   ),
   '圖片集': ('Picture decks', "Jeux d'images"),
+  '單字集': ('Word deck', 'Jeu de mots'),
+  '張': ('photos', 'photos'),
+  '字': ('words', 'mots'),
+  'English Card 編輯部': ('English Card Editors', 'Équipe éditoriale English Card'),
   '去拍照選單字': (
     'Take a photo to find words',
     'Photographier pour trouver des mots'
@@ -737,8 +750,14 @@ const uiCatalog = <String, (String, String)>{
   '關於': ('About', 'À propos'),
   '資料來源與授權': ('Data sources and licenses', 'Sources de données et licences'),
   '照片上的單字標示': ('Word labels on photos', 'Étiquettes de mots sur les photos'),
-  '複習卡片背面的照片上，顯示這個單字的標籤。': ('On the back of review cards, show this word’s label on the photo.', 'Au dos des cartes, affiche l’étiquette de ce mot sur la photo.'),
-  '複習幾次之後，這裡會顯示你的複習次數、程度變化和弱項單字。': ('After a few reviews, your review counts, level changes and weak words appear here.', 'Après quelques révisions, vos révisions, changements de niveau et mots faibles apparaîtront ici.'),
+  '複習卡片背面的照片上，顯示這個單字的標籤。': (
+    'On the back of review cards, show this word’s label on the photo.',
+    'Au dos des cartes, affiche l’étiquette de ce mot sur la photo.'
+  ),
+  '複習幾次之後，這裡會顯示你的複習次數、程度變化和弱項單字。': (
+    'After a few reviews, your review counts, level changes and weak words appear here.',
+    'Après quelques révisions, vos révisions, changements de niveau et mots faibles apparaîtront ici.'
+  ),
   '複習這些字': ('Review these words', 'Réviser ces mots'),
   'CEFR 等級變化': ('CEFR level changes', 'Changements de niveau CECR'),
   '蘋果': ('Apple', 'Pomme'),
@@ -753,9 +772,18 @@ const uiCatalog = <String, (String, String)>{
   '英式': ('British', 'Britannique'),
   '美式': ('American', 'Américain'),
   '收起': ('Show less', 'Réduire'),
-  '哪個單字最適合這張照片？': ('Which word fits this photo best?', 'Quel mot correspond le mieux à cette photo ?'),
-  '等級為詞頻估算': ('Level is estimated from word frequency', 'Niveau estimé d’après la fréquence'),
-  '等級為詞頻估算。': ('Level is estimated from word frequency.', 'Niveau estimé d’après la fréquence.'),
+  '哪個單字最適合這張照片？': (
+    'Which word fits this photo best?',
+    'Quel mot correspond le mieux à cette photo ?'
+  ),
+  '等級為詞頻估算': (
+    'Level is estimated from word frequency',
+    'Niveau estimé d’après la fréquence'
+  ),
+  '等級為詞頻估算。': (
+    'Level is estimated from word frequency.',
+    'Niveau estimé d’après la fréquence.'
+  ),
   '估': ('est.', 'est.'),
   '入門': ('Beginner', 'Débutant'),
   '基礎': ('Elementary', 'Élémentaire'),
@@ -824,12 +852,14 @@ String translateUi(String source, String language, {String learning = 'en'}) {
 }
 
 /// 「un exemple（陽性名詞）」, 「動詞・名詞」: grammar labels joined by
-/// （ ） ・ ； around untouched words. Only whole catalog entries are swapped.
+/// （ ） ・ ； ： around untouched words. Only whole catalog entries are swapped.
 String? _labelParts(String source, String language) {
   if (!RegExp(r'[一-鿿]').hasMatch(source)) return null;
   var changed = false;
-  final out = source.splitMapJoin(RegExp(r'[（）；・]'),
-      onMatch: (m) => m[0]!,
+  // ：joins a form's part of speech to its own meaning — dormant（現在分詞・
+  // 形容詞：asleep） (卡 #516).
+  final out = source.splitMapJoin(RegExp(r'[（）；・：]'),
+      onMatch: (m) => m[0] == '：' ? ': ' : m[0]!,
       onNonMatch: (piece) {
         final e = uiCatalog[piece.trim()];
         if (e == null) return piece;
@@ -858,9 +888,18 @@ class _UiTemplate {
 
 const _templateCopy = <String, (String, String)>{
   '顯示更多（{0}）': ('Show more ({0})', 'Afficher plus ({0})'),
-  '第 {0} / {1} 張　·　左右滑動換照片': ('Photo {0} of {1} · swipe to change photo', 'Photo {0} sur {1} · balayez pour changer de photo'),
-  '最近 7 天（每日）：{0}': ('Last 7 days (daily): {0}', '7 derniers jours (par jour) : {0}'),
-  '最近 4 週（每週）：{0}': ('Last 4 weeks (weekly): {0}', '4 dernières semaines (par semaine) : {0}'),
+  '第 {0} / {1} 張　·　左右滑動換照片': (
+    'Photo {0} of {1} · swipe to change photo',
+    'Photo {0} sur {1} · balayez pour changer de photo'
+  ),
+  '最近 7 天（每日）：{0}': (
+    'Last 7 days (daily): {0}',
+    '7 derniers jours (par jour) : {0}'
+  ),
+  '最近 4 週（每週）：{0}': (
+    'Last 4 weeks (weekly): {0}',
+    '4 dernières semaines (par semaine) : {0}'
+  ),
   '共 {0} 次複習。': ('{0} reviews in total.', '{0} révisions au total.'),
   '{0}・估': ('{0} · est.', '{0} · est.'),
   '單字難度 {0} · {1}': ('Difficulty: {0} · {1}', 'Difficulté : {0} · {1}'),
@@ -920,8 +959,14 @@ const _templateCopy = <String, (String, String)>{
     '{0}: {1} photos with labels at this level · {2} match at another level',
     '{0} : {1} photos avec étiquettes de ce niveau · {2} correspondent à un autre niveau'
   ),
-  '搜尋的字 {0} 在 {1}': ('Searched word {0} is at {1}', 'Le mot {0} est au niveau {1}'),
-  '搜尋的字 {0} 沒有分級': ('Searched word {0} has no level', 'Le mot {0} n’a pas de niveau'),
+  '搜尋的字 {0} 在 {1}': (
+    'Searched word {0} is at {1}',
+    'Le mot {0} est au niveau {1}'
+  ),
+  '搜尋的字 {0} 沒有分級': (
+    'Searched word {0} has no level',
+    'Le mot {0} n’a pas de niveau'
+  ),
   '切到 {0}': ('Switch to {0}', 'Passer à {0}'),
   '包含待補齊單字（{0}）': (
     'Include incomplete words ({0})',
@@ -951,7 +996,10 @@ const _templateCopy = <String, (String, String)>{
     'This photo format can’t be used. Please pick another.',
     'Ce format de photo n’est pas pris en charge. Choisissez-en une autre.'
   ),
-  '發生問題，請再試一次。': ('Something went wrong. Please try again.', 'Un problème est survenu. Réessayez.'),
+  '發生問題，請再試一次。': (
+    'Something went wrong. Please try again.',
+    'Un problème est survenu. Réessayez.'
+  ),
   '拍照失敗：{0}': ('Could not take photo: {0}', 'Échec de la prise de photo : {0}'),
   '儲存照片失敗：{0}': (
     'Could not save photo: {0}',
@@ -989,7 +1037,10 @@ const _templateCopy = <String, (String, String)>{
   ),
   // 匯出到 Anki (問題回報 #325)
   '匯出到 Anki': ('Export to Anki', 'Exporter vers Anki'),
-  '匯出到 Anki：選擇範圍': ('Export to Anki: choose what', 'Exporter vers Anki : choisir'),
+  '匯出到 Anki：選擇範圍': (
+    'Export to Anki: choose what',
+    'Exporter vers Anki : choisir'
+  ),
   '正在建立 Anki 匯入檔…': ('Creating the Anki file…', 'Création du fichier Anki…'),
   '產生 Anki 可匯入的檔案（含照片、發音與授權標示），用分享存出。': (
     'Creates a file Anki can import (with photos, pronunciation and license credits) and shares it.',
@@ -1011,13 +1062,22 @@ const _templateCopy = <String, (String, String)>{
     'A backup holds your words, photos, albums, review history and settings (not the photo-recognition API key).',
     'Une sauvegarde contient vos mots, photos, albums, historique de révision et réglages (sans la clé API de reconnaissance).'
   ),
-  '這不是拍照學單字的備份檔': ('This is not a 拍照學單字 backup file', 'Ce fichier n’est pas une sauvegarde de 拍照學單字'),
+  '這不是拍照學單字的備份檔': (
+    'This is not a 拍照學單字 backup file',
+    'Ce fichier n’est pas une sauvegarde de 拍照學單字'
+  ),
   '這個備份來自較新版本的 App，請先更新 App 再還原': (
     'This backup comes from a newer version of the app. Update the app, then restore.',
     'Cette sauvegarde vient d’une version plus récente de l’app. Mettez l’app à jour, puis restaurez.'
   ),
-  '備份檔已損壞，無法讀取': ('The backup file is damaged and cannot be read', 'Le fichier de sauvegarde est endommagé'),
-  '備份檔不完整，可能沒有存完': ('The backup file is incomplete; it may not have finished saving', 'Le fichier de sauvegarde est incomplet'),
+  '備份檔已損壞，無法讀取': (
+    'The backup file is damaged and cannot be read',
+    'Le fichier de sauvegarde est endommagé'
+  ),
+  '備份檔不完整，可能沒有存完': (
+    'The backup file is incomplete; it may not have finished saving',
+    'Le fichier de sauvegarde est incomplet'
+  ),
   '已建立備份：{0} 個單字、{1} 張照片、{2} 筆複習紀錄（照片 {3}）': (
     'Backup created: {0} words, {1} photos, {2} reviews (photos {3})',
     'Sauvegarde créée : {0} mots, {1} photos, {2} révisions (photos {3})'
