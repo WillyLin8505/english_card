@@ -820,14 +820,18 @@ class Tick:
         # each at most every idle_recurring_cooldown_hours; issues above keep their place in line
         if cfg.get("idle_recurring"):
             idle_h = float(cfg.get("idle_recurring_cooldown_hours", 3))
-            for c in cands:
-                card = full.get(c.get("task_id")) or {}
-                if (card.get("kind") != "recurring" or c["key"] in keys or card.get("agent")
-                        or not night_launch_ok(c["task_id"], self.night_tasks, self.now, self.cfg["night_last_launch"])
+            skip_t = set(self.caps.get("skip_tasks", []))
+            # standing cards not due yet live in board["recurring"], outside the deck pick_card reads
+            for card in board.get("recurring", []):
+                tid = card.get("id")
+                if (card.get("card", "task") != "task" or not tid or f"t{tid}" in keys or tid in skip_t
+                        or card.get("agent") or card.get("status") not in ("scheduled", "queued")
+                        or not night_launch_ok(tid, self.night_tasks, self.now, self.cfg["night_last_launch"])
                         or in_cooldown(card, self.now, idle_h)):
                     continue
-                keys.add(c["key"])
-                issues.append(c)
+                keys.add(f"t{tid}")
+                issues.append({"key": f"t{tid}", "task_id": tid, "issue_id": None, "kind": "recurring",
+                               "difficulty": card.get("difficulty") or 2, "title": card.get("title")})
         # 「[給 Mac]」 requests are for the Claude session on the owner's Mac, not for a CLI here
         issues = [c for c in issues if not str(c.get("title") or "").lstrip("問題回報 #0123456789：").startswith(MAC_PREFIX)
                   and MAC_PREFIX not in str(c.get("title") or "")[:40]
