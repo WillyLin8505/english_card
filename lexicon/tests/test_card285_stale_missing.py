@@ -75,3 +75,32 @@ def test_fill_missing_keeps_accepted_slot():
     res.add(0, "ai_translate", [c1, c2, c3])
     assert sorted(a.candidate.slot for a in res.adopted) == ["s1", "s2"]
     assert res.missing() == set()
+
+
+def test_failed_ai_retry_keeps_stored_candidates(session, fakes):
+    """Card #511 (問題回報 #210): Qwen paused (502) during a re-resolution
+    used to delete every AI Chinese the word had; they must survive."""
+    apple_data(fakes)
+    pipeline.process_word(session, "en", "zh-TW", "apple", None, "fill_missing")
+    ai_rows = lambda: {r.slot for r in session.execute(select(m.FieldCandidate).where(
+        m.FieldCandidate.lemma == "apple", m.FieldCandidate.field == "native_definition",
+        m.FieldCandidate.source == "ai_translate")).scalars()}
+    assert ai_rows() == {"s2"}
+    # the word gains a sense (a real gap → AI is asked again), and AI is down
+    fakes["kaikki"].data["definition"].append(
+        ({"pos": "noun", "gloss": "A city.", "sense_key": "s3", "gloss_language": "en"}, "s3", "noun"))
+    pipeline.process_word(session, "en", "zh-TW", "apple", ["definition"], "force_refresh")
+    fakes["ai_translate"].fail = {"*"}
+    for _ in range(2):  # the second run starts from a `failed` lookup row
+        calls = len(fakes["ai_translate"].calls)
+        pipeline.process_word(session, "en", "zh-TW", "apple", None, "reresolve")
+        assert len(fakes["ai_translate"].calls) > calls
+        session.expire_all()
+        assert ai_rows() == {"s2"}
+        nd = _fv(session, "native_definition")
+        assert {i.get("sense_key") for i in nd.items} >= {"s1", "s2"}
+    # AI back: only the gap is asked for, the kept s2 is not re-translated
+    fakes["ai_translate"].fail = set()
+    pipeline.process_word(session, "en", "zh-TW", "apple", None, "reresolve")
+    session.expire_all()
+    assert ai_rows() == {"s2", "s3"}

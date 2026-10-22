@@ -308,12 +308,16 @@ def stored_candidates(s: Session, ctx: Context, field_key: str, source: str):
         m.SourceLookup.target_language == ctx.target, m.SourceLookup.lemma == ctx.lemma,
         m.SourceLookup.native_language == nk, m.SourceLookup.field == field_key,
         m.SourceLookup.source == source)).scalar_one_or_none()
-    if look is None or look.status == "failed":
+    if look is None:
         return None
     rows = s.execute(select(m.FieldCandidate).where(
         m.FieldCandidate.target_language == ctx.target, m.FieldCandidate.lemma == ctx.lemma,
         m.FieldCandidate.native_language == nk, m.FieldCandidate.field == field_key,
         m.FieldCandidate.source == source).order_by(m.FieldCandidate.id)).scalars().all()
+    # Card 511: a failed retry keeps the rows an earlier lookup stored, so a
+    # failed lookup with rows still hands them back (the caller retries).
+    if look.status == "failed" and not rows:
+        return None
     cands = [Candidate(field_key, r.language, r.value, r.item_key, source=r.source, slot=r.slot,
                        source_record_id=r.source_record_id, confidence=r.confidence,
                        license=r.license, attribution=r.attribution, raw_value=r.raw_value,
@@ -495,6 +499,8 @@ def resolve_field(s: Session, ctx: Context, field_key: str, policy, steps, *, mo
                     if left:
                         ctx.memo[("missing_slots", field_key)] = left
                         stored, cands = cands, None
+                if cands is not None and looked == "failed":
+                    stored, cands = cands, None  # retry; keep what an earlier lookup stored
         try:
             if cands is None:
                 ctx.timeout, ctx.retries = st.timeout_s, st.retries
@@ -516,8 +522,17 @@ def resolve_field(s: Session, ctx: Context, field_key: str, policy, steps, *, mo
             errors += 1
             step.status, step.reason, step.error_kind = "failed", str(e), e.kind
             step.ms = int((time.time() - started) * 1000)
+            # Card 511: a failed retry (Qwen paused → 502) used to store [] and
+            # so delete every candidate this source had stored, e.g. all the
+            # AI Chinese of a word.  Keep them and keep them adopted.
             if write:
-                store_candidates(s, ctx, field_key, st.source, [], "failed", str(e))
+                ids = store_candidates(s, ctx, field_key, st.source, stored, "failed", str(e))
+                for c in stored:
+                    c._id = ids.get(c.key)
+            kept = [c for c in stored if c.valid and c.confidence >= st.min_confidence]
+            if kept:
+                pos_exclusions.drop_candidates(kept, ctx.target, ctx.lemma, field_key)
+                step.adopted = res.add(st.position, st.source, kept)
             recorder.attempt(ctx.lemma, field_key, st.source, "failed", step.ms, 0, str(e), e.kind,
                              attempts=st.retries + 1)
             if not st.continue_on_failure:

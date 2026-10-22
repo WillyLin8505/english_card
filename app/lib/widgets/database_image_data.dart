@@ -219,7 +219,8 @@ List<PinData> databasePins(Map<String, dynamic> image, LexiconPack pack,
         word: '${l['word']}',
         zh: entry?.nativeMeaning?.split('、').first ?? '',
         entryType: entry?.entryType ?? 'word',
-        linked: entry != null));
+        linked: entry != null,
+        lexemeId: entry?.id));
     if (max != null && pins.length >= max) break;
   }
   return pins;

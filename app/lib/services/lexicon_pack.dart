@@ -539,6 +539,15 @@ class LexSense {
 
   const LexSense(this.id, this.definition, this.native, this.nativeAi,
       {this.register, this.labels = const []});
+
+  /// Where a sense goes in a detail page's list (卡 #227 第 124 輪): 0 common,
+  /// 1 only ranked low (#184), 2 slang, obsolete, offensive and the like —
+  /// bank 動詞「把東西藏在直腸內」 after 「傾斜轉彎」.
+  int get displayTier {
+    final rare = labels.where(LexEntry.isRareLabel).toList();
+    if (rare.isEmpty) return 0;
+    return rare.every((l) => l.toLowerCase() == 'low_priority') ? 1 : 2;
+  }
 }
 
 class LexForm {
@@ -860,6 +869,9 @@ class LexEntry {
     // Quality rules (#184): senses ranked low by lexicon/backend/app/quality.py.
     'low_priority',
   };
+
+  static bool isRareLabel(String label) =>
+      _rareLabels.contains(label.toLowerCase());
 
   /// What a learner recalls from (問題回報 #18, owner decision 2026-10-01):
   /// the Chinese of the first two common senses, skipping obsolete, slang

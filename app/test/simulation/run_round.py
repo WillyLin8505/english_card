@@ -204,7 +204,11 @@ def main():
         # Replay the live deck list in a widget test without network calls or AI.
         deck_file = out / "decks.json"
         if not deck_file.exists():
-            with urllib.request.urlopen("http://127.0.0.1:8123/api/decks", timeout=60) as response:
+            # The app asks with its languages (問題回報 #501), so the replay must too;
+            # the bare list is every deck of every language.
+            target, native = LANGS[a.lang]
+            with urllib.request.urlopen(f"http://127.0.0.1:8123/api/decks?target={target}&native={native}",
+                                        timeout=60) as response:
                 deck_file.write_bytes(response.read())
     previous = out / "summary.json"
     results = (json.loads(previous.read_text(encoding="utf-8")).get("results", {})

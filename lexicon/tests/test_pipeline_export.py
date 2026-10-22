@@ -576,3 +576,20 @@ def test_store_safe_export_drops_derogatory_senses(session, fakes, tmp_path, mon
         with sqlite3.connect(tmp_path / rel.file_name / f'{rel.file_name}.sqlite') as con:
             return con.execute('SELECT count(*) FROM senses').fetchone()[0]
     assert n_senses() == n_senses(store_safe=True) + 1
+
+
+def test_homophone_problem_keeps_only_common_same_sound_words():
+    """問題回報 #526: blue→bleu, color→colour, ear→air are not shown as 同音字."""
+    from app.exporter import homophone_problem as hp
+
+    class T:
+        def __init__(self, status="full"):
+            self.status = status
+
+    ok = {"rarity": "common"}
+    assert hp("son", "sun", ok, 5.2, {"S AH N"}, {"S AH N"}, T()) is None
+    assert hp("bleu", "blue", {"rarity": "very_rare"}, 2.8, set(), set(), T()) == "rare"
+    assert hp("colour", "color", ok, 4.5, set(), set(), T()) == "spelling_variant"
+    assert hp("defence", "defense", ok, 4.2, set(), set(), T()) == "spelling_variant"
+    assert hp("air", "ear", ok, 5.0, {"IY1R"}, {"EH1R"}, T()) == "not_same_sound"
+    assert hp("marc", "mark", ok, 4.3, set(), set(), T("stub")) == "not_in_lexicon"

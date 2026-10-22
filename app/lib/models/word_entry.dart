@@ -21,10 +21,14 @@ String displayWord(String word) => word
 /// The headword on a card. French keeps its lowercase spelling (a capital
 /// makes a noun look like a proper noun) and a noun shows with its article —
 /// "un exemple" — taken from the gender inflection the pack builds as
-/// `frenchWithArticle` (問題回報 #499).
+/// `frenchWithArticle` (問題回報 #499). The article belongs to the noun only:
+/// a spelling whose shown part of speech is an adjective or a verb (populaire,
+/// pouvoir, être) also has a noun usage, and its "le populaire" inflection
+/// must not head the adjective (卡 #496 round 5), so pass [pos] when known.
 String headword(String word, String language,
-    {Iterable<Inflection> inflections = const []}) {
+    {Iterable<Inflection> inflections = const [], String? pos}) {
   if (language != 'fr') return displayWord(word);
+  if (pos != null && !_nounPos.contains(pos.toLowerCase())) return word;
   final lower = word.toLowerCase();
   for (final i in inflections) {
     final form = i.form.toLowerCase();
@@ -34,6 +38,8 @@ String headword(String word, String language,
   }
   return word;
 }
+
+const _nounPos = {'noun', 'n.', 'n', 'proper noun', 'proper_noun', '名詞'};
 
 /// How a related word relates to its [WordEntry]. Spec section 5
 /// (完整單字資訊欄位 · 詞彙關係): "關係需保存類型，不把所有相關字混成同一

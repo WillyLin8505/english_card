@@ -193,7 +193,11 @@ class DatabaseWordScreen extends StatelessWidget {
                       (sense) => (sense.native ?? '').trim().isNotEmpty)) ...[
                     TagChip(posLabel(usage.pos)),
                     const SizedBox(height: 6),
-                    for (final sense in usage.senses)
+                    // Common senses first, slang/obsolete last (卡 #227).
+                    for (final sense in [
+                      for (final tier in const [0, 1, 2])
+                        ...usage.senses.where((s) => s.displayTier == tier)
+                    ])
                       if ((sense.native ?? '').trim().isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.only(bottom: MSpace.xxs),

@@ -110,5 +110,7 @@
     396,
     4
   ],
-  "_qwen_wait_note": "要 Qwen 的卡在 Qwen 非工作時段先 blocked，qwen_schedule 開始時自動排回 queued。"
+  "_qwen_wait_note": "要 Qwen 的卡在 Qwen 非工作時段先 blocked，qwen_schedule 開始時自動排回 queued。",
+  "watchdog": true,
+  "watchdog_minutes": 60
 }

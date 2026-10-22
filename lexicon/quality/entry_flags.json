@@ -1,49 +1,241 @@
 {
+"abortion|noun": {
+"common_word_too_hard": "B2"
+},
+"about|verb": {
+"cefr_above_list": "A1"
+},
+"above|noun": {
+"cefr_above_list": "A1"
+},
+"above|prep": {
+"cefr_above_list": "A1"
+},
+"abstract|noun": {
+"cefr_above_list": "B1"
+},
+"abstract|verb": {
+"cefr_above_list": "B1"
+},
+"absurd|noun": {
+"cefr_above_list": "B2"
+},
+"abuse|verb": {
+"cefr_above_list": "B2"
+},
+"academic|noun": {
+"cefr_above_list": "B1"
+},
+"acceptable|noun": {
+"cefr_above_list": "A2"
+},
+"accidental|noun": {
+"cefr_above_list": "B1"
+},
+"accord|noun": {
+"common_word_too_hard": "B2"
+},
+"acid|adj": {
+"cefr_above_list": "B2"
+},
+"across|noun": {
+"cefr_above_list": "A2"
+},
+"action|adj": {
+"cefr_above_list": "A1"
+},
+"action|intj": {
+"cefr_above_list": "A1"
+},
+"action|verb": {
+"cefr_above_list": "A1"
+},
+"actual|noun": {
+"cefr_above_list": "B2"
+},
+"additional|noun": {
+"cefr_above_list": "A2"
+},
+"add|noun": {
+"cefr_above_list": "A1"
+},
+"adequate|det": {
+"cefr_above_list": "B2"
+},
+"adjacent|adj": {
+"common_word_too_hard": "B2"
+},
+"adjacent|noun": {
+"common_word_too_hard": "B2"
+},
+"adjacent|prep": {
+"common_word_too_hard": "B2"
+},
 "adolescents|unknown": {
 "inflected_form": "adolescent"
 },
+"adolescent|adj": {
+"common_word_too_hard": "B2"
+},
+"adult|verb": {
+"cefr_above_list": "A2"
+},
+"advance|adj": {
+"cefr_above_list": "B1"
+},
+"advantage|verb": {
+"cefr_above_list": "A2"
+},
 "advertising|verb": {
-"excluded_has_cefr": "A2",
 "inflected_form": "advertise"
 },
 "advising|unknown": {
 "inflected_form": "advise"
 },
+"advocate|noun": {
+"common_word_too_hard": "B2"
+},
+"advocate|verb": {
+"common_word_too_hard": "B2"
+},
+"aftermath|noun": {
+"common_word_too_hard": "B2"
+},
+"after|adj": {
+"cefr_above_list": "A1"
+},
+"after|conj": {
+"cefr_above_list": "A1"
+},
+"after|prep": {
+"cefr_above_list": "A1"
+},
+"age|verb": {
+"cefr_above_list": "A1"
+},
+"aggression|noun": {
+"common_word_too_hard": "B2"
+},
 "agonies|unknown": {
 "inflected_form": "agony"
+},
+"agonisingly|adv": {
+"inflected_form": "agonizingly"
 },
 "agonizing|unknown": {
 "inflected_form": "agonize"
 },
+"agricultural|noun": {
+"cefr_above_list": "B1"
+},
+"ahead|adj": {
+"cefr_above_list": "A2"
+},
+"air|verb": {
+"cefr_above_list": "A2"
+},
+"alert|adj": {
+"cefr_above_list": "B2"
+},
 "aligned|verb": {
 "inflected_form": "align"
+},
+"almighty|noun": {
+"common_word_too_hard": "B2"
 },
 "almonds|unknown": {
 "inflected_form": "almond"
 },
+"almost|noun": {
+"cefr_above_list": "A1"
+},
+"alongside|adv": {
+"cefr_above_list": "B2"
+},
+"along|prep": {
+"cefr_above_list": "A1"
+},
+"alright|intj": {
+"cefr_above_list": "A2"
+},
+"altogether|noun": {
+"cefr_above_list": "B1"
+},
+"aluminum foil|noun": {
+"excluded_has_cefr": "B2",
+"inflected_form": "aluminium foil"
+},
+"amber|adj": {
+"common_word_too_hard": "B2"
+},
+"ambience|noun": {
+"inflected_form": "ambiance"
+},
+"amendment|noun": {
+"common_word_too_hard": "B2"
+},
 "amnesiæ|unknown": {
 "inflected_form": "amnesia"
+},
+"ample|det": {
+"cefr_above_list": "B2"
 },
 "anchoring|unknown": {
 "inflected_form": "anchor"
 },
-"anguisht|unknown": {
-"inflected_form": "anguish"
+"anger|verb": {
+"cefr_above_list": "B1"
+},
+"angry|noun": {
+"cefr_above_list": "A1"
 },
 "animals|noun": {
 "inflected_form": "animal"
 },
+"animal|adj": {
+"cefr_above_list": "A1"
+},
 "annotations|noun": {
 "inflected_form": "annotation"
 },
+"another|adj": {
+"cefr_above_list": "A1"
+},
+"another|pron": {
+"cefr_above_list": "A1"
+},
 "antennae|unknown": {
 "inflected_form": "antenna"
+},
+"anything|adv": {
+"cefr_above_list": "A1"
+},
+"anything|noun": {
+"cefr_above_list": "A1"
+},
+"anything|verb": {
+"cefr_above_list": "A1"
+},
+"anywhere|noun": {
+"cefr_above_list": "A2"
+},
+"anywhere|pron": {
+"cefr_above_list": "A2"
+},
+"any|adj": {
+"cefr_above_list": "A1"
+},
+"any|det": {
+"cefr_above_list": "A1"
 },
 "appled|unknown": {
 "inflected_form": "apple"
 },
 "apples|unknown": {
 "inflected_form": "apple"
+},
+"apple|verb": {
+"cefr_above_list": "A1"
 },
 "applied|unknown": {
 "inflected_form": "apply"
@@ -57,8 +249,17 @@
 "applying|unknown": {
 "inflected_form": "apply"
 },
+"apply|adj": {
+"inflected_form": "appley"
+},
 "apricots|noun": {
 "inflected_form": "apricot"
+},
+"apron|verb": {
+"cefr_above_list": "A1"
+},
+"arbitrary|noun": {
+"common_word_too_hard": "B2"
 },
 "arched|verb": {
 "inflected_form": "arch"
@@ -72,14 +273,55 @@
 "arching|verb": {
 "inflected_form": "arch"
 },
+"architectural|adj": {
+"common_word_too_hard": "B2"
+},
+"arch|adj": {
+"cefr_above_list": "B2"
+},
+"arch|verb": {
+"cefr_above_list": "B2"
+},
+"arise|noun": {
+"cefr_above_list": "B1"
+},
+"armchair|adj": {
+"cefr_above_list": "A2"
+},
+"around|adj": {
+"cefr_above_list": "A1"
+},
+"around|prep": {
+"cefr_above_list": "A1"
+},
+"article|verb": {
+"cefr_above_list": "A1"
+},
 "artisans|unknown": {
 "inflected_form": "artisan"
+},
+"ask|noun": {
+"cefr_above_list": "A1"
+},
+"asleep|adv": {
+"cefr_above_list": "A2"
+},
+"aspect|verb": {
+"cefr_above_list": "B1"
+},
+"assault|verb": {
+"cefr_above_list": "B2"
+},
+"associate|adj": {
+"cefr_above_list": "B1"
+},
+"associate|noun": {
+"cefr_above_list": "B1"
 },
 "aten|unknown": {
 "inflected_form": "eat"
 },
 "attached|verb": {
-"excluded_has_cefr": "B2",
 "inflected_form": "attach"
 },
 "attaching|unknown": {
@@ -88,8 +330,26 @@
 "attacht|unknown": {
 "inflected_form": "attach"
 },
+"attorney|noun": {
+"common_word_too_hard": "B2"
+},
+"attorney|verb": {
+"common_word_too_hard": "B2"
+},
+"audio|noun": {
+"cefr_above_list": "A2"
+},
 "audits|unknown": {
 "inflected_form": "audit"
+},
+"automatic|noun": {
+"cefr_above_list": "A2"
+},
+"auto|noun": {
+"common_word_too_hard": "B2"
+},
+"auto|verb": {
+"common_word_too_hard": "B2"
 },
 "avocadi|unknown": {
 "inflected_form": "avocado"
@@ -97,11 +357,56 @@
 "avocados|unknown": {
 "inflected_form": "avocado"
 },
+"aware|verb": {
+"cefr_above_list": "B1"
+},
+"away|adj": {
+"cefr_above_list": "A1"
+},
+"away|intj": {
+"cefr_above_list": "A1"
+},
+"away|verb": {
+"cefr_above_list": "A1"
+},
+"awful|adv": {
+"cefr_above_list": "A2"
+},
 "babies|noun": {
 "inflected_form": "baby"
 },
+"baby|adj": {
+"cefr_above_list": "A1"
+},
+"baby|verb": {
+"cefr_above_list": "A1"
+},
+"backburner|noun": {
+"inflected_form": "back burner"
+},
+"background|adj": {
+"cefr_above_list": "A2"
+},
+"background|verb": {
+"cefr_above_list": "A2"
+},
+"bad-mouth|verb": {
+"inflected_form": "badmouth"
+},
+"bad|intj": {
+"cefr_above_list": "A1"
+},
+"bad|noun": {
+"cefr_above_list": "A1"
+},
+"bag|verb": {
+"cefr_above_list": "A1"
+},
 "balconies|unknown": {
 "inflected_form": "balcony"
+},
+"ballad|verb": {
+"cefr_above_list": "B2"
 },
 "balled|unknown": {
 "inflected_form": "ball"
@@ -109,27 +414,77 @@
 "balloting|unknown": {
 "inflected_form": "ballot"
 },
+"ballot|verb": {
+"cefr_above_list": "B2"
+},
 "balls|noun": {
 "inflected_form": "ball"
 },
-"bangs|noun": {
-"proper_or_brand": "專有名詞、品牌或含數字"
+"ball|intj": {
+"cefr_above_list": "A1"
 },
-"bangs|verb": {
-"inflected_form": "bang",
-"proper_or_brand": "專有名詞、品牌或含數字"
+"ball|verb": {
+"cefr_above_list": "A1"
+},
+"banana|adj": {
+"cefr_above_list": "A1"
+},
+"bandage|verb": {
+"cefr_above_list": "B1"
+},
+"band|verb": {
+"cefr_above_list": "A1"
+},
+"bang|adv": {
+"cefr_above_list": "B1"
+},
+"bang|intj": {
+"cefr_above_list": "B1"
 },
 "banished|unknown": {
 "inflected_form": "banish"
 },
-"basiled|unknown": {
-"inflected_form": "basil"
+"banner|noun": {
+"common_word_too_hard": "B2"
+},
+"barge|verb": {
+"common_word_too_hard": "B2"
+},
+"barrel|verb": {
+"cefr_above_list": "B1"
+},
+"barren|noun": {
+"cefr_above_list": "B2"
+},
+"bar|adv": {
+"cefr_above_list": "A1"
+},
+"base|adj": {
+"cefr_above_list": "A2"
+},
+"basic|noun": {
+"cefr_above_list": "A2"
 },
 "basked|unknown": {
 "inflected_form": "bask"
 },
-"beaded|verb": {
-"inflected_form": "bead"
+"basketball|verb": {
+"cefr_above_list": "A1"
+},
+"basket|verb": {
+"cefr_above_list": "A2"
+},
+"bathroom|verb": {
+"cefr_above_list": "A1"
+},
+"bath|verb": {
+"cefr_above_list": "A1"
+},
+"baulk|noun": {
+"inflected_form": "balk"
+},
+"beach|verb": {
+"cefr_above_list": "A1"
 },
 "beamed|unknown": {
 "inflected_form": "beam"
@@ -137,45 +492,244 @@
 "beams|unknown": {
 "inflected_form": "beam"
 },
+"beam|verb": {
+"cefr_above_list": "B2"
+},
+"bear|adj": {
+"cefr_above_list": "A1"
+},
+"beat|adj": {
+"cefr_above_list": "B1"
+},
+"beauty|adj": {
+"cefr_above_list": "A2"
+},
+"beauty|intj": {
+"cefr_above_list": "A2"
+},
 "bedded|unknown": {
 "inflected_form": "bed"
 },
+"bed|verb": {
+"cefr_above_list": "A1"
+},
+"beef|verb": {
+"cefr_above_list": "A1"
+},
+"before|conj": {
+"cefr_above_list": "A1"
+},
+"before|noun": {
+"cefr_above_list": "A1"
+},
+"before|prep": {
+"cefr_above_list": "A1"
+},
+"begin|noun": {
+"cefr_above_list": "A1"
+},
+"behind|adj": {
+"cefr_above_list": "A1"
+},
+"behind|prep": {
+"cefr_above_list": "A1"
+},
+"bell|verb": {
+"cefr_above_list": "A1"
+},
+"below|prep": {
+"cefr_above_list": "A1"
+},
+"belt|verb": {
+"cefr_above_list": "A2"
+},
+"bench|verb": {
+"cefr_above_list": "A2"
+},
+"bent|noun": {
+"cefr_above_list": "B1"
+},
 "bent|verb": {
-"excluded_has_cefr": "B1",
 "inflected_form": "bend"
+},
+"besides|prep": {
+"cefr_above_list": "A2"
+},
+"bestow|noun": {
+"cefr_above_list": "B2"
+},
+"beyond|adv": {
+"cefr_above_list": "A2"
+},
+"beyond|noun": {
+"cefr_above_list": "A2"
 },
 "bicycles|unknown": {
 "inflected_form": "bicycle"
 },
+"bicycle|verb": {
+"cefr_above_list": "A1"
+},
 "bicycling|unknown": {
 "inflected_form": "bicycle"
+},
+"bid|noun": {
+"cefr_above_list": "B2"
+},
+"big|adv": {
+"cefr_above_list": "A1"
+},
+"big|noun": {
+"cefr_above_list": "A1"
+},
+"bike|verb": {
+"cefr_above_list": "A1"
+},
+"binding|adj": {
+"common_word_too_hard": "B2"
 },
 "binding|verb": {
 "inflected_form": "bind"
 },
+"bind|noun": {
+"cefr_above_list": "B2"
+},
+"binge|verb": {
+"common_word_too_hard": "B2"
+},
+"bin|verb": {
+"cefr_above_list": "B1"
+},
+"birch|adj": {
+"common_word_too_hard": "B2"
+},
+"bird|adj": {
+"cefr_above_list": "A1"
+},
+"bird|verb": {
+"cefr_above_list": "A1"
+},
+"birthday|verb": {
+"cefr_above_list": "A1"
+},
+"birth|adj": {
+"cefr_above_list": "A1"
+},
+"birth|verb": {
+"cefr_above_list": "A1"
+},
+"biscuit|verb": {
+"cefr_above_list": "A1"
+},
+"bishop|verb": {
+"cefr_above_list": "B1"
+},
 "bitten|verb": {
 "inflected_form": "bite"
+},
+"bit|adj": {
+"cefr_above_list": "A2"
+},
+"bit|verb": {
+"cefr_above_list": "A2"
+},
+"black-and-white|adj": {
+"excluded_has_cefr": "A1",
+"inflected_form": "black and white"
+},
+"black-and-white|noun": {
+"excluded_has_cefr": "B2",
+"inflected_form": "black and white"
 },
 "blacks|unknown": {
 "inflected_form": "black"
 },
+"black|verb": {
+"cefr_above_list": "A1"
+},
 "bladed|unknown": {
 "inflected_form": "blade"
 },
-"blanch|verb": {
-"proper_or_brand": "專有名詞、品牌或含數字"
+"blade|verb": {
+"cefr_above_list": "B2"
+},
+"blanket|adj": {
+"cefr_above_list": "A2"
+},
+"blanket|verb": {
+"cefr_above_list": "A2"
 },
 "blasted|unknown": {
 "inflected_form": "blast"
 },
+"bleach|verb": {
+"common_word_too_hard": "B2"
+},
+"blind|noun": {
+"cefr_above_list": "B1"
+},
+"blind|verb": {
+"cefr_above_list": "B1"
+},
 "blistering|unknown": {
 "inflected_form": "blister"
+},
+"bloody|verb": {
+"cefr_above_list": "B2"
+},
+"blood|verb": {
+"cefr_above_list": "A2"
 },
 "blossoming|unknown": {
 "inflected_form": "blossom"
 },
+"blossom|verb": {
+"cefr_above_list": "B2"
+},
+"blow|intj": {
+"cefr_above_list": "A1"
+},
+"blue|verb": {
+"cefr_above_list": "A1"
+},
+"bluff|verb": {
+"common_word_too_hard": "B2"
+},
+"boat|verb": {
+"cefr_above_list": "A1"
+},
+"body|verb": {
+"cefr_above_list": "A1"
+},
 "boils|noun": {
 "inflected_form": "boil"
+},
+"boil|noun": {
+"cefr_above_list": "A2"
+},
+"bold-faced|adj": {
+"inflected_form": "boldfaced"
+},
+"bond|verb": {
+"cefr_above_list": "B1"
+},
+"bone|adj": {
+"cefr_above_list": "A1"
+},
+"bone|adv": {
+"cefr_above_list": "A1"
+},
+"bone|verb": {
+"cefr_above_list": "A1"
+},
+"bonus|verb": {
+"cefr_above_list": "A2"
+},
+"boom|intj": {
+"cefr_above_list": "B1"
+},
+"boot|verb": {
+"cefr_above_list": "B1"
 },
 "bordered|unknown": {
 "inflected_form": "border"
@@ -183,11 +737,65 @@
 "bordering|unknown": {
 "inflected_form": "border"
 },
+"border|verb": {
+"cefr_above_list": "B1"
+},
+"boss|verb": {
+"cefr_above_list": "A2"
+},
+"both|adj": {
+"cefr_above_list": "A1"
+},
+"both|det": {
+"cefr_above_list": "A1"
+},
+"both|pron": {
+"cefr_above_list": "A1"
+},
 "bottled|unknown": {
 "inflected_form": "bottle"
 },
 "bottling|unknown": {
 "inflected_form": "bottle"
+},
+"boundary|noun": {
+"common_word_too_hard": "B2"
+},
+"bound|noun": {
+"cefr_above_list": "B1"
+},
+"bound|verb": {
+"cefr_above_list": "B1"
+},
+"box|verb": {
+"cefr_above_list": "A1"
+},
+"boycott|noun": {
+"common_word_too_hard": "B2"
+},
+"boy|intj": {
+"cefr_above_list": "A1"
+},
+"brain|verb": {
+"cefr_above_list": "A1"
+},
+"brand|verb": {
+"cefr_above_list": "A2"
+},
+"brass|adj": {
+"cefr_above_list": "B1"
+},
+"brave|noun": {
+"cefr_above_list": "A2"
+},
+"brave|verb": {
+"cefr_above_list": "A2"
+},
+"breach|noun": {
+"common_word_too_hard": "B2"
+},
+"breach|verb": {
+"common_word_too_hard": "B2"
 },
 "breaded|unknown": {
 "inflected_form": "bread"
@@ -195,11 +803,23 @@
 "breading|unknown": {
 "inflected_form": "bread"
 },
+"bread|verb": {
+"cefr_above_list": "A1"
+},
+"breakfast|verb": {
+"cefr_above_list": "A1"
+},
 "breaking|unknown": {
 "inflected_form": "break"
 },
 "breaks|unknown": {
 "inflected_form": "break"
+},
+"breast|verb": {
+"cefr_above_list": "B1"
+},
+"breeze|verb": {
+"cefr_above_list": "A2"
 },
 "brewed|verb": {
 "inflected_form": "brew"
@@ -207,8 +827,31 @@
 "brews|unknown": {
 "inflected_form": "brew"
 },
+"brew|noun": {
+"common_word_too_hard": "B2"
+},
+"brick|adj": {
+"cefr_above_list": "B1"
+},
+"brick|verb": {
+"cefr_above_list": "B1"
+},
+"bridge|verb": {
+"cefr_above_list": "A1"
+},
+"bright|verb": {
+"cefr_above_list": "A1"
+},
+"brilliant|noun": {
+"cefr_above_list": "A2"
+},
+"broadcast|adj": {
+"cefr_above_list": "B1"
+},
+"broad|noun": {
+"cefr_above_list": "B1"
+},
 "broken|verb": {
-"excluded_has_cefr": "A1",
 "inflected_form": "break"
 },
 "broke|unknown": {
@@ -217,45 +860,68 @@
 "bronzer|unknown": {
 "inflected_form": "bronze"
 },
+"bronze|adj": {
+"cefr_above_list": "B1"
+},
+"bronze|verb": {
+"cefr_above_list": "B1"
+},
 "brooding|unknown": {
 "inflected_form": "brood"
 },
 "broods|unknown": {
 "inflected_form": "brood"
 },
+"brother|intj": {
+"cefr_above_list": "A1"
+},
 "browns|unknown": {
 "inflected_form": "brown"
+},
+"brown|verb": {
+"cefr_above_list": "A1"
 },
 "brushstrokes|noun": {
 "inflected_form": "brushstroke"
 },
+"bubble|verb": {
+"cefr_above_list": "B1"
+},
 "bucked|unknown": {
 "inflected_form": "buck"
 },
-"buckle|noun": {
-"proper_or_brand": "專有名詞、品牌或含數字"
+"bucket|verb": {
+"cefr_above_list": "A1"
 },
-"buckle|verb": {
-"proper_or_brand": "專有名詞、品牌或含數字"
+"budget|verb": {
+"cefr_above_list": "A2"
 },
-"buck|noun": {
-"proper_or_brand": "專有名詞、品牌或含數字"
-},
-"buck|verb": {
-"proper_or_brand": "專有名詞、品牌或含數字"
+"bud|verb": {
+"cefr_above_list": "B2"
 },
 "building|verb": {
-"excluded_has_cefr": "A1",
 "inflected_form": "build"
+},
+"build|noun": {
+"cefr_above_list": "A1"
+},
+"bull|adj": {
+"cefr_above_list": "B1"
+},
+"bull|verb": {
+"cefr_above_list": "B1"
+},
+"bump|intj": {
+"cefr_above_list": "B1"
+},
+"bump|noun": {
+"cefr_above_list": "B1"
+},
+"bunch|verb": {
+"cefr_above_list": "B1"
 },
 "buoyed|verb": {
 "inflected_form": "buoy"
-},
-"burrow|noun": {
-"proper_or_brand": "專有名詞、品牌或含數字"
-},
-"burrow|verb": {
-"proper_or_brand": "專有名詞、品牌或含數字"
 },
 "bursars|unknown": {
 "inflected_form": "bursar"
@@ -266,11 +932,63 @@
 "bushes|unknown": {
 "inflected_form": "bush"
 },
+"bush|adj": {
+"cefr_above_list": "A2"
+},
+"bush|adv": {
+"cefr_above_list": "A2"
+},
+"bush|verb": {
+"cefr_above_list": "A2"
+},
+"business|adj": {
+"cefr_above_list": "A1"
+},
 "bussed|unknown": {
 "inflected_form": "bus"
 },
+"bustle|noun": {
+"cefr_above_list": "B2"
+},
+"bust|adj": {
+"cefr_above_list": "B1"
+},
+"bust|noun": {
+"cefr_above_list": "B1"
+},
+"busy|verb": {
+"cefr_above_list": "A1"
+},
+"bus|verb": {
+"cefr_above_list": "A1"
+},
 "butted|verb": {
 "inflected_form": "but"
+},
+"butter|verb": {
+"cefr_above_list": "A1"
+},
+"button|verb": {
+"cefr_above_list": "A1"
+},
+"butt|verb": {
+"common_word_too_hard": "B2"
+},
+"buy|noun": {
+"cefr_above_list": "A1"
+},
+"by-law|noun": {
+"excluded_has_cefr": "A2",
+"inflected_form": "bylaw"
+},
+"bye|adj": {
+"cefr_above_list": "A1"
+},
+"bye|intj": {
+"cefr_above_list": "A1"
+},
+"cake|verb": {
+"cefr_above_list": "A1"
 },
 "caking|unknown": {
 "inflected_form": "cake"
@@ -278,11 +996,47 @@
 "calendars|unknown": {
 "inflected_form": "calendar"
 },
+"calm|noun": {
+"cefr_above_list": "B1"
+},
+"calm|verb": {
+"cefr_above_list": "B1"
+},
+"campus|verb": {
+"cefr_above_list": "A2"
+},
 "canaries|unknown": {
 "inflected_form": "canary"
 },
+"candle|verb": {
+"cefr_above_list": "B1"
+},
+"candy|verb": {
+"cefr_above_list": "A1"
+},
+"cane|verb": {
+"cefr_above_list": "B2"
+},
 "caning|unknown": {
 "inflected_form": "cane"
+},
+"capitalism|noun": {
+"common_word_too_hard": "B2"
+},
+"capital|adj": {
+"cefr_above_list": "A2"
+},
+"captain|verb": {
+"cefr_above_list": "A2"
+},
+"cap|verb": {
+"cefr_above_list": "A1"
+},
+"carbon|verb": {
+"cefr_above_list": "B2"
+},
+"cardinal|adj": {
+"common_word_too_hard": "B2"
 },
 "carding|unknown": {
 "inflected_form": "card"
@@ -290,11 +1044,29 @@
 "cards|unknown": {
 "inflected_form": "card"
 },
+"card|verb": {
+"cefr_above_list": "A1"
+},
+"career|verb": {
+"cefr_above_list": "B1"
+},
+"carpenter|verb": {
+"cefr_above_list": "C1"
+},
 "carpeted|unknown": {
 "inflected_form": "carpet"
 },
+"carpet|verb": {
+"cefr_above_list": "B1"
+},
+"carry|noun": {
+"cefr_above_list": "A1"
+},
 "cars|unknown": {
 "inflected_form": "car"
+},
+"cart|verb": {
+"common_word_too_hard": "B2"
 },
 "carved|verb": {
 "inflected_form": "carve"
@@ -302,45 +1074,131 @@
 "carven|unknown": {
 "inflected_form": "carve"
 },
+"carve|noun": {
+"cefr_above_list": "B2"
+},
+"case|verb": {
+"cefr_above_list": "A1"
+},
+"cash|verb": {
+"cefr_above_list": "A2"
+},
 "casting|unknown": {
 "inflected_form": "cast"
+},
+"cast|adj": {
+"cefr_above_list": "B2"
+},
+"casualty|noun": {
+"common_word_too_hard": "B2"
+},
+"catalog|verb": {
+"cefr_above_list": "B2",
+"excluded_has_cefr": "C2",
+"inflected_form": "catalogue"
+},
+"cat|verb": {
+"cefr_above_list": "A1"
 },
 "ceded|unknown": {
 "inflected_form": "cede"
 },
-"ceiling|verb": {
-"excluded_has_cefr": "B2",
-"inflected_form": "ceil"
+"celestial|noun": {
+"common_word_too_hard": "B2"
 },
-"celled|unknown": {
-"inflected_form": "cell"
-},
-"celling|unknown": {
-"inflected_form": "cell"
+"cellular|noun": {
+"common_word_too_hard": "B2"
 },
 "centered|verb": {
 "inflected_form": "center"
 },
+"center|adj": {
+"cefr_above_list": "A2"
+},
+"center|verb": {
+"cefr_above_list": "A2"
+},
+"centigrade|adj": {
+"cefr_above_list": "B2"
+},
+"ceramic|adj": {
+"common_word_too_hard": "B2"
+},
 "cereals|noun": {
 "inflected_form": "cereal"
+},
+"certain|det": {
+"cefr_above_list": "A2"
 },
 "chained|verb": {
 "inflected_form": "chain"
 },
-"chant|noun": {
-"proper_or_brand": "專有名詞、品牌或含數字"
+"chainmail|noun": {
+"excluded_has_cefr": "C2",
+"inflected_form": "chain mail"
 },
-"chant|verb": {
-"proper_or_brand": "專有名詞、品牌或含數字"
+"chain|verb": {
+"cefr_above_list": "A2"
+},
+"chairman|verb": {
+"cefr_above_list": "A2"
+},
+"chair|verb": {
+"cefr_above_list": "A1"
+},
+"chamber|noun": {
+"common_word_too_hard": "B2"
+},
+"chamber|verb": {
+"common_word_too_hard": "B2"
+},
+"champion|adj": {
+"cefr_above_list": "B1"
+},
+"chance|verb": {
+"cefr_above_list": "A2"
+},
+"channel|verb": {
+"cefr_above_list": "B1"
 },
 "chartered|unknown": {
 "inflected_form": "charter"
 },
+"cheap|noun": {
+"cefr_above_list": "A2"
+},
+"cheap|verb": {
+"cefr_above_list": "A2"
+},
+"check|intj": {
+"cefr_above_list": "A1"
+},
+"cheek|verb": {
+"cefr_above_list": "A2"
+},
 "cheesed|unknown": {
 "inflected_form": "cheese"
 },
+"cheese|intj": {
+"cefr_above_list": "A1"
+},
+"cheese|verb": {
+"cefr_above_list": "A1"
+},
+"chef|verb": {
+"cefr_above_list": "A2"
+},
 "cherries|unknown": {
 "inflected_form": "cherry"
+},
+"chest|verb": {
+"cefr_above_list": "A2"
+},
+"chicken|adj": {
+"cefr_above_list": "A1"
+},
+"chicken|verb": {
+"cefr_above_list": "A1"
 },
 "childrens|unknown": {
 "inflected_form": "child"
@@ -351,17 +1209,35 @@
 "chilled|unknown": {
 "inflected_form": "chill"
 },
-"chives|verb": {
-"inflected_form": "chive"
+"chill|adj": {
+"cefr_above_list": "C1"
+},
+"chip|verb": {
+"cefr_above_list": "B2"
 },
 "chocolates|unknown": {
 "inflected_form": "chocolate"
 },
+"chocolate|adj": {
+"cefr_above_list": "A1"
+},
+"choice|adj": {
+"cefr_above_list": "A2"
+},
 "chopped|verb": {
 "inflected_form": "chop"
 },
+"chop|noun": {
+"cefr_above_list": "B2"
+},
 "chucked|verb": {
 "inflected_form": "chuck"
+},
+"chuck|verb": {
+"common_word_too_hard": "B2"
+},
+"cigarette|verb": {
+"cefr_above_list": "A2"
 },
 "circled|unknown": {
 "inflected_form": "circle"
@@ -369,17 +1245,65 @@
 "circles|unknown": {
 "inflected_form": "circle"
 },
+"circuit|verb": {
+"cefr_above_list": "B2"
+},
+"circular|noun": {
+"cefr_above_list": "B1"
+},
+"circular|verb": {
+"cefr_above_list": "B1"
+},
+"cite|noun": {
+"cefr_above_list": "C1"
+},
+"citrus|adj": {
+"common_word_too_hard": "B2"
+},
+"civilian|adj": {
+"common_word_too_hard": "B2"
+},
+"civilian|noun": {
+"common_word_too_hard": "B2"
+},
 "clapped|unknown": {
 "inflected_form": "clap"
 },
 "clapping|unknown": {
 "inflected_form": "clap"
 },
+"clap|noun": {
+"cefr_above_list": "B2"
+},
 "clays|unknown": {
 "inflected_form": "clay"
 },
+"clean|adv": {
+"cefr_above_list": "A1"
+},
+"clean|noun": {
+"cefr_above_list": "A1"
+},
+"clear|noun": {
+"cefr_above_list": "A2"
+},
 "cleaves|unknown": {
 "inflected_form": "cleave"
+},
+"clench|noun": {
+"cefr_above_list": "C1"
+},
+"cliche|noun": {
+"inflected_form": "cliché"
+},
+"cliche|verb": {
+"inflected_form": "cliché"
+},
+"click|intj": {
+"cefr_above_list": "A2"
+},
+"clock|verb": {
+"cefr_above_list": "A1"
 },
 "clomb|unknown": {
 "inflected_form": "climb"
@@ -393,8 +1317,23 @@
 "closes|unknown": {
 "inflected_form": "close"
 },
+"closet|verb": {
+"common_word_too_hard": "B2"
+},
+"close|adv": {
+"cefr_above_list": "A1"
+},
+"close|noun": {
+"cefr_above_list": "A1"
+},
 "clouded|unknown": {
 "inflected_form": "cloud"
+},
+"cloud|verb": {
+"cefr_above_list": "A1"
+},
+"club|verb": {
+"cefr_above_list": "A1"
 },
 "clumb|unknown": {
 "inflected_form": "climb"
@@ -402,21 +1341,68 @@
 "clusters|unknown": {
 "inflected_form": "cluster"
 },
+"cluster|noun": {
+"common_word_too_hard": "B2"
+},
+"cluster|verb": {
+"common_word_too_hard": "B2"
+},
 "clutcht|unknown": {
 "inflected_form": "clutch"
+},
+"clutch|adj": {
+"cefr_above_list": "C1"
+},
+"coach|adv": {
+"cefr_above_list": "A1"
+},
+"coal|adj": {
+"cefr_above_list": "B1"
 },
 "coarser|unknown": {
 "inflected_form": "coarse"
 },
+"coat|verb": {
+"cefr_above_list": "A1"
+},
+"cock|verb": {
+"common_word_too_hard": "B2"
+},
+"cocoa|adj": {
+"cefr_above_list": "B2"
+},
+"code|verb": {
+"cefr_above_list": "A1"
+},
 "coffee beans|noun": {
-"excluded_has_cefr": "B1",
 "inflected_form": "coffee bean"
+},
+"coffee maker|noun": {
+"inflected_form": "coffeemaker"
+},
+"coffee|adj": {
+"cefr_above_list": "A1"
+},
+"coffee|verb": {
+"cefr_above_list": "A1"
 },
 "coiled|verb": {
 "inflected_form": "coil"
 },
-"colored|verb": {
-"inflected_form": "color"
+"coil|verb": {
+"common_word_too_hard": "B2"
+},
+"coin|verb": {
+"cefr_above_list": "A2"
+},
+"collar|verb": {
+"cefr_above_list": "B1"
+},
+"collect|adv": {
+"cefr_above_list": "A1"
+},
+"collect|noun": {
+"cefr_above_list": "A1"
 },
 "colores|unknown": {
 "inflected_form": "color"
@@ -424,8 +1410,29 @@
 "colors|unknown": {
 "inflected_form": "color"
 },
+"color|adj": {
+"cefr_above_list": "A1"
+},
+"combat|noun": {
+"common_word_too_hard": "B2"
+},
+"combat|verb": {
+"common_word_too_hard": "B2"
+},
+"combine|noun": {
+"cefr_above_list": "B1"
+},
 "combs|unknown": {
 "inflected_form": "comb"
+},
+"come|prep": {
+"cefr_above_list": "A1"
+},
+"comfortable|noun": {
+"cefr_above_list": "A2"
+},
+"comfort|verb": {
+"cefr_above_list": "B1"
 },
 "commenced|unknown": {
 "inflected_form": "commence"
@@ -433,32 +1440,104 @@
 "commences|unknown": {
 "inflected_form": "commence"
 },
+"commence|verb": {
+"common_word_too_hard": "B2"
+},
+"commentary|noun": {
+"common_word_too_hard": "B2"
+},
 "commissioned|unknown": {
 "inflected_form": "commission"
+},
+"commissioner|noun": {
+"common_word_too_hard": "B2"
+},
+"commit|noun": {
+"cefr_above_list": "B1"
+},
+"communicate|adj": {
+"cefr_above_list": "A2"
+},
+"communist|adj": {
+"common_word_too_hard": "B2"
+},
+"communist|noun": {
+"common_word_too_hard": "B2"
+},
+"commy|noun": {
+"inflected_form": "commie"
+},
+"composite|adj": {
+"common_word_too_hard": "B2"
+},
+"composite|verb": {
+"common_word_too_hard": "B2"
 },
 "compounded|unknown": {
 "inflected_form": "compound"
 },
+"compound|adj": {
+"cefr_above_list": "B1"
+},
+"compound|verb": {
+"cefr_above_list": "B1"
+},
+"comprehensive|noun": {
+"cefr_above_list": "B2"
+},
+"compress|verb": {
+"cefr_above_list": "B2"
+},
 "comprest|unknown": {
 "inflected_form": "compress"
 },
-"conceited|verb": {
-"inflected_form": "conceit"
+"computer|verb": {
+"cefr_above_list": "A1"
 },
 "conceived|unknown": {
 "inflected_form": "conceive"
 },
-"condescending|verb": {
-"inflected_form": "condescend"
+"concentrate|adj": {
+"cefr_above_list": "A2"
+},
+"concentrate|noun": {
+"cefr_above_list": "A2"
+},
+"concert|verb": {
+"cefr_above_list": "A1"
+},
+"concrete|verb": {
+"cefr_above_list": "B2"
 },
 "confections|unknown": {
 "inflected_form": "confection"
 },
+"confederate|noun": {
+"common_word_too_hard": "B2"
+},
+"confederate|verb": {
+"common_word_too_hard": "B2"
+},
+"confirm|adv": {
+"cefr_above_list": "B1"
+},
+"conflict|verb": {
+"cefr_above_list": "B1"
+},
 "confrontations|unknown": {
 "inflected_form": "confrontation"
 },
+"confrontation|noun": {
+"common_word_too_hard": "B2"
+},
 "confronted|unknown": {
 "inflected_form": "confront"
+},
+"confuse|adj": {
+"cefr_above_list": "A2"
+},
+"conjure|noun": {
+"cefr_above_list": "C1"
 },
 "connected|verb": {
 "inflected_form": "connect"
@@ -466,14 +1545,35 @@
 "connotations|unknown": {
 "inflected_form": "connotation"
 },
+"consistent|noun": {
+"cefr_above_list": "B2"
+},
+"consist|noun": {
+"cefr_above_list": "A2"
+},
 "constants|unknown": {
 "inflected_form": "constant"
 },
 "constituents|noun": {
 "inflected_form": "constituent"
 },
+"constituent|adj": {
+"common_word_too_hard": "B2"
+},
+"constitutional|adj": {
+"common_word_too_hard": "B2"
+},
+"constitutional|noun": {
+"common_word_too_hard": "B2"
+},
 "constricting|unknown": {
 "inflected_form": "constrict"
+},
+"construct|noun": {
+"cefr_above_list": "B1"
+},
+"consult|noun": {
+"cefr_above_list": "B2"
 },
 "contained|unknown": {
 "inflected_form": "contain"
@@ -481,23 +1581,104 @@
 "contains|unknown": {
 "inflected_form": "contain"
 },
+"contemporary|noun": {
+"cefr_above_list": "B2"
+},
+"continent|adj": {
+"cefr_above_list": "A2"
+},
+"continue|noun": {
+"cefr_above_list": "A2"
+},
+"contrast|verb": {
+"cefr_above_list": "A2"
+},
 "controls|noun": {
 "inflected_form": "control"
+},
+"controversial|noun": {
+"cefr_above_list": "B1"
+},
+"conventional|noun": {
+"cefr_above_list": "B2"
+},
+"convert|noun": {
+"cefr_above_list": "B2"
 },
 "cooked|unknown": {
 "inflected_form": "cook"
 },
+"cookie|verb": {
+"cefr_above_list": "A1"
+},
+"cool|noun": {
+"cefr_above_list": "A1"
+},
+"cope|intj": {
+"cefr_above_list": "B2"
+},
+"core|adj": {
+"cefr_above_list": "B2"
+},
+"core|verb": {
+"cefr_above_list": "B2"
+},
+"corner|intj": {
+"cefr_above_list": "A1"
+},
+"corner|verb": {
+"cefr_above_list": "A1"
+},
+"corn|verb": {
+"cefr_above_list": "A1"
+},
+"corporate|noun": {
+"cefr_above_list": "B2"
+},
+"correct|adv": {
+"cefr_above_list": "A1"
+},
+"correct|intj": {
+"cefr_above_list": "A1"
+},
+"correct|noun": {
+"cefr_above_list": "A1"
+},
+"cotton|adj": {
+"cefr_above_list": "B1"
+},
+"cotton|verb": {
+"cefr_above_list": "B1"
+},
+"counter|adj": {
+"cefr_above_list": "B1"
+},
+"country|adj": {
+"cefr_above_list": "A2"
+},
+"county|adj": {
+"cefr_above_list": "B1"
+},
+"couple|verb": {
+"cefr_above_list": "A2"
+},
 "coups|unknown": {
 "inflected_form": "coup"
 },
-"courier|noun": {
-"proper_or_brand": "專有名詞、品牌或含數字"
+"coup|noun": {
+"common_word_too_hard": "B2"
 },
-"courier|verb": {
-"proper_or_brand": "專有名詞、品牌或含數字"
+"course|adv": {
+"cefr_above_list": "A1"
+},
+"course|verb": {
+"cefr_above_list": "A1"
 },
 "courting|unknown": {
 "inflected_form": "court"
+},
+"covenant|verb": {
+"common_word_too_hard": "B2"
 },
 "covered|verb": {
 "inflected_form": "cover"
@@ -505,30 +1686,108 @@
 "covers|unknown": {
 "inflected_form": "cover"
 },
+"cow|verb": {
+"cefr_above_list": "A1"
+},
 "cracked|verb": {
 "inflected_form": "crack"
+},
+"crane|verb": {
+"common_word_too_hard": "B2"
+},
+"crash|adj": {
+"cefr_above_list": "B1"
+},
+"crater|verb": {
+"cefr_above_list": "B2"
+},
+"crazy|adv": {
+"cefr_above_list": "A2"
 },
 "creases|unknown": {
 "inflected_form": "crease"
 },
+"crease|verb": {
+"cefr_above_list": "B2"
+},
 "creasing|unknown": {
 "inflected_form": "crease"
+},
+"creative|noun": {
+"cefr_above_list": "A2"
+},
+"credential|verb": {
+"cefr_above_list": "C1"
+},
+"credit|verb": {
+"cefr_above_list": "A2"
+},
+"crescent|adj": {
+"common_word_too_hard": "B2"
+},
+"crest|verb": {
+"common_word_too_hard": "B2"
+},
+"crew|verb": {
+"cefr_above_list": "B2"
+},
+"crime|verb": {
+"cefr_above_list": "A2"
+},
+"crimson|noun": {
+"common_word_too_hard": "B2"
+},
+"crimson|verb": {
+"common_word_too_hard": "B2"
 },
 "cringed|unknown": {
 "inflected_form": "cringe"
 },
+"cringe|adj": {
+"common_word_too_hard": "B2"
+},
+"cringe|noun": {
+"common_word_too_hard": "B2"
+},
 "crinkled|verb": {
 "inflected_form": "crinkle"
 },
-"crippled|verb": {
-"inflected_form": "cripple"
+"cripple|verb": {
+"cefr_above_list": "B2"
+},
+"crisp|adj": {
+"cefr_above_list": "A2"
+},
+"crisp|verb": {
+"cefr_above_list": "A2"
+},
+"critical|noun": {
+"cefr_above_list": "B1"
+},
+"critique|noun": {
+"common_word_too_hard": "B2"
+},
+"critique|verb": {
+"common_word_too_hard": "B2"
 },
 "croissants|unknown": {
 "inflected_form": "croissant"
 },
+"crop|verb": {
+"cefr_above_list": "B1"
+},
+"cross-section|adj": {
+"common_word_too_hard": "B2"
+},
+"cross-section|noun": {
+"excluded_has_cefr": "A2",
+"inflected_form": "cross section"
+},
 "crossing|verb": {
-"excluded_has_cefr": "B1",
 "inflected_form": "cross"
+},
+"cross|adj": {
+"cefr_above_list": "A2"
 },
 "crowned|unknown": {
 "inflected_form": "crown"
@@ -536,29 +1795,74 @@
 "crowning|verb": {
 "inflected_form": "crown"
 },
+"crown|verb": {
+"cefr_above_list": "A2"
+},
 "crows|unknown": {
 "inflected_form": "crow"
+},
+"crow|adj": {
+"cefr_above_list": "B1"
+},
+"crow|verb": {
+"cefr_above_list": "B1"
+},
+"crumb|verb": {
+"cefr_above_list": "C1"
+},
+"crust|verb": {
+"common_word_too_hard": "B2"
+},
+"crystal|adj": {
+"common_word_too_hard": "B2"
+},
+"crystal|noun": {
+"common_word_too_hard": "B2"
+},
+"cuff|verb": {
+"cefr_above_list": "B2"
 },
 "cultivated|verb": {
 "inflected_form": "cultivate"
 },
+"culture|verb": {
+"cefr_above_list": "A1"
+},
+"cup|verb": {
+"cefr_above_list": "A1"
+},
 "curled|verb": {
 "inflected_form": "curl"
+},
+"curl|verb": {
+"cefr_above_list": "B2"
 },
 "curtained|unknown": {
 "inflected_form": "curtain"
 },
-"curved|verb": {
-"inflected_form": "curve"
+"curtain|verb": {
+"cefr_above_list": "B1"
 },
 "curves|unknown": {
 "inflected_form": "curve"
 },
+"curve|verb": {
+"cefr_above_list": "B1"
+},
 "curving|unknown": {
 "inflected_form": "curve"
 },
-"cushioned|verb": {
-"inflected_form": "cushion"
+"cushion|verb": {
+"cefr_above_list": "B1"
+},
+"custody|noun": {
+"common_word_too_hard": "B2"
+},
+"customary|noun": {
+"cefr_above_list": "C1"
+},
+"custom|adj": {
+"cefr_above_list": "A2"
 },
 "cuts|noun": {
 "inflected_form": "cut"
@@ -566,11 +1870,56 @@
 "cutting|unknown": {
 "inflected_form": "cut"
 },
-"dappled|verb": {
-"inflected_form": "dapple"
+"cut|adj": {
+"cefr_above_list": "A1"
+},
+"cut|intj": {
+"cefr_above_list": "A1"
+},
+"daily|noun": {
+"cefr_above_list": "A2"
+},
+"daily|verb": {
+"cefr_above_list": "A2"
+},
+"damn|intj": {
+"cefr_above_list": "B2"
+},
+"damn|noun": {
+"cefr_above_list": "B2"
+},
+"damp|noun": {
+"cefr_above_list": "B1"
+},
+"damp|verb": {
+"cefr_above_list": "B1"
+},
+"dark|noun": {
+"cefr_above_list": "A1"
+},
+"dart|verb": {
+"common_word_too_hard": "B2"
 },
 "dawned|unknown": {
 "inflected_form": "dawn"
+},
+"dawn|verb": {
+"cefr_above_list": "B2"
+},
+"dead|adv": {
+"cefr_above_list": "A2"
+},
+"dead|noun": {
+"cefr_above_list": "A2"
+},
+"dear|intj": {
+"cefr_above_list": "A1"
+},
+"decent|adv": {
+"cefr_above_list": "B2"
+},
+"deck|verb": {
+"cefr_above_list": "B2"
 },
 "decorated|verb": {
 "inflected_form": "decorate"
@@ -578,14 +1927,38 @@
 "decorating|unknown": {
 "inflected_form": "decorate"
 },
+"deep|noun": {
+"cefr_above_list": "A2"
+},
+"deep|verb": {
+"cefr_above_list": "A2"
+},
+"defensive|adj": {
+"common_word_too_hard": "B2"
+},
+"defensive|noun": {
+"common_word_too_hard": "B2"
+},
 "defied|unknown": {
 "inflected_form": "defy"
 },
-"defies|unknown": {
-"inflected_form": "defy"
+"delicious|noun": {
+"cefr_above_list": "A1"
+},
+"democratic|noun": {
+"cefr_above_list": "B1"
+},
+"demoralise|verb": {
+"inflected_form": "demoralize"
 },
 "denotes|verb": {
 "inflected_form": "denote"
+},
+"dense|noun": {
+"cefr_above_list": "B2"
+},
+"density|noun": {
+"common_word_too_hard": "B2"
 },
 "deported|unknown": {
 "inflected_form": "deport"
@@ -593,23 +1966,71 @@
 "deserted|unknown": {
 "inflected_form": "desert"
 },
+"desert|adj": {
+"cefr_above_list": "A2"
+},
 "designed|unknown": {
 "inflected_form": "design"
 },
 "desks|noun": {
 "inflected_form": "desk"
 },
+"desk|verb": {
+"cefr_above_list": "A1"
+},
+"desperate|adv": {
+"cefr_above_list": "B1"
+},
+"desperate|noun": {
+"cefr_above_list": "B1"
+},
+"despite|prep": {
+"cefr_above_list": "B1"
+},
 "desserts|unknown": {
 "inflected_form": "dessert"
 },
-"deter|verb": {
-"proper_or_brand": "專有名詞、品牌或含數字"
+"detail|verb": {
+"cefr_above_list": "A2"
+},
+"detention|noun": {
+"common_word_too_hard": "B2"
 },
 "devotees|unknown": {
 "inflected_form": "devotee"
 },
+"diamond|adj": {
+"cefr_above_list": "A2"
+},
+"diamond|verb": {
+"cefr_above_list": "A2"
+},
+"diary|verb": {
+"cefr_above_list": "A2"
+},
+"diet|adj": {
+"cefr_above_list": "A2"
+},
+"diet|verb": {
+"cefr_above_list": "A2"
+},
+"die|noun": {
+"cefr_above_list": "A2"
+},
+"differentiate|noun": {
+"common_word_too_hard": "B2"
+},
+"differentiate|verb": {
+"common_word_too_hard": "B2"
+},
+"differ|noun": {
+"cefr_above_list": "B1"
+},
 "dimensions|unknown": {
 "inflected_form": "dimension"
+},
+"dime|verb": {
+"cefr_above_list": "B2"
 },
 "diminished|unknown": {
 "inflected_form": "diminish"
@@ -617,8 +2038,47 @@
 "dimmer|unknown": {
 "inflected_form": "dim"
 },
+"dim|verb": {
+"cefr_above_list": "B2"
+},
+"dinner|verb": {
+"cefr_above_list": "A1"
+},
+"dip|noun": {
+"cefr_above_list": "B2"
+},
+"dirty|noun": {
+"cefr_above_list": "A1"
+},
+"dirty|verb": {
+"cefr_above_list": "A1"
+},
+"dirt|adj": {
+"cefr_above_list": "B1"
+},
+"discipline|verb": {
+"cefr_above_list": "B2"
+},
+"discount|adj": {
+"cefr_above_list": "B1"
+},
+"discount|verb": {
+"cefr_above_list": "B1"
+},
+"disgrace|verb": {
+"cefr_above_list": "B2"
+},
 "dishing|verb": {
 "inflected_form": "dish"
+},
+"dish|verb": {
+"cefr_above_list": "A1"
+},
+"disk|verb": {
+"cefr_above_list": "B1"
+},
+"dismal|noun": {
+"cefr_above_list": "C1"
 },
 "dispersed|unknown": {
 "inflected_form": "disperse"
@@ -629,23 +2089,94 @@
 "displays|unknown": {
 "inflected_form": "display"
 },
+"dispute|verb": {
+"cefr_above_list": "B2"
+},
+"disregard|verb": {
+"cefr_above_list": "B2"
+},
 "distilled|unknown": {
 "inflected_form": "distill"
+},
+"district|verb": {
+"cefr_above_list": "B1"
 },
 "disturbed|verb": {
 "inflected_form": "disturb"
 },
-"disturbing|verb": {
-"inflected_form": "disturb"
+"disturbing|adj": {
+"common_word_too_hard": "B2"
+},
+"ditch|noun": {
+"common_word_too_hard": "B2"
 },
 "dividing|verb": {
 "inflected_form": "divide"
 },
-"dogged|verb": {
-"inflected_form": "dog"
+"doctor|verb": {
+"cefr_above_list": "A1"
+},
+"doctrine|noun": {
+"common_word_too_hard": "B2"
+},
+"document|verb": {
+"cefr_above_list": "B1"
 },
 "dogs|unknown": {
 "inflected_form": "dog"
+},
+"dog|adj": {
+"cefr_above_list": "A1"
+},
+"dog|verb": {
+"cefr_above_list": "A1"
+},
+"domain|noun": {
+"common_word_too_hard": "B2"
+},
+"donut|noun": {
+"excluded_has_cefr": "C1",
+"inflected_form": "doughnut"
+},
+"door|verb": {
+"cefr_above_list": "A1"
+},
+"dope|adj": {
+"common_word_too_hard": "B2"
+},
+"dope|verb": {
+"common_word_too_hard": "B2"
+},
+"dork|noun": {
+"excluded_has_cefr": "C1",
+"inflected_form": "dirk"
+},
+"dorm|verb": {
+"cefr_above_list": "B2"
+},
+"double|adv": {
+"cefr_above_list": "A2"
+},
+"downtown|adj": {
+"cefr_above_list": "A2"
+},
+"downtown|noun": {
+"cefr_above_list": "A2"
+},
+"down|noun": {
+"cefr_above_list": "A1"
+},
+"down|verb": {
+"cefr_above_list": "A1"
+},
+"doze|verb": {
+"cefr_above_list": "B1"
+},
+"draft|adj": {
+"cefr_above_list": "B2"
+},
+"drag|noun": {
+"cefr_above_list": "B1"
 },
 "draining|verb": {
 "inflected_form": "drain"
@@ -660,14 +2191,25 @@
 "inflected_form": "drape"
 },
 "drawing|verb": {
-"excluded_has_cefr": "A2",
 "inflected_form": "draw"
+},
+"draw|intj": {
+"cefr_above_list": "A1"
+},
+"dreadful|noun": {
+"cefr_above_list": "B2"
 },
 "dreading|unknown": {
 "inflected_form": "dread"
 },
-"dressing|verb": {
-"inflected_form": "dress"
+"dread|noun": {
+"cefr_above_list": "B2"
+},
+"dream|adj": {
+"cefr_above_list": "A1"
+},
+"dress|adj": {
+"cefr_above_list": "A1"
 },
 "dried|verb": {
 "inflected_form": "dry"
@@ -681,6 +2223,10 @@
 "drinking|unknown": {
 "inflected_form": "drink"
 },
+"dripping|verb": {
+"excluded_has_cefr": "C2",
+"inflected_form": "drip"
+},
 "driving|unknown": {
 "inflected_form": "drive"
 },
@@ -690,17 +2236,86 @@
 "droplets|unknown": {
 "inflected_form": "droplet"
 },
+"drug|verb": {
+"cefr_above_list": "A2"
+},
 "drying|unknown": {
 "inflected_form": "dry"
+},
+"dry|noun": {
+"cefr_above_list": "A1"
+},
+"due|noun": {
+"cefr_above_list": "A1"
 },
 "dusting|unknown": {
 "inflected_form": "dust"
 },
+"dusty|noun": {
+"cefr_above_list": "B1"
+},
+"dust|verb": {
+"cefr_above_list": "A2"
+},
+"dwarf|adj": {
+"cefr_above_list": "B2"
+},
+"each|adj": {
+"cefr_above_list": "A1"
+},
+"each|det": {
+"cefr_above_list": "A1"
+},
+"each|pron": {
+"cefr_above_list": "A1"
+},
+"early|noun": {
+"cefr_above_list": "A1"
+},
 "earsful|unknown": {
 "inflected_form": "earful"
 },
+"earth|verb": {
+"cefr_above_list": "A2"
+},
+"easy|adv": {
+"cefr_above_list": "A1"
+},
+"easy|intj": {
+"cefr_above_list": "A1"
+},
+"easy|noun": {
+"cefr_above_list": "A1"
+},
 "eaten|verb": {
 "inflected_form": "eat"
+},
+"eat|noun": {
+"cefr_above_list": "A1"
+},
+"eclipse|verb": {
+"common_word_too_hard": "B2"
+},
+"economy|adj": {
+"cefr_above_list": "B1"
+},
+"ecstatic|noun": {
+"cefr_above_list": "B2"
+},
+"edge|verb": {
+"cefr_above_list": "B1"
+},
+"effective|noun": {
+"cefr_above_list": "B1"
+},
+"effect|verb": {
+"cefr_above_list": "A2"
+},
+"efficient|noun": {
+"cefr_above_list": "B1"
+},
+"effort|verb": {
+"cefr_above_list": "A2"
 },
 "egged|unknown": {
 "inflected_form": "egg"
@@ -711,8 +2326,50 @@
 "eggs|noun": {
 "inflected_form": "egg"
 },
+"egg|verb": {
+"cefr_above_list": "A1"
+},
+"either|conj": {
+"cefr_above_list": "A1"
+},
+"either|det": {
+"cefr_above_list": "A1"
+},
+"either|pron": {
+"cefr_above_list": "A1"
+},
+"elderly|noun": {
+"cefr_above_list": "A2"
+},
+"electric|noun": {
+"cefr_above_list": "A2"
+},
+"electronic|noun": {
+"cefr_above_list": "B1"
+},
+"elect|adj": {
+"cefr_above_list": "B2"
+},
+"elect|noun": {
+"cefr_above_list": "B2"
+},
+"elementary|noun": {
+"cefr_above_list": "A1"
+},
+"elite|adj": {
+"cefr_above_list": "B2"
+},
 "elongated|unknown": {
 "inflected_form": "elongate"
+},
+"elongate|adj": {
+"cefr_above_list": "C1"
+},
+"elsewhere|noun": {
+"cefr_above_list": "A2"
+},
+"else|adj": {
+"cefr_above_list": "A1"
 },
 "embossed|verb": {
 "inflected_form": "emboss"
@@ -720,20 +2377,88 @@
 "emerged|unknown": {
 "inflected_form": "emerge"
 },
+"emerge|noun": {
+"inflected_form": "emerg"
+},
 "emitting|unknown": {
 "inflected_form": "emit"
+},
+"employ|noun": {
+"cefr_above_list": "B2"
 },
 "emptied|unknown": {
 "inflected_form": "empty"
 },
+"empty|noun": {
+"cefr_above_list": "A2"
+},
+"empty|verb": {
+"cefr_above_list": "A2"
+},
 "encapsulated|unknown": {
 "inflected_form": "encapsulate"
+},
+"endeavor|verb": {
+"cefr_above_list": "B2"
+},
+"enforcement|noun": {
+"common_word_too_hard": "B2"
+},
+"engine|verb": {
+"cefr_above_list": "B1"
+},
+"enough|adj": {
+"cefr_above_list": "A2"
+},
+"enough|det": {
+"cefr_above_list": "A2"
+},
+"enough|pron": {
+"cefr_above_list": "A2"
+},
+"entire|noun": {
+"cefr_above_list": "B1"
+},
+"envelope|verb": {
+"cefr_above_list": "A2",
+"excluded_has_cefr": "C2",
+"inflected_form": "envelop"
+},
+"environmental|noun": {
+"cefr_above_list": "B1"
 },
 "environs|noun": {
 "inflected_form": "environ"
 },
+"error|verb": {
+"cefr_above_list": "A2"
+},
+"escort|verb": {
+"common_word_too_hard": "B2"
+},
+"essay|verb": {
+"cefr_above_list": "A2"
+},
+"essential|noun": {
+"cefr_above_list": "B1"
+},
 "etched|verb": {
 "inflected_form": "etch"
+},
+"even|noun": {
+"cefr_above_list": "A2"
+},
+"everyday|noun": {
+"cefr_above_list": "A1"
+},
+"everything|noun": {
+"cefr_above_list": "A1"
+},
+"everywhere|noun": {
+"cefr_above_list": "A1"
+},
+"every|adj": {
+"cefr_above_list": "A1"
 },
 "evidenced|unknown": {
 "inflected_form": "evidence"
@@ -741,15 +2466,62 @@
 "evidences|unknown": {
 "inflected_form": "evidence"
 },
+"evidence|verb": {
+"cefr_above_list": "A2"
+},
+"evolutionary|adj": {
+"common_word_too_hard": "B2"
+},
+"exactly|intj": {
+"cefr_above_list": "A2"
+},
+"examine|noun": {
+"cefr_above_list": "B1"
+},
+"exam|verb": {
+"cefr_above_list": "A2"
+},
+"except|prep": {
+"cefr_above_list": "A2"
+},
+"except|verb": {
+"cefr_above_list": "A2"
+},
 "excised|unknown": {
 "inflected_form": "excise"
 },
 "excited|verb": {
-"excluded_has_cefr": "A1",
 "inflected_form": "excite"
+},
+"exclusive|noun": {
+"cefr_above_list": "B1"
+},
+"exempt|verb": {
+"common_word_too_hard": "B2"
+},
+"expenditure|noun": {
+"common_word_too_hard": "B2"
+},
+"expense|verb": {
+"cefr_above_list": "B1"
+},
+"experimental|adj": {
+"common_word_too_hard": "B2"
+},
+"exploit|noun": {
+"cefr_above_list": "B2"
 },
 "exposed|verb": {
 "inflected_form": "expose"
+},
+"expose|noun": {
+"cefr_above_list": "B1"
+},
+"expressive|noun": {
+"cefr_above_list": "B2"
+},
+"express|adj": {
+"cefr_above_list": "A2"
 },
 "extended|unknown": {
 "inflected_form": "extend"
@@ -757,51 +2529,188 @@
 "exteriors|unknown": {
 "inflected_form": "exterior"
 },
+"exterior|adj": {
+"cefr_above_list": "C1"
+},
+"external|noun": {
+"cefr_above_list": "B2"
+},
+"extraordinary|noun": {
+"cefr_above_list": "B1"
+},
+"ex|verb": {
+"common_word_too_hard": "B2"
+},
 "eyed|unknown": {
 "inflected_form": "eye"
 },
 "eyes|noun": {
 "inflected_form": "eye"
 },
+"eye|verb": {
+"cefr_above_list": "A1"
+},
+"factor|verb": {
+"cefr_above_list": "B2"
+},
+"fade|adj": {
+"cefr_above_list": "B1"
+},
+"fade|noun": {
+"cefr_above_list": "B1"
+},
+"faggit|noun": {
+"inflected_form": "faggot"
+},
+"fail|adj": {
+"cefr_above_list": "A2"
+},
+"fail|noun": {
+"cefr_above_list": "A2"
+},
+"faint|noun": {
+"cefr_above_list": "B1"
+},
+"fairy|adj": {
+"cefr_above_list": "A1"
+},
+"fair|adv": {
+"cefr_above_list": "A1"
+},
+"faithful|noun": {
+"cefr_above_list": "B1"
+},
+"fallen|noun": {
+"cefr_above_list": "B1"
+},
 "fallen|verb": {
-"excluded_has_cefr": "B1",
 "inflected_form": "fall"
 },
 "falling|unknown": {
 "inflected_form": "fall"
 },
-"famine|noun": {
-"proper_or_brand": "專有名詞、品牌或含數字"
+"false|noun": {
+"cefr_above_list": "A1"
+},
+"false|verb": {
+"cefr_above_list": "A1"
+},
+"falter|noun": {
+"cefr_above_list": "B2"
+},
+"familiar|noun": {
+"cefr_above_list": "A2"
+},
+"family|adj": {
+"cefr_above_list": "A1"
 },
 "fans|unknown": {
 "inflected_form": "fan"
 },
+"fan|verb": {
+"cefr_above_list": "A1"
+},
+"farm|verb": {
+"cefr_above_list": "A1"
+},
+"far|noun": {
+"cefr_above_list": "A2"
+},
+"fashion|verb": {
+"cefr_above_list": "A2"
+},
+"fast|noun": {
+"cefr_above_list": "A1"
+},
+"fast|verb": {
+"cefr_above_list": "A1"
+},
+"fate|verb": {
+"cefr_above_list": "B2"
+},
+"father|verb": {
+"cefr_above_list": "A1"
+},
+"fault|verb": {
+"cefr_above_list": "A2"
+},
 "feathered|unknown": {
 "inflected_form": "feather"
+},
+"feather|verb": {
+"cefr_above_list": "A2"
 },
 "fed|unknown": {
 "inflected_form": "feed"
 },
+"feedback|verb": {
+"cefr_above_list": "B2"
+},
 "feeding|unknown": {
 "inflected_form": "feed"
+},
+"fee|verb": {
+"cefr_above_list": "A2"
 },
 "fell|unknown": {
 "inflected_form": "fall"
 },
+"feminine|noun": {
+"common_word_too_hard": "B2"
+},
+"fence|verb": {
+"cefr_above_list": "A2"
+},
+"festival|adj": {
+"cefr_above_list": "A1"
+},
+"feud|verb": {
+"common_word_too_hard": "B2"
+},
+"few|adj": {
+"cefr_above_list": "A2"
+},
 "fiddled|unknown": {
 "inflected_form": "fiddle"
+},
+"field|verb": {
+"cefr_above_list": "A1"
 },
 "filled|unknown": {
 "inflected_form": "fill"
 },
+"fill|noun": {
+"cefr_above_list": "A1"
+},
+"filter|verb": {
+"cefr_above_list": "B1"
+},
+"find|noun": {
+"cefr_above_list": "A1"
+},
+"fine|intj": {
+"cefr_above_list": "A1"
+},
+"finger|verb": {
+"cefr_above_list": "B1"
+},
 "fink|noun": {
 "person_name": "人名"
 },
-"fink|verb": {
-"person_name": "人名"
+"fin|verb": {
+"common_word_too_hard": "B2"
 },
 "fired|unknown": {
 "inflected_form": "fire"
+},
+"fire|adj": {
+"cefr_above_list": "A1"
+},
+"fire|intj": {
+"cefr_above_list": "A1"
+},
+"first|verb": {
+"cefr_above_list": "A1"
 },
 "fished|unknown": {
 "inflected_form": "fish"
@@ -812,8 +2721,11 @@
 "fittings|unknown": {
 "inflected_form": "fitting"
 },
-"fitting|verb": {
-"inflected_form": "fit"
+"flag|verb": {
+"cefr_above_list": "A1"
+},
+"flair|verb": {
+"common_word_too_hard": "B2"
 },
 "flakes|unknown": {
 "inflected_form": "flake"
@@ -821,14 +2733,26 @@
 "flames|unknown": {
 "inflected_form": "flame"
 },
+"flame|adj": {
+"cefr_above_list": "B2"
+},
+"flame|verb": {
+"cefr_above_list": "B2"
+},
 "flapping|verb": {
 "inflected_form": "flap"
 },
 "flats|noun": {
 "inflected_form": "flat"
 },
+"fleet|verb": {
+"cefr_above_list": "B2"
+},
 "flew|unknown": {
 "inflected_form": "fly"
+},
+"flexible|noun": {
+"cefr_above_list": "B2"
 },
 "flickering|verb": {
 "inflected_form": "flicker"
@@ -836,14 +2760,23 @@
 "flings|unknown": {
 "inflected_form": "fling"
 },
-"flooded|verb": {
-"inflected_form": "flood"
-},
 "flooding|unknown": {
 "inflected_form": "flood"
 },
+"floor|verb": {
+"cefr_above_list": "A1"
+},
+"flop|adv": {
+"common_word_too_hard": "B2"
+},
+"flop|noun": {
+"common_word_too_hard": "B2"
+},
 "florae|unknown": {
 "inflected_form": "flora"
+},
+"floral|noun": {
+"common_word_too_hard": "B2"
 },
 "floras|unknown": {
 "inflected_form": "flora"
@@ -860,17 +2793,38 @@
 "flowering|unknown": {
 "inflected_form": "flower"
 },
+"flower|verb": {
+"cefr_above_list": "A1"
+},
 "flowing|unknown": {
 "inflected_form": "flow"
 },
 "flown|unknown": {
 "inflected_form": "fly"
 },
+"flunk|noun": {
+"cefr_above_list": "B1"
+},
+"flute|verb": {
+"cefr_above_list": "B1"
+},
 "fluttering|unknown": {
 "inflected_form": "flutter"
 },
+"flutter|verb": {
+"cefr_above_list": "B2"
+},
+"flux|verb": {
+"common_word_too_hard": "B2"
+},
 "flyer|unknown": {
 "inflected_form": "fly"
+},
+"foam|verb": {
+"common_word_too_hard": "B2"
+},
+"foil|verb": {
+"common_word_too_hard": "B2"
 },
 "folded|unknown": {
 "inflected_form": "fold"
@@ -881,9 +2835,23 @@
 "folds|unknown": {
 "inflected_form": "fold"
 },
+"folk|adj": {
+"cefr_above_list": "B1"
+},
 "fooling around|verb": {
-"excluded_has_cefr": "C1",
 "inflected_form": "fool around"
+},
+"football|verb": {
+"cefr_above_list": "A1"
+},
+"foot|verb": {
+"cefr_above_list": "B1"
+},
+"foreign|noun": {
+"cefr_above_list": "A1"
+},
+"foremost|adv": {
+"common_word_too_hard": "B2"
 },
 "forested|unknown": {
 "inflected_form": "forest"
@@ -891,8 +2859,20 @@
 "forests|unknown": {
 "inflected_form": "forest"
 },
+"forest|verb": {
+"cefr_above_list": "A2"
+},
+"forever|noun": {
+"cefr_above_list": "A2"
+},
 "forgers|unknown": {
 "inflected_form": "forger"
+},
+"fork|verb": {
+"cefr_above_list": "A2"
+},
+"formal|noun": {
+"cefr_above_list": "B1"
 },
 "formed|unknown": {
 "inflected_form": "form"
@@ -900,14 +2880,54 @@
 "forming|unknown": {
 "inflected_form": "form"
 },
+"forth|noun": {
+"excluded_has_cefr": "B1",
+"inflected_form": "fourth"
+},
+"forward|adj": {
+"cefr_above_list": "A2"
+},
+"forward|noun": {
+"cefr_above_list": "A2"
+},
+"forward|verb": {
+"cefr_above_list": "A2"
+},
+"foster|adj": {
+"common_word_too_hard": "B2"
+},
+"foster|noun": {
+"common_word_too_hard": "B2"
+},
+"foster|verb": {
+"common_word_too_hard": "B2"
+},
+"foul|noun": {
+"cefr_above_list": "B2"
+},
+"foul|verb": {
+"cefr_above_list": "B2"
+},
+"founder|verb": {
+"common_word_too_hard": "B2"
+},
 "fractions|noun": {
 "inflected_form": "fraction"
+},
+"fraction|verb": {
+"cefr_above_list": "C1"
 },
 "fractured|verb": {
 "inflected_form": "fracture"
 },
+"fracture|verb": {
+"common_word_too_hard": "B2"
+},
 "fragments|unknown": {
 "inflected_form": "fragment"
+},
+"fragment|verb": {
+"cefr_above_list": "B1"
 },
 "frames|unknown": {
 "inflected_form": "frame"
@@ -915,18 +2935,47 @@
 "framing|unknown": {
 "inflected_form": "frame"
 },
+"freedom|adj": {
+"cefr_above_list": "A2"
+},
+"freeze|noun": {
+"cefr_above_list": "A2"
+},
+"free|noun": {
+"cefr_above_list": "A1"
+},
+"frequent|verb": {
+"cefr_above_list": "B1"
+},
+"fresh|noun": {
+"cefr_above_list": "A2"
+},
+"fresh|verb": {
+"cefr_above_list": "A2"
+},
+"fridge|verb": {
+"cefr_above_list": "A2"
+},
 "fried|verb": {
-"excluded_has_cefr": "A2",
 "inflected_form": "fry"
+},
+"friendly|adv": {
+"cefr_above_list": "B2"
+},
+"friendly|noun": {
+"cefr_above_list": "B2"
+},
+"friend|verb": {
+"cefr_above_list": "A1"
 },
 "fries|unknown": {
 "inflected_form": "fry"
 },
-"frosted|verb": {
-"inflected_form": "frost"
+"front|intj": {
+"cefr_above_list": "A1"
 },
-"frosting|verb": {
-"inflected_form": "frost"
+"front|verb": {
+"cefr_above_list": "A1"
 },
 "fruiting|verb": {
 "inflected_form": "fruit"
@@ -934,35 +2983,143 @@
 "fruits|unknown": {
 "inflected_form": "fruit"
 },
+"fruit|verb": {
+"cefr_above_list": "A1"
+},
+"fuel|verb": {
+"cefr_above_list": "B1"
+},
+"full|noun": {
+"cefr_above_list": "A1"
+},
+"full|verb": {
+"cefr_above_list": "A1"
+},
+"fume|verb": {
+"cefr_above_list": "B2"
+},
+"functional|noun": {
+"cefr_above_list": "B2"
+},
+"fundamental|noun": {
+"cefr_above_list": "B2"
+},
+"funny|noun": {
+"cefr_above_list": "A1"
+},
+"fun|verb": {
+"cefr_above_list": "A1"
+},
+"further|verb": {
+"cefr_above_list": "A2"
+},
+"fuzzy|noun": {
+"common_word_too_hard": "B2"
+},
+"gain|adj": {
+"cefr_above_list": "B1"
+},
+"galaxy|verb": {
+"common_word_too_hard": "B2"
+},
+"game|adj": {
+"cefr_above_list": "A1"
+},
+"game|verb": {
+"cefr_above_list": "A1"
+},
+"gap|verb": {
+"cefr_above_list": "B1"
+},
+"garden|adj": {
+"cefr_above_list": "A1"
+},
+"garden|verb": {
+"cefr_above_list": "A1"
+},
 "garnished|verb": {
 "inflected_form": "garnish"
 },
 "garnishes|unknown": {
 "inflected_form": "garnish"
 },
+"gas|adj": {
+"cefr_above_list": "A2"
+},
 "gated|unknown": {
 "inflected_form": "gate"
+},
+"gate|verb": {
+"cefr_above_list": "A2"
+},
+"gather|noun": {
+"cefr_above_list": "A2"
 },
 "gating|unknown": {
 "inflected_form": "gate"
 },
-"gaunt|adj": {
-"proper_or_brand": "專有名詞、品牌或含數字"
+"gay|noun": {
+"cefr_above_list": "B1"
+},
+"gaze|verb": {
+"cefr_above_list": "B2"
 },
 "gazing|verb": {
 "inflected_form": "gaze"
 },
-"gelled|verb": {
-"inflected_form": "gel"
+"gear|verb": {
+"cefr_above_list": "B2"
+},
+"gel|verb": {
+"common_word_too_hard": "B2"
+},
+"gem|verb": {
+"cefr_above_list": "C1"
+},
+"gender|adj": {
+"cefr_above_list": "A2"
+},
+"gender|verb": {
+"cefr_above_list": "A2"
+},
+"generic|adj": {
+"common_word_too_hard": "B2"
+},
+"generic|noun": {
+"common_word_too_hard": "B2"
+},
+"gentle|noun": {
+"cefr_above_list": "A2"
+},
+"gesture|verb": {
+"cefr_above_list": "B1"
+},
+"ghost|adj": {
+"cefr_above_list": "A1"
+},
+"ghost|verb": {
+"cefr_above_list": "A1"
 },
 "gibe|noun": {
-"person_name": "人名"
+"inflected_form": "gybe"
 },
-"gibe|verb": {
-"person_name": "人名"
+"gift|verb": {
+"cefr_above_list": "A1"
+},
+"gig|verb": {
+"cefr_above_list": "C1"
 },
 "gilded|verb": {
 "inflected_form": "gild"
+},
+"glad|noun": {
+"cefr_above_list": "A1"
+},
+"glare|verb": {
+"cefr_above_list": "B2"
+},
+"glass|verb": {
+"cefr_above_list": "A1"
 },
 "glazed|verb": {
 "inflected_form": "glaze"
@@ -973,17 +3130,53 @@
 "glides|unknown": {
 "inflected_form": "glide"
 },
+"glide|verb": {
+"cefr_above_list": "B1"
+},
 "glistening|verb": {
 "inflected_form": "glisten"
+},
+"global|noun": {
+"cefr_above_list": "B1"
+},
+"glove|verb": {
+"cefr_above_list": "A2"
 },
 "gnawed|unknown": {
 "inflected_form": "gnaw"
 },
-"golding|unknown": {
-"inflected_form": "gold"
+"gnaw|noun": {
+"cefr_above_list": "C1"
+},
+"goal|verb": {
+"cefr_above_list": "A1"
+},
+"golden|noun": {
+"cefr_above_list": "A2"
+},
+"golden|verb": {
+"cefr_above_list": "A2"
+},
+"golf|verb": {
+"cefr_above_list": "A2"
+},
+"good|adv": {
+"cefr_above_list": "A1"
+},
+"good|intj": {
+"cefr_above_list": "A1"
+},
+"good|verb": {
+"cefr_above_list": "A1"
+},
+"go|adj": {
+"cefr_above_list": "A1"
 },
 "graced|unknown": {
 "inflected_form": "grace"
+},
+"grace|verb": {
+"cefr_above_list": "A2"
 },
 "graded|verb": {
 "inflected_form": "grade"
@@ -991,14 +3184,47 @@
 "grading|unknown": {
 "inflected_form": "grade"
 },
-"grained|unknown": {
-"inflected_form": "grain"
+"graduate|adj": {
+"cefr_above_list": "A2"
 },
-"grated|verb": {
-"inflected_form": "grate"
+"grand|noun": {
+"cefr_above_list": "B2"
+},
+"grape|adj": {
+"cefr_above_list": "A1"
+},
+"grape|verb": {
+"cefr_above_list": "A1"
+},
+"grass|verb": {
+"cefr_above_list": "A1"
+},
+"gravel|verb": {
+"common_word_too_hard": "B2"
+},
+"grave|adj": {
+"cefr_above_list": "B1"
+},
+"grave|verb": {
+"cefr_above_list": "B1"
 },
 "grays|unknown": {
 "inflected_form": "gray"
+},
+"gray|verb": {
+"cefr_above_list": "A1"
+},
+"grease|verb": {
+"common_word_too_hard": "B2"
+},
+"great|adv": {
+"cefr_above_list": "A1"
+},
+"great|intj": {
+"cefr_above_list": "A1"
+},
+"great|noun": {
+"cefr_above_list": "A1"
 },
 "greener|unknown": {
 "inflected_form": "green"
@@ -1006,8 +3232,35 @@
 "greens|unknown": {
 "inflected_form": "green"
 },
+"green|verb": {
+"cefr_above_list": "A1"
+},
 "grew|unknown": {
 "inflected_form": "grow"
+},
+"grid|noun": {
+"common_word_too_hard": "B2"
+},
+"grind|noun": {
+"common_word_too_hard": "B2"
+},
+"grind|verb": {
+"common_word_too_hard": "B2"
+},
+"grin|verb": {
+"cefr_above_list": "B2"
+},
+"groom|verb": {
+"cefr_above_list": "B1"
+},
+"gross|noun": {
+"cefr_above_list": "B2"
+},
+"gross|verb": {
+"cefr_above_list": "B2"
+},
+"ground|adj": {
+"cefr_above_list": "A1"
 },
 "groups|unknown": {
 "inflected_form": "group"
@@ -1018,14 +3271,63 @@
 "grown|unknown": {
 "inflected_form": "grow"
 },
-"gutted|verb": {
-"inflected_form": "gut"
+"grow|noun": {
+"cefr_above_list": "A1"
+},
+"guest|verb": {
+"cefr_above_list": "A1"
+},
+"guilty|noun": {
+"cefr_above_list": "B1"
+},
+"guitar|verb": {
+"cefr_above_list": "A1"
+},
+"gulp|verb": {
+"cefr_above_list": "B2"
+},
+"gut|noun": {
+"common_word_too_hard": "B2"
+},
+"gut|verb": {
+"common_word_too_hard": "B2"
+},
+"guy|verb": {
+"cefr_above_list": "A1"
+},
+"gym|verb": {
+"cefr_above_list": "B1"
 },
 "hailed|unknown": {
 "inflected_form": "hail"
 },
 "hails|unknown": {
 "inflected_form": "hail"
+},
+"hail|noun": {
+"cefr_above_list": "B2"
+},
+"half|adj": {
+"cefr_above_list": "A1"
+},
+"half|prep": {
+"cefr_above_list": "A1"
+},
+"half|verb": {
+"cefr_above_list": "A1"
+},
+"ham|verb": {
+"cefr_above_list": "A2"
+},
+"handheld|adj": {
+"excluded_has_cefr": "C1",
+"inflected_form": "hand-held"
+},
+"handheld|noun": {
+"inflected_form": "hand-held"
+},
+"handicap|verb": {
+"cefr_above_list": "B2"
 },
 "handles|unknown": {
 "inflected_form": "handle"
@@ -1036,15 +3338,29 @@
 "hands|noun": {
 "inflected_form": "hand"
 },
-"handwriting|verb": {
-"excluded_has_cefr": "B1",
-"inflected_form": "handwrite"
-},
 "hanged|unknown": {
 "inflected_form": "hang"
 },
 "hangs|unknown": {
 "inflected_form": "hang"
+},
+"happy|verb": {
+"cefr_above_list": "A1"
+},
+"hard|noun": {
+"cefr_above_list": "A1"
+},
+"harness|verb": {
+"cefr_above_list": "B1"
+},
+"harrow|verb": {
+"cefr_above_list": "B2"
+},
+"hatch|verb": {
+"cefr_above_list": "B1"
+},
+"hat|verb": {
+"cefr_above_list": "A1"
 },
 "heading|unknown": {
 "inflected_form": "head"
@@ -1052,11 +3368,80 @@
 "headlights|noun": {
 "inflected_form": "headlight"
 },
+"head|adj": {
+"cefr_above_list": "A1"
+},
+"healthcare|noun": {
+"excluded_has_cefr": "B2",
+"inflected_form": "health care"
+},
+"heavy|adv": {
+"cefr_above_list": "A1"
+},
+"heavy|noun": {
+"cefr_above_list": "A1"
+},
+"hedge|verb": {
+"cefr_above_list": "B2"
+},
 "held|unknown": {
 "inflected_form": "hold"
 },
+"hello|intj": {
+"cefr_above_list": "A1"
+},
+"hello|verb": {
+"cefr_above_list": "A1"
+},
+"hell|adv": {
+"cefr_above_list": "B2",
+"excluded_has_cefr": "C2",
+"inflected_form": "the hell or like hell"
+},
+"helmet|verb": {
+"cefr_above_list": "B1"
+},
+"help|intj": {
+"cefr_above_list": "A1"
+},
+"herd|verb": {
+"cefr_above_list": "B1"
+},
+"here|noun": {
+"cefr_above_list": "A1"
+},
+"hide|noun": {
+"cefr_above_list": "A1"
+},
+"highway|verb": {
+"cefr_above_list": "A2"
+},
+"high|noun": {
+"cefr_above_list": "A1"
+},
 "hinged|verb": {
 "inflected_form": "hinge"
+},
+"hint|verb": {
+"cefr_above_list": "B2"
+},
+"hip|adj": {
+"cefr_above_list": "B1"
+},
+"hip|intj": {
+"cefr_above_list": "B1"
+},
+"hip|verb": {
+"cefr_above_list": "B1"
+},
+"hit|adj": {
+"cefr_above_list": "A2"
+},
+"hive|verb": {
+"common_word_too_hard": "B2"
+},
+"hi|noun": {
+"cefr_above_list": "A1"
 },
 "holden|unknown": {
 "inflected_form": "hold"
@@ -1066,6 +3451,21 @@
 },
 "holed|unknown": {
 "inflected_form": "hole"
+},
+"hole|verb": {
+"cefr_above_list": "A1"
+},
+"holiday|verb": {
+"cefr_above_list": "A1"
+},
+"home|adj": {
+"cefr_above_list": "A1"
+},
+"home|verb": {
+"cefr_above_list": "A1"
+},
+"honestly|intj": {
+"cefr_above_list": "B1"
 },
 "hong|unknown": {
 "inflected_form": "hang"
@@ -1079,6 +3479,9 @@
 "hooting|verb": {
 "inflected_form": "hoot"
 },
+"hoover|noun": {
+"common_word_too_hard": "B2"
+},
 "hopped|unknown": {
 "inflected_form": "hop"
 },
@@ -1088,11 +3491,43 @@
 "horning|unknown": {
 "inflected_form": "horn"
 },
+"horn|verb": {
+"cefr_above_list": "B1"
+},
+"horse|verb": {
+"cefr_above_list": "A1"
+},
+"hose|verb": {
+"common_word_too_hard": "B2"
+},
+"host|verb": {
+"cefr_above_list": "A2"
+},
+"hot|noun": {
+"cefr_above_list": "A1"
+},
 "housed|unknown": {
 "inflected_form": "house"
 },
+"however|conj": {
+"cefr_above_list": "A2"
+},
+"humanitarian|adj": {
+"common_word_too_hard": "B2"
+},
+"humanitarian|noun": {
+"common_word_too_hard": "B2"
+},
+"humor|verb": {
+"cefr_above_list": "B1",
+"excluded_has_cefr": "C2",
+"inflected_form": "humour"
+},
 "hunched|unknown": {
 "inflected_form": "hunch"
+},
+"hunger|verb": {
+"cefr_above_list": "B1"
 },
 "hung|unknown": {
 "inflected_form": "hang"
@@ -1100,8 +3535,29 @@
 "hurled|unknown": {
 "inflected_form": "hurl"
 },
+"hurt|noun": {
+"cefr_above_list": "A1"
+},
+"husband|verb": {
+"cefr_above_list": "A1"
+},
+"hush|noun": {
+"cefr_above_list": "B2"
+},
 "hustled|unknown": {
 "inflected_form": "hustle"
+},
+"hustle|noun": {
+"common_word_too_hard": "B2"
+},
+"hut|intj": {
+"cefr_above_list": "B1"
+},
+"ice|verb": {
+"cefr_above_list": "A1"
+},
+"ideal|noun": {
+"cefr_above_list": "A1"
 },
 "ignored|unknown": {
 "inflected_form": "ignore"
@@ -1109,32 +3565,119 @@
 "ignores|unknown": {
 "inflected_form": "ignore"
 },
+"illegal|noun": {
+"cefr_above_list": "A2"
+},
 "illuminated|verb": {
 "inflected_form": "illuminate"
+},
+"illuminate|adj": {
+"cefr_above_list": "B1"
+},
+"image|verb": {
+"cefr_above_list": "A2"
+},
+"imagine|noun": {
+"cefr_above_list": "A1"
 },
 "imaging|unknown": {
 "inflected_form": "image"
 },
+"immediately|conj": {
+"cefr_above_list": "B1"
+},
+"imminent|adj": {
+"common_word_too_hard": "B2"
+},
+"impact|verb": {
+"cefr_above_list": "A2"
+},
+"implementation|noun": {
+"common_word_too_hard": "B2"
+},
+"imply|noun": {
+"cefr_above_list": "B2"
+},
+"import|noun": {
+"cefr_above_list": "B2"
+},
+"impossible|noun": {
+"cefr_above_list": "A2"
+},
 "incensed|unknown": {
 "inflected_form": "incense"
+},
+"incense|verb": {
+"cefr_above_list": "B2"
 },
 "incorporating|unknown": {
 "inflected_form": "incorporate"
 },
-"indians|unknown": {
-"inflected_form": "indian"
+"index|verb": {
+"cefr_above_list": "B2"
+},
+"indicator|noun": {
+"common_word_too_hard": "B2"
 },
 "indoctrinating|unknown": {
 "inflected_form": "indoctrinate"
 },
+"inert|noun": {
+"cefr_above_list": "B2"
+},
+"inevitable|noun": {
+"cefr_above_list": "B1"
+},
+"inferior|noun": {
+"common_word_too_hard": "B2"
+},
+"inflammatory|noun": {
+"cefr_above_list": "B2"
+},
 "ingraining|unknown": {
 "inflected_form": "ingrain"
+},
+"initial|verb": {
+"cefr_above_list": "B1"
+},
+"ink|verb": {
+"cefr_above_list": "B1"
+},
+"inner|noun": {
+"cefr_above_list": "A2"
+},
+"innocent|noun": {
+"cefr_above_list": "B1"
+},
+"input|verb": {
+"cefr_above_list": "B2"
 },
 "inscribed|unknown": {
 "inflected_form": "inscribe"
 },
+"install|noun": {
+"cefr_above_list": "B1"
+},
+"instance|verb": {
+"cefr_above_list": "B1"
+},
+"instant|adv": {
+"cefr_above_list": "A2"
+},
 "instilling|unknown": {
 "inflected_form": "instill"
+},
+"institutional|adj": {
+"common_word_too_hard": "B2"
+},
+"intact|adj": {
+"common_word_too_hard": "B2"
+},
+"integrate|adj": {
+"cefr_above_list": "B2"
+},
+"interior|adj": {
+"cefr_above_list": "B2"
 },
 "interlocked|verb": {
 "inflected_form": "interlock"
@@ -1142,9 +3685,23 @@
 "internationals|unknown": {
 "inflected_form": "international"
 },
+"internet|verb": {
+"cefr_above_list": "A1"
+},
+"intervention|noun": {
+"common_word_too_hard": "B2"
+},
+"invite|noun": {
+"cefr_above_list": "A2"
+},
 "ironing|verb": {
-"excluded_has_cefr": "B1",
 "inflected_form": "iron"
+},
+"iron|adj": {
+"cefr_above_list": "B1"
+},
+"irregular|noun": {
+"cefr_above_list": "B1"
 },
 "irrigated|verb": {
 "inflected_form": "irrigate"
@@ -1152,20 +3709,98 @@
 "irrigating|unknown": {
 "inflected_form": "irrigate"
 },
-"jagged|verb": {
-"inflected_form": "jag"
+"island|verb": {
+"cefr_above_list": "A1"
+},
+"jacket|verb": {
+"cefr_above_list": "A1"
+},
+"jackpot|verb": {
+"common_word_too_hard": "B2"
+},
+"jade|adj": {
+"cefr_above_list": "B1"
+},
+"jade|verb": {
+"cefr_above_list": "B1"
+},
+"jail|verb": {
+"cefr_above_list": "B1"
+},
+"jar|verb": {
+"cefr_above_list": "B1"
 },
 "jawed|unknown": {
 "inflected_form": "jaw"
 },
+"jaw|verb": {
+"cefr_above_list": "B2"
+},
+"jazz|verb": {
+"cefr_above_list": "B1"
+},
+"jewel|verb": {
+"cefr_above_list": "B1"
+},
 "jointed|unknown": {
 "inflected_form": "joint"
+},
+"join|noun": {
+"cefr_above_list": "A1"
+},
+"journey|verb": {
+"cefr_above_list": "A2"
+},
+"juice|verb": {
+"cefr_above_list": "A1"
+},
+"junior|noun": {
+"cefr_above_list": "A2"
+},
+"junior|verb": {
+"cefr_above_list": "A2"
 },
 "juveniles|unknown": {
 "inflected_form": "juvenile"
 },
+"keen|noun": {
+"cefr_above_list": "B2"
+},
+"keep|noun": {
+"cefr_above_list": "A1"
+},
+"kettle|verb": {
+"cefr_above_list": "B1"
+},
 "keyboards|unknown": {
 "inflected_form": "keyboard"
+},
+"keyboard|verb": {
+"cefr_above_list": "B1"
+},
+"key|verb": {
+"cefr_above_list": "A1"
+},
+"killer|adj": {
+"cefr_above_list": "A2"
+},
+"kill|noun": {
+"cefr_above_list": "A1"
+},
+"kindle|noun": {
+"common_word_too_hard": "B2"
+},
+"kitchen|verb": {
+"cefr_above_list": "A1"
+},
+"kit|verb": {
+"cefr_above_list": "A2"
+},
+"knee|verb": {
+"cefr_above_list": "A1"
+},
+"knife|verb": {
+"cefr_above_list": "A1"
 },
 "knives|unknown": {
 "inflected_form": "knife"
@@ -1173,23 +3808,73 @@
 "knobs|noun": {
 "inflected_form": "knob"
 },
+"know|noun": {
+"cefr_above_list": "A1"
+},
 "labeled|unknown": {
 "inflected_form": "label"
+},
+"label|verb": {
+"cefr_above_list": "B2"
+},
+"labor|verb": {
+"cefr_above_list": "A2",
+"excluded_has_cefr": "C1",
+"inflected_form": "labour"
+},
+"lab|verb": {
+"cefr_above_list": "B1"
 },
 "lacing|verb": {
 "inflected_form": "lace"
 },
-"laden|verb": {
-"inflected_form": "lade"
-},
 "lain|unknown": {
 "inflected_form": "lie"
+},
+"lake|verb": {
+"cefr_above_list": "A2"
+},
+"lame|noun": {
+"cefr_above_list": "B2"
+},
+"lame|verb": {
+"cefr_above_list": "B2"
 },
 "lamps|unknown": {
 "inflected_form": "lamp"
 },
+"lamp|verb": {
+"cefr_above_list": "A2"
+},
+"language|intj": {
+"cefr_above_list": "A1"
+},
 "lapping|unknown": {
 "inflected_form": "lap"
+},
+"laptop|adj": {
+"cefr_above_list": "B2"
+},
+"lap|verb": {
+"cefr_above_list": "B2"
+},
+"large|noun": {
+"cefr_above_list": "A1"
+},
+"last|noun": {
+"cefr_above_list": "A2"
+},
+"latent|noun": {
+"cefr_above_list": "C1"
+},
+"late|noun": {
+"cefr_above_list": "A1"
+},
+"latter|noun": {
+"cefr_above_list": "A2"
+},
+"law|verb": {
+"cefr_above_list": "A2"
 },
 "layered|verb": {
 "inflected_form": "layer"
@@ -1197,8 +3882,26 @@
 "layers|unknown": {
 "inflected_form": "layer"
 },
+"layer|verb": {
+"cefr_above_list": "B1"
+},
+"layout|noun": {
+"common_word_too_hard": "B2"
+},
+"layout|verb": {
+"common_word_too_hard": "B2"
+},
+"lay|noun": {
+"cefr_above_list": "B1"
+},
+"lazy|noun": {
+"cefr_above_list": "A1"
+},
 "leafs|unknown": {
 "inflected_form": "leaf"
+},
+"leaf|verb": {
+"cefr_above_list": "A1"
 },
 "leaned|unknown": {
 "inflected_form": "lean"
@@ -1212,17 +3915,72 @@
 "leans|verb": {
 "inflected_form": "lean"
 },
+"lean|noun": {
+"cefr_above_list": "B1"
+},
+"learn|noun": {
+"cefr_above_list": "A1"
+},
+"leash|verb": {
+"cefr_above_list": "B2"
+},
 "leathered|unknown": {
 "inflected_form": "leather"
 },
 "leathers|unknown": {
 "inflected_form": "leather"
 },
+"leather|adj": {
+"cefr_above_list": "A2"
+},
+"leather|verb": {
+"cefr_above_list": "A2"
+},
 "leaves|noun": {
 "inflected_form": "leaf"
 },
+"lecture|verb": {
+"cefr_above_list": "B1"
+},
+"left|verb": {
+"excluded_has_cefr": "A2",
+"inflected_form": "leave"
+},
+"legacy|adj": {
+"cefr_above_list": "C1"
+},
+"legal|noun": {
+"cefr_above_list": "B1"
+},
+"legislative|noun": {
+"cefr_above_list": "B2"
+},
+"lemon|adj": {
+"cefr_above_list": "A2"
+},
+"lemon|verb": {
+"cefr_above_list": "A2"
+},
+"lend|noun": {
+"cefr_above_list": "A2"
+},
+"less|noun": {
+"cefr_above_list": "A2"
+},
+"letter|verb": {
+"cefr_above_list": "A1"
+},
+"let|noun": {
+"cefr_above_list": "A1"
+},
 "levers|unknown": {
 "inflected_form": "lever"
+},
+"lever|verb": {
+"common_word_too_hard": "B2"
+},
+"levy|verb": {
+"common_word_too_hard": "B2"
 },
 "liberating|unknown": {
 "inflected_form": "liberate"
@@ -1230,11 +3988,32 @@
 "licensed|unknown": {
 "inflected_form": "license"
 },
+"lid|verb": {
+"cefr_above_list": "B2"
+},
 "lied|unknown": {
 "inflected_form": "lie"
 },
 "lights|unknown": {
 "inflected_form": "light"
+},
+"likely|adv": {
+"cefr_above_list": "A2"
+},
+"like|prep": {
+"cefr_above_list": "A1"
+},
+"lime|adj": {
+"common_word_too_hard": "B2"
+},
+"limit|adj": {
+"cefr_above_list": "B1"
+},
+"limp|adj": {
+"cefr_above_list": "B1"
+},
+"limp|noun": {
+"cefr_above_list": "B1"
 },
 "lined|verb": {
 "inflected_form": "line"
@@ -1245,8 +4024,26 @@
 "lining|unknown": {
 "inflected_form": "line"
 },
-"loaded|verb": {
-"inflected_form": "load"
+"listen|noun": {
+"cefr_above_list": "A1"
+},
+"literacy|noun": {
+"common_word_too_hard": "B2"
+},
+"little|noun": {
+"cefr_above_list": "A1"
+},
+"little|pron": {
+"cefr_above_list": "A1"
+},
+"lit|noun": {
+"common_word_too_hard": "B2"
+},
+"live|adv": {
+"cefr_above_list": "A1"
+},
+"loan|verb": {
+"cefr_above_list": "B2"
 },
 "logged|unknown": {
 "inflected_form": "log"
@@ -1257,11 +4054,71 @@
 "logs|unknown": {
 "inflected_form": "log"
 },
+"log|verb": {
+"cefr_above_list": "B1"
+},
+"long|noun": {
+"cefr_above_list": "A1"
+},
+"long|verb": {
+"cefr_above_list": "A1"
+},
+"loop|noun": {
+"common_word_too_hard": "B2"
+},
+"loop|verb": {
+"common_word_too_hard": "B2"
+},
+"loose|noun": {
+"cefr_above_list": "A2"
+},
+"loose|verb": {
+"cefr_above_list": "A2"
+},
+"lorry|verb": {
+"cefr_above_list": "B1"
+},
+"loungey|adj": {
+"inflected_form": "loungy"
+},
+"lovely|noun": {
+"cefr_above_list": "A1"
+},
+"low|noun": {
+"cefr_above_list": "A2"
+},
+"luck|verb": {
+"cefr_above_list": "A1"
+},
+"lump|verb": {
+"common_word_too_hard": "B2"
+},
+"lunch|verb": {
+"cefr_above_list": "A1"
+},
 "lurks|verb": {
 "inflected_form": "lurk"
 },
-"maddening|verb": {
-"inflected_form": "madden"
+"lush|noun": {
+"cefr_above_list": "B2"
+},
+"lying|adj": {
+"common_word_too_hard": "B2"
+},
+"ma'am|verb": {
+"common_word_too_hard": "B2"
+},
+"machine|verb": {
+"cefr_above_list": "A1"
+},
+"mad|adv": {
+"cefr_above_list": "A2"
+},
+"magnitude|noun": {
+"common_word_too_hard": "B2"
+},
+"manage|noun": {
+"cefr_above_list": "A2"
 },
 "manias|unknown": {
 "inflected_form": "mania"
@@ -1269,14 +4126,59 @@
 "manning|unknown": {
 "inflected_form": "man"
 },
+"many|adj": {
+"cefr_above_list": "A1"
+},
+"many|pron": {
+"cefr_above_list": "A1"
+},
+"man|intj": {
+"cefr_above_list": "A1"
+},
+"man|pron": {
+"cefr_above_list": "A1"
+},
+"map|verb": {
+"cefr_above_list": "A1"
+},
 "marbled|unknown": {
 "inflected_form": "marble"
 },
 "marbles|unknown": {
 "inflected_form": "marble"
 },
+"marble|adj": {
+"cefr_above_list": "B1"
+},
+"marble|verb": {
+"cefr_above_list": "B1"
+},
 "marks|unknown": {
 "inflected_form": "mark"
+},
+"mask|verb": {
+"cefr_above_list": "B2"
+},
+"massive|noun": {
+"cefr_above_list": "B1"
+},
+"mass|verb": {
+"cefr_above_list": "B1"
+},
+"mating|adj": {
+"common_word_too_hard": "B2"
+},
+"mature|verb": {
+"cefr_above_list": "B2"
+},
+"mat|adj": {
+"inflected_form": "matte"
+},
+"mat|verb": {
+"common_word_too_hard": "B2"
+},
+"maybe|noun": {
+"cefr_above_list": "A1"
 },
 "meandering|verb": {
 "inflected_form": "meander"
@@ -1284,18 +4186,110 @@
 "meanings|unknown": {
 "inflected_form": "meaning"
 },
-"meaning|verb": {
-"excluded_has_cefr": "A2",
-"inflected_form": "mean"
+"meaning|adj": {
+"cefr_above_list": "A2"
+},
+"meanwhile|noun": {
+"cefr_above_list": "B1"
+},
+"mechanical|noun": {
+"cefr_above_list": "B1"
+},
+"medical|noun": {
+"cefr_above_list": "A2"
+},
+"meet|noun": {
+"cefr_above_list": "A1"
+},
+"melt|noun": {
+"cefr_above_list": "B1"
 },
 "membranes|noun": {
 "inflected_form": "membrane"
 },
+"mental|noun": {
+"cefr_above_list": "B1"
+},
 "men|unknown": {
 "inflected_form": "man"
 },
+"mere|noun": {
+"cefr_above_list": "B1"
+},
+"message|verb": {
+"cefr_above_list": "A1"
+},
+"metal|adj": {
+"cefr_above_list": "A2"
+},
+"meter|verb": {
+"cefr_above_list": "A2"
+},
+"midnight|adj": {
+"cefr_above_list": "A2"
+},
+"mid|adv": {
+"common_word_too_hard": "B2"
+},
+"mid|noun": {
+"common_word_too_hard": "B2"
+},
+"mid|prep": {
+"common_word_too_hard": "B2"
+},
+"militant|noun": {
+"common_word_too_hard": "B2"
+},
+"military|noun": {
+"cefr_above_list": "A2"
+},
 "milking|unknown": {
 "inflected_form": "milk"
+},
+"milk|verb": {
+"cefr_above_list": "A1"
+},
+"mill|verb": {
+"cefr_above_list": "B2"
+},
+"mineral|adj": {
+"cefr_above_list": "B1"
+},
+"mine|det": {
+"cefr_above_list": "A1"
+},
+"mine|pron": {
+"cefr_above_list": "A1"
+},
+"mine|verb": {
+"cefr_above_list": "A1"
+},
+"minister|verb": {
+"cefr_above_list": "B2"
+},
+"ministry|noun": {
+"common_word_too_hard": "B2"
+},
+"minority|adj": {
+"cefr_above_list": "B1"
+},
+"mint|adj": {
+"cefr_above_list": "B2"
+},
+"mint|verb": {
+"cefr_above_list": "B2"
+},
+"minute|adj": {
+"cefr_above_list": "A1"
+},
+"minute|verb": {
+"cefr_above_list": "A1"
+},
+"mirror|verb": {
+"cefr_above_list": "A2"
+},
+"mistake|verb": {
+"cefr_above_list": "A2"
 },
 "mixed|unknown": {
 "inflected_form": "mix"
@@ -1309,12 +4303,59 @@
 "mobs|unknown": {
 "inflected_form": "mob"
 },
+"mob|noun": {
+"common_word_too_hard": "B2"
+},
+"mob|verb": {
+"common_word_too_hard": "B2"
+},
+"moderate|noun": {
+"cefr_above_list": "B1"
+},
+"moderate|verb": {
+"cefr_above_list": "B1"
+},
+"modern|noun": {
+"cefr_above_list": "A2"
+},
+"moon|verb": {
+"cefr_above_list": "A1"
+},
 "mornings|unknown": {
 "inflected_form": "morning"
 },
-"mottled|verb": {
-"excluded_has_cefr": "C2",
-"inflected_form": "mottle"
+"morning|intj": {
+"cefr_above_list": "A1"
+},
+"mortal|adv": {
+"cefr_above_list": "B2"
+},
+"mortal|noun": {
+"cefr_above_list": "B2"
+},
+"mortar|verb": {
+"cefr_above_list": "B2"
+},
+"moss|verb": {
+"cefr_above_list": "B1"
+},
+"most|noun": {
+"cefr_above_list": "A1"
+},
+"most|pron": {
+"cefr_above_list": "A1"
+},
+"mother|verb": {
+"cefr_above_list": "A1"
+},
+"motorcycle|verb": {
+"cefr_above_list": "B1"
+},
+"motor|adj": {
+"cefr_above_list": "B1"
+},
+"motor|verb": {
+"cefr_above_list": "B1"
 },
 "mounted|unknown": {
 "inflected_form": "mount"
@@ -1325,20 +4366,115 @@
 "mourning|unknown": {
 "inflected_form": "mourn"
 },
+"mourn|noun": {
+"cefr_above_list": "B1"
+},
+"mouse|verb": {
+"cefr_above_list": "A1"
+},
+"mouth|verb": {
+"cefr_above_list": "A1"
+},
+"much|det": {
+"cefr_above_list": "A1"
+},
+"much|noun": {
+"cefr_above_list": "A1"
+},
+"much|pron": {
+"cefr_above_list": "A1"
+},
 "mugger|unknown": {
 "inflected_form": "mug"
+},
+"mug|adj": {
+"cefr_above_list": "A2"
+},
+"mug|verb": {
+"cefr_above_list": "A2"
+},
+"multiple|det": {
+"cefr_above_list": "B2"
+},
+"must|adj": {
+"cefr_above_list": "A1"
+},
+"must|noun": {
+"cefr_above_list": "A1"
 },
 "napkins|unknown": {
 "inflected_form": "napkin"
 },
-"naturals|unknown": {
-"inflected_form": "natural"
+"narrow|noun": {
+"cefr_above_list": "B1"
+},
+"narrow|verb": {
+"cefr_above_list": "B1"
+},
+"native|noun": {
+"cefr_above_list": "A2"
+},
+"nearby|noun": {
+"cefr_above_list": "B1"
+},
+"near|noun": {
+"cefr_above_list": "A1"
+},
+"near|prep": {
+"cefr_above_list": "A1"
+},
+"near|verb": {
+"cefr_above_list": "A1"
 },
 "nebulae|unknown": {
 "inflected_form": "nebula"
 },
+"necessary|noun": {
+"cefr_above_list": "A2"
+},
+"negative|noun": {
+"cefr_above_list": "A2"
+},
+"neglect|verb": {
+"cefr_above_list": "B2"
+},
+"neighbor|verb": {
+"cefr_above_list": "A1",
+"excluded_has_cefr": "C2",
+"inflected_form": "neighbour"
+},
+"neither|det": {
+"cefr_above_list": "B2"
+},
+"neither|pron": {
+"cefr_above_list": "B2"
+},
+"nerve|verb": {
+"cefr_above_list": "B2"
+},
 "nestled|verb": {
 "inflected_form": "nestle"
+},
+"net|adv": {
+"cefr_above_list": "A2"
+},
+"net|verb": {
+"cefr_above_list": "A2"
+},
+"newspaper|verb": {
+"cefr_above_list": "A1"
+},
+"next|det": {
+"cefr_above_list": "A2"
+},
+"nice|intj": {
+"cefr_above_list": "A1"
+},
+"nice|noun": {
+"cefr_above_list": "A1"
+},
+"niche|verb": {
+"cefr_above_list": "C1"
 },
 "noblemen|unknown": {
 "inflected_form": "nobleman"
@@ -1346,23 +4482,197 @@
 "nobles|unknown": {
 "inflected_form": "noble"
 },
+"nobody|pron": {
+"cefr_above_list": "A2"
+},
+"nocturnal|noun": {
+"cefr_above_list": "C1"
+},
+"noise|verb": {
+"cefr_above_list": "A1"
+},
+"none|adv": {
+"cefr_above_list": "B1"
+},
+"none|det": {
+"cefr_above_list": "B1"
+},
+"none|noun": {
+"cefr_above_list": "B1"
+},
+"non|adv": {
+"excluded_has_cefr": "A1",
+"inflected_form": "none"
+},
 "noodles|unknown": {
 "inflected_form": "noodle"
+},
+"normal|noun": {
+"cefr_above_list": "A2"
+},
+"nose|verb": {
+"cefr_above_list": "A1"
+},
+"notably|adv": {
+"common_word_too_hard": "B2"
 },
 "notations|unknown": {
 "inflected_form": "notation"
 },
+"notch|verb": {
+"common_word_too_hard": "B2"
+},
+"nothing|adv": {
+"cefr_above_list": "A1"
+},
+"nothing|intj": {
+"cefr_above_list": "A1"
+},
+"nothing|pron": {
+"cefr_above_list": "A1"
+},
+"now|conj": {
+"cefr_above_list": "A1"
+},
+"no|prep": {
+"cefr_above_list": "A1"
+},
+"no|verb": {
+"cefr_above_list": "A1"
+},
+"nuclear|noun": {
+"cefr_above_list": "B1"
+},
+"null|adj": {
+"common_word_too_hard": "B2"
+},
+"numerous|det": {
+"cefr_above_list": "B1"
+},
+"odd|noun": {
+"cefr_above_list": "B2"
+},
+"offensive|noun": {
+"cefr_above_list": "B1"
+},
+"off|noun": {
+"cefr_above_list": "A1"
+},
+"off|prep": {
+"cefr_above_list": "A1"
+},
 "oiled|unknown": {
 "inflected_form": "oil"
+},
+"oil|verb": {
+"cefr_above_list": "A2"
+},
+"okay|intj": {
+"cefr_above_list": "A1",
+"excluded_has_cefr": "C1",
+"inflected_form": "ok"
+},
+"okay|noun": {
+"cefr_above_list": "A1",
+"excluded_has_cefr": "C1",
+"inflected_form": "ok"
+},
+"okay|verb": {
+"cefr_above_list": "A1",
+"excluded_has_cefr": "C1",
+"inflected_form": "ok"
 },
 "olives|unknown": {
 "inflected_form": "olive"
 },
+"olive|adj": {
+"cefr_above_list": "B2"
+},
+"on the table|phrase": {
+"idiom_too_easy": "B2"
+},
+"once|conj": {
+"cefr_above_list": "A1"
+},
+"once|noun": {
+"cefr_above_list": "A1",
+"excluded_has_cefr": "C2",
+"inflected_form": "ounce"
+},
+"one|adj": {
+"cefr_above_list": "A1"
+},
+"one|num": {
+"cefr_above_list": "A1"
+},
+"ongoing|noun": {
+"common_word_too_hard": "B2"
+},
+"only|conj": {
+"cefr_above_list": "A1"
+},
+"only|noun": {
+"cefr_above_list": "A1"
+},
+"on|noun": {
+"cefr_above_list": "A1"
+},
+"open|noun": {
+"cefr_above_list": "A1"
+},
 "operated|unknown": {
 "inflected_form": "operate"
 },
+"opponent|adj": {
+"cefr_above_list": "B2"
+},
+"opposite|prep": {
+"cefr_above_list": "A2"
+},
+"optical|adj": {
+"common_word_too_hard": "B2"
+},
+"option|verb": {
+"cefr_above_list": "B1"
+},
+"orange|verb": {
+"cefr_above_list": "A1"
+},
+"orbit|verb": {
+"cefr_above_list": "B1"
+},
+"organic|noun": {
+"cefr_above_list": "B1"
+},
+"ornamental|noun": {
+"cefr_above_list": "C1"
+},
 "ornamented|unknown": {
 "inflected_form": "ornament"
+},
+"ornament|verb": {
+"cefr_above_list": "B2"
+},
+"other|det": {
+"cefr_above_list": "A1"
+},
+"ought|noun": {
+"common_word_too_hard": "B2",
+"excluded_has_cefr": "C1",
+"inflected_form": "aught"
+},
+"ought|verb": {
+"excluded_has_cefr": "B1",
+"inflected_form": "owe"
+},
+"outfit|verb": {
+"cefr_above_list": "B2"
+},
+"outlaw|adj": {
+"cefr_above_list": "B1"
+},
+"outlaw|verb": {
+"cefr_above_list": "B1"
 },
 "outlined|unknown": {
 "inflected_form": "outline"
@@ -1370,8 +4680,29 @@
 "outlining|unknown": {
 "inflected_form": "outline"
 },
+"output|verb": {
+"cefr_above_list": "B2"
+},
+"outrage|verb": {
+"cefr_above_list": "B2"
+},
+"outright|adj": {
+"common_word_too_hard": "B2"
+},
+"outside|prep": {
+"cefr_above_list": "A1"
+},
+"overfulfil|verb": {
+"inflected_form": "overfulfill"
+},
+"overhaul|verb": {
+"common_word_too_hard": "B2"
+},
 "overheard|unknown": {
 "inflected_form": "overhear"
+},
+"overlap|verb": {
+"cefr_above_list": "B2"
 },
 "overlooked|unknown": {
 "inflected_form": "overlook"
@@ -1382,27 +4713,74 @@
 "overlooks|unknown": {
 "inflected_form": "overlook"
 },
+"overlook|noun": {
+"cefr_above_list": "B2"
+},
 "overthrew|unknown": {
 "inflected_form": "overthrow"
 },
 "overthrown|unknown": {
 "inflected_form": "overthrow"
 },
+"overthrow|noun": {
+"cefr_above_list": "B2"
+},
+"over|adj": {
+"cefr_above_list": "A1"
+},
+"over|intj": {
+"cefr_above_list": "A1"
+},
+"over|noun": {
+"cefr_above_list": "A1"
+},
+"over|prep": {
+"cefr_above_list": "A1"
+},
+"own|noun": {
+"cefr_above_list": "A1"
+},
+"package|verb": {
+"cefr_above_list": "B1"
+},
 "packs|noun": {
 "inflected_form": "pack"
+},
+"pact|verb": {
+"common_word_too_hard": "B2"
 },
 "paddled|unknown": {
 "inflected_form": "paddle"
 },
-"painted|verb": {
-"inflected_form": "paint"
+"pad|verb": {
+"cefr_above_list": "B2"
 },
-"painting|verb": {
-"excluded_has_cefr": "A1",
+"page|verb": {
+"cefr_above_list": "A1"
+},
+"painted|verb": {
 "inflected_form": "paint"
 },
 "paints|unknown": {
 "inflected_form": "paint"
+},
+"pain|verb": {
+"cefr_above_list": "B1"
+},
+"pair|verb": {
+"cefr_above_list": "A1"
+},
+"pale|noun": {
+"cefr_above_list": "B1"
+},
+"pale|verb": {
+"cefr_above_list": "B1"
+},
+"pallet|verb": {
+"cefr_above_list": "B2"
+},
+"palm|verb": {
+"cefr_above_list": "B1"
 },
 "panelled|unknown": {
 "inflected_form": "panel"
@@ -1410,63 +4788,241 @@
 "panels|unknown": {
 "inflected_form": "panel"
 },
+"panel|verb": {
+"cefr_above_list": "B2"
+},
 "panes|unknown": {
 "inflected_form": "pane"
+},
+"panick|adj": {
+"inflected_form": "panic"
+},
+"panick|noun": {
+"inflected_form": "panic"
+},
+"panic|adj": {
+"cefr_above_list": "A2"
+},
+"pants|adj": {
+"cefr_above_list": "A1"
+},
+"pants|verb": {
+"cefr_above_list": "A1"
+},
+"pan|adj": {
+"cefr_above_list": "A2"
+},
+"pan|verb": {
+"cefr_above_list": "A2"
 },
 "papered|unknown": {
 "inflected_form": "paper"
 },
+"paper|adj": {
+"cefr_above_list": "A1"
+},
+"paper|verb": {
+"cefr_above_list": "A1"
+},
+"parade|verb": {
+"cefr_above_list": "B2"
+},
+"paragraph|verb": {
+"cefr_above_list": "A1"
+},
+"parallel|adv": {
+"common_word_too_hard": "B2"
+},
+"parallel|verb": {
+"common_word_too_hard": "B2"
+},
+"parent|verb": {
+"cefr_above_list": "A1"
+},
 "parks|unknown": {
 "inflected_form": "park"
+},
+"parky|noun": {
+"inflected_form": "parkie"
+},
+"parody|verb": {
+"common_word_too_hard": "B2"
+},
+"partner|verb": {
+"cefr_above_list": "A1"
+},
+"party|verb": {
+"cefr_above_list": "A1"
+},
+"passage|verb": {
+"cefr_above_list": "A2"
+},
+"pastoral|noun": {
+"cefr_above_list": "B2"
+},
+"pastor|verb": {
+"cefr_above_list": "B2"
+},
+"past|prep": {
+"cefr_above_list": "A1"
 },
 "paths|unknown": {
 "inflected_form": "path"
 },
+"path|verb": {
+"cefr_above_list": "A2"
+},
 "patios|unknown": {
 "inflected_form": "patio"
 },
-"patronizing|verb": {
-"excluded_has_cefr": "C2",
-"inflected_form": "patronize"
+"patrol|verb": {
+"cefr_above_list": "B1"
 },
-"patterned|verb": {
-"inflected_form": "pattern"
+"pause|intj": {
+"cefr_above_list": "B1"
+},
+"paw|verb": {
+"cefr_above_list": "B2"
+},
+"peace|verb": {
+"cefr_above_list": "A1"
 },
 "peaches|unknown": {
 "inflected_form": "peach"
 },
+"peak|adj": {
+"cefr_above_list": "B2"
+},
+"peak|verb": {
+"cefr_above_list": "B2"
+},
+"pebble|verb": {
+"cefr_above_list": "B2"
+},
+"pedal|verb": {
+"cefr_above_list": "B2"
+},
 "peeled|verb": {
 "inflected_form": "peel"
+},
+"peer|verb": {
+"cefr_above_list": "B2"
 },
 "pegged|verb": {
 "inflected_form": "peg"
 },
+"peg|verb": {
+"cefr_above_list": "B2"
+},
+"pension|verb": {
+"cefr_above_list": "B2"
+},
 "pent|unknown": {
 "inflected_form": "pen"
+},
+"pen|verb": {
+"cefr_above_list": "A1"
+},
+"people|verb": {
+"cefr_above_list": "A1"
+},
+"perennial|noun": {
+"common_word_too_hard": "B2"
+},
+"perfect|noun": {
+"cefr_above_list": "A2"
+},
+"period|intj": {
+"cefr_above_list": "A1"
+},
+"period|verb": {
+"cefr_above_list": "A1"
 },
 "perished|unknown": {
 "inflected_form": "perish"
 },
+"permanent|noun": {
+"cefr_above_list": "B1"
+},
+"permeate|noun": {
+"cefr_above_list": "B2"
+},
+"permission|verb": {
+"cefr_above_list": "A2"
+},
+"permit|noun": {
+"cefr_above_list": "B1"
+},
+"personal|noun": {
+"cefr_above_list": "A1"
+},
 "pests|unknown": {
 "inflected_form": "pest"
 },
-"pest|noun": {
-"proper_or_brand": "專有名詞、品牌或含數字"
+"petition|noun": {
+"common_word_too_hard": "B2"
+},
+"petition|verb": {
+"common_word_too_hard": "B2"
 },
 "pettifogging|verb": {
 "inflected_form": "pettifog"
 },
+"pet|adj": {
+"cefr_above_list": "A1"
+},
+"pet|verb": {
+"cefr_above_list": "A1"
+},
+"phase|verb": {
+"cefr_above_list": "B2"
+},
 "phones|noun": {
 "inflected_form": "phone"
+},
+"photo|verb": {
+"cefr_above_list": "A1"
+},
+"phrase|verb": {
+"cefr_above_list": "B1"
+},
+"physical|noun": {
+"cefr_above_list": "A2"
+},
+"piano|adv": {
+"cefr_above_list": "A1"
+},
+"piano|verb": {
+"cefr_above_list": "A1"
+},
+"piece|verb": {
+"cefr_above_list": "A1"
+},
+"pierce|noun": {
+"common_word_too_hard": "B2"
 },
 "piled|verb": {
 "inflected_form": "pile"
 },
+"pile|verb": {
+"cefr_above_list": "A2"
+},
 "pillowing|unknown": {
 "inflected_form": "pillow"
 },
+"pillow|verb": {
+"cefr_above_list": "B1"
+},
+"pilot|adj": {
+"cefr_above_list": "A2"
+},
+"pilot|verb": {
+"cefr_above_list": "A2"
+},
+"pinch|noun": {
+"common_word_too_hard": "B2"
+},
 "pine nuts|noun": {
-"excluded_has_cefr": "B2",
 "inflected_form": "pine nut"
 },
 "pineapples|unknown": {
@@ -1475,11 +5031,17 @@
 "pines|unknown": {
 "inflected_form": "pine"
 },
-"pisces|noun": {
-"proper_or_brand": "專有名詞、品牌或含數字"
+"pine|verb": {
+"cefr_above_list": "B2"
+},
+"pipe|verb": {
+"cefr_above_list": "B1"
 },
 "pitted|unknown": {
 "inflected_form": "pit"
+},
+"pit|verb": {
+"cefr_above_list": "B1"
 },
 "pizzas|unknown": {
 "inflected_form": "pizza"
@@ -1490,8 +5052,23 @@
 "placing|unknown": {
 "inflected_form": "place"
 },
+"plain|adv": {
+"cefr_above_list": "B1"
+},
+"plain|noun": {
+"cefr_above_list": "B1"
+},
+"plain|verb": {
+"cefr_above_list": "B1"
+},
 "planets|noun": {
 "inflected_form": "planet"
+},
+"plane|adj": {
+"cefr_above_list": "A1"
+},
+"plane|verb": {
+"cefr_above_list": "A1"
 },
 "planted|unknown": {
 "inflected_form": "plant"
@@ -1499,17 +5076,59 @@
 "plants|unknown": {
 "inflected_form": "plant"
 },
-"plateau|noun": {
-"proper_or_brand": "專有名詞、品牌或含數字"
-},
-"plateau|verb": {
-"proper_or_brand": "專有名詞、品牌或含數字"
-},
 "plated|unknown": {
 "inflected_form": "plate"
 },
+"plate|verb": {
+"cefr_above_list": "A2"
+},
+"pleasure|verb": {
+"cefr_above_list": "A1"
+},
+"pledge|noun": {
+"common_word_too_hard": "B2"
+},
+"pledge|verb": {
+"common_word_too_hard": "B2"
+},
+"plenty|adv": {
+"cefr_above_list": "A2"
+},
+"plenty|det": {
+"cefr_above_list": "A2"
+},
+"plenty|pron": {
+"cefr_above_list": "A2"
+},
+"plummet|noun": {
+"cefr_above_list": "C1"
+},
 "plums|unknown": {
 "inflected_form": "plum"
+},
+"plum|adv": {
+"cefr_above_list": "B2"
+},
+"plum|verb": {
+"cefr_above_list": "B2"
+},
+"plus|adj": {
+"cefr_above_list": "A2"
+},
+"plus|conj": {
+"cefr_above_list": "A2"
+},
+"plus|prep": {
+"cefr_above_list": "A2"
+},
+"plus|verb": {
+"cefr_above_list": "A2"
+},
+"pocket|verb": {
+"cefr_above_list": "A1"
+},
+"pod|verb": {
+"common_word_too_hard": "B2"
 },
 "pointed|verb": {
 "inflected_form": "point"
@@ -1517,20 +5136,65 @@
 "pointing|unknown": {
 "inflected_form": "point"
 },
+"point|intj": {
+"cefr_above_list": "A1"
+},
+"pole|verb": {
+"cefr_above_list": "B1"
+},
+"police|verb": {
+"cefr_above_list": "A2"
+},
+"policy|verb": {
+"cefr_above_list": "B1"
+},
 "polished|verb": {
 "inflected_form": "polish"
 },
-"poll|adj": {
-"proper_or_brand": "專有名詞、品牌或含數字"
-},
-"poll|noun": {
-"proper_or_brand": "專有名詞、品牌或含數字"
-},
-"poll|verb": {
-"proper_or_brand": "專有名詞、品牌或含數字"
+"polish|verb": {
+"cefr_above_list": "B2"
 },
 "pondering|unknown": {
 "inflected_form": "ponder"
+},
+"ponder|noun": {
+"cefr_above_list": "B2"
+},
+"pond|verb": {
+"cefr_above_list": "B1"
+},
+"pool|verb": {
+"cefr_above_list": "A1"
+},
+"poor|noun": {
+"cefr_above_list": "A1"
+},
+"popular|noun": {
+"cefr_above_list": "A2"
+},
+"pop|adj": {
+"cefr_above_list": "A1"
+},
+"pop|adv": {
+"cefr_above_list": "A1"
+},
+"portion|verb": {
+"cefr_above_list": "B2"
+},
+"portrait|adj": {
+"cefr_above_list": "A2"
+},
+"port|verb": {
+"cefr_above_list": "B1"
+},
+"possible|noun": {
+"cefr_above_list": "A2"
+},
+"post|adv": {
+"cefr_above_list": "A1"
+},
+"potato|verb": {
+"cefr_above_list": "A1"
 },
 "potted|verb": {
 "inflected_form": "pot"
@@ -1538,14 +5202,125 @@
 "poured|unknown": {
 "inflected_form": "pour"
 },
+"pour|noun": {
+"cefr_above_list": "A2"
+},
+"powerful|adv": {
+"cefr_above_list": "A2"
+},
+"power|verb": {
+"cefr_above_list": "A2"
+},
 "praught|verb": {
 "inflected_form": "preach"
+},
+"pre-eminent|adj": {
+"inflected_form": "preeminent"
+},
+"precise|verb": {
+"cefr_above_list": "A2"
+},
+"pregnancy|noun": {
+"common_word_too_hard": "B2"
+},
+"prejudice|verb": {
+"cefr_above_list": "B1"
+},
+"preliminary|noun": {
+"cefr_above_list": "B2"
+},
+"premiere|adj": {
+"common_word_too_hard": "B2"
+},
+"premiere|verb": {
+"common_word_too_hard": "B2"
+},
+"premise|verb": {
+"cefr_above_list": "C1"
+},
+"premium|adj": {
+"common_word_too_hard": "B2"
+},
+"premium|noun": {
+"common_word_too_hard": "B2"
+},
+"preserve|noun": {
+"cefr_above_list": "B1"
+},
+"pressure|verb": {
+"cefr_above_list": "A2"
+},
+"presume|verb": {
+"common_word_too_hard": "B2"
 },
 "pretensions|unknown": {
 "inflected_form": "pretension"
 },
+"pretty|noun": {
+"cefr_above_list": "A1"
+},
+"pretty|verb": {
+"cefr_above_list": "A1"
+},
+"previous|noun": {
+"cefr_above_list": "B1"
+},
+"prick|verb": {
+"cefr_above_list": "B2"
+},
+"pride|verb": {
+"cefr_above_list": "A2"
+},
+"primary|verb": {
+"cefr_above_list": "B2"
+},
+"prime|verb": {
+"cefr_above_list": "B2"
+},
+"prior|adv": {
+"cefr_above_list": "B2"
+},
+"private|noun": {
+"cefr_above_list": "A2"
+},
+"private|verb": {
+"cefr_above_list": "A2"
+},
+"prize|adj": {
+"cefr_above_list": "B1"
+},
+"prize|verb": {
+"cefr_above_list": "B1"
+},
 "prodigies|unknown": {
 "inflected_form": "prodigy"
+},
+"produce|noun": {
+"cefr_above_list": "A2"
+},
+"profile|verb": {
+"cefr_above_list": "B2"
+},
+"progressive|noun": {
+"cefr_above_list": "A2"
+},
+"prominent|noun": {
+"cefr_above_list": "B1"
+},
+"proper|noun": {
+"cefr_above_list": "A2"
+},
+"prospect|verb": {
+"cefr_above_list": "B2"
+},
+"provision|verb": {
+"cefr_above_list": "B2"
+},
+"pro|adj": {
+"cefr_above_list": "A2"
+},
+"pro|prep": {
+"cefr_above_list": "A2"
 },
 "pulled|verb": {
 "inflected_form": "pull"
@@ -1553,36 +5328,191 @@
 "pulling|unknown": {
 "inflected_form": "pull"
 },
+"pull|intj": {
+"cefr_above_list": "A2"
+},
+"pull|noun": {
+"cefr_above_list": "A2"
+},
+"pure|adv": {
+"cefr_above_list": "B1"
+},
+"pure|noun": {
+"cefr_above_list": "B1"
+},
+"pure|verb": {
+"cefr_above_list": "B1"
+},
+"purge|noun": {
+"common_word_too_hard": "B2"
+},
+"purpose|verb": {
+"cefr_above_list": "A2"
+},
+"put up|verb": {
+"idiom_too_easy": "B2"
+},
+"quarry|verb": {
+"cefr_above_list": "C1"
+},
+"quarter|adj": {
+"cefr_above_list": "A1"
+},
+"quarter|verb": {
+"cefr_above_list": "A1"
+},
 "questing|unknown": {
 "inflected_form": "quest"
+},
+"questionnaire|verb": {
+"cefr_above_list": "B1"
 },
 "questions|unknown": {
 "inflected_form": "question"
 },
-"ragged|verb": {
-"inflected_form": "rag"
+"quest|verb": {
+"cefr_above_list": "C1"
+},
+"quick|adv": {
+"cefr_above_list": "A2"
+},
+"quick|noun": {
+"cefr_above_list": "A2"
+},
+"quiet|intj": {
+"cefr_above_list": "A1"
+},
+"quiet|verb": {
+"cefr_above_list": "A1"
+},
+"quit|noun": {
+"cefr_above_list": "A2"
+},
+"quota|noun": {
+"common_word_too_hard": "B2"
+},
+"rack|verb": {
+"cefr_above_list": "B2"
+},
+"radiate|noun": {
+"cefr_above_list": "B2"
+},
+"radical|adj": {
+"cefr_above_list": "B2"
+},
+"radio|verb": {
+"cefr_above_list": "A1"
+},
+"raid|noun": {
+"common_word_too_hard": "B2"
+},
+"raid|verb": {
+"common_word_too_hard": "B2"
 },
 "railing|verb": {
 "inflected_form": "rail"
 },
+"rail|verb": {
+"cefr_above_list": "B1"
+},
 "raised|verb": {
 "inflected_form": "raise"
+},
+"raise|noun": {
+"cefr_above_list": "A2"
 },
 "raising|unknown": {
 "inflected_form": "raise"
 },
+"ramp|verb": {
+"cefr_above_list": "B2"
+},
+"random|noun": {
+"common_word_too_hard": "B2"
+},
+"rapid|noun": {
+"cefr_above_list": "B1"
+},
+"rare|noun": {
+"cefr_above_list": "B1"
+},
+"rash|noun": {
+"cefr_above_list": "B2"
+},
+"rather|noun": {
+"cefr_above_list": "A2"
+},
+"rather|verb": {
+"cefr_above_list": "A2"
+},
+"ratio|noun": {
+"common_word_too_hard": "B2"
+},
+"ratio|verb": {
+"common_word_too_hard": "B2"
+},
+"rat|verb": {
+"cefr_above_list": "A1"
+},
+"rave|noun": {
+"common_word_too_hard": "B2"
+},
+"raw|noun": {
+"cefr_above_list": "A2"
+},
+"ray|verb": {
+"cefr_above_list": "A2"
+},
 "razed|unknown": {
 "inflected_form": "raze"
+},
+"react|noun": {
+"cefr_above_list": "B1"
+},
+"ready|noun": {
+"cefr_above_list": "A1"
+},
+"ready|verb": {
+"cefr_above_list": "A1"
+},
+"read|noun": {
+"cefr_above_list": "A1"
+},
+"really|intj": {
+"cefr_above_list": "A1"
+},
+"realm|noun": {
+"common_word_too_hard": "B2"
+},
+"real|noun": {
+"cefr_above_list": "A1"
+},
+"rear|noun": {
+"cefr_above_list": "B2"
+},
+"recent|noun": {
+"cefr_above_list": "A2"
 },
 "reckoning|unknown": {
 "inflected_form": "reckon"
 },
-"red|verb": {
-"excluded_has_cefr": "A1",
-"inflected_form": "rede"
+"recommend|noun": {
+"cefr_above_list": "B1"
+},
+"record|adj": {
+"cefr_above_list": "A2"
+},
+"recover|noun": {
+"cefr_above_list": "B1"
 },
 "referenda|unknown": {
 "inflected_form": "referendum"
+},
+"referendum|noun": {
+"common_word_too_hard": "B2"
+},
+"refer|noun": {
+"cefr_above_list": "A2"
 },
 "reflecting|unknown": {
 "inflected_form": "reflect"
@@ -1590,35 +5520,155 @@
 "reflects|verb": {
 "inflected_form": "reflect"
 },
+"reform|verb": {
+"cefr_above_list": "B2"
+},
+"refuse|adj": {
+"cefr_above_list": "B1"
+},
+"regular|noun": {
+"cefr_above_list": "A2"
+},
 "reigned|unknown": {
 "inflected_form": "reign"
 },
 "reigns|unknown": {
 "inflected_form": "reign"
 },
+"reign|noun": {
+"common_word_too_hard": "B2"
+},
+"reign|verb": {
+"common_word_too_hard": "B2"
+},
+"reject|noun": {
+"cefr_above_list": "B1"
+},
+"remain|noun": {
+"cefr_above_list": "A2"
+},
+"remedy|verb": {
+"cefr_above_list": "B1"
+},
 "remnants|noun": {
 "inflected_form": "remnant"
+},
+"remote|noun": {
+"cefr_above_list": "A2"
+},
+"remote|verb": {
+"cefr_above_list": "A2"
+},
+"removal|noun": {
+"common_word_too_hard": "B2"
+},
+"repeal|noun": {
+"common_word_too_hard": "B2"
+},
+"repeat|noun": {
+"cefr_above_list": "A1"
+},
+"representation|noun": {
+"common_word_too_hard": "B2"
+},
+"reservoir|verb": {
+"common_word_too_hard": "B2"
+},
+"residential|noun": {
+"cefr_above_list": "B1"
 },
 "residues|unknown": {
 "inflected_form": "residue"
 },
+"resolve|noun": {
+"cefr_above_list": "B1"
+},
+"respectively|adv": {
+"common_word_too_hard": "B2"
+},
+"respond|noun": {
+"cefr_above_list": "B1"
+},
+"responsible|noun": {
+"cefr_above_list": "B1"
+},
 "resting|unknown": {
 "inflected_form": "rest"
+},
+"restore|noun": {
+"cefr_above_list": "B1"
+},
+"retail|adj": {
+"cefr_above_list": "B1"
+},
+"retail|adv": {
+"cefr_above_list": "B1"
+},
+"retail|verb": {
+"cefr_above_list": "B1"
 },
 "retained|unknown": {
 "inflected_form": "retain"
 },
-"riddled|verb": {
-"inflected_form": "riddle"
+"reveal|noun": {
+"cefr_above_list": "A2"
+},
+"reverse|adj": {
+"cefr_above_list": "B2"
+},
+"rib|verb": {
+"cefr_above_list": "B2"
+},
+"rice|verb": {
+"cefr_above_list": "A1"
+},
+"rich|noun": {
+"cefr_above_list": "A1"
+},
+"ridge|verb": {
+"cefr_above_list": "B2"
+},
+"right|verb": {
+"cefr_above_list": "A1"
+},
+"rigid|noun": {
+"common_word_too_hard": "B2"
+},
+"rim|verb": {
+"cefr_above_list": "B2"
+},
+"riot|noun": {
+"common_word_too_hard": "B2"
+},
+"riot|verb": {
+"common_word_too_hard": "B2"
+},
+"rival|adj": {
+"cefr_above_list": "B2"
+},
+"rival|verb": {
+"cefr_above_list": "B2"
+},
+"river|verb": {
+"cefr_above_list": "A1"
+},
+"road|adj": {
+"cefr_above_list": "A2"
 },
 "roaring|unknown": {
 "inflected_form": "roar"
 },
-"robed|verb": {
-"inflected_form": "robe"
+"roar|noun": {
+"cefr_above_list": "B2"
+},
+"robe|verb": {
+"common_word_too_hard": "B2"
 },
 "rocked|unknown": {
 "inflected_form": "rock"
+},
+"rocket|verb": {
+"cefr_above_list": "B2"
 },
 "rockies|noun": {
 "inflected_form": "rocky",
@@ -1630,14 +5680,41 @@
 "rocks|unknown": {
 "inflected_form": "rock"
 },
+"rogue|verb": {
+"common_word_too_hard": "B2"
+},
+"romantic|noun": {
+"cefr_above_list": "A2"
+},
+"roof|verb": {
+"cefr_above_list": "A2"
+},
+"root|verb": {
+"cefr_above_list": "A2"
+},
 "roped|unknown": {
 "inflected_form": "rope"
+},
+"rope|verb": {
+"cefr_above_list": "A2"
+},
+"rough|noun": {
+"cefr_above_list": "B1"
+},
+"rough|verb": {
+"cefr_above_list": "B1"
 },
 "rounded|unknown": {
 "inflected_form": "round"
 },
 "rounds|unknown": {
 "inflected_form": "round"
+},
+"route|verb": {
+"cefr_above_list": "B2"
+},
+"routine|adj": {
+"cefr_above_list": "B1"
 },
 "rowed|unknown": {
 "inflected_form": "row"
@@ -1654,17 +5731,65 @@
 "rung|verb": {
 "inflected_form": "ring"
 },
+"run|adj": {
+"cefr_above_list": "A1"
+},
+"rush|adj": {
+"cefr_above_list": "A2"
+},
+"rusty|noun": {
+"cefr_above_list": "B2"
+},
+"rust|adj": {
+"common_word_too_hard": "B2"
+},
+"rust|verb": {
+"common_word_too_hard": "B2"
+},
+"sabotage|noun": {
+"common_word_too_hard": "B2"
+},
 "saboteurs|unknown": {
 "inflected_form": "saboteur"
 },
-"saddled|verb": {
-"inflected_form": "saddle"
+"saddle|verb": {
+"common_word_too_hard": "B2"
 },
-"saga|noun": {
-"proper_or_brand": "專有名詞、品牌或含數字"
+"safe|noun": {
+"cefr_above_list": "A2"
+},
+"sage|adj": {
+"cefr_above_list": "B2"
+},
+"sage|intj": {
+"cefr_above_list": "B2"
+},
+"sage|verb": {
+"cefr_above_list": "B2"
+},
+"sag|verb": {
+"cefr_above_list": "B2"
 },
 "salads|unknown": {
 "inflected_form": "salad"
+},
+"salary|verb": {
+"cefr_above_list": "B2"
+},
+"salt|adj": {
+"cefr_above_list": "A2"
+},
+"salt|verb": {
+"cefr_above_list": "A2"
+},
+"salute|noun": {
+"common_word_too_hard": "B2"
+},
+"same|pron": {
+"cefr_above_list": "A1"
+},
+"sample|verb": {
+"cefr_above_list": "A2"
 },
 "sanding|unknown": {
 "inflected_form": "sand"
@@ -1675,8 +5800,29 @@
 "sandwiches|unknown": {
 "inflected_form": "sandwich"
 },
+"sandwich|adj": {
+"cefr_above_list": "A1"
+},
+"sandwich|verb": {
+"cefr_above_list": "A1"
+},
+"sand|adj": {
+"cefr_above_list": "B1"
+},
+"sand|verb": {
+"cefr_above_list": "B1"
+},
 "sank|unknown": {
 "inflected_form": "sink"
+},
+"sap|verb": {
+"cefr_above_list": "C1"
+},
+"satellite|adj": {
+"cefr_above_list": "B1"
+},
+"satellite|verb": {
+"cefr_above_list": "B1"
 },
 "sat|unknown": {
 "inflected_form": "sit"
@@ -1687,20 +5833,56 @@
 "sauces|unknown": {
 "inflected_form": "sauce"
 },
+"sauce|verb": {
+"cefr_above_list": "A2"
+},
+"save|noun": {
+"cefr_above_list": "A1"
+},
+"savor|noun": {
+"inflected_form": "savour"
+},
+"savor|verb": {
+"inflected_form": "savour"
+},
 "saws|unknown": {
 "inflected_form": "saw"
 },
-"scaffolding|verb": {
-"inflected_form": "scaffold"
+"say|intj": {
+"cefr_above_list": "A1"
 },
 "scaled|unknown": {
 "inflected_form": "scale"
 },
-"scalloped|verb": {
-"inflected_form": "scallop"
+"scale|verb": {
+"cefr_above_list": "A2"
+},
+"scare|adj": {
+"cefr_above_list": "B1"
+},
+"scarf|verb": {
+"cefr_above_list": "A2"
+},
+"scarlet|adj": {
+"cefr_above_list": "B2"
+},
+"scarlet|verb": {
+"cefr_above_list": "B2"
+},
+"scattered|adj": {
+"common_word_too_hard": "B2"
 },
 "scattered|verb": {
 "inflected_form": "scatter"
+},
+"scatter|noun": {
+"cefr_above_list": "B1"
+},
+"scheme|verb": {
+"cefr_above_list": "B2"
+},
+"scope|verb": {
+"cefr_above_list": "B1"
 },
 "scored|verb": {
 "inflected_form": "score"
@@ -1708,8 +5890,14 @@
 "scores|unknown": {
 "inflected_form": "score"
 },
-"scrambled|verb": {
-"inflected_form": "scramble"
+"score|intj": {
+"cefr_above_list": "B1"
+},
+"scotch|verb": {
+"common_word_too_hard": "B2"
+},
+"scout|verb": {
+"common_word_too_hard": "B2"
 },
 "scraped|unknown": {
 "inflected_form": "scrape"
@@ -1720,14 +5908,23 @@
 "scraps|unknown": {
 "inflected_form": "scrap"
 },
+"scrap|noun": {
+"common_word_too_hard": "B2"
+},
 "screened|verb": {
 "inflected_form": "screen"
 },
 "screens|unknown": {
 "inflected_form": "screen"
 },
+"script|verb": {
+"cefr_above_list": "A2"
+},
 "scrutinizing|verb": {
 "inflected_form": "scrutinize"
+},
+"scum|verb": {
+"common_word_too_hard": "B2"
 },
 "seasoned|verb": {
 "inflected_form": "season"
@@ -1738,14 +5935,53 @@
 "seasons|unknown": {
 "inflected_form": "season"
 },
+"seat|verb": {
+"cefr_above_list": "A1"
+},
+"second|verb": {
+"cefr_above_list": "A1"
+},
+"secret|verb": {
+"cefr_above_list": "A2"
+},
 "seeded|unknown": {
 "inflected_form": "seed"
+},
+"seed|verb": {
+"cefr_above_list": "A2"
 },
 "segmented|verb": {
 "inflected_form": "segment"
 },
+"seizure|verb": {
+"common_word_too_hard": "B2"
+},
+"self|pron": {
+"cefr_above_list": "A1"
+},
+"sell|noun": {
+"cefr_above_list": "A1"
+},
+"semi|adv": {
+"common_word_too_hard": "B2"
+},
+"send|noun": {
+"cefr_above_list": "A2"
+},
+"sensitive|noun": {
+"cefr_above_list": "B2"
+},
 "separated|verb": {
 "inflected_form": "separate"
+},
+"separate|noun": {
+"cefr_above_list": "A2"
+},
+"sequence|verb": {
+"cefr_above_list": "B1"
+},
+"serene|noun": {
+"cefr_above_list": "B2"
 },
 "served|unknown": {
 "inflected_form": "serve"
@@ -1753,11 +5989,38 @@
 "serves|unknown": {
 "inflected_form": "serve"
 },
+"serve|noun": {
+"cefr_above_list": "A2"
+},
+"session|verb": {
+"cefr_above_list": "B1"
+},
+"settle|noun": {
+"cefr_above_list": "B1"
+},
+"set|adj": {
+"cefr_above_list": "A1"
+},
+"several|det": {
+"cefr_above_list": "A2"
+},
+"sexual|noun": {
+"cefr_above_list": "B2"
+},
 "shades|unknown": {
 "inflected_form": "shade"
 },
+"shade|verb": {
+"cefr_above_list": "A2"
+},
 "shaking|unknown": {
 "inflected_form": "shake"
+},
+"shallow|noun": {
+"cefr_above_list": "B1"
+},
+"shallow|verb": {
+"cefr_above_list": "B1"
 },
 "shaped|verb": {
 "inflected_form": "shape"
@@ -1765,20 +6028,38 @@
 "shapes|unknown": {
 "inflected_form": "shape"
 },
+"shareholder|noun": {
+"common_word_too_hard": "B2"
+},
 "shattered|verb": {
 "inflected_form": "shatter"
 },
 "shattering|unknown": {
 "inflected_form": "shatter"
 },
-"sheathed|unknown": {
-"inflected_form": "sheath"
+"shatter|noun": {
+"cefr_above_list": "B2"
+},
+"sheet|verb": {
+"cefr_above_list": "B1"
+},
+"shelf|verb": {
+"inflected_form": "shelve"
 },
 "shelled|unknown": {
 "inflected_form": "shell"
 },
+"shelter|verb": {
+"cefr_above_list": "B1"
+},
 "shelves|unknown": {
 "inflected_form": "shelf"
+},
+"shield|verb": {
+"cefr_above_list": "B2"
+},
+"shine|noun": {
+"cefr_above_list": "A2"
 },
 "shipped|unknown": {
 "inflected_form": "ship"
@@ -1789,23 +6070,120 @@
 "shirts|noun": {
 "inflected_form": "shirt"
 },
+"shirt|verb": {
+"cefr_above_list": "A1"
+},
+"shoe|verb": {
+"cefr_above_list": "A1"
+},
+"shop|intj": {
+"cefr_above_list": "A1"
+},
+"shore|verb": {
+"cefr_above_list": "A2"
+},
+"short|verb": {
+"cefr_above_list": "A1"
+},
+"shot|verb": {
+"cefr_above_list": "A2"
+},
+"shoulder|verb": {
+"cefr_above_list": "A1"
+},
+"should|noun": {
+"cefr_above_list": "A1"
+},
 "shoves|unknown": {
 "inflected_form": "shove"
+},
+"shove|noun": {
+"common_word_too_hard": "B2"
 },
 "shrubs|unknown": {
 "inflected_form": "shrub"
 },
+"shut|noun": {
+"cefr_above_list": "A2"
+},
+"sick|noun": {
+"cefr_above_list": "A1"
+},
+"sick|verb": {
+"cefr_above_list": "A1"
+},
 "sighted|unknown": {
 "inflected_form": "sight"
 },
-"signed|unknown": {
-"inflected_form": "sign"
+"sight|verb": {
+"cefr_above_list": "A1"
+},
+"sigh|intj": {
+"cefr_above_list": "B1"
+},
+"signature|adj": {
+"cefr_above_list": "B1"
+},
+"significant|noun": {
+"cefr_above_list": "A2"
+},
+"sign|adj": {
+"cefr_above_list": "A1"
+},
+"silence|verb": {
+"cefr_above_list": "A2"
+},
+"silent|noun": {
+"cefr_above_list": "B1"
+},
+"silly|noun": {
+"cefr_above_list": "A2"
+},
+"silver|verb": {
+"cefr_above_list": "A2"
+},
+"simple|noun": {
+"cefr_above_list": "A2"
+},
+"since|conj": {
+"cefr_above_list": "A2"
+},
+"since|prep": {
+"cefr_above_list": "A2"
+},
+"single|verb": {
+"cefr_above_list": "A2"
+},
+"sing|noun": {
+"cefr_above_list": "A1"
 },
 "sinking|unknown": {
 "inflected_form": "sink"
 },
+"sin|noun": {
+"common_word_too_hard": "B2"
+},
+"sin|verb": {
+"common_word_too_hard": "B2"
+},
+"sipping|verb": {
+"excluded_has_cefr": "C2",
+"inflected_form": "sip"
+},
+"sister|verb": {
+"cefr_above_list": "A1"
+},
+"site|verb": {
+"cefr_above_list": "A1"
+},
 "sitting|unknown": {
 "inflected_form": "sit"
+},
+"sit|noun": {
+"cefr_above_list": "A1"
+},
+"size|verb": {
+"cefr_above_list": "A1"
 },
 "sketched|unknown": {
 "inflected_form": "sketch"
@@ -1816,11 +6194,23 @@
 "sketcht|unknown": {
 "inflected_form": "sketch"
 },
+"sketch|adj": {
+"cefr_above_list": "B2"
+},
+"skill|verb": {
+"cefr_above_list": "A1"
+},
 "skirting|verb": {
 "inflected_form": "skirt"
 },
-"slanted|verb": {
-"inflected_form": "slant"
+"skirt|verb": {
+"cefr_above_list": "A1"
+},
+"skull|verb": {
+"common_word_too_hard": "B2"
+},
+"sky|verb": {
+"cefr_above_list": "A1"
 },
 "slants|unknown": {
 "inflected_form": "slant"
@@ -1828,23 +6218,116 @@
 "slashed|unknown": {
 "inflected_form": "slash"
 },
-"slays|unknown": {
-"inflected_form": "slay"
+"slash|verb": {
+"cefr_above_list": "B2"
+},
+"slave|verb": {
+"cefr_above_list": "A2"
 },
 "sliced|unknown": {
 "inflected_form": "slice"
 },
+"slight|verb": {
+"cefr_above_list": "B1"
+},
 "slopes|unknown": {
 "inflected_form": "slope"
+},
+"slope|verb": {
+"cefr_above_list": "B1"
+},
+"slow|noun": {
+"cefr_above_list": "A1"
+},
+"slut|verb": {
+"common_word_too_hard": "B2"
+},
+"small|noun": {
+"cefr_above_list": "A1"
+},
+"smart|noun": {
+"cefr_above_list": "A1"
+},
+"smart|verb": {
+"cefr_above_list": "A1"
+},
+"smooth|noun": {
+"cefr_above_list": "A2"
+},
+"smooth|verb": {
+"cefr_above_list": "A2"
+},
+"snake|verb": {
+"cefr_above_list": "A1"
+},
+"sneak|adj": {
+"cefr_above_list": "B2"
+},
+"sneak|noun": {
+"cefr_above_list": "B2"
+},
+"snooze|noun": {
+"cefr_above_list": "C1"
 },
 "snowmen|unknown": {
 "inflected_form": "snowman"
 },
+"snow|adj": {
+"cefr_above_list": "A1"
+},
+"soccer|verb": {
+"cefr_above_list": "A1"
+},
+"social|noun": {
+"cefr_above_list": "A1"
+},
+"soft|noun": {
+"cefr_above_list": "A2"
+},
+"solid|noun": {
+"cefr_above_list": "B1"
+},
+"somebody|noun": {
+"cefr_above_list": "A2"
+},
+"somewhat|noun": {
+"cefr_above_list": "B2"
+},
+"somewhere|noun": {
+"cefr_above_list": "A2"
+},
+"some|adj": {
+"cefr_above_list": "A1"
+},
+"son|verb": {
+"cefr_above_list": "A1"
+},
+"soon|adj": {
+"cefr_above_list": "A1"
+},
+"sorry|intj": {
+"cefr_above_list": "A1"
+},
 "sot|unknown": {
 "inflected_form": "sit"
 },
-"souping|unknown": {
-"inflected_form": "soup"
+"soul|verb": {
+"cefr_above_list": "B1"
+},
+"sound|adv": {
+"cefr_above_list": "A2"
+},
+"source|verb": {
+"cefr_above_list": "A2"
+},
+"southern|noun": {
+"cefr_above_list": "B1"
+},
+"sovereignty|noun": {
+"common_word_too_hard": "B2"
+},
+"so|intj": {
+"cefr_above_list": "A1"
 },
 "spanned|unknown": {
 "inflected_form": "span"
@@ -1852,20 +6335,72 @@
 "spans|unknown": {
 "inflected_form": "span"
 },
+"spare|noun": {
+"cefr_above_list": "B2"
+},
+"spark|verb": {
+"cefr_above_list": "B2"
+},
+"spear|verb": {
+"common_word_too_hard": "B2"
+},
+"specialist|adj": {
+"cefr_above_list": "B1"
+},
+"special|noun": {
+"cefr_above_list": "A1"
+},
+"specific|noun": {
+"cefr_above_list": "A2"
+},
+"spectacular|noun": {
+"cefr_above_list": "B1"
+},
 "spectators|noun": {
 "inflected_form": "spectator"
+},
+"speech|verb": {
+"cefr_above_list": "A1"
+},
+"spice|verb": {
+"cefr_above_list": "B1"
 },
 "spilling|unknown": {
 "inflected_form": "spill"
 },
+"spill|noun": {
+"cefr_above_list": "A2"
+},
 "spilt|unknown": {
 "inflected_form": "spill"
+},
+"spiral arms|noun": {
+"excluded_has_cefr": "B1",
+"inflected_form": "spiral arm"
+},
+"spiral|noun": {
+"cefr_above_list": "B1"
+},
+"spiral|verb": {
+"cefr_above_list": "B1"
+},
+"spirit|verb": {
+"cefr_above_list": "B1"
+},
+"spoon|verb": {
+"cefr_above_list": "A2"
+},
+"sport|verb": {
+"cefr_above_list": "A1"
 },
 "spots|noun": {
 "inflected_form": "spot"
 },
-"spotted|verb": {
-"inflected_form": "spot"
+"square|adv": {
+"cefr_above_list": "A2"
+},
+"square|verb": {
+"cefr_above_list": "A2"
 },
 "squeaks|unknown": {
 "inflected_form": "squeak"
@@ -1873,8 +6408,26 @@
 "stabbing|unknown": {
 "inflected_form": "stab"
 },
+"stable|verb": {
+"cefr_above_list": "B1"
+},
+"stab|noun": {
+"cefr_above_list": "B2"
+},
 "stacked|verb": {
 "inflected_form": "stack"
+},
+"stack|verb": {
+"cefr_above_list": "B2"
+},
+"staff|verb": {
+"cefr_above_list": "A2"
+},
+"stage|verb": {
+"cefr_above_list": "A1"
+},
+"staircase|verb": {
+"common_word_too_hard": "B2"
 },
 "staked|unknown": {
 "inflected_form": "stake"
@@ -1882,45 +6435,176 @@
 "stakes|unknown": {
 "inflected_form": "stake"
 },
+"stake|verb": {
+"cefr_above_list": "B2"
+},
+"stance|verb": {
+"common_word_too_hard": "B2"
+},
 "standings|unknown": {
 "inflected_form": "standing"
 },
-"starks|unknown": {
-"inflected_form": "stark"
+"stark|adj": {
+"common_word_too_hard": "B2"
+},
+"stark|adv": {
+"common_word_too_hard": "B2"
 },
 "starring|unknown": {
 "inflected_form": "star"
 },
+"stash|verb": {
+"common_word_too_hard": "B2"
+},
+"statement|adj": {
+"cefr_above_list": "A2"
+},
+"statement|verb": {
+"cefr_above_list": "A2"
+},
+"station|verb": {
+"cefr_above_list": "A1"
+},
+"statue|verb": {
+"cefr_above_list": "A2"
+},
+"steady|adv": {
+"cefr_above_list": "B1"
+},
+"steady|noun": {
+"cefr_above_list": "B1"
+},
+"steady|verb": {
+"cefr_above_list": "B1"
+},
+"steak|verb": {
+"cefr_above_list": "A2"
+},
+"steal|noun": {
+"cefr_above_list": "A2"
+},
+"steel|adj": {
+"cefr_above_list": "B1"
+},
+"steel|verb": {
+"cefr_above_list": "B1"
+},
+"steep|noun": {
+"cefr_above_list": "B1"
+},
+"steep|verb": {
+"cefr_above_list": "B1"
+},
+"steer|noun": {
+"cefr_above_list": "B2"
+},
 "stemming|unknown": {
 "inflected_form": "stem"
+},
+"stern|noun": {
+"cefr_above_list": "B2"
 },
 "sticken|unknown": {
 "inflected_form": "stick"
 },
+"sticker|verb": {
+"cefr_above_list": "B1"
+},
+"stick|adj": {
+"cefr_above_list": "B1"
+},
+"still|noun": {
+"cefr_above_list": "A1"
+},
+"still|verb": {
+"cefr_above_list": "A1"
+},
 "stimulants|noun": {
 "inflected_form": "stimulant"
+},
+"sting|verb": {
+"common_word_too_hard": "B2"
+},
+"stir-fry|noun": {
+"common_word_too_hard": "B2"
+},
+"stir|noun": {
+"cefr_above_list": "B1"
+},
+"stockpile|verb": {
+"cefr_above_list": "B2"
+},
+"stock|adj": {
+"cefr_above_list": "B2"
 },
 "stoned|verb": {
 "inflected_form": "stone"
 },
+"stone|adj": {
+"cefr_above_list": "A1"
+},
+"stone|adv": {
+"cefr_above_list": "A1"
+},
+"stone|verb": {
+"cefr_above_list": "A1"
+},
 "stood|unknown": {
 "inflected_form": "stand"
 },
-"stricken|verb": {
-"excluded_has_cefr": "B1",
-"inflected_form": "strike"
+"storage|verb": {
+"cefr_above_list": "B1"
+},
+"storm|verb": {
+"cefr_above_list": "A2"
+},
+"story|verb": {
+"cefr_above_list": "A1"
+},
+"straight|noun": {
+"cefr_above_list": "A1"
+},
+"strange|noun": {
+"cefr_above_list": "A1"
+},
+"strawberry|adj": {
+"cefr_above_list": "B1"
+},
+"straw|adj": {
+"cefr_above_list": "B1"
+},
+"straw|verb": {
+"cefr_above_list": "B1"
+},
+"street|adj": {
+"cefr_above_list": "A1"
+},
+"stretch|adj": {
+"cefr_above_list": "B1"
+},
+"stretch|noun": {
+"cefr_above_list": "B1"
 },
 "striken|unknown": {
 "inflected_form": "strike"
 },
-"striped|verb": {
-"inflected_form": "stripe"
+"string|verb": {
+"cefr_above_list": "A2"
 },
 "stripes|unknown": {
 "inflected_form": "stripe"
 },
+"stripe|verb": {
+"cefr_above_list": "B1"
+},
 "stripped|unknown": {
 "inflected_form": "strip"
+},
+"stroll|noun": {
+"common_word_too_hard": "B2"
+},
+"strong|noun": {
+"cefr_above_list": "A1"
 },
 "struck|unknown": {
 "inflected_form": "strike"
@@ -1928,14 +6612,62 @@
 "structures|unknown": {
 "inflected_form": "structure"
 },
+"structure|verb": {
+"cefr_above_list": "A2"
+},
 "stung|unknown": {
 "inflected_form": "sting"
+},
+"stunt|verb": {
+"common_word_too_hard": "B2"
+},
+"stupid|noun": {
+"cefr_above_list": "B1"
+},
+"style|verb": {
+"cefr_above_list": "A2"
+},
+"subject|adj": {
+"cefr_above_list": "A1"
+},
+"subsequent|noun": {
+"common_word_too_hard": "B2"
+},
+"substantial|noun": {
+"cefr_above_list": "B1"
+},
+"sub|prep": {
+"common_word_too_hard": "B2"
 },
 "succulents|unknown": {
 "inflected_form": "succulent"
 },
+"such|adv": {
+"cefr_above_list": "A2"
+},
+"sudden|noun": {
+"cefr_above_list": "A2"
+},
+"sufficient|det": {
+"cefr_above_list": "B1"
+},
+"sugar|verb": {
+"cefr_above_list": "A1"
+},
+"suicide|verb": {
+"cefr_above_list": "B1"
+},
 "suits|unknown": {
 "inflected_form": "suit"
+},
+"summit|verb": {
+"cefr_above_list": "B1"
+},
+"summon|noun": {
+"common_word_too_hard": "B2"
+},
+"sum|verb": {
+"cefr_above_list": "A1"
 },
 "sunken|unknown": {
 "inflected_form": "sink"
@@ -1943,23 +6675,59 @@
 "sunk|unknown": {
 "inflected_form": "sink"
 },
-"sunlighting|unknown": {
-"inflected_form": "sunlight"
-},
 "sunlights|unknown": {
 "inflected_form": "sunlight"
 },
 "sunning|unknown": {
 "inflected_form": "sun"
 },
+"sunshine|adj": {
+"cefr_above_list": "A1"
+},
 "suns|unknown": {
 "inflected_form": "sun"
+},
+"sun|verb": {
+"cefr_above_list": "A1"
+},
+"superior|noun": {
+"cefr_above_list": "B1"
+},
+"super|adv": {
+"cefr_above_list": "A1"
+},
+"super|noun": {
+"cefr_above_list": "A1"
+},
+"supplement|verb": {
+"cefr_above_list": "B2"
+},
+"supple|verb": {
+"cefr_above_list": "C1"
+},
+"sure|intj": {
+"cefr_above_list": "A1"
 },
 "surfaced|unknown": {
 "inflected_form": "surface"
 },
+"surface|adj": {
+"cefr_above_list": "B1"
+},
+"surplus|adj": {
+"common_word_too_hard": "B2"
+},
+"surplus|noun": {
+"common_word_too_hard": "B2"
+},
+"surprise|intj": {
+"cefr_above_list": "A1"
+},
 "surrounds|verb": {
 "inflected_form": "surround"
+},
+"surround|noun": {
+"cefr_above_list": "B1"
 },
 "surveyed|unknown": {
 "inflected_form": "survey"
@@ -1967,15 +6735,47 @@
 "surveys|unknown": {
 "inflected_form": "survey"
 },
+"survey|verb": {
+"cefr_above_list": "A1"
+},
+"swamp|verb": {
+"common_word_too_hard": "B2"
+},
+"swan|verb": {
+"cefr_above_list": "B2"
+},
 "swarmed|unknown": {
 "inflected_form": "swarm"
+},
+"swarm|verb": {
+"cefr_above_list": "B1"
 },
 "swaying|verb": {
 "inflected_form": "sway"
 },
+"swear|noun": {
+"cefr_above_list": "B1"
+},
+"sweep|noun": {
+"cefr_above_list": "B2"
+},
+"sweet|intj": {
+"cefr_above_list": "A1"
+},
+"swell|noun": {
+"cefr_above_list": "B1"
+},
+"swimming|adj": {
+"cefr_above_list": "A1"
+},
 "swimming|verb": {
-"excluded_has_cefr": "A1",
 "inflected_form": "swim"
+},
+"sword|verb": {
+"cefr_above_list": "B1"
+},
+"sympathetic|noun": {
+"cefr_above_list": "B2"
 },
 "tableaux|unknown": {
 "inflected_form": "tableau"
@@ -1986,11 +6786,23 @@
 "tables|unknown": {
 "inflected_form": "table"
 },
+"tablet|verb": {
+"cefr_above_list": "B1"
+},
+"table|verb": {
+"cefr_above_list": "A1"
+},
 "tacked|unknown": {
 "inflected_form": "tack"
 },
+"tackle|noun": {
+"cefr_above_list": "B2"
+},
 "tacks|unknown": {
 "inflected_form": "tack"
+},
+"tack|noun": {
+"cefr_above_list": "B2"
 },
 "tagged|unknown": {
 "inflected_form": "tag"
@@ -1998,11 +6810,23 @@
 "tagging|unknown": {
 "inflected_form": "tag"
 },
+"tag|adj": {
+"cefr_above_list": "B2"
+},
 "tailed|unknown": {
 "inflected_form": "tail"
 },
+"tail|verb": {
+"cefr_above_list": "B2"
+},
 "taller|unknown": {
 "inflected_form": "tall"
+},
+"tall|noun": {
+"cefr_above_list": "A1"
+},
+"tank|verb": {
+"cefr_above_list": "B1"
 },
 "tapered|verb": {
 "inflected_form": "taper"
@@ -2016,32 +6840,212 @@
 "tare|unknown": {
 "inflected_form": "tear"
 },
+"target|verb": {
+"cefr_above_list": "A2"
+},
+"task|verb": {
+"cefr_above_list": "A2"
+},
+"taxi|verb": {
+"cefr_above_list": "A1"
+},
+"tax|verb": {
+"cefr_above_list": "B1"
+},
+"tea bag|noun": {
+"excluded_has_cefr": "A1",
+"inflected_form": "teabag"
+},
+"teach|noun": {
+"cefr_above_list": "A1"
+},
+"team|intj": {
+"cefr_above_list": "A1"
+},
+"team|verb": {
+"cefr_above_list": "A1"
+},
+"tea|adj": {
+"cefr_above_list": "A1"
+},
+"tea|verb": {
+"cefr_above_list": "A1"
+},
+"teen|adj": {
+"cefr_above_list": "B1"
+},
+"television|verb": {
+"cefr_above_list": "A1"
+},
+"tell|noun": {
+"cefr_above_list": "A1"
+},
+"temple|verb": {
+"cefr_above_list": "A1"
+},
+"temporary|noun": {
+"cefr_above_list": "B1"
+},
+"tender|noun": {
+"cefr_above_list": "B2"
+},
+"tennis|verb": {
+"cefr_above_list": "A1"
+},
+"tension|verb": {
+"cefr_above_list": "B1"
+},
+"tent|verb": {
+"cefr_above_list": "B1"
+},
+"terminal|adj": {
+"cefr_above_list": "B1"
+},
+"terminal|verb": {
+"cefr_above_list": "B1"
+},
+"term|adj": {
+"cefr_above_list": "B1"
+},
+"term|verb": {
+"cefr_above_list": "B1"
+},
+"terrace|verb": {
+"cefr_above_list": "B2"
+},
+"terrible|adv": {
+"cefr_above_list": "A1"
+},
 "texts|unknown": {
 "inflected_form": "text"
+},
+"texture|noun": {
+"common_word_too_hard": "B2"
+},
+"texture|verb": {
+"common_word_too_hard": "B2"
+},
+"that|conj": {
+"cefr_above_list": "A1"
+},
+"that|pron": {
+"cefr_above_list": "A1"
+},
+"theme|verb": {
+"cefr_above_list": "B2"
+},
+"then|adj": {
+"cefr_above_list": "A1"
+},
+"theoretical|adj": {
+"common_word_too_hard": "B2"
+},
+"thin|noun": {
+"cefr_above_list": "A1"
+},
+"thin|verb": {
+"cefr_above_list": "A1"
+},
+"this|noun": {
+"cefr_above_list": "A1"
+},
+"though|conj": {
+"cefr_above_list": "A2"
+},
+"throughout|prep": {
+"cefr_above_list": "B1"
+},
+"through|adj": {
+"cefr_above_list": "A1"
+},
+"through|prep": {
+"cefr_above_list": "A1"
 },
 "thugs|unknown": {
 "inflected_form": "thug"
 },
+"thus|noun": {
+"cefr_above_list": "B1",
+"excluded_has_cefr": "C1",
+"inflected_form": "thuris"
+},
 "tibiae|unknown": {
 "inflected_form": "tibia"
 },
-"tiled|verb": {
-"inflected_form": "tile"
+"ticket|verb": {
+"cefr_above_list": "A1"
+},
+"tile|verb": {
+"cefr_above_list": "B1"
 },
 "tiling|unknown": {
 "inflected_form": "tile"
 },
+"till|conj": {
+"cefr_above_list": "A2"
+},
+"till|prep": {
+"cefr_above_list": "A2"
+},
+"till|verb": {
+"cefr_above_list": "A2"
+},
 "tilts|unknown": {
 "inflected_form": "tilt"
 },
+"tilt|noun": {
+"common_word_too_hard": "B2"
+},
+"timber|noun": {
+"common_word_too_hard": "B2"
+},
+"timber|verb": {
+"common_word_too_hard": "B2"
+},
+"tin|adj": {
+"cefr_above_list": "B1"
+},
+"tin|verb": {
+"cefr_above_list": "B1"
+},
+"tire|noun": {
+"cefr_above_list": "B1"
+},
+"title|verb": {
+"cefr_above_list": "A2"
+},
+"toast|verb": {
+"cefr_above_list": "A2"
+},
+"together|adj": {
+"cefr_above_list": "A1"
+},
+"toll|verb": {
+"cefr_above_list": "B2"
+},
 "tomatoes|unknown": {
 "inflected_form": "tomato"
+},
+"tomato|adj": {
+"cefr_above_list": "A1"
+},
+"tongue-in-cheek|adv": {
+"common_word_too_hard": "B2"
+},
+"tongue|verb": {
+"cefr_above_list": "B1"
+},
+"tool|verb": {
+"cefr_above_list": "A1"
 },
 "toppled|unknown": {
 "inflected_form": "topple"
 },
 "toppling|verb": {
 "inflected_form": "topple"
+},
+"top|verb": {
+"cefr_above_list": "A1"
 },
 "tore|unknown": {
 "inflected_form": "tear"
@@ -2052,11 +7056,41 @@
 "tossed|unknown": {
 "inflected_form": "toss"
 },
+"toss|noun": {
+"cefr_above_list": "B1"
+},
+"tough|intj": {
+"cefr_above_list": "B2"
+},
+"tough|noun": {
+"cefr_above_list": "B2"
+},
+"tough|verb": {
+"cefr_above_list": "B2"
+},
+"toward|adj": {
+"cefr_above_list": "A2"
+},
 "towels|unknown": {
 "inflected_form": "towel"
 },
+"towel|verb": {
+"cefr_above_list": "A1"
+},
 "towering|unknown": {
 "inflected_form": "tower"
+},
+"tower|verb": {
+"cefr_above_list": "A1"
+},
+"toy|verb": {
+"cefr_above_list": "A1"
+},
+"traditional|noun": {
+"cefr_above_list": "A2"
+},
+"traffic|verb": {
+"cefr_above_list": "A2"
 },
 "trailing|unknown": {
 "inflected_form": "trail"
@@ -2064,11 +7098,97 @@
 "trained|unknown": {
 "inflected_form": "train"
 },
+"trample|verb": {
+"cefr_above_list": "B2"
+},
+"tramp|verb": {
+"cefr_above_list": "B2"
+},
+"transition|verb": {
+"cefr_above_list": "B2"
+},
+"transparent|noun": {
+"cefr_above_list": "B2"
+},
+"trans|adj": {
+"common_word_too_hard": "B2"
+},
+"trans|noun": {
+"common_word_too_hard": "B2",
+"excluded_has_cefr": "C2",
+"inflected_form": "tran"
+},
+"trans|verb": {
+"common_word_too_hard": "B2"
+},
+"trap|verb": {
+"cefr_above_list": "A2"
+},
+"trash|verb": {
+"cefr_above_list": "B1"
+},
+"tray|verb": {
+"cefr_above_list": "B2"
+},
+"treaty|verb": {
+"cefr_above_list": "B2"
+},
 "trees|noun": {
 "inflected_form": "tree"
 },
+"tree|verb": {
+"cefr_above_list": "A1"
+},
+"trend|verb": {
+"cefr_above_list": "B1"
+},
+"trial|verb": {
+"cefr_above_list": "B2"
+},
+"trigger|verb": {
+"cefr_above_list": "B1"
+},
 "trimmed|unknown": {
 "inflected_form": "trim"
+},
+"trim|adj": {
+"cefr_above_list": "B1"
+},
+"trim|adv": {
+"cefr_above_list": "B1"
+},
+"trim|verb": {
+"cefr_above_list": "B1"
+},
+"triple|adj": {
+"common_word_too_hard": "B2"
+},
+"triple|verb": {
+"common_word_too_hard": "B2"
+},
+"tropical|noun": {
+"cefr_above_list": "B1"
+},
+"true|noun": {
+"cefr_above_list": "A1"
+},
+"true|verb": {
+"cefr_above_list": "A1"
+},
+"trumpet|verb": {
+"cefr_above_list": "B1"
+},
+"truth|verb": {
+"cefr_above_list": "A2"
+},
+"tube|verb": {
+"cefr_above_list": "A1"
+},
+"tuck|noun": {
+"common_word_too_hard": "B2"
+},
+"tumble|noun": {
+"cefr_above_list": "B1"
 },
 "tumbling|verb": {
 "inflected_form": "tumble"
@@ -2076,36 +7196,119 @@
 "turned|unknown": {
 "inflected_form": "turn"
 },
+"turnover|noun": {
+"common_word_too_hard": "B2"
+},
 "turns|verb": {
 "inflected_form": "turn"
 },
+"twin|verb": {
+"cefr_above_list": "B1"
+},
 "twisted|verb": {
-"excluded_has_cefr": "B2",
 "inflected_form": "twist"
 },
 "twisting|unknown": {
 "inflected_form": "twist"
 },
+"ugly|noun": {
+"cefr_above_list": "A1"
+},
+"ugly|verb": {
+"cefr_above_list": "A1"
+},
+"ultimate|noun": {
+"cefr_above_list": "B2"
+},
 "umbrellas|unknown": {
 "inflected_form": "umbrella"
 },
-"underlying|verb": {
-"inflected_form": "underlie"
+"umbrella|adj": {
+"cefr_above_list": "A1"
+},
+"umbrella|verb": {
+"cefr_above_list": "A1"
+},
+"unable|intj": {
+"cefr_above_list": "B1"
+},
+"underground|verb": {
+"cefr_above_list": "B2"
+},
+"underlying|adj": {
+"common_word_too_hard": "B2"
+},
+"underlying|noun": {
+"common_word_too_hard": "B2"
+},
+"undermine|verb": {
+"common_word_too_hard": "B2"
+},
+"union|adj": {
+"cefr_above_list": "B1"
+},
+"unique|noun": {
+"cefr_above_list": "B1"
+},
+"universal|noun": {
+"cefr_above_list": "B2"
+},
+"unknown|noun": {
+"cefr_above_list": "A2"
+},
+"unlike|noun": {
+"cefr_above_list": "A2"
+},
+"unlike|prep": {
+"cefr_above_list": "A2"
+},
+"unlike|verb": {
+"cefr_above_list": "A2"
 },
 "unsub|noun": {
 "abbreviation": "縮寫"
 },
-"unsub|verb": {
-"abbreviation": "縮寫"
+"until|conj": {
+"cefr_above_list": "A1"
+},
+"unusual|noun": {
+"cefr_above_list": "A2"
+},
+"upcoming|adj": {
+"common_word_too_hard": "B2"
+},
+"upcoming|noun": {
+"common_word_too_hard": "B2"
 },
 "upperclassmen|noun": {
 "inflected_form": "upperclassman"
 },
-"uprooted|verb": {
-"inflected_form": "uproot"
+"upright|noun": {
+"cefr_above_list": "B2"
+},
+"upright|verb": {
+"cefr_above_list": "B2"
+},
+"upset|noun": {
+"cefr_above_list": "A2"
+},
+"upward|adv": {
+"cefr_above_list": "B1"
+},
+"up|verb": {
+"cefr_above_list": "A1"
+},
+"usual|noun": {
+"cefr_above_list": "A2"
 },
 "utensils|unknown": {
 "inflected_form": "utensil"
+},
+"vacation|verb": {
+"cefr_above_list": "A1"
+},
+"valuable|noun": {
+"cefr_above_list": "B1"
 },
 "vandalized|verb": {
 "inflected_form": "vandalize"
@@ -2113,8 +7316,35 @@
 "vapors|unknown": {
 "inflected_form": "vapor"
 },
+"vapor|verb": {
+"common_word_too_hard": "B2"
+},
+"variable|adj": {
+"common_word_too_hard": "B2"
+},
+"variable|noun": {
+"common_word_too_hard": "B2"
+},
+"various|det": {
+"cefr_above_list": "B1"
+},
+"vase|verb": {
+"cefr_above_list": "A1"
+},
+"vast|noun": {
+"cefr_above_list": "B1"
+},
+"vegetable|adj": {
+"cefr_above_list": "A1"
+},
 "vehicles|noun": {
 "inflected_form": "vehicle"
+},
+"vehicle|verb": {
+"cefr_above_list": "B1"
+},
+"veil|verb": {
+"common_word_too_hard": "B2"
 },
 "veins|unknown": {
 "inflected_form": "vein"
@@ -2125,8 +7355,56 @@
 "verandas|unknown": {
 "inflected_form": "veranda"
 },
+"verb|verb": {
+"cefr_above_list": "A2"
+},
+"vest|verb": {
+"common_word_too_hard": "B2"
+},
+"veteran|adj": {
+"cefr_above_list": "B2"
+},
+"viable|noun": {
+"common_word_too_hard": "B2"
+},
+"via|prep": {
+"cefr_above_list": "B1"
+},
+"video|verb": {
+"cefr_above_list": "A1"
+},
+"virtual|noun": {
+"cefr_above_list": "B1"
+},
+"virus|verb": {
+"cefr_above_list": "B1"
+},
+"volcano|verb": {
+"cefr_above_list": "B1"
+},
+"voluntary|noun": {
+"cefr_above_list": "C1"
+},
+"volunteer|adj": {
+"cefr_above_list": "B1"
+},
 "vouching|unknown": {
 "inflected_form": "vouch"
+},
+"voyage|verb": {
+"cefr_above_list": "B1"
+},
+"vulgar|noun": {
+"common_word_too_hard": "B2"
+},
+"wage|verb": {
+"cefr_above_list": "B2"
+},
+"wagon|verb": {
+"cefr_above_list": "B1"
+},
+"wait|intj": {
+"cefr_above_list": "A1"
 },
 "walked|verb": {
 "inflected_form": "walk"
@@ -2134,20 +7412,41 @@
 "walled|unknown": {
 "inflected_form": "wall"
 },
+"wallpaper|verb": {
+"common_word_too_hard": "B2"
+},
+"wall|verb": {
+"cefr_above_list": "A1"
+},
 "walnuts|unknown": {
 "inflected_form": "walnut"
 },
 "waned|unknown": {
 "inflected_form": "wane"
 },
-"wank|noun": {
-"person_name": "人名"
-},
 "wank|verb": {
 "person_name": "人名"
 },
+"ward|verb": {
+"cefr_above_list": "B1"
+},
+"warehouse|noun": {
+"common_word_too_hard": "B2"
+},
+"warehouse|verb": {
+"common_word_too_hard": "B2"
+},
 "ware|unknown": {
 "inflected_form": "wear"
+},
+"warm|adv": {
+"cefr_above_list": "A1"
+},
+"warm|noun": {
+"cefr_above_list": "A1"
+},
+"warp|verb": {
+"common_word_too_hard": "B2"
 },
 "watching|unknown": {
 "inflected_form": "watch"
@@ -2155,45 +7454,162 @@
 "watered|unknown": {
 "inflected_form": "water"
 },
-"waters|noun": {
-"proper_or_brand": "專有名詞、品牌或含數字"
-},
 "waved|verb": {
 "inflected_form": "wave"
 },
 "waving|unknown": {
 "inflected_form": "wave"
 },
+"way|adv": {
+"cefr_above_list": "A1"
+},
+"wealthy|noun": {
+"cefr_above_list": "B2"
+},
 "weapons|unknown": {
 "inflected_form": "weapon"
+},
+"weapon|verb": {
+"cefr_above_list": "B1"
 },
 "wearing|verb": {
 "inflected_form": "wear"
 },
+"wear|noun": {
+"cefr_above_list": "A1"
+},
 "weathered|verb": {
 "inflected_form": "weather"
+},
+"weather|adj": {
+"cefr_above_list": "A1"
+},
+"weather|verb": {
+"cefr_above_list": "A1"
+},
+"weave|verb": {
+"cefr_above_list": "B2"
+},
+"web|verb": {
+"cefr_above_list": "A2"
+},
+"weekend|adj": {
+"cefr_above_list": "A1"
+},
+"weekly|noun": {
+"cefr_above_list": "A2"
 },
 "weeping|unknown": {
 "inflected_form": "weep"
 },
+"weep|verb": {
+"cefr_above_list": "A2"
+},
+"weight|verb": {
+"cefr_above_list": "A2"
+},
+"welfare|verb": {
+"cefr_above_list": "B2"
+},
+"well|intj": {
+"cefr_above_list": "A1"
+},
+"well|verb": {
+"cefr_above_list": "A1"
+},
 "wept|verb": {
 "inflected_form": "weep"
+},
+"west|verb": {
+"cefr_above_list": "A2"
 },
 "wetter|adj": {
 "inflected_form": "wet"
 },
+"wet|noun": {
+"cefr_above_list": "A2"
+},
+"wet|verb": {
+"cefr_above_list": "A2"
+},
+"whatever|noun": {
+"cefr_above_list": "A2"
+},
+"whatever|pron": {
+"cefr_above_list": "A2"
+},
+"what|noun": {
+"cefr_above_list": "A1"
+},
+"what|pron": {
+"cefr_above_list": "A1"
+},
+"wheel|verb": {
+"cefr_above_list": "A1"
+},
+"whereas|conj": {
+"cefr_above_list": "B2"
+},
+"wherever|adv": {
+"cefr_above_list": "B1"
+},
+"where|conj": {
+"cefr_above_list": "A1"
+},
+"where|pron": {
+"cefr_above_list": "A1"
+},
+"which|det": {
+"cefr_above_list": "A1"
+},
+"while|verb": {
+"cefr_above_list": "A2"
+},
 "whiter|unknown": {
 "inflected_form": "white"
 },
-"windowed|unknown": {
-"inflected_form": "window"
+"white|verb": {
+"cefr_above_list": "A1"
 },
-"windowing|unknown": {
-"inflected_form": "window"
+"wholesale|adv": {
+"common_word_too_hard": "B2"
+},
+"wholesale|verb": {
+"common_word_too_hard": "B2"
+},
+"wild|adv": {
+"cefr_above_list": "A2"
+},
+"wild|noun": {
+"cefr_above_list": "A2"
+},
+"wild|verb": {
+"cefr_above_list": "A2"
+},
+"willow|verb": {
+"common_word_too_hard": "B2"
 },
 "windows|noun": {
 "inflected_form": "window",
 "proper_or_brand": "專有名詞、品牌或含數字"
+},
+"wine|verb": {
+"cefr_above_list": "A2"
+},
+"winter|verb": {
+"cefr_above_list": "A1"
+},
+"wipe|noun": {
+"cefr_above_list": "B2"
+},
+"wise|noun": {
+"cefr_above_list": "A2"
+},
+"wolf|verb": {
+"cefr_above_list": "B2"
+},
+"woman|verb": {
+"cefr_above_list": "A1"
 },
 "women|unknown": {
 "inflected_form": "woman"
@@ -2207,8 +7623,20 @@
 "woods|unknown": {
 "inflected_form": "wood"
 },
+"wood|verb": {
+"cefr_above_list": "A2"
+},
 "wooed|unknown": {
 "inflected_form": "woo"
+},
+"woo|intj": {
+"inflected_form": "whoo"
+},
+"woo|noun": {
+"inflected_form": "woo woo"
+},
+"word|verb": {
+"cefr_above_list": "A1"
 },
 "wore|unknown": {
 "inflected_form": "wear"
@@ -2216,9 +7644,17 @@
 "worked|unknown": {
 "inflected_form": "work"
 },
-"worn|verb": {
-"excluded_has_cefr": "B1",
-"inflected_form": "wear"
+"workshop|verb": {
+"cefr_above_list": "B1"
+},
+"world|adj": {
+"cefr_above_list": "A1"
+},
+"would|noun": {
+"cefr_above_list": "A1"
+},
+"woven|noun": {
+"common_word_too_hard": "B2"
 },
 "woven|verb": {
 "inflected_form": "weave"
@@ -2226,10 +7662,52 @@
 "wove|unknown": {
 "inflected_form": "weave"
 },
-"wrecked|verb": {
-"inflected_form": "wreck"
+"wreck|verb": {
+"cefr_above_list": "B2"
+},
+"wrong|noun": {
+"cefr_above_list": "A1"
+},
+"wrong|verb": {
+"cefr_above_list": "A1"
 },
 "wrung|unknown": {
 "inflected_form": "wring"
+},
+"yeah|intj": {
+"cefr_above_list": "A2"
+},
+"yellow|verb": {
+"cefr_above_list": "A1"
+},
+"yesterday|noun": {
+"cefr_above_list": "A1"
+},
+"yes|det": {
+"cefr_above_list": "A1"
+},
+"yes|noun": {
+"cefr_above_list": "A1"
+},
+"yes|verb": {
+"cefr_above_list": "A1"
+},
+"yet|conj": {
+"cefr_above_list": "A1"
+},
+"yet|noun": {
+"cefr_above_list": "A1"
+},
+"yet|verb": {
+"cefr_above_list": "A1"
+},
+"yield|noun": {
+"cefr_above_list": "B2"
+},
+"young|verb": {
+"cefr_above_list": "A1"
+},
+"zone|verb": {
+"cefr_above_list": "A2"
 }
 }

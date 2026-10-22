@@ -248,6 +248,18 @@ class FlashcardBack extends StatelessWidget {
     this.onOpenWord,
   });
 
+  /// The card's headword: capitalised English, lowercase French with the
+  /// noun's article (問題回報 #499) — shared by the title, the photo overlay
+  /// and the photo pin (卡 #496 round 5: the overlay showed "Appareil").
+  String get _headword {
+    final source = _source;
+    return headword(entry.word, entry.language,
+        pos: activePos ?? entry.pos,
+        inflections: source == null
+            ? const []
+            : LexiconPack.instance.detailFor(source).inflections);
+  }
+
   LexEntry? get _source {
     final pack = LexiconPack.instance;
     final byId = entry.lexemeId == null ? null : pack.byId(entry.lexemeId!);
@@ -496,8 +508,9 @@ class FlashcardBack extends StatelessWidget {
             },
             height: look.photoHeight,
             radius: look.photoRadius,
-            // 圖片沉浸 (#317): the word is written on the photo.
-            overlay: look.photoHero ? _HeroWord(entry.word, look) : null,
+            // 圖片沉浸 (#317): the word is written on the photo — the same
+            // headword as without a photo (French lowercase + article, #499).
+            overlay: look.photoHero ? _HeroWord(_headword, look) : null,
             // 圖片沉浸 already writes the word on the photo.
             pinFor: AppScope.of(context).settings.showPhotoLabels &&
                     !look.photoHero
@@ -506,7 +519,7 @@ class FlashcardBack extends StatelessWidget {
                     : PinData(
                         id: entry.word,
                         anchor: o.$2!,
-                        word: displayWord(entry.word),
+                        word: _headword,
                         zh: activeMeaning ?? entry.meaning)
                 : null);
       case CardBackField.example:
@@ -724,13 +737,7 @@ class FlashcardBack extends StatelessWidget {
                   if (hero == null)
                     // 圖片沉浸 without a photo: the headword is white (made for
                     // the dark scrim), so it needs the dark ink on the canvas.
-                    Text(
-                        headword(entry.word, entry.language,
-                            inflections: source == null
-                                ? const []
-                                : LexiconPack.instance
-                                    .detailFor(source)
-                                    .inflections),
+                    Text(_headword,
                         style: look.photoHero
                             ? look.headword.copyWith(color: look.meaning.color)
                             : look.headword),
@@ -1250,7 +1257,9 @@ class _HeroWord extends StatelessWidget {
             colors: [Color(0x00000000), Color(0xB3000000)],
           ),
         ),
-        child: Text(displayWord(word),
+        // Already the card's headword (English capitalised, French "un
+        // appareil"): capitalising again gave "Un Appareil" (卡 #496).
+        child: Text(word,
             key: const ValueKey('hero-word'),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,

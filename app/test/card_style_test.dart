@@ -250,12 +250,18 @@ void main() {
     }
   });
 
+  test('style names carry no mock-up letter (問題回報 #521)', () {
+    for (final s in CardStyle.values) {
+      expect(s.label, isNot(matches(RegExp(r'^[A-Z] '))), reason: s.name);
+    }
+  });
+
   testWidgets('設定 → 卡片樣式 switches the style',
       (tester) async {
     final app = await pumpApp(tester, initialTab: AppTab.settings);
     // Owner's choice on #317: B is the default.
     expect(app.settings.cardStyle, CardStyle.immersive);
-    final chip = find.text('C 活潑遊戲');
+    final chip = find.text('活潑遊戲');
     await tester.scrollUntilVisible(chip, 300,
         scrollable: find
             .descendant(

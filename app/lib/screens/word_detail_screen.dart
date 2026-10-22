@@ -113,6 +113,42 @@ class _WordBody extends StatelessWidget {
     final repo = scope.repository;
     final pack = LexiconPack.instance;
 
+    // 卡 #227 第 124 輪: common senses first, slang/obsolete/offensive last
+    // (bank 動詞「把東西藏在直腸內」 was third, 「傾斜轉彎」 behind 顯示更多).
+    final senseTier = <String, int>{
+      for (final e in pack.entriesFor(entry.word))
+        for (final s in e.senses) 'pack:${pack.target}:${s.id}': s.displayTier,
+    };
+    List<WordSense> orderedSenses(LexemeUsage usage) {
+      final senses = usage.senses.toList();
+      final rank = {for (var i = 0; i < senses.length; i++) senses[i]: i};
+      senses.sort((a, b) {
+        final t = (senseTier[a.id] ?? 0).compareTo(senseTier[b.id] ?? 0);
+        return t != 0 ? t : rank[a]!.compareTo(rank[b]!);
+      });
+      return senses;
+    }
+
+    // One part of speech shows its main meaning big; its other senses were
+    // missing (卡 #227 第 124 輪: pupil 只有「學生」, 沒有「瞳孔」 — the
+    // 資料庫 detail lists them). Those whose words are all in the main
+    // meaning are not repeated.
+    final meaningWords = entry.meaning
+        .split(RegExp(r'[、，,；;\s]+'))
+        .where((w) => w.isNotEmpty)
+        .toSet();
+    final otherSenses = entry.effectiveUsages.length == 1
+        ? <String>{
+            for (final sense in orderedSenses(entry.effectiveUsages.single))
+              if (sense.meaning.trim().isNotEmpty &&
+                  !sense.meaning
+                      .split(RegExp(r'[、，,；;\s]+'))
+                      .where((w) => w.isNotEmpty)
+                      .every(meaningWords.contains))
+                sense.meaning.trim(),
+          }.toList()
+        : const <String>[];
+
     // Owner decision (issue #252): three per section, the rest behind 更多.
     List<({String word, String meaning})> relatedWords(String kind) {
       final seen = <String>{};
@@ -210,12 +246,13 @@ class _WordBody extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                    headword(entry.word, entry.language, inflections: [
-                      for (final u in entry.effectiveUsages)
-                        if (pack.lookup(entry.word, pos: u.pos)?.entry
-                            case final s?)
-                          ...pack.detailFor(s).inflections
-                    ]),
+                    headword(entry.word, entry.language, pos: entry.pos,
+                        inflections: [
+                          for (final u in entry.effectiveUsages)
+                            if (pack.lookup(entry.word, pos: u.pos)?.entry
+                                case final s?)
+                              ...pack.detailFor(s).inflections
+                        ]),
                     style: MFont.manrope(32, FontWeight.w800, MColors.ink)),
                 if (entry.ipa != null) ...[
                   const SizedBox(height: MSpace.xxs),
@@ -271,13 +308,16 @@ class _WordBody extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              for (final usage in entry.effectiveUsages) ...[
+              // A part of speech with no meaning yet would be a bare chip
+              // (secret 動詞, imply 名詞; 卡 #12 第 131 輪), as in the database view.
+              for (final usage in entry.effectiveUsages)
+                if (usage.senses.any((s) => s.meaning.trim().isNotEmpty)) ...[
                 TagChip(posLabel(usage.pos)),
                 const SizedBox(height: MSpace.xxs),
                 _MoreList(
                   initial: 3,
                   children: [
-                    for (final sense in usage.senses)
+                    for (final sense in orderedSenses(usage))
                       if (sense.meaning.trim().isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.only(bottom: MSpace.xxs),
@@ -311,6 +351,21 @@ class _WordBody extends StatelessWidget {
               const SizedBox(height: MSpace.xxs),
               Text(entry.definition!,
                   style: MFont.manrope(14, FontWeight.w600, MColors.muted)),
+            ],
+            if (otherSenses.isNotEmpty) ...[
+              const SizedBox(height: MSpace.xs),
+              _MoreList(
+                initial: 2,
+                children: [
+                  for (final meaning in otherSenses)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: MSpace.xxs),
+                      child: Text(meaning,
+                          style: MFont.manrope(
+                              17, FontWeight.w700, MColors.ink)),
+                    ),
+                ],
+              ),
             ],
           ],
         ),

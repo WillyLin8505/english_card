@@ -26,9 +26,10 @@ enum CardStyle {
 
   String get label => switch (this) {
         CardStyle.classic => '經典',
-        CardStyle.minimal => 'A 簡潔留白',
-        CardStyle.immersive => 'B 圖片沉浸',
-        CardStyle.playful => 'C 活潑遊戲',
+        // No A/B/C: those were the mock-up codes (問題回報 #521).
+        CardStyle.minimal => '簡潔留白',
+        CardStyle.immersive => '圖片沉浸',
+        CardStyle.playful => '活潑遊戲',
       };
 }
 

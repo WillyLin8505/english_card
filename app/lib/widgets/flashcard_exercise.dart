@@ -175,8 +175,10 @@ class _InteractiveExerciseState extends State<_InteractiveExercise> {
           _photo(),
           const SizedBox(height: 18),
           _title(x.prompt),
+          // The part of speech is UI copy (名詞 → Noun for an English
+          // speaker), not dictionary text (卡 #496 round 5).
           if (x.translation != null)
-            Text(x.translation!,
+            Text(ui(context, x.translation!),
                 textAlign: TextAlign.center,
                 style: MFont.manrope(14, FontWeight.w700, MColors.label)),
           const SizedBox(height: 12),

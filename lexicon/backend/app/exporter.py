@@ -236,7 +236,9 @@ def _spelling_key(word: str) -> str:
     """British/American spellings map to one key: colour/color, centre/center, realise/realize."""
     w = word.lower()
     w = re.sub(r"(?<=[bclmnpstvgdkz])our", "or", w)
-    w = w.replace("ise", "ize")
+    w = w.replace("ise", "ize").replace("xion", "ction")
+    if len(w) >= 5 and w.endswith("ce"):
+        w = w[:-2] + "se"  # defence/defense, licence/license
     if len(w) >= 5 and w.endswith("re"):
         w = w[:-2] + "er"
     return w
@@ -255,6 +257,28 @@ def confusable_problem(word: str, head: str, target, zh: str | None,
         return "same_meaning"
     if word.lower() != head.lower() and _spelling_key(word) == _spelling_key(head):
         return "spelling_variant"
+    return None
+
+
+def _phoneme_key(value) -> str:
+    if isinstance(value, (list, tuple)):
+        value = " ".join(map(str, value))
+    return re.sub(r"\d", "", str(value or "")).lower().replace(" ", "")
+
+
+def homophone_problem(word: str, head: str, detail: dict, zipf, head_phonemes: set, their_phonemes: set, target=None) -> str | None:
+    """Why a 同音字 row is hidden (問題回報 #526): only a common word that sounds the same is
+    worth showing. rare: rarity worse than less_common (blue→bleu); spelling_variant: British
+    spelling of the headword (connexion); not_same_sound: the phonemes differ (ear→air)."""
+    if target is not None and target.status != "full":
+        return "not_in_lexicon"  # a link stub, often a name (marc, kane, d'or)
+    rarity = detail.get("rarity")
+    if rarity in ("uncommon", "rare", "very_rare") or zipf is None or zipf < 4.0:
+        return "rare"
+    if word.lower() != head.lower() and _spelling_key(word) == _spelling_key(head):
+        return "spelling_variant"
+    if head_phonemes and their_phonemes and not (head_phonemes & their_phonemes):
+        return "not_same_sound"
     return None
 
 
@@ -597,6 +621,11 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_saf
         # 的詞形不算; apple's derived terms must not list apples).
         own_forms = {lemma.lower()} | {(it.get("form") or "").lower()
                                        for ff in catalog.INFLECTION_FIELDS for it in items(lemma, ff)}
+        def phoneme_set(word):
+            return {_phoneme_key(i.get("phonemes")) for i in
+                    (values[word].get("phonemes").items if word in values and
+                     values[word].get("phonemes") is not None else [])} - {""}
+        head_ph = phoneme_set(lemma)
         for f in catalog.RELATION_FIELDS + ["derived_terms"]:
             nat_field = "derived_native_meaning" if f == "derived_terms" else f"{f}_native"
             meanings = {(i.get("word") or i.get("slot") or "").lower(): i
@@ -621,6 +650,9 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_saf
                     if mean else None
                 if f in _CONFUSABLE and not hidden:
                     hidden = confusable_problem(w, lemma, tgt, zh, head_zh) is not None
+                if f == "homophones" and not hidden:
+                    hidden = homophone_problem(w, lemma, detail, target_zipf, head_ph,
+                                              phoneme_set(w), tgt) is not None
                 found.append((n, it, w, row, tgt, mean, detail, target_zipf,
                               tgt.cefr or detail.get("cefr"), hidden, zh))
             if f in _PER_LEVEL:

@@ -353,6 +353,10 @@ class PinData {
   /// Where the word is printed on the photo, framed (問題回報 #324).
   final LabelBox? frame;
 
+  /// The pinned lexeme, when known: a tap opens it, not whatever entry the
+  /// spelling looks up first (soil noun, not soil verb).
+  final int? lexemeId;
+
   const PinData({
     required this.id,
     required this.anchor,
@@ -362,6 +366,7 @@ class PinData {
     this.muted = false,
     this.linked = true,
     this.frame,
+    this.lexemeId,
   });
 }
 

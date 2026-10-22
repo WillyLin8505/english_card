@@ -960,6 +960,17 @@ class Tick:
                 self.state["note"] = {"text": line, "at": self.now.timestamp()}
 
     def run(self) -> int:
+        every = float(self.cfg.get("watchdog_minutes", 60))  # owner 10/22: 「2分鐘太頻繁了 改成1小時」
+        if (not self.dry and os.name == "nt" and self.cfg.get("watchdog", True)
+                and time.time() - self.state.get("watchdog_at", 0) >= every * 60):
+            # owner 10/22 「保持網路 不要斷掉了」: tunnel, API, UI, App, tagger come back on their own
+            self.state["watchdog_at"] = time.time()
+            try:
+                from watchdog import ensure_all
+                if ensure_all(log):
+                    self.event("recovered", outcome="watchdog 重新啟動了停掉的服務（見 dispatch_tick.log）")
+            except Exception as e:  # noqa: BLE001
+                log(f"watchdog failed: {e}")
         try:
             board = http("GET", "/schedule/board")
         except Exception as e:  # noqa: BLE001

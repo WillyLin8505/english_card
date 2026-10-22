@@ -318,9 +318,9 @@ const uiCatalog = <String, (String, String)>{
   '發音腔調': ('Pronunciation accent', 'Accent'),
   '卡片樣式': ('Card style', 'Style des cartes'),
   '經典': ('Classic', 'Classique'),
-  'A 簡潔留白': ('A Clean', 'A Épuré'),
-  'B 圖片沉浸': ('B Photo-first', 'B Immersif'),
-  'C 活潑遊戲': ('C Playful', 'C Ludique'),
+  '簡潔留白': ('Clean', 'Épuré'),
+  '圖片沉浸': ('Photo-first', 'Immersif'),
+  '活潑遊戲': ('Playful', 'Ludique'),
   '只改變複習卡片的外觀，內容和複習方式不變。': (
     'Changes only how review cards look; their content and reviews stay the same.',
     'Change seulement l’apparence des cartes ; contenu et révisions restent identiques.'

@@ -81,7 +81,8 @@ class _DatabaseTagGroupState extends State<_DatabaseTagGroup> {
             const SizedBox(width: MSpace.xs),
           ],
           Flexible(
-            child: Text(
+            // UI copy: an English speaker reads "Beginner (A1)" (\u5361 #496).
+            child: UiText(
               group.key == null ? '\u672a\u5206\u7d1a' : levelLabel(group.key!),
               style: MFont.manrope(14, FontWeight.w700, MColors.ink),
             ),
@@ -113,7 +114,8 @@ class _DatabaseTagGroupState extends State<_DatabaseTagGroup> {
                               MFont.manrope(15, FontWeight.w700, MColors.ink)),
                       if (group.key != null && databaseTagEstimated(tag, pack)) ...[
                         const SizedBox(height: 2),
-                        Text('\u7b49\u7d1a\u70ba\u8a5e\u983b\u4f30\u7b97',
+                        // UI copy, localized for native=en/fr (\u5361 #496).
+                        UiText('\u7b49\u7d1a\u70ba\u8a5e\u983b\u4f30\u7b97',
                             style: MFont.caption),
                       ],
                     ],

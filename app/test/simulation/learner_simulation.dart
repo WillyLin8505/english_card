@@ -26,6 +26,7 @@ import 'package:photo_english_app/models/learning_card.dart';
 import 'package:photo_english_app/models/vocabulary_profile.dart';
 import 'package:photo_english_app/models/word_entry.dart';
 import 'package:photo_english_app/screens/flashcard_screen.dart';
+import 'package:photo_english_app/services/app_settings.dart';
 import 'package:photo_english_app/services/flashcard_session.dart';
 import 'package:photo_english_app/services/learning_content.dart';
 import 'package:photo_english_app/services/lexicon_pack.dart';
@@ -83,7 +84,11 @@ void checkBack(WordEntry e, String level, Findings f) {
   final all =
       e.examples.where((x) => (x.translation ?? '').isNotEmpty).toList();
   final same = all.where((x) => x.difficulty == level).toList();
-  if (xs.isNotEmpty && same.isNotEmpty && xs.first.difficulty != level) {
+  // Unleveled sentences deliberately rank with the learner's level.
+  if (xs.isNotEmpty &&
+      same.isNotEmpty &&
+      xs.first.difficulty != null &&
+      xs.first.difficulty != level) {
     f.add('背面第一句例句不是使用者程度（規格：先顯示同級）',
         '${e.word}：程度 $level，顯示 ${xs.first.difficulty}「${xs.first.text}」');
   }
@@ -192,7 +197,11 @@ void main() {
       final dueBefore = repo.eligibleCards().length;
       var shown = 0, sessionAgain = 0;
       if (!skipped && dueBefore > 0) {
-        final s = FlashcardSession(repo, random: rnd);
+        // Same 每日上限 as the app's defaults (flashcard_screen passes them).
+        final s = FlashcardSession(repo,
+            random: rnd,
+            newLimit: AppSettings.defaultDailyNewLimit,
+            reviewLimit: AppSettings.defaultDailyReviewLimit);
         final seen = <String, int>{};
         final againAt = <String, int>{};
         final againCounts = <String, int>{};
@@ -243,7 +252,11 @@ void main() {
         if (againAt.isNotEmpty) {
           f.add('按忘記的卡在同一次複習中沒有再出現', againAt.keys.join(','));
         }
-        final left = repo.eligibleCards().where((c) => !seen.containsKey(c.id));
+        final left = repo
+            .eligibleCards(
+                newLimit: AppSettings.defaultDailyNewLimit,
+                reviewLimit: AppSettings.defaultDailyReviewLimit)
+            .where((c) => !seen.containsKey(c.id));
         if (left.isNotEmpty) {
           f.add('複習結束時還有到期卡片沒出現', '${left.length} 張');
         }

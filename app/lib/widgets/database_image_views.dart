@@ -261,10 +261,9 @@ class _DatabaseImageScreenState extends State<DatabaseImageScreen> {
                               pins: databasePins(image, pack, level: _level),
                               radius: 0,
                               onPinTap: (pin) {
-                                final word = pack.lookup(pin.word);
-                                if (word != null) {
-                                  openDatabaseWord(context, word.entry.id);
-                                }
+                                final id = pin.lexemeId ??
+                                    pack.lookup(pin.word)?.entry.id;
+                                if (id != null) openDatabaseWord(context, id);
                               })),
                     ),
                     const SizedBox(height: MSpace.sm),
