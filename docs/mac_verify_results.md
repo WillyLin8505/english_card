@@ -629,3 +629,11 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #469 容易混淆的字 | 通過 | 48,072 筆，沒有詞條的 33,699 筆都預設隱藏，預設顯示卻沒有詞條 0 筆 | — | — |
 | #472 more／most 形式 | 通過 | 0 筆 | — | — |
 | #468 關聯詞缺中文（新版增加） | 不通過 | 有詞條的關聯詞 75,312 筆中缺中文 51 筆（前一版 56,695 筆中 14 筆），超過永久卡 S6 的 20 筆；例：park→par、discriminate→discrimination、truck→semi、pie→pre、pure→pre。另外有些關聯本身就怪（meaning→pregnant、hail→hell） | — | 低 |
+
+## 2026-10-23 Mac 修正：照片詳情與翻卡卡頓（翻卡修正已 push）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| 照片詳情開啟頓一下（M-PERF） | 通過 | Mac 修正已 push：dc19cbbc（photo_detail_screen.dart 分四個畫面建立、查詞改快取，新增 photo_detail_first_frame_test）。Mac 上 flutter analyze 0 error、0 warning，flutter test 516 通過；實機重量另列 | — | — |
+| 翻卡頓一下（M-PERF） | 通過 | 翻卡修正已 push：e8081479（flashcard_back.dart 背面分兩個畫面建立、左右滑照片不重建下半部、詞庫查詢與例句排序改快取、正面時先備好背面；flashcard_session_views.dart 呼叫預備；順手清掉 lexicon_pack.dart 等 3 個原本的 warning）。Mac 上 analyze 0 warning、test 516 通過；實機重量另列 | — | — |
+| 凍結清單 | 通過 | flashcard_back.dart、flashcard_session_views.dart、photo_detail_screen.dart 的 Mac 修改都已 push，可以解除凍結 | — | — |
