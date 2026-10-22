@@ -637,3 +637,12 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 照片詳情開啟頓一下（M-PERF） | 通過 | Mac 修正已 push：dc19cbbc（photo_detail_screen.dart 分四個畫面建立、查詞改快取，新增 photo_detail_first_frame_test）。Mac 上 flutter analyze 0 error、0 warning，flutter test 516 通過；實機重量另列 | — | — |
 | 翻卡頓一下（M-PERF） | 通過 | 翻卡修正已 push：e8081479（flashcard_back.dart 背面分兩個畫面建立、左右滑照片不重建下半部、詞庫查詢與例句排序改快取、正面時先備好背面；flashcard_session_views.dart 呼叫預備；順手清掉 lexicon_pack.dart 等 3 個原本的 warning）。Mac 上 analyze 0 warning、test 516 通過；實機重量另列 | — | — |
 | 凍結清單 | 通過 | flashcard_back.dart、flashcard_session_views.dart、photo_detail_screen.dart 的 Mac 修改都已 push，可以解除凍結 | — | — |
+
+## 2026-10-23 實機 iPhone 12：修正後重量流暢度（dc19cbbc＋e8081479）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| 量測 | 通過 | iPhone 12 profile 版、上架設定，跑兩次（第 1 次剛好在同步新詞庫 249ddcab…，第 2 次詞庫已同步）。第 2 次：單字本最慢 48ms、單字詳情 39ms、相片冊 46ms、相簿內照片 29ms | — | — |
+| 照片詳情開啟（M-PERF 第二輪） | Mac 處理中 | 修正後最慢一張 114ms → 64ms（build 最大 95.8 → 62.7ms），但仍有 4 張超過 33ms；Mac 繼續修 photo_detail_screen.dart | — | — |
+| 翻卡（M-PERF 第二輪） | Mac 處理中 | 修正後最慢一張 108ms → 87ms（build 最大 67.8 → 54.2ms），仍有 5 張超過 33ms；Mac 繼續修 flashcard_back.dart | — | — |
+| 同步新詞庫時主執行緒卡住 | Mac 處理中 | 第 1 次量測 App 剛好第一次同步新版詞庫：單字本捲動中有一張畫面 580ms、複習中有一張 1,151ms，但 build／raster 都很短（主執行緒被畫面以外的工作佔住）；第 2 次詞庫已同步就沒有。每次伺服器出新詞庫，使用者打開 App 後會卡一下約 1 秒。Mac 修 dictionary_sync.dart／lexicon_pack.dart／lexicon_sqlite.dart，把套用與載入新詞庫移出主執行緒或分批做 | — | — |
