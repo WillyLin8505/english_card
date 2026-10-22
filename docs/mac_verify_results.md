@@ -609,3 +609,12 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
 |----|----|----|----|----|
 | #484／#485 詞庫包重新匯出 | 未能驗證 | 01:54 公開網址恢復（/api/decks 回 200）。模擬器新安裝同步到的伺服器詞庫版本仍是 2bc4f1d6…（跟 10/21 21:52 實機拿到的同一版），非核心詞性帶比較級／最高級仍是 70 筆（good 感嘆詞 better／best、well 感嘆詞 more well 等）。也就是 pack 還沒重新匯出，請 Windows 重新匯出後開 M 項，Mac 再驗 | — | — |
+
+## 2026-10-22 owner 派工：Windows 離線期間（Mac 整理）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| Windows 服務沒有自動恢復 | 不通過 | 10/22 01:54 公開網址還能同步詞庫，之後 Windows 停止：21:00 起公開網址回 530、card manager（Remote Control）離線、最後 push 是 10/21 22:30。家裡網路上 192.168.0.135 仍開著 445（檔案分享），但 8765／8123／5173 都關著，看起來是被重開機後停在登入畫面、登入後才會跑的程式（cloudflared、serve_app、打標服務、派工、Claude Code）都沒起來。請把 cloudflared 裝成 Windows 服務、serve_app／打標／dispatch_tick 的排程設成「開機時、不論使用者是否登入都執行」，serve_app 啟動要帶 --public-host api.willylinai.com，並查事件檢視器 1074／6005／41 確認原因 | — | 高 |
+| 詞庫 pack 重新匯出（#484、#485、#465） | 不通過 | 伺服器詞庫仍是 2bc4f1d6…（10/21 21:52 那版），非核心詞性帶比較級／最高級仍 70 筆；#484 的修正要重新匯出 pack 才會到 App。請 Windows 上線後重新匯出並開 M 項讓 Mac 驗 | — | 中 |
+| 照片詳情開啟、翻卡頓一下（M-PERF 兩列） | 通過 | owner 決定 Windows 離線期間由 Mac 修：已在 Mac 開兩個工作（photo-detail-jank、flip-card-jank），修好會 push 到 main，Mac 再到實機重量 | — | — |
+| 永久卡 | 通過 | Mac 驗過且目前沒問題的檢查轉成 7 張永久卡（S1 analyze／test、S2 模擬器回歸、S3 實機記憶體、S4 實機流暢度、S5 公開網址健康、S6 詞庫資料、S7 內建錄音），見 docs/mac_standing_cards.md；Windows 上線後可匯入看板 | — | — |
