@@ -53,6 +53,24 @@ void main() {
     expect(learningExamples(e, 'B2').first.difficulty, 'B2');
   });
 
+  test('one sentence per translation (問題回報 #555)', () {
+    final e = WordEntry.fromUserInput(
+      id: 'mouille',
+      word: 'mouillé',
+      pos: 'adj',
+      language: 'fr',
+      meaning: 'wet',
+      now: testNow,
+    ).copyWith(examples: const [
+      WordExample(text: 'Pourquoi es-tu mouillé ?', translation: 'Why are you wet?'),
+      WordExample(text: 'Pourquoi es-tu mouillée ?', translation: 'Why are you wet?'),
+      WordExample(text: 'Pourquoi êtes-vous mouillé ?', translation: 'why are you wet'),
+      WordExample(text: 'Les chiens mouillés sentent très bon.', translation: 'Wet dogs smell great.'),
+    ]);
+    expect([for (final x in learningExamples(e, 'B1')) x.text],
+        ['Pourquoi es-tu mouillé ?', 'Les chiens mouillés sentent très bon.']);
+  });
+
   test('a neutral sentence is preferred over a charged one (問題回報 #254)', () {
     final e = WordEntry.fromUserInput(
       id: 'outlaw',

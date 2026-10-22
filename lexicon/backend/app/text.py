@@ -598,3 +598,38 @@ def sense_native(text: str | None, labels) -> tuple[str | None, bool]:
 def offensive_native(text: str | None) -> bool:
     return bool(text) and any(b in text for b in ZH_OFFENSIVE)
 
+
+
+# 卡 #524 / 問題回報 #554: French swear and sex words in an example sentence, and
+# senses whose English definition is sexual/excretory but carry no vulgar label
+# (kaikki often omits it). Only used for non-English targets.
+_FR_PROFANE = re.compile(
+    r"\b(?:merd\w*|cul|culs|fout(?:re|s|t)|foutr\w+|put(?:e|es|ain\w*)|p[ée]nis|vagin\w*|porno\w*|"
+    r"masturb\w*|couilles?|salopes?|salauds?|encul\w+|connards?|connasses?|bordel\w*|"
+    r"bites?|(?<!-)nique\w*|sperme|[ée]rection|orgasm\w*|prostitu\w+|trou du cul|chier|chiant\w*|"
+    r"viols?)\b",
+    re.I,
+)
+_UNSAFE_GLOSS = re.compile(
+    r"\b(?:penis|vagina|genitals?|testicles?|sexually|sexual (?:intercourse|aggression|desire|act|organ)|"
+    r"to have sex|prostitutes?|prostitution|fart|farts|slutty|slut|whore|excrement|feces|faeces|"
+    r"masturbat\w*|orgasm|erection|semen|sperm|porn\w*)\b",
+    re.I,
+)
+_SAFE_GLOSS = re.compile(r"condom|pregnancy|glans|synonym of|intentionally tasteless", re.I)
+
+
+def fr_unfit_text(text: str | None, lemma: str = "") -> bool:
+    """A French sentence with a swear / sex word that is not the headword itself."""
+    low = (lemma or "").lower().strip()
+    for m in _FR_PROFANE.finditer(text or ""):
+        hit = m.group(0).lower()
+        if low and (hit.startswith(low[:4]) and len(low) >= 3 or low.startswith(hit)):
+            continue
+        return True
+    return False
+
+
+def unsafe_gloss(gloss: str | None) -> bool:
+    """An English definition that describes sex or excrement (for a sense with no label)."""
+    return bool(gloss) and bool(_UNSAFE_GLOSS.search(gloss)) and not _SAFE_GLOSS.search(gloss)

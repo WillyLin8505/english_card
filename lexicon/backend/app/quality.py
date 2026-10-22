@@ -414,18 +414,43 @@ def example_is_charged(text: str, lemma: str = "") -> str | None:
     return None
 
 
-def example_flags(text: str, lemma: str, pos: str, forms: list[str] = ()) -> list[str]:
-    flags = []
-    t = (text or "").strip()
-    # A trailing quote mark (closing a quoted word) is not part of the word
-    # itself, only an internal apostrophe/hyphen is ('don't, 'Tell-tale').
-    words = re.findall(r"[A-Za-z]+(?:['\-][A-Za-z]+)*", t)
+# A word of a sentence: letters of any script with accents (mouillée, élève,
+# œuvre), an internal apostrophe or hyphen kept ('don't', 'tell-tale'); a
+# trailing quote mark is not part of the word. ASCII-only [A-Za-z] cut French
+# words at the accent and the headword was never found (問題回報 #562).
+_WORD = re.compile(r"[^\W\d_]+(?:['’\-][^\W\d_]+)*")
+# French elision: in l'école, d'eau, qu'il, chef-d'œuvre the word after the
+# clitic counts on its own. English don't / it's stay one token.
+_ELISION = {"l", "d", "j", "m", "n", "s", "t", "c", "qu", "jusqu", "lorsqu", "puisqu", "quoiqu"}
+
+
+def example_words(text: str) -> list[str]:
+    return [w.replace("’", "'") for w in _WORD.findall(text or "")]
+
+
+def word_pieces(words: list[str]) -> list[str]:
+    """Lower-case words plus the parts a hyphen or a French elision joins:
+    "tell-tale" also counts as containing "tale", "l'arc-en-ciel" as "arc"."""
     low = []
     for x in words:
         x = re.sub(r"'s$", "", x.lower())
-        low.append(x)
+        parts = [x]
         if "-" in x:
-            low.extend(x.split("-"))  # "tell-tale" also counts as containing "tale"
+            parts += x.split("-")
+        for p in list(parts):
+            while "'" in p:
+                head, p = p.split("'", 1)
+                if head in _ELISION and p:
+                    parts.append(p)
+        low.extend(parts)
+    return low
+
+
+def example_flags(text: str, lemma: str, pos: str, forms: list[str] = ()) -> list[str]:
+    flags = []
+    t = (text or "").strip()
+    words = example_words(t)
+    low = word_pieces(words)
     forms_set = inflections(lemma, forms)
     if " " in lemma:
         first = lemma.split()[0].lower()
@@ -433,7 +458,10 @@ def example_flags(text: str, lemma: str, pos: str, forms: list[str] = ()) -> lis
             flags.append("missing_lemma")
     elif not any(x in forms_set for x in low):
         flags.append("missing_lemma")
-    if len(words) < 3 or not re.match(r"[\"'“A-Z0-9]", t) or not re.search(r"[.!?。\"'”]$", t):
+    # Starts like a sentence (a capital of any script: Élève, À; a quote; a
+    # number) and ends with sentence punctuation (French « … » included).
+    if len(words) < 3 or not (re.match(r"[\"'“«0-9]", t) or t[:1].isupper()) \
+            or not re.search(r"[.!?。\"'”»]$", t):
         flags.append("not_sentence")
     w = re.escape(lemma.lower())
     if pos == "adj" and lemma.lower().endswith("ed") and re.search(
@@ -451,9 +479,7 @@ def example_other_pos_only(text: str, lemma: str, own_forms, sibling_forms) -> b
     -est…) that a sibling entry of the same word (another part of speech) owns:
     charge noun + "fast charging", base noun + "based on", sweet adj + "sweets"
     (問題回報 #456). The word itself or one of this entry's own forms settles it."""
-    toks = {x.lower() for x in re.findall(r"[A-Za-z]+(?:['\-][A-Za-z]+)*", text or "")}
-    toks |= {re.sub(r"'s$", "", x) for x in toks}
-    toks |= {p for x in list(toks) if "-" in x for p in x.split("-")}
+    toks = set(word_pieces(example_words(text)))
     own = {lemma.lower(), *map(str.lower, own_forms)}
     if toks & own or not toks & inflections(lemma):
         return False
@@ -476,7 +502,7 @@ def example_reject_reason(text: str, lemma: str, pos: str, forms: list[str] = ()
 def example_preference(text: str) -> tuple:
     """Sort key, lower first: a complete ordinary sentence beats a Tatoeba
     placeholder name (Ziri, Mennad, Baya) and a very long or very short line."""
-    words = re.findall(r"[A-Za-z]+(?:['\-][A-Za-z]+)*", text or "")
+    words = example_words(text)
     odd = 1 if any(name in words for name in ODD_NAMES) else 0
     return (odd, abs(len(text or "") - 45))
 
@@ -525,6 +551,12 @@ def bind_example_sense(text: str, senses: list[dict], forms: list[str] = (),
     return bind_example_sense_ex(text, senses, forms, fallback_main)[0]
 
 
+def translation_key(text: str | None) -> str:
+    """A translation compared without case, punctuation or spacing ("Why are
+    you wet?" = "why are you wet"). Empty when there is no translation."""
+    return " ".join(re.sub(r"[\W_]+", " ", (text or "").lower()).split())
+
+
 def rank_examples(examples: list[dict], lemma: str, pos: str, forms: list[str],
                   low_sense_ids: set) -> list[dict]:
     for e in examples:
@@ -570,6 +602,43 @@ def apply_pack(pack: dict, entry_flags: dict | None = None, overrides: dict | No
             if e.get("id") in vulgar_ex and "vulgar" not in e["quality_flags"]:
                 e["quality_flags"].append("vulgar")
         lx["examples"].sort(key=lambda e: "rejected" in e["quality_flags"])
+        lx["examples"] = drop_same_translation(lx["examples"], lx["lemma"])
+
+
+_BAD_EXAMPLE = {"missing_lemma", "not_sentence", "pos_mismatch", "low_priority_sense", "rejected"}
+
+
+def drop_same_translation(examples: list[dict], lemma: str) -> list[dict]:
+    """One sentence per translation (問題回報 #555): Tatoeba keeps several versions
+    of one English line (« Pourquoi es-tu mouillé ? » / « … mouillée ? » / « Pourquoi
+    êtes-vous mouillé ? » → "Why are you wet?"; "Money cannot / can't buy happiness."
+    → 錢買不到幸福), and they filled the card back. The group keeps the sentence with
+    the fewest quality flags that uses the headword itself, then the shortest, at the
+    group's first place. The database rows are not touched."""
+    groups: dict[str, list[dict]] = {}
+    for e in examples:
+        k = translation_key(e.get("translation"))
+        if k:
+            groups.setdefault(k, []).append(e)
+    if all(len(g) == 1 for g in groups.values()):
+        return examples
+    word = re.compile(rf"(?<!\w){re.escape(lemma.lower())}(?!\w)")
+
+    def preference(e: dict) -> tuple:
+        flags = set(e.get("quality_flags") or [])
+        return (bool(flags & _BAD_EXAMPLE), "charged" in flags, "odd_name" in flags,
+                not word.search((e.get("text") or "").lower()), len(e.get("text") or ""))
+
+    keep = {id(min(g, key=preference)) for g in groups.values()}
+    out, placed = [], set()
+    for e in examples:
+        k = translation_key(e.get("translation"))
+        if not k:
+            out.append(e)
+        elif k not in placed:
+            placed.add(k)
+            out.append(next(x for x in groups[k] if id(x) in keep))
+    return out
 
 
 # ------------------------------------------------- decisions (#191, owner)
@@ -638,12 +707,18 @@ def apply_decisions(pack: dict, decisions: dict | None = None) -> dict:
                         have.add(img.get("path"))
                         counts["merged_images"] += 1
         texts = {e.get("text") for e in base.get("examples") or []}
+        # One sentence per translation here too (#555): carved's "on the tree" beside carve's "into the tree".
+        translations = {translation_key(e.get("translation")) for e in base.get("examples") or []} - {""}
         for e in lx.get("examples") or []:
-            if e.get("text") not in texts and not set(e.get("quality_flags") or []) & {
+            tk = translation_key(e.get("translation"))
+            if e.get("text") not in texts and tk not in translations and not set(
+                    e.get("quality_flags") or []) & {
                     "missing_lemma", "not_sentence", "pos_mismatch", "rejected"}:
                 base.setdefault("examples", []).append({**e, "merged_from": lx["lemma"],
                                                         "sense_id": None})
                 texts.add(e.get("text"))
+                if tk:
+                    translations.add(tk)
                 counts["merged_examples"] += 1
     return counts
 

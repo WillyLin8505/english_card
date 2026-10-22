@@ -140,18 +140,23 @@ def lint_scope(flags: dict, rows: list[tuple]) -> set[int]:
 
 
 def reconcile(s, decisions: dict, baseline: dict | None,
-              evaluated_ids: set[int] | None = None) -> tuple[int, int]:
+              evaluated_ids: set[int] | None = None,
+              keep: set[int] | None = None) -> tuple[int, int]:
     """Reconcile only proven re-evaluations; carry unobserved decisions forward.
 
     A matching lint manifest can withdraw exclusion/inflection decisions, but
     absent level warnings cannot undo successful corrections. Redirect removal
     is limited to unchanged mappings owned by the previous decision file.
-    Returns (cefr restored, redirects dropped); mutates decisions for persistence.
+    ``keep``: lexemes whose decision belongs to another rule (card #318 spelling
+    variants: calory → calorie, enquiry → inquiry) — the lint never plans them,
+    so their absence from this plan is no evidence; carried forward untouched
+    (card #523). Returns (cefr restored, redirects dropped); mutates decisions
+    for persistence.
     """
     previous = quality.load_json("decisions.json")
     # Absence is evidence only within a verified lint scope. Persist carried
     # decisions too: otherwise the next run/re-import silently loses them.
-    evaluated = evaluated_ids or set()
+    evaluated = (evaluated_ids or set()) - (keep or set())
     planned = ({int(k) for k in decisions["redirect"]} | set(decisions["strip_cefr"])
                | {int(k) for k in decisions["set_cefr"]})
     evaluated = evaluated | planned
@@ -216,8 +221,11 @@ def main(argv: list[str]) -> None:
         print(json.dumps(dict(counts), ensure_ascii=False))
         earliest = sorted(out.glob("backup-191-*.json"))
         baseline = json.loads(earliest[0].read_text(encoding="utf-8")) if earliest else None
+        # Card #523: #318 spelling-variant decisions are not this lint's to withdraw.
+        from card318_variants import candidates as variant_candidates  # noqa: E402 (circular at top)
+        keep = {e["id"] for e in variant_candidates(s)}
         if "--dry-run" in argv:
-            restored, unredirected = reconcile(s, decisions, baseline, lint_scope(flags, rows))
+            restored, unredirected = reconcile(s, decisions, baseline, lint_scope(flags, rows), keep)
             s.rollback()
             print(json.dumps({"restored_cefr": restored, "unredirected": unredirected,
                               "pending_base": len(missing_bases(log, rows))}))
@@ -230,7 +238,7 @@ def main(argv: list[str]) -> None:
         bpath.write_text(json.dumps(backup), encoding="utf-8")
         # Reconcile with the state before the first #191 run (the earliest
         # backup) so a narrower rule (#194) undoes what it no longer wants.
-        restored, unredirected = reconcile(s, decisions, baseline, lint_scope(flags, rows))
+        restored, unredirected = reconcile(s, decisions, baseline, lint_scope(flags, rows), keep)
         counts["restored_cefr"], counts["unredirected"] = restored, unredirected
         existing = {r[0] for r in s.execute(text("SELECT old_id FROM lexeme_redirects"))}
         new = [{"o": int(k), "n": v} for k, v in decisions["redirect"].items() if int(k) not in existing]

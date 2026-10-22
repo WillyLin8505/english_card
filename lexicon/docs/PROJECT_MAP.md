@@ -34,6 +34,10 @@ Line counts as of 2026-10-17. **Big files: search first, then read a range** (se
   proper_or_brand rule had fired on Title-Case lemmas that #460 later lower-cased). After any bulk lemma/pos rewrite:
   `lint_lexicon.py` then `card509_stale_exclusions.py [--apply|--restore]` (withdraws only lint-made decisions the
   current flags no longer support; #318 variants stay); measure `card509_measure.py --live [--qc-out f]`.
+  A strip whose lemma has no full entry (brushstrokes → brushstroke) keeps photo labels 「未分級」 (#552/#523):
+  `card523_lemma_redirects.py measure|backup|import|plan|apply|restore` imports the lemma (foreground job, no
+  audio/AI) and turns the strip into a redirect; `apply_quality_decisions.reconcile(keep=#318 variants)` no longer
+  withdraws #318 decisions that sit inside the lint scope.
 - Photo labelling fallback (#327/#330): `tag_fallback.py` (status / ask / apply / golden / run, config
   `tag_fallback_config.json`) → backend `app/vision_fallback.py`; Codex/Cursor CLI look at the photo when Qwen
   is paused or the queue is long; cost log `lexicon/logs/tag_fallback/cost.jsonl`.
@@ -61,11 +65,18 @@ Line counts as of 2026-10-17. **Big files: search first, then read a range** (se
   `card395_def_order.py count|apply|restore` so the definition items follow the ordinals too (admin UI, old servers);
   card fronts: `card381_learner.py --cefr A1,A2 --out f.tsv` (port of learnerMeaning). `meaning_index` also labels pictures from deeper plain senses that English
   Wiktionary confirms (motif 「pattern」).
+- Example → sense guesses (#528): with no gloss evidence `adapters/local.py` binds a sentence to the first common sense of its
+  part of speech (Kaikki order ≠ frequency) and marks it `evidence: fallback`; `tools/card528_pick.py measure|ask --batch N|judge|apply|restore`
+  lets Qwen (tagger kind `pick`, asked twice) choose among that part of speech's senses (A1 words first).
 - Relation-word Chinese after the word enters the lexicon (#462/#468): `backend/app/relation_backfill.py` — `process_word` calls `backfill_for_word` after materialize (fills other headwords' `*_native` slots still in `missing` + relation_translations, no AI); sweep `tools/card468_backfill.py measure|apply|restore`.
 - Gender / forms / morphemes (#429): the App pack reads field_values (not the forms table). `card429_forms.py` (fr_gender by main sense), `card429_morph.py` (Wiktionary affix templates), `card429_measure.py` (fr vs en coverage); all dry-run|apply|restore.
 - English -er/-est and more/most forms Wiktionary over-reports (#463/#465/#472): `adapters/kaikki.py` `degree_form_implausible` (3+ syllables), `degree_entry_unused` (one-word: more-first / not comparable / minor adjective), `degree_pos_minor` (minor adjective sense ≤ 1/4 → no more/most either; reviewed `DEGREE_KEEP`/`DEGREE_DROP`); DB sweeps `tools/card463_…`, `card465_…`, `card472_adj_degree_forms.py` dry-run|apply|restore.
 - French inflection senses without `form_of` (#499/#504): Kaikki fr senses often only say 「second-person plural … of aimer」 in the gloss; `adapters/base.py` `is_form_sense` / `form_bases` / `gloss_inflection_base` read it (shared by `inflection_bases`, `card_base`, `kaikki._is_form_of`); `kaikki._form_entry_bases` = a pure form, or a verb with a form-of sense and no own conjugation (permettant, doutes, accusé), takes the base verb's table. Sweep `tools/card499_form_entries.py plan|backup|apply|report|restore` (drop / redirect / share).
 - Out-of-use parts of speech (#504/#512): `kaikki.out_of_use_pos` — every sense obsolete/archaic beside a current part of speech (rich/verb, hier/verb) → no entry (`dropped_pos` = that ∪ `inflection_only_pos`, used by the adapter's `pos` / senses). Sweep `tools/card504_stale_pos.py plan|backup|apply|keep_translations|report|restore --lang en|fr [words]` (skips pictures, other-source pos, HELD).
+- Example sentences must use the word (#527 / 問題回報 #562): `quality.example_flags` tokenizes Unicode words with
+  French elision (l'école → école) and runs for French too (tatoeba.normalize, base validity); the gender letters m / f
+  are never query forms. Re-resolve the four example fields of listed words with fresh code (points the adapters at the
+  active snapshots, keeps DB-only #494 translations): `tools/card527_fr_examples.py measure|backup|run|report|restore`.
 - CEFR (#335, issue #332 decision C): `word_level(w, "fr")` = `backend/app/fr_cefr_reviewed.json` (法語基礎 3000 字,
   Claude-reviewed A1–B1, `cefr_source=ai_reviewed`, app shows 估算) else max(wordfreq, Lexique 3.83 lemma zipf in
   `fr_lexique_lemma_zipf.json`). Rebuild / rewrite DB: `tools/card335_fr_cefr.py build|apply [--dry-run]|restore`;

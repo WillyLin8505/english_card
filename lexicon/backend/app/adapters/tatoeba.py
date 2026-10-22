@@ -190,9 +190,11 @@ class Tatoeba(SourceAdapter):
                     continue
                 # Shared rule (#166): a fragment or a line that never uses the
                 # headword is not a candidate. Placeholder names stay eligible
-                # but sort after an ordinary sentence.
-                flags = set(example_flags(s["text"], ctx.lemma, "", form_list)) if ctx.target == "en" \
-                    else set()
+                # but sort after an ordinary sentence. French too (問題回報 #562:
+                # the gender letters m / f once stood among the query forms and
+                # nothing stopped « Pourriez-vous m'aider » from reaching fils).
+                flags = set(example_flags(s["text"], ctx.lemma, "", form_list)) \
+                    if not ctx.target.startswith("zh") else set()
                 if flags & {"not_sentence", "missing_lemma"}:
                     continue
                 # One part of speech on this run: drop a sentence that is

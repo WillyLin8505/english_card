@@ -168,12 +168,20 @@ String? exampleIsCharged(String text, String lemma) {
 /// Source data remains intact.
 List<WordExample> learningExamples(WordEntry entry, String level, {int maxItems = 5}) {
   final seen = <String>{};
+  // One sentence per translation (問題回報 #555): « Pourquoi es-tu mouillé ? »
+  // and « Pourquoi êtes-vous mouillée ? » are both "Why are you wet?". The pack
+  // already keeps one; this covers older packs and local entries.
+  final seenTranslations = <String>{};
   final at = levelIndex(level);
   final examples = entry.examples
       .where((e) =>
           (e.translation ?? '').trim().isNotEmpty &&
           !isColumnWordList(e.text, entry.word) &&
           seen.add(e.text.toLowerCase()) &&
+          seenTranslations.add(e.translation!
+              .toLowerCase()
+              .replaceAll(RegExp(r'[^\p{L}\p{N}]+', unicode: true), ' ')
+              .trim()) &&
           (e.difficulty == null || levelIndex(e.difficulty) <= at + 1))
       .toList();
   // Unleveled sentences rank with the learner's level.

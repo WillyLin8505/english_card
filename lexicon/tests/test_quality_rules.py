@@ -151,3 +151,22 @@ def test_bind_example_sense_ex_reports_evidence():
     assert (sense["sense_key"], evidence) == ("main", "fallback")
     only = [{"sense_key": "main", "gloss": "x", "ordinal": 0}]
     assert q.bind_example_sense_ex("The door is red.", only)[1] == "single"
+
+
+def test_one_example_per_translation():
+    """#555: Tatoeba variants of one English line keep only the headword's own form."""
+    exs = [
+        {"id": 1, "text": "Les chiens mouillés sentent très bon.", "translation": "Wet dogs smell great."},
+        {"id": 2, "text": "Pourquoi êtes-vous mouillée ?", "translation": "Why are you wet?"},
+        {"id": 3, "text": "Pourquoi es-tu mouillée ?", "translation": "why are you wet"},
+        {"id": 4, "text": "Pourquoi êtes-vous mouillé ?", "translation": "Why are you wet ?"},
+        {"id": 5, "text": "Pourquoi es-tu mouillé ?", "translation": "Why are you wet?"},
+        {"id": 6, "text": "Sans traduction mouillé.", "translation": None},
+        {"id": 7, "text": "Autre mouillé.", "translation": ""},
+    ]
+    for e in exs:
+        e["quality_flags"] = []
+    out = q.drop_same_translation(exs, "mouillé")
+    assert [e["id"] for e in out] == [1, 5, 6, 7]
+    assert q.translation_key("Money can't  buy happiness!") == "money can t buy happiness"
+    assert q.drop_same_translation(exs[:2], "mouillé") == exs[:2]

@@ -135,7 +135,8 @@ _PER_LEVEL = {"synonyms", "related"}
 _PER_LEVEL_MAX = 3
 
 
-from .text import STORE_UNSAFE_LABELS, clean_native, offensive_native, repair_learner_gloss, sense_native  # noqa: E402
+from .text import (STORE_UNSAFE_LABELS, clean_native, fr_unfit_text, offensive_native,  # noqa: E402
+                   repair_learner_gloss, sense_native, unsafe_gloss)
 
 
 # Whole-token swears the exact OFFENSIVE list misses (bitches, shite,
@@ -481,6 +482,11 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_saf
             reg = registers.get(sk) or {}
             tr = native_def.get(sk)
             labels = list(it.get("labels") or [])
+            # 卡 #524: a sexual/excretory definition without a dictionary label counts as vulgar.
+            if target != "en" and not (set(labels) & STORE_UNSAFE_LABELS) and unsafe_gloss(it.get("gloss")):
+                labels.append("vulgar")
+                reg = {**reg, "register": "vulgar"}
+                counts["senses_gloss_vulgar"] = counts.get("senses_gloss_vulgar", 0) + 1
             # App Store build (問題回報 #271): drop vulgar/offensive/derogatory senses. Their
             # examples vanish too, since an example without a sense is skipped.
             if store_safe and (set(labels) & STORE_UNSAFE_LABELS
@@ -589,6 +595,10 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_saf
             if is_column_word_list(it.get("text", ""), lemma) or unfit_example(it.get("text", ""), lemma) or offensive_native(
                     (ex_tr.get(k) or {}).get("text")):
                 continue
+            if target != "en" and (fr_unfit_text(it.get("text", ""), lemma)
+                                   or unfit_example((ex_tr.get(k) or {}).get("text", ""))):
+                counts["examples_profane_foreign"] = counts.get("examples_profane_foreign", 0) + 1
+                continue
             sid = sense_id_by_key.get(ex_sense.get(k) or it.get("sense_key") or "")
             # The learner pack has no UI for an unresolved usage. Keep such
             # examples in the master database for review, but never flatten
@@ -602,9 +612,13 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_saf
                     {f for i in ids if i != own_lx for f in forms_by_lexeme.get(i, ())}):
                 counts["examples_other_pos"] = counts.get("examples_other_pos", 0) + 1
                 continue
+            # The card that shows the sentence is the sense's entry, not the
+            # master row's (the lowest lexeme id of the word, often the noun):
+            # a verb-sense sentence under fear/noun was still shown on the noun
+            # card (問題回報 #557).
             con.execute("INSERT INTO examples VALUES (?,?,?,?,?,?,?,?,?)",
-                        (ex.id, ex.lexeme_id, sid, ex.text, ex_level.get(k), it.get("source", ""),
-                         ex.source_record_id, ex.license, n))
+                        (ex.id, own_lx if own_lx is not None else ex.lexeme_id, sid, ex.text,
+                         ex_level.get(k), it.get("source", ""), ex.source_record_id, ex.license, n))
             used(it.get("source"))
             counts["examples"] += 1
             tr = ex_tr.get(k)

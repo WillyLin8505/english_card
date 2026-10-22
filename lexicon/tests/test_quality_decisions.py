@@ -108,6 +108,24 @@ def test_reconcile_only_undoes_evaluated_owned_decisions(monkeypatch):
     assert session.writes[1][1] == {'i': [3]}
 
 
+def test_reconcile_keeps_other_rules_decisions_in_lint_scope(monkeypatch):
+    # Card #523: calory → calorie is a #318 spelling-variant redirect and 6 a
+    # #318 strip; both lexemes are in the lint scope but the lint never plans
+    # them, so a re-run must carry them forward, not withdraw them.
+    previous = {'redirect': {'3': 2}, 'strip_cefr': [6], 'set_cefr': {}}
+    monkeypatch.setattr(q, 'load_json', lambda _: previous)
+    baseline = {'lexeme_cefr': [[3, 'B2'], [6, 'B1']], 'lexeme_redirects': []}
+    decisions = empty_decisions()
+    session = RecordingSession([(3, 2)])
+    assert tool.reconcile(session, decisions, baseline, {3, 6}, keep={3, 6}) == (0, 0)
+    assert decisions == previous
+    assert session.writes == []
+    # Without keep the same scope withdraws both (the pre-#523 behaviour).
+    decisions = empty_decisions()
+    session = RecordingSession([(3, 2)])
+    assert tool.reconcile(session, decisions, baseline, {3, 6}) == (2, 1)
+
+
 def test_reconcile_legacy_and_missing_baseline_fail_closed(monkeypatch):
     previous = {'redirect': {}, 'strip_cefr': [6], 'set_cefr': {'7': 'B2'}}
     monkeypatch.setattr(q, 'load_json', lambda _: previous)

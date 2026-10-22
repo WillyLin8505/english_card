@@ -824,6 +824,28 @@ def test_example_sense_ignores_prepositions_as_semantic_evidence():
     assert by_example[example_key(ctx.items('example_sentences')[0]['text'])] == 'air'
 
 
+def test_example_sense_marks_a_guess_among_several_senses():
+    """Card #528: with no gloss evidence the first verb sense is a guess (spell
+    「使著魔」 for 「how to spell the word」); it says so, so Qwen can pick."""
+    ctx = Context('en', 'zh-TW', 'spell')
+    ctx.resolved.update({
+        'pos': [{'pos': 'verb'}],
+        'definition': [
+            {'sense_key': 'magic', 'pos': 'verb', 'gloss': 'To put under the influence of a spell.'},
+            {'sense_key': 'letters', 'pos': 'verb', 'labels': ['etymology-2'],
+             'gloss': 'To write or say the letters that form a word.'},
+        ],
+        'example_sentences': [{'text': "I don't know how to spell it."},
+                              {'text': 'Say the letters: spell it.'}],
+    })
+    out = [c.value for c in LocalCalc().normalize('example_sense', None, ctx)]
+    assert out[0]['sense_key'] == 'magic' and out[0]['evidence'] == 'fallback'
+    assert out[1]['sense_key'] == 'letters' and 'evidence' not in out[1]
+    ctx.resolved['definition'] = ctx.resolved['definition'][:1]
+    only = LocalCalc().normalize('example_sense', None, ctx)[0].value
+    assert 'evidence' not in only  # one sense: nothing to pick
+
+
 def test_taiwan_usage_drops_erhua_variants():
     from app.adapters.kaikki import _without_erhua
     assert _without_erhua(["門", "門兒", "戶"]) == ["門", "戶"]
@@ -885,3 +907,27 @@ def test_closed_class_and_adverb_frames_issue_351():
     assert not m("You did everything the doctor asked.", "everything", "verb", {"everything"}, ())
     assert not m("Nara is a quiet city.", "a", "adv", {"a"}, ())
     assert not m("I like such a lovely day.", "lovely", "adv", {"lovely"}, ())
+
+
+def test_base_form_after_auxiliary_is_the_verb():
+    """問題回報 #557: 「doesn't fear the tiger」 is fear the verb, not the noun."""
+    from app.adapters.local import _usage_pos, matches_lexeme_pos
+    fear = {"fear", "fears", "feared", "fearing"}
+    only = frozenset({"feared", "fearing"})
+    assert _usage_pos("The sacrificed newborn doesn't fear the tiger.", fear, only, "fear") == "verb"
+    assert _usage_pos("Don't worry.", {"worry", "worries"}, frozenset(), "worry") == "verb"
+    assert _usage_pos("You should drink milk.", {"drink", "drinks"}, frozenset(), "drink") == "verb"
+    assert _usage_pos("Things will never change.", {"change", "changes"}, frozenset(), "change") == "verb"
+    assert _usage_pos("You are not to neglect your duty.", {"neglect"}, frozenset(), "neglect") == "verb"
+    assert _usage_pos("I want to drink something.", {"drink", "drinks"}, frozenset(), "drink") == "verb"
+    assert _usage_pos("We did not change the plan.", {"change", "changes"}, frozenset(), "change") == "verb"
+    # Not the verb: a subject before the next verb, a noun modal, a name, movement + a new phrase.
+    assert _usage_pos("Can fear be useful?", fear, only, "fear") is None
+    assert _usage_pos("Pass me the can opener.", {"opener", "openers"}, frozenset(), "opener") == "noun"
+    assert _usage_pos("I told Will change was coming.", {"change", "changes"}, frozenset(), "change") is None
+    assert _usage_pos("It is never fear that drives him.", fear, only, "fear") is None
+    assert _usage_pos("He went to work the next day.", {"work", "works"}, frozenset(), "work") is None
+    assert _usage_pos("I did everything.", {"everything"}, frozenset(), "everything") is None
+    # The noun entry rejects the sentence, the verb entry accepts it.
+    assert not matches_lexeme_pos("The newborn doesn't fear the tiger.", "fear", "noun", fear, only)
+    assert matches_lexeme_pos("The newborn doesn't fear the tiger.", "fear", "verb", fear, only)

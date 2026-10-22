@@ -1059,12 +1059,17 @@ class LocalCalc(SourceAdapter):
                 # Otherwise the main usage's first common sense: the part of
                 # speech the sentence shows, else the CEFR-J listed one.
                 usage = use if use in by_pos else main_pos
-                first = next((x for x in by_pos.get(usage, []) if not _rare_sense(x)),
-                             (by_pos.get(usage) or [None])[0])
+                common = [x for x in by_pos.get(usage, []) if not _rare_sense(x)]
+                first = common[0] if common else (by_pos.get(usage) or [None])[0]
                 if first is not None:
-                    C.append(Candidate(f, ctx.target, {"example_key": k,
-                                                       "sense_key": first.get("sense_key")}, k,
-                                       slot=k, confidence=0.4))
+                    value = {"example_key": k, "sense_key": first.get("sense_key")}
+                    # Kaikki order is not frequency order (spell 「使著魔」
+                    # before 「拼字」): a guess among several senses says so,
+                    # and Qwen picks the sense later (card #528,
+                    # tools/card528_pick.py).
+                    if len(by_pos.get(usage) or []) > 1:
+                        value["evidence"] = "fallback"
+                    C.append(Candidate(f, ctx.target, value, k, slot=k, confidence=0.4))
         elif f == "stress":
             for item in ctx.items("ipa"):
                 ipa = item.get("ipa", "")
@@ -1184,6 +1189,41 @@ _FINITE_VERB = {
     "is", "are", "was", "were", "am", "be", "been", "do", "does", "did",
     "has", "have", "had", "will", "would", "can", "could", "should",
     "must", "may", "might",
+}
+# A base form right after one of these is the verb: 「doesn't fear the
+# tiger」, 「should drink milk」, 「Don't worry」 (問題回報 #557). Bare do /
+# does / did are left out: 「did everything」 makes the word an object.
+_AUX_BEFORE_VERB = {
+    "will", "would", "can", "could", "should", "must", "may", "might", "shall",
+    "won't", "wouldn't", "can't", "cannot", "couldn't", "shouldn't", "mustn't",
+    "mightn't", "shan't", "don't", "doesn't", "didn't", "never",
+}
+_NOT_HOSTS = _AUX_BEFORE_VERB | {"do", "does", "did"}
+# 「want to change」, 「able to drink」, 「how to fear」: the word before
+# ``to`` takes an infinitive, so the base form after it is the verb.
+_INFINITIVE_HOSTS = {
+    "want", "wants", "wanted", "need", "needs", "needed", "like", "likes", "liked",
+    "love", "loves", "loved", "hate", "hates", "hated", "going", "able", "unable",
+    "try", "tries", "tried", "trying", "used", "have", "has", "had", "ought", "how",
+    "order", "decide", "decided", "decides", "hope", "hopes", "hoped", "begin",
+    "begins", "began", "start", "starts", "started", "seem", "seems", "seemed",
+    "tend", "tends", "tended", "learn", "learns", "learned", "learnt", "forget",
+    "forgets", "forgot", "refuse", "refuses", "refused", "plan", "plans", "planned",
+    "mean", "means", "meant", "expect", "expects", "expected", "wish", "wishes",
+    "wished", "afford", "manage", "managed", "supposed", "allowed", "likely",
+    "easy", "hard", "difficult", "impossible", "possible", "ready", "willing",
+    "enough", "prefer", "prefers", "preferred", "continue", "continued", "promise",
+    "promised", "agree", "agreed", "fail", "failed", "dare", "happy", "glad",
+    "afraid", "free", "time", "way", "chance", "nothing", "something", "anything",
+}
+# 「went to work the field」 is rare; 「went to school the next day」 is not,
+# so a determiner after the word proves nothing when movement leads to it.
+_MOTION_BEFORE_TO = {
+    "go", "goes", "went", "gone", "going", "come", "comes", "came", "get", "gets",
+    "got", "back", "return", "returned", "walk", "walked", "drive", "drove",
+    "travel", "travelled", "traveled", "way", "trip", "visit", "move", "moved",
+    "send", "sent", "take", "took", "taken", "bring", "brought", "run", "ran",
+    "off", "down", "up", "out", "over", "home", "straight", "directly",
 }
 
 
@@ -1652,6 +1692,103 @@ def _adv_frame(text: str, lemma: str, forms) -> bool:
     return False
 
 
+def _base_after_auxiliary(toks: list[str], cased: list[str], starts: list[bool], i: int) -> bool:
+    """The base form at ``i`` follows an auxiliary, a negation or an
+    infinitive ``to``, so it is the verb (問題回報 #557): 「doesn't fear the
+    tiger」, 「should drink milk」, 「Don't worry」, 「will never change」,
+    「not to neglect your duty」, 「want to drink」.
+
+    Not 「Can fear be useful?」 (fear is the subject of be), 「a can opener」
+    (the modal is a noun), 「Will Smith」 (a name), 「is never fear」 or
+    「went to school the next day」 (movement, then a new phrase).
+    """
+    if i == 0:
+        return False
+    prev = toks[i - 1]
+    before = toks[i - 2] if i >= 2 else ""
+    nxt = toks[i + 1] if i + 1 < len(toks) else ""
+    if nxt in _FINITE_VERB or nxt in _VERBISH or (nxt and _lexical_verb(nxt)):
+        return False
+
+    def is_name(j: int) -> bool:
+        return j < len(cased) and not starts[j] and cased[j][:1].isupper()
+
+    if prev in _AUX_BEFORE_VERB:
+        if is_name(i - 1) or before in ARTICLES:
+            return False
+        return not (prev == "never" and before in _COPULA)
+    if prev == "not" and before in _NOT_HOSTS:
+        return True
+    if prev == "to":
+        host = before if before != "not" else (toks[i - 3] if i >= 3 else "")
+        if host in _INFINITIVE_HOSTS:
+            return True
+        return bool(host) and host not in _MOTION_BEFORE_TO and (
+            nxt in DETERMINERS or nxt in _OBJECT)
+    return False
+
+
+# Verbs that take an adjective after them like ``is``: 「getting late」,
+# 「stay awake」, 「sounds pretty」 (問題回報 #567). Not turn/go: 「turn right」.
+_LINKING = {
+    "be", "been", "being", "get", "gets", "got", "getting", "gotten", "grow", "grows",
+    "grew", "growing", "stay", "stays", "stayed", "remain", "remains", "remained",
+    "keep", "keeps", "kept", "sound", "sounds", "sounded", "smell", "smells", "smelled",
+    "taste", "tastes", "tasted", "seeming", "looking", "feeling", "becoming", "becomes",
+}
+# Adjectives that are degree adverbs before another adjective even after a
+# determiner: 「a pretty good idea」, 「a real nice guy」.
+_DEGREE_ADJ = {"pretty", "real", "dead", "awful", "mighty", "jolly"}
+# Adverbs a degree word can sit before: 「pretty well」, 「pretty soon」.
+_ADV_HEADS = {"well", "much", "soon", "often", "far", "fast", "hard", "late", "early", "quickly"}
+
+
+def _verb_before(prev: str) -> bool:
+    """``prev`` is a verb the next word can modify as an adverb: 「works」 in
+    「works hard」, 「arrived」, 「did」 — not is/get (they take adjectives)."""
+    if (not prev or prev in _COPULA or prev in _LINKING or prev in DETERMINERS
+            or prev in _MODAL - {"did", "does"} or prev in {"has", "have", "had", "am", "be"}):
+        return False
+    if prev in {"do", "does", "did", "done", "doing"} or prev in _VERBISH - _FINITE_VERB:
+        return True
+    poses = _listed_poses(prev)
+    if poses:
+        return "verb" in poses and "adj" not in poses and "adv" not in poses
+    return len(prev) > 4 and prev.endswith(("ed", "ing"))
+
+
+def _adj_adv_use(toks: list[str], i: int, pause: bool = False) -> str | None:
+    """A word that is both an adjective and an adverb (pretty, fast, hard,
+    late, well): the slot says which (問題回報 #567). 「are pretty proud」,
+    「pretty well」, 「works hard」 → adv; 「is late」, 「a fast car」 → adj;
+    otherwise None."""
+    t = toks[i]
+    prev = toks[i - 1] if i else ""
+    prev2 = toks[i - 2] if i > 1 else ""
+    nxt = toks[i + 1] if i + 1 < len(toks) else ""
+    nxt2 = toks[i + 2] if i + 2 < len(toks) else ""
+    ends = not nxt or nxt in PHRASE_END
+    # 「It means "pretty", right?」, 「positions left open」: no degree word.
+    before_adj = (bool(nxt) and not pause and nxt not in DETERMINERS
+                  and _listed_poses(prev) != {"noun"} and (_clear_adj(nxt) or nxt in _ADV_HEADS))
+    if prev in DETERMINERS:
+        if before_adj and t in _DEGREE_ADJ:
+            return "adv"  # a pretty good idea
+        if nxt and "noun" in _listed_poses(nxt) and not _clear_adj(nxt):
+            return "adj"  # a fast car, the late train
+        return None
+    if before_adj and (t in _DEGREE_ADJ or not nxt2 or nxt2 in PHRASE_END
+                       or "noun" not in _listed_poses(nxt2)):
+        return "adv"  # are pretty proud, fast asleep — not 「long hard days」
+    if not ends:
+        return None
+    if prev in _COPULA | _LINKING or (prev in _DEGREE and prev2 in _COPULA | _LINKING):
+        return None if t == "back" else "adj"  # is late, getting late
+    if _verb_before(prev) or (prev in _DEGREE and _verb_before(prev2)):
+        return "adv"  # works hard, arrived late, runs too fast
+    return None
+
+
 def _usage_pos(text: str, forms, verb_only, lemma: str | None = None) -> str | None:
     """Which part of speech the headword is in this sentence, when its form
     or a determiner before it says so: "verb" (Tom was mugged), "noun" (the
@@ -1665,6 +1802,10 @@ def _usage_pos(text: str, forms, verb_only, lemma: str | None = None) -> str | N
     low = (text or "").lower()
     if not any(t in forms for t in toks):
         return "other"  # 「this is a pen」: not this word at all
+    # pretty, fast, hard, late, well (問題回報 #567). Closed-class adverbs
+    # (still, even) keep the adverb-slot rule below.
+    both_adj_adv = bool(lemma) and lemma.lower() not in _PREVERBAL and {
+        "adj", "adv"} <= _listed_poses(lemma)
     for i, t in enumerate(toks):
         if t not in forms:
             continue
@@ -1686,6 +1827,13 @@ def _usage_pos(text: str, forms, verb_only, lemma: str | None = None) -> str | N
                 b and b not in forms for b in (t[:-1], t[:-2] if t.endswith("es") else "")
         ) and base_is_word(t, lemma):
             return "other"
+        if lemma and t == lemma.lower() and _base_after_auxiliary(toks, cased, starts, i):
+            return "verb"  # 「doesn't fear the tiger」 (問題回報 #557)
+        if both_adj_adv and t == lemma.lower():
+            pause = bool(re.search(r"(?i)\b" + re.escape(t) + r"\b[\"'”’]?\s*[,;:.!?\"“”(—]", text or ""))
+            use = _adj_adv_use(toks, i, pause)
+            if use:
+                return use
         if t in verb_only:
             # 「the wound」: a noun spelt like the verb's form is another
             # word; so is long-winded. (Not 「this applies」: a pronoun.)

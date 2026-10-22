@@ -18,8 +18,11 @@ FlashcardSession sessionFor(String word, List<String> texts,
   final entry = WordEntry.fromJson({
     ...original.toJson(),
     'forms': [for (final form in forms) form.toJson()],
+  // Distinct translations: learningExamples keeps one sentence per
+  // translation (問題回報 #555), so a shared placeholder would hide the rest.
   }).copyWith(examples: [
-    for (final text in texts) WordExample(text: text, translation: '測試翻譯')
+    for (final (i, text) in texts.indexed)
+      WordExample(text: text, translation: '測試翻譯$i')
   ]);
   final repo = WordDatabaseRepository(clock: () => testNow, entries: [
     entry

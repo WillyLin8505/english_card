@@ -472,7 +472,7 @@ def validate(c: Candidate, ctx: Context) -> str | None:
             return "少於 3 個字，不像完整句子"
         if ctx.target != "zh-TW" and len(text.split()) > catalog.MAX_EXAMPLE_WORDS:
             return f"超過 {catalog.MAX_EXAMPLE_WORDS} 個字"
-        if ctx.target == "en":
+        if not ctx.target.startswith("zh"):
             from ..quality import example_flags as _example_flags
             from .local import word_forms as _word_forms
             if "not_sentence" in _example_flags(text, ctx.lemma, "", list(_word_forms(ctx))):
