@@ -146,7 +146,7 @@ class _BackupButtonsState extends State<BackupButtons> {
         if (busy != null)
           UiText(busy, style: MFont.manrope(12, FontWeight.w700, MColors.muted))
         else
-          UiText('備份檔包含單字、照片、相片冊、複習紀錄與設定（不含照片辨識的連線金鑰）。',
+          UiText('備份檔包含單字、照片、相片冊、複習紀錄與設定。',
               style: MFont.manrope(12, FontWeight.w600, MColors.muted)),
       ],
     );

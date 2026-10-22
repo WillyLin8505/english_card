@@ -49,7 +49,7 @@ Map<String, Object> _run(_Profile p, int seed, {LexiconPack? pack}) {
   var now = DateTime(2026, 1, 1, 20);
   final repo = WordDatabaseRepository(
       clock: () => now, language: pack == null ? 'en' : 'fr')
-    ..scheduler = FsrsScheduler(FsrsParameters());
+    ..scheduler = const FsrsScheduler(FsrsParameters());
   final pool = <LexEntry>[];
   final lemmas = <String>{};
   if (pack != null) {

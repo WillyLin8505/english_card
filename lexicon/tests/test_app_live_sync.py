@@ -122,6 +122,34 @@ def test_catalog_only_publishes_approved_formal_labels(session, fakes):
     assert image['labels'] == [expected_label]
 
 
+def test_label_takes_position_from_inflected_tag(session, fakes):
+    """#510 (問題回報 #524): the tagger wrote the word as it saw it (apples)
+    with a position; the approved binding hangs on the entry (apple). The
+    label still gets that position, so the app draws a pin."""
+    apple_data(fakes)
+    pipeline.process_word(session, 'en', 'zh-TW', 'apple', None, 'fill_missing')
+    session.flush()
+    sense = session.scalars(select(m.Sense)).first()
+    word = session.get(m.Lexeme, sense.lexeme_id)
+    asset = m.ImageAsset(
+        source='test', source_image_id='inflected-tag', status='ready', path='images/test.jpg',
+        tags=[{'word': 'Apples', 'lemma': 'Apples', 'pos': 'noun',
+               'point': [0.4, 0.5], 'box': [0.1, 0.2, 0.7, 0.8]}])
+    session.add(asset)
+    session.flush()
+    session.add(m.SenseImage(sense_id=sense.id, image_asset_id=asset.id,
+                             role='representative', review_status='approved'))
+    session.flush()
+    image = serve_app.catalog_snapshot(session, 'en')[1][0]
+    assert [(lb['word'], lb['point'], lb['box']) for lb in image['labels']] == [
+        (word.lemma, [0.4, 0.5], [0.1, 0.2, 0.7, 0.8])]
+    # The candidates follow images.resolve_full_lexeme: stored forms, then regular stems.
+    assert serve_app.tag_aliases({'word': 'children'}, {'children': ['child']})[:2] == ['children', 'child']
+    assert 'hold' in serve_app.tag_aliases({'word': 'holding'}, {})
+    assert 'glass' in serve_app.tag_aliases({'word': 'glasses'}, {})
+    assert serve_app.tag_aliases({'word': ''}, {}) == []
+
+
 def test_shared_picture_names_target_words_by_meaning(session, fakes):
     """#347: a French pack's shared English picture also names the French
     words whose main sense means another approved English word on it."""

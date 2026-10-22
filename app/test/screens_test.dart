@@ -283,7 +283,10 @@ void main() {
       await tester.tap(find.text('完成'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('儲存'));
-      await settle(tester);
+      await settle(tester,
+          until: () =>
+              app.repository.photoCount == photosBefore + 1 &&
+              find.text('Fork').evaluate().isNotEmpty);
 
       expect(app.repository.photoCount, photosBefore + 1);
       final tag = requests.firstWhere((r) => r.url.path == '/tag');
@@ -296,7 +299,10 @@ void main() {
       expect(app.repository.entryByWord('pasta'), isNull);
 
       await tester.tap(find.bySemanticsLabel('返回'));
-      await settle(tester);
+      await settle(tester,
+          until: () =>
+              app.repository.entryByWord('pasta') != null &&
+              app.repository.entryByWord('fork') != null);
       final pasta = app.repository.entryByWord('pasta')!;
       expect(pasta.meaning, '義大利麵');
       expect(app.repository.cardOf(pasta.id), isNotNull);

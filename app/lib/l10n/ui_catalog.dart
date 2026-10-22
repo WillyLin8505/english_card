@@ -252,9 +252,9 @@ const uiCatalog = <String, (String, String)>{
   '設定': ('Settings', 'Réglages'),
   '隱私': ('Privacy', 'Confidentialité'),
   '分享使用統計': ('Share usage statistics', 'Partager les statistiques d’usage'),
-  '關閉時不會送出使用統計。打開後只送匿名的操作紀錄，用來了解功能好不好用，不影響任何功能。': (
-    'When this is off, usage statistics are not sent. When on, only anonymous activity is sent so we can see which features help. It does not change any feature.',
-    'Désactivé, aucune statistique n’est envoyée. Activé, seules des activités anonymes partent, pour voir quelles fonctions aident. Aucune fonction ne change.'
+  '只送匿名的操作紀錄，用來改善 App；關閉不影響任何功能。': (
+    'Only anonymous activity is sent, to improve the app. Turning it off changes nothing.',
+    'Seules des activités anonymes sont envoyées, pour améliorer l’app. Désactiver ne change rien.'
   ),
   '查看隱私權政策': ('View privacy policy', 'Voir la politique de confidentialité'),
   '隱私權政策': ('Privacy policy', 'Politique de confidentialité'),
@@ -780,6 +780,7 @@ const uiCatalog = <String, (String, String)>{
     'Level is estimated from word frequency',
     'Niveau estimé d’après la fréquence'
   ),
+  '整張圖': ('Whole picture', 'Image entière'),
   '等級為詞頻估算。': (
     'Level is estimated from word frequency.',
     'Niveau estimé d’après la fréquence.'
@@ -1058,9 +1059,13 @@ const _templateCopy = <String, (String, String)>{
     'Restoring replaces all your current words, photos, albums, review history and settings with the backup. To keep your current data, export a backup first.',
     'La restauration remplace tous vos mots, photos, albums, historique de révision et réglages actuels. Pour garder vos données actuelles, exportez d’abord une sauvegarde.'
   ),
-  '備份檔包含單字、照片、相片冊、複習紀錄與設定（不含照片辨識的連線金鑰）。': (
-    'A backup holds your words, photos, albums, review history and settings (not the photo-recognition API key).',
-    'Une sauvegarde contient vos mots, photos, albums, historique de révision et réglages (sans la clé API de reconnaissance).'
+  '備份檔包含單字、照片、相片冊、複習紀錄與設定。': (
+    'A backup holds your words, photos, albums, review history and settings.',
+    'Une sauvegarde contient vos mots, photos, albums, historique de révision et réglages.'
+  ),
+  '金鑰不會存進備份檔；在新手機還原備份後要重新輸入。': (
+    'The key is not saved in backups; enter it again after restoring on a new phone.',
+    'La clé n’est pas enregistrée dans les sauvegardes ; saisissez-la à nouveau après une restauration sur un nouveau téléphone.'
   ),
   '這不是拍照學單字的備份檔': (
     'This is not a 拍照學單字 backup file',

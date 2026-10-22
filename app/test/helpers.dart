@@ -115,8 +115,12 @@ Future<TestApp> pumpApp(
 }
 
 /// Lets real async work (HTTP mocks, microtasks) finish between frames.
-Future<void> settle(WidgetTester tester, {int rounds = 3}) async {
-  for (var i = 0; i < rounds; i++) {
+/// With [until], keeps going (up to [maxRounds]) until it holds: on a busy
+/// machine three 30 ms rounds are not enough for a save → tag chain
+/// (問題回報 #540).
+Future<void> settle(WidgetTester tester,
+    {int rounds = 3, bool Function()? until, int maxRounds = 200}) async {
+  for (var i = 0; i < rounds || (until != null && !until() && i < maxRounds); i++) {
     await tester
         .runAsync(() => Future<void>.delayed(const Duration(milliseconds: 30)));
     await tester.pumpAndSettle();

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../app/app_scope.dart';
 import '../l10n/ui_text.dart';
 import '../theme/card_style.dart';
 import '../theme/mobile_theme.dart';
@@ -102,8 +103,15 @@ class _Mini extends StatelessWidget {
       ),
       child: const Icon(Icons.image_outlined, size: 16, color: Colors.white),
     );
-    final word =
-        Text('apple', style: look.headword.copyWith(fontSize: 16, height: 1.1));
+    // The sample word is in the language being learned (卡 #516: a French
+    // learner saw 「apple」), its meaning in the interface language.
+    final learning = context
+            .dependOnInheritedWidgetOfExactType<AppScope>()
+            ?.settings
+            .learningLanguage ??
+        'en';
+    final word = Text(learning == 'fr' ? 'pomme' : 'apple',
+        style: look.headword.copyWith(fontSize: 16, height: 1.1));
     final meaning = Text(ui(context, '蘋果'),
         style: look.meaning.copyWith(fontSize: 12, height: 1.2));
     final panel = look.sectionPanel(0);

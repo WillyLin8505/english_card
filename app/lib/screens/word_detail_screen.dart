@@ -148,6 +148,23 @@ class _WordBody extends StatelessWidget {
                 sense.meaning.trim(),
           }.toList()
         : const <String>[];
+    // Owner decision (#528): slang/obsolete/offensive senses (tier 2) always
+    // wait behind 顯示更多, even when fewer than [cap] common ones exist
+    // (fridge「胖女人」, commercial「男妓」); [floor] keeps one meaning shown.
+    final rareMeanings = <String>{
+      for (final usage in entry.effectiveUsages)
+        for (final s in usage.senses)
+          if ((senseTier[s.id] ?? 0) >= 2) s.meaning.trim(),
+    }..removeAll({
+        for (final usage in entry.effectiveUsages)
+          for (final s in usage.senses)
+            if ((senseTier[s.id] ?? 0) < 2) s.meaning.trim(),
+      });
+    int initialShown(Iterable<String> meanings, int cap, {int floor = 0}) =>
+        meanings
+            .where((m) => !rareMeanings.contains(m.trim()))
+            .length
+            .clamp(floor, cap);
 
     // Owner decision (issue #252): three per section, the rest behind 更多.
     List<({String word, String meaning})> relatedWords(String kind) {
@@ -315,7 +332,10 @@ class _WordBody extends StatelessWidget {
                 TagChip(posLabel(usage.pos)),
                 const SizedBox(height: MSpace.xxs),
                 _MoreList(
-                  initial: 3,
+                  initial: initialShown([
+                    for (final s in usage.senses)
+                      if (s.meaning.trim().isNotEmpty) s.meaning
+                  ], 3, floor: 1),
                   children: [
                     for (final sense in orderedSenses(usage))
                       if (sense.meaning.trim().isNotEmpty)
@@ -355,7 +375,7 @@ class _WordBody extends StatelessWidget {
             if (otherSenses.isNotEmpty) ...[
               const SizedBox(height: MSpace.xs),
               _MoreList(
-                initial: 2,
+                initial: initialShown(otherSenses, 2),
                 children: [
                   for (final meaning in otherSenses)
                     Padding(
@@ -454,8 +474,7 @@ class _WordBody extends StatelessWidget {
               runSpacing: 8,
               children: [
                 for (final form in forms.entries)
-                  TagChip(
-                      '${form.key}（${form.value.where((x) => x.isNotEmpty).join('；')}）')
+                  TagChip('${form.key}（${mergeFormLabels(form.value)}）')
               ],
             )),
       if (learningMorphology(entry) case final parts?)
@@ -474,6 +493,31 @@ class _WordBody extends StatelessWidget {
       ],
     );
   }
+}
+
+/// One 詞形變化 chip's labels, gathered from every part of speech. A form
+/// with its own meaning carries it on each label — 過去式・形容詞：有負載的,
+/// 過去分詞・形容詞：有負載的, 形容詞：有負載的 — so the grammar labels are
+/// listed once and the meaning once after them:
+/// loaded（過去式；過去分詞・形容詞：有負載的）(卡 #227 第 142 輪).
+String mergeFormLabels(Iterable<String> labels) {
+  final grammar = <String>{};
+  final meanings = <String>{};
+  for (final label in labels) {
+    final colon = label.indexOf('：');
+    if (colon < 0) {
+      if (label.isNotEmpty) grammar.add(label);
+      continue;
+    }
+    final dot = label.lastIndexOf('・', colon);
+    if (dot > 0) grammar.add(label.substring(0, dot));
+    meanings.addAll(
+        label.substring(dot + 1).split('；').where((m) => m.isNotEmpty));
+  }
+  return [
+    if (grammar.isNotEmpty) grammar.join('；'),
+    if (meanings.isNotEmpty) meanings.join('；'),
+  ].join('・');
 }
 
 /// Background data fetch in progress, or failed (spec section 7: 失敗標記).

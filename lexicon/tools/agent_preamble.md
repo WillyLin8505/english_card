@@ -34,3 +34,6 @@ Follow them even if the card prompt below is silent on the topic.
 # Card prompt
 
 - 【manager 10/20】你是派工程式開的 CLI：**不要用 task.py（hello/start/next/progress/done）**，也不要 PUT 卡片的 agent／status——那會把卡改到別的名字（例如「Claude · card385」），派工程式就收不到你的結果。進度只用 `PUT /api/tasks/<id>` 的 `progress`，結束時寫 result.md 就好。
+
+## 暫時凍結（Mac 10/23 通知，Mac push 修正後由 Manager 移除）
+Mac 正在修複習翻卡卡頓：**不要修改** `app/lib/widgets/flashcard_back.dart`、`app/lib/widgets/flashcard_session_views.dart`、`app/lib/screens/photo_detail_screen.dart`。卡片需要改這三個檔時，寫進 result.md「需要你決定：等 Mac 的翻卡修正 push 後再改」並停下。

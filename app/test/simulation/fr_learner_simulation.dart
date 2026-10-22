@@ -18,7 +18,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'dart:ui' as ui;
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -48,8 +47,6 @@ String _en(String zh) => translateUi(zh, 'en');
 /// Chinese characters in an English interface.
 final _cjk = RegExp(r'[一-鿿]');
 final _leakedNull = RegExp(r'^null$|[：:]\s*null$|^null\s*[：:]');
-final _article =
-    RegExp(r"(^|\s|\()(le|la|l'|l’|un|une|les|des)\s?\S", caseSensitive: false);
 final _gender = RegExp(r'\b(masculine|feminine|masc\.|fem\.|m\.|f\.|nm|nf)\b',
     caseSensitive: false);
 
@@ -253,8 +250,9 @@ void main() {
         w['back'] = screenTexts(tester);
         w['spoken'] = speaker.calls.sublist(said);
         final good = find.text(Rating.good.labelIn('en'));
-        if (good.evaluate().isEmpty)
+        if (good.evaluate().isEmpty) {
           throw StateError('no "${Rating.good.labelIn('en')}"');
+        }
         await tester.tap(good.first);
         await settleUp();
       } catch (e) {

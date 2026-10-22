@@ -213,8 +213,12 @@ List<PinData> databasePins(Map<String, dynamic> image, LexiconPack pack,
     }
     final id = (l['lexeme_id'] as num?)?.toInt();
     final entry = id == null ? null : pack.byId(id);
+    // Card #496 round 7: 26 French photos label one spelling twice (vert
+    // noun + vert adj, rond…); keyed by the word alone the pins collide
+    // (Duplicate keys) and a tap on one opens the other, so the lexeme id
+    // tells them apart.
     pins.add(PinData(
-        id: '${l['word']}',
+        id: id == null ? '${l['word']}' : '${l['word']}#$id',
         anchor: LabelPoint(x, y),
         word: '${l['word']}',
         zh: entry?.nativeMeaning?.split('、').first ?? '',

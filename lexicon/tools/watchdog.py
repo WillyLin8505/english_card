@@ -68,6 +68,12 @@ def ensure_all(log=print) -> list[str]:
     if not port_up(8770) and not running(procs, "uvicorn", "app.main:app") and not running(procs, "run_api.bat"):
         console("lexicon API", f'"{LEX / "run_api.bat"}"', LEX)
         started.append("lexicon API")
+    # the 9 lexicon workers (start_lexicon.bat's lanes): 4 text, 2 images, 3 picture labels
+    for lane, want in (("text", 4), ("images", 2), ("tags", 3)):
+        have = sum(1 for p in procs if p.startswith("cmd.exe") and "run_worker.bat" in p and p.rstrip().rstrip('"').endswith(" " + lane))
+        for n in range(have, want):
+            console(f"lexicon {lane} {n + 1}", rf'"{LEX / "worker" / "run_worker.bat"}" {lane}', LEX)
+            started.append(f"worker {lane}")
     if not port_up(5173) and not running(procs, "vite", "5173"):
         console("lexicon UI", "npm --prefix frontend run dev", LEX)
         started.append("admin UI")

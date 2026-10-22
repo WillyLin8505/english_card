@@ -284,6 +284,20 @@ def rest_until(agent: str, usage: dict, now: datetime) -> datetime | None:
     return best
 
 
+def reset_from_line(line: str, now: datetime) -> datetime | None:
+    """「You've hit your session limit · resets 6:10am (Asia/Taipei)」 → the next 6:10 Taipei
+    (10/23: without this a limit that reset at 06:10 kept the CLIs resting until 11:13)."""
+    m = re.search(r"resets\s+(\d{1,2})(?::(\d{2}))?\s*([ap]m)", line, re.I)
+    if not m:
+        return None
+    h = int(m.group(1)) % 12 + (12 if m.group(3).lower() == "pm" else 0)
+    at = now.astimezone(TAIPEI).replace(hour=h, minute=int(m.group(2) or 0), second=0, microsecond=0)
+    if at > now:
+        return at
+    # a session limit resets within ~5 h: a reset time a few hours back has already happened
+    return now if now - at < timedelta(hours=6) else at + timedelta(days=1)
+
+
 def probe_due(last_at, now_ts: float, interval_min: float) -> bool:
     """A live probe may run when none ran yet or the last one is older than interval_min."""
     return not last_at or now_ts - float(last_at) >= float(interval_min) * 60
@@ -669,6 +683,8 @@ class Tick:
 
     # 4. limits
     def set_limit(self, agent: str, until: datetime | None, line: str | None):
+        if until is None and line:
+            until = reset_from_line(line, self.now)
         if until is None:
             try:
                 until = rest_until(agent, http("GET", "/schedule/agents-info?refresh=true", timeout=90)

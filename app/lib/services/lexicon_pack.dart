@@ -940,7 +940,6 @@ class LexEntry {
     final common =
         (dictionary.isNotEmpty ? dictionary : usable).take(2).toList();
     if (common.isEmpty) return nativeMeaning;
-    final seen = <String>{};
     // A meaning that spells the answer gives it away on the front (問題回報
     // #118: toll 「徵收 toll」).
     final answer = RegExp(

@@ -93,6 +93,45 @@ def warm_snapshots():
             logging.exception('Could not warm dictionary %s', pair)
 
 
+def english_form_lemmas(session) -> dict[str, list[str]]:
+    """Every stored English form (lower-cased) → the full entries it belongs
+    to (trees → tree, children → child, lit → light), one query for the whole
+    pack build (card #510). Mirrors the forms step of images.resolve_full_lexeme."""
+    from sqlalchemy import select
+    from app import models as m
+    out: dict[str, list[str]] = {}
+    rows = session.execute(select(m.Form.form, m.Form.normalized, m.Lexeme.normalized).join(
+        m.Lexeme, m.Lexeme.id == m.Form.lexeme_id).where(
+        m.Lexeme.language == 'en', m.Lexeme.status == 'full').order_by(m.Lexeme.id)).all()
+    for form, normalized, lemma in rows:
+        for spelling in {str(form or '').strip().lower(), str(normalized or '').strip().lower()}:
+            if spelling and spelling != lemma:
+                bucket = out.setdefault(spelling, [])
+                if lemma not in bucket:
+                    bucket.append(lemma)
+    return out
+
+
+def tag_aliases(item, form_lemmas) -> list[str]:
+    """The entry spellings a vision tag may stand for, the tag's own word
+    first: its recorded lemma, the dictionary's stored forms and the regular
+    inflection stems (holding → hold, glasses → glass, clouds → cloud) — the
+    same candidates binding uses (images.resolve_full_lexeme, #197). The
+    stems are not verified here; they only match an entry that is already
+    approved for the picture."""
+    from app.images import _morphology_lemmas
+    word = ' '.join(str(item.get('word') or '').strip().lower().split())
+    if not word:
+        return []
+    out = [word]
+    lemma = ' '.join(str(item.get('lemma') or '').strip().lower().split())
+    if lemma:
+        out.append(lemma)
+    out.extend(form_lemmas.get(word, ()))
+    out.extend(_morphology_lemmas(word))
+    return list(dict.fromkeys(out))
+
+
 def catalog_snapshot(session, target):
     """Publish only reviewed pictures and their approved dictionary labels.
 
@@ -184,7 +223,10 @@ def catalog_snapshot(session, target):
             item = next((positioned[name] for name in names if name in positioned), None)
             if item is None:
                 item = next((positioned_dropped[name] for name in names
-                             if name in positioned_dropped), {})
+                             if name in positioned_dropped), None)
+            if item is None:  # #510: the tag names the entry in another form
+                item = next((positioned_alias[name] for name in names
+                             if name in positioned_alias), {})
             seen_words.add(word.id)
             # Decision 2 / P2: the photo tag's level is the card's level
             # (lexicon), never the vision model's guess.

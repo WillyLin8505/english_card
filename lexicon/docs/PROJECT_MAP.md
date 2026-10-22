@@ -30,6 +30,10 @@ Line counts as of 2026-10-17. **Big files: search first, then read a range** (se
   `card_difficulty.py`, `agent_capabilities.json`, `agent_preamble.md`.
 - Quality: `qc.py` (loads .env itself — run it, never open .env), `qc_golden.py` (`--out`, `--force`), `qc_snapshot.py`,
   `quality_ai.py`, `apply_quality_decisions.py`, `recompute_photo_tag_cefr.py`, `enrich_cefr_tags.py`.
+  `quality/decisions.json` keeps a #191 strip_cefr until a lint with matching scope withdraws it (#509/#523: the
+  proper_or_brand rule had fired on Title-Case lemmas that #460 later lower-cased). After any bulk lemma/pos rewrite:
+  `lint_lexicon.py` then `card509_stale_exclusions.py [--apply|--restore]` (withdraws only lint-made decisions the
+  current flags no longer support; #318 variants stay); measure `card509_measure.py --live [--qc-out f]`.
 - Photo labelling fallback (#327/#330): `tag_fallback.py` (status / ask / apply / golden / run, config
   `tag_fallback_config.json`) → backend `app/vision_fallback.py`; Codex/Cursor CLI look at the photo when Qwen
   is paused or the queue is long; cost log `lexicon/logs/tag_fallback/cost.jsonl`.

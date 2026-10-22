@@ -447,7 +447,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ),
                             ],
                           ),
-                          _note('關閉時不會送出使用統計。打開後只送匿名的操作紀錄，用來了解功能好不好用，不影響任何功能。'),
+                          _note('只送匿名的操作紀錄，用來改善 App；關閉不影響任何功能。'),
                           Align(
                             alignment: Alignment.centerLeft,
                             child: TextButton(
@@ -510,7 +510,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               controller: _key,
                               obscureText: true,
                               decoration: InputDecoration(
-                                  labelText: ui(context, '連線金鑰（API Key）')),
+                                  labelText: ui(context, '連線金鑰（API Key）'),
+                                  // #546: the backup note no longer mentions the key;
+                                  // only people who set one need to know.
+                                  helperText: ui(context, '金鑰不會存進備份檔；在新手機還原備份後要重新輸入。')),
                               onChanged: (v) => settings.apiKey = v,
                             ),
                             const SizedBox(height: 12),

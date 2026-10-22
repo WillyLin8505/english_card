@@ -32,8 +32,17 @@ void main() {
     final screens = <Map<String, Object?>>[];
     final errors = <String>[];
     final original = FlutterError.onError;
-    FlutterError.onError =
-        (d) => errors.add(d.exceptionAsString().split('\n').first);
+    FlutterError.onError = (d) {
+      // Card #496 round 7: keep the error-causing widget so a failure names
+      // the screen (e.g. "Duplicate keys found. @ DatabaseImageScreen …").
+      final lines = d.toString().split('\n');
+      final at = lines.indexWhere((l) => l.contains('error-causing widget'));
+      final where =
+          at >= 0 && at + 1 < lines.length ? ' @ ${lines[at + 1].trim()}' : '';
+      errors.add('${d.exceptionAsString().split('\n').first}$where');
+      File('${env['SIM_OUT']!}.errors.txt')
+          .writeAsStringSync('${d.toString()}\n\n', mode: FileMode.append);
+    };
     addTearDown(() => FlutterError.onError = original);
     var checked = 0;
     final wrong = <String>[];
@@ -41,8 +50,9 @@ void main() {
     for (final photo in photos) {
       for (final pin in databasePins(photo, pack)) {
         checked++;
-        if (pack.entriesFor(pin.word).isEmpty)
+        if (pack.entriesFor(pin.word).isEmpty) {
           wrong.add('${photo['id']}: ${pin.word}');
+        }
       }
     }
     for (final photo in photos.take(25)) {

@@ -55,7 +55,11 @@ void main() {
     expect(find.text('學生'), findsOneWidget);
     expect(find.text('瞳孔'), findsOneWidget);
     // The repeat of the main meaning is not listed again; the obsolete one
-    // is there, after the rest.
+    // waits behind 顯示更多 (owner decision #528).
+    expect(find.text('國定孤兒'), findsNothing);
+    expect(find.text('顯示更多（1）'), findsOneWidget);
+    await tester.tap(find.text('顯示更多（1）'));
+    await tester.pumpAndSettle();
     expect(find.text('國定孤兒'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -73,6 +77,28 @@ void main() {
     ]);
     expect(find.text('傾斜轉彎'), findsOneWidget);
     expect(find.text('藏在直腸內'), findsNothing);
+    expect(find.text('顯示更多（1）'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  // Owner decision #528 (卡 #12): fewer than three common senses no longer
+  // pull slang into view (commercial 名詞「（俚語）男妓」 was third).
+  testWidgets('slang stays behind 顯示更多 when common senses are few',
+      (tester) async {
+    await open(tester, 'commercial', 'noun', [
+      lexeme(1, 'commercial', 'adj', [sense(1, '商業的')]),
+      lexeme(2, 'commercial', 'noun', [
+        sense(10, '廣告'),
+        sense(11, '男妓', ['slang']),
+      ]),
+      lexeme(3, 'commercial', 'verb', [
+        sense(20, '舊義', ['obsolete']),
+      ]),
+    ]);
+    expect(find.text('廣告'), findsOneWidget);
+    expect(find.text('男妓'), findsNothing);
+    // A part of speech with only rare senses still shows one meaning.
+    expect(find.text('舊義'), findsOneWidget);
     expect(find.text('顯示更多（1）'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

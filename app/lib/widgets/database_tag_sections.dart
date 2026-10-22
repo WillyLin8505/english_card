@@ -37,12 +37,22 @@ class DatabaseTagSections extends StatelessWidget {
         ),
       ];
     }
+    // Card #510 (問題回報 #524): a label with no point draws no pin; the
+    // list says so ("整張圖") instead of looking like a missing pin.
+    final positioned = <int>{
+      for (final l in (image['labels'] as List? ?? []))
+        if (l is Map &&
+            l['lexeme_id'] is num &&
+            (l['point'] as List? ?? []).length >= 2)
+          (l['lexeme_id'] as num).toInt()
+    };
     return [
       for (final group in groups)
         _DatabaseTagGroup(
             key: ValueKey('${image['id']}:${group.key}'),
             group: group,
             pack: pack,
+            positioned: positioned,
             compact: compact)
     ];
   }
@@ -51,11 +61,13 @@ class DatabaseTagSections extends StatelessWidget {
 class _DatabaseTagGroup extends StatefulWidget {
   final MapEntry<String?, List<Map<String, dynamic>>> group;
   final LexiconPack pack;
+  final Set<int> positioned;
   final bool compact;
   const _DatabaseTagGroup(
       {super.key,
       required this.group,
       required this.pack,
+      this.positioned = const {},
       required this.compact});
   @override
   State<_DatabaseTagGroup> createState() => _DatabaseTagGroupState();
@@ -94,6 +106,8 @@ class _DatabaseTagGroupState extends State<_DatabaseTagGroup> {
         final label = databaseImageLabels({
           'tags': [tag]
         }, pack);
+        final wholePicture =
+            !widget.positioned.contains((tag['lexeme_id'] as num).toInt());
         out.add(Container(
           margin: const EdgeInsets.only(bottom: MSpace.xxs),
           decoration: MDecor.listTileSurface(showDivider: true),
@@ -109,9 +123,29 @@ class _DatabaseTagGroupState extends State<_DatabaseTagGroup> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(label,
-                          style:
-                              MFont.manrope(15, FontWeight.w700, MColors.ink)),
+                      Row(children: [
+                        Flexible(
+                          child: Text(label,
+                              style: MFont.manrope(
+                                  15, FontWeight.w700, MColors.ink)),
+                        ),
+                        if (wholePicture) ...[
+                          const SizedBox(width: MSpace.xs),
+                          // #510: no pin on the photo; the word is about
+                          // the whole picture, not a missing pin.
+                          Container(
+                            key: ValueKey(
+                                'whole-picture-${tag['lexeme_id']}'),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 1),
+                            decoration: BoxDecoration(
+                                color: MColors.surfaceSoft,
+                                borderRadius:
+                                    BorderRadius.circular(MRadii.sm)),
+                            child: UiText('整張圖', style: MFont.caption),
+                          ),
+                        ],
+                      ]),
                       if (group.key != null && databaseTagEstimated(tag, pack)) ...[
                         const SizedBox(height: 2),
                         // UI copy, localized for native=en/fr (\u5361 #496).
