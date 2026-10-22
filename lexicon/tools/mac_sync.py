@@ -184,6 +184,13 @@ def main(argv=None) -> int:
             report_failure(line, cards)
             return 1
         sh("git", "add", "-A")
+        # GitHub refuses files over 100 MB and then every later push fails too (10/22: a 327 MB
+        # agent scratch pack blocked the Mac for hours) — never commit anything that big
+        for p in sh("git", "diff", "--cached", "--name-only").stdout.splitlines():
+            f = ROOT / p.strip()
+            if f.is_file() and f.stat().st_size > 50 * 1024 * 1024:
+                log(f"not committing {p} ({f.stat().st_size // 2**20} MB)")
+                sh("git", "reset", "-q", "--", p.strip())
         if sh("git", "diff", "--cached", "--quiet").returncode != 0:
             msg = ("Sync for Mac verification: cards " + ", ".join(f"#{c['card']}" for c in cards)
                    + "\n\nCommitted by lexicon/tools/mac_sync.py after flutter analyze + flutter test passed.")

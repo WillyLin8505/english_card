@@ -816,6 +816,18 @@ class Tick:
                     continue
                 keys.add(c["key"])
                 issues.append(c)
+        # nothing else waiting → free CLIs run the standing cards (owner 10/22: 「沒有卡了那就都跑常態卡」),
+        # each at most every idle_recurring_cooldown_hours; issues above keep their place in line
+        if cfg.get("idle_recurring"):
+            idle_h = float(cfg.get("idle_recurring_cooldown_hours", 3))
+            for c in cands:
+                card = full.get(c.get("task_id")) or {}
+                if (card.get("kind") != "recurring" or c["key"] in keys or card.get("agent")
+                        or not night_launch_ok(c["task_id"], self.night_tasks, self.now, self.cfg["night_last_launch"])
+                        or in_cooldown(card, self.now, idle_h)):
+                    continue
+                keys.add(c["key"])
+                issues.append(c)
         # 「[給 Mac]」 requests are for the Claude session on the owner's Mac, not for a CLI here
         issues = [c for c in issues if not str(c.get("title") or "").lstrip("問題回報 #0123456789：").startswith(MAC_PREFIX)
                   and MAC_PREFIX not in str(c.get("title") or "")[:40]

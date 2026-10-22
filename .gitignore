@@ -68,3 +68,6 @@ lexicon/board.json
 lexicon/act.json
 tagger/last_benchmark.json
 tagger/ab-*.json
+
+# agent scratch (packs can be >100 MB, GitHub refuses them)
+lexicon/tmp/
