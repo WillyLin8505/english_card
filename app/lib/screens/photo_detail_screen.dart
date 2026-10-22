@@ -11,6 +11,7 @@ import '../models/photo.dart';
 import '../models/word_entry.dart';
 import '../services/lexicon_pack.dart';
 import '../services/photo_word_session.dart';
+import '../services/word_database_repository.dart';
 import '../services/word_selector.dart';
 import '../theme/mobile_theme.dart';
 import '../widgets/mobile/common.dart';
@@ -61,21 +62,75 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
   SessionWord? _placing;
   final _photoKey = GlobalKey();
 
+  /// 問題回報：Mac 實機量測照片詳情開啟 114ms（M-PERF）: the whole page in its
+  /// first frame took up to 96 ms to build. Frame 0 is the photo and the
+  /// title; frame 1 picks the words and draws the labels; frame 2 adds the
+  /// difficulty bar and the words; frame 3 the rest under the list.
+  int _stage = 0;
+  static const _listStage = 2;
+  static const _fullStage = 3;
+
+  /// Meanings with their 片語/… tag and IPA from the word list, kept until
+  /// the repository or the pack changes (M-PERF: they were looked up for
+  /// every label on every rebuild, e.g. each step of the difficulty bar).
+  final Map<(String, String, String), String> _zhCache = {};
+  final Map<String, String?> _ipaCache = {};
+  Listenable? _cacheSource;
+  WordDatabaseRepository? _cacheRepo;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _advanceAfterFrame();
   }
+
+  void _advanceAfterFrame() =>
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _stage >= _fullStage) return;
+        // Between frames, so neither frame pays for the word picking.
+        if (_stage == 0) _startSession();
+        setState(() => _stage++);
+        _advanceAfterFrame();
+      });
+
+  void _startSession() {
+    final scope = _scope;
+    if (scope == null || _session != null) return;
+    _session = PhotoWordSession(
+      repo: scope.repository,
+      photoId: widget.photoId,
+      queue: scope.queue,
+    )..addListener(_changed);
+  }
+
+  void _clearCaches() {
+    _zhCache.clear();
+    _ipaCache.clear();
+  }
+
+  /// [meaning] with its entry type from the pack, as labels show it.
+  String _zh(String word, String pos, String meaning) => _zhCache.putIfAbsent(
+      (word, pos, meaning),
+      () => typedMeaning(
+          meaning,
+          LexiconPack.instance.lookup(word, pos: pos)?.entry.entryType ??
+              'word'));
+
+  String? _ipa(WordDatabaseRepository repo, String word) =>
+      _ipaCache.putIfAbsent(word, () => repo.entryByWord(word)?.ipa);
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final scope = _scope = AppScope.of(context);
-    _session ??= PhotoWordSession(
-      repo: scope.repository,
-      photoId: widget.photoId,
-      queue: scope.queue,
-    )..addListener(_changed);
+    if (!identical(scope.repository, _cacheRepo)) {
+      _cacheSource?.removeListener(_clearCaches);
+      _cacheRepo = scope.repository;
+      _cacheSource = Listenable.merge([scope.repository, LexiconPack.instance])
+        ..addListener(_clearCaches);
+      _clearCaches();
+    }
     // Leaving by any navigation saves: another tab, a screen on top.
     final visible =
         (ActiveTabScope.of(context) ?? AppTab.album) == AppTab.album &&
@@ -97,6 +152,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _cacheSource?.removeListener(_clearCaches);
     final session = _session;
     final scope = _scope;
     if (session != null) {
@@ -254,7 +310,6 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
   Widget build(BuildContext context) {
     final scope = AppScope.of(context);
     final repo = scope.repository;
-    final session = _session!;
     return ListenableBuilder(
       listenable: Listenable.merge([repo, scope.queue]),
       builder: (context, _) {
@@ -284,46 +339,10 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
             ),
           );
         }
-        final old = session.showLearned ? session.oldWords : const <OldWord>[];
-        final pins = [
-          for (final w in session.words)
-            if (w.placed)
-              PinData(
-                id: w.word,
-                anchor: w.anchor,
-                word: displayWord(w.word),
-                zh: typedMeaning(
-                    w.candidate.meaning,
-                    LexiconPack.instance
-                            .lookup(w.word, pos: w.candidate.pos)
-                            ?.entry
-                            .entryType ??
-                        'word'),
-                linked: w.candidate.inDatabase || LexiconPack.instance.isEmpty,
-                // A word read off the photo is framed where it is printed,
-                // until the learner drags its label somewhere else.
-                frame: w.candidate.box?.contains(w.anchor) == true
-                    ? w.candidate.box
-                    : null,
-              ),
-          for (final o in old)
-            PinData(
-              id: 'old:${o.word}',
-              anchor: o.anchor,
-              word: displayWord(o.word),
-              zh: typedMeaning(
-                  o.candidate.meaning,
-                  LexiconPack.instance
-                          .lookup(o.word, pos: o.candidate.pos)
-                          ?.entry
-                          .entryType ??
-                      'word'),
-              muted: true,
-            ),
-        ];
-        SessionWord? wordOf(PinData p) =>
-            session.words.where((w) => w.word == p.id).firstOrNull;
-
+        final session = _session;
+        final old = session != null && session.showLearned
+            ? session.oldWords
+            : const <OldWord>[];
         return Scaffold(
           backgroundColor: MColors.canvas,
           body: SafeArea(
@@ -337,7 +356,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                     onTap: () => SharePlus.instance.share(ShareParams(
                       title: photo.title,
                       text: '照片「${photo.title}」裡的英文單字：'
-                          '${session.words.map((w) => '${displayWord(w.word)} ${w.candidate.meaning}').join('、')}',
+                          '${(_session?.words ?? const <SessionWord>[]).map((w) => '${displayWord(w.word)} ${w.candidate.meaning}').join('、')}',
                     )),
                   ),
                 ),
@@ -354,36 +373,32 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                             decoration:
                                 MDecor.heroPhotoFrame(radius: MRadii.xxl),
                             clipBehavior: Clip.antiAlias,
-                            child: PinnedPhoto(
-                              photo: photo,
-                              pins: pins,
-                              onPinTap: (p) {
-                                final w = wordOf(p);
-                                if (w != null) _pinActions(w);
-                              },
-                              onPinMoved: (p, to) {
-                                final w = wordOf(p);
-                                if (w != null) session.move(w, to);
-                              },
-                              onPhotoTap: _placing == null ? null : _placeAt,
-                              overlay: _overlayFor(photo, session),
-                              revealNew: true,
+                            child: session == null
+                                // M-PERF: frame 0 — the photo alone, as
+                                // PinnedPhoto draws it (labels come next).
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(24),
+                                    child: RepaintBoundary(
+                                        child: PhotoImage(photo)),
+                                  )
+                                : _pinnedPhoto(photo, session, old),
+                          ),
+                        ),
+                        if (session != null && _stage >= _listStage) ...[
+                          PhotoDifficultyBar(
+                            key: const ValueKey('difficulty-bar'),
+                            target: session.target,
+                            offset: session.offset,
+                            onMove: _moveBar,
+                            onSelect: _settleBar,
+                          ),
+                          if (_placing case final w?)
+                            _PlacingBar(
+                              word: displayWord(w.word),
+                              onSkip: () => setState(() => _placing = null),
                             ),
-                          ),
-                        ),
-                        PhotoDifficultyBar(
-                          key: const ValueKey('difficulty-bar'),
-                          target: session.target,
-                          offset: session.offset,
-                          onMove: _moveBar,
-                          onSelect: _settleBar,
-                        ),
-                        if (_placing case final w?)
-                          _PlacingBar(
-                            word: displayWord(w.word),
-                            onSkip: () => setState(() => _placing = null),
-                          ),
-                        _buildList(photo, session, old),
+                          _buildList(photo, session, old),
+                        ],
                       ],
                     ),
                   ),
@@ -393,6 +408,51 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
           ),
         );
       },
+    );
+  }
+
+  Widget _pinnedPhoto(
+      Photo photo, PhotoWordSession session, List<OldWord> old) {
+    final pins = [
+      for (final w in session.words)
+        if (w.placed)
+          PinData(
+            id: w.word,
+            anchor: w.anchor,
+            word: displayWord(w.word),
+            zh: _zh(w.word, w.candidate.pos, w.candidate.meaning),
+            linked: w.candidate.inDatabase || LexiconPack.instance.isEmpty,
+            // A word read off the photo is framed where it is printed,
+            // until the learner drags its label somewhere else.
+            frame: w.candidate.box?.contains(w.anchor) == true
+                ? w.candidate.box
+                : null,
+          ),
+      for (final o in old)
+        PinData(
+          id: 'old:${o.word}',
+          anchor: o.anchor,
+          word: displayWord(o.word),
+          zh: _zh(o.word, o.candidate.pos, o.candidate.meaning),
+          muted: true,
+        ),
+    ];
+    SessionWord? wordOf(PinData p) =>
+        session.words.where((w) => w.word == p.id).firstOrNull;
+    return PinnedPhoto(
+      photo: photo,
+      pins: pins,
+      onPinTap: (p) {
+        final w = wordOf(p);
+        if (w != null) _pinActions(w);
+      },
+      onPinMoved: (p, to) {
+        final w = wordOf(p);
+        if (w != null) session.move(w, to);
+      },
+      onPhotoTap: _placing == null ? null : _placeAt,
+      overlay: _overlayFor(photo, session),
+      revealNew: true,
     );
   }
 
@@ -469,15 +529,8 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
               },
               child: _WordCard(
                 word: displayWord(w.word),
-                ipa: w.candidate.ipa ??
-                    scope.repository.entryByWord(w.word)?.ipa,
-                zh: typedMeaning(
-                    w.candidate.meaning,
-                    LexiconPack.instance
-                            .lookup(w.word, pos: w.candidate.pos)
-                            ?.entry
-                            .entryType ??
-                        'word'),
+                ipa: w.candidate.ipa ?? _ipa(scope.repository, w.word),
+                zh: _zh(w.word, w.candidate.pos, w.candidate.meaning),
                 level: w.candidate.level,
                 starred: w.starred,
                 onTap: () => _openWord(w),
@@ -489,85 +542,84 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
             ),
             const SizedBox(height: 12),
           ],
-          // 問題回報 #438: adding a missed word comes after reading the list.
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              key: const ValueKey('add-word'),
-              onPressed: _addWord,
-              icon: const Icon(Icons.add_rounded, size: 18),
-              label: UiText('自己加字',
-                  style: MFont.manrope(13, FontWeight.w800, MColors.primary)),
-            ),
-          ),
-          // 問題回報 #451: the list's shortcuts sit under the words too, so
-          // the first word is the first thing under the list title.
-          const SizedBox(height: 4),
-          _LevelRow(
-            bias: session.bias,
-            busy: topping,
-            onBias: session.setBias,
-            onEasier: session.target > 0
-                ? () => session.setTarget(session.target - 1)
-                : null,
-            onHarder: session.target < cefrLevels.length - 1
-                ? () => session.setTarget(session.target + 1)
-                : null,
-          ),
-          // 問題回報 #276: the "no 建立 button, leaving saves" rule used to sit
-          // under all five words; #451 (owner 10/21) moved it below the list too.
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              const Icon(Icons.check_circle_outline_rounded,
-                  size: 14, color: MColors.label),
-              const SizedBox(width: 4),
-              Expanded(
-                child: UiText('返回時自動保存，不用再按建立。',
-                    style: MFont.manrope(12, FontWeight.w600, MColors.label)),
+          // M-PERF: what follows the words is below the fold; one frame later.
+          if (_stage >= _fullStage) ...[
+            // 問題回報 #438: adding a missed word comes after reading the list.
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: const ValueKey('add-word'),
+                onPressed: _addWord,
+                icon: const Icon(Icons.add_rounded, size: 18),
+                label: UiText('自己加字',
+                    style: MFont.manrope(13, FontWeight.w800, MColors.primary)),
               ),
-            ],
-          ),
-          if (old.isNotEmpty) ...[
+            ),
+            // 問題回報 #451: the list's shortcuts sit under the words too, so
+            // the first word is the first thing under the list title.
             const SizedBox(height: 4),
-            const SectionLabel('已學會與學習中的舊詞'),
-            const SizedBox(height: 8),
-            for (final o in old) ...[
-              _OldWordRow(
-                word: displayWord(o.word),
-                zh: typedMeaning(
-                    o.candidate.meaning,
-                    LexiconPack.instance
-                            .lookup(o.word, pos: o.candidate.pos)
-                            ?.entry
-                            .entryType ??
-                        'word'),
-                learned: o.learned,
-                onRestore: o.learned
-                    ? () {
-                        session.restore(o);
-                        showToast(context, '已復原「${displayWord(o.word)}」');
-                      }
-                    : null,
-              ),
-              const SizedBox(height: 8),
-            ],
-          ],
-          const SizedBox(height: 4),
-          UiText(
-            '左滑單字表示已經會了；拖曳照片上的標籤可調整位置；點標籤可改字或刪除。',
-            textAlign: TextAlign.center,
-            style: MFont.manrope(12, FontWeight.w600, MColors.label),
-          ),
-          if (session.selection != null && session.selection!.scored.isNotEmpty)
-            Center(
-              child: TextButton(
-                onPressed: () =>
-                    showSelectionReasons(context, session.selection!),
-                child: UiText('為什麼是這些字？',
-                    style: MFont.manrope(12, FontWeight.w700, MColors.primary)),
-              ),
+            _LevelRow(
+              bias: session.bias,
+              busy: topping,
+              onBias: session.setBias,
+              onEasier: session.target > 0
+                  ? () => session.setTarget(session.target - 1)
+                  : null,
+              onHarder: session.target < cefrLevels.length - 1
+                  ? () => session.setTarget(session.target + 1)
+                  : null,
             ),
+            // 問題回報 #276: the "no 建立 button, leaving saves" rule used to sit
+            // under all five words; #451 (owner 10/21) moved it below the list too.
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.check_circle_outline_rounded,
+                    size: 14, color: MColors.label),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: UiText('返回時自動保存，不用再按建立。',
+                      style: MFont.manrope(12, FontWeight.w600, MColors.label)),
+                ),
+              ],
+            ),
+            if (old.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              const SectionLabel('已學會與學習中的舊詞'),
+              const SizedBox(height: 8),
+              for (final o in old) ...[
+                _OldWordRow(
+                  word: displayWord(o.word),
+                  zh: _zh(o.word, o.candidate.pos, o.candidate.meaning),
+                  learned: o.learned,
+                  onRestore: o.learned
+                      ? () {
+                          session.restore(o);
+                          showToast(context, '已復原「${displayWord(o.word)}」');
+                        }
+                      : null,
+                ),
+                const SizedBox(height: 8),
+              ],
+            ],
+            const SizedBox(height: 4),
+            UiText(
+              '左滑單字表示已經會了；拖曳照片上的標籤可調整位置；點標籤可改字或刪除。',
+              textAlign: TextAlign.center,
+              style: MFont.manrope(12, FontWeight.w600, MColors.label),
+            ),
+            if (session.selection != null &&
+                session.selection!.scored.isNotEmpty)
+              Center(
+                child: TextButton(
+                  onPressed: () =>
+                      showSelectionReasons(context, session.selection!),
+                  child: UiText('為什麼是這些字？',
+                      style:
+                          MFont.manrope(12, FontWeight.w700, MColors.primary)),
+                ),
+              ),
+          ],
         ],
       ),
     );
