@@ -1,6 +1,7 @@
 import '../l10n/ui_text.dart';
 import '../services/learning_content.dart';
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
@@ -66,9 +67,23 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
   /// first frame took up to 96 ms to build. Frame 0 is the photo and the
   /// title; frame 1 picks the words and draws the labels; frame 2 adds the
   /// difficulty bar and the words; frame 3 the rest under the list.
-  int _stage = 0;
-  static const _listStage = 2;
-  static const _fullStage = 3;
+  /// 問題回報：Mac 實機量測第二輪 照片詳情 64ms／翻卡 87ms（M-PERF2）: each
+  /// step rebuilt the whole page, and the list frame (an IconButton per
+  /// word) was still the heaviest. Now each part shows itself
+  /// ([_AfterFrames]) without rebuilding the rest: frame 2 the bar and the
+  /// list title, frames 3 and 4 two words each (the first ones are what a
+  /// phone shows under the photo), frame 5 the fifth, frames 6 and 7 what
+  /// is under the list.
+  bool _started = false;
+  bool _opening = true;
+
+  /// Word cards per frame (M-PERF2): each has an IconButton and two icon
+  /// buttons, about 2 ms each to build in the tests.
+  static const _wordsPerFrame = 2;
+
+  /// Frames after the labels before a part shows, while the page opens;
+  /// afterwards (a word added, the list re-picked) at once.
+  int _after(int frames) => _opening ? frames : 0;
 
   /// Meanings with their 片語/… tag and IPA from the word list, kept until
   /// the repository or the pack changes (M-PERF: they were looked up for
@@ -87,11 +102,22 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
 
   void _advanceAfterFrame() =>
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted || _stage >= _fullStage) return;
+        if (!mounted) return;
         // Between frames, so neither frame pays for the word picking.
-        if (_stage == 0) _startSession();
-        setState(() => _stage++);
-        _advanceAfterFrame();
+        _startSession();
+        setState(() => _started = true);
+        _endOpening(7);
+      });
+
+  void _endOpening(int frames) =>
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (frames > 1) {
+          _endOpening(frames - 1);
+          WidgetsBinding.instance.scheduleFrame();
+        } else {
+          _opening = false;
+        }
       });
 
   void _startSession() {
@@ -339,7 +365,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
             ),
           );
         }
-        final session = _session;
+        final session = _started ? _session : null;
         final old = session != null && session.showLearned
             ? session.oldWords
             : const <OldWord>[];
@@ -384,13 +410,16 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                                 : _pinnedPhoto(photo, session, old),
                           ),
                         ),
-                        if (session != null && _stage >= _listStage) ...[
-                          PhotoDifficultyBar(
-                            key: const ValueKey('difficulty-bar'),
-                            target: session.target,
-                            offset: session.offset,
-                            onMove: _moveBar,
-                            onSelect: _settleBar,
+                        if (session != null) ...[
+                          _AfterFrames(
+                            frames: _after(1),
+                            child: PhotoDifficultyBar(
+                              key: const ValueKey('difficulty-bar'),
+                              target: session.target,
+                              offset: session.offset,
+                              onMove: _moveBar,
+                              onSelect: _settleBar,
+                            ),
                           ),
                           if (_placing case final w?)
                             _PlacingBar(
@@ -489,137 +518,162 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: UiText('辨識單字列表 (${session.words.length})',
-                    style: MFont.manrope(15, FontWeight.w800, MColors.muted)),
-              ),
-              UiText('顯示已學會單字',
-                  style: MFont.manrope(12, FontWeight.w700, MColors.label)),
-              Transform.scale(
-                scale: 0.75,
-                child: Switch(
-                  value: session.showLearned,
-                  onChanged: session.setShowLearned,
+          _AfterFrames(
+            frames: _after(1),
+            child: Row(
+              children: [
+                Expanded(
+                  child: UiText('辨識單字列表 (${session.words.length})',
+                      style: MFont.manrope(15, FontWeight.w800, MColors.muted)),
                 ),
-              ),
-            ],
+                UiText('顯示已學會單字',
+                    style: MFont.manrope(12, FontWeight.w700, MColors.label)),
+                Transform.scale(
+                  scale: 0.75,
+                  child: Switch(
+                    value: session.showLearned,
+                    onChanged: session.setShowLearned,
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 12),
-          if (session.words.isEmpty) _emptyState(photo, session),
-          for (final w in session.words) ...[
-            Dismissible(
-              key: ValueKey('word:${w.word}'),
-              direction: DismissDirection.endToStart,
-              background: const _KnownBackground(),
-              onDismissed: (_) {
-                final undo = OldWord(w.candidate, w.anchor, learned: true);
-                session.swipe(w);
-                // 問題回報 #299: 和複習畫面一樣，提示帶「復原」按鈕.
-                ScaffoldMessenger.of(context)
-                  ..hideCurrentSnackBar()
-                  ..showSnackBar(SnackBar(
-                    content: UiText('已把「${displayWord(w.word)}」移到已學會'),
-                    action: SnackBarAction(
-                      label: ui(context, '復原'),
-                      onPressed: () => session.restore(undo),
-                    ),
-                  ));
-              },
-              child: _WordCard(
-                word: displayWord(w.word),
-                ipa: w.candidate.ipa ?? _ipa(scope.repository, w.word),
-                zh: _zh(w.word, w.candidate.pos, w.candidate.meaning),
-                level: w.candidate.level,
-                starred: w.starred,
-                onTap: () => _openWord(w),
-                onMore: () => _pinActions(w),
-                onAudio: () => scope.speak(context, w.word,
-                    language: scope.repository.language),
-                onStar: () => session.toggleStar(w),
+          if (session.words.isEmpty)
+            _AfterFrames(frames: _after(1), child: _emptyState(photo, session)),
+          for (final (i, w) in session.words.indexed) ...[
+            _AfterFrames(
+              key: ValueKey('shown:${w.word}'),
+              frames: _after(math.min(4, 2 + i ~/ _wordsPerFrame)),
+              child: Dismissible(
+                key: ValueKey('word:${w.word}'),
+                direction: DismissDirection.endToStart,
+                background: const _KnownBackground(),
+                onDismissed: (_) {
+                  final undo = OldWord(w.candidate, w.anchor, learned: true);
+                  session.swipe(w);
+                  // 問題回報 #299: 和複習畫面一樣，提示帶「復原」按鈕.
+                  ScaffoldMessenger.of(context)
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(SnackBar(
+                      content: UiText('已把「${displayWord(w.word)}」移到已學會'),
+                      action: SnackBarAction(
+                        label: ui(context, '復原'),
+                        onPressed: () => session.restore(undo),
+                      ),
+                    ));
+                },
+                child: _WordCard(
+                  word: displayWord(w.word),
+                  ipa: w.candidate.ipa ?? _ipa(scope.repository, w.word),
+                  zh: _zh(w.word, w.candidate.pos, w.candidate.meaning),
+                  level: w.candidate.level,
+                  starred: w.starred,
+                  onTap: () => _openWord(w),
+                  onMore: () => _pinActions(w),
+                  onAudio: () => scope.speak(context, w.word,
+                      language: scope.repository.language),
+                  onStar: () => session.toggleStar(w),
+                ),
               ),
             ),
             const SizedBox(height: 12),
           ],
-          // M-PERF: what follows the words is below the fold; one frame later.
-          if (_stage >= _fullStage) ...[
-            // 問題回報 #438: adding a missed word comes after reading the list.
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                key: const ValueKey('add-word'),
-                onPressed: _addWord,
-                icon: const Icon(Icons.add_rounded, size: 18),
-                label: UiText('自己加字',
-                    style: MFont.manrope(13, FontWeight.w800, MColors.primary)),
-              ),
-            ),
-            // 問題回報 #451: the list's shortcuts sit under the words too, so
-            // the first word is the first thing under the list title.
-            const SizedBox(height: 4),
-            _LevelRow(
-              bias: session.bias,
-              busy: topping,
-              onBias: session.setBias,
-              onEasier: session.target > 0
-                  ? () => session.setTarget(session.target - 1)
-                  : null,
-              onHarder: session.target < cefrLevels.length - 1
-                  ? () => session.setTarget(session.target + 1)
-                  : null,
-            ),
-            // 問題回報 #276: the "no 建立 button, leaving saves" rule used to sit
-            // under all five words; #451 (owner 10/21) moved it below the list too.
-            const SizedBox(height: 8),
-            Row(
+          // M-PERF: what follows the words is below the fold; one frame later
+          // (M-PERF2: the shortcuts, then the notes under them).
+          _AfterFrames(
+            frames: _after(5),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Icon(Icons.check_circle_outline_rounded,
-                    size: 14, color: MColors.label),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: UiText('返回時自動保存，不用再按建立。',
-                      style: MFont.manrope(12, FontWeight.w600, MColors.label)),
+                // 問題回報 #438: adding a missed word comes after reading the list.
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    key: const ValueKey('add-word'),
+                    onPressed: _addWord,
+                    icon: const Icon(Icons.add_rounded, size: 18),
+                    label: UiText('自己加字',
+                        style: MFont.manrope(
+                            13, FontWeight.w800, MColors.primary)),
+                  ),
                 ),
-              ],
-            ),
-            if (old.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              const SectionLabel('已學會與學習中的舊詞'),
-              const SizedBox(height: 8),
-              for (final o in old) ...[
-                _OldWordRow(
-                  word: displayWord(o.word),
-                  zh: _zh(o.word, o.candidate.pos, o.candidate.meaning),
-                  learned: o.learned,
-                  onRestore: o.learned
-                      ? () {
-                          session.restore(o);
-                          showToast(context, '已復原「${displayWord(o.word)}」');
-                        }
+                // 問題回報 #451: the list's shortcuts sit under the words too, so
+                // the first word is the first thing under the list title.
+                const SizedBox(height: 4),
+                _LevelRow(
+                  bias: session.bias,
+                  busy: topping,
+                  onBias: session.setBias,
+                  onEasier: session.target > 0
+                      ? () => session.setTarget(session.target - 1)
+                      : null,
+                  onHarder: session.target < cefrLevels.length - 1
+                      ? () => session.setTarget(session.target + 1)
                       : null,
                 ),
-                const SizedBox(height: 8),
               ],
-            ],
-            const SizedBox(height: 4),
-            UiText(
-              '左滑單字表示已經會了；拖曳照片上的標籤可調整位置；點標籤可改字或刪除。',
-              textAlign: TextAlign.center,
-              style: MFont.manrope(12, FontWeight.w600, MColors.label),
             ),
-            if (session.selection != null &&
-                session.selection!.scored.isNotEmpty)
-              Center(
-                child: TextButton(
-                  onPressed: () =>
-                      showSelectionReasons(context, session.selection!),
-                  child: UiText('為什麼是這些字？',
-                      style:
-                          MFont.manrope(12, FontWeight.w700, MColors.primary)),
+          ),
+          _AfterFrames(
+            frames: _after(6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // 問題回報 #276: the "no 建立 button, leaving saves" rule used to sit
+                // under all five words; #451 (owner 10/21) moved it below the list too.
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.check_circle_outline_rounded,
+                        size: 14, color: MColors.label),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: UiText('返回時自動保存，不用再按建立。',
+                          style: MFont.manrope(
+                              12, FontWeight.w600, MColors.label)),
+                    ),
+                  ],
                 ),
-              ),
-          ],
+                if (old.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  const SectionLabel('已學會與學習中的舊詞'),
+                  const SizedBox(height: 8),
+                  for (final o in old) ...[
+                    _OldWordRow(
+                      word: displayWord(o.word),
+                      zh: _zh(o.word, o.candidate.pos, o.candidate.meaning),
+                      learned: o.learned,
+                      onRestore: o.learned
+                          ? () {
+                              session.restore(o);
+                              showToast(context, '已復原「${displayWord(o.word)}」');
+                            }
+                          : null,
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                ],
+                const SizedBox(height: 4),
+                UiText(
+                  '左滑單字表示已經會了；拖曳照片上的標籤可調整位置；點標籤可改字或刪除。',
+                  textAlign: TextAlign.center,
+                  style: MFont.manrope(12, FontWeight.w600, MColors.label),
+                ),
+                if (session.selection != null &&
+                    session.selection!.scored.isNotEmpty)
+                  Center(
+                    child: TextButton(
+                      onPressed: () =>
+                          showSelectionReasons(context, session.selection!),
+                      child: UiText('為什麼是這些字？',
+                          style: MFont.manrope(
+                              12, FontWeight.w700, MColors.primary)),
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -706,4 +760,47 @@ class _PlacingBar extends StatelessWidget {
           ],
         ),
       );
+}
+
+/// Shows [child] [frames] frames after it first appears; 0 shows it at
+/// once (問題回報：Mac 實機量測第二輪 照片詳情 64ms／翻卡 87ms（M-PERF2）). Only
+/// this part is rebuilt when it shows, not the page around it.
+class _AfterFrames extends StatefulWidget {
+  final int frames;
+  final Widget child;
+
+  const _AfterFrames({super.key, required this.frames, required this.child});
+
+  @override
+  State<_AfterFrames> createState() => _AfterFramesState();
+}
+
+class _AfterFramesState extends State<_AfterFrames> {
+  late bool _ready = widget.frames <= 0;
+
+  @override
+  void initState() {
+    super.initState();
+    if (!_ready) _wait(widget.frames);
+  }
+
+  void _wait(int frames) => WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _ready) return;
+        if (frames > 1) {
+          _wait(frames - 1);
+          WidgetsBinding.instance.scheduleFrame();
+        } else {
+          setState(() => _ready = true);
+        }
+      });
+
+  @override
+  void didUpdateWidget(_AfterFrames old) {
+    super.didUpdateWidget(old);
+    if (widget.frames <= 0) _ready = true;
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      _ready ? widget.child : const SizedBox.shrink();
 }

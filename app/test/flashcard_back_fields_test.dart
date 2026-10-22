@@ -64,7 +64,12 @@ void main() {
               'near_homophones',
               'similar_spelling'
             ])
-              {'relation': kind, 'word': 'hidden-$kind', 'native': '相似字', 'cefr': 'A1'},
+              {
+                'relation': kind,
+                'word': 'hidden-$kind',
+                'native': '相似字',
+                'cefr': 'A1'
+              },
           ],
         },
       ],
@@ -108,6 +113,8 @@ void main() {
             const TemplateField(CardBackField.source, collapsed: false),
           ]),
         ))));
+    // M-PERF2: the sections under the photo come one frame each.
+    await tester.pumpAndSettle();
   }
 
   testWidgets(
@@ -124,7 +131,10 @@ void main() {
       'private-id',
       '6.123',
     ]) {
-      expect(find.textContaining(RegExp(RegExp.escape(text), caseSensitive: false)), findsNothing);
+      expect(
+          find.textContaining(
+              RegExp(RegExp.escape(text), caseSensitive: false)),
+          findsNothing);
     }
     // Card #251 item 6: 近音字 and 拼字相近 are shown when the pack has them.
     expect(find.text('近音字'), findsOneWidget);

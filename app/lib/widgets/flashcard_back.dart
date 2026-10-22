@@ -823,6 +823,10 @@ class FlashcardBack extends StatelessWidget {
           ],
         ];
     final laterPhoto = later.any((f) => f.field == CardBackField.photoContext);
+    // M-PERF2: the sound buttons come one frame after the card turns and the
+    // photo one frame after them (see _PhotoPager), so the sections under
+    // it start one frame later still.
+    final topPhoto = hero != null || fields.any((w) => w is _PhotoPager);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -878,23 +882,34 @@ class FlashcardBack extends StatelessWidget {
                 ],
               ),
             ),
-            if (showPronunciation) ...[
-              for (final accent in const ['en-GB', 'en-US'])
-                IconButton(
-                  tooltip: accent == 'en-GB' ? '播放英式發音' : '播放美式發音',
-                  onPressed: () => playAccent(context, entry, accent),
-                  icon: Column(mainAxisSize: MainAxisSize.min, children: [
-                    const Icon(Icons.volume_up_outlined),
-                    UiText(accent == 'en-GB' ? '英式' : '美式',
-                        style: MFont.caption),
-                  ]),
+            if (showPronunciation)
+              // 問題回報：Mac 實機量測第二輪 照片詳情 64ms／翻卡 87ms（M-PERF2）:
+              // the two IconButtons were most of the turning frame's back;
+              // they come the next frame (the back is still fading in).
+              _NextFrame(
+                cacheKey: entry,
+                builder: (context) => Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (final accent in const ['en-GB', 'en-US'])
+                      IconButton(
+                        tooltip: accent == 'en-GB' ? '播放英式發音' : '播放美式發音',
+                        onPressed: () => playAccent(context, entry, accent),
+                        icon: Column(mainAxisSize: MainAxisSize.min, children: [
+                          const Icon(Icons.volume_up_outlined),
+                          UiText(accent == 'en-GB' ? '英式' : '美式',
+                              style: MFont.caption),
+                        ]),
+                      ),
+                  ],
                 ),
-            ],
+              ),
           ],
         ),
         ...sections(fields, 0),
         if (later.isNotEmpty)
           _NextFrame(
+            frames: topPhoto ? 3 : 2,
             // Unchanged, a rebuild (a photo swipe) keeps the built sections.
             cacheKey: (
               entry,
@@ -917,8 +932,10 @@ class FlashcardBack extends StatelessWidget {
                     )
                   : null,
             ),
-            builder: (context) => Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+            // 問題回報：Mac 實機量測第二輪 照片詳情 64ms／翻卡 87ms（M-PERF2）:
+            // all of them in one frame was still too much; one per frame.
+            builder: (context) => _OnePerFrame(
+              perFrame: 2, // the gap and the section
               children: sections(
                   [
                     for (final f in later)
@@ -1038,13 +1055,16 @@ class _BackData {
   _BackData(this.stamp, this.source);
 }
 
-/// Builds [builder] from the frame after it first appears (M-PERF); the
-/// last build is kept while [cacheKey] stays the same.
+/// Builds [builder] from the frame after it first appears (M-PERF), or
+/// [frames] frames after (M-PERF2); the last build is kept while
+/// [cacheKey] stays the same.
 class _NextFrame extends StatefulWidget {
   final Object cacheKey;
   final WidgetBuilder builder;
+  final int frames;
 
-  const _NextFrame({required this.cacheKey, required this.builder});
+  const _NextFrame(
+      {required this.cacheKey, required this.builder, this.frames = 1});
 
   @override
   State<_NextFrame> createState() => _NextFrameState();
@@ -1058,10 +1078,18 @@ class _NextFrameState extends State<_NextFrame> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) setState(() => _ready = true);
-    });
+    _wait(widget.frames);
   }
+
+  void _wait(int frames) => WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (frames > 1) {
+          _wait(frames - 1);
+          WidgetsBinding.instance.scheduleFrame();
+        } else {
+          setState(() => _ready = true);
+        }
+      });
 
   @override
   Widget build(BuildContext context) {
@@ -1072,6 +1100,43 @@ class _NextFrameState extends State<_NextFrame> {
     }
     return _built!;
   }
+}
+
+/// [children] in a column, [perFrame] more of them each frame (問題回報：
+/// Mac 實機量測第二輪 照片詳情 64ms／翻卡 87ms（M-PERF2）). Once all are in,
+/// a rebuild shows them all at once.
+class _OnePerFrame extends StatefulWidget {
+  final List<Widget> children;
+  final int perFrame;
+
+  const _OnePerFrame({required this.children, this.perFrame = 1});
+
+  @override
+  State<_OnePerFrame> createState() => _OnePerFrameState();
+}
+
+class _OnePerFrameState extends State<_OnePerFrame> {
+  late int _shown = widget.perFrame;
+
+  @override
+  void initState() {
+    super.initState();
+    _next();
+  }
+
+  void _next() => WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _shown >= widget.children.length) return;
+        setState(() => _shown += widget.perFrame);
+        _next();
+      });
+
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: _shown >= widget.children.length
+            ? widget.children
+            : widget.children.take(_shown).toList(),
+      );
 }
 
 /// 詞形變化 as an even grid (問題回報 #406): equal-width cells, the kind in
@@ -1385,6 +1450,28 @@ class _PhotoPagerState extends State<_PhotoPager> {
       PageController(initialPage: widget.initialIndex);
   late int _index = widget.initialIndex;
 
+  /// 問題回報：Mac 實機量測第二輪 照片詳情 64ms／翻卡 87ms（M-PERF2）: the
+  /// frames that turn the card hold the photo's place (the back is still
+  /// fading in); the photos, their pager and labels come the frame after
+  /// the sound buttons.
+  bool _ready = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _wait(2);
+  }
+
+  void _wait(int frames) => WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (frames > 1) {
+          _wait(frames - 1);
+          WidgetsBinding.instance.scheduleFrame();
+        } else {
+          setState(() => _ready = true);
+        }
+      });
+
   @override
   void dispose() {
     _controller.dispose();
@@ -1449,24 +1536,30 @@ class _PhotoPagerState extends State<_PhotoPager> {
                           child: widget.overlay)),
                 ]),
         );
-    if (photos.length == 1) return framed(_photo(context, photos.single));
+    if (photos.length == 1) {
+      return framed(
+          _ready ? _photo(context, photos.single) : const SizedBox.expand());
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         framed(
-          PageView.builder(
-            controller: _controller,
-            itemCount: photos.length,
-            onPageChanged: (i) {
-              setState(() => _index = i);
-              widget.onSelected?.call(i);
-            },
-            itemBuilder: (context, i) => Padding(
-              padding: EdgeInsets.only(
-                  left: i == 0 ? 0 : 4, right: i == photos.length - 1 ? 0 : 4),
-              child: _photo(context, photos[i]),
-            ),
-          ),
+          !_ready
+              ? const SizedBox.expand()
+              : PageView.builder(
+                  controller: _controller,
+                  itemCount: photos.length,
+                  onPageChanged: (i) {
+                    setState(() => _index = i);
+                    widget.onSelected?.call(i);
+                  },
+                  itemBuilder: (context, i) => Padding(
+                    padding: EdgeInsets.only(
+                        left: i == 0 ? 0 : 4,
+                        right: i == photos.length - 1 ? 0 : 4),
+                    child: _photo(context, photos[i]),
+                  ),
+                ),
         ),
         const SizedBox(height: 8),
         Semantics(
