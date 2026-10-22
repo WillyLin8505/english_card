@@ -585,8 +585,15 @@ class LexRelation {
   final String? rarity;
   final bool hideByDefault;
 
+  /// The sense of this lexeme the relation belongs to, when the pack says.
+  final int? senseId;
+
   const LexRelation(this.relation, this.word, this.lexemeId, this.native,
-      {this.cefr, this.zipf, this.rarity, this.hideByDefault = false});
+      {this.cefr,
+      this.zipf,
+      this.rarity,
+      this.hideByDefault = false,
+      this.senseId});
 }
 
 class LexExample {
@@ -712,7 +719,8 @@ class LexDetail {
               cefr: r['cefr'] as String?,
               zipf: (r['zipf'] as num?)?.toDouble(),
               rarity: r['rarity'] as String?,
-              hideByDefault: r['hide_by_default'] == true),
+              hideByDefault: r['hide_by_default'] == true,
+              senseId: (r['sense_id'] as num?)?.toInt()),
       ],
       morphemes: [
         for (final m in list('morphemes'))

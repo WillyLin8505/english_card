@@ -187,6 +187,11 @@ class _WordBody extends StatelessWidget {
                     const <LexRelation>[])
                   if (r.relation == kind &&
                       !r.hideByDefault &&
+                      // 卡 #227 第 147 輪: not the words of a slang/obsolete
+                      // sense, which waits behind 顯示更多 (#528) — 653 such
+                      // words showed (bang、beef、bust…).
+                      (senseTier['pack:${pack.target}:${r.senseId}'] ?? 0) <
+                          2 &&
                       (r.native ?? '').trim().isNotEmpty &&
                       r.word.toLowerCase() != entry.word.toLowerCase() &&
                       seen.add(r.word.toLowerCase()))

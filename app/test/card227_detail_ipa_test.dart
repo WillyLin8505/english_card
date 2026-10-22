@@ -27,19 +27,39 @@ Map<String, dynamic> cover() => {
       ],
     };
 
+// Same round: 653 related words of slang/obsolete senses showed although
+// those senses wait behind 顯示更多 (#528).
+Map<String, dynamic> bust() => {
+      'id': 2,
+      'lemma': 'bust',
+      'normalized': 'bust',
+      'pos': 'noun',
+      'status': 'full',
+      'cefr': 'B2',
+      'senses': [
+        {'id': 20, 'definition': 'd', 'native': '半身像', 'labels': []},
+        {'id': 21, 'definition': 'd', 'native': '突襲搜查', 'labels': ['slang']},
+      ],
+      'relations': [
+        {'relation': 'synonyms', 'word': 'statue', 'native': '雕像', 'sense_id': 20},
+        {'relation': 'synonyms', 'word': 'raid', 'native': '突襲', 'sense_id': 21},
+      ],
+    };
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUp(() => LexiconPack.instance.loadJson({
         'target_language': 'en',
         'native_language': 'zh-TW',
         'created_at': '1',
-        'lexemes': [cover()],
+        'lexemes': [cover(), bust()],
       }));
   tearDown(() => LexiconPack.instance.clear());
 
-  Future<void> open(WidgetTester tester, String accent) async {
+  Future<void> open(WidgetTester tester, String accent,
+      {String word = 'cover', String pos = 'verb'}) async {
     final repo = WordDatabaseRepository(clock: () => testNow);
-    final id = repo.addWord(word: 'cover', pos: 'verb', meaning: '').id;
+    final id = repo.addWord(word: word, pos: pos, meaning: '').id;
     repo.linkLexicon(LexiconPack.instance);
     await pumpApp(tester,
         repository: repo,
@@ -56,6 +76,12 @@ void main() {
   testWidgets('英式 shows the British IPA', (tester) async {
     await open(tester, 'en-GB');
     expect(find.text('/ˈkʌvə/'), findsOneWidget);
+  });
+
+  testWidgets('a slang sense brings no related words', (tester) async {
+    await open(tester, 'en-GB', word: 'bust', pos: 'noun');
+    expect(find.textContaining('statue'), findsOneWidget);
+    expect(find.textContaining('raid'), findsNothing);
   });
 
   test('an IPA the learner typed is kept', () {

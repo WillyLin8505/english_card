@@ -32,10 +32,17 @@ class DatabaseWordScreen extends StatelessWidget {
                 seenExamples.add(example.text.toLowerCase()))
             .toList();
         final seenRelations = <String>{};
+        // 卡 #227 第 147 輪: words of a slang/obsolete sense are left out.
+        final rareSenses = {
+          for (final usage in usages)
+            for (final s in usage.senses)
+              if (s.displayTier >= 2) s.id,
+        };
         final relations = [
           for (final usage in usages)
             for (final relation in usage.relations)
               if (!relation.hideByDefault &&
+                  !rareSenses.contains(relation.senseId) &&
                   (relation.native ?? '').trim().isNotEmpty &&
                   seenRelations.add(
                       '${relation.relation}:${relation.word.toLowerCase()}'))
