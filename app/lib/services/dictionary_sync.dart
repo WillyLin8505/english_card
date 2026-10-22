@@ -70,6 +70,7 @@ class DictionarySync extends ChangeNotifier {
       : client = client ?? http.Client(),
         _remoteOverride = remote;
   Timer? _timer;
+
   /// A healthy cache holds one pack (~30-60 MB); anything bigger is leftover.
   static const maxCacheFileBytes = 100 * 1024 * 1024;
   LazyBox<String>? _cache;
@@ -211,7 +212,7 @@ class DictionarySync extends ChangeNotifier {
         if (_disposed) return;
         if (identical(repo, _repository!()) &&
             native == _settings!.nativeLanguage) {
-          repo.linkLexicon(LexiconPack.instance);
+          await repo.linkLexiconInBatches(LexiconPack.instance);
           _activePair = pair;
           unawaited(LexiconPack.instance.warmMeanings());
         }
@@ -310,11 +311,13 @@ class DictionarySync extends ChangeNotifier {
           try {
             final copy = await _serverCopy(pair, target, native);
             if (copy != null) {
-              final candidate = LexiconPack()..loadSqlite(copy);
+              final candidate = await LexiconPack.openSqlite(copy);
               LexiconPack.instance.replaceWith(candidate);
-              repo.linkLexicon(LexiconPack.instance);
+              await repo.linkLexiconInBatches(LexiconPack.instance);
               opened = true;
-              if (_cache?.containsKey(pair) ?? false) await _cache?.delete(pair);
+              if (_cache?.containsKey(pair) ?? false) {
+                await _cache?.delete(pair);
+              }
             }
           } catch (e) {
             debugPrint('DictionarySync: downloaded pack unusable: $e');
@@ -331,15 +334,17 @@ class DictionarySync extends ChangeNotifier {
               throw const FormatException('Wrong cached dictionary language');
             }
             LexiconPack.instance.replaceWith(candidate);
-            repo.linkLexicon(LexiconPack.instance);
+            await repo.linkLexiconInBatches(LexiconPack.instance);
           } catch (_) {
             await _cache?.delete(pair);
             await LexiconPack.instance.load(target: target, native: native);
-            if (current()) repo.linkLexicon(LexiconPack.instance);
+            if (current()) {
+              await repo.linkLexiconInBatches(LexiconPack.instance);
+            }
           }
         } else if (!kIsWeb) {
           await LexiconPack.instance.load(target: target, native: native);
-          if (current()) repo.linkLexicon(LexiconPack.instance);
+          if (current()) await repo.linkLexiconInBatches(LexiconPack.instance);
         }
         // The web page skips the 30 MB bundled pack and goes online; the
         // bundled one is only the offline fallback (catch below, #357).
@@ -388,8 +393,8 @@ class DictionarySync extends ChangeNotifier {
       final contentType = response.headers['content-type'] ?? '';
       if (useSqlite && contentType.contains('sqlite')) {
         // The whole pack as a file: streamed to disk, never held in memory.
-        await _installSqliteDownload(response.stream, pair, target, native,
-            repo, current);
+        await _installSqliteDownload(
+            response.stream, pair, target, native, repo, current);
         _forceFull.remove(pair);
         _succeeded();
         await _sendMissingQuietly();
@@ -407,7 +412,9 @@ class DictionarySync extends ChangeNotifier {
         try {
           if (!canReuse) throw const FormatException('No base for delta');
           if (sqliteBase) {
-            await _applySqliteDelta(json, pair, target, native, repo);
+            // The isolate decodes its own copy; this tree can go.
+            json = const {};
+            await _applySqliteDelta(bodyBytes, pair, repo);
             _forceFull.remove(pair);
             _succeeded();
             await _sendMissingQuietly();
@@ -435,7 +442,7 @@ class DictionarySync extends ChangeNotifier {
       // and compared (another ~60 MB string) just to skip the write.
       if (LexiconPack.instance.version != candidate.version || !hasSaved) {
         LexiconPack.instance.replaceWith(candidate);
-        repo.linkLexicon(LexiconPack.instance);
+        await repo.linkLexiconInBatches(LexiconPack.instance);
         await _cache?.put(pair, raw ?? utf8.decode(bodyBytes));
         await _cache?.compact();
       }
@@ -448,7 +455,7 @@ class DictionarySync extends ChangeNotifier {
         try {
           await LexiconPack.instance.load(target: target, native: native);
           if (current()) {
-            repo.linkLexicon(LexiconPack.instance);
+            await repo.linkLexiconInBatches(LexiconPack.instance);
             _activePair = pair;
           }
         } catch (_) {}
@@ -480,6 +487,7 @@ class DictionarySync extends ChangeNotifier {
     await dir.create(recursive: true);
     final path = _newServerCopyPath(dir, pair);
     final part = File('$path.part');
+    final LexiconPack candidate;
     try {
       final sink = part.openWrite();
       try {
@@ -488,47 +496,43 @@ class DictionarySync extends ChangeNotifier {
         await sink.close().catchError((_) {});
         rethrow;
       }
-      final info = LexiconSqlite.inspect(part.path);
-      if (info == null ||
-          info.target != target ||
-          info.native != native ||
-          info.version == null) {
-        throw const FormatException('Wrong dictionary language');
-      }
-      await part.rename(path);
+      // Checked, indexed and renamed off the UI thread (M-PERF2).
+      candidate = await LexiconPack.openSqlite(part.path,
+          target: target, native: native, renameTo: path);
     } catch (_) {
       try {
         if (await part.exists()) await part.delete();
       } catch (_) {}
       rethrow;
     }
-    if (!current()) return;
-    final candidate = LexiconPack()..loadSqlite(path);
+    if (!current()) {
+      candidate.clear();
+      return;
+    }
     LexiconPack.instance.replaceWith(candidate);
-    repo.linkLexicon(LexiconPack.instance);
+    await repo.linkLexiconInBatches(LexiconPack.instance);
     if (_cache?.containsKey(pair) ?? false) await _cache?.delete(pair);
     await _pruneServerCopies(pair, path);
     unawaited(LexiconPack.instance.warmMeanings());
   }
 
-  /// Applies a server delta to the open SQLite pack. The bundled pack is
-  /// never patched in place (its version must keep matching the asset):
-  /// it is copied beside the downloads first.
-  Future<void> _applySqliteDelta(Map<String, dynamic> patch, String pair,
-      String target, String native, WordDatabaseRepository repo) async {
+  /// Applies a server delta to a copy of the open SQLite pack (a new
+  /// `{pair}.server.*.sqlite`), so the pack on screen keeps reading its own
+  /// file until the patched one replaces it; the bundled pack is never
+  /// patched (its version must keep matching the asset). Copy, patch and
+  /// index run off the UI thread (M-PERF2); a failed patch leaves no file.
+  Future<void> _applySqliteDelta(
+      Uint8List deltaJson, String pair, WordDatabaseRepository repo) async {
     final active = LexiconPack.instance.sqlitePath;
     if (active == null) throw const FormatException('No base for delta');
-    if (!_isServerCopy(active, pair)) {
-      final dir = await LexiconPack.storageDirectory();
-      await dir.create(recursive: true);
-      final path = _newServerCopyPath(dir, pair);
-      await File(active).copy(path);
-      final candidate = LexiconPack()..loadSqlite(path);
-      LexiconPack.instance.replaceWith(candidate);
-    }
-    LexiconPack.instance.applySqliteDelta(patch);
-    repo.linkLexicon(LexiconPack.instance);
-    await _pruneServerCopies(pair, LexiconPack.instance.sqlitePath);
+    final dir = await LexiconPack.storageDirectory();
+    await dir.create(recursive: true);
+    final path = _newServerCopyPath(dir, pair);
+    final candidate = await LexiconPack.openSqlite(path,
+        copyFrom: active, deltaJson: deltaJson);
+    LexiconPack.instance.replaceWith(candidate);
+    await repo.linkLexiconInBatches(LexiconPack.instance);
+    await _pruneServerCopies(pair, path);
     unawaited(LexiconPack.instance.warmMeanings());
   }
 
@@ -542,7 +546,6 @@ class DictionarySync extends ChangeNotifier {
     super.dispose();
   }
 }
-
 
 Map<String, dynamic> _decodeBody(List<int> bytes) =>
     jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>;
