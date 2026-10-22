@@ -180,7 +180,9 @@ void main() {
       for (final w in words.values)
         for (final part in ['front', 'back', 'detail'])
           for (final t in (w[part] as List<String>? ?? const <String>[]))
-            if (RegExp(r'\bnull\b').hasMatch(t)) '${w['word']} $part：$t'
+            // "null　空值" is a related-word chip for the English word null.
+            if (RegExp(r'\bnull\b').hasMatch(t) && !t.startsWith('null　'))
+              '${w['word']} $part：$t'
     ];
     final report = {
       'level': level, 'added': added.length, 'reviewed': n,
