@@ -624,8 +624,14 @@ class Tick:
         if self.dry:
             return
         q = DECISION_RE.split(text, maxsplit=1)[-1].lstrip("：: ").split("\n")[0].strip()[:200]
-        detail = (f"卡 #{card_id}「{(task.get('title') or '')[:80]}」需要你決定（派工程式自動開）。\n\n"
-                  + text[:2500] + f"\n\n完整結果：{rel}\n在本頁「決定」欄回答後，派工程式會自動把卡 #{card_id} 排回去照你的決定做。")
+        # owner 10/23: 「要我決定的問題 長話短說 最多300字 並且需要付上你的建議」 — only the card's
+        # decision paragraph (question, options, 建議), cut at 300 characters; the rest stays in result.md
+        block = DECISION_RE.split(text, maxsplit=1)[-1].lstrip("：: ").split("\n\n")[0].split("\n## ")[0].strip()
+        if len(block) > 300:
+            block = block[:299] + "…"
+        if "建議" not in block:
+            block += "\n（卡片沒寫建議，見完整結果）"
+        detail = block + f"\n\n完整結果：{rel}｜在「決定」欄回答後，卡 #{card_id} 會照你的決定繼續。"
         try:
             i = http("POST", "/issues", {"kind": "decision", "severity": "high", "area": "app",
                                         "title": f"[待決定] 卡 #{card_id}：{q}"[:300], "detail": detail,

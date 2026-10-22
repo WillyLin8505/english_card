@@ -37,3 +37,7 @@ Follow them even if the card prompt below is silent on the topic.
 
 ## 暫時凍結（Mac 10/23 通知，Mac push 修正後由 Manager 移除）
 Mac 正在修複習翻卡卡頓：**不要修改** `app/lib/widgets/flashcard_back.dart`、`app/lib/widgets/flashcard_session_views.dart`、`app/lib/screens/photo_detail_screen.dart`。卡片需要改這三個檔時，寫進 result.md「需要你決定：等 Mac 的翻卡修正 push 後再改」並停下。
+
+
+## 要 owner 決定的問題（owner 10/23）
+result.md 第一段「需要你決定：…」**最多 300 字**：問題一句、選項 A／B…、「建議：X，因為…」（一定要有建議）。細節放空一行之後。派工程式只把這一段貼到問題回報頁。開 [待決定] 問題回報時也一樣。
