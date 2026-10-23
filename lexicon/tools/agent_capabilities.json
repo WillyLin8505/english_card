@@ -39,8 +39,8 @@
       "models_by_difficulty": {
         "1": "claude-haiku-5-5",
         "2": "claude-sonnet-5-5",
-        "3": "claude-opus-5-5",
-        "4": "claude-fable-5-1"
+        "3": "claude-sonnet-5-5",
+        "4": "claude-opus-5-5"
       }
     },
     "Codex": {
@@ -144,5 +144,6 @@
   ],
   "_skip_note": "#13 是 Grokbot 自己的派工巡檢；#27 很吃 Ollama，先跳過；問題回報 #192、#202–206 依使用者決定跳過。",
   "fable_cards": [],
-  "_fable_note": "owner 10/23 省 token：極難卡預設用 Opus；只有列在 fable_cards 的卡用 Fable。"
+  "_fable_note": "owner 10/23 省 token：極難卡預設用 Opus；只有列在 fable_cards 的卡用 Fable。",
+  "_models_note": "owner 10/23 省 token：簡單→Haiku、中等與困難→Sonnet、極難→Opus；Fable 只給 fable_cards。困難卡大多由 Codex 先接。卡片做不好可在看板把難度調高一級。"
 }

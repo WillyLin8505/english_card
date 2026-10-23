@@ -866,13 +866,27 @@ class Tick:
                   and MAC_PREFIX not in str(c.get("title") or "")[:40]
                   and "[待決定]" not in str(c.get("title") or "")[:12]]
         issues = [c for c in issues if not self.prior_busy(c.get("task_id"))]
+        # owner 10/23: 「所有我回應的問題或需求都要優先修正」 — the owner's own reports and requests
+        # go first, and may use owner_extra CLIs beyond max_parallel when every slot is busy
+        reporters = {i["id"]: str(i.get("reporter") or "") for i in open_issues}
+        task_issues = {t.get("id"): t.get("issue_ids") or [] for t in board.get("deck", []) if t.get("card", "task") == "task"}
+
+        def from_owner(c) -> bool:
+            title = str(c.get("title") or "")
+            if any(tag in title for tag in ("[owner]", "[卡片回報]", "[意見回饋]")):
+                return True
+            ids = [c["issue_id"]] if c.get("issue_id") else task_issues.get(c.get("task_id"), [])
+            return any(reporters.get(i, "").startswith(("owner", "App 使用者")) for i in ids)
+
+        issues.sort(key=lambda c: not from_owner(c))
+        extra = int(cfg.get("owner_extra", 5))
         taken = set()
         for c in issues:
             # Codex first for cards it may take (≤ 3), Claude for the rest and when Codex is full
             agent = (free_slot(used, codex_n, CODEX_PREFIX)
                      if codex_ok and int(c.get("difficulty") or 3) <= 3 else None)
             if not agent and claude_ok:
-                agent = free_slot(used, limit)
+                agent = free_slot(used, limit) or (free_slot(used, limit + extra) if from_owner(c) else None)
             if not agent:
                 if claude_ok:
                     log(f"issue swarm: {limit} Claude CLIs busy, {len(issues) - len(taken)} issue(s) wait")
