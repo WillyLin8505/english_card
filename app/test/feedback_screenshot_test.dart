@@ -44,4 +44,21 @@ void main() {
     await tester.pumpAndSettle();
     expect(service.pendingCount, 1);
   });
+
+  test('a 卡片回報 carries the screenshot too (#669)', () {
+    final issue = CardReport(
+            kind: 'layout',
+            note: '標籤跑出去',
+            word: 'apple',
+            pos: 'noun',
+            screenshot: Uint8List.fromList(_png))
+        .toIssue();
+    expect(issue['screenshot'], startsWith('data:image/png;base64,'));
+    expect(issue['detail'], contains('截圖：有'));
+    expect(
+        const CardReport(kind: 'other', note: '', word: 'a', pos: 'noun')
+            .toIssue()
+            .containsKey('screenshot'),
+        isFalse);
+  });
 }

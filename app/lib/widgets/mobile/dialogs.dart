@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import '../../l10n/ui_text.dart';
 import '../../app/app_scope.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +8,7 @@ import '../../models/card_template.dart';
 import '../../models/photo.dart';
 import '../../models/word_entry.dart';
 import '../../services/card_report.dart';
+import '../../services/screen_capture.dart';
 import '../../services/word_database_repository.dart';
 import '../../services/word_selector.dart';
 import '../../theme/mobile_theme.dart';
@@ -795,24 +798,30 @@ Future<bool?> showCardReportDialog(
   String cardType = '',
   String apiKey = '',
   CardReportService? service,
-}) =>
-    showDialog<bool>(
-      context: context,
-      builder: (_) => _CardReportDialog(
-        word: word,
-        pos: pos,
-        meaning: meaning,
-        photoId: photoId,
-        cardType: cardType,
-        apiKey: apiKey,
-        service: service ?? CardReportService.instance,
-      ),
-    );
+}) async {
+  // 問題回報 #669: the card as it is, before the form covers it.
+  final shot = await captureAppScreen();
+  if (!context.mounted) return null;
+  return showDialog<bool>(
+    context: context,
+    builder: (_) => _CardReportDialog(
+      word: word,
+      pos: pos,
+      meaning: meaning,
+      photoId: photoId,
+      cardType: cardType,
+      apiKey: apiKey,
+      screenshot: shot,
+      service: service ?? CardReportService.instance,
+    ),
+  );
+}
 
 class _CardReportDialog extends StatefulWidget {
   final String word, pos, cardType, apiKey;
   final String? meaning, photoId;
   final CardReportService service;
+  final Uint8List? screenshot;
 
   const _CardReportDialog({
     required this.word,
@@ -822,6 +831,7 @@ class _CardReportDialog extends StatefulWidget {
     required this.service,
     this.meaning,
     this.photoId,
+    this.screenshot,
   });
 
   @override
@@ -832,6 +842,7 @@ class _CardReportDialogState extends State<_CardReportDialog> {
   String _kind = CardReport.kinds.first.$1;
   final _note = TextEditingController();
   bool _sending = false;
+  bool _attach = true;
 
   @override
   void dispose() {
@@ -850,6 +861,7 @@ class _CardReportDialogState extends State<_CardReportDialog> {
         meaning: widget.meaning,
         photoId: widget.photoId,
         cardType: widget.cardType,
+        screenshot: _attach ? widget.screenshot : null,
       ),
       apiKey: widget.apiKey,
     );
@@ -887,6 +899,31 @@ class _CardReportDialogState extends State<_CardReportDialog> {
               ),
               UiText('會一併附上這張卡的單字、詞性、義項、照片與 App 版本。',
                   style: MFont.inter(12, FontWeight.w500, MColors.label)),
+              if (widget.screenshot case final shot?) ...[
+                const SizedBox(height: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: Image.memory(shot,
+                          key: const ValueKey('report-screenshot'),
+                          height: 96,
+                          fit: BoxFit.contain),
+                    ),
+                    Expanded(
+                      child: CheckboxListTile(
+                        key: const ValueKey('report-attach'),
+                        dense: true,
+                        contentPadding: const EdgeInsets.only(left: 4),
+                        value: _attach,
+                        onChanged: (v) => setState(() => _attach = v ?? false),
+                        title: const UiText('附上這個畫面的截圖'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
         ),
