@@ -1084,3 +1084,26 @@ commit `1858bf24`（Windows：flutter analyze 無 error、  D:/vibe_coding/engli
 commit `6b8d6974`（Windows：flutter analyze 無 error、  D:/vibe_coding/english_card/app/test/card450_level_row_dup_test.dart: the level is shown once on the photo page (did not complete)（1 個測試檔重跑一次就過：同時有別的 flutter test 在跑））。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #540：問題回報 #209：[qc] entry.full_without_ipa：完整詞條沒有 IPA
   結果：全部完成：entry.fullwithoutipa 1→0（新匯入的 repairperson，從根因修：推導備援認得 -person／-proof），golden 不變、QC regressions=[]，測試 57 過。
+
+## M78（2026-10-23 16:29）狀態：待做
+commit `eec971f5`（Windows：flutter analyze 無 error、01:14 +571 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #543：問題回報 #584：相機權限被拒時只顯示「目前無法使用相機」和「重試相機」，沒說是權限問題，重試也不會再問權限
+  結果：全部完成：相機權限被拒時，徽章改「相機權限未開啟」、按鈕改「開啟權限說明」（跳出到系統設定開相機權限的步驟，內有「重試相機」）；其他錯誤維持原樣。dart analyze 無問題。；- 改：app/lib/screens/camerascreen.dart（permissionDenied 依 CameraExcept
+- 卡 #493：問題回報 #495：法語模擬：學法語時介面文案仍假設學英文／母語中文（英式／美式發音鈕、「find English wo
+  結果：- 程度測驗：app/lib/screens/onboardingscreen.dart 的 placementCheckWords['fr'] 已有 A1–C2 各 3 字（pomme/livre/eau … chevronné/dénoter/canopée），與 owner 決定的 18 字相同。canCheck
+- 卡 #544：問題回報 #507：法語新手引導程度測驗：要不要做法文版（目前學法語時整個略過）
+  結果：全部完成：問題回報 #507 owner 已決定 A（照用法文版 18 字），不需改程式或資料。
+- 卡 #545：問題回報 #564：拍完照在「存到相片冊」按取消，剛拍的照片直接丟掉、沒有任何提示
+  結果：已完成（照 owner 決定 B）：相機拍照後「存到相片冊」的取消鈕改成「不要這張」，按下會跳「照片未儲存」提示，不再靜默丟掉。；- app/lib/l10n/uicatalog.dart：加「不要這張」「照片未儲存」英／法翻譯
+- 卡 #546：問題回報 #563：拍照後「存到相片冊」預設選第一本（最舊的）相片冊，不是上次存的那本，連拍幾張都要重選
+  結果：全部完成：「存到相片冊」對話框現在預設選上次存的那本（拍照與相簿選照片共用），沒紀錄或該本已刪才用第一本（問題回報 #563 owner 決定 A）。
+- 卡 #547：問題回報 #536：拍照後徽章只寫「處理中…」，看不出是在存照片還是在找單字、要等多久
+  結果：全部完成：拍照徽章改依辨識設定顯示「正在找照片裡的單字…」（未設定辨識時「正在讀照片裡的文字…」），採 owner 決定 A。；- 改 app/lib/screens/camerascreen.dart（busy 徽章）、app/lib/l10n/uicatalog.dart（加兩條英／法翻譯；「處理中…」保留給其他用
+- 卡 #549：問題回報 #583：相機開著時，快門下方的按鈕寫「查看這張照片的單字」，但畫面上是取景框，按下去開的是最近一張舊照片
+  結果：全部完成：相機開著（即時取景）時，快門下方按鈕改寫「最近一張照片的單字」（en: Words in your last photo），沒相機時維持「查看這張照片的單字」；1 處程式＋1 條新字串（問題回報 #583，decision＝照建議）。
+- 卡 #225：模擬使用者・相片冊
+  結果：第166輪：主模擬 album 1/1 通過（31 秒）、相片冊補充測試 8/8（4 檔 card225）通過；新問題 無、UX 建議 無新增（#576、#577 已是 fixed）。
+- 卡 #226：模擬使用者・複習
+  結果：第 159 輪：2/2 通過（learner 82 秒、restart 60 秒）；無新問題；UX 建議＝補註 #515（無真人發音升到 50%）。
+- 卡 #227：模擬使用者・單字本
+  結果：第 167/169 輪：2/2 通過（database 94 秒、detail 61 秒），新問題 0、新 UX 建議 0（這輪沒做逐頁易用性評估）。
