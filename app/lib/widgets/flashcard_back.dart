@@ -361,6 +361,35 @@ class FlashcardBack extends StatelessWidget {
           {int initial = 10000}) =>
       ShowMoreItems(initial: initial, children: items);
 
+  /// 問題回報 #642 #643: meanings and examples as a numbered list, three at
+  /// a time (the rest behind 顯示更多) — a long run of them was too much.
+  Widget _numbered(CardBackField field, List<Widget> items, CardLook look) =>
+      _items(
+          field,
+          [
+            for (final (i, item) in items.indexed)
+              Row(
+                key: ValueKey('numbered-${field.name}-${i + 1}'),
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 22,
+                    child: Text('${i + 1}.',
+                        style: MFont.manrope(
+                            15, FontWeight.w800, MColors.primary)),
+                  ),
+                  Expanded(child: item),
+                ],
+              ),
+          ],
+          initial: 3);
+
+  /// The meaning split into its senses (「國民、民族；人們」 → two).
+  static List<String> meaningParts(String meaning) => [
+        for (final part in meaning.split(RegExp(r'\s*[；;]\s*')))
+          if (part.trim().isNotEmpty) part.trim(),
+      ];
+
   Widget? _configuredField(BuildContext context, TemplateField setting,
       WordLinks links, CardLook look) {
     final block = _field(context, setting.field, links, look);
@@ -557,15 +586,12 @@ class FlashcardBack extends StatelessWidget {
               source?.senses.where((s) => (s.native ?? '').isNotEmpty).toList();
           return _Block(
               '逐義釋義',
-              _items(
-                  field,
-                  [
-                    if (meanings == null || meanings.isEmpty)
-                      Text(meaning)
-                    else
-                      for (final sense in meanings) Text(sense.native!),
-                  ],
-                  initial: 3));
+              meanings == null || meanings.length < 2
+                  ? Text(meanings?.firstOrNull?.native ?? meaning)
+                  : _numbered(
+                      field,
+                      [for (final sense in meanings) Text(sense.native!)],
+                      look));
         }
         // Card #251 item 2: the part of speech only — no CEFR level chip.
         // 問題回報 #469: same title as the word detail's meaning section.
@@ -578,7 +604,11 @@ class FlashcardBack extends StatelessWidget {
                 Row(children: [TagChip(posLabel(pos))]),
                 const SizedBox(height: 6),
               ],
-              Text(meaning, style: look.meaning),
+              if (meaningParts(meaning) case final parts when parts.length > 1)
+                _numbered(field,
+                    [for (final p in parts) Text(p, style: look.meaning)], look)
+              else
+                Text(meaning, style: look.meaning),
               if (definition != null)
                 LinkedText(definition,
                     style: MFont.manrope(14, FontWeight.w600, MColors.muted),
@@ -631,7 +661,7 @@ class FlashcardBack extends StatelessWidget {
         if (recommended.isEmpty) return null;
         return _Block(
           '例句與翻譯',
-          _items(
+          _numbered(
               field,
               [
                 // Item 4: the sentences sit close together.
@@ -649,7 +679,7 @@ class FlashcardBack extends StatelessWidget {
                                 false),
                   ),
               ],
-              initial: 5),
+              look),
         );
       case CardBackField.formsAndDerivations:
         // 問題回報 #406: one cell per kind of form (過去式、過去分詞、現在分詞、

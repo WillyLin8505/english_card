@@ -454,7 +454,8 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('自由加練，不更動下次複習時間'), findsNothing);
       expect(find.bySemanticsLabel('刪除此卡片'), findsOneWidget);
-      expect(find.textContaining('張'), findsNothing, reason: 'no card counts');
+      expect(find.textContaining(RegExp(r'\d+\s*張')), findsNothing,
+          reason: 'no card counts');
     });
 
     test('firstLetterHint keeps words and spaces', () {

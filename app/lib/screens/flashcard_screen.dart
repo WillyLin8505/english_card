@@ -344,7 +344,23 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
                                 ? () => Navigator.of(context).pop()
                                 : () =>
                                     scope.navigator.selectTab(AppTab.camera))
-                    : BackNavButton(onTap: () => _end(summary: true)),
+                    : s.finished
+                        ? BackNavButton(onTap: () => _end(summary: true))
+                        : Row(mainAxisSize: MainAxisSize.min, children: [
+                            BackNavButton(onTap: () => _end(summary: true)),
+                            const SizedBox(width: 8),
+                            // 問題回報 #641: the card just graded, shown again.
+                            Opacity(
+                              opacity: s.canGoPrevious ? 1 : 0.35,
+                              child: NavIconButton(
+                                key: const ValueKey('previous-card'),
+                                label: '上一張卡片',
+                                icon: const Icon(Icons.undo_rounded,
+                                    size: 20, color: MColors.label),
+                                onTap: s.canGoPrevious ? s.goPrevious : null,
+                              ),
+                            ),
+                          ]),
                 trailing: s == null || s.finished
                     ? null
                     : Row(mainAxisSize: MainAxisSize.min, children: [

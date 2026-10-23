@@ -171,7 +171,7 @@ class FlashcardSession extends ChangeNotifier {
   }
 
   void _repositoryChanged() {
-    if (_rating || finished) return;
+    if (_rating || finished || _ahead != null) return;
     final current = card;
     if (current == null ||
         current.archived ||
@@ -290,9 +290,93 @@ class FlashcardSession extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 問題回報 #641: the card just graded, kept so the learner can look at it
+  /// again; and the card they were on while they do (grading is not repeated).
+  _CardSnap? _previous;
+  _CardSnap? _ahead;
+  bool get viewingPrevious => _ahead != null;
+  bool get canGoPrevious => _previous != null && _ahead == null;
+  bool get canFlipToFront => _back && _ahead == null;
+
+  _CardSnap _snap() => _CardSnap(
+      _cardId,
+      _usageId,
+      _senseId,
+      _photo,
+      _anchor,
+      _box,
+      _photoCredit,
+      _back,
+      _exercise,
+      _correct,
+      _submittedAnswer,
+      _attempts,
+      _hintCount,
+      _practice,
+      _photoOptions);
+
+  void _restore(_CardSnap c) {
+    _cardId = c.cardId;
+    _usageId = c.usageId;
+    _senseId = c.senseId;
+    _photo = c.photo;
+    _anchor = c.anchor;
+    _box = c.box;
+    _photoCredit = c.credit;
+    _back = c.back;
+    _exercise = c.exercise;
+    _correct = c.correct;
+    _submittedAnswer = c.submitted;
+    _attempts = c.attempts;
+    _hintCount = c.hints;
+    _practice = c.practice;
+    _photoOptions = c.options;
+    _photoAttempt++;
+    _photoGuarded = false;
+    _photoReady = true;
+    _photoFailed = false;
+  }
+
+  /// 回到正面: look at the question again before grading.
+  void flipToFront() {
+    if (!canFlipToFront) return;
+    _back = false;
+    _correct = null;
+    _submittedAnswer = null;
+    _attempts = 0;
+    _hintCount = 0;
+    _photoAttempt++;
+    _photoGuarded = false;
+    _photoReady = true;
+    _photoFailed = false;
+    notifyListeners();
+  }
+
+  /// 上一張: show the card just graded (back side); grading it again is not
+  /// possible, the next tap returns to the card the learner was on.
+  void goPrevious() {
+    if (!canGoPrevious || _cardId == null) return;
+    _ahead = _snap();
+    _restore(_previous!);
+    notifyListeners();
+  }
+
+  /// Back from 上一張 to the card the learner was on.
+  void returnToCurrent() {
+    final ahead = _ahead;
+    if (ahead == null) return;
+    _ahead = null;
+    _restore(ahead);
+    notifyListeners();
+  }
+
   void rate(Rating rating) {
     final id = _cardId;
     if (id == null || !_back) return;
+    if (_ahead != null) {
+      returnToCurrent();
+      return;
+    }
     // Reviewing notifies the repository synchronously. Advance exactly once
     // after recording this grade, rather than inside that notification.
     _rating = true;
@@ -313,6 +397,7 @@ class FlashcardSession extends ChangeNotifier {
       _rating = false;
     }
     _reviewed++;
+    _previous = _snap();
     if (rating == Rating.again) {
       final repeats = _againRepeats[id] ?? 0;
       // Continuous mode caps returns too (問題回報 #319): past the cap the
@@ -952,4 +1037,32 @@ class FlashcardSession extends ChangeNotifier {
     }
     return found;
   }
+}
+
+class _CardSnap {
+  final String? cardId, usageId, senseId, credit, submitted;
+  final Photo? photo;
+  final LabelPoint? anchor;
+  final Rect? box;
+  final bool back, practice;
+  final ReviewExercise? exercise;
+  final bool? correct;
+  final int attempts, hints;
+  final List<CardPhoto> options;
+  _CardSnap(
+      this.cardId,
+      this.usageId,
+      this.senseId,
+      this.photo,
+      this.anchor,
+      this.box,
+      this.credit,
+      this.back,
+      this.exercise,
+      this.correct,
+      this.submitted,
+      this.attempts,
+      this.hints,
+      this.practice,
+      this.options);
 }

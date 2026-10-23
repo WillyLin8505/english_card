@@ -448,34 +448,66 @@ class FlashcardCardView extends StatelessWidget {
           padding: EdgeInsets.fromLTRB(
               MSpace.lg, MSpace.sm, MSpace.lg, MSpace.md + bottom),
           decoration: look.dock,
-          child: session.showingBack
-              ? RatingBar(
-                  previews: session.ratingPreviews,
-                  native: native,
-                  extraPractice: session.isExtraPractice,
-                  onRate: session.rate,
-                )
-              : PrimaryButton(
-                  label: '顯示答案',
-                  decoration: look.answerButton,
-                  height: look.answerHeight,
-                  textStyle: look.answerText,
-                  // 卡 #226 r112: phones have no space key, so the hint
-                  // shows only on desktop.
-                  shortcut: session.exercise?.type ==
-                              ReviewExerciseType.photoRecall &&
-                          _hasKeyboard(context)
-                      ? '空白鍵'
-                      : null,
-                  onTap: !session.canAnswer
-                      ? null
-                      : () {
-                          if (session.exercise?.type !=
-                              ReviewExerciseType.photoRecall) {
-                            session.useHint();
-                          }
-                          session.showAnswer();
-                        }),
+          child: session.viewingPrevious
+              // 問題回報 #641: the card just graded is shown again; it is
+              // not graded twice, the button goes back to the current one.
+              ? Column(mainAxisSize: MainAxisSize.min, children: [
+                  UiText('這是上一張卡片，已經評分過',
+                      style: MFont.manrope(13, FontWeight.w600, MColors.muted)),
+                  const SizedBox(height: 6),
+                  PrimaryButton(
+                      key: const ValueKey('return-to-current'),
+                      label: '回到這張卡片',
+                      decoration: look.answerButton,
+                      height: look.answerHeight,
+                      textStyle: look.answerText,
+                      onTap: session.returnToCurrent),
+                ])
+              : session.showingBack
+                  ? Column(mainAxisSize: MainAxisSize.min, children: [
+                      // 問題回報 #641: look at the question again first.
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton.icon(
+                          key: const ValueKey('flip-to-front'),
+                          style: TextButton.styleFrom(
+                              visualDensity: VisualDensity.compact,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                          onPressed: session.canFlipToFront
+                              ? session.flipToFront
+                              : null,
+                          icon: const Icon(Icons.flip_to_front, size: 18),
+                          label: const UiText('回到正面'),
+                        ),
+                      ),
+                      RatingBar(
+                        previews: session.ratingPreviews,
+                        native: native,
+                        extraPractice: session.isExtraPractice,
+                        onRate: session.rate,
+                      ),
+                    ])
+                  : PrimaryButton(
+                      label: '顯示答案',
+                      decoration: look.answerButton,
+                      height: look.answerHeight,
+                      textStyle: look.answerText,
+                      // 卡 #226 r112: phones have no space key, so the hint
+                      // shows only on desktop.
+                      shortcut: session.exercise?.type ==
+                                  ReviewExerciseType.photoRecall &&
+                              _hasKeyboard(context)
+                          ? '空白鍵'
+                          : null,
+                      onTap: !session.canAnswer
+                          ? null
+                          : () {
+                              if (session.exercise?.type !=
+                                  ReviewExerciseType.photoRecall) {
+                                session.useHint();
+                              }
+                              session.showAnswer();
+                            }),
         ),
       ],
     );

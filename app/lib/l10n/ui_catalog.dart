@@ -2,6 +2,14 @@
 /// content. Missing keys/languages deliberately retain the original copy.
 const uiCatalog = <String, (String, String)>{
   '意見回饋': ('Feedback', 'Commentaires'),
+  // 問題回報 #641.
+  '上一張卡片': ('Previous card', 'Carte précédente'),
+  '回到正面': ('Back to front', 'Revoir le recto'),
+  '回到這張卡片': ('Back to this card', 'Revenir à cette carte'),
+  '這是上一張卡片，已經評分過': (
+    'This is the previous card; it is already graded',
+    'C’est la carte précédente ; elle est déjà notée'
+  ),
   // 長按辨識 (問題回報 #616).
   'AI 在這裡看到': ('The AI sees here', 'L’IA voit ici'),
   'AI 在這裡沒有認出東西': ('The AI found nothing here', 'L’IA n’a rien reconnu ici'),
