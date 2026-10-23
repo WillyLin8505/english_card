@@ -1,9 +1,12 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 
 import '../app/app_scope.dart';
 import '../l10n/ui_text.dart';
 import '../services/card_report.dart';
 import '../services/feedback_context.dart';
+import '../services/screen_capture.dart';
 import '../theme/mobile_theme.dart';
 
 /// 問題回報 #587: a small 意見回饋 button on every page. It floats above the
@@ -11,6 +14,9 @@ import '../theme/mobile_theme.dart';
 /// carrying its own copy. [navigatorKey] is the app's root navigator, which
 /// the form opens on.
 class FeedbackOverlay extends StatelessWidget {
+  /// The whole app under the button, for the feedback screenshot.
+  static final screenKey = GlobalKey(debugLabel: 'feedback-screen');
+
   final GlobalKey<NavigatorState> navigatorKey;
   final Widget child;
   final CardReportService? service;
@@ -26,7 +32,8 @@ class FeedbackOverlay extends StatelessWidget {
     final top = MediaQuery.paddingOf(context).top;
     return Stack(
       children: [
-        Positioned.fill(child: child),
+        // What a feedback screenshot shows (問題回報 #664).
+        Positioned.fill(child: RepaintBoundary(key: screenKey, child: child)),
         Positioned(
           right: 6,
           top: top + 2,
@@ -40,9 +47,17 @@ class FeedbackOverlay extends StatelessWidget {
               child: InkWell(
                 key: const ValueKey('feedback-button'),
                 customBorder: const CircleBorder(),
-                onTap: () {
+                onTap: () async {
+                  // 問題回報 #664: the screen as it is, before the form
+                  // covers it.
+                  // A capture that stalls must not hold the form back.
+                  final shot = await captureScreen(screenKey).timeout(
+                      const Duration(milliseconds: 800),
+                      onTimeout: () => null);
                   final ctx = navigatorKey.currentContext;
-                  if (ctx != null) showFeedbackDialog(ctx, service: service);
+                  if (ctx != null && ctx.mounted) {
+                    showFeedbackDialog(ctx, service: service, screenshot: shot);
+                  }
                 },
                 child: const Padding(
                   padding: EdgeInsets.all(5),
@@ -61,7 +76,7 @@ class FeedbackOverlay extends StatelessWidget {
 /// The 意見回饋 form: one text box. Page, word/photo id, app version and
 /// learning language are attached; it goes through the 卡片回報 offline queue.
 Future<bool?> showFeedbackDialog(BuildContext context,
-    {CardReportService? service}) {
+    {CardReportService? service, Uint8List? screenshot}) {
   final messenger = ScaffoldMessenger.maybeOf(context);
   final fc = FeedbackContext.instance;
   final page = fc.page;
@@ -77,6 +92,7 @@ Future<bool?> showFeedbackDialog(BuildContext context,
         subject: subject,
         language: language,
         apiKey: apiKey,
+        screenshot: screenshot,
         service: sink),
   ).then((sent) {
     if (sent == null) return null;
@@ -91,6 +107,7 @@ class _FeedbackDialog extends StatefulWidget {
   final String page, language, apiKey;
   final String? subject;
   final CardReportService service;
+  final Uint8List? screenshot;
 
   const _FeedbackDialog({
     required this.page,
@@ -98,6 +115,7 @@ class _FeedbackDialog extends StatefulWidget {
     required this.apiKey,
     required this.service,
     this.subject,
+    this.screenshot,
   });
 
   @override
@@ -107,6 +125,7 @@ class _FeedbackDialog extends StatefulWidget {
 class _FeedbackDialogState extends State<_FeedbackDialog> {
   final _note = TextEditingController();
   bool _sending = false;
+  bool _attach = true;
 
   @override
   void dispose() {
@@ -123,7 +142,8 @@ class _FeedbackDialogState extends State<_FeedbackDialog> {
           page: widget.page,
           note: note,
           subject: widget.subject,
-          language: widget.language),
+          language: widget.language,
+          screenshot: _attach ? widget.screenshot : null),
       apiKey: widget.apiKey,
     );
     if (mounted) Navigator.of(context).pop(sent);
@@ -148,6 +168,31 @@ class _FeedbackDialogState extends State<_FeedbackDialog> {
               ),
               UiText('會一併附上目前頁面、App 版本與學習語言。',
                   style: MFont.inter(12, FontWeight.w500, MColors.label)),
+              if (widget.screenshot case final shot?) ...[
+                const SizedBox(height: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: Image.memory(shot,
+                          key: const ValueKey('feedback-screenshot'),
+                          height: 96,
+                          fit: BoxFit.contain),
+                    ),
+                    Expanded(
+                      child: CheckboxListTile(
+                        key: const ValueKey('feedback-attach'),
+                        dense: true,
+                        contentPadding: const EdgeInsets.only(left: 4),
+                        value: _attach,
+                        onChanged: (v) => setState(() => _attach = v ?? false),
+                        title: const UiText('附上這個畫面的截圖'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
         ),
@@ -167,6 +212,7 @@ Map<String, dynamic> feedbackIssue({
   required String note,
   String? subject,
   String language = '',
+  Uint8List? screenshot,
 }) {
   final text = note.trim();
   final head = text.characters.take(30).toString();
@@ -181,7 +227,10 @@ Map<String, dynamic> feedbackIssue({
       if ((subject ?? '').isNotEmpty) '單字／照片 id：$subject',
       'App 版本：${CardReport.appVersion}',
       if (language.isNotEmpty) '學習語言：$language',
+      if (screenshot != null) '截圖：有（screenshot 欄位）',
     ].join('\n'),
     'reporter': 'App 使用者',
+    // 問題回報 #664: shown on the 問題回報 board once the server keeps it.
+    if (screenshot != null) 'screenshot': screenshotField(screenshot),
   };
 }
