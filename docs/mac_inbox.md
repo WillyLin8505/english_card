@@ -1638,3 +1638,8 @@ App 播放時顯示 speaker／授權標示（資料在 audio_assets.speaker／li
 
 Wikimedia 的 speaker 有多行格式（"Speaker: X
 Recorder: Y"），App 目前會把換行原樣顯示在一行的錄音者字串裡，請 Mac 看看是否要整理成一行（例如只取 Speaker 後面的名字）。這是 App 畫面，不是詞庫的問題，我沒有改。
+
+## M140（2026-10-24 03:03）狀態：待做
+commit `b3c1f5ee`（Windows：flutter analyze 無 error、01:41 +646 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #608：問題回報 #688：[Mac] 2026-10-24 M138（Mac 修 #657 錄音授權標示）：詞庫沒有 spea
+  結果：全部完成：問題回報 #688 已修。匯出的 app pack 現在帶出錄音者（speaker）與來源頁（sourcepage）：pronunciations 中 14,243 個錄音有來源頁、14,118 個有錄音者（修前 0／0）；golden 無退步。
