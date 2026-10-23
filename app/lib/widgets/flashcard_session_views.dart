@@ -20,9 +20,10 @@ part of '../screens/flashcard_screen.dart';
 }
 
 /// The cards of a downloaded 單字集 (問題回報 #648): a word deck adds words
-/// but no 相片冊, so its 複習 tile goes by the words the deck added.
+/// but no 相片冊, so its 複習 tile goes by the deck's words — all of them,
+/// also those that were in the 單字本 before (問題回報 #668).
 Set<String> deckCardIds(WordDatabaseRepository repo, InstalledDeck deck) => {
-      for (final id in deck.wordEntryIds)
+      for (final id in deck.entryIds(repo))
         if (repo.cardOf(id) case final c? when !c.archived) c.id,
     };
 

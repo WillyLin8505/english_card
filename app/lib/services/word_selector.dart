@@ -154,6 +154,7 @@ class WordSelector {
     List<String> current = const [],
     Set<String> locked = const {},
     PosBias bias = PosBias.none,
+    Set<String> fresh = const {},
     required DateTime now,
   }) {
     final learned = profile.learned;
@@ -223,12 +224,14 @@ class WordSelector {
       return same == 0 ? 1.0 : (same == 1 ? 0.5 : 0.0);
     }
 
-    bool allowed(ScoredCandidate s, {ScoredCandidate? replacing}) {
+    bool allowed(ScoredCandidate s,
+        {ScoredCandidate? replacing, bool nounCap = true}) {
       if (s.rejected != null) return false;
       final others = picked().where((p) => p != replacing).toList();
       if (others.contains(s)) return false;
       if (others.any((p) => related(p.candidate, s.candidate))) return false;
-      if (s.candidate.isNoun &&
+      if (nounCap &&
+          s.candidate.isNoun &&
           others.where((p) => p.candidate.isNoun).length >= maxNouns) {
         return false;
       }
@@ -322,6 +325,41 @@ class WordSelector {
         slots[slots.indexOf(out)] = c;
       }
     }
+    // 問題回報 #670/#671: words the recognizer just found because the learner
+    // asked (多看動詞, 難一點, 重新掃描) take the weakest unlocked places —
+    // up to [biasWords] of them — so the tap visibly changes the list.
+    bool isFresh(ScoredCandidate s) => fresh.contains(s.word);
+    if (fresh.isNotEmpty) {
+      var brought = picked().where(isFresh).length;
+      for (final s in scored) {
+        if (brought >= biasWords) break;
+        if (!isFresh(s) || s.rejected != null || picked().contains(s)) {
+          continue;
+        }
+        if (!wanted(s) && s.levelFit < 0.6) continue;
+        if (picked().length < maxWords) {
+          if (!allowed(s)) continue;
+          slots.add(s);
+          brought++;
+          continue;
+        }
+        // A new word of the asked-for kind replaces an older one of that
+        // kind once enough are shown, so the other kinds stay; anything
+        // else replaces a word of another kind.
+        final out = wanted(s) && picked().where(wanted).length >= biasWords
+            ? weakest((p) => !isFresh(p) && wanted(p)) ??
+                weakest((p) => !isFresh(p))
+            : weakest((p) => !isFresh(p) && !wanted(p)) ??
+                (wanted(s) ? weakest((p) => !isFresh(p)) : null);
+        if (out == null) break;
+        // A noun for a noun doesn't add one (deck pictures start over the cap).
+        if (!allowed(s, replacing: out, nounCap: !out.candidate.isNoun)) {
+          continue;
+        }
+        slots[slots.indexOf(out)] = s;
+        brought++;
+      }
+    }
     // One challenge word (挑戰詞) above the target level.
     if (!picked().any((s) => levelIndex(s.candidate.level) > target)) {
       bool harder(ScoredCandidate s) => levelIndex(s.candidate.level) > target;
@@ -329,8 +367,10 @@ class WordSelector {
         final c = best(where: harder);
         if (c != null) slots.add(c);
       } else {
-        final out = weakest(
-            (s) => levelIndex(s.candidate.level) <= target && !wanted(s));
+        final out = weakest((s) =>
+            levelIndex(s.candidate.level) <= target &&
+            !wanted(s) &&
+            !isFresh(s));
         final c = out == null ? null : best(replacing: out, where: harder);
         if (out != null && c != null) slots[slots.indexOf(out)] = c;
       }

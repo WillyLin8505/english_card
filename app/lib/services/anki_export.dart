@@ -292,7 +292,7 @@ class AnkiExportScope {
     final ids = <String>{
       for (final id in photoIds)
         for (final o in repo.occurrencesInPhoto(id)) o.wordEntryId,
-      ...?deck?.wordEntryIds,
+      ...?deck?.entryIds(repo),
     };
     return [
       for (final e in repo.entries)

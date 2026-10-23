@@ -142,6 +142,13 @@ class InstalledDeck {
   final List<String> photoIds;
   final List<String> wordEntryIds;
 
+  /// Every word of a word deck, normalized (問題回報 #668): [wordEntryIds]
+  /// holds only the words this install created — the ones 移除集合 may
+  /// delete — so a deck whose words were mostly in the 單字本 already
+  /// looked like it had four words. Null for decks installed before this
+  /// field existed, until [DeckLibrary] fills it from the server.
+  final List<String>? words;
+
   /// The 相片冊 album of a picture deck (問題回報 #403); null for word
   /// decks and for picture decks installed before albums existed.
   final String? albumId;
@@ -151,15 +158,49 @@ class InstalledDeck {
     required this.installedAt,
     this.photoIds = const [],
     this.wordEntryIds = const [],
+    this.words,
     this.albumId,
   });
+
+  /// How many words the deck has (all of them, not only the new ones).
+  int get wordCount => words?.length ?? wordEntryIds.length;
+
+  /// The 單字本 entries of the deck's words: those it created and those
+  /// that were there already. Without [words] (an old install, offline)
+  /// it falls back to the created ones.
+  List<String> entryIds(WordDatabaseRepository repo) {
+    final all = words;
+    if (all == null) return wordEntryIds;
+    // One pass over the 單字本 rather than a lookup per word: a deck can
+    // have 3000 words.
+    final byWord = <String, String>{};
+    for (final e in repo.entries) {
+      byWord.putIfAbsent(e.word, () => e.id);
+    }
+    final ids = <String>{
+      for (final w in all)
+        if (byWord[w] case final id?) id,
+      ...wordEntryIds.where((id) => repo.entry(id) != null),
+    };
+    return ids.toList();
+  }
 
   InstalledDeck withAlbum(String id) => InstalledDeck(
         info: info,
         installedAt: installedAt,
         photoIds: photoIds,
         wordEntryIds: wordEntryIds,
+        words: words,
         albumId: id,
+      );
+
+  InstalledDeck withWords(List<String> all) => InstalledDeck(
+        info: info,
+        installedAt: installedAt,
+        photoIds: photoIds,
+        wordEntryIds: wordEntryIds,
+        words: all,
+        albumId: albumId,
       );
 
   factory InstalledDeck.fromJson(Map<String, dynamic> j) => InstalledDeck(
@@ -167,6 +208,7 @@ class InstalledDeck {
         installedAt: DateTime.parse(j['installedAt'] as String),
         photoIds: (j['photoIds'] as List).cast<String>(),
         wordEntryIds: (j['wordEntryIds'] as List).cast<String>(),
+        words: (j['words'] as List?)?.cast<String>(),
         albumId: j['albumId'] as String?,
       );
 
@@ -175,6 +217,7 @@ class InstalledDeck {
         'installedAt': installedAt.toIso8601String(),
         'photoIds': photoIds,
         'wordEntryIds': wordEntryIds,
+        if (words != null) 'words': words,
         'albumId': albumId,
       };
 }
@@ -259,19 +302,58 @@ class DeckLibrary extends ChangeNotifier {
     try {
       _box ??= await Hive.openBox<String>('installed_decks_v1');
       final raw = _box!.get(language);
-      if (raw != null) {
-        for (final d
-            in (jsonDecode(raw) as List).cast<Map<String, dynamic>>()) {
-          final deck = InstalledDeck.fromJson(d);
-          _installed[deck.info.slug] = deck;
-        }
-      }
+      if (raw != null) _restore(raw);
     } catch (e) {
       debugPrint('DeckLibrary: load failed: $e');
     }
     _loadedFor = language;
     notifyListeners();
+    unawaited(fillDeckWords(language));
   }
+
+  void _restore(String raw) {
+    for (final d in (jsonDecode(raw) as List).cast<Map<String, dynamic>>()) {
+      final deck = InstalledDeck.fromJson(d);
+      _installed[deck.info.slug] = deck;
+    }
+  }
+
+  /// Loads installed decks saved as [raw] (the Hive value), for tests of
+  /// older formats.
+  @visibleForTesting
+  void restoreForTest(String language, String raw) {
+    _installed.clear();
+    _restore(raw);
+    _loadedFor = language;
+    notifyListeners();
+  }
+
+  /// Word decks installed before [InstalledDeck.words] existed get their
+  /// full word list from the server (問題回報 #668). Offline, they keep
+  /// going by [InstalledDeck.wordEntryIds] and try again next launch.
+  Future<void> fillDeckWords(String language) async {
+    var changed = false;
+    for (final deck in _installed.values.toList()) {
+      if (deck.info.isPhotos || deck.words != null) continue;
+      try {
+        final content = await fetchDeck(deck.info.slug);
+        if (_loadedFor != language) return;
+        if (_installed[deck.info.slug] != deck) continue;
+        _installed[deck.info.slug] = deck.withWords(_normalized(content));
+        changed = true;
+      } catch (e) {
+        debugPrint('DeckLibrary: words of ${deck.info.slug}: $e');
+      }
+    }
+    if (!changed) return;
+    await _save(language);
+    notifyListeners();
+  }
+
+  static List<String> _normalized(DeckContent deck) => {
+        for (final w in deck.words)
+          if (w.word.trim().toLowerCase() case final n when n.isNotEmpty) n,
+      }.toList();
 
   List<InstalledDeck> get installed => _installed.values.toList()
     ..sort((a, b) => b.installedAt.compareTo(a.installedAt));
@@ -337,6 +419,7 @@ class DeckLibrary extends ChangeNotifier {
       installedAt: repository.clock(),
       photoIds: photoIds,
       wordEntryIds: [for (final w in created) w.id],
+      words: deck.info.isPhotos ? null : _normalized(deck),
       albumId: albumId,
     );
     await _save(repository.language);

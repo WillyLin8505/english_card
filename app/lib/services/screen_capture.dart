@@ -10,7 +10,7 @@ import 'package:flutter/widgets.dart';
 /// report): [scale] of the logical size, smaller again if still too big.
 /// Null when nothing could be captured (tests, web).
 Future<Uint8List?> captureScreen(GlobalKey boundary,
-    {double scale = 0.6, int maxBytes = 170 * 1024}) async {
+    {double scale = 0.5, int maxBytes = 180 * 1024}) async {
   try {
     final box = boundary.currentContext?.findRenderObject();
     if (box is! RenderRepaintBoundary || !box.hasSize) return null;
@@ -27,6 +27,18 @@ Future<Uint8List?> captureScreen(GlobalKey boundary,
   }
   return null;
 }
+
+/// The whole app (FeedbackOverlay wraps it in a RepaintBoundary with this
+/// key): what every report's screenshot shows (問題回報 #664 #669).
+final appScreenKey = GlobalKey(debugLabel: 'app-screen');
+
+/// [captureScreen] of the whole app, given up after [wait] so a stalled
+/// capture never holds a report form back.
+// 0.8 s was too short on a photo-heavy page (問題回報 #669: the reports
+// from 照片詳情 came without one); a big PNG is shrunk and encoded again.
+Future<Uint8List?> captureAppScreen(
+        {Duration wait = const Duration(milliseconds: 2500)}) =>
+    captureScreen(appScreenKey).timeout(wait, onTimeout: () => null);
 
 /// [png] as the `screenshot` field of a report.
 String screenshotField(Uint8List png) =>

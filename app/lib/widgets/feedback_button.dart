@@ -14,8 +14,8 @@ import '../theme/mobile_theme.dart';
 /// carrying its own copy. [navigatorKey] is the app's root navigator, which
 /// the form opens on.
 class FeedbackOverlay extends StatelessWidget {
-  /// The whole app under the button, for the feedback screenshot.
-  static final screenKey = GlobalKey(debugLabel: 'feedback-screen');
+  /// The whole app under the button, for report screenshots.
+  static GlobalKey get screenKey => appScreenKey;
 
   final GlobalKey<NavigatorState> navigatorKey;
   final Widget child;
@@ -50,10 +50,7 @@ class FeedbackOverlay extends StatelessWidget {
                 onTap: () async {
                   // 問題回報 #664: the screen as it is, before the form
                   // covers it.
-                  // A capture that stalls must not hold the form back.
-                  final shot = await captureScreen(screenKey).timeout(
-                      const Duration(milliseconds: 800),
-                      onTimeout: () => null);
+                  final shot = await captureAppScreen();
                   final ctx = navigatorKey.currentContext;
                   if (ctx != null && ctx.mounted) {
                     showFeedbackDialog(ctx, service: service, screenshot: shot);

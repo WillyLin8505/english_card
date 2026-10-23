@@ -81,7 +81,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
         // under the same pill); they open their words' lexicon pictures.
         final wordDecks = [
           for (final d in DeckLibrary.instance.installed)
-            if (!d.info.isPhotos && d.wordEntryIds.isNotEmpty) d,
+            if (!d.info.isPhotos && d.wordCount > 0) d,
         ];
         final groups = [
           ...repo.albumGroups(),

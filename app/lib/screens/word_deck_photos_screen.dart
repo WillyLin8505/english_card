@@ -17,7 +17,7 @@ List<Map<String, dynamic>> wordDeckImages(
     WordDatabaseRepository repo, InstalledDeck deck, LexiconPack pack,
     {int max = 300}) {
   final ids = <int>{};
-  for (final id in deck.wordEntryIds) {
+  for (final id in deck.entryIds(repo)) {
     final e = repo.entry(id);
     if (e == null) continue;
     final lex = (e.lexemeId == null ? null : pack.byId(e.lexemeId!)) ??
@@ -47,11 +47,37 @@ class WordDeckPhotosScreen extends StatefulWidget {
 class _WordDeckPhotosScreenState extends State<WordDeckPhotosScreen> {
   List<Map<String, dynamic>>? _images;
 
+  /// The deck as installed now: an old install gets its full word list
+  /// from the server after the page opened (問題回報 #668).
+  InstalledDeck get _deck =>
+      _library.installedDeck(widget.deck.info.slug) ?? widget.deck;
+
+  final _library = DeckLibrary.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _library.addListener(_deckChanged);
+  }
+
+  @override
+  void dispose() {
+    _library.removeListener(_deckChanged);
+    super.dispose();
+  }
+
+  void _deckChanged() {
+    if (!mounted) return;
+    setState(() => _images = _findImages());
+  }
+
+  List<Map<String, dynamic>> _findImages() => wordDeckImages(
+      AppScope.of(context).repository, _deck, LexiconPack.instance);
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _images ??= wordDeckImages(
-        AppScope.of(context).repository, widget.deck, LexiconPack.instance);
+    _images ??= _findImages();
   }
 
   @override
@@ -74,7 +100,7 @@ class _WordDeckPhotosScreenState extends State<WordDeckPhotosScreen> {
                 child: UiText(
                     images.isEmpty
                         ? '詞庫還沒有這個單字集的圖片'
-                        : '單字集 · ${widget.deck.wordEntryIds.length} 個單字 · ${images.length} 張詞庫圖片',
+                        : '單字集 · ${_deck.wordCount} 個單字 · ${images.length} 張詞庫圖片',
                     style: MFont.manrope(13, FontWeight.w600, MColors.muted)),
               ),
             ),
@@ -113,7 +139,7 @@ class WordDeckAlbumCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Tap(
         onTap: onTap,
-        label: '${deck.info.title}，${deck.wordEntryIds.length} 個單字',
+        label: '${deck.info.title}，${deck.wordCount} 個單字',
         child: Container(
           decoration: BoxDecoration(
             color: MColors.primarySoft,
@@ -140,7 +166,7 @@ class WordDeckAlbumCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: MFont.inter(15, FontWeight.w700, MColors.ink)),
               const SizedBox(height: 2),
-              UiText('${deck.wordEntryIds.length} 個單字',
+              UiText('${deck.wordCount} 個單字',
                   style: MFont.inter(12, FontWeight.w600, MColors.muted)),
             ],
           ),

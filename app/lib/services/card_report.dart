@@ -6,6 +6,7 @@ import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 
 import 'dictionary_sync.dart';
+import 'screen_capture.dart';
 
 /// 問題回報 #316: the learner reports a card that looks wrong. The report
 /// goes to the owner's 問題回報 page through the dictionary server's
@@ -35,6 +36,9 @@ class CardReport {
   /// Which side/exercise the learner was looking at ("recall 正面" etc.).
   final String cardType;
 
+  /// The screen when the learner reported it (問題回報 #669: every report).
+  final Uint8List? screenshot;
+
   const CardReport({
     required this.kind,
     required this.note,
@@ -43,6 +47,7 @@ class CardReport {
     this.meaning,
     this.photoId,
     this.cardType = '',
+    this.screenshot,
   });
 
   String get kindLabel =>
@@ -62,9 +67,11 @@ class CardReport {
           if ((photoId ?? '').isNotEmpty) '照片 id：$photoId',
           if (cardType.isNotEmpty) '卡片題型：$cardType',
           'App 版本：$appVersion',
+          if (screenshot != null) '截圖：有（screenshot 欄位）',
         ].join('\n'),
         'lemma': word,
         'reporter': 'App 使用者',
+        if (screenshot != null) 'screenshot': screenshotField(screenshot!),
       };
 
   Map<String, dynamic> toJson() => toIssue();

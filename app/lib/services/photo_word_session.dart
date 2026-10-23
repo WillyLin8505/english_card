@@ -6,6 +6,7 @@ import '../models/vocabulary_profile.dart';
 import '../models/word_candidate.dart';
 import '../models/word_entry.dart';
 import 'lexicon_pack.dart';
+import 'photo_intake.dart';
 import 'tagging_queue.dart';
 import 'word_database_repository.dart';
 import 'word_selector.dart';
@@ -133,10 +134,14 @@ class PhotoWordSession extends ChangeNotifier {
   Selection? get selection => _selection;
 
   /// What 照片辨識 is being asked for right now because the learner tapped
-  /// 多看動詞 / 難一點 and the pool had nothing more of it (問題回報 #666):
-  /// 'actions', 'descriptions', 'harder' or 'easier'.
+  /// 多看動詞 / 難一點 (問題回報 #666, #671): 'actions', 'descriptions',
+  /// 'harder' or 'easier'.
   String? get fetchingMore => _fetching;
   String? _fetching;
+
+  /// 重新掃描標籤 is on its way (問題回報 #670).
+  bool get rescanning => _rescanning;
+  bool _rescanning = false;
 
   /// Told when such a tap brings nothing new — the pool and the recognizer
   /// have no more of it, or no recognizer can be asked — so the tap never
@@ -202,7 +207,7 @@ class PhotoWordSession extends ChangeNotifier {
         .difference({for (final w in words) w.word});
   }
 
-  void _reselect({bool allowTopUp = false}) {
+  void _reselect({bool allowTopUp = false, Set<String> fresh = const {}}) {
     final sel = selector.select(
       pool: _pool,
       target: _target,
@@ -216,6 +221,7 @@ class PhotoWordSession extends ChangeNotifier {
           if (w.starred || w.added || w.edited) w.word,
       },
       bias: _bias,
+      fresh: fresh,
       now: repo.clock(),
     );
     final byWord = {for (final w in words) w.word: w};
@@ -273,9 +279,9 @@ class PhotoWordSession extends ChangeNotifier {
   }
 
   /// Moves the dial. While dragging ([live]) only the existing pool is
-  /// used; on release the model may be asked for more words — and when the
-  /// list did not change at all, it is asked for harder (easier) words
-  /// outright (問題回報 #666: 難度提高 looked like it did nothing).
+  /// used; on release the model may be asked for more words. A step to
+  /// another level (難一點 / 簡單一點) scans the photo for harder (easier)
+  /// words every time (問題回報 #666, #671).
   void setTarget(int level, {bool live = false}) {
     final t = level.clamp(0, cefrLevels.length - 1);
     if (t == _target && live) return;
@@ -287,23 +293,19 @@ class PhotoWordSession extends ChangeNotifier {
       _reselect(allowTopUp: !live);
     } else {
       _reselect();
-      final changed = !listEquals(before, [for (final w in words) w.word]);
-      if (changed) {
-        _maybeTopUp(_selection!);
-      } else {
-        _askForMore(t > from ? 'harder' : 'easier', () {
-          final now = [for (final w in words) w.word];
-          return !listEquals(before, now);
-        });
-      }
+      final focus = t > from ? 'harder' : 'easier';
+      _askForMore(focus, () {
+        final now = [for (final w in words) w.word];
+        return !listEquals(before, now);
+      }, stillWanted: () => _target == t);
     }
     notifyListeners();
   }
 
   /// 更多動作 / 更多描述 (tap again to turn off). Turning one on brings
-  /// that kind into the list; when the pool has no more of it, 照片辨識 is
-  /// asked (問題回報 #666) — also for downloaded deck pictures — and the
-  /// learner is told when there is none.
+  /// that kind into the list and asks 照片辨識 for more of it every time
+  /// (問題回報 #666, #671) — also for downloaded deck pictures; what it
+  /// finds is swapped in, and the learner is told when there is none.
   void setBias(PosBias b) {
     _bias = _bias == b ? PosBias.none : b;
     _dirty = true;
@@ -312,15 +314,11 @@ class PhotoWordSession extends ChangeNotifier {
     } else {
       final before = _shownOfBias();
       _reselect();
-      if (_shownOfBias().difference(before).isNotEmpty) {
-        _maybeTopUp(_selection!);
-      } else {
-        final asked = _bias;
-        _askForMore(
-            asked == PosBias.actions ? 'actions' : 'descriptions',
-            () =>
-                _bias == asked && _shownOfBias().difference(before).isNotEmpty);
-      }
+      final asked = _bias;
+      _askForMore(
+          asked == PosBias.actions ? 'actions' : 'descriptions',
+          () => _bias == asked && _shownOfBias().difference(before).isNotEmpty,
+          stillWanted: () => _bias == asked);
     }
     notifyListeners();
   }
@@ -336,26 +334,38 @@ class PhotoWordSession extends ChangeNotifier {
 
   /// Asks the recognizer for more words of [focus] because the learner
   /// asked for them; [improved] says whether the list then shows some.
-  void _askForMore(String focus, bool Function() improved) {
+  /// What arrives is swapped into the list while [stillWanted] (the
+  /// learner hasn't turned it off or moved on). A tap while the same kind
+  /// is being fetched joins that request.
+  void _askForMore(String focus, bool Function() improved,
+      {required bool Function() stillWanted}) {
     final what = focusLabel(focus);
     final q = queue;
     final p = photo;
     if (q == null || p == null || !q.canAskMore(p)) {
-      _notice('這張照片沒有更多$what了，連上照片辨識後可以再找');
+      if (!improved()) _notice('這張照片沒有更多$what了，連上照片辨識後可以再找');
       return;
     }
-    if (!q.canTopUp(p, focus)) {
-      _notice('這張照片沒有更多$what了');
-      return;
-    }
+    if (_fetching == focus) return;
     _fetching = focus;
     final level = targetLevel;
     Future<void>.microtask(() async {
       String? message;
       try {
-        final added = await q.topUp(photoId, focus: focus, level: level);
+        final pool = {
+          for (final c in photo?.candidates ?? const <WordCandidate>[]) c.word,
+        };
+        final added =
+            await q.topUp(photoId, focus: focus, level: level, again: true);
         if (_disposed) return;
-        if (added > 0) {
+        final fresh = {
+          for (final c in photo?.candidates ?? const <WordCandidate>[])
+            if (!pool.contains(c.word)) c.word,
+        };
+        if (fresh.isNotEmpty && stillWanted()) {
+          _reselect(fresh: fresh);
+          _dirty = true;
+        } else if (added > 0) {
           _reselect();
         }
         if (!improved()) message = '這張照片沒有更多$what了';
@@ -368,6 +378,44 @@ class PhotoWordSession extends ChangeNotifier {
       notifyListeners();
       if (message != null) _notice(message);
     });
+  }
+
+  /// 重新掃描標籤 (問題回報 #670): the whole photo is read again. New words
+  /// join the pool and the list is picked again — words already there and
+  /// the learner's own (starred, corrected, added) stay — and the learner
+  /// is told how many arrived.
+  Future<void> rescan() async {
+    final q = queue;
+    final p = photo;
+    if (_rescanning || q == null || p == null) return;
+    if (!q.canRescan(p)) {
+      _notice('這台裝置還沒有照片辨識，請到「設定」連上照片辨識後再重新掃描');
+      return;
+    }
+    _rescanning = true;
+    notifyListeners();
+    String message;
+    try {
+      final fresh = await q.rescan(photoId);
+      if (_disposed) return;
+      if (fresh.isEmpty) {
+        message = '重新掃描完成，沒有新的單字';
+      } else {
+        _reselect(fresh: fresh.toSet());
+        _dirty = true;
+        message = '重新掃描完成，新增了 ${fresh.length} 個單字';
+      }
+    } catch (e) {
+      debugPrint('Rescan of $photoId failed: $e');
+      message = e is TaggingNotConfigured
+          ? '這台裝置還沒有照片辨識，請到「設定」連上照片辨識後再重新掃描'
+          : '連不到照片辨識，暫時無法重新掃描，稍後再試';
+    } finally {
+      _rescanning = false;
+    }
+    if (_disposed) return;
+    notifyListeners();
+    _notice(message);
   }
 
   void _notice(String message) => onNotice?.call(message);

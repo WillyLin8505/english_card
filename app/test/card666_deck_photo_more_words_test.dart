@@ -149,10 +149,15 @@ void main() {
       expect(seen, hasLength(1));
       expect(notices.single, contains('沒有更多動詞'));
 
-      // Asked once already: the next tap answers without asking again.
+      // 問題回報 #671: every tap scans the photo again.
       s.setBias(PosBias.actions); // off
       s.setBias(PosBias.actions); // on
-      expect(seen, hasLength(1));
+      await tester.runAsync(() async {
+        for (var i = 0; i < 50 && s.fetchingMore != null; i++) {
+          await Future<void>.delayed(const Duration(milliseconds: 10));
+        }
+      });
+      expect(seen, hasLength(2));
       expect(notices.last, contains('沒有更多動詞'));
       s.dispose();
     });
