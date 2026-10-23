@@ -1261,3 +1261,8 @@ commit `dcd77118`（Windows：flutter analyze 無 error、01:01 +583 ~2: All tes
   結果：結論：#650（複習圖片要一兩秒才出現）是 App 畫面的載入問題，依 10/23 #626 分工歸 Mac；本卡沒改任何資料或程式。已在 Mac inbox M93。
 - 卡 #580：問題回報 #651：[給 Mac] [意見回饋] 複習：有時候那個藍色的點會跑出圖片外是圖片被截到的問題嗎？還是標示
   結果：結論：不是詞庫資料問題，是 App 畫面問題（照片用 BoxFit.cover 置中裁切，物件在被裁掉的部分時，藍點算出來就在框外）。Windows 不改，交給 Mac。；需要 Mac：複習頁的照片 app/lib/widgets/mobile/photowidgets.dart 的 CoverGeometry（約第 
+
+## M97（2026-10-23 22:20）狀態：待做（owner 決定，給 Mac）
+**#640 相片沒出現在相片冊和複習區**：owner 選 A。辨識失敗或還在排隊的相片也要顯示在相片冊，只有伺服器判定不安全（451）的才隱藏。
+- 原因（Windows 卡 #573 推斷，未在實機驗證）：`word_database_repository.dart:332` 的 `photos` 只收 `safetyStatus == safe`。`photo_intake.addPhoto` 一開始是 unchecked，只有 `tagging_queue.dart:232` 辨識成功才改成 safe。所以辨識失敗、離線排隊或沒有辨識器的相片會一直藏著。
+- 請在 owner 的 iPhone 確認那張相片（photo-1792753703603088）的狀態，修好後重裝 release。複習區照舊只出有單字的卡。
