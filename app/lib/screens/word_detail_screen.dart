@@ -10,6 +10,7 @@ import '../models/word_entry.dart';
 import '../services/lexicon_pack.dart';
 import '../services/word_database_query.dart';
 import '../theme/mobile_theme.dart';
+import '../widgets/recording_credit.dart';
 import '../widgets/mobile/common.dart';
 import '../widgets/mobile/dialogs.dart';
 import '../widgets/mobile/m_icon.dart';
@@ -306,6 +307,14 @@ class _WordBody extends StatelessWidget {
                   const SizedBox(height: MSpace.xxs),
                   Text(ipa,
                       style: MFont.manrope(16, FontWeight.w600, MColors.muted)),
+                ],
+                // 問題回報 #657: who recorded the pronunciation, and its license.
+                if (repo.language == 'en'
+                        ? accentAudioCredit(entry, scope.settings.englishAccent)
+                        : null
+                    case final credit?) ...[
+                  const SizedBox(height: 2),
+                  RecordingCreditLine(credit),
                 ],
                 const SizedBox(height: MSpace.xxs + 2),
                 Wrap(

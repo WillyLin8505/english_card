@@ -63,3 +63,24 @@ String? accentAudioUrl(WordEntry entry, String accent,
   }
   return null;
 }
+
+/// The credit of the recording [accentAudioUrl] plays for [entry] in
+/// [accent] (問題回報 #657): null for TTS or a recording with no credit.
+RecordingCredit? accentAudioCredit(WordEntry entry, String accent) {
+  final pack = LexiconPack.instance;
+  final source = (entry.lexemeId == null ? null : pack.byId(entry.lexemeId!)) ??
+      pack.lookup(entry.word, pos: entry.pos)?.entry;
+  if (source == null) return null;
+  return packAccentAudioCredit(source, accent);
+}
+
+/// [packAccentAudioUrl]'s recording's credit (orDefault, as the word pages
+/// play it).
+RecordingCredit? packAccentAudioCredit(LexEntry source, String accent) {
+  final aliases = _aliases(accent);
+  final recording = source.recordings
+          .where((r) => aliases.contains(r.accent?.toLowerCase()))
+          .firstOrNull ??
+      source.recordings.firstOrNull;
+  return recording == null ? null : source.recordingCredits[recording.path];
+}

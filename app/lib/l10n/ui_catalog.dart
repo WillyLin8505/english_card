@@ -982,6 +982,7 @@ class _UiTemplate {
 }
 
 const _templateCopy = <String, (String, String)>{
+  '發音錄音：{0}': ('Recording: {0}', 'Enregistrement : {0}'),
   'AI 在這張照片找到的字最難到 {0}，按「難一點」或「重新掃描標籤」請 AI 找更難的字': (
     'The hardest word the AI found here is {0}; tap “Harder” or “Rescan labels” for harder words',
     'Le mot le plus difficile trouvé ici est {0} ; touchez « Plus difficile » ou « Réanalyser » pour en trouver'

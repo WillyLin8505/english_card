@@ -672,6 +672,35 @@ class LexEtymology {
 
 /// The per-word data a SQLite pack reads on demand (everything but the head
 /// that [LexiconPack] indexes at launch).
+/// The credit of one recording: speaker (or attribution) and license, and
+/// the page it came from.
+class RecordingCredit {
+  final String text;
+  final String? sourcePage;
+
+  const RecordingCredit(this.text, {this.sourcePage});
+
+  static RecordingCredit? fromJson(Map<String, dynamic> p) {
+    String? field(String k) {
+      final v = (p[k] as String? ?? '').trim();
+      return v.isEmpty ? null : v;
+    }
+
+    final attribution = field('attribution');
+    final who = field('speaker') ??
+        (attribution == null || attribution.toLowerCase() == 'own work'
+            ? null
+            : attribution);
+    final license = field('license');
+    final parts = [
+      if (who != null) who,
+      if (license != null) license,
+    ];
+    if (parts.isEmpty) return null;
+    return RecordingCredit(parts.join(' · '), sourcePage: field('source_page'));
+  }
+}
+
 class LexDetail {
   final String? ipa;
 
@@ -681,6 +710,10 @@ class LexDetail {
   final String? audio; // relative to assets/lexicon/media/
   final List<({String path, String? accent})> recordings;
   final String? audioCredit;
+
+  /// Who recorded each recording and under what license, by its path
+  /// (問題回報 #657 / M138: CC BY-SA recordings must credit the speaker).
+  final Map<String, RecordingCredit> recordingCredits;
   final List<LexExample> examples;
   final List<LexRelation> relations;
   final List<LexMorpheme> morphemes;
@@ -692,6 +725,7 @@ class LexDetail {
     this.ipas = const [],
     this.audio,
     this.recordings = const [],
+    this.recordingCredits = const {},
     this.audioCredit,
     this.examples = const [],
     this.relations = const [],
@@ -731,6 +765,11 @@ class LexDetail {
           if ((p['audio'] as String).isNotEmpty)
             (path: p['audio'] as String, accent: p['accent'] as String?),
       ],
+      recordingCredits: {
+        for (final p in audio)
+          if ((p['audio'] as String).isNotEmpty)
+            if (RecordingCredit.fromJson(p) case final c?) p['audio'] as String: c,
+      },
       audioCredit: () {
         final first = audio.firstOrNull;
         final parts = [
@@ -830,6 +869,7 @@ class LexEntry {
   /// License and attribution of [audio] ("CC BY-SA 4.0 · Own work"), for
   /// credits outside the app (匯出到 Anki, 問題回報 #325).
   String? get audioCredit => detail.audioCredit;
+  Map<String, RecordingCredit> get recordingCredits => detail.recordingCredits;
   List<LexExample> get examples => detail.examples;
   List<LexRelation> get relations => detail.relations;
   List<LexMorpheme> get morphemes => detail.morphemes;

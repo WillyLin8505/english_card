@@ -151,6 +151,14 @@ class DatabaseWordScreen extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(ipa, style: MFont.caption),
               ],
+              // 問題回報 #657: who recorded the pronunciation, and its license.
+              if (((pack.target ?? 'en') == 'en'
+                      ? packAccentAudioCredit(word, scope.settings.englishAccent)
+                      : null)
+                  case final credit?) ...[
+                const SizedBox(height: 2),
+                RecordingCreditLine(credit),
+              ],
               const SizedBox(height: MSpace.sm),
               Align(
                 alignment: Alignment.centerLeft,

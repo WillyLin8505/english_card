@@ -15,6 +15,7 @@ import '../services/word_database_repository.dart';
 import '../theme/mobile_theme.dart';
 import '../widgets/mobile/common.dart';
 import '../widgets/mobile/photo_widgets.dart';
+import '../widgets/recording_credit.dart';
 import 'album_screen.dart';
 import 'word_database_screen.dart';
 
