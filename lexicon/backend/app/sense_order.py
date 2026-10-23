@@ -307,7 +307,10 @@ def order_senses(items: list[dict], target: str, lemma: str) -> list[dict]:
     etymology with the most established senses — second 「unit of time」
     before 「number two in a series」 (card #539); Wiktionary's order last."""
     return sorted(items, key=lambda it: (sense_rank(it, target, lemma), _preferred_index(it, target, lemma),
-                                         _etymology_group_rank(it, target, lemma)))
+                                         _etymology_group_rank(it, target, lemma),
+                                         # within the etymology, the senses Kaikki's label still
+                                         # marks as another word (no translation table) last
+                                         any(l.startswith("etymology-") for l in _labels(it))))
 
 def english_sense_translations(english: str, pos: str, target: str, gloss: str) -> set[str] | None:
     """The ``target``-language words English Wiktionary lists under the one
