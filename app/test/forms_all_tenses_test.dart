@@ -1,4 +1,4 @@
-// 問題回報 #619: a verb lists every tense (現在式、過去式、未來式、分詞);
+// 問題回報 #619: a verb lists 現在式、過去式、分詞 (no 未來式: decision #632 A);
 // a form that does not belong to the part of speech is not shown.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -75,17 +75,13 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('a verb shows 現在式 and 未來式 with the other tenses', (tester) async {
+  testWidgets('a verb shows 現在式 with the other forms, no 未來式', (tester) async {
     await pumpBack(tester, 'decide', 'verb', 1);
-    for (final kind in ['現在式', '第三人稱單數', '過去式', '未來式', '現在分詞', '過去分詞']) {
+    for (final kind in ['現在式', '第三人稱單數', '過去式', '現在分詞', '過去分詞']) {
       expect(find.text(kind), findsOneWidget, reason: kind);
     }
-    expect(find.text('will decide'), findsOneWidget);
-    // In time order: 現在式 before 過去式 before 未來式.
-    final x = [
-      for (final k in ['現在式', '過去式', '未來式']) tester.getTopLeft(find.text(k))
-    ];
-    expect(x[0].dy < x[1].dy || x[0].dx < x[1].dx, isTrue);
+    expect(find.text('未來式'), findsNothing);
+    expect(find.text('will decide'), findsNothing);
   });
 
   testWidgets('an adjective keeps 比較級／最高級, never verb forms', (tester) async {

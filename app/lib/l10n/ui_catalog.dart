@@ -872,7 +872,6 @@ const uiCatalog = <String, (String, String)>{
   '複數': ('plural', 'pluriel'),
   '過去式': ('past tense', 'passé'),
   '現在式': ('present tense', 'présent'),
-  '未來式': ('future tense', 'futur'),
   '過去分詞': ('past participle', 'participe passé'),
   '現在分詞': ('present participle', 'participe présent'),
   '第三人稱單數': ('third-person singular', '3e personne du singulier'),
