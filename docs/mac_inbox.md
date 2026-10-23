@@ -1444,3 +1444,43 @@ owner 在 iPhone 送出的回報（#626：App 畫面與互動由 Mac 修）。�
 若採 B，在 album_screen.dart 加提示文字／已有集子數量說明。
 - 剩下：等 owner 決定 A/B/C；C 才需要 Windows 資料卡。
 - 暫存檔 lexicon/logs/agents/card593_shot*.png 可刪。
+
+## M121（2026-10-24 00:53）狀態：待做（Windows 卡 #594 交給 Mac 的 App 畫面部分）
+卡：問題回報 #669：[給 Mac] [意見回饋] 照片詳情：這裡的回報沒有截圖欸 全部都要ㄧㄡˇ
+
+照片詳情頁的「意見回饋」送出時沒有帶 `screenshot` 欄位（#669 `has_screenshot=false`）。同樣的回報在相片冊頁（#668）有截圖，所以後端 `lexicon/backend/app/issues.py` 的 screenshot 欄位正常，問題在照片詳情頁的送出流程。請 Mac 讓所有頁面（含照片詳情）的回饋都附截圖，並實測一次。
+
+數字：無資料變更；未跑 golden/QC（沒改任何東西）。備份／還原：不需要。
+剩下：Mac 修 App 端（inbox M117）。
+
+## M122（2026-10-24 00:53）狀態：待做（Windows 卡 #595 交給 Mac 的 App 畫面部分）
+卡：問題回報 #670：[給 Mac] [意見回饋] 照片詳情：我要一個重新掃描標籤的按鈕
+
+照片詳情加一個「重新掃描標籤」按鈕，呼叫 `POST /images/{asset_id}/retag-short`（經 5173 代理或 App 的 API）。注意回傳 `{"queued": false}` 的情況：圖片不存在會回 404；圖片標籤已達標（每級 5 個）或不是已完成的圖片時 `queued` 為 false，此時 App 應顯示「標籤已完整」之類的提示，而不是當作失敗。排入後是背景重標，App 需要自己重新讀取標籤。
+
+## M123（2026-10-24 00:55）狀態：待做（Windows 卡 #596 交給 Mac 的 App 畫面部分）
+卡：問題回報 #671：[給 Mac] [意見回饋] 照片詳情：我按多動詞的時候你要重新掃描並且給我動詞 其他的也是
+
+照片詳情「多動詞」重新掃描）。
+
+需要 Mac：照片詳情（photo_detail_screen.dart 一帶）點選「多動詞」的辨識結果時，應重新掃描並列出動詞（verb）義項；App 目前只顯示照片辨識回傳的 pos／candidate。此項已在 docs/mac_inbox.md M119（待做，給 Mac），Windows 端不重做。
+
+前後數字表
+| 項目 | 前 | 後 |
+|---|---|---|
+| 伺服器上可查到的 photo-1792753703603088 | 0（/api/assets、/api/photos 皆 404） | 0（未改） |
+| 問題回報 #671 狀態 | in_progress | 未改（待 Mac 修） |
+
+改了哪些程式與資料
+- 無。沒有改程式、沒有改資料，因此沒有備份；還原指令不需要。
+
+依據
+- `lexicon/state/dispatch_events.jsonl`：#640 同一張相片（card573）已判定「無法從這端讀到手機上該相片的 taggingStatus」，同樣的限制適用於本卡。
+- #671 的 decision 欄位為 null，owner 沒有另外決定，不用問。
+
+golden / QC
+- 未跑。沒有資料變更，依卡片規則不需比對；qc.py check --live 不會因此改變。
+
+剩下什麼
+- 需要 Mac 在 App 照片詳情實作「多動詞重新掃描、列出動詞」，完成後回報 mac_verify_results 讓問題回報 #671 結案。
+- 若 Mac 實作時需要伺服器端的動詞資料（例如某詞的 verb 義項缺漏），再開新卡，屆時才有可量測的字詞。
