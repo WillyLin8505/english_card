@@ -680,6 +680,31 @@ class RecordingCredit {
 
   const RecordingCredit(this.text, {this.sourcePage});
 
+  /// One name from Wikimedia's speaker text (M139: "Speaker: X\nRecorder: Y"
+  /// showed both lines): the name after `Speaker:`, else the first line
+  /// without its label; at most 60 characters.
+  static String? cleanSpeaker(String? raw) {
+    if (raw == null) return null;
+    final lines = [
+      for (final l in raw.split(RegExp(r'[\r\n]+')))
+        if (l.trim().isNotEmpty) l.trim()
+    ];
+    if (lines.isEmpty) return null;
+    final labelled = RegExp(r'^([A-Za-z ]+)\s*[:：]\s*(.+)$');
+    String? name;
+    for (final l in lines) {
+      final m = labelled.firstMatch(l);
+      if (m != null && m.group(1)!.trim().toLowerCase() == 'speaker') {
+        name = m.group(2);
+        break;
+      }
+    }
+    name ??= labelled.firstMatch(lines.first)?.group(2) ?? lines.first;
+    name = name.trim();
+    if (name.isEmpty) return null;
+    return name.length > 60 ? '${name.substring(0, 59)}…' : name;
+  }
+
   static RecordingCredit? fromJson(Map<String, dynamic> p) {
     String? field(String k) {
       final v = (p[k] as String? ?? '').trim();
@@ -687,7 +712,7 @@ class RecordingCredit {
     }
 
     final attribution = field('attribution');
-    final who = field('speaker') ??
+    final who = cleanSpeaker(field('speaker')) ??
         (attribution == null || attribution.toLowerCase() == 'own work'
             ? null
             : attribution);

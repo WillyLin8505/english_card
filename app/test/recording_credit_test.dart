@@ -28,6 +28,21 @@ void main() {
             .text,
         'CC BY-SA 4.0');
     expect(RecordingCredit.fromJson({}), isNull);
+    // M139: Wikimedia's multi-line speaker text becomes one name.
+    expect(RecordingCredit.cleanSpeaker('Speaker: Jane Doe\nRecorder: John'),
+        'Jane Doe');
+    expect(
+        RecordingCredit.cleanSpeaker('Recorder: John\nSpeaker: Jane'), 'Jane');
+    expect(RecordingCredit.cleanSpeaker('Recorder: John'), 'John');
+    expect(RecordingCredit.cleanSpeaker('Jane Doe'), 'Jane Doe');
+    expect(RecordingCredit.cleanSpeaker('  \n '), isNull);
+    expect(
+        RecordingCredit.fromJson({
+          'speaker': 'Speaker: Jane Doe\nRecorder: John',
+          'license': 'CC BY-SA 4.0'
+        })!
+            .text,
+        'Jane Doe · CC BY-SA 4.0');
     expect(
         RecordingCreditLine.label(const RecordingCredit('Jane · CC BY-SA 4.0',
             sourcePage: 'https://commons.wikimedia.org/wiki/File:x.ogg')),
