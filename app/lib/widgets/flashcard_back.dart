@@ -15,9 +15,19 @@ Future<bool> playAccent(
 }
 
 /// Card #251: when the card turns, the word is heard in both accents,
-/// British first and then American, one after the other.
+/// British first and then American, one after the other. Only accents with
+/// a real recording are played (owner 2026-10-23: a TTS British voice before
+/// the American recording sounded robotic — 67% of A1 words have no British
+/// clip); a word with no recording at all is said once, in 設定's accent.
 Future<void> playBothAccents(BuildContext context, WordEntry entry) async {
-  for (final accent in const ['en-GB', 'en-US']) {
+  final recorded = [
+    for (final accent in const ['en-GB', 'en-US'])
+      if (accentAudioUrl(entry, accent) != null) accent,
+  ];
+  final accents = recorded.isNotEmpty
+      ? recorded
+      : [AppScope.of(context).settings.englishAccent];
+  for (final accent in accents) {
     if (!context.mounted) return;
     if (!await playAccent(context, entry, accent)) return;
   }
@@ -605,16 +615,16 @@ class FlashcardBack extends StatelessWidget {
             // headword as without a photo (French lowercase + article, #499).
             overlay: look.photoHero ? _HeroWord(_headword, look) : null,
             // 圖片沉浸 already writes the word on the photo.
-            pinFor: AppScope.of(context).settings.showPhotoLabels &&
-                    !look.photoHero
-                ? (o) => o.$2 == null
-                    ? null
-                    : PinData(
-                        id: entry.word,
-                        anchor: o.$2!,
-                        word: _headword,
-                        zh: activeMeaning ?? entry.meaning)
-                : null);
+            pinFor:
+                AppScope.of(context).settings.showPhotoLabels && !look.photoHero
+                    ? (o) => o.$2 == null
+                        ? null
+                        : PinData(
+                            id: entry.word,
+                            anchor: o.$2!,
+                            word: _headword,
+                            zh: activeMeaning ?? entry.meaning)
+                    : null);
       case CardBackField.example:
         // Spec sections 4 and 7: 3–5 examples at the learner's level.
         final recommended = _examples();
@@ -898,15 +908,16 @@ class FlashcardBack extends StatelessWidget {
                       ),
                     if (entry.language == 'en')
                       for (final accent in const ['en-GB', 'en-US'])
-                      IconButton(
-                        tooltip: accent == 'en-GB' ? '播放英式發音' : '播放美式發音',
-                        onPressed: () => playAccent(context, entry, accent),
-                        icon: Column(mainAxisSize: MainAxisSize.min, children: [
-                          const Icon(Icons.volume_up_outlined),
-                          UiText(accent == 'en-GB' ? '英式' : '美式',
-                              style: MFont.caption),
-                        ]),
-                      ),
+                        IconButton(
+                          tooltip: accent == 'en-GB' ? '播放英式發音' : '播放美式發音',
+                          onPressed: () => playAccent(context, entry, accent),
+                          icon:
+                              Column(mainAxisSize: MainAxisSize.min, children: [
+                            const Icon(Icons.volume_up_outlined),
+                            UiText(accent == 'en-GB' ? '英式' : '美式',
+                                style: MFont.caption),
+                          ]),
+                        ),
                   ],
                 ),
               ),

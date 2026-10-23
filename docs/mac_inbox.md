@@ -1143,7 +1143,7 @@ commit `c1207cc8`（Windows：flutter analyze 無 error、00:57 +571 ~2: All tes
 - 卡 #539：問題回報 #579：同一詞性裡「第二詞源」的常用義項全被標低優先、沒有中文：second 的「秒」、tip 的「小費」、
   結果：第二詞源的常用義項不再被藏：637 字／1,655 個義項拿掉 etymology-N 標籤（A1–B1 1,040），「已確立卻被藏」從 502 降到 2，有中文的從 878 增加到 1,035；還有 557 個義項（282 字）缺中文，要等 Qwen 恢復後補（Qwen 目前暫停）。golden 與 QC 都沒有退
 
-## M84（2026-10-23 18:00）狀態：待做（owner 優先）
+## M84（2026-10-23 18:00）狀態：完成
 owner 實際用 iPhone 時，App 裡**看不到「照片辨識連線」設定**，回報的問題也沒送到問題回報頁，看起來手機上是舊版。
 1. 等 iPhone 接上 Mac（有線或同一 Wi-Fi），用 `git pull` 後的最新 main 裝到 owner 的 iPhone。用 `flutter build ios --release --dart-define-from-file=iphone.json` 加 `flutter install`，或 `flutter run --release`，這樣拔線後也能用；不要用 debug 版。
 2. 確認新版：設定 → 進階設定 → 照片辨識連線 看得到「掃描 QR code」；每一頁右上角有「意見回饋」鈕（#587）。
