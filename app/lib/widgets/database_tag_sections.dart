@@ -43,7 +43,7 @@ class DatabaseTagSections extends StatelessWidget {
       for (final l in (image['labels'] as List? ?? []))
         if (l is Map &&
             l['lexeme_id'] is num &&
-            (l['point'] as List? ?? []).length >= 2)
+            databaseLabelPoint(l) != null)
           (l['lexeme_id'] as num).toInt()
     };
     return [

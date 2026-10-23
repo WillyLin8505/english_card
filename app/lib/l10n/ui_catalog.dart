@@ -1043,9 +1043,9 @@ const _templateCopy = <String, (String, String)>{
     'Exporter vers Anki : choisir'
   ),
   '正在建立 Anki 匯入檔…': ('Creating the Anki file…', 'Création du fichier Anki…'),
-  '產生 Anki 可匯入的檔案（含照片、發音與授權標示），用分享存出。': (
-    'Creates a file Anki can import (with photos, pronunciation and license credits) and shares it.',
-    'Crée un fichier importable dans Anki (photos, prononciation et licences) et le partage.'
+  '把單字卡連同照片和發音存成 Anki 檔，可以存到檔案或傳到其他 App。': (
+    'Saves your word cards with photos and pronunciation as an Anki file you can save to Files or send to another app.',
+    'Enregistre vos cartes avec photos et prononciation dans un fichier Anki, à garder dans Fichiers ou envoyer à une autre app.'
   ),
   '這個範圍沒有單字可以匯出': ('No words to export here', 'Aucun mot à exporter ici'),
   // 備份與還原 (問題回報 #278)

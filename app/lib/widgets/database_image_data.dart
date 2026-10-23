@@ -124,6 +124,28 @@ String? databaseTagLevel(Map<String, dynamic> tag, LexiconPack pack) {
 
 /// The tag's level is a frequency estimate, not from the CEFR-J / Octanove
 /// lists (問題回報 #139 decision: 標「估算」; #132 noodle C1).
+/// Where a catalog label's pin goes, or null when it has no usable point.
+/// The model's "middle of the picture" (0.5, 0.5) becomes the middle of its
+/// box. Card #225 round 160: 517 labels on 124 photos sit at (0, 0) — the
+/// tagger's "don't know" — and drew a pile of pins in the top-left corner
+/// (47 photos had every pin there); without a box they count as no point.
+(double, double)? databaseLabelPoint(Map l) {
+  final point = [
+    for (final v in (l['point'] as List? ?? [])) (v as num).toDouble()
+  ];
+  if (point.length < 2) return null;
+  final box = [
+    for (final v in (l['box'] as List? ?? [])) (v as num).toDouble()
+  ];
+  final x = point[0], y = point[1];
+  final centre = (x == 0.5 && y == 0.5) || (x == 0 && y == 0);
+  if (centre && box.length == 4) {
+    return ((box[0] + box[2]) / 2, (box[1] + box[3]) / 2);
+  }
+  if (x == 0 && y == 0) return null;
+  return (x, y);
+}
+
 bool databaseTagEstimated(Map<String, dynamic> tag, LexiconPack pack) {
   final source = tag['cefr_source'];
   if (source != null) {
@@ -198,19 +220,9 @@ List<PinData> databasePins(Map<String, dynamic> image, LexiconPack pack,
   ];
   final pins = <PinData>[];
   for (final l in labels) {
-    final point = [
-      for (final v in (l['point'] as List? ?? [])) (v as num).toDouble()
-    ];
-    if (point.length < 2) continue;
-    var x = point[0], y = point[1];
-    final box = [
-      for (final v in (l['box'] as List? ?? [])) (v as num).toDouble()
-    ];
-    if (box.length == 4 && x == 0.5 && y == 0.5) {
-      // The model's "middle of the picture": the middle of its box instead.
-      x = (box[0] + box[2]) / 2;
-      y = (box[1] + box[3]) / 2;
-    }
+    final point = databaseLabelPoint(l);
+    if (point == null) continue;
+    final x = point.$1, y = point.$2;
     final id = (l['lexeme_id'] as num?)?.toInt();
     final entry = id == null ? null : pack.byId(id);
     // Card #496 round 7: 26 French photos label one spelling twice (vert

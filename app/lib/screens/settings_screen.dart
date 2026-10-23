@@ -420,8 +420,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 14, FontWeight.w700, MColors.success),
                           ),
                           const SizedBox(height: 6),
+                          // The language prefix only tells learners which
+                          // language's data this is when there is more than
+                          // one to choose from (問題回報 #572, like #474).
                           _note(
-                              '${ui(context, supportedLanguages[repo.language]!)}：'
+                              '${availableLearningLanguages.length > 1 ? '${ui(context, supportedLanguages[repo.language]!)}：' : ''}'
                               '${formatCount(repo.wordCount)} 個單字 · '
                               '${formatCount(repo.photoCount)} 張照片 · '
                               '已學會 ${formatCount(profile.learned.length)} 個'),
