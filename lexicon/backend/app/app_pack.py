@@ -50,7 +50,10 @@ def build(db_path: Path) -> dict:
         by_lex[r["lexeme_id"]]["pronunciations"].append({
             "kind": r["kind"], "value": r["value"], "accent": r["accent"],
             "default": bool(r["is_default"]), "audio": a["path"] if a else None,
-            "license": a["license"] if a else None, "attribution": a["attribution"] if a else None})
+            "license": a["license"] if a else None, "attribution": a["attribution"] if a else None,
+            # 問題回報 #688: the App shows who recorded it and where from (#657).
+            "speaker": a.get("speaker") if a else None,
+            "source_page": a.get("source_page") if a else None})
     for r in q("SELECT e.*, t.text AS translation, t.is_ai FROM examples e LEFT JOIN"
                " example_translations t ON t.example_id = e.id ORDER BY e.lexeme_id, e.ordinal"):
         by_lex[r["lexeme_id"]]["examples"].append({
