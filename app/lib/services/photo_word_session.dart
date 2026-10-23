@@ -398,6 +398,26 @@ class PhotoWordSession extends ChangeNotifier {
     return w;
   }
 
+  /// 長按辨識 (問題回報 #616): a word the AI found at [at], pinned there.
+  /// The learner chose it (like 自己加字), but its meaning stays the
+  /// pack's / AI's, not one the learner typed. A word already on the
+  /// photo moves to [at].
+  SessionWord addFound(WordCandidate found, LabelPoint at) {
+    final existing = words.where((w) => w.word == found.word).firstOrNull;
+    if (existing != null) {
+      move(existing, at);
+      return existing;
+    }
+    final c = (pack.isEmpty ? found : pack.link(found)).copyWith(point: at);
+    _rejected.remove(c.word);
+    _removed.remove(c.word);
+    final w = SessionWord(c, at, added: true, placed: true);
+    words.add(w);
+    _dirty = true;
+    notifyListeners();
+    return w;
+  }
+
   void move(SessionWord w, LabelPoint anchor) {
     w.anchor = anchor;
     w.placed = true;

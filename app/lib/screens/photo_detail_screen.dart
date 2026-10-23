@@ -9,8 +9,10 @@ import 'package:share_plus/share_plus.dart';
 import '../app/app_scope.dart';
 import '../models/learning_card.dart';
 import '../models/photo.dart';
+import '../models/word_candidate.dart';
 import '../models/word_entry.dart';
 import '../services/lexicon_pack.dart';
+import '../services/photo_intake.dart' show TaggingNotConfigured;
 import '../services/photo_word_session.dart';
 import '../services/word_database_repository.dart';
 import '../services/word_selector.dart';
@@ -64,6 +66,9 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
 
   /// An added word waiting for a tap on the photo to get its pin.
   SessionWord? _placing;
+
+  /// 長按辨識 (問題回報 #616): the spot the AI is looking at.
+  LabelPoint? _scanning;
   final _photoKey = GlobalKey();
 
   /// 問題回報：Mac 實機量測照片詳情開啟 114ms（M-PERF）: the whole page in its
@@ -318,6 +323,91 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
     });
   }
 
+  /// 長按辨識 (問題回報 #616): long-press anywhere on the photo → that part
+  /// of the picture goes to the AI → the learner picks the word → it is
+  /// pinned at that spot (and saved like 自己加字).
+  Future<void> _recognizeAt(Photo photo, LabelPoint at) async {
+    if (_scanning != null) return;
+    final scope = AppScope.of(context);
+    setState(() => _scanning = at);
+    List<WordCandidate> found;
+    try {
+      found = await scope.queue.recognizeSpot(photo, at);
+    } on TaggingNotConfigured {
+      if (mounted) {
+        showToast(context, '還沒設定照片辨識：到 設定 → 進階設定 → 照片辨識連線');
+      }
+      return;
+    } catch (e) {
+      debugPrint('長按辨識失敗: $e');
+      if (mounted) showToast(context, '辨識失敗，請檢查網路後再試');
+      return;
+    } finally {
+      if (mounted) setState(() => _scanning = null);
+    }
+    if (!mounted) return;
+    final session = _session;
+    if (session == null) return;
+    final onPhoto = {for (final w in session.words) w.word};
+    final choices = found.take(6).toList();
+    final picked = await showModalBottomSheet<Object>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ListTile(
+                title: UiText(choices.isEmpty ? 'AI 在這裡沒有認出東西' : 'AI 在這裡看到',
+                    style: MFont.manrope(16, FontWeight.w800, MColors.ink)),
+                subtitle: UiText(choices.isEmpty
+                    ? '可以換個位置再長按，或自己輸入。'
+                    : '選一個字，就會在你長按的位置加上標籤。'),
+              ),
+              for (final c in choices)
+                ListTile(
+                  key: ValueKey('spot-${c.word}'),
+                  title: Text('${displayWord(c.word)}　${c.meaning}',
+                      style: MFont.manrope(15, FontWeight.w700, MColors.ink)),
+                  subtitle: UiText(onPhoto.contains(c.word)
+                      ? '已在照片上，選它會移到這裡'
+                      : levelLabel(c.level)),
+                  trailing: UiText(onPhoto.contains(c.word) ? '移到這裡' : '加入',
+                      style:
+                          MFont.manrope(14, FontWeight.w800, MColors.primary)),
+                  onTap: () => Navigator.pop(context, c),
+                ),
+              ListTile(
+                leading: const Icon(Icons.edit_outlined),
+                title: const UiText('都不是，自己輸入'),
+                onTap: () => Navigator.pop(context, 'manual'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (picked == null || !mounted) return;
+    if (picked is WordCandidate) {
+      final w = session.addFound(picked, at);
+      showToast(context, '已在這個位置加上「${displayWord(w.word)}」');
+      return;
+    }
+    final result = await showLabelDialog(
+      context,
+      title: '自己加字',
+      hint: '中文可以留空，會用詞庫的意思。',
+    );
+    if (result == null || !mounted) return;
+    final word = LexiconPack.normalize(result.word);
+    final level = scope.lexicon
+        .resolve(word, word.contains(' ') ? 'phrase' : 'noun')
+        .level;
+    session.add(word: word, meaning: result.zh, level: level, at: at);
+  }
+
   void _placeAt(LabelPoint at) {
     final w = _placing;
     if (w == null) return;
@@ -483,6 +573,8 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
         if (w != null) session.move(w, to);
       },
       onPhotoTap: _placing == null ? null : _placeAt,
+      onPhotoLongPressAt: (at) => _recognizeAt(photo, at),
+      scanning: _scanning,
       overlay: _overlayFor(photo, session),
       revealNew: true,
     );
@@ -590,16 +682,24 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // 問題回報 #438: adding a missed word comes after reading the list.
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton.icon(
-                    key: const ValueKey('add-word'),
-                    onPressed: _addWord,
-                    icon: const Icon(Icons.add_rounded, size: 18),
-                    label: UiText('自己加字',
-                        style: MFont.manrope(
-                            13, FontWeight.w800, MColors.primary)),
-                  ),
+                Row(
+                  children: [
+                    TextButton.icon(
+                      key: const ValueKey('add-word'),
+                      onPressed: _addWord,
+                      icon: const Icon(Icons.add_rounded, size: 18),
+                      label: UiText('自己加字',
+                          style: MFont.manrope(
+                              13, FontWeight.w800, MColors.primary)),
+                    ),
+                    // 問題回報 #616: the other way to add a word.
+                    Expanded(
+                      child: UiText('或在照片上長按，讓 AI 認那個位置',
+                          maxLines: 2,
+                          style: MFont.manrope(
+                              12, FontWeight.w600, MColors.muted)),
+                    ),
+                  ],
                 ),
                 // 問題回報 #451: the list's shortcuts sit under the words too, so
                 // the first word is the first thing under the list title.

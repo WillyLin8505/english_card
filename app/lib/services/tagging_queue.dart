@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../models/learning_card.dart';
 import '../models/photo.dart';
 import '../models/word_candidate.dart';
 import '../models/word_entry.dart';
@@ -9,6 +10,7 @@ import 'app_settings.dart';
 import 'cefr_lexicon.dart';
 import 'lexicon_pack.dart';
 import 'photo_intake.dart';
+import 'spot_crop.dart';
 import 'tagging_service.dart';
 import 'text_scan.dart';
 import 'word_database_repository.dart';
@@ -247,7 +249,8 @@ class TaggingQueue extends ChangeNotifier {
       if (latest != null) {
         repo.updatePhoto(latest.copyWith(
           taggingStatus: offline ? TaggingStatus.pending : TaggingStatus.failed,
-          taggingError: () => describeTaggingError(e, settings.taggingUrl, showUrl: false),
+          taggingError: () =>
+              describeTaggingError(e, settings.taggingUrl, showUrl: false),
         ));
       }
       debugPrint('Tagging ${photo.id} failed: $e');
@@ -271,8 +274,8 @@ class TaggingQueue extends ChangeNotifier {
     final mode = focus == null ? photo.scanMode : PhotoScanMode.objects;
     final objects = mode.findsObjects &&
         (mode == PhotoScanMode.objects || settings.taggingConfigured);
-    final text = mode.findsText &&
-        (mode == PhotoScanMode.text || TextScan.available);
+    final text =
+        mode.findsText && (mode == PhotoScanMode.text || TextScan.available);
     if (!objects && !text) throw TaggingNotConfigured();
     final bytes = await intake.bytesOf(photo);
     if (bytes == null) throw TaggingApiException('這張照片沒有影像可以辨識');
@@ -284,6 +287,20 @@ class TaggingQueue extends ChangeNotifier {
         ...await _ask(intake.createTextTagger(), bytes,
             level: level, exclude: exclude),
     ];
+  }
+
+  /// 長按辨識 (問題回報 #616): what is at [at] on [photo]. The picture
+  /// around that spot is cut out and sent to the recognizer on its own, at
+  /// the photo's level; the learner picks a word and it is pinned there.
+  Future<List<WordCandidate>> recognizeSpot(Photo photo, LabelPoint at) async {
+    if (!settings.taggingConfigured) throw TaggingNotConfigured();
+    final bytes = await intake.bytesOf(photo);
+    if (bytes == null) throw TaggingApiException('這張照片沒有影像可以辨識');
+    final crop = await cropAround(bytes, at);
+    final repo = repository();
+    final level = cefrLevels[(repo.profile.level + photo.difficultyOffset)
+        .clamp(0, cefrLevels.length - 1)];
+    return _ask(_objectTagger(), crop, level: level);
   }
 
   /// Whether [photo] can be recognized now: things in the picture need a

@@ -2,6 +2,35 @@
 /// content. Missing keys/languages deliberately retain the original copy.
 const uiCatalog = <String, (String, String)>{
   '意見回饋': ('Feedback', 'Commentaires'),
+  // 長按辨識 (問題回報 #616).
+  'AI 在這裡看到': ('The AI sees here', 'L’IA voit ici'),
+  'AI 在這裡沒有認出東西': ('The AI found nothing here', 'L’IA n’a rien reconnu ici'),
+  '可以換個位置再長按，或自己輸入。': (
+    'Long-press another spot, or type the word yourself.',
+    'Appuyez longuement ailleurs, ou saisissez le mot vous-même.'
+  ),
+  '選一個字，就會在你長按的位置加上標籤。': (
+    'Pick a word to label the spot you pressed.',
+    'Choisissez un mot pour étiqueter l’endroit touché.'
+  ),
+  '已在照片上，選它會移到這裡': (
+    'Already on the photo; picking it moves it here',
+    'Déjà sur la photo ; le choisir le déplace ici'
+  ),
+  '移到這裡': ('Move here', 'Déplacer ici'),
+  '都不是，自己輸入': ('None of these, type it', 'Aucun, saisir le mot'),
+  '或在照片上長按，讓 AI 認那個位置': (
+    'or long-press the photo to have the AI read that spot',
+    'ou appuyez longuement sur la photo pour que l’IA lise cet endroit'
+  ),
+  '還沒設定照片辨識：到 設定 → 進階設定 → 照片辨識連線': (
+    'Photo recognition isn’t set up: Settings → Advanced → Photo recognition',
+    'Reconnaissance non configurée : Réglages → Avancé → Reconnaissance des photos'
+  ),
+  '辨識失敗，請檢查網路後再試': (
+    'Recognition failed; check your connection and try again',
+    'Échec de la reconnaissance ; vérifiez la connexion et réessayez'
+  ),
   '已送出，謝謝你的意見': ('Sent, thank you', 'Envoyé, merci'),
   '會一併附上目前頁面、App 版本與學習語言。': (
     'The current page, app version and learning language are attached.',
@@ -606,7 +635,10 @@ const uiCatalog = <String, (String, String)>{
   '單字集': ('Word deck', 'Jeu de mots'),
   '張': ('photos', 'photos'),
   '字': ('words', 'mots'),
-  'English Card 編輯部': ('English Card Editors', 'Équipe éditoriale English Card'),
+  'English Card 編輯部': (
+    'English Card Editors',
+    'Équipe éditoriale English Card'
+  ),
   '去拍照選單字': (
     'Take a photo to find words',
     'Photographier pour trouver des mots'
@@ -659,10 +691,7 @@ const uiCatalog = <String, (String, String)>{
     'Voir les mots des photos récentes'
   ),
   '查看這張照片的單字': ('View words in this photo', 'Voir les mots de cette photo'),
-  '最近一張照片的單字': (
-    'Words in your last photo',
-    'Mots de votre dernière photo'
-  ),
+  '最近一張照片的單字': ('Words in your last photo', 'Mots de votre dernière photo'),
   '開啟最近的照片': ('Open recent photo', 'Ouvrir la photo récente'),
   '正在讀取最近照片…': ('Loading recent photos…', 'Chargement des photos récentes…'),
   '還沒有照片，先拍一張吧！': (
@@ -672,7 +701,10 @@ const uiCatalog = <String, (String, String)>{
   '相機未啟用': ('Camera is off', 'Appareil photo désactivé'),
   '正在開啟相機…': ('Opening camera…', 'Ouverture de l’appareil photo…'),
   '目前無法使用相機': ('Camera is unavailable', 'Appareil photo indisponible'),
-  '相機權限未開啟': ('Camera permission is off', 'Autorisation de l’appareil photo désactivée'),
+  '相機權限未開啟': (
+    'Camera permission is off',
+    'Autorisation de l’appareil photo désactivée'
+  ),
   '開啟權限說明': ('How to enable permission', 'Comment activer l’autorisation'),
   '請到手機「設定」→ 找到本 App → 開啟「相機」權限，再回來按「重試相機」。': (
     'Open Settings, find this app, turn on Camera access, then come back and tap “Retry camera”.',
@@ -747,8 +779,14 @@ const uiCatalog = <String, (String, String)>{
     'Lock (keep when adjusting difficulty)',
     'Verrouiller (conserver lors du réglage)'
   ),
-  '正在找照片裡的單字…': ('Finding words in the photo…', 'Recherche de mots dans la photo…'),
-  '正在讀照片裡的文字…': ('Reading the text in the photo…', 'Lecture du texte de la photo…'),
+  '正在找照片裡的單字…': (
+    'Finding words in the photo…',
+    'Recherche de mots dans la photo…'
+  ),
+  '正在讀照片裡的文字…': (
+    'Reading the text in the photo…',
+    'Lecture du texte de la photo…'
+  ),
   '處理中…': ('Processing…', 'Traitement…'),
   '補充候選詞…': ('Finding more candidates…', 'Recherche d’autres mots…'),
   '正在整理單字內容…': ('Preparing word content…', 'Préparation des mots…'),
@@ -917,6 +955,7 @@ class _UiTemplate {
 }
 
 const _templateCopy = <String, (String, String)>{
+  '已在這個位置加上「{0}」': ('Added “{0}” here', '« {0} » ajouté ici'),
   '全部加入（{0}）': ('Add all ({0})', 'Tout ajouter ({0})'),
   '已加入 {0} 個單字': ('{0} words added', '{0} mots ajoutés'),
   '顯示更多（{0}）': ('Show more ({0})', 'Afficher plus ({0})'),
