@@ -726,3 +726,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
 |----|----|----|----|----|
 | #616 長按辨識（卡 #567 理解錯，Mac 重做） | 通過 | Mac 8a8e4e2a：照片詳情長按任何位置 → 該點轉圈 → 切出那一塊送 AI 辨識（伺服器或手機內建）→「AI 在這裡看到」清單（最多 6 個，附等級）→ 選一個就在長按位置加標籤和單字；已在照片上的字會移到這裡；可選「都不是，自己輸入」；沒設定辨識時提示去設定。移除 #567 的長按既有點顯示字。新增英法翻譯與 long_press_recognize_test 3 項；flutter test 579 過。photo_detail_screen.dart、photo_widgets.dart 的長按程式改完了，Windows 可解除凍結。已裝到 owner 的 iPhone，等 owner 實際試用 | — | — |
+
+## 2026-10-23 M88
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| 卡 #571 flutter test 修正 | 通過 | Mac 在 main 8a8e4e2a 上：flutter test 579 過／3 skip／0 失敗，analyze 0 error（screens_test.dart 有 1 個既有 unused_import warning） | — | — |
