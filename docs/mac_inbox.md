@@ -1622,3 +1622,8 @@ commit `c4e4d3b1`（Windows：flutter analyze 無 error、02:26 +636 ~2: All tes
 在模擬器下載進階單字 C1／C2，檢查相片冊與複習頁的單字集格子，並在 owner 的 iPhone 確認。
 
 剩下：C1 抽查顯示 CEFR 分級本身有少數怪字（如 removed、jersey 列 C1），屬分級來源問題，未擴大範圍。
+
+## M137（2026-10-24 02:09）狀態：待做
+commit `d91555fb`（Windows：flutter analyze 無 error、01:27 +644 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #604：問題回報 #678：[owner] 基礎 3000 字的 C1（35 字）、C2（4 字）切片太小，看起來像壞掉
+  結果：全部完成：新增「進階單字・C1」「進階單字・C2」各 400 字（有中文、例句、發音、圖），並把 basic-3000-c1（35 字）、basic-3000-c2（4 字）下架。
