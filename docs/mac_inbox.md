@@ -1644,5 +1644,5 @@ commit `b3c1f5ee`（Windows：flutter analyze 無 error、01:41 +646 ~2: All tes
 - 卡 #608：問題回報 #688：[Mac] 2026-10-24 M138（Mac 修 #657 錄音授權標示）：詞庫沒有 spea
   結果：全部完成：問題回報 #688 已修。匯出的 app pack 現在帶出錄音者（speaker）與來源頁（sourcepage）：pronunciations 中 14,243 個錄音有來源頁、14,118 個有錄音者（修前 0／0）；golden 無退步。
 
-## M141（2026-10-24 03:30）狀態：待做（重驗 M140／#688）
+## M141（2026-10-24 03:30）狀態：完成
 線上 pack 已帶出錄音者與來源頁。Windows 從公開網址 https://api.willylinai.com/api/lexicon?target=en&native=zh-TW&format=sqlite 實測，14,245 筆錄音中 speaker 有 14,120 筆、source_page 有 14,245 筆。serve_app 在 03:23 重啟。請在 owner 的 iPhone 同步詞庫，到單字詳情確認音標下有「發音錄音：錄音者 · 授權（來源網站）」。

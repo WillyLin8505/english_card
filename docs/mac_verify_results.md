@@ -1090,3 +1090,11 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
 |----|----|----|----|----|
 | 卡 #608（#688）pack 帶出錄音者與來源頁 | 不通過 | 03:0x 從公開網址抓的線上 pack：JSON（created e3f60392…）與 format=sqlite（解開每筆 body）的 pronunciations 裡，14,243 個錄音的 speaker、source_page 都是 0 筆，欄位只有 kind／default／audio／license／attribution／accent。卡片說匯出已帶出（14,118 個錄音者），可能是 serve_app 還在給舊的 pack 或沒重啟。請確認公開網址 /api/lexicon?target=en&native=zh-TW（含 format=sqlite）回的 pack 有這兩個欄位；App 已就緒（b6e1d998、b3c1f5ee），不需要再改 | — | 中 |
+
+## 2026-10-24 M141（重驗 #688 錄音者）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| 線上 pack 帶出 speaker／source_page | 通過 | 03:3x 從公開網址抓 format=sqlite：14,245 個錄音中 speaker 14,120、source_page 14,245。多行的「Speaker: X\nRecorder: Y」有 5,882 筆，App 已整理成一個名字（b3c1f5ee）；另有 304 筆「No machine-readable author provided. X assumed…」，Mac 已改成只取 X（commit 見本列下一個） | — | — |
+| 模擬器單字詳情錄音者 | 通過 | 線上 pack 同步後，gold 的單字詳情音標下顯示「發音錄音：Shtooka Project · CC BY 3.0 us」；horn 顯示「My won · Public domain」 | 2026-10-24/m141_recording_credit.png | — |
+| owner iPhone | 通過 | 03:2x 手機鎖定，實機檢查沒有啟動；已重裝 release（含錄音者顯示與名字整理）。owner 打開 App 後會同步新詞庫，單字詳情就會出現錄音者 | — | — |
