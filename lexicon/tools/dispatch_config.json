@@ -131,5 +131,6 @@
     "ignore_tasks": []
   },
   "_serve_app_reload_note": "卡 #522／owner 決定 #553＝A：serve_app 只在啟動時載入 lexicon/backend/app、lexicon/quality、serve_app.py、lexicon_transport.py。每 10 分鐘查一次，程式內容變了且 15 分鐘沒再改、改程式時就在跑的 CLI 都做完（最多等 6 小時）、沒有用 8123 的卡（busy_tasks＝模擬使用者）在跑，就重啟 serve_app；等超過 3 小時在 digest 出 ⚠。",
-  "hold_new_launches": true
+  "hold_new_launches": true,
+  "hold_allow_owner": true
 }

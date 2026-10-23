@@ -811,7 +811,7 @@ class Tick:
             taken.add(c["key"])
             self.launch(agent, c)
 
-    def swarm(self, board: dict) -> set:
+    def swarm(self, board: dict, owner_only: bool = False) -> set:
         """Each open 問題回報 card → its own new Claude CLI (owner, 2026-10-18)."""
         cfg = self.cfg.get("issue_swarm") or {}
         if not cfg.get("enabled"):
@@ -899,6 +899,8 @@ class Tick:
             return any(reporters.get(i, "").startswith(("owner", "App 使用者")) for i in ids)
 
         issues.sort(key=lambda c: not from_owner(c))
+        if owner_only:
+            issues = [c for c in issues if from_owner(c)]
         extra = int(cfg.get("owner_extra", 5))
         taken = set()
         for c in issues:
@@ -1078,7 +1080,11 @@ class Tick:
                 log(f"mac_results_to_issues failed: {e}")
         if self.cfg.get("hold_new_launches"):
             # owner 10/23 「現有的事情做完就先不要再派新的」: finish and collect, launch nothing
-            log("hold_new_launches: collecting only, no new CLIs")
+            log("hold_new_launches: collecting only, no new CLIs"
+                + ("; owner's own reports still go out" if self.cfg.get("hold_allow_owner") else ""))
+            if self.cfg.get("hold_allow_owner"):
+                # owner 10/23: 「只派我這 6 筆回報，其他維持暫停」
+                self.swarm(board, owner_only=True)
         else:
             swarmed = self.swarm(board)
             if swarmed and not self.dry:
