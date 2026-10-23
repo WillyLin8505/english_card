@@ -12,7 +12,7 @@ from sqlalchemy import func, select
 
 from .. import catalog, config
 from ..text import example_key, fold, tokens
-from .base import Candidate, Context, SourceAdapter
+from .base import Candidate, Context, SourceAdapter, form_bases
 
 CEFR_FILE = config.REPO / "app" / "assets" / "cefr_en.json"
 OXFORD_EXTRA = Path(__file__).resolve().parents[1] / "oxford5000_extra.json"
@@ -886,13 +886,79 @@ def word_level(word: str, language: str = "en") -> str:
     return capped_frequency_level(w, fr_zipf(w) if language == "fr" else _zipf(w, language), language)
 
 
+# Kaikki tags of a conjugation nobody meets in an example sentence: the past
+# historic (je vis = voir) and a form that is only subjunctive (qu'il fonde =
+# fondre). Such a use of another verb does not make the form ambiguous.
+_FR_RARE_USE_TAGS = {"historic", "dialectal", "regional"}
+
+
+@lru_cache(maxsize=20_000)
+def _fr_form_verbs(form: str) -> tuple[tuple[str, bool], ...]:
+    """The verbs French Wiktionary conjugates ``form`` from, with whether
+    that use is a common one: suis → (être, True), (suivre, True); vis →
+    (vivre, True), (voir, False — past historic). Empty without the Kaikki
+    index."""
+    from .. import kaikki_index
+    out: dict[str, bool] = {}
+    for e in kaikki_index.lookup("fr", form) or []:
+        if str(e.get("word", "")).lower() != form or e.get("pos") != "verb":
+            continue
+        for s in e.get("senses") or []:
+            tags = set(s.get("tags") or [])
+            # A regional (Louisiana été = aller), dated or dialectal use is
+            # no competitor either.
+            regional = any(t[:1].isupper() for t in tags)
+            common = not (tags & (_FR_RARE_USE_TAGS | RARE_SENSE_LABELS)) and not regional and not (
+                "subjunctive" in tags and not tags & {"indicative", "imperative"})
+            for b in form_bases(s):
+                b = b.strip().lower()
+                if b:
+                    out[b] = out.get(b, False) or common
+    return tuple(sorted(out.items()))
+
+
+def fr_shared_verb_forms(lemma: str, verb_forms) -> frozenset[str]:
+    """Conjugations of ``lemma`` that another verb, at least a fifth as
+    frequent, uses in a common tense (問題回報 #582): suivre's « suis » is
+    almost always être, so it finds and matches no example sentence. être
+    keeps « suis » (suivre is far rarer); vivre keeps « vis » (voir's use is
+    the past historic); the infinitive is never shared away."""
+    lemma = (lemma or "").lower()
+    own = fr_zipf(lemma)
+    shared = set()
+    for f in verb_forms:
+        f = (f or "").lower()
+        if not f or f == lemma or " " in f:
+            continue
+        for base, common in _fr_form_verbs(f):
+            if not common or base == lemma or fold(base) == fold(lemma):
+                continue
+            if fr_zipf(base) >= own - 0.7:  # the other verb ≥ 1/5 as frequent
+                shared.add(f)
+                break
+    return frozenset(shared)
+
+
+def _fr_shared_forms(ctx: Context) -> frozenset[str]:
+    """fr_shared_verb_forms for this run's verb-form items."""
+    if getattr(ctx, "target", None) != "fr":
+        return frozenset()
+    verb_forms = {(i.get("form") or "").lower() for k in catalog.INFLECTION_FIELDS
+                  if catalog.FORM_POS.get(k) == "verb" for i in ctx.items(k)}
+    return fr_shared_verb_forms(ctx.lemma, verb_forms)
+
+
 def word_forms(ctx: Context) -> frozenset[str]:
-    """The headword and its inflected forms, lower case."""
+    """The headword and its inflected forms, lower case. For French, a
+    conjugation another frequent verb shares (suivre's suis, 問題回報 #582)
+    is left out: it would find that verb's sentences."""
     forms = {ctx.lemma.lower()}
+    shared = _fr_shared_forms(ctx)
     for k in catalog.INFLECTION_FIELDS:
         for i in ctx.items(k):
             if i.get("form") and (ctx.target != "en" or plausible_form(ctx.lemma, i["form"])):
-                forms.add(i["form"].lower())
+                if i["form"].lower() not in shared:
+                    forms.add(i["form"].lower())
     if ctx.target == "en" and " " not in ctx.lemma:
         w = ctx.lemma.lower()
         stem = w[:-1] if w.endswith("e") else w
@@ -1123,7 +1189,8 @@ def _verb_only_forms(ctx: Context) -> frozenset[str]:
                 # English verb_* and French fr_present_* / fr_past_participle.
                 is_verb = catalog.FORM_POS.get(k) == "verb" and k != "verb_base"
                 (verb if is_verb else other).add(form)
-    return frozenset(verb - other)
+    # suivre's « suis » is être's too (問題回報 #582): not a form to match on.
+    return frozenset(verb - other - _fr_shared_forms(ctx))
 
 
 # French determiners before a noun: la maison, une maison, ma maison, à la

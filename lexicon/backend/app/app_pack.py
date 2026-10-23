@@ -111,6 +111,7 @@ def build(db_path: Path) -> dict:
     quality.apply_decisions(pack)  # owner decision #191
     move_compound_synonyms(pack)  # #400 / card 413
     hide_minor_sense_synonyms(pack)  # #466 / card 481
+    fix_confusable_glosses(pack)  # #581 / card 541
     drop_unlisted_confusables(pack)  # #457 / card 462
     from .picture_need import assign_picture_ids
     assign_picture_ids(pack["lexemes"])
@@ -118,6 +119,54 @@ def build(db_path: Path) -> dict:
 
 
 _CONFUSABLE_RELATIONS = ("near_homophones", "similar_spelling")
+_GLOSS_SPLIT = re.compile(r"[、，,；;/]")
+_GLOSS_NOISE = re.compile(r"[\s。．.「」『』\"'“”()（）]")
+
+
+def _gloss_keys(text: str | None) -> list[str]:
+    return [k for k in (_GLOSS_NOISE.sub("", p) for p in _GLOSS_SPLIT.split(text or "")) if k]
+
+
+def fix_confusable_glosses(pack: dict) -> int:
+    """「容易混淆的字」 Chinese is the other word's main meaning (問題回報 #581, card 541).
+    A chip whose Chinese is not among the first three senses of the other spelling's main
+    part of speech (usage_rank 0) shows a rare sense there: page→pale 「柵欄」 (pale is mainly
+    「蒼白」), sea→set 「日落」. Such a chip takes that entry's first sense instead. A chip
+    that would then equal the headword's own meaning is hidden (#420), and a chip whose
+    target has no Chinese yet keeps its text. The database rows are not touched."""
+    main_by_spelling: dict[str, dict] = {}
+    for lx in pack.get("lexemes", []):
+        if lx.get("status") == "full" and lx.get("usage_rank") == 0:
+            main_by_spelling.setdefault(lx.get("normalized"), lx)
+    lexeme_by_id = {lx["id"]: lx for lx in pack.get("lexemes", [])}
+    changed = 0
+    for lx in pack.get("lexemes", []):
+        if lx.get("status") != "full" or not lx.get("relations"):
+            continue
+        head_keys = {k for sn in lx.get("senses") or [] for k in _gloss_keys(sn.get("native"))}
+        for r in lx["relations"]:
+            if r["relation"] not in _CONFUSABLE_RELATIONS or r.get("hide_by_default"):
+                continue
+            target = lexeme_by_id.get(r.get("lexeme_id"))
+            main = main_by_spelling.get(target.get("normalized")) if target else None
+            if main is None:
+                continue
+            top = [sn for sn in (main.get("senses") or [])[:3] if sn.get("native")]
+            first = next((sn for sn in main.get("senses") or [] if sn.get("native")), None)
+            if first is None:
+                continue
+            top_keys = {k for sn in top for k in _gloss_keys(sn["native"])}
+            chip = _gloss_keys(r.get("native"))
+            if chip and all(any(c == t or c in t or t in c for t in top_keys) for c in chip):
+                continue  # already a main meaning of the other word
+            if set(_gloss_keys(first["native"])) & head_keys:
+                r["hide_by_default"] = True  # the same meaning as the headword (#420)
+                r["detail"] = {**(r.get("detail") or {}), "hidden_reason": "same_meaning"}
+            r["native"], r["native_ai"] = first["native"], bool(first.get("native_ai"))
+            changed += 1
+    return changed
+
+
 
 
 def drop_unlisted_confusables(pack: dict) -> int:
