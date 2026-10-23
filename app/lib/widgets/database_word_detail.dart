@@ -86,6 +86,22 @@ class DatabaseWordScreen extends StatelessWidget {
           ]);
         }
 
+        // A part of speech with no Chinese yet is left out whole, and the
+        // section with it when no part of speech has any (stub words).
+        final meaningUsages = [
+          for (final usage in usages)
+            if (usage.senses
+                .any((sense) => (sense.native ?? '').trim().isNotEmpty))
+              usage,
+        ];
+        // 「包含待補齊單字」: a stub (pos unknown, no Chinese, no photo).
+        final stub = !word.full;
+        final noMeaning = (word.learnerMeaning ?? '').trim().isEmpty;
+        final headerLabel = '${[
+          if (word.entryType != 'word') entryTypeLabel(word.entryType),
+          if (word.pos != 'unknown') posLabel(word.pos)
+        ].join(' / ')}${word.cefr == null || word.rareUsage ? '' : ' · ${levelLabel(word.cefr!)}'}'
+            '${word.rareUsage ? ' · 罕見用法' : ''}';
         final images = databaseEntryImages(pack.catalogImages, word);
         final sharesNounPicture =
             word.pictureIds != null && word.pictureIds!.isEmpty;
@@ -95,27 +111,28 @@ class DatabaseWordScreen extends StatelessWidget {
             body: ListView(padding: const EdgeInsets.all(MSpace.md), children: [
               Text(word.lemma,
                   style: MFont.manrope(28, FontWeight.w800, MColors.ink)),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  // Flexible: 「動詞 · B2 進階 · 罕見用法」 + badge is wider
-                  // than a phone (390 px); the label wraps instead.
-                  Flexible(
-                    child: UiText(
-                        '${[
-                          if (word.entryType != 'word')
-                            entryTypeLabel(word.entryType),
-                          posLabel(word.pos)
-                        ].join(' / ')}${word.cefr == null || word.rareUsage ? '' : ' · ${levelLabel(word.cefr!)}'}'
-                        '${word.rareUsage ? ' · 罕見用法' : ''}',
-                        style: MFont.bodyMuted),
-                  ),
-                  if (word.cefr != null && !word.rareUsage) ...[
-                    const SizedBox(width: 8),
-                    LevelBadge(word.cefr!),
+              if (headerLabel.isNotEmpty ||
+                  (word.cefr != null && !word.rareUsage)) ...[
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    // Flexible: 「動詞 · B2 進階 · 罕見用法」 + badge is wider
+                    // than a phone (390 px); the label wraps instead.
+                    if (headerLabel.isNotEmpty)
+                      Flexible(
+                        child: UiText(headerLabel, style: MFont.bodyMuted),
+                      ),
+                    if (word.cefr != null && !word.rareUsage) ...[
+                      if (headerLabel.isNotEmpty) const SizedBox(width: 8),
+                      LevelBadge(word.cefr!),
+                    ],
                   ],
-                ],
-              ),
+                ),
+              ],
+              if (stub) ...[
+                const SizedBox(height: MSpace.xs),
+                UiText('這個字還在補齊資料', style: MFont.bodyMuted),
+              ],
               // 卡 #227 第 147 輪: the IPA in 設定's accent, like the audio.
               if (((pack.target ?? 'en') == 'en'
                       ? packAccentIpa(word, scope.settings.englishAccent)
@@ -158,17 +175,29 @@ class DatabaseWordScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: MSpace.md),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                    onPressed: () => addDatabaseWord(context, pack, word),
-                    child: const UiText('加入我的單字本與複習')),
-              ),
+              // Already collected: says so before any tap.
+              ListenableBuilder(
+                  listenable: scope.repository,
+                  builder: (context, _) {
+                    final collected = databaseWordCollected(context, word);
+                    return SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                          key: const ValueKey('database-add'),
+                          onPressed: collected
+                              ? null
+                              : () => addDatabaseWord(context, pack, word),
+                          child: UiText(collected
+                              ? '已在我的單字本 ✓'
+                              : noMeaning
+                                  ? '加入單字本（{N}補齊後排進複習）'
+                                  : '加入我的單字本與複習')),
+                    );
+                  }),
               const SizedBox(height: MSpace.md),
-              section('詞性與意思', [
-                for (final usage in usages)
-                  if (usage.senses.any(
-                      (sense) => (sense.native ?? '').trim().isNotEmpty)) ...[
+              if (meaningUsages.isNotEmpty)
+                section('詞性與意思', [
+                  for (final usage in meaningUsages) ...[
                     TagChip(posLabel(usage.pos)),
                     const SizedBox(height: 6),
                     // Common senses first, slang/obsolete last (卡 #227).
@@ -252,21 +281,24 @@ class DatabaseWordScreen extends StatelessWidget {
                             Text(usage.etymology!.native!, style: MFont.body),
                       ),
                 ]),
-              const SizedBox(height: MSpace.lg),
-              UiText('資料庫圖片（${images.length}）', style: MFont.titleSm),
-              const SizedBox(height: MSpace.xs),
+              // No photo: no empty 「資料庫圖片（0）」 section — one muted line,
+              // and nothing at all for a stub (its notice says it is pending).
+              if (images.isEmpty && !sharesNounPicture) ...[
+                if (!stub) ...[
+                  const SizedBox(height: MSpace.lg),
+                  UiText('資料庫尚未加入這個單字的圖片', style: MFont.caption),
+                ],
+              ] else ...[
+                const SizedBox(height: MSpace.lg),
+                UiText('資料庫圖片（${images.length}）', style: MFont.titleSm),
+                const SizedBox(height: MSpace.xs),
+              ],
               if (sharesNounPicture)
                 Container(
                   padding: const EdgeInsets.all(MSpace.lg),
                   decoration: MDecor.emptyStateCard(),
                   child: UiText('這個詞性顯示同拼法名詞的圖片。這個拼法沒有名詞。',
                       style: MFont.bodyMuted),
-                )
-              else if (images.isEmpty)
-                Container(
-                  padding: const EdgeInsets.all(MSpace.lg),
-                  decoration: MDecor.emptyStateCard(),
-                  child: UiText('資料庫尚未加入這個單字的圖片', style: MFont.bodyMuted),
                 ),
               for (final image in images)
                 Padding(
