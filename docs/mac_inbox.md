@@ -1496,3 +1496,10 @@ commit `5410b45d`（Windows：flutter analyze 無 error、02:17 +631 ~2: All tes
 commit `79113d59`（Windows：flutter analyze 無 error、02:06 +631 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #596：問題回報 #671：[給 Mac] [意見回饋] 照片詳情：我按多動詞的時候你要重新掃描並且給我動詞 其他的也是
   結果：資料端無法量測（0 筆可查）：#671 的照片 photo-1792753703603088 只存在 owner 的手機上，伺服器查不到，問題屬 App 畫面（需要 Mac：照片詳情「多動詞」重新掃描）。
+
+## M126（2026-10-24 01:11）狀態：待做（owner 回報，給 Mac）
+owner 在 iPhone 送出的回報（#626：App 畫面與互動由 Mac 修）。資料或伺服器的部分請寫「不通過」列交回 Windows。
+
+| # | 回報 | 內容 |
+|---|---|---|
+| 673 | [意見回饋] 相片冊：為什麼呢？ | 意見：為什麼呢？ / 頁面：相片冊 / App 版本：1.0.0+1 / 學習語言：en / 截圖：有（screenshot 欄位） |
