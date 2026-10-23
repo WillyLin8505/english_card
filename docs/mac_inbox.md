@@ -1296,3 +1296,26 @@ commit `8443c1b2`（Windows：flutter analyze 無 error、01:13 +584 ~2: All tes
 
 ## M102（2026-10-23 23:10）狀態：完成
 **#619 拿掉「未來式」**：owner 在決定單 #632 選了 **A：不加未來式**。理由是英文的未來式是 will＋原形，不是詞形變化，每個字都列一樣的東西反而會誤導。5f4ec6a2 加的「未來式（will＋原形）」請拿掉，測試也一起改。「現在式」、依詞性過濾變化（happy 不再出現動詞變化）這兩項保留。改好後重裝 release。
+
+## M103（2026-10-23 23:21）狀態：待做（Windows 卡 #586 交給 Mac 的 App 畫面部分）
+卡：問題回報 #660：[Mac] 2026-10-23 M100（Mac 修 #619 畫面部分）：#619 詞庫缺的變化形（交 Windows）
+
+App pack 要重新匯出後再驗證（缺的過去式等已在 card570 補進資料庫，pack 還沒重匯）。
+
+| 項目 | 前 | 後 |
+|---|---|---|
+| 動詞次要詞性＋形容詞為主的詞（happy、unhappy、bright、golden…） | 81 詞帶動詞變化 | 0 |
+| shadow 名詞帶 adj_comparative/superlative | 2 組 | 0 |
+| 名詞帶比較級 rad、bluff | 保留：radder、bluffer 是真形容詞變化（DB 缺 adj 詞條，非變化問題） |
+
+- 規則：同詞有 verb 與 adj 詞條，動詞義項數 ×4 ≤ 形容詞義項數 → 動詞變化不適用；審過的真動詞（dry、empty、free、tidy、bare、smart、dirty、busy…共 33 字）保留。
+- 不動名詞複數（the rich、million、thousand 有真複數）。
+- 程式：`lexicon/tools/card586_minor_pos_forms.py dry-run|apply|restore`；`kaikki.py` DEGREE_DROP 加 shadow（重匯入不再產生 more shadow）。
+- 備份／還原：`lexicon/logs/agents/card586_backup.json`；`python lexicon/tools/card586_minor_pos_forms.py restore`。
+- QC：`card586_qc_after.json`（對照 card570_qc_after.json）regressions 空；golden 全 1.0，照片 expected_sense 0.9286 不變。
+- 剩下：重新匯入時，動詞次要詞性的變化仍會由 adapter 重新產生（這次只清現有資料）；若要根治需把同規則放進 adapter，未擴大範圍。
+
+## M104（2026-10-23 23:21）狀態：待做（Windows 卡 #584 交給 Mac 的 App 畫面部分）
+卡：問題回報 #625：[Mac] 2026-10-23 owner 要求：翻卡第一次發音是機器人聲：owner 要求：補更多真人發音（交 Windows）
+
+無。
