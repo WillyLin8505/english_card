@@ -771,3 +771,11 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #642 意思編號 1 2 3 | 通過 | 以「；」分開的多個意思編號 1 2 3，前三個先顯示，其餘在「顯示更多」；逐義釋義版面同樣編號（單元測試） | — | — |
 | #643 例句編號 1 2 3 | 通過 | 例句編號 1 2 3、前三句先顯示（原本 5 句），其餘在「顯示更多」；模擬器 bread 背面「顯示更多（3）」 | 2026-10-23/m91_back_numbered_2.png | — |
 | 測試與安裝 | 通過 | flutter test 582 過（連跑兩次）、analyze 0 error；已裝 release 版到 owner 的 iPhone。flashcard_back.dart、flashcard_screen.dart、flashcard_session_views.dart 改完，Windows 可解除凍結 | — | — |
+
+## 2026-10-23 M92（Mac 修 #648）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #648 複習頁沒有下載的單字庫 | 通過 | 原因：單字集只加單字、不建相片冊，複習頁只列相片冊；而且卡片集清單只在打開卡片集時才載入。Mac 652af97a：啟動時載入已下載的卡片集；複習頁每個單字集一格，點了只複習該單字集加入的字。模擬器：下載「基礎單字（先行版）」後複習頁出現該格（今天 20 張）。flutter test 583 過；已裝 release 到 owner 的 iPhone | 2026-10-23/m92_review_tiles.png | — |
+| 單字集沒有封面圖（交 Windows） | 不通過 | /api/decks 的 9 個單字集（basic-core、basic-3000 與 A1–C2、法語 2000／3000）cover_asset_id 都是 null，複習頁與卡片集頁的單字集格子只能顯示色塊。App 已支援：單字集有 cover_asset_id 就用它當封面。請幫每個單字集挑一張代表圖 | — | 低 |
+| 詞庫圖片仍有很多圖表、文件頁（交 Windows） | 不通過 | Mac 試著用詞庫圖片當複習格封面時，A1–A2 名詞的第一張圖常是圖表／心智圖、雜誌內頁、標語海報（例：TOTALITARIAN STATE 海報、手寫筆記 7652、一張只有英文句子的圖），跟 #558 退件的純文字／文件圖同類。建議再掃一次：主標籤是 text／diagram／chart／page／poster、畫面以文字為主的圖退件 | — | 中 |
