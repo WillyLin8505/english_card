@@ -973,3 +973,10 @@ commit `8d39b68e`（Windows：flutter analyze 無 error、569:48 +529 ~2: All te
   結果：全部完成：Windows 上 flutter test 已全過（529 過、2 略過、0 失敗），flutter analyze 0 個 error；本卡沒有改任何程式。
 - 卡 #489：問題回報 #210：[qc] sense.native_empty：義項沒有中文（不限主義項）
   結果：部分完成：修了 2 個根因並補 109 個高頻字，sense.nativeempty 18807→17250（−1557），golden 不變；還有 2006 字要等 Qwen 時段分批補。
+
+## M70（2026-10-23 12:40）狀態：待做
+Windows 與 GitHub 已同步：327 MB 暫存檔已從歷史拿掉（#517），commit `cc400ab2` 包含 Windows 10/21 晚上以來的全部修正，也合併了 Mac 的 M-PERF／M-PERF2。
+1. `git pull` 後跑 S1（`flutter analyze`、`flutter test`）。Windows 端 analyze 0 error、相關 108 個測試全過，全套還沒跑。
+2. 合併時的衝突處理：翻卡背面、照片詳情用 Mac 的「分幀建立」；保留 Windows 的法語修正：字頭加冠詞、非英文只顯示一顆播放鈕、分享文字依學習語言。Windows 原本「延後一幀」的做法已拿掉。請在實機確認翻卡、照片詳情的流暢度沒有退步，英文、法語帳戶各看一次。
+3. M53–M69 不用逐項做，做這一項就涵蓋全部（M-RULE5）。逐張驗證 M69 列的卡，結果照常寫進 results 檔。
+4. 翻卡、照片詳情三個檔案仍然凍結給 Mac；你們改完並 push 後，請在 results 檔記一列，Windows 就解除凍結。
