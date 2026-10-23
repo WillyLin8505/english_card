@@ -974,6 +974,10 @@ class _UiTemplate {
 }
 
 const _templateCopy = <String, (String, String)>{
+  '這 {0} 個字在詞庫裡還沒有圖片，可以先看單字': (
+    'No lexicon pictures for these {0} words yet; here are the words',
+    'Pas encore d’images pour ces {0} mots ; voici les mots'
+  ),
   '單字集 · {0} 個單字 · {1} 張詞庫圖片': (
     'Word set · {0} words · {1} lexicon pictures',
     'Liste de mots · {0} mots · {1} images'
