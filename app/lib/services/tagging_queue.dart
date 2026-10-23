@@ -350,46 +350,72 @@ class TaggingQueue extends ChangeNotifier {
     ];
   }
 
-  final _toppingUp = <String>{};
+  final _toppingUp = <String, Future<int>>{};
   final _asked = <String>{};
 
-  bool isToppingUp(String photoId) => _toppingUp.contains(photoId);
+  bool isToppingUp(String photoId) => _toppingUp.containsKey(photoId);
+
+  /// Whether a recognizer could be asked about [photo] at all: things in
+  /// the picture need the phone's classifier or a server. Downloaded deck
+  /// pictures (卡片集) count too — they have their image (問題回報 #666).
+  bool canAskMore(Photo photo) =>
+      settings.taggingConfigured && photo.scanMode.findsObjects;
 
   /// Whether more candidates of [focus] can still be asked for.
   bool canTopUp(Photo photo, String focus) =>
-      settings.taggingConfigured &&
-      photo.scanMode.findsObjects &&
+      canAskMore(photo) &&
       !_asked.contains('${photo.id}|$focus') &&
       !photo.candidates.any((c) => c.focus == focus);
 
   /// Asks the model for more candidates of one kind for [photoId] and
   /// adds them to its pool (spec: 候選不足才重新呼叫模型). Returns how many
-  /// new words arrived; each focus is asked for once per photo.
+  /// new words arrived; each focus is asked for once per photo — unless the
+  /// request failed (offline, server error), then it can be tried again.
+  /// A request while another one for the photo runs waits for it first
+  /// (問題回報 #666: the learner's tap must not be dropped as "nothing").
   Future<int> topUp(String photoId,
       {required String focus, required String level}) async {
+    final running = _toppingUp[photoId];
+    if (running != null) {
+      try {
+        await running;
+      } catch (_) {
+        // That request's caller reports it.
+      }
+    }
     final repo = repository();
     final photo = repo.photo(photoId);
     if (photo == null ||
-        _toppingUp.contains(photoId) ||
+        _toppingUp.containsKey(photoId) ||
         !canTopUp(photo, focus)) {
       return 0;
     }
-    _asked.add('$photoId|$focus');
-    _toppingUp.add(photoId);
+    final key = '$photoId|$focus';
+    _asked.add(key);
+    final request = _topUp(repo, photo, focus: focus, level: level);
+    _toppingUp[photoId] = request;
     notifyListeners();
     try {
-      final found = await _request(photo,
-          level: level,
-          focus: focus,
-          exclude: [for (final c in photo.candidates) c.word]);
-      final latest = repo.photo(photoId);
-      if (latest == null) return 0;
-      final merged = _merge(latest.candidates, found);
-      repo.updatePhoto(latest.copyWith(candidates: merged));
-      return merged.length - latest.candidates.length;
+      return await request;
+    } catch (_) {
+      _asked.remove(key);
+      rethrow;
     } finally {
       _toppingUp.remove(photoId);
-      notifyListeners();
+      if (!_disposed) notifyListeners();
     }
+  }
+
+  Future<int> _topUp(WordDatabaseRepository repo, Photo photo,
+      {required String focus, required String level}) async {
+    final found = await _request(photo,
+        level: level,
+        focus: focus,
+        exclude: [for (final c in photo.candidates) c.word]);
+    final latest = repo.photo(photo.id);
+    if (latest == null) return 0;
+    final merged = _merge(latest.candidates, found);
+    repo.updatePhoto(latest.copyWith(candidates: merged));
+    return merged.length - latest.candidates.length;
   }
 }

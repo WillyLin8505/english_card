@@ -132,6 +132,26 @@ class PhotoWordSession extends ChangeNotifier {
   bool get hasUnsavedChanges => _dirty;
   Selection? get selection => _selection;
 
+  /// What 照片辨識 is being asked for right now because the learner tapped
+  /// 多看動詞 / 難一點 and the pool had nothing more of it (問題回報 #666):
+  /// 'actions', 'descriptions', 'harder' or 'easier'.
+  String? get fetchingMore => _fetching;
+  String? _fetching;
+
+  /// Told when such a tap brings nothing new — the pool and the recognizer
+  /// have no more of it, or no recognizer can be asked — so the tap never
+  /// looks ignored. The screen shows it as a snack bar.
+  void Function(String message)? onNotice;
+
+  /// 「動詞」「形容詞」「更難的字」「更簡單的字」 for a top-up focus.
+  static String focusLabel(String focus) => switch (focus) {
+        'actions' => '動詞',
+        'descriptions' => '形容詞',
+        'harder' => '更難的字',
+        'easier' => '更簡單的字',
+        _ => '單字',
+      };
+
   /// A candidate standing in for a word already saved on this photo.
   WordCandidate _candidateFor(WordEntry e, PhotoOccurrence o) {
     final fromPool =
@@ -253,23 +273,104 @@ class PhotoWordSession extends ChangeNotifier {
   }
 
   /// Moves the dial. While dragging ([live]) only the existing pool is
-  /// used; on release the model may be asked for more words.
+  /// used; on release the model may be asked for more words — and when the
+  /// list did not change at all, it is asked for harder (easier) words
+  /// outright (問題回報 #666: 難度提高 looked like it did nothing).
   void setTarget(int level, {bool live = false}) {
     final t = level.clamp(0, cefrLevels.length - 1);
     if (t == _target && live) return;
+    final from = _target;
+    final before = [for (final w in words) w.word];
     _target = t;
     _dirty = true;
-    _reselect(allowTopUp: !live);
+    if (live || t == from) {
+      _reselect(allowTopUp: !live);
+    } else {
+      _reselect();
+      final changed = !listEquals(before, [for (final w in words) w.word]);
+      if (changed) {
+        _maybeTopUp(_selection!);
+      } else {
+        _askForMore(t > from ? 'harder' : 'easier', () {
+          final now = [for (final w in words) w.word];
+          return !listEquals(before, now);
+        });
+      }
+    }
     notifyListeners();
   }
 
-  /// 更多動作 / 更多描述 (tap again to turn off).
+  /// 更多動作 / 更多描述 (tap again to turn off). Turning one on brings
+  /// that kind into the list; when the pool has no more of it, 照片辨識 is
+  /// asked (問題回報 #666) — also for downloaded deck pictures — and the
+  /// learner is told when there is none.
   void setBias(PosBias b) {
     _bias = _bias == b ? PosBias.none : b;
     _dirty = true;
-    _reselect(allowTopUp: true);
+    if (_bias == PosBias.none) {
+      _reselect(allowTopUp: true);
+    } else {
+      final before = _shownOfBias();
+      _reselect();
+      if (_shownOfBias().difference(before).isNotEmpty) {
+        _maybeTopUp(_selection!);
+      } else {
+        final asked = _bias;
+        _askForMore(
+            asked == PosBias.actions ? 'actions' : 'descriptions',
+            () =>
+                _bias == asked && _shownOfBias().difference(before).isNotEmpty);
+      }
+    }
     notifyListeners();
   }
+
+  /// The listed words of the kind [bias] asks for.
+  Set<String> _shownOfBias() => {
+        for (final w in words)
+          if (_bias == PosBias.actions
+              ? w.candidate.isAction
+              : _bias == PosBias.descriptions && w.candidate.isDescription)
+            w.word,
+      };
+
+  /// Asks the recognizer for more words of [focus] because the learner
+  /// asked for them; [improved] says whether the list then shows some.
+  void _askForMore(String focus, bool Function() improved) {
+    final what = focusLabel(focus);
+    final q = queue;
+    final p = photo;
+    if (q == null || p == null || !q.canAskMore(p)) {
+      _notice('這張照片沒有更多$what了，連上照片辨識後可以再找');
+      return;
+    }
+    if (!q.canTopUp(p, focus)) {
+      _notice('這張照片沒有更多$what了');
+      return;
+    }
+    _fetching = focus;
+    final level = targetLevel;
+    Future<void>.microtask(() async {
+      String? message;
+      try {
+        final added = await q.topUp(photoId, focus: focus, level: level);
+        if (_disposed) return;
+        if (added > 0) {
+          _reselect();
+        }
+        if (!improved()) message = '這張照片沒有更多$what了';
+      } catch (e) {
+        debugPrint('Top-up for $photoId failed: $e');
+        message = '連不到照片辨識，暫時找不到更多$what，稍後再試';
+      }
+      if (_disposed) return;
+      if (_fetching == focus) _fetching = null;
+      notifyListeners();
+      if (message != null) _notice(message);
+    });
+  }
+
+  void _notice(String message) => onNotice?.call(message);
 
   void toggleStar(SessionWord w) {
     w.starred = !w.starred;

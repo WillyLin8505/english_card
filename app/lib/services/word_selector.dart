@@ -88,6 +88,9 @@ class Selection {
 class WordSelector {
   static const maxWords = 5;
   static const maxNouns = 3;
+
+  /// How many words of the asked-for kind 多看動詞／多看形容詞 brings in.
+  static const biasWords = 2;
   static const minScore = 0.38;
 
   const WordSelector();
@@ -298,6 +301,27 @@ class WordSelector {
               where: (s) => _posClass(s.candidate) != classes.first);
       if (out != null && alt != null) slots[slots.indexOf(out)] = alt;
     }
+    // 多看動詞／多看形容詞 (問題回報 #666): the asked-for kind gets in even
+    // when the list is full — the words already shown must not block it.
+    bool wanted(ScoredCandidate s) => switch (bias) {
+          PosBias.actions => s.candidate.isAction,
+          PosBias.descriptions => s.candidate.isDescription,
+          PosBias.none => false,
+        };
+    if (bias != PosBias.none) {
+      while (picked().where(wanted).length < biasWords) {
+        if (picked().length < maxWords) {
+          final c = best(where: wanted);
+          if (c == null) break;
+          slots.add(c);
+          continue;
+        }
+        final out = weakest((s) => !wanted(s));
+        final c = out == null ? null : best(replacing: out, where: wanted);
+        if (out == null || c == null) break;
+        slots[slots.indexOf(out)] = c;
+      }
+    }
     // One challenge word (挑戰詞) above the target level.
     if (!picked().any((s) => levelIndex(s.candidate.level) > target)) {
       bool harder(ScoredCandidate s) => levelIndex(s.candidate.level) > target;
@@ -305,7 +329,8 @@ class WordSelector {
         final c = best(where: harder);
         if (c != null) slots.add(c);
       } else {
-        final out = weakest((s) => levelIndex(s.candidate.level) <= target);
+        final out = weakest(
+            (s) => levelIndex(s.candidate.level) <= target && !wanted(s));
         final c = out == null ? null : best(replacing: out, where: harder);
         if (out != null && c != null) slots[slots.indexOf(out)] = c;
       }

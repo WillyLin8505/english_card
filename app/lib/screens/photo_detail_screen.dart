@@ -135,7 +135,17 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
       repo: scope.repository,
       photoId: widget.photoId,
       queue: scope.queue,
-    )..addListener(_changed);
+    )
+      ..addListener(_changed)
+      // 問題回報 #666: 多看動詞／難一點 that finds nothing says so.
+      ..onNotice = _showNotice;
+  }
+
+  void _showNotice(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: UiText(message)));
   }
 
   void _clearCaches() {
@@ -706,7 +716,10 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                 const SizedBox(height: 4),
                 _LevelRow(
                   bias: session.bias,
-                  busy: topping,
+                  busy: topping || session.fetchingMore != null,
+                  busyLabel: session.fetchingMore == null
+                      ? null
+                      : 'AI 正在找更多${PhotoWordSession.focusLabel(session.fetchingMore!)}…',
                   onBias: session.setBias,
                   onEasier: session.target > 0
                       ? () => session.setTarget(session.target - 1)
