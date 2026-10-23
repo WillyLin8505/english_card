@@ -1632,3 +1632,9 @@ commit `d91555fb`（Windows：flutter analyze 無 error、01:27 +644 ~2: All tes
 卡：問題回報 #657：[owner] 補真人發音第一步：用 Wikimedia 補約 757 個字，並查 Forvo／Free Dictionary 等音檔來源的
 
 App 播放時顯示 speaker／授權標示（資料在 audio_assets.speaker／license／source_page）。
+
+## M139（2026-10-24 02:59）狀態：待做（Windows 卡 #608 交給 Mac 的 App 畫面部分）
+卡：問題回報 #688：[Mac] 2026-10-24 M138（Mac 修 #657 錄音授權標示）：詞庫沒有 speaker／source_page 欄位（交
+
+Wikimedia 的 speaker 有多行格式（"Speaker: X
+Recorder: Y"），App 目前會把換行原樣顯示在一行的錄音者字串裡，請 Mac 看看是否要整理成一行（例如只取 Speaker 後面的名字）。這是 App 畫面，不是詞庫的問題，我沒有改。
