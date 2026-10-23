@@ -654,6 +654,11 @@ class Kaikki(SourceAdapter):
                         add({"form": form, **({"base": owner} if shared else {})}, form.lower(),
                             conf=(0.6 if " " in form else 1.0) * (0.95 if shared else 1),
                             rid=f"{owner}#{e.get('pos')}", raw=fo)
+            if f in ("adj_comparative", "adj_superlative") and any(
+                    " " not in c.value["form"] for c in C):
+                # One degree system per word (card #587, issue #637): happier / happiest
+                # beat more happy / most happy.
+                C[:] = [c for c in C if " " not in c.value["form"]]
             C.sort(key=lambda c: -c.confidence)
         elif f in ("synonyms", "antonyms", "hypernyms", "hyponyms", "related"):
             senses = self.senses(entries, ctx)
