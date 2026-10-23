@@ -695,3 +695,17 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | owner iPhone 安裝 | 通過 | 實機檢查後重裝 release 版 main e4b1e8c0（含 Windows 6aa0b935 的 #561 #565 #557 #568 #567 #564 與 Mac d0d8d51b） | — | — |
 | 模擬檔修正 | 通過 | Mac 0fabd933：detail 讀 SIM_OUT、findings 不為空就不算過、SIM_SEED 分層抽樣（含 stub）、捲到底檢查空白標題、沒有 tagger cache 時 pin 略過／fuzz 跳過照片、pack_update 加 SQLite 分批路徑。SIM_SEED=1023：detail 通過、pack_update 通過、fuzz 通過、pin 略過 | — | — |
 | database_simulation：等待提示與實際不符 | 不通過 | 從資料庫加入「本身沒中文、同拼字其他詞性有中文」的字（frightening 名詞、hanging 形容詞），提示說「中文補齊後會自動排進複習」，實際上卡片已拿到其他詞性的中文並排進複習。原因：database_word_detail.dart 的 addDatabaseWord 在 linkLexicon 之前判斷要不要等待 | — | 低 |
+
+## 2026-10-23 M87（iPhone 模擬器）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #565 拍照頁不再有「先選一張照片開始學習」 | 通過 | 模擬器全新安裝、沒有照片時，拍照頁沒有那個按鈕 | 2026-10-23/m87_565_camera.png | — |
+| #564 相片冊主頁封面 | 通過 | 水果與蔬菜圖片集卡片有封面圖 | 2026-10-23/m87_564_albums.png | — |
+| #564 存到相片冊對話框 | 不通過 | 原本：對話框排版時丟出例外（_RenderLayoutBuilder does not support dry layout），畫面只剩灰色遮罩，存照片時選不了相片冊。Mac dec1e2dd 已修：封面改用固定大小的 Image；新增 save_to_album_cover_test（修正前會失敗）；flutter test 576 過。請 Windows 確認後關卡 | 2026-10-23/m87_564_save_dialog.png | 高 |
+| #564 卡片集標籤壓到封面文字 | 不通過 | 相片冊主頁水果與蔬菜圖片集卡片左上「卡片集 · English Card 編輯部」換行後疊在照片上的字上，看不清楚（模擬器與 owner 實機都一樣） | 2026-10-23/m87_564_albums.png | 低 |
+| #567 長按點位顯示該字 | 通過 | 照片詳情長按 Tomato 的點，點旁出現黑底「Tomato 番茄、柿子」，放開後消失 | 2026-10-23/m87_567_long_press.png | — |
+| #568 單字詳情有圖片和標籤 | 通過 | 沒有自己照片的字：money、face 有「資料庫圖片」，face 有標籤區；happy、glad、blue、bright 詞庫沒有標到它們的圖，所以沒有區塊（照規格不顯示空標題） | 2026-10-23/m87_568_word_detail.png | — |
+| #561 句子填空有圖 | 通過 | 複習 30 張裡有 8 張句子填空，8 張都有照片 | 2026-10-23/m87_561_cloze_1.png | — |
+| #557 拖曳題標籤不重疊 | 通過 | 拖曳題 2 張：fruit 那張 3 個目標點分開、不重疊；cutting board 那張截圖時圖片還在載入（「正在載入圖片…」，跟 #618 載圖慢同一件事） | 2026-10-23/m87_557_drag_2.png | — |
+| happy 的詞形變化有錯（資料） | 不通過 | 單字詳情 happy（形容詞）的「詞形變化」列出 more happy／most happy（已有 happier／happiest）、happied（過去式；過去分詞）、happying（現在分詞）、happies（第三人稱單數），形容詞不該有動詞變化，也不該同時列 more／most。詞庫資料問題，跟 #619（詞形變化要完整）一起修 | 2026-10-23/m87_568_word_detail.png | 中 |
