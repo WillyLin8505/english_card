@@ -646,6 +646,8 @@ void main() {
         ..hasError = true;
       await pumpApp(tester,
           initialTab: AppTab.settings, size: const Size(402, 1600));
+      await tester.scrollUntilVisible(find.text('詞庫連線'), 300,
+          scrollable: find.byType(Scrollable).first);
       expect(find.text('詞庫連線'), findsOneWidget);
       expect(find.text(sync.status), findsOneWidget);
       expect(find.text('重新連線'), findsOneWidget);

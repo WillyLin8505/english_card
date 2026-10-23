@@ -8,7 +8,10 @@ import 'package:photo_english_app/app/app_scope.dart';
 import 'package:photo_english_app/app/app_shell.dart';
 import 'package:photo_english_app/data/sample_word_database.dart';
 import 'package:photo_english_app/services/app_settings.dart';
+import 'package:photo_english_app/services/card_report.dart';
 import 'package:photo_english_app/services/cefr_lexicon.dart';
+import 'package:photo_english_app/services/feedback_context.dart';
+import 'package:photo_english_app/widgets/feedback_button.dart';
 import 'package:photo_english_app/services/photo_intake.dart';
 import 'package:photo_english_app/services/photo_store.dart';
 import 'package:photo_english_app/services/speaker.dart';
@@ -65,6 +68,7 @@ Future<TestApp> pumpApp(
   Size size = const Size(402, 874),
   bool databaseLibrary = false,
   Speaker? speaker,
+  CardReportService? reports,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -89,6 +93,7 @@ Future<TestApp> pumpApp(
       lexicon: testLexicon,
       queue: queue);
   final spk = speaker ?? SilentSpeaker();
+  final rootKey = GlobalKey<NavigatorState>();
   await tester.pumpWidget(AppScope(
     repository: repo,
     settings: s,
@@ -102,6 +107,14 @@ Future<TestApp> pumpApp(
     switchLanguage: (_) async {},
     clock: () => testNow,
     child: MaterialApp(
+      navigatorKey: rootKey,
+      navigatorObservers: reports == null ? [] : [FeedbackObserver(null)],
+      builder: reports == null
+          ? null
+          : (context, child) => FeedbackOverlay(
+              navigatorKey: rootKey,
+              service: reports,
+              child: child ?? const SizedBox.shrink()),
       theme: MobileTheme.light(),
       home: home ??
           AppShell(

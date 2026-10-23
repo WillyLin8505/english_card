@@ -43,6 +43,7 @@ class _CameraScreenState extends State<CameraScreen>
   CameraController? _controller;
   bool _starting = false;
   String? _cameraError;
+  bool _permissionDenied = false;
   bool _torch = false;
   bool _busy = false;
   bool _active = false;
@@ -82,10 +83,34 @@ class _CameraScreenState extends State<CameraScreen>
     super.dispose();
   }
 
+  void _showPermissionHelp() {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const UiText('相機權限未開啟'),
+        content: const UiText('請到手機「設定」→ 找到本 App → 開啟「相機」權限，再回來按「重試相機」。'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              _start();
+            },
+            child: const UiText('重試相機'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const UiText('關閉'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _start() async {
     if (_controller != null || _starting) return;
     _starting = true;
     _cameraError = null;
+    _permissionDenied = false;
     try {
       final cameras = await availableCameras();
       if (cameras.isEmpty) throw CameraException('none', '找不到相機');
@@ -106,6 +131,8 @@ class _CameraScreenState extends State<CameraScreen>
       });
     } catch (e) {
       _cameraError = e is CameraException ? e.description ?? e.code : '$e';
+      _permissionDenied = e is CameraException &&
+          (e.code.startsWith('CameraAccess') || e.code.contains('Permission'));
       debugPrint('Camera unavailable: $_cameraError');
     } finally {
       _starting = false;
@@ -144,7 +171,10 @@ class _CameraScreenState extends State<CameraScreen>
         repository: scope.repository,
         defaultTitle: defaultPhotoTitle(now),
       );
-      if (choice == null) return;
+      if (choice == null) {
+        if (mounted) showToast(context, '照片未儲存');
+        return;
+      }
       final photo = await scope.intake.addPhoto(bytes,
           title: choice.title,
           albumId: choice.albumId,
@@ -190,10 +220,12 @@ class _CameraScreenState extends State<CameraScreen>
         final latest = repo.photos.where(PhotoStore.canShow).firstOrNull;
         final String badge;
         if (_busy) {
-          badge = '處理中…';
+          badge = scope.settings.taggingConfigured
+              ? '正在找照片裡的單字…'
+              : '正在讀照片裡的文字…';
         } else if (_controller == null) {
           badge = _cameraError != null
-              ? '目前無法使用相機'
+              ? (_permissionDenied ? '相機權限未開啟' : '目前無法使用相機')
               : _starting
                   ? '正在開啟相機…'
                   : '相機未啟用';
@@ -337,8 +369,10 @@ class _CameraScreenState extends State<CameraScreen>
                               ),
                           ],
                         ),
-                        if (_controller == null ||
-                            !scope.settings.taggingConfigured) ...[
+                        // With a camera, the badge and the top-right settings
+                        // button already lead to setup; this panel is only
+                        // the fallback when there is no camera (問題回報 #535).
+                        if (_controller == null) ...[
                           const SizedBox(height: MSpace.sm),
                           Container(
                             padding: const EdgeInsets.symmetric(
@@ -351,9 +385,15 @@ class _CameraScreenState extends State<CameraScreen>
                               children: [
                                 if (_controller == null) ...[
                                   TextButton.icon(
-                                    onPressed: _starting ? null : _start,
+                                    onPressed: _starting
+                                        ? null
+                                        : _permissionDenied
+                                            ? _showPermissionHelp
+                                            : _start,
                                     icon: const MSvg(MIcon.pulseDot, size: 16),
-                                    label: const UiText('重試相機'),
+                                    label: UiText(_permissionDenied
+                                        ? '開啟權限說明'
+                                        : '重試相機'),
                                   ),
                                 ],
                                 if (!scope.settings.taggingConfigured) ...[
@@ -388,9 +428,15 @@ class _CameraScreenState extends State<CameraScreen>
                                 // longer than the Chinese (問題回報 #363).
                                 Flexible(
                                   child: UiText(
+                                      // With a live preview behind the button,
+                                      // 「這張」 reads as the viewfinder; it
+                                      // opens the last photo (問題回報 #583).
                                       latest == null
                                           ? '先選一張照片開始學習'
-                                          : '查看這張照片的單字',
+                                          : _controller?.value.isInitialized ==
+                                                  true
+                                              ? '最近一張照片的單字'
+                                              : '查看這張照片的單字',
                                       textAlign: TextAlign.center,
                                       style: MFont.manrope(13, FontWeight.w700,
                                           MColors.primary)),

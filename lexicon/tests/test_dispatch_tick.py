@@ -247,3 +247,23 @@ def test_tag_fallback_starts_run_only_when_enabled(tmp_path, monkeypatch):
     tick.dry = True
     tick.tag_fallback()
     assert len(calls) == 1
+
+
+def test_serve_app_reload_waits_until_change_settles():
+    # card #522 / decision #553 = A
+    cfg = {"quiet_minutes": 15, "max_wait_hours": 6}
+    now = 100_000.0
+    act = dt.serve_app_reload_action
+    assert act(None, [], [], now, now, cfg)[0] == "ok"
+    assert act(now - 60, [], [], now - 60, now, cfg)[0] == "wait"            # still being edited
+    assert act(now - 3600, [], [12], now - 3600, now, cfg)[0] == "wait"      # simulation uses 8123
+    assert act(now - 3600, [501], [], now - 3600, now, cfg)[0] == "wait"     # editing CLI still runs
+    assert act(now - 3600, [501], [], now - 7 * 3600, now, cfg)[0] == "restart"  # waited max_wait_hours
+    assert act(now - 3600, [], [], now - 3600, now, cfg)[0] == "restart"
+
+
+def test_serve_app_stale_revision_matches_serve_app():
+    import serve_app_stale as sas
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    import serve_app
+    assert serve_app.snapshot_directory().name == sas.revision()

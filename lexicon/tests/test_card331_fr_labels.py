@@ -24,7 +24,7 @@ def _asset(session, m, tmp_path, words, name):
     asset = m.ImageAsset(source="wikimedia_commons", source_image_id=f"File:{name}.jpg",
                          license_code="CC0", status="ready", tag_status="done",
                          safety_status="safe", path=path.name,
-                         tags=[{"word": w, "pos": "noun", "score": 0.9} for w in words])
+                         tags=[{"word": w, "pos": "noun", "score": 0.9, "box": [0.1, 0.1, 0.6, 0.6], "visualConfidence": 0.9} for w in words])
     session.add(asset)
     session.flush()
     return asset

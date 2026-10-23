@@ -1,6 +1,12 @@
 /// Traditional Chinese source keys are stable UI identifiers, never dictionary
 /// content. Missing keys/languages deliberately retain the original copy.
 const uiCatalog = <String, (String, String)>{
+  '意見回饋': ('Feedback', 'Commentaires'),
+  '已送出，謝謝你的意見': ('Sent, thank you', 'Envoyé, merci'),
+  '會一併附上目前頁面、App 版本與學習語言。': (
+    'The current page, app version and learning language are attached.',
+    'La page, la version de l’app et la langue apprise sont jointes.'
+  ),
   '卡片集': ('Decks', 'Paquets'),
   '瀏覽並下載卡片集': (
     'Browse and download decks',
@@ -653,6 +659,10 @@ const uiCatalog = <String, (String, String)>{
     'Voir les mots des photos récentes'
   ),
   '查看這張照片的單字': ('View words in this photo', 'Voir les mots de cette photo'),
+  '最近一張照片的單字': (
+    'Words in your last photo',
+    'Mots de votre dernière photo'
+  ),
   '開啟最近的照片': ('Open recent photo', 'Ouvrir la photo récente'),
   '正在讀取最近照片…': ('Loading recent photos…', 'Chargement des photos récentes…'),
   '還沒有照片，先拍一張吧！': (
@@ -662,6 +672,12 @@ const uiCatalog = <String, (String, String)>{
   '相機未啟用': ('Camera is off', 'Appareil photo désactivé'),
   '正在開啟相機…': ('Opening camera…', 'Ouverture de l’appareil photo…'),
   '目前無法使用相機': ('Camera is unavailable', 'Appareil photo indisponible'),
+  '相機權限未開啟': ('Camera permission is off', 'Autorisation de l’appareil photo désactivée'),
+  '開啟權限說明': ('How to enable permission', 'Comment activer l’autorisation'),
+  '請到手機「設定」→ 找到本 App → 開啟「相機」權限，再回來按「重試相機」。': (
+    'Open Settings, find this app, turn on Camera access, then come back and tap “Retry camera”.',
+    'Ouvrez Réglages, trouvez cette app, activez l’accès à l’appareil photo, puis revenez et touchez « Réessayer l’appareil photo ».'
+  ),
   '找不到相機': ('No camera found', 'Aucun appareil photo trouvé'),
   '重試相機': ('Retry camera', 'Réessayer l’appareil photo'),
   '這台裝置不支援閃光燈': (
@@ -694,6 +710,8 @@ const uiCatalog = <String, (String, String)>{
     'Photos sélectionnées et exemples'
   ),
   '範例照片': ('Example photos', 'Photos d’exemple'),
+  '不要這張': ('Discard this photo', 'Ne pas garder cette photo'),
+  '照片未儲存': ('Photo not saved', 'Photo non enregistrée'),
   '存到相片冊': ('Save to album', 'Enregistrer dans un album'),
   '這張照片已經加入過': ('This photo is already added', 'Cette photo est déjà ajoutée'),
   '仍要再加入': ('Add anyway', 'Ajouter quand même'),
@@ -729,6 +747,8 @@ const uiCatalog = <String, (String, String)>{
     'Lock (keep when adjusting difficulty)',
     'Verrouiller (conserver lors du réglage)'
   ),
+  '正在找照片裡的單字…': ('Finding words in the photo…', 'Recherche de mots dans la photo…'),
+  '正在讀照片裡的文字…': ('Reading the text in the photo…', 'Lecture du texte de la photo…'),
   '處理中…': ('Processing…', 'Traitement…'),
   '補充候選詞…': ('Finding more candidates…', 'Recherche d’autres mots…'),
   '正在整理單字內容…': ('Preparing word content…', 'Préparation des mots…'),
@@ -897,6 +917,8 @@ class _UiTemplate {
 }
 
 const _templateCopy = <String, (String, String)>{
+  '全部加入（{0}）': ('Add all ({0})', 'Tout ajouter ({0})'),
+  '已加入 {0} 個單字': ('{0} words added', '{0} mots ajoutés'),
   '顯示更多（{0}）': ('Show more ({0})', 'Afficher plus ({0})'),
   '第 {0} / {1} 張　·　左右滑動換照片': (
     'Photo {0} of {1} · swipe to change photo',

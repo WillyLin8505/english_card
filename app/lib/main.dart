@@ -30,6 +30,9 @@ import 'theme/mobile_theme.dart';
 import 'widgets/background_error_banner.dart';
 import 'widgets/tagging_progress.dart';
 import 'services/analytics.dart';
+import 'services/card_report.dart';
+import 'services/feedback_context.dart';
+import 'widgets/feedback_button.dart';
 
 /// MaterialApp can call its builder with no child during route/bootstrap
 /// transitions on Flutter web. Keep the phone shell renderable instead of
@@ -122,7 +125,9 @@ class PhotoEnglishApp extends StatefulWidget {
   State<PhotoEnglishApp> createState() => _PhotoEnglishAppState();
 }
 
-class _PhotoEnglishAppState extends State<PhotoEnglishApp> {
+class _PhotoEnglishAppState extends State<PhotoEnglishApp>
+    with WidgetsBindingObserver {
+  final _rootNavigator = GlobalKey<NavigatorState>();
   final _navigator = AppNavigatorProxy();
   late WordDatabaseRepository _repository = widget.repository;
   late final _intake =
@@ -145,6 +150,10 @@ class _PhotoEnglishAppState extends State<PhotoEnglishApp> {
   @override
   void initState() {
     super.initState();
+    // 問題回報 #587: queued 意見回饋／卡片回報 are re-sent at start-up and
+    // whenever the app comes back to the foreground.
+    WidgetsBinding.instance.addObserver(this);
+    if (widget.runWorkers) _flushReports();
     _applyRetention();
     widget.settings.addListener(_applyRetention);
     if (widget.runWorkers) {
@@ -156,7 +165,18 @@ class _PhotoEnglishAppState extends State<PhotoEnglishApp> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && widget.runWorkers) {
+      _flushReports();
+    }
+  }
+
+  void _flushReports() => unawaited(
+      CardReportService.instance.flush(apiKey: widget.settings.apiKey));
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     widget.settings.removeListener(_applyRetention);
     _queue.dispose();
     _enricher.dispose();
@@ -234,12 +254,17 @@ class _PhotoEnglishAppState extends State<PhotoEnglishApp> {
           localizationsDelegates: GlobalMaterialLocalizations.delegates,
           debugShowCheckedModeBanner: false,
           theme: MobileTheme.light(),
+          navigatorKey: _rootNavigator,
+          navigatorObservers: [FeedbackObserver(null)],
           builder: (context, child) => phoneFrameBuilder(
               context,
-              BackgroundErrorBanner(
-                errors: BackgroundErrors.instance,
-                child: TaggingProgress(
-                    queue: _queue, child: child ?? const SizedBox.shrink()),
+              FeedbackOverlay(
+                navigatorKey: _rootNavigator,
+                child: BackgroundErrorBanner(
+                  errors: BackgroundErrors.instance,
+                  child: TaggingProgress(
+                      queue: _queue, child: child ?? const SizedBox.shrink()),
+                ),
               )),
           home: ListenableBuilder(
             listenable: widget.settings,

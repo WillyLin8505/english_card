@@ -555,8 +555,12 @@ def _native_layer(s, native, fields, lexemes, sense_rows, ex_rows, ids):
         keep_ex.add(ex.id)
     all_ex = [e.id for e in ex_rows.values()]
     if all_ex:
+        # card #553 / issue #589: ai_translate writes example translations only to the
+        # example_translations table (field_values has none), so keep AI rows whose
+        # example still exists; only human/source rows missing from field_values go.
         s.execute(delete(m.ExampleTranslation).where(
             m.ExampleTranslation.native_language == native,
+            m.ExampleTranslation.is_ai.is_not(True),
             m.ExampleTranslation.example_id.in_([i for i in all_ex if i not in keep_ex])))
     # relation translations
     rels = s.execute(select(m.LexemeRelation).where(m.LexemeRelation.lexeme_id.in_(ids))

@@ -15,6 +15,7 @@ import '../widgets/mobile/tab_bar.dart';
 import 'app_scope.dart';
 import '../theme/mobile_theme.dart';
 import '../services/analytics.dart';
+import '../services/feedback_context.dart';
 
 /// The five tabs, each with its own navigation stack so the tab bar
 /// stays visible on pushed screens, as the mocks show (照片詳情 and
@@ -49,6 +50,7 @@ class AppShellState extends State<AppShell> implements AppNavigator {
   @override
   void initState() {
     super.initState();
+    FeedbackContext.instance.tab = _tab;
     widget.onNavigatorReady(this);
   }
 
@@ -61,26 +63,31 @@ class AppShellState extends State<AppShell> implements AppNavigator {
       _nav(tab)?.popUntil((r) => r.isFirst);
       return;
     }
+    FeedbackContext.instance.tab = tab;
     setState(() => _tab = tab);
     Analytics.instance.screen(tab.name);
   }
 
-  void _pushInAlbumTab(Widget screen) {
+  void _pushInAlbumTab(Widget screen, String name, String subject) {
+    FeedbackContext.instance.tab = AppTab.album;
     setState(() => _tab = AppTab.album);
     // The album navigator may not have built yet if the tab was never
     // shown; push after this frame.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _nav(AppTab.album)?.push(MaterialPageRoute<void>(builder: (_) => screen));
+      _nav(AppTab.album)?.push(MaterialPageRoute<void>(
+          settings: RouteSettings(name: name, arguments: subject),
+          builder: (_) => screen));
     });
   }
 
   @override
   void openPhoto(String photoId) =>
-      _pushInAlbumTab(PhotoDetailScreen(photoId: photoId));
+      _pushInAlbumTab(PhotoDetailScreen(photoId: photoId), '照片詳情', photoId);
 
   @override
   void openWordPhotos(String wordEntryId) =>
-      _pushInAlbumTab(PhotoGridScreen.word(wordEntryId: wordEntryId));
+      _pushInAlbumTab(PhotoGridScreen.word(wordEntryId: wordEntryId), '項目照片',
+          wordEntryId);
 
   @override
   void setReviewing(bool reviewing) {
@@ -102,6 +109,7 @@ class AppShellState extends State<AppShell> implements AppNavigator {
 
   @override
   void dispose() {
+    FeedbackContext.instance.tab = null;
     _reviewRequest.dispose();
     super.dispose();
   }
@@ -117,6 +125,7 @@ class AppShellState extends State<AppShell> implements AppNavigator {
   @override
   void openWord(String wordEntryId, {String? occurrenceId}) {
     Navigator.of(context, rootNavigator: true).push(MaterialPageRoute<void>(
+      settings: RouteSettings(name: '單字詳情', arguments: wordEntryId),
       builder: (_) => WordDetailScreen(
           wordEntryId: wordEntryId, occurrenceId: occurrenceId),
     ));
@@ -159,6 +168,7 @@ class AppShellState extends State<AppShell> implements AppNavigator {
               for (final tab in AppTab.values)
                 Navigator(
                   key: _navigators[tab],
+                  observers: [FeedbackObserver(tab)],
                   onGenerateRoute: (_) =>
                       MaterialPageRoute<void>(builder: (_) => _root(tab)),
                 ),

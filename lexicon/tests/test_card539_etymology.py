@@ -52,6 +52,7 @@ def test_english_order_puts_the_heavier_etymology_first(monkeypatch):
                         lambda target, word, path=None: SECOND if word == "second" else [])
     sense_order.kaikki_sense_info.cache_clear()
     sense_order.etymology_weights.cache_clear()
+    sense_order.kaikki_sense_translations.cache_clear()
     items = [{"pos": "noun", "gloss": "Something that is number two in a series.", "labels": []},
              {"pos": "noun", "gloss": "A second-class honours degree.", "labels": ["informal"]},
              {"pos": "noun", "gloss": "A unit of time, one sixtieth of a minute.", "labels": []},
@@ -60,7 +61,8 @@ def test_english_order_puts_the_heavier_etymology_first(monkeypatch):
              {"pos": "noun", "gloss": "Aid; assistance; help.", "labels": ["obsolete", "etymology-3"]}]
     assert dict(sense_order.etymology_weights("en", "second", "noun")) == {"1": 17, "2": 214, "3": 0}
     got = [it["gloss"][:12] for it in sense_order.order_senses(items, "en", "second")]
-    assert got == ["A unit of ti", "A unit of an", "Something th", "A second-cla", "Aid; assista"]
+    # only the established sense moves up; the angle (no table) stays behind the first etymology
+    assert got == ["A unit of ti", "Something th", "A second-cla", "A unit of an", "Aid; assista"]
     # French keeps the dictionary's order for the same labels
     assert [it["gloss"][:12] for it in sense_order.order_senses(items, "fr", "second")][0] == "Something th"
 
@@ -72,3 +74,27 @@ def test_a_later_etymology_needs_clearly_stronger_evidence():
     assert sense_order.etymology_order({"1": 122, "2": 294, "3": 42}) == ["2", "1", "3"]  # second
     assert sense_order.etymology_order({"1": 83, "2": 16, "4": 115, "5": 72}) == ["1", "4", "5", "2"]  # tip
     assert sense_order.etymology_order({"1": 4, "2": 22, "3": 110}) == ["3", "1", "2"]  # down
+
+
+TIP = [
+    {"word": "tip", "pos": "noun", "lang_code": "en", "etymology_number": 1,
+     "senses": [{"glosses": ["The extreme end of something."], "translations": _tr(83)},
+                {"glosses": ["A small piece of meat."]}]},
+    {"word": "tip", "pos": "noun", "lang_code": "en", "etymology_number": 2,
+     "senses": [{"glosses": ["A tram for coal."]}]},
+    {"word": "tip", "pos": "noun", "lang_code": "en", "etymology_number": 4,
+     "senses": [{"glosses": ["A small sum given for service; gratuity."], "translations": _tr(115)}]},
+]
+
+
+def test_a_non_dominant_established_sense_follows_the_first_etymology(monkeypatch):
+    monkeypatch.setattr("app.kaikki_index.lookup",
+                        lambda target, word, path=None: TIP if word == "tip" else [])
+    for f in (sense_order.kaikki_sense_info, sense_order.etymology_weights, sense_order.kaikki_sense_translations):
+        f.cache_clear()
+    items = [{"pos": "noun", "gloss": g, "labels": []} for g in
+             ("The extreme end of something.", "A tram for coal.", "A small piece of meat.",
+              "A small sum given for service; gratuity.")]
+    got = [it["gloss"][:7] for it in sense_order.order_senses(items, "en", "tip")]
+    assert got == ["The ext", "A small", "A small", "A tram "]
+    assert got and sense_order.order_senses(items, "en", "tip")[2]["gloss"].startswith("A small sum")

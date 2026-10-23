@@ -119,9 +119,14 @@ class CardReportService {
 
   /// Queues [report] and tries to send everything queued. Returns true when
   /// the report reached the server, false when it stays queued on the device.
-  Future<bool> submit(CardReport report, {String apiKey = ''}) async {
+  Future<bool> submit(CardReport report, {String apiKey = ''}) =>
+      submitIssue(report.toJson(), apiKey: apiKey);
+
+  /// Same queue for any issue the App may send (卡片回報, 意見回饋).
+  Future<bool> submitIssue(Map<String, dynamic> issue,
+      {String apiKey = ''}) async {
     await _load();
-    _memory.add(jsonEncode(report.toJson()));
+    _memory.add(jsonEncode(issue));
     await _save();
     return await flush(apiKey: apiKey) == 0;
   }

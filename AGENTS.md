@@ -75,6 +75,10 @@ launches a card for each idle AI (pick_card rules + `lexicon/tools/dispatch_conf
   and refuses to launch a card whose previous CLI still runs; the tick skips such cards, waits
   `finish_grace_alive_minutes` (45) before collecting a card whose CLI is still alive, and ends a CLI quiet for
   `lingering_kill_minutes` (90).
+- serve_app reload (card #522, owner A): serve_app loads `lexicon/backend/app`, `lexicon/quality`, `serve_app.py`,
+  `lexicon_transport.py` only at start-up; the tick restarts it when that code changed, has been quiet 15 min, the CLIs
+  running at the change are done (≤ 6 h) and no `busy_tasks` card (simulation) runs (`serve_app_reload` in dispatch_config.json;
+  check by hand: `python lexicon/tools/serve_app_stale.py`).
 - Dry run: `python lexicon/tools/dispatch_tick.py --dry-run`. Tests: `lexicon/tests/test_dispatch_tick.py`.
 
 ## Standing preamble (auto-attached on every launch)

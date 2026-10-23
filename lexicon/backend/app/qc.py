@@ -112,7 +112,9 @@ def validate(pack: dict) -> dict[str, list]:
             v["pronunciation.ipa_is_arpabet"].append(lx["id"])
         if not ipa_values:
             v["entry.full_without_ipa"].append(lx["id"])
-        if not any(p.get("kind") == "audio" for p in prons):
+        # 問題回報 #515 (owner: A) — the system voice (kind "tts") is a playable
+        # pronunciation too, so a word with only TTS is no longer "missing audio".
+        if not any(p.get("kind") in ("audio", "tts") for p in prons):
             v["entry.full_without_audio"].append(lx["id"])
         if lx.get("cefr") and lx.get("cefr_source") in ESTIMATE_SOURCES:
             # Flagged via cefr_source (app reads it); nothing else required.

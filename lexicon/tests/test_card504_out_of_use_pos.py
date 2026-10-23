@@ -50,3 +50,12 @@ def test_current_form_is_not_out_of_use():
                     _sense("simple past of owe", "obsolete", form_of=[{"word": "owe"}]))]
     assert out_of_use_pos(ought) == set()
     assert inflection_only_pos(ought) == set()
+
+
+def test_owner_kept_parts_of_speech_stay():
+    # 問題回報 #514 A: cheap/noun has pictures, the owner keeps it
+    cheap = [{"word": "cheap", "lang_code": "en", "pos": "adj", "senses": [_sense("Low in price")]},
+             {"word": "cheap", "lang_code": "en", "pos": "noun", "senses": [_sense("A bargain", "obsolete")]}]
+    assert out_of_use_pos(cheap) == set()
+    cheap_fr = [dict(e, lang_code="fr") for e in cheap]
+    assert out_of_use_pos(cheap_fr) == {"noun"}

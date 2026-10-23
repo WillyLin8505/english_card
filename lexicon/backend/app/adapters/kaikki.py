@@ -180,6 +180,18 @@ def inflection_only_pos(entries) -> set[str]:
 
 OUT_OF_USE_TAGS = {"obsolete", "archaic"}
 
+# Out-of-use parts of speech the owner keeps (問題回報 #514 A, 卡 #504): they
+# have pictures, another source (OEWN) lists them, or dropping them moved
+# examples to the wrong entry (mine). lang_code → word → parts of speech.
+KEPT_OUT_OF_USE = {"en": {
+    "amiss": {"noun"}, "arise": {"noun"}, "bestow": {"noun"}, "cheap": {"noun", "verb"},
+    "communicate": {"adj"}, "confuse": {"adj"}, "controversial": {"noun"},
+    "disparage": {"noun"}, "efficient": {"noun"}, "fade": {"adj"}, "integrate": {"adj"},
+    "necessary": {"noun"}, "outlandish": {"noun"}, "quaint": {"noun"}, "settle": {"noun"},
+    "state": {"adj"}, "sudden": {"noun"},
+    "consist": {"verb"}, "nothing": {"adv"}, "opponent": {"adj"}, "plain": {"verb"},
+    "powerful": {"adv"}, "mine": {"det"}}}
+
 
 def out_of_use_pos(entries) -> set[str]:
     """Parts of speech whose every meaning is obsolete / archaic (consist the
@@ -201,7 +213,11 @@ def out_of_use_pos(entries) -> set[str]:
                 current.add(p)  # a current form (dried: past of dry) is #51's case
                 if not _is_form_of(s):
                     real.add(p)
-    return old - current if real else set()
+    if not real:
+        return set()
+    e0 = entries[0] if entries else {}
+    kept = KEPT_OUT_OF_USE.get(e0.get("lang_code") or "", {}).get(e0.get("word") or "", set())
+    return old - current - kept
 
 
 def dropped_pos(entries) -> set[str]:

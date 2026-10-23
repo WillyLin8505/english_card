@@ -684,7 +684,7 @@ class Handler(SimpleHTTPRequestHandler):
         if not isinstance(data, dict):
             return None
         title = str(data.get('title') or '')
-        if not title.startswith('[卡片回報]') or data.get('reporter') != 'App 使用者':
+        if not title.startswith(('[卡片回報]', '[意見回饋]')) or data.get('reporter') != 'App 使用者':
             return None
         keep = {k: str(data[k])[:4000] for k in ('title', 'detail', 'lemma') if data.get(k)}
         keep['title'] = keep['title'][:300]

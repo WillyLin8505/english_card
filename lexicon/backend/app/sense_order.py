@@ -21,12 +21,14 @@ materialize() orders the definition items with order_senses():
   3. hand-reviewed common senses first (PREFERRED_GLOSSES for French,
      quality/en_common_senses.json for English — card #381: train's first
      Kaikki sense is a dress's train);
-  4. for English, a later etymology whose Wiktionary translation tables
-     clearly outweigh the first's comes first (card #539: second 「unit of
-     time」 before 「number two in a series」, down 「feathers」 before 「a
-     negative aspect」; etymology_order) — Kaikki's etymology-N label no
-     longer demotes an established sense (adapters/kaikki.py
-     established_sense);
+  4. for English words with senses under several etymologies, the
+     established senses (10+ translations) first — those of a later
+     etymology whose Wiktionary translation tables clearly outweigh the
+     first's ahead of all (card #539: second 「unit of time」 before 「number
+     two in a series」, down 「feathers」 before 「a negative aspect」, tip
+     「gratuity」 before 「a tram for coal」; _etymology_group_rank) —
+     Kaikki's etymology-N label no longer demotes an established sense
+     (adapters/kaikki.py established_sense);
   5. otherwise the dictionary's order (stable sort).
 
 Items carry their Kaikki topics since this card; older items are looked up
@@ -134,22 +136,51 @@ def etymology_order(weights: dict[str, int]) -> list[str]:
     return dominant + [first] + [k for k in later if k not in dominant]
 
 
+@lru_cache(maxsize=100_000)
+def kaikki_sense_translations(target: str, lemma: str, pos: str, gloss: str) -> int | None:
+    """How many translations Wiktionary lists for the Kaikki sense whose
+    first gloss is ``gloss`` (adapters.kaikki.translation_counts); None when
+    the index does not know the gloss."""
+    from . import kaikki_index
+    from .adapters.kaikki import translation_counts
+    for e in kaikki_index.lookup(target, lemma) or []:
+        if str(e.get("word", "")) != lemma or _kaikki_pos(e) != pos:
+            continue
+        for i, s in enumerate(e.get("senses") or []):
+            if (s.get("glosses") or [""])[0].strip() == gloss:
+                return translation_counts(e)[i]
+    return None
+
+
 def _etymology_group_rank(item: dict, target: str, lemma: str) -> int:
-    """English only: the rank of the item's etymology among the headword's
-    etymologies in that part of speech (etymology_order). 0 when the word
-    has one etymology; a sense the index does not know by its gloss takes
-    the etymology its label names, else the first."""
+    """English only, for a part of speech with senses under two or more
+    etymologies: 0 an established sense (adapters.kaikki.established_sense)
+    of a later etymology that dominates the first (etymology_order: second
+    「unit of time」, duck 「bird」), 1 the first etymology's senses and the
+    other established ones (tip 「gratuity」), 2 a later etymology's other
+    senses (tip 「a tram for coal」). Each group keeps the dictionary's
+    order, so the first etymology's order is untouched and only established
+    meanings move up — post's 「travel with relays of horses」 does not,
+    although its etymology also holds 「send mail」. 0 for everything else;
+    a sense the index does not know by its gloss takes the etymology its
+    label names, else the first."""
     if target != "en":
         return 0
+    from .adapters.kaikki import ESTABLISHED_TRANSLATIONS
     pos, gloss = str(item.get("pos") or ""), str(item.get("gloss") or "")
     weights = dict(etymology_weights(target, lemma, pos))
     if len(weights) < 2:
         return 0
+    first = min(weights, key=_ety_num)
     ety = kaikki_sense_info(target, lemma, pos, gloss)[2]
     if not ety:
-        ety = next((l.split("-", 1)[1] for l in _labels(item) if l.startswith("etymology-")), "")
+        ety = next((l.split("-", 1)[1] for l in _labels(item) if l.startswith("etymology-")), first)
+    if ety == first:
+        return 1
+    if (kaikki_sense_translations(target, lemma, pos, gloss) or 0) < ESTABLISHED_TRANSLATIONS:
+        return 2
     order = etymology_order(weights)
-    return order.index(ety) if ety in order else order.index(min(weights, key=_ety_num))
+    return 0 if ety in order[: order.index(first)] else 1
 
 
 def topics_of(target: str, lemma: str, pos: str, gloss: str) -> tuple[str, ...]:

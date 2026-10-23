@@ -2834,13 +2834,27 @@ def label_word(s, sense_id, language, lemma) -> str | None:
     return sense_search_term(language, normalized or lemma, pos, sense_key, meaning, gloss)
 
 
-def sense_shows_word(s, asset, sense_id, language, lemma) -> tuple[str | None, bool]:
+def tag_solid(tag) -> bool:
+    """#455: a label the auto-accept may trust: a box of at least
+    REP_MIN_BOX_AREA of the frame and a stored visualConfidence."""
+    area = tag_box_area(tag)
+    if area is None or area < REP_MIN_BOX_AREA:
+        return False
+    try:
+        float(tag.get('visualConfidence'))
+    except (TypeError, ValueError):
+        return False
+    return True
+
+
+def sense_shows_word(s, asset, sense_id, language, lemma, solid_only=False) -> tuple[str | None, bool]:
     """(the English word looked for, whether the picture's labels name it).
     A label that is a synonym of the word (dad for father, refrigerator for
     fridge: quality/label_synonyms.json, #427) names it too."""
     from .label_synonyms import synonyms
     word = label_word(s, sense_id, language, lemma)
-    return word, bool(word and shows_word(asset.tags, word,
+    tags = [t for t in asset.tags or [] if tag_solid(t)] if solid_only else asset.tags
+    return word, bool(word and shows_word(tags, word,
                                           lemma_forms(s, word) | synonyms(word)))
 
 
@@ -2878,7 +2892,8 @@ def auto_accept_asset(s, asset, note='自動採用（#34）') -> int:
     for b, w, lang in rows:
         if b.review_status != 'pending':
             continue
-        word, seen = sense_shows_word(s, asset, b.sense_id, lang, w)
+        # #455 (owner b): a tiny box or no visualConfidence never auto-approves
+        word, seen = sense_shows_word(s, asset, b.sense_id, lang, w, solid_only=True)
         if auto_accept_ok(asset, seen, b.semantic_score) and auto_accept_sense_ok(s, b.sense_id):
             ok.append((b, w if word == w else f'{word}（{w}）'))
     if not ok or approved + len(ok) < AUTO_ACCEPT_MIN_TAGS:

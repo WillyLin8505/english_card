@@ -41,9 +41,7 @@ class DatabaseTagSections extends StatelessWidget {
     // list says so ("整張圖") instead of looking like a missing pin.
     final positioned = <int>{
       for (final l in (image['labels'] as List? ?? []))
-        if (l is Map &&
-            l['lexeme_id'] is num &&
-            databaseLabelPoint(l) != null)
+        if (l is Map && l['lexeme_id'] is num && databaseLabelPoint(l) != null)
           (l['lexeme_id'] as num).toInt()
     };
     return [
@@ -92,23 +90,24 @@ class _DatabaseTagGroupState extends State<_DatabaseTagGroup> {
             LevelBadge(group.key!),
             const SizedBox(width: MSpace.xs),
           ],
-          Flexible(
+          Expanded(
             // UI copy: an English speaker reads "Beginner (A1)" (\u5361 #496).
             child: UiText(
               group.key == null ? '\u672a\u5206\u7d1a' : levelLabel(group.key!),
               style: MFont.manrope(14, FontWeight.w700, MColors.ink),
             ),
           ),
-          const Spacer(),
-          _AddAllButton(
-              key: ValueKey('add-all-${group.key ?? 'unknown'}'),
-              words: [
-                for (final tag in group.value)
-                  if (pack.byId((tag['lexeme_id'] as num).toInt())
-                      case final w?)
-                    w
-              ],
-              pack: pack),
+          const SizedBox(width: MSpace.xs),
+          Flexible(
+              child: _AddAllButton(
+                  key: ValueKey('add-all-${group.key ?? 'unknown'}'),
+                  words: [
+                    for (final tag in group.value)
+                      if (pack.byId((tag['lexeme_id'] as num).toInt())
+                          case final w?)
+                        w
+                  ],
+                  pack: pack)),
         ]),
       ));
       for (final tag in visibleTags) {
@@ -144,14 +143,12 @@ class _DatabaseTagGroupState extends State<_DatabaseTagGroup> {
                           // #510: no pin on the photo; the word is about
                           // the whole picture, not a missing pin.
                           Container(
-                            key: ValueKey(
-                                'whole-picture-${tag['lexeme_id']}'),
+                            key: ValueKey('whole-picture-${tag['lexeme_id']}'),
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 6, vertical: 1),
                             decoration: BoxDecoration(
                                 color: MColors.surfaceSoft,
-                                borderRadius:
-                                    BorderRadius.circular(MRadii.sm)),
+                                borderRadius: BorderRadius.circular(MRadii.sm)),
                             child: UiText('整張圖', style: MFont.caption),
                           ),
                         ],
@@ -244,7 +241,8 @@ class _AddAllButton extends StatelessWidget {
               ..removeCurrentSnackBar()
               ..showSnackBar(SnackBar(content: UiText('已加入 $n 個單字')));
           },
-          child: UiText('全部加入（${todo.length}）'),
+          child: UiText('全部加入（${todo.length}）',
+              maxLines: 1, overflow: TextOverflow.ellipsis),
         );
       });
 }

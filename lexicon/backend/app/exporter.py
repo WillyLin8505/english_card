@@ -536,7 +536,8 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_saf
                     counts["forms"] += 1
         # pronunciations + audio
         audio_rows = []
-        for it in items(lemma, "audio"):
+        # 問題回報 #588: the system-voice fallback (tts_fallback) is a pronunciation too.
+        for it in [*items(lemma, "audio"), *items(lemma, "tts_fallback")]:
             if it.get("tts"):
                 audio_rows.append((None, it))
                 continue

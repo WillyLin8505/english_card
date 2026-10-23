@@ -22,6 +22,8 @@ Each tick (owner, 2026-10-18 — cut Grokbot's token use to <= 1/5):
     ("Claude CLI <slot>", one card each, at most issue_swarm.max_parallel at once, sharing
     Claude Code's quota/limit). A finished issue card also marks its issues fixed.
  7. Heartbeats for the four bots; card #13 progress gets one line (only when it changes / every 2 h).
+ 8. serve_app (8123) running older code than lexicon/backend/app, lexicon/quality, serve_app.py or
+    lexicon_transport.py → restarted once the change has settled (card #522, serve_app_reload).
  Notable events only → lexicon/state/dispatch_events.jsonl (read by dispatch_digest.py).
  State: lexicon/state/dispatch_state.json · log: lexicon/logs/dispatch_tick.log · lock: dispatch_tick.lock.
 """
@@ -322,6 +324,24 @@ def run_probe(cmd: list) -> bool:
         log(f"probe {cmd[:1]} failed: {e}")
         return False
     return probe_verdict(r.returncode, (r.stdout + r.stderr).decode("utf-8", "replace"))
+
+
+def serve_app_reload_action(newest_change: float | None, unsettled: list[int], busy: list[int],
+                            stale_since: float, now: float, cfg: dict) -> tuple[str, str]:
+    """Card #522 / owner decision #553 = A: serve_app (8123) loads code + quality rules only at start-up.
+    'ok' (nothing changed) · 'wait' (still being edited, a CLI that may be editing is still running,
+    or a card that uses 8123 is running) · 'restart'. Past max_wait_hours the unsettled CLIs no longer
+    hold it back (busy cards still do)."""
+    if newest_change is None:
+        return "ok", ""
+    quiet = float(cfg.get("quiet_minutes", 15)) * 60
+    if now - newest_change < quiet:
+        return "wait", f"程式 {int((now - newest_change) // 60)} 分鐘前還在改"
+    if busy:
+        return "wait", "用 8123 的卡還在跑：" + "、".join(f"#{c}" for c in busy)
+    if unsettled and now - stale_since < float(cfg.get("max_wait_hours", 6)) * 3600:
+        return "wait", "改程式時就在跑的 CLI 還沒做完：" + "、".join(f"#{c}" for c in unsettled[:5])
+    return "restart", ""
 
 
 def order_candidates(cands: list[dict], agent: str, cfg: dict, now: datetime, taken: set,
@@ -1064,8 +1084,100 @@ class Tick:
         self.sync_issues()
         self.mac_sync()
         self.tag_fallback()
+        try:
+            self.serve_app_reload()
+        except Exception as e:  # noqa: BLE001 — never lose the tick's state over it
+            log(f"serve_app reload failed: {e}")
         self.save()
         return 0
+
+    def serve_app_reload(self):
+        """Card #522 (owner decision #553 = A): serve_app hashes serve_app.py, lexicon_transport.py,
+        lexicon/backend/app/**.py and lexicon/quality/**.json only at start-up, so fixed rules never
+        reached the app pack until someone restarted it. Every check_minutes: code changed since the
+        process started (content, not just mtime) → restart it once the change has settled
+        (serve_app_reload_action); #380 keeps answering from the old pack while the new one builds."""
+        cfg = self.cfg.get("serve_app_reload") or {}
+        if not cfg.get("enabled") or os.name != "nt":
+            return
+        now = time.time()
+        st_all = self.state.setdefault("serve_app", {})
+        if now - float(st_all.get("checked_at") or 0) < float(cfg.get("check_minutes", 10)) * 60:
+            return
+        try:
+            import serve_app_stale as sas
+            st = sas.status()
+            rev = sas.revision()
+        except Exception as e:  # noqa: BLE001
+            log(f"serve_app reload: check failed ({e})")
+            return
+        if not self.dry:
+            st_all["checked_at"] = now
+        if not st["running"]:
+            return  # the watchdog brings it back
+        started = st["started"].isoformat()
+        if st_all.get("started") != started:
+            st_all.update(started=started, rev=None, stale_since=None, reminded=False)
+        if not st["changed"]:
+            st_all["rev"] = rev
+            return
+        if st_all.get("rev") == rev:
+            return  # files touched, content unchanged
+        newest = st["changed"][0][0].timestamp()
+        stale_since = float(st_all.get("stale_since") or now)
+        st_all["stale_since"] = stale_since
+        from launch_agent import live_run
+        busy_ids = {int(x) for x in cfg.get("busy_tasks", [])}
+        unsettled, busy = [], []
+        for f in AG_LOGS.glob("card*.pid.json"):
+            m = re.fullmatch(r"card(\d+)\.pid\.json", f.name)
+            info = live_run(int(m.group(1))) if m else None
+            if not info:
+                continue
+            cid = int(m.group(1))
+            if cid in busy_ids:
+                busy.append(cid)
+            elif float(info.get("at") or 0) < newest and cid not in cfg.get("ignore_tasks", []):
+                unsettled.append(cid)
+        action, why = serve_app_reload_action(newest, sorted(unsettled), sorted(busy), stale_since, now, cfg)
+        files = [f for _, f in st["changed"]]
+        log(f"serve_app reload: {len(files)} file(s) changed since {hm(st['started'].astimezone(TAIPEI))} → {action} {why}")
+        if action == "wait":
+            if (not st_all.get("reminded") and now - stale_since > float(cfg.get("remind_hours", 3)) * 3600):
+                st_all["reminded"] = True
+                self.event("blocker", outcome=f"serve_app 跑舊程式 {int((now - stale_since) // 3600)} 小時還沒重啟（{why}）；"
+                                             f"改過 {len(files)} 檔：{', '.join(files[:3])}")
+            return
+        if self.dry:
+            log(f"DRY would restart serve_app pid {st['pids']}")
+            return
+        ok, msg = self.restart_serve_app(st["pids"])
+        if ok:
+            st_all.update(started=None, rev=None, stale_since=None, reminded=False)
+            self.event("recovered", outcome=f"serve_app 重啟，載入 {len(files)} 個新改的檔案（{', '.join(files[:3])}）")
+        else:
+            self.event("error", outcome=f"serve_app 重啟失敗：{msg[:160]}")
+
+    def restart_serve_app(self, pids: list[int]) -> tuple[bool, str]:
+        import socket
+        flags = NO_WINDOW if os.name == "nt" else 0
+        ids = ",".join(str(int(p)) for p in pids)
+        subprocess.run(["powershell", "-NoProfile", "-Command", f"Stop-Process -Id {ids} -Force"],
+                       capture_output=True, timeout=60, creationflags=flags)
+        for _ in range(30):
+            with socket.socket() as s:
+                s.settimeout(1)
+                if s.connect_ex(("127.0.0.1", 8123)) != 0:
+                    break
+            time.sleep(1)
+        try:
+            r = subprocess.run([python_exe(), str(ROOT / "start_services.py")], cwd=ROOT, capture_output=True,
+                               timeout=120, creationflags=flags)
+        except subprocess.TimeoutExpired:
+            return False, "start_services.py 120 秒沒回應"
+        out = (r.stdout + r.stderr).decode("utf-8", "replace").strip()
+        log(f"serve_app restart: {out[-200:]}")
+        return r.returncode == 0, out
 
     def sweep_orphans(self) -> bool:
         """Cards left in_progress by a holder that went away (a closed session, an unnamed CLI)

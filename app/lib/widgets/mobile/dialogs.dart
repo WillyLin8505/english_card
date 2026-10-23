@@ -250,6 +250,10 @@ Future<SavePhotoChoice?> showSaveToAlbumDialog(
       builder: (_) => _SaveToAlbumDialog(repository, defaultTitle, albumId),
     );
 
+/// The album last saved to (問題回報 #563): the default for the next photo,
+/// camera and picker alike; falls back to the first album when it is gone.
+String? _lastSavedAlbumId;
+
 class _SaveToAlbumDialog extends StatefulWidget {
   final WordDatabaseRepository repository;
   final String defaultTitle;
@@ -263,8 +267,11 @@ class _SaveToAlbumDialog extends StatefulWidget {
 
 class _SaveToAlbumDialogState extends State<_SaveToAlbumDialog> {
   final _newAlbum = TextEditingController();
-  late String? _albumId =
-      widget.albumId ?? widget.repository.albums.firstOrNull?.id;
+  late String? _albumId = widget.albumId ??
+      (widget.repository.albums.any((a) => a.id == _lastSavedAlbumId)
+          ? _lastSavedAlbumId
+          : null) ??
+      widget.repository.albums.firstOrNull?.id;
   bool _creating = false;
 
   @override
@@ -280,6 +287,7 @@ class _SaveToAlbumDialogState extends State<_SaveToAlbumDialog> {
     if (_creating && _newAlbum.text.trim().isNotEmpty) {
       albumId = widget.repository.addAlbum(name: _newAlbum.text).id;
     }
+    _lastSavedAlbumId = albumId;
     Navigator.of(context).pop((
       title: widget.defaultTitle,
       albumId: albumId,
@@ -335,7 +343,7 @@ class _SaveToAlbumDialogState extends State<_SaveToAlbumDialog> {
       actions: [
         TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const UiText('取消')),
+            child: const UiText('不要這張')),
         FilledButton(
           onPressed:
               (_creating ? _newAlbum.text.trim().isNotEmpty : _albumId != null)
