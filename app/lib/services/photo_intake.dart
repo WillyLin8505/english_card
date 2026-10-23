@@ -97,7 +97,12 @@ class PhotoIntake {
   }) async {
     final repo = repository();
     final now = repo.clock();
-    final id = 'photo-${now.microsecondsSinceEpoch}';
+    // Several picks in one go (問題回報 #677) can land on the same clock
+    // tick: keep every id unique.
+    var id = 'photo-${now.microsecondsSinceEpoch}';
+    for (var n = 2; repo.photo(id) != null; n++) {
+      id = 'photo-${now.microsecondsSinceEpoch}-$n';
+    }
     final saved = await photoStore.save(id, bytes);
     final size = await _imageSize(bytes);
     final photo = Photo(

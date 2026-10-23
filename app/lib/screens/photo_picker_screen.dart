@@ -45,6 +45,11 @@ class _Candidate {
   ImageProvider get image =>
       asset != null ? AssetImage(asset!) as ImageProvider : MemoryImage(bytes!);
 
+  /// Decoded at a display size, never the full picture: a strip of picked
+  /// 2048px photos decoded whole is 12 MB each (問題回報 #677, jetsam #413).
+  ImageProvider sized(int width) =>
+      ResizeImage.resizeIfNeeded(width, null, image);
+
   /// Longest edge kept for a device photo (same cap as the gallery picker).
   /// A 48MP original decodes to ~190 MB of pixels — several in a row used to
   /// take the app past the iOS memory limit (問題回報 #413).
@@ -78,11 +83,18 @@ class _Candidate {
 ///
 /// On Android and iOS, 最近相片 reads the device library after permission.
 /// The web keeps the file-picker plus bundled samples as its fallback.
+///
+/// Several photos can be ticked and added at once (問題回報 #677): the
+/// album is asked once, they are saved one by one, and the tagging queue
+/// recognizes them one at a time.
 class PhotoPickerScreen extends StatefulWidget {
   /// Album to preselect in the save dialog.
   final String? albumId;
 
-  const PhotoPickerScreen({super.key, this.albumId});
+  /// 從相簿選擇: the system multi-photo picker; tests pass a fake.
+  final Future<List<XFile>> Function()? pickLibrary;
+
+  const PhotoPickerScreen({super.key, this.albumId, this.pickLibrary});
 
   @override
   State<PhotoPickerScreen> createState() => _PhotoPickerScreenState();
@@ -95,9 +107,36 @@ class _PhotoPickerScreenState extends State<PhotoPickerScreen> {
     ..._sessionPicks,
     for (final a in sampleRecentPhotos) _Candidate.asset(a),
   ];
-  int _selected = 0;
+
+  /// The big preview; the newest candidate until one is tapped.
+  _Candidate? _preview;
+
+  /// Ticked photos, in tap order (問題回報 #677).
+  final _chosen = <_Candidate>[];
+
+  /// Which photo of a multi-photo add is being saved (1-based), or 0.
+  int _progress = 0;
   bool _saving = false;
   bool _loadingDevice = false;
+
+  /// Library picks kept for the session (they show again next time); capped
+  /// so many picks don't pile up in memory.
+  static const _maxSessionPicks = 30;
+
+  _Candidate? get _shown => _preview ?? _candidates.firstOrNull;
+
+  /// What 完成 adds: the ticked photos, or the previewed one.
+  List<_Candidate> get _picks =>
+      _chosen.isNotEmpty ? List.of(_chosen) : [if (_shown case final c?) c];
+
+  void _toggle(_Candidate c) => setState(() {
+        if (_chosen.remove(c)) {
+          if (_preview == c) _preview = _chosen.lastOrNull ?? c;
+        } else {
+          _chosen.add(c);
+          _preview = c;
+        }
+      });
 
   @override
   void initState() {
@@ -142,7 +181,6 @@ class _PhotoPickerScreenState extends State<PhotoPickerScreen> {
         if (device.isEmpty) continue;
         setState(() {
           _candidates.insertAll(shown, device);
-          if (shown == 0) _selected = 0;
           shown += device.length;
           _loadingDevice = false;
         });
@@ -156,16 +194,27 @@ class _PhotoPickerScreenState extends State<PhotoPickerScreen> {
     }
   }
 
+  static Future<List<XFile>> _systemPicker() =>
+      ImagePicker().pickMultiImage(maxWidth: 2048, limit: _maxSessionPicks);
+
   Future<void> _pickFromLibrary() async {
     try {
-      final file = await ImagePicker()
-          .pickImage(source: ImageSource.gallery, maxWidth: 2048);
-      if (file == null || !mounted) return;
-      final pick = _Candidate.bytes(await file.readAsBytes());
-      _sessionPicks.insert(0, pick);
+      final files = await (widget.pickLibrary ?? _systemPicker)();
+      if (files.isEmpty || !mounted) return;
+      // One file at a time: each is already scaled to 2048px by the picker.
+      final picks = <_Candidate>[];
+      for (final file in files) {
+        picks.add(_Candidate.bytes(await file.readAsBytes()));
+      }
+      if (!mounted) return;
+      _sessionPicks.insertAll(0, picks);
+      if (_sessionPicks.length > _maxSessionPicks) {
+        _sessionPicks.removeRange(_maxSessionPicks, _sessionPicks.length);
+      }
       setState(() {
-        _candidates.insert(0, pick);
-        _selected = 0;
+        _candidates.insertAll(0, picks);
+        _chosen.addAll(picks);
+        _preview = picks.first;
       });
     } catch (e) {
       if (mounted) showToast(context, photoErrorMessage(e));
@@ -173,12 +222,103 @@ class _PhotoPickerScreenState extends State<PhotoPickerScreen> {
   }
 
   Future<void> _done() async {
-    if (_candidates.isEmpty || _saving) return;
+    final picks = _picks;
+    if (picks.isEmpty || _saving) return;
+    if (picks.length == 1) return _addOne(picks.single);
+    return _addMany(picks);
+  }
+
+  /// Several photos (問題回報 #677): one 存到相片冊 question for all, then
+  /// each is read, checked for a duplicate and saved before the next one is
+  /// read — never all originals in memory at once. Tagging starts after, and
+  /// the queue takes them one at a time.
+  Future<void> _addMany(List<_Candidate> picks) async {
+    final scope = AppScope.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final choice = await showSaveToAlbumDialog(
+      context,
+      repository: scope.repository,
+      defaultTitle: defaultPhotoTitle(scope.clock()),
+      albumId: widget.albumId,
+      count: picks.length,
+    );
+    if (choice == null || !mounted) return;
+    setState(() => _saving = true);
+    var added = 0;
+    var skipped = 0;
+    Photo? openInstead;
+    Object? error;
+    try {
+      for (var i = 0; i < picks.length; i++) {
+        if (mounted) setState(() => _progress = i + 1);
+        try {
+          final bytes = await picks[i].load();
+          Photo? existing;
+          try {
+            existing = scope.intake.findDuplicate(bytes);
+          } catch (e) {
+            debugPrint('duplicate check failed: $e');
+          }
+          if (existing != null) {
+            // The same rule as one photo: ask. In a batch, 打開原本的照片
+            // (or dismissing) skips this one and the rest go on.
+            final again = mounted
+                ? await showDuplicatePhotoDialog(context,
+                    existing: existing, repository: scope.repository)
+                : null;
+            if (again != true) {
+              skipped++;
+              if (again == false) openInstead = existing;
+              continue;
+            }
+          }
+          await scope.intake.addPhoto(
+            bytes,
+            title: choice.title,
+            albumId: choice.albumId,
+            scanMode: choice.scanMode,
+          );
+          added++;
+        } catch (e) {
+          debugPrint('Adding photo ${i + 1}/${picks.length} failed: $e');
+          error = e;
+        }
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _saving = false;
+          _progress = 0;
+        });
+      }
+    }
+    if (added > 0) unawaited(scope.queue.process());
+    if (!mounted) return;
+    if (added == 0) {
+      if (openInstead != null) {
+        Navigator.of(context).pop();
+        scope.navigator.openPhoto(openInstead.id);
+      } else if (error != null) {
+        showToast(context, photoErrorMessage(error));
+      }
+      return;
+    }
+    Navigator.of(context).pop();
+    scope.navigator.selectTab(AppTab.album);
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+          content: UiText(skipped == 0
+              ? '已加入 $added 張照片，AI 會一張一張辨識'
+              : '已加入 $added 張照片，AI 會一張一張辨識（$skipped 張已加入過，略過）')));
+  }
+
+  Future<void> _addOne(_Candidate pick) async {
     final scope = AppScope.of(context);
     final now = scope.clock();
     final Uint8List bytes;
     try {
-      bytes = await _candidates[_selected].load();
+      bytes = await pick.load();
     } catch (e) {
       if (mounted) showToast(context, photoErrorMessage(e));
       return;
@@ -230,7 +370,8 @@ class _PhotoPickerScreenState extends State<PhotoPickerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final selected = _candidates.isEmpty ? null : _candidates[_selected];
+    final selected = _shown;
+    final count = _chosen.length;
     return Scaffold(
       backgroundColor: MColors.canvas,
       body: SafeArea(
@@ -248,16 +389,25 @@ class _PhotoPickerScreenState extends State<PhotoPickerScreen> {
                 ),
                 trailing: Tap(
                   onTap: _saving ? null : _done,
-                  label: '完成',
+                  label: count > 1 ? '加入 $count 張' : '完成',
                   child: Container(
                     height: 40,
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     alignment: Alignment.center,
                     child: _saving
-                        ? const SizedBox.square(
-                            dimension: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2))
-                        : UiText('完成',
+                        ? Row(mainAxisSize: MainAxisSize.min, children: [
+                            const SizedBox.square(
+                                dimension: 18,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2)),
+                            if (_progress > 0 && count > 1) ...[
+                              const SizedBox(width: 6),
+                              Text('$_progress/$count',
+                                  style: MFont.inter(
+                                      13, FontWeight.w600, MColors.primary)),
+                            ],
+                          ])
+                        : UiText(count > 1 ? '加入 $count 張' : '完成',
                             style: MFont.inter(
                                 16, FontWeight.w700, MColors.primary)),
                   ),
@@ -282,7 +432,8 @@ class _PhotoPickerScreenState extends State<PhotoPickerScreen> {
                         ),
                         child: selected == null
                             ? const SizedBox.shrink()
-                            : Image(image: selected.image, fit: BoxFit.cover),
+                            : Image(
+                                image: selected.sized(1200), fit: BoxFit.cover),
                       ),
                     ),
                     const SizedBox(height: 38),
@@ -303,7 +454,10 @@ class _PhotoPickerScreenState extends State<PhotoPickerScreen> {
                                 style: MFont.inter(
                                     14, FontWeight.w700, MColors.albumInk)),
                           ),
-                          UiText('${_candidates.length} 張',
+                          UiText(
+                              count > 0
+                                  ? '已選 $count 張'
+                                  : '${_candidates.length} 張',
                               style: MFont.inter(
                                   13, FontWeight.w500, MColors.albumMuted)),
                         ],
@@ -317,22 +471,12 @@ class _PhotoPickerScreenState extends State<PhotoPickerScreen> {
                             horizontal: 16, vertical: 4),
                         itemCount: _candidates.length,
                         separatorBuilder: (_, __) => const SizedBox(width: 10),
-                        itemBuilder: (context, i) => Tap(
-                          onTap: () => setState(() => _selected = i),
-                          label: '相片 ${i + 1}',
-                          child: Container(
-                            width: 60,
-                            height: 60,
-                            clipBehavior: Clip.antiAlias,
-                            decoration: BoxDecoration(
-                              borderRadius: MRadii.rSm,
-                              border: i == _selected
-                                  ? Border.all(color: MColors.primary, width: 3)
-                                  : null,
-                            ),
-                            child: Image(
-                                image: _candidates[i].image, fit: BoxFit.cover),
-                          ),
+                        itemBuilder: (context, i) => _Thumb(
+                          candidate: _candidates[i],
+                          index: i,
+                          previewed: _candidates[i] == selected,
+                          order: _chosen.indexOf(_candidates[i]) + 1,
+                          onTap: _saving ? null : () => _toggle(_candidates[i]),
                         ),
                       ),
                     ),
@@ -368,6 +512,73 @@ class _PhotoPickerScreenState extends State<PhotoPickerScreen> {
                 ),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One 最近照片 thumbnail: tap to tick it; ticked ones show their order
+/// (問題回報 #677).
+class _Thumb extends StatelessWidget {
+  final _Candidate candidate;
+  final int index;
+  final bool previewed;
+
+  /// 1-based place among the ticked photos, 0 when not ticked.
+  final int order;
+  final VoidCallback? onTap;
+
+  const _Thumb({
+    required this.candidate,
+    required this.index,
+    required this.previewed,
+    required this.order,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final ticked = order > 0;
+    return Tap(
+      onTap: onTap,
+      label: ticked ? '相片 ${index + 1}（已選）' : '相片 ${index + 1}',
+      child: SizedBox(
+        width: 60,
+        height: 60,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Container(
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                borderRadius: MRadii.rSm,
+                border: ticked || previewed
+                    ? Border.all(
+                        color: ticked ? MColors.primary : MColors.hairline,
+                        width: 3)
+                    : null,
+              ),
+              child: Image(image: candidate.sized(180), fit: BoxFit.cover),
+            ),
+            if (ticked)
+              Positioned(
+                top: 3,
+                right: 3,
+                child: Container(
+                  width: 20,
+                  height: 20,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: MColors.primary,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 1.5),
+                  ),
+                  child: Text('$order',
+                      style: MFont.inter(11, FontWeight.w700, Colors.white)),
+                ),
+              ),
           ],
         ),
       ),

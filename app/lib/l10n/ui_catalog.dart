@@ -1082,6 +1082,25 @@ const _templateCopy = <String, (String, String)>{
   '找到 {0} 個字': ('Found {0} words', '{0} mots trouvés'),
   '{0} 個單字': ('{0} words', '{0} mots'),
   '{0} 張': ('{0} photos', '{0} photos'),
+  // 一次匯入多張照片 (問題回報 #677).
+  '存到相片冊（{0} 張）': (
+    'Save to album ({0} photos)',
+    'Enregistrer dans un album ({0} photos)'
+  ),
+  '加入 {0} 張': ('Add {0}', 'Ajouter {0}'),
+  '已選 {0} 張': ('{0} selected', '{0} sélectionnées'),
+  '正在加入第 {0} 張，共 {1} 張': (
+    'Adding photo {0} of {1}',
+    'Ajout de la photo {0} sur {1}'
+  ),
+  '已加入 {0} 張照片，AI 會一張一張辨識': (
+    '{0} photos added; the AI will recognize them one by one',
+    '{0} photos ajoutées ; l’IA les reconnaîtra une par une'
+  ),
+  '已加入 {0} 張照片，AI 會一張一張辨識（{1} 張已加入過，略過）': (
+    '{0} photos added; the AI will recognize them one by one ({1} already added, skipped)',
+    '{0} photos ajoutées ; l’IA les reconnaîtra une par une ({1} déjà ajoutées, ignorées)'
+  ),
   '資料庫圖片（{0}）': ('Database photos ({0})', 'Photos du dictionnaire ({0})'),
   '出現這個單字的照片（{0}）': ('Photos with this word ({0})', 'Photos avec ce mot ({0})'),
   '展開全部（{0}）': ('Show all ({0})', 'Tout afficher ({0})'),
