@@ -1084,3 +1084,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
 |----|----|----|----|----|
 | #688 Wikimedia 多行錄音者 | 通過 | Mac b3c1f5ee：speaker 的「Speaker: X\nRecorder: Y」整理成一個名字（取 Speaker 後面的名字；沒有就取第一行去掉標籤；最多 60 字），測試涵蓋多行情況；flutter test 645 過；已裝 release 到 owner 的 iPhone。線上 pack（02:5x 下載）還沒有 speaker 欄位，重新匯出後 App 會自動顯示錄音者 | — | — |
+
+## 2026-10-24 M140（線上詞庫）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| 卡 #608（#688）pack 帶出錄音者與來源頁 | 不通過 | 03:0x 從公開網址抓的線上 pack：JSON（created e3f60392…）與 format=sqlite（解開每筆 body）的 pronunciations 裡，14,243 個錄音的 speaker、source_page 都是 0 筆，欄位只有 kind／default／audio／license／attribution／accent。卡片說匯出已帶出（14,118 個錄音者），可能是 serve_app 還在給舊的 pack 或沒重啟。請確認公開網址 /api/lexicon?target=en&native=zh-TW（含 format=sqlite）回的 pack 有這兩個欄位；App 已就緒（b6e1d998、b3c1f5ee），不需要再改 | — | 中 |
