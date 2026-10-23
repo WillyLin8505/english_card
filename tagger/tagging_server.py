@@ -72,7 +72,7 @@ KEY_FILE = os.path.join(HERE, '.api_key')
 CMUDICT = os.path.join(ROOT, 'data', 'raw', 'cmudict.dict')
 DEFAULT_MODEL = 'qwen3.5:4b'
 MAX_BODY = 20 * 1024 * 1024
-PROMPT_VERSION = 'photo-tags-context-v8-visible'
+PROMPT_VERSION = 'photo-tags-context-v9-levelmix'
 CACHE_DIR = os.path.join(HERE, 'cache')
 MODEL_CONTEXT = int(os.environ.get('TAGGER_NUM_CTX', '4096'))
 MODEL_MAX_TOKENS = int(os.environ.get('TAGGER_NUM_PREDICT', '1200'))
@@ -102,7 +102,9 @@ IMAGE_PREP_VERSION = f'edge{IMAGE_MAX_EDGE}q{IMAGE_JPEG_QUALITY}'
 LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 POS = ['noun', 'verb', 'adjective', 'adverb', 'phrase']
 FOCUS = {
-    'harder': 'This time prefer specific, precise labels instead of broad category names.',
+    'harder': 'This time prefer specific, precise labels instead of broad category names. '
+              'Every label must be an advanced word (upper-intermediate to proficient, e.g. '
+              '"ergonomic", "cluttered", "luminous", "peripheral"), not a synonym of a basic word.',
     'easier': 'This time prefer common, broad everyday labels.',
     'actions': 'This time prefer verbs and action phrases.',
     'descriptions': 'This time prefer adjectives and adverbs describing what is seen.',
@@ -193,6 +195,12 @@ def build_prompt(level: str, lang: str = 'en', native: str = 'zh-TW',
         'Use ordinary vocabulary, not company, product, model or person names. Ignore words '
         'that are only read from logos, packaging, watermarks or signs.',
     ]
+    if lang == 'en' and level in LEVELS and focus not in ('easier', 'harder'):
+        lines.append(
+            f'The learner is at level {level}. Make sure the labels cover a range of difficulty: '
+            'besides common words, include at least 2 less common, more precise or more advanced '
+            f'labels (above {level}, for example upper-intermediate or advanced vocabulary) '
+            'whenever the photo supports them.')
     if focus in FOCUS:
         lines.append(FOCUS[focus])
     lines += [
