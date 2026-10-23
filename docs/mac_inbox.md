@@ -1633,7 +1633,7 @@ commit `d91555fb`（Windows：flutter analyze 無 error、01:27 +644 ~2: All tes
 
 App 播放時顯示 speaker／授權標示（資料在 audio_assets.speaker／license／source_page）。
 
-## M139（2026-10-24 02:59）狀態：待做（Windows 卡 #608 交給 Mac 的 App 畫面部分）
+## M139（2026-10-24 02:59）狀態：完成
 卡：問題回報 #688：[Mac] 2026-10-24 M138（Mac 修 #657 錄音授權標示）：詞庫沒有 speaker／source_page 欄位（交
 
 Wikimedia 的 speaker 有多行格式（"Speaker: X

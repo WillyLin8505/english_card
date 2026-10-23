@@ -1078,3 +1078,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 |----|----|----|----|----|
 | #657 播放時顯示錄音者／授權 | 通過 | Mac b6e1d998：兩種單字詳情在音標下方顯示「發音錄音：錄音者 · 授權（來源網站）」，取設定腔調實際會播的那段錄音的 speaker（沒有就 attribution，但 Own work 不算）、license、source_page。複習卡背面照既有規則不放出處。新增 recording_credit_test；flutter test 645 過；已裝 release 到 owner 的 iPhone | — | — |
 | 詞庫沒有 speaker／source_page 欄位（交 Windows） | 不通過 | 線上 pack 14,233 個錄音都有 license，但 speaker、source_page 都是 0 筆（6,036 個 attribution 只寫 Own work）；#657 新加的約 757 個 Wikimedia 錄音也沒有帶出錄音者。請在匯出 pack 時把 audio_assets.speaker／source_page 放進 pronunciations，App 就會自動顯示錄音者與來源 | — | 中 |
+
+## 2026-10-24 M139（Mac：錄音者整理成一行）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #688 Wikimedia 多行錄音者 | 通過 | Mac b3c1f5ee：speaker 的「Speaker: X\nRecorder: Y」整理成一個名字（取 Speaker 後面的名字；沒有就取第一行去掉標籤；最多 60 字），測試涵蓋多行情況；flutter test 645 過；已裝 release 到 owner 的 iPhone。線上 pack（02:5x 下載）還沒有 speaker 欄位，重新匯出後 App 會自動顯示錄音者 | — | — |
