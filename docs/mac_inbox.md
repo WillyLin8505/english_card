@@ -1342,7 +1342,7 @@ commit `3d9fbda8`（Windows：flutter analyze 無 error、01:18 +602 ~2: All tes
 - 卡 #587：問題回報 #637：[owner] [Mac] 2026-10-23 M87（iPhone 模擬器）：happy 的詞形
   結果：全部完成：全庫只有 2 字（happy、crumbly）同時有 -er/-est 與 more/most，已只留 -er/-est；匯入規則也改了，之後不會再出現。
 
-## M108（2026-10-23 23:43）狀態：待做（owner 回報，給 Mac）
+## M108（2026-10-23 23:43）狀態：完成
 owner 在 iPhone 送出的回報（#626：App 畫面與互動由 Mac 修）。資料或伺服器的部分請寫「不通過」列交回 Windows。
 
 | # | 回報 | 內容 |

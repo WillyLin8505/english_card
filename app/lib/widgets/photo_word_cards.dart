@@ -6,6 +6,9 @@ part of '../screens/photo_detail_screen.dart';
 class _LevelRow extends StatelessWidget {
   final PosBias bias;
   final bool busy;
+
+  /// What the busy note says (問題回報 #666: 「AI 正在找更多動詞…」).
+  final String? busyLabel;
   final ValueChanged<PosBias> onBias;
   final VoidCallback? onEasier;
   final VoidCallback? onHarder;
@@ -13,6 +16,7 @@ class _LevelRow extends StatelessWidget {
   const _LevelRow({
     required this.bias,
     required this.busy,
+    this.busyLabel,
     required this.onBias,
     required this.onEasier,
     required this.onHarder,
@@ -29,7 +33,7 @@ class _LevelRow extends StatelessWidget {
                     dimension: 12,
                     child: CircularProgressIndicator(strokeWidth: 1.6)),
                 const SizedBox(width: MSpace.xxs),
-                UiText('補充候選詞…',
+                UiText(busyLabel ?? '補充候選詞…',
                     style: MFont.manrope(12, FontWeight.w600, MColors.label)),
               ],
             ),
