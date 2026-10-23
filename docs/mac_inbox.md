@@ -1348,3 +1348,17 @@ owner 在 iPhone 送出的回報（#626：App 畫面與互動由 Mac 修）。�
 | # | 回報 | 內容 |
 |---|---|---|
 | 666 | [意見回饋] 照片詳情：多點動詞 難度提高等那些功能 目前沒有看到你有新增標籤 | 意見：多點動詞 難度提高等那些功能 目前沒有看到你有新增標籤 / 頁面：照片詳情 / 單字／照片 id：photo-deck-1792592460433879 / App 版本：1.0.0+1 / 學習語言：en |
+
+## M109（2026-10-23 23:49）狀態：待做（Windows 卡 #588 交給 Mac 的 App 畫面部分）
+卡：問題回報 #663：[給 Mac] [意見回饋] 相片冊：這裡也要顯示我下載的相片庫
+
+相片冊（album_screen.dart）要把下載的相片庫也列出來。資料端已經有：下載圖片集時 `deck_library.dart:309` 會 `_addAlbum`（帶 `deckSlug`），照片也加進該相簿；舊的圖片集由 `ensureAlbums` 補建（#403）。所以本機已有相簿，問題在顯示：
+- `album_screen.dart:81-84` 只依 `_category` 過濾 `repo.albums`；下載的圖片集在 `albumGroup()`（`word_database_repository.dart:891`）被歸到 `deckAlbumGroup`（圖片集）分組。請 Mac 確認：分類篩選列是否沒有「圖片集」或預設沒列出；以及 owner 下載的是否為 `kind == "photos"`（若是 `words` 的卡片集，本來就不會建相簿，這種情況要另開需求）。
+- 若要保證一定顯示，可在 `_category == null` 時不過濾，或在篩選列加上圖片集分組。
+
+Windows 端改動：無（沒有改 app/、資料或伺服器）。
+- 備份：不需要（沒改資料）。
+- golden（300 詞＋50 照片）與 `qc.py check --live`：沒有改資料，未重跑；沒有退步風險。
+- 未 commit、未 push。
+
+剩下：Mac 依上面確認 owner 的庫類型，改 album_screen 顯示；問題回報 #663 由 Mac 結案。
