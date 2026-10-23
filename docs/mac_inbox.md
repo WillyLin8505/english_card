@@ -1123,3 +1123,12 @@ commit `b717f530`（Windows：flutter analyze 無 error、01:00 +571 ~2: All tes
   結果：全部完成：照 #514 決定 A，保留的 en 24 個過時詞性寫進 Kaikki 轉接器白名單（日後重新整理不會再刪、圖片不會跟著消失）；全庫重放 fr 0、en 0 個待刪。
 - 卡 #455：問題回報 #449：[Mac] 2026-10-21 M30 補驗（上一輪未能驗證的 16 張新介面卡）：詞庫：cup
   結果：全部完成：依 owner 決定 B，自動核可現在要求「標籤框 ≥ 0.02 且有 visualConfidence」，不符的照片留在 pending（只管之後的照片）。
+
+## M81（2026-10-23 16:40）狀態：待做
+commit `1cc4a767`（Windows：flutter analyze 無 error、00:56 +571 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #552：問題回報 #588：法語：系統 TTS 備援沒有寫進 pack（#515 決定 A 還沒生效）
+  結果：exporter 現在會把 ttsfallback 匯出成 kind=tts 的發音列（#588）；程式已改，尚未重新匯出 pack，也未跑 golden / live QC。
+- 卡 #448：問題回報 #442：照片難度改成照片下方的拖曳條：每個難度都至少顯示 5 個標籤，往難拖時簡單字消失、難字出現
+  結果：本輪（r4）未改程式與資料；拖曳條 widget 測試 4/4 通過，後端測試因共用測試 DB 衝突無法驗證，剩餘 4 項已開問題回報 #593。
+- 卡 #553：問題回報 #589：詞庫：重新整理詞條（force_refresh 詞義）會刪掉只存在 example_translat
+  結果：已修（選項 A）：materialize 重新整理不再刪 AI 例句翻譯；新測試因共用測試 DB 被其他 agent 佔用，尚未跑成功（未驗證）。；- 新測試 lexicon/tests/testcard553aiexampletranslationkept.py（AI 保留、非 AI 被刪）。
