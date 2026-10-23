@@ -59,6 +59,8 @@ void main() {
     expect(FeedbackContext.instance.page, '單字詳情');
 
     await tester.tap(button);
+    // The screenshot is given up to 2.5 s (#669); in a test it never comes.
+    await tester.pump(const Duration(seconds: 3));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('feedback-note')), findsOneWidget);
     await tester.enterText(find.byKey(const ValueKey('feedback-note')), '字太小');
