@@ -20,7 +20,9 @@ export 'photo_cache.dart' show precachePhoto;
 
 /// Where a label anchor (a fraction of the ORIGINAL image) lands in a box
 /// that shows the photo with [BoxFit.cover], and back. Photos without a
-/// known size (placeholders) simply fill the box.
+/// known size (placeholders) simply fill the box. [alignment] is the
+/// photo's (the same as [Image.alignment]): which part of an image larger
+/// than the box stays in view.
 class CoverGeometry {
   final double scale;
   final double imageWidth;
@@ -29,14 +31,51 @@ class CoverGeometry {
 
   CoverGeometry._(this.scale, this.imageWidth, this.imageHeight, this.offset);
 
-  factory CoverGeometry(Size box, Photo photo) {
+  factory CoverGeometry(Size box, Photo photo,
+      {Alignment alignment = Alignment.center}) {
     final w = photo.width?.toDouble(), h = photo.height?.toDouble();
     if (!photo.hasImage || w == null || h == null || w <= 0 || h <= 0) {
       return CoverGeometry._(1, box.width, box.height, Offset.zero);
     }
     final s = box.width / w > box.height / h ? box.width / w : box.height / h;
-    return CoverGeometry._(
-        s, w, h, Offset((box.width - w * s) / 2, (box.height - h * s) / 2));
+    final free = Offset(box.width - w * s, box.height - h * s) / 2;
+    return CoverGeometry._(s, w, h,
+        Offset(free.dx * (1 + alignment.x), free.dy * (1 + alignment.y)));
+  }
+
+  /// The geometry of [photo] drawn in a [PinnedPhoto] above [context]: it
+  /// may have moved the photo to keep its focus in view (問題回報 #651).
+  factory CoverGeometry.of(BuildContext context, Size box, Photo photo) =>
+      CoverGeometry(box, photo, alignment: PhotoAlignment.of(context));
+
+  /// 問題回報 #651: with [BoxFit.cover] centred, a spot near the edge of a
+  /// photo much wider (or taller) than its box is cropped away, and its dot
+  /// would land outside the frame. This is the alignment that shows the
+  /// photo with [focus] at least [margin] inside the box — moving the photo
+  /// as little as it can from centred, so a spot already in view changes
+  /// nothing. The dot stays on its object: the photo moves, not the dot.
+  static Alignment focusing(Size box, Photo photo, LabelPoint focus,
+      {double margin = 40}) {
+    final g = CoverGeometry(box, photo);
+    double axis(double boxLen, double imageLen, double f) {
+      final free = boxLen - imageLen; // ≤ 0: how much is cropped
+      if (free > -0.5) return 0;
+      final m = math.min(margin, boxLen / 2);
+      // Offsets o (free ≤ o ≤ 0) that put o + f·imageLen in [m, boxLen − m].
+      final lo = math.max(free, m - f * imageLen);
+      final hi = math.min(0.0, boxLen - m - f * imageLen);
+      final centred = free / 2;
+      if (lo <= centred && centred <= hi) return 0; // already in view
+      final o = lo > hi
+          ? (f < 0.5 ? 0.0 : free) // too near the edge: show that edge
+          : centred.clamp(lo, hi);
+      return (2 * o / free - 1).clamp(-1.0, 1.0);
+    }
+
+    return Alignment(
+      axis(box.width, g.imageWidth * g.scale, focus.x),
+      axis(box.height, g.imageHeight * g.scale, focus.y),
+    );
   }
 
   Offset toBox(LabelPoint p) =>
@@ -46,6 +85,22 @@ class CoverGeometry {
         ((o.dx - offset.dx) / (imageWidth * scale)).clamp(0.0, 1.0),
         ((o.dy - offset.dy) / (imageHeight * scale)).clamp(0.0, 1.0),
       );
+}
+
+/// The alignment a [PinnedPhoto] drew its photo with, for overlays drawn
+/// over it ([TargetRing], dots) to map anchors the same way.
+class PhotoAlignment extends InheritedWidget {
+  final Alignment alignment;
+
+  const PhotoAlignment(
+      {super.key, required this.alignment, required super.child});
+
+  static Alignment of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<PhotoAlignment>()?.alignment ??
+      Alignment.center;
+
+  @override
+  bool updateShouldNotify(PhotoAlignment old) => old.alignment != alignment;
 }
 
 /// A photo's pixels, whichever way they are stored (see [Photo]); photos
@@ -451,6 +506,11 @@ class PinnedPhoto extends StatefulWidget {
   /// when the photo opens show at once.
   final bool revealNew;
 
+  /// The spot that must stay in view (問題回報 #651): the photo is moved
+  /// off centre when [BoxFit.cover] would crop it away. Defaults to the
+  /// only label's anchor when there is exactly one.
+  final LabelPoint? focus;
+
   const PinnedPhoto({
     super.key,
     required this.photo,
@@ -470,6 +530,7 @@ class PinnedPhoto extends StatefulWidget {
     this.reserveBottom = 0,
     this.avoid = const [],
     this.revealNew = false,
+    this.focus,
   });
 
   @override
@@ -620,7 +681,12 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
       child: LayoutBuilder(
         builder: (context, c) {
           final box = Size(c.maxWidth, c.maxHeight);
-          final geo = CoverGeometry(box, widget.photo);
+          final focus = widget.focus ??
+              (widget.pins.length == 1 ? widget.pins.single.anchor : null);
+          final alignment = focus == null
+              ? Alignment.center
+              : CoverGeometry.focusing(box, widget.photo, focus);
+          final geo = CoverGeometry(box, widget.photo, alignment: alignment);
           final scaler = MediaQuery.textScalerOf(context);
           final byId = {for (final p in widget.pins) p.id: p};
           final placed = _placements([
@@ -670,6 +736,7 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
                 // The photo stays still while labels pop in (#409).
                 child: RepaintBoundary(
                   child: PhotoImage(widget.photo,
+                      alignment: alignment,
                       imageErrorBuilder: widget.imageErrorBuilder,
                       onImageState: widget.onImageState),
                 ),
@@ -791,7 +858,9 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
                   ),
                 ),
               if (widget.overlay != null)
-                Positioned.fill(child: widget.overlay!),
+                Positioned.fill(
+                    child: PhotoAlignment(
+                        alignment: alignment, child: widget.overlay!)),
               if (_queue.isNotEmpty || _found != null)
                 Positioned(
                   left: 0,
@@ -933,7 +1002,7 @@ class TargetRing extends StatelessWidget {
         builder: (context, c) => Stack(
           children: [
             if (box case final b?)
-              if (CoverGeometry(c.biggest, photo) case final geo)
+              if (CoverGeometry.of(context, c.biggest, photo) case final geo)
                 Positioned.fromRect(
                   rect: Rect.fromPoints(geo.toBox(LabelPoint(b.left, b.top)),
                       geo.toBox(LabelPoint(b.right, b.bottom))),
@@ -956,7 +1025,8 @@ class TargetRing extends StatelessWidget {
                     ),
                   ),
                 ),
-            if (CoverGeometry(c.biggest, photo).toBox(anchor) case final at)
+            if (CoverGeometry.of(context, c.biggest, photo).toBox(anchor)
+                case final at)
               Positioned(
                 left: at.dx - 28,
                 top: at.dy - 28,

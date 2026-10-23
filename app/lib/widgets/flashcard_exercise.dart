@@ -51,6 +51,9 @@ class _InteractiveExerciseState extends State<_InteractiveExercise> {
           photo: photo,
           radius: look.frontPhotoRadius,
           pins: const [],
+          // 問題回報 #651: the word's spot stays in the frame, even when
+          // BoxFit.cover would crop it away (the ring then follows).
+          focus: anchor,
           overlay: mark && anchor != null && !s.photoFailed
               ? Semantics(
                   label: ui(context, '照片中標出的位置'),
