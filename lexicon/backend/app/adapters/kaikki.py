@@ -332,7 +332,7 @@ def degree_form_implausible(lemma: str, form: str) -> bool:
 DEGREE_KEEP = {"common", "opaque", "base", "brief", "pink", "choice", "minute", "fancy",
                "fit", "trim", "rad", "remote", "orange"}
 DEGREE_DROP = {"awful", "male", "country", "dusk", "left", "lying", "trick", "well",
-               "gold", "swear"}
+               "gold", "swear", "shadow"}
 
 
 def _degree_reviewed_keep(owner: str) -> bool:
