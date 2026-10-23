@@ -683,3 +683,15 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #607（卡 #556）翻卡第一聲是機器人 | 通過 | Mac 7d62d469 已修：翻卡只播有真人錄音的腔調，兩個都沒有才用 TTS 一次；TTS 挑 premium／enhanced 語音。卡 #556 請停掉或只驗證。真人錄音不夠的部分見上面「補更多真人發音（交 Windows）」那一列 | — | — |
 | #610（卡 #562）複習頁要有圖片 | 通過 | Mac d4236e8c 已修：複習頁每一格有封面照片。卡 #562 請停掉或只驗證 | 2026-10-23/review_covers.png | — |
 | M85 其餘 13 筆 | Mac 處理中 | 照 M85 由 Windows 修；mac_sync 開 M 項後 Mac 在 iPhone 實機驗證 | — | — |
+
+## 2026-10-23 M86（owner 的 iPhone 12 實機檢查）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #614 相片冊照片看不到 | 通過 | 原因：Photo.filePath 存完整路徑（含 iOS App 容器 ID），iOS 每次安裝／更新都換容器，owner 手機上 19 張照片存的全是舊容器路徑，檔案其實都還在。Mac d0d8d51b：存的路徑不存在時，到這次安裝的照片資料夾找同檔名（顯示、遺失判斷、辨識讀檔、Anki、備份都改）。iPhone 實機：19 張可顯示 19、看不到 0；photo-1792730973924683 照片詳情正常顯示 4 個標籤。App Store 更新也會遇到同樣問題，這次一併修好 | 2026-10-23/own_02_photo_614.png | — |
+| M84 掃描 QR code、#587 意見回饋鈕 | 通過 | iPhone 實機：設定 → 進階設定 → 照片辨識連線看得到「掃描 QR code」；每頁右上有意見回饋鈕 | 2026-10-23/own_04_advanced.png | — |
+| 複習頁封面（實機） | 通過 | iPhone 實機：綜合、哈、水果與蔬菜圖片集、今天新加的單字都有各自的照片當封面；弱項單字沒有字，維持色塊 | 2026-10-23/own_03_review.png | — |
+| 相片冊主頁卡片集標籤 | 不通過 | iPhone 實機（d0d8d51b 之前的版本）：水果與蔬菜圖片集封面左上「卡片集 · English Card 編輯部」標籤換行後壓到照片上的字。卡 #564 正在改相片冊封面，請一併檢查；M87 會再驗 | 2026-10-23/own_01_albums.png | 低 |
+| owner iPhone 安裝 | 通過 | 實機檢查後重裝 release 版 main e4b1e8c0（含 Windows 6aa0b935 的 #561 #565 #557 #568 #567 #564 與 Mac d0d8d51b） | — | — |
+| 模擬檔修正 | 通過 | Mac 0fabd933：detail 讀 SIM_OUT、findings 不為空就不算過、SIM_SEED 分層抽樣（含 stub）、捲到底檢查空白標題、沒有 tagger cache 時 pin 略過／fuzz 跳過照片、pack_update 加 SQLite 分批路徑。SIM_SEED=1023：detail 通過、pack_update 通過、fuzz 通過、pin 略過 | — | — |
+| database_simulation：等待提示與實際不符 | 不通過 | 從資料庫加入「本身沒中文、同拼字其他詞性有中文」的字（frightening 名詞、hanging 形容詞），提示說「中文補齊後會自動排進複習」，實際上卡片已拿到其他詞性的中文並排進複習。原因：database_word_detail.dart 的 addDatabaseWord 在 linkLexicon 之前判斷要不要等待 | — | 低 |
