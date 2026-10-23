@@ -88,6 +88,16 @@ NO_WINDOW = 0x08000000
 BREAKAWAY = 0x01000000
 LOG_CAP = 1_000_000
 LOCK_STALE_S = 15 * 60
+NO_DECISION_RE = re.compile(r"^[：:\s]*(無|沒有|none|n/?a)\s*[。.]?\s*($|\n)", re.I)
+
+
+def real_decision(text: str) -> bool:
+    """A 「需要你決定」 that actually asks something — cards sometimes write 「需要你決定：無。」
+    (10/23: those opened empty [待決定] issues and parked finished cards)."""
+    m = DECISION_RE.search(text[:800])
+    return bool(m) and not NO_DECISION_RE.match(text[m.end():m.end() + 40])
+
+
 DECISION_RE = re.compile(r"需要你決定|待你決定|請你決定|需使用者決定|需要使用者決定|decision needed|needs owner", re.I)
 ALL_DONE_RE = re.compile(r"^\s*(全部完成|ALL DONE)", re.I | re.M)
 BLOCKER_RE = re.compile(r"^\s*(BLOCKED|卡住|無法完成)", re.I | re.M)
@@ -581,6 +591,7 @@ class Tick:
 
     def finish(self, card_id: int, agent: str, t: dict, res: Path):
         text = res.read_text(encoding="utf-8", errors="replace")
+        self.hand_to_mac(card_id, t, text)
         outcome = outcome_line(text)
         fresh = http("GET", f"/tasks/{card_id}")
         repeat = fresh.get("kind") == "recurring" or card_id in set(self.cfg["multi_round_tasks"])
@@ -593,7 +604,7 @@ class Tick:
         progress = f"{outcome}（dispatch_tick {hm(self.now)} 收卡；{rel}）"[:600]
         if fresh.get("status") != "in_progress" or fresh.get("agent") != agent:
             action = f"已由 {fresh.get('agent') or 'owner'} 改成 {fresh.get('status')}"
-        elif DECISION_RE.search(text[:800]):
+        elif real_decision(text):
             action = "waiting"
             self.write("PUT", f"/tasks/{card_id}", {"by": "Grokbot", "status": "waiting", "progress": progress}, "decision")
             self.ask_owner(card_id, fresh, text, rel)
@@ -1190,6 +1201,19 @@ class Tick:
         out = (r.stdout + r.stderr).decode("utf-8", "replace").strip()
         log(f"serve_app restart: {out[-200:]}")
         return r.returncode == 0, out
+
+    def hand_to_mac(self, card_id: int, task: dict, text: str):
+        """#626: a card's 「需要 Mac：…」 part (App screens) goes to docs/mac_inbox.md for the Mac."""
+        m = re.search(r"需要 ?Mac[：:]", text)
+        if not m or self.dry:
+            return
+        part = text[m.end():].split("\n\n## ")[0].strip()[:1500]
+        inbox = ROOT / "docs" / "mac_inbox.md"
+        no = max([int(n) for n in re.findall(r"^## M(\d+)", inbox.read_text(encoding="utf-8"), re.M)] or [0]) + 1
+        with inbox.open("a", encoding="utf-8", newline="\n") as f:
+            f.write(f"\n## M{no}（{self.now:%Y-%m-%d %H:%M}）狀態：待做（Windows 卡 #{card_id} 交給 Mac 的 App 畫面部分）\n"
+                    f"卡：{str(task.get('title') or '')[:80]}\n\n{part}\n")
+        log(f"#{card_id}: App part handed to the Mac (inbox M{no})")
 
     def route_app_reports(self):
         """owner 10/23 (#626): App 畫面與互動由 Mac 修。The owner's reports from the App go to the Mac:
