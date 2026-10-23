@@ -10,7 +10,7 @@ import 'package:flutter/widgets.dart';
 /// report): [scale] of the logical size, smaller again if still too big.
 /// Null when nothing could be captured (tests, web).
 Future<Uint8List?> captureScreen(GlobalKey boundary,
-    {double scale = 0.5, int maxBytes = 180 * 1024}) async {
+    {double scale = 0.75, int maxBytes = 180 * 1024}) async {
   try {
     final box = boundary.currentContext?.findRenderObject();
     if (box is! RenderRepaintBoundary || !box.hasSize) return null;
