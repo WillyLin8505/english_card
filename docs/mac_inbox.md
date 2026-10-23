@@ -1203,7 +1203,7 @@ commit `7b8c97cb`（Windows：flutter analyze 無 error、01:07 +576 ~2: All tes
 - 卡 #571：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
   結果：全部完成：flutter test 576 過／2 skip／0 失敗，flutter analyze 0 error（1 個既有 unusedimport warning）。
 
-## M89（2026-10-23 19:42）狀態：待做
+## M89（2026-10-23 19:42）狀態：完成
 commit `533bd111`（Windows：flutter analyze 無 error、01:09 +580 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #558：問題回報 #605：[卡片回報] money（noun）翻譯錯
   結果：全部完成：money 的圖（asset 10290）與全庫 1031 張純文字截圖／文件圖已退件（5286 筆配圖關聯 → rejected），golden／QC 無退步。
