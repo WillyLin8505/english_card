@@ -646,3 +646,15 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 照片詳情開啟（M-PERF 第二輪） | Mac 處理中 | 修正後最慢一張 114ms → 64ms（build 最大 95.8 → 62.7ms），但仍有 4 張超過 33ms；Mac 繼續修 photo_detail_screen.dart | — | — |
 | 翻卡（M-PERF 第二輪） | Mac 處理中 | 修正後最慢一張 108ms → 87ms（build 最大 67.8 → 54.2ms），仍有 5 張超過 33ms；Mac 繼續修 flashcard_back.dart | — | — |
 | 同步新詞庫時主執行緒卡住 | Mac 處理中 | 第 1 次量測 App 剛好第一次同步新版詞庫：單字本捲動中有一張畫面 580ms、複習中有一張 1,151ms，但 build／raster 都很短（主執行緒被畫面以外的工作佔住）；第 2 次詞庫已同步就沒有。每次伺服器出新詞庫，使用者打開 App 後會卡一下約 1 秒。Mac 修 dictionary_sync.dart／lexicon_pack.dart／lexicon_sqlite.dart，把套用與載入新詞庫移出主執行緒或分批做 | — | — |
+
+## 2026-10-23 Mac 修正第二輪＋永久卡 S2／S5
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| 照片詳情開啟（M-PERF2） | 通過 | 第二輪修正 62d8fd15（標籤排版快取、每段自己延後出現）後 iPhone 12 實機：最慢一張 114 → 64 → 43ms，超過 33ms 的畫面 4 → 2 張；剩下的單張 40 多 ms 肉眼不易察覺，先結案，S4 會持續追 | — | — |
+| 翻卡（M-PERF2） | 通過 | 第二輪修正 62d8fd15（翻面那格只建單字、IPA、詞性與意思，其餘逐格出現在 180ms 淡入期間）後實機：最慢一張 108 → 87 → 58ms，超過 33ms 的畫面 7 → 5 → 1 張 | — | — |
+| 同步新詞庫時主執行緒卡住（M-PERF2） | 通過 | 修正 e5dfa83b（建索引、套 delta 改到背景 isolate，linkLexicon 分批每 8ms 讓出）：Mac 上主執行緒最長停頓 delta 856 → 31ms、整檔下載 224 → 10ms，新增 sync_main_thread_test 比對新舊結果一致。實機要等伺服器出下一版詞庫時才量得到，S4／S6 會補 | — | — |
+| analyze／test（62d8fd15） | 通過 | Mac 上 flutter analyze 0 error、0 warning；flutter test 520 通過、3 略過 | — | — |
+| S2 模擬器回歸（英文帳戶） | 通過 | 複習 40 張不同單字 37 個、同字最多 3 次、提示只算一次、回報此卡片、刪除可復原、背面英式美式與無等級字、預設 B 樣式、設定各項、圖片集變相片冊、照片詳情左滑可復原、單字詳情收合都照舊；測試裡資料庫搜尋、卡片集入口、要找什麼這幾步是 App 已拿掉的畫面，不算 | — | — |
+| S2 模擬器回歸（法語帳戶） | 未能驗證 | App 目前學習語言只開放英文（app_settings.dart availableLearningLanguages = {'en'}），法文顯示「即將推出」，模擬器上開不了學法語的帳戶；下一輪改用母語法文（介面法文）跑一輪 | — | — |
+| S5 公開網址健康 | 通過 | 11:53 /api/decks 回 200（2.2 秒）、/api/audio 加 Range 回 206（content-range bytes 0-1/21688） | — | — |
