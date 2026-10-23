@@ -1315,7 +1315,7 @@ App pack 要重新匯出後再驗證（缺的過去式等已在 card570 補進�
 - QC：`card586_qc_after.json`（對照 card570_qc_after.json）regressions 空；golden 全 1.0，照片 expected_sense 0.9286 不變。
 - 剩下：重新匯入時，動詞次要詞性的變化仍會由 adapter 重新產生（這次只清現有資料）；若要根治需把同規則放進 adapter，未擴大範圍。
 
-## M104（2026-10-23 23:21）狀態：待做（Windows 卡 #584 交給 Mac 的 App 畫面部分）
+## M104（2026-10-23 23:21）狀態：完成
 卡：問題回報 #625：[Mac] 2026-10-23 owner 要求：翻卡第一次發音是機器人聲：owner 要求：補更多真人發音（交 Windows）
 
 無。
