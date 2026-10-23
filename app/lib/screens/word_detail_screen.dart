@@ -260,6 +260,12 @@ class _WordBody extends StatelessWidget {
             when !PhotoStore.lostOriginal(p))
           (photo: p, occ: o),
     ];
+    // A part of speech with no meaning yet is left out whole (cigarette 動詞);
+    // with none left there is no 詞性與意思 title at all.
+    final meaningUsages = [
+      for (final usage in entry.effectiveUsages)
+        if (usage.senses.any((s) => s.meaning.trim().isNotEmpty)) usage,
+    ];
     final sections = <Widget>[
       // pronounce-block
       Row(
@@ -298,7 +304,8 @@ class _WordBody extends StatelessWidget {
                     // that section is absent and the header keeps it (#469).
                     if (entry.meaning.isEmpty &&
                         entry.effectiveUsages.length <= 1 &&
-                        entry.pos.isNotEmpty)
+                        entry.pos.isNotEmpty &&
+                        entry.pos != 'unknown')
                       TagChip(posLabel(entry.pos)),
                     if (entry.level != null) LevelBadge(entry.level!),
                     // Neutral register is the default: only label the rest (#421).
@@ -329,7 +336,7 @@ class _WordBody extends StatelessWidget {
       ),
       if (entry.dataStatus != WordDataStatus.complete)
         _DataStatus(entry: entry),
-      if (entry.effectiveUsages.length > 1)
+      if (entry.effectiveUsages.length > 1 && meaningUsages.isNotEmpty)
         _Section(
           label: '詞性與意思',
           child: Column(
@@ -337,8 +344,7 @@ class _WordBody extends StatelessWidget {
             children: [
               // A part of speech with no meaning yet would be a bare chip
               // (secret 動詞, imply 名詞; 卡 #12 第 131 輪), as in the database view.
-              for (final usage in entry.effectiveUsages)
-                if (usage.senses.any((s) => s.meaning.trim().isNotEmpty)) ...[
+              for (final usage in meaningUsages) ...[
                 TagChip(posLabel(usage.pos)),
                 const SizedBox(height: MSpace.xxs),
                 _MoreList(

@@ -34,8 +34,8 @@ void main() {
   testWidgets('a word without Chinese yet says it waits (問題回報 #100)', (tester) async {
     await pumpApp(tester);
     await open(tester, 8);
-    await tester.ensureVisible(find.text('加入我的單字本與複習'));
-    await tester.tap(find.text('加入我的單字本與複習'));
+    await tester.ensureVisible(find.text('加入單字本（中文補齊後排進複習）'));
+    await tester.tap(find.text('加入單字本（中文補齊後排進複習）'));
     await tester.pump();
     expect(find.text('已加入我的單字本；中文意思補齊後會自動排進複習'), findsOneWidget);
   });

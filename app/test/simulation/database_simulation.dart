@@ -60,9 +60,12 @@ void main() {
         final s = t.data ?? t.textSpan?.toPlainText() ?? '';
         if (RegExp(r'\bnull\b').hasMatch(s)) f.add('畫面出現 null', '$current：$s');
       }
-      final button = find.text('加入我的單字本與複習');
+      final button = find.byKey(const ValueKey('database-add'));
       if (button.evaluate().isEmpty) {
         f.add('沒有加入按鈕', current);
+      } else if (tester.widget<FilledButton>(button).onPressed == null) {
+        // 「已在我的單字本 ✓」: one card per spelling, another part of
+        // speech (or the base word of this form) was added already.
       } else {
         await tester.ensureVisible(button);
         final before = {for (final e in repo.entries) e.id};

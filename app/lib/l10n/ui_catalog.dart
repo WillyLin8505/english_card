@@ -465,6 +465,15 @@ const uiCatalog = <String, (String, String)>{
     'Add to my words and review',
     'Ajouter à mes mots et aux révisions'
   ),
+  '加入單字本（{N}補齊後排進複習）': (
+    'Add to my words (review starts when the {N} meaning is ready)',
+    'Ajouter à mes mots (révision quand le sens en {N} sera disponible)'
+  ),
+  '已在我的單字本 ✓': ('Already in my words ✓', 'Déjà dans mes mots ✓'),
+  '這個字還在補齊資料': (
+    'This word’s details are still being filled in',
+    'Les informations de ce mot sont en cours d’ajout'
+  ),
   '已加入我的單字本與複習': (
     'Added to my words and review',
     'Ajouté à mes mots et aux révisions'
