@@ -867,6 +867,8 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_response(status)
         self.send_header('Content-Type', mimetypes.guess_type(path)[0] or 'application/octet-stream')
         self.send_header('Accept-Ranges', 'bytes')
+        # a recording never changes at its path: let the phone keep it (Mac 10/24, #684)
+        self.send_header('Cache-Control', 'public, max-age=604800')
         if status == 206:
             self.send_header('Content-Range', f'bytes {start}-{end}/{size}')
         self.send_header('Content-Length', str(end - start + 1))
@@ -919,6 +921,7 @@ class Handler(SimpleHTTPRequestHandler):
                 self.send_header('Content-Type', mimetypes.guess_type(path)[0] or 'application/octet-stream')
                 self.send_header('Content-Length', str(path.stat().st_size))
                 self.send_header('X-Content-Type-Options', 'nosniff')
+                self.send_header('Cache-Control', 'public, max-age=604800')  # an asset id's file never changes
                 self.end_headers()
                 with path.open('rb') as image_file:
                     self.copyfile(image_file, self.wfile)
