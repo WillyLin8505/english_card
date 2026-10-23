@@ -1604,6 +1604,27 @@ def _base_level_simple(word: str, s=None):
     return None
 
 
+def _denominal_adjective_level(word: str, pos: str, base):
+    """Card #563 (問題回報 #611): an -ed/-ing adjective built on a word the list
+    only has as a noun (weathered ← weather A1, patterned ← pattern B1,
+    flowered ← flower A1) is a different, harder word than its base, so it
+    must not take the base's level outright. Returns the word's frequency
+    estimate when that is harder, at most two bands above the base (the
+    estimate overshoots photographable words, 問題回報 #218); None otherwise
+    (verb-based participles like tired ← tire keep following the base)."""
+    from .adapters.base import frequency_profile, zipf
+    from .adapters.local import cefr_list
+    if pos not in ('adjective', 'adj') or not word.endswith(('ed', 'ing')) or '+' in base[1]:
+        return None
+    kinds = (cefr_list().get(base[1]) or (None, {}))[1]
+    if 'verb' in kinds or 'noun' not in kinds:
+        return None
+    est = frequency_profile(zipf(word, 'en'))['cefr']
+    if CEFR_RANK[est] <= CEFR_RANK[base[0]]:
+        return None
+    return min(est, CEFR_LEVELS[min(CEFR_RANK[base[0]] + 2, len(CEFR_LEVELS) - 1)], key=CEFR_RANK.get)
+
+
 def classify_tag_cefr(s, tag: dict, *, include_exact: bool = True) -> dict:
     """A label's level (owner decisions, 問題回報 option A + 2026-10-06):
     1. the CEFR-J / Octanove list's level for the same word and part of
@@ -1648,7 +1669,8 @@ def classify_tag_cefr(s, tag: dict, *, include_exact: bool = True) -> dict:
                 tag['cefr'], tag['cefrSource'] = other_pos, 'cefrj'
                 return tag
         if base:
-            tag['cefr'], tag['cefrSource'], tag['cefrLemma'] = base[0], 'base', base[1]
+            level = _denominal_adjective_level(parts[0], pos, base)
+            tag['cefr'], tag['cefrSource'], tag['cefrLemma'] = level or base[0], 'base', base[1]
             return tag
     elif len(parts) > 1:
         levels = []

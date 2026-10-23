@@ -1498,8 +1498,24 @@ class _PhotoPagerState extends State<_PhotoPager> {
   Widget _photo(BuildContext context, CardPhoto o) {
     final p = o.$1;
     final a = o.$2;
-    final photoWidget = PinnedPhoto(
+    final credit = o.$3?.trim();
+    return PinnedPhoto(
       photo: p,
+      onPhotoLongPress: credit == null || credit.isEmpty
+          ? null
+          : () => showDialog<void>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const UiText('圖片來源'),
+                  content: Text(credit),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      child: const UiText('關閉'),
+                    ),
+                  ],
+                ),
+              ),
       radius: widget.radius,
       imageErrorBuilder: p.networkUrl == null
           ? null
@@ -1515,26 +1531,6 @@ class _PhotoPagerState extends State<_PhotoPager> {
               onMoved: widget.onAnchorMoved == null
                   ? null
                   : (to) => widget.onAnchorMoved!(o, to)),
-    );
-    final credit = o.$3?.trim();
-    if (credit == null || credit.isEmpty) return photoWidget;
-    return GestureDetector(
-      onLongPress: () {
-        showDialog<void>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const UiText('圖片來源'),
-            content: Text(credit),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const UiText('關閉'),
-              ),
-            ],
-          ),
-        );
-      },
-      child: photoWidget,
     );
   }
 

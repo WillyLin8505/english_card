@@ -8,6 +8,7 @@ import '../../services/card_report.dart';
 import '../../services/word_database_repository.dart';
 import '../../services/word_selector.dart';
 import '../../theme/mobile_theme.dart';
+import 'photo_widgets.dart';
 import 'word_details_editor.dart';
 
 Widget _title(String text) =>
@@ -295,6 +296,22 @@ class _SaveToAlbumDialogState extends State<_SaveToAlbumDialog> {
     ));
   }
 
+  /// The album's cover (same pick as the 相片冊 card), so the chip shows
+  /// the pictures inside (問題回報 #612).
+  Widget? _albumCover(Album a) {
+    final Widget? image = a.coverAsset != null
+        ? Image.asset(a.coverAsset!, fit: BoxFit.cover)
+        : switch (widget.repository.albumCoverPhoto(a.id)) {
+            final Photo p => PhotoImage(p),
+            _ => null,
+          };
+    if (image == null) return null;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(6),
+      child: SizedBox(width: 28, height: 28, child: image),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final albums = widget.repository.albums;
@@ -313,6 +330,7 @@ class _SaveToAlbumDialogState extends State<_SaveToAlbumDialog> {
               children: [
                 for (final Album a in albums)
                   ChoiceChip(
+                    avatar: _albumCover(a),
                     label: Text(a.name),
                     selected: !_creating && a.id == _albumId,
                     onSelected: (_) => setState(() {

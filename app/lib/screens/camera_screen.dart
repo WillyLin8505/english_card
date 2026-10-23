@@ -220,9 +220,8 @@ class _CameraScreenState extends State<CameraScreen>
         final latest = repo.photos.where(PhotoStore.canShow).firstOrNull;
         final String badge;
         if (_busy) {
-          badge = scope.settings.taggingConfigured
-              ? '正在找照片裡的單字…'
-              : '正在讀照片裡的文字…';
+          badge =
+              scope.settings.taggingConfigured ? '正在找照片裡的單字…' : '正在讀照片裡的文字…';
         } else if (_controller == null) {
           badge = _cameraError != null
               ? (_permissionDenied ? '相機權限未開啟' : '目前無法使用相機')
@@ -233,9 +232,7 @@ class _CameraScreenState extends State<CameraScreen>
           // Say the limit, not the capability: with only on-device text
           // scanning a cup or a plant finds nothing (問題回報 #472).
           badge = !scope.settings.taggingConfigured
-              ? (TextScan.available
-                  ? '只找照片裡的{L}字・物品辨識未連線'
-                  : '照片辨識尚未連線')
+              ? (TextScan.available ? '只找照片裡的{L}字・物品辨識未連線' : '照片辨識尚未連線')
               : scope.queue.offline
                   ? 'AI 離線 · 照片會先排隊'
                   : 'AI 辨識就緒';
@@ -293,8 +290,7 @@ class _CameraScreenState extends State<CameraScreen>
                           onBadgeTap: _controller != null &&
                                   !_busy &&
                                   !scope.settings.taggingConfigured
-                              ? () =>
-                                  scope.navigator.selectTab(AppTab.settings)
+                              ? () => scope.navigator.selectTab(AppTab.settings)
                               : null,
                           onOpenFallback: () => _openLatest(latest),
                         ),
@@ -391,9 +387,8 @@ class _CameraScreenState extends State<CameraScreen>
                                             ? _showPermissionHelp
                                             : _start,
                                     icon: const MSvg(MIcon.pulseDot, size: 16),
-                                    label: UiText(_permissionDenied
-                                        ? '開啟權限說明'
-                                        : '重試相機'),
+                                    label: UiText(
+                                        _permissionDenied ? '開啟權限說明' : '重試相機'),
                                   ),
                                 ],
                                 if (!scope.settings.taggingConfigured) ...[
@@ -409,42 +404,44 @@ class _CameraScreenState extends State<CameraScreen>
                             ),
                           ),
                         ],
-                        const SizedBox(height: MSpace.md),
-                        Tap(
-                          onTap: () => _openLatest(latest),
-                          label: '查看最近照片的單字',
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: MSpace.md, vertical: MSpace.xs + 2),
-                            constraints: const BoxConstraints(
-                                minWidth: 48, minHeight: 48),
-                            decoration: MDecor.chipSurface(active: true),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const MSvg(MIcon.chevronUp, size: 16),
-                                const SizedBox(width: MSpace.xs),
-                                // Flexible: the English and French copy is
-                                // longer than the Chinese (問題回報 #363).
-                                Flexible(
-                                  child: UiText(
-                                      // With a live preview behind the button,
-                                      // 「這張」 reads as the viewfinder; it
-                                      // opens the last photo (問題回報 #583).
-                                      latest == null
-                                          ? '先選一張照片開始學習'
-                                          : _controller?.value.isInitialized ==
-                                                  true
-                                              ? '最近一張照片的單字'
-                                              : '查看這張照片的單字',
-                                      textAlign: TextAlign.center,
-                                      style: MFont.manrope(13, FontWeight.w700,
-                                          MColors.primary)),
-                                ),
-                              ],
+                        // Owner: no 「先選一張照片開始學習」 chip before the first
+                        // photo (問題回報 #613); the picker button stays.
+                        if (latest != null) ...[
+                          const SizedBox(height: MSpace.md),
+                          Tap(
+                            onTap: () => _openLatest(latest),
+                            label: '查看最近照片的單字',
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: MSpace.md,
+                                  vertical: MSpace.xs + 2),
+                              constraints: const BoxConstraints(
+                                  minWidth: 48, minHeight: 48),
+                              decoration: MDecor.chipSurface(active: true),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const MSvg(MIcon.chevronUp, size: 16),
+                                  const SizedBox(width: MSpace.xs),
+                                  // Flexible: the English and French copy is
+                                  // longer than the Chinese (問題回報 #363).
+                                  Flexible(
+                                    child: UiText(
+                                        // With a live preview behind the button,
+                                        // 「這張」 reads as the viewfinder; it
+                                        // opens the last photo (問題回報 #583).
+                                        _controller?.value.isInitialized == true
+                                            ? '最近一張照片的單字'
+                                            : '查看這張照片的單字',
+                                        textAlign: TextAlign.center,
+                                        style: MFont.manrope(13,
+                                            FontWeight.w700, MColors.primary)),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
+                        ],
                       ],
                     ),
                   ),

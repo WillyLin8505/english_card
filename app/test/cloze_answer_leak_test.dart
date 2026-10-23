@@ -57,7 +57,7 @@ void main() {
       'This ripe apple is on the wooden table.'
     ]);
     addTearDown(s.dispose);
-    expect(s.exercise!.prompt, 'This ripe ＿＿＿＿ is on the wooden table.');
+    expect(s.exercise!.prompt, 'This ripe ＿＿＿＿＿ is on the wooden table.');
     expect(s.exercise!.answer, 'apple');
   });
   test('the chosen strict substring policy also rejects men inside women', () {

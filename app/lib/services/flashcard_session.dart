@@ -430,8 +430,11 @@ class FlashcardSession extends ChangeNotifier {
             caseSensitive: false);
         final matches = pattern.allMatches(example.text).toList();
         if (matches.length != 1) continue;
+        // One underscore per letter, so the learner sees the answer's length
+        // (card #559); a space or hyphen in the form keeps its own slot.
+        final blank = matches.single.group(0)!.replaceAll(RegExp(r'\S'), '＿');
         final prompt = example.text
-            .replaceRange(matches.single.start, matches.single.end, '＿＿＿＿');
+            .replaceRange(matches.single.start, matches.single.end, blank);
         // Use the same strict substring policy as the preview: another form
         // or a compound must not leave the answer visible after masking.
         final remaining = prompt.toLowerCase();
@@ -551,6 +554,10 @@ class FlashcardSession extends ChangeNotifier {
   /// labelled words gives another kind of question.
   static const dragTargets = 3;
 
+  /// Drop spots closer than this (share of the photo) would overlap on screen
+  /// (card #557), so a drag question never uses two labels that close.
+  static const dragMinGap = 0.1;
+
   ReviewExercise? _imageDrag(WordEntry entry) {
     final photo = _photo;
     if (photo == null) return null;
@@ -561,7 +568,10 @@ class FlashcardSession extends ChangeNotifier {
       final personal = owned[key];
       if (personal == null ||
           meaning.trim().isEmpty ||
-          targets.any((t) => LexiconPack.normalize(t.word) == key)) {
+          targets.any((t) => LexiconPack.normalize(t.word) == key) ||
+          targets.any((t) =>
+              (t.anchor.x - anchor.x).abs() < dragMinGap &&
+              (t.anchor.y - anchor.y).abs() < dragMinGap)) {
         return;
       }
       targets.add(ExerciseTarget(personal.word, meaning, anchor));
@@ -693,18 +703,7 @@ class FlashcardSession extends ChangeNotifier {
           .first;
       return _takeAgain(next.key);
     }
-    final photosByWord = repo.photoIdsByWord();
-    double score(LearningCard c) {
-      final r = repo.scheduler.retrievability(c.fsrs, now);
-      final forgetting = r == null ? 0.5 : 1 - r;
-      final photos = photosByWord[c.wordEntryId] ?? const <String>{};
-      final variety =
-          _lastPhoto != null && photos.contains(_lastPhoto) ? 0.0 : 1.0;
-      return 0.6 * forgetting + 0.3 * variety + 0.1 * _random.nextDouble();
-    }
-
-    // Each card scored once (sort would call it again for every comparison).
-    final scores = {for (final c in eligible) c.id: score(c)};
+    final scores = _scores(eligible, now);
     eligible.sort((a, b) => scores[b.id]!.compareTo(scores[a.id]!));
     return eligible.first.id;
   }
@@ -728,21 +727,75 @@ class FlashcardSession extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _choosePhoto() {
-    final c = card;
-    if (c == null) return;
+  /// Every picture a card of [wordEntryId] can show, learner's own first.
+  List<CardPhoto> _photosOf(String wordEntryId) {
     final seenIds = <String>{};
-    final all = [
+    return [
       for (final o in [
-        for (final o in repo.occurrencesOf(c.wordEntryId))
+        for (final o in repo.occurrencesOf(wordEntryId))
           // A learner's photo whose original file is gone is skipped, so the
           // card shows another picture of the word (問題回報 #279).
           if (repo.photo(o.photoId) case final p? when PhotoStore.canShow(p))
             (p, o.placed ? o.anchor : null, p.credit),
-        ..._databasePhotos(c.wordEntryId),
+        ..._databasePhotos(wordEntryId),
       ])
         if (seenIds.add(o.$1.id)) o,
     ];
+  }
+
+  /// The random part of a card's pick score, drawn once per card so the
+  /// ranking [upcomingPhotos] looks at is the one [_pick] will use.
+  final _noise = <String, double>{};
+
+  /// Each card scored once (sort would call it again for every comparison).
+  Map<String, double> _scores(List<LearningCard> cards, DateTime now) {
+    final photosByWord = repo.photoIdsByWord();
+    double score(LearningCard c) {
+      final r = repo.scheduler.retrievability(c.fsrs, now);
+      final forgetting = r == null ? 0.5 : 1 - r;
+      final photos = photosByWord[c.wordEntryId] ?? const <String>{};
+      final variety =
+          _lastPhoto != null && photos.contains(_lastPhoto) ? 0.0 : 1.0;
+      final noise = _noise.putIfAbsent(c.id, _random.nextDouble);
+      return 0.6 * forgetting + 0.3 * variety + 0.1 * noise;
+    }
+
+    return {for (final c in cards) c.id: score(c)};
+  }
+
+  /// Photos of the cards most likely to come next (the most forgotten
+  /// eligible ones), for the screen to load before they are shown (問題回報
+  /// #618: 圖片要等約 1 秒). The real pick is random, so this is a guess.
+  List<Photo> upcomingPhotos({int cards = 3, int perCard = 2}) {
+    final now = repo.clock();
+    final eligible = [
+      for (final c in repo.eligibleCards(
+          newLimit: newLimit, reviewLimit: reviewLimit))
+        if (c.id != _cardId &&
+            !_shownAt.containsKey(c.id) &&
+            !_again.containsKey(c.id) &&
+            _inRun(c.id))
+          c,
+    ];
+    final scores = _scores(eligible, now);
+    eligible.sort((a, b) => scores[b.id]!.compareTo(scores[a.id]!));
+    // Queued Again cards and the focus list jump the queue in [_pick].
+    final jumps = <LearningCard>[
+      for (final id in [..._again.keys, ...focus])
+        if (!_shownAt.containsKey(id) || _again.containsKey(id))
+          if (repo.card(id) case final c? when !c.archived) c,
+    ];
+    eligible.insertAll(0, jumps.take(2));
+    return [
+      for (final c in eligible.take(cards))
+        for (final o in _photosOf(c.wordEntryId).take(perCard)) o.$1,
+    ];
+  }
+
+  void _choosePhoto() {
+    final c = card;
+    if (c == null) return;
+    final all = _photosOf(c.wordEntryId);
     // An album run shows only the album's pictures of the word; when the
     // album has none of them left, any picture of the word is shown.
     final inAlbum = [

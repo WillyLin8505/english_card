@@ -30,7 +30,8 @@ void main() {
     const old = '/var/mobile/Containers/Data/Application/'
         '87AAF059-D418-49A0-A878-9E6847AE4018/Documents/english_card_photos/'
         'photo-1792730973924683.jpg';
-    expect(PhotoStore.localPath(old), '${tmp.path}/photo-1792730973924683.jpg');
+    expect(PhotoStore.localPath(old).replaceAll(r'\', '/'),
+        '${tmp.path.replaceAll(r'\', '/')}/photo-1792730973924683.jpg');
     expect(PhotoStore.lostOriginal(photo(old)), isFalse);
     expect(PhotoStore.canShow(photo(old)), isTrue);
   });

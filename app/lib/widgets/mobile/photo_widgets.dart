@@ -423,6 +423,9 @@ class PinnedPhoto extends StatefulWidget {
   /// A tap on the photo itself (not a label): where, as a fraction of the
   /// original image — used to place a word the learner added by hand.
   final ValueChanged<LabelPoint>? onPhotoTap;
+
+  /// Long-press that lands on no pin (e.g. the photo-credit dialog).
+  final VoidCallback? onPhotoLongPress;
   final Widget? overlay;
   final WidgetBuilder? imageErrorBuilder;
   final ValueChanged<bool>? onImageState;
@@ -449,6 +452,7 @@ class PinnedPhoto extends StatefulWidget {
     this.onPinTap,
     this.onPinMoved,
     this.onPhotoTap,
+    this.onPhotoLongPress,
     this.overlay,
     this.imageErrorBuilder,
     this.onImageState,
@@ -465,6 +469,10 @@ class PinnedPhoto extends StatefulWidget {
 class _PinnedPhotoState extends State<PinnedPhoto> {
   String? _dragging;
   Offset _dragBy = Offset.zero;
+
+  /// Pin whose dot is being long-pressed: its label is called out so the
+  /// learner can tell which word a point belongs to (問題回報 #616).
+  String? _peek;
 
   // 問題回報 #409: `_queue` holds the ids still waiting to pop in, one every
   // [_popGap]; `_popped` the ids that have popped in (they animate once).
@@ -641,6 +649,21 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
                 onTapUp: widget.onPhotoTap == null
                     ? null
                     : (d) => widget.onPhotoTap!(geo.fromBox(d.localPosition)),
+                onLongPressStart: (d) {
+                  String? hit;
+                  var best = 32.0;
+                  for (final pl in placed) {
+                    final dist = (pl.anchor - d.localPosition).distance;
+                    if (dist < best) {
+                      best = dist;
+                      hit = pl.id;
+                    }
+                  }
+                  setState(() => _peek = hit);
+                  if (hit == null) widget.onPhotoLongPress?.call();
+                },
+                onLongPressEnd: (_) => setState(() => _peek = null),
+                onLongPressCancel: () => setState(() => _peek = null),
                 // The photo stays still while labels pop in (#409).
                 child: RepaintBoundary(
                   child: PhotoImage(widget.photo,
@@ -750,6 +773,36 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
                       ),
                     ),
                   ),
+              if (_peek case final id?)
+                if (byId[id] case final p?)
+                  for (final pl in placed.where((x) => x.id == id))
+                    Positioned(
+                      left: (pl.anchor.dx - 90).clamp(4.0, box.width - 184),
+                      top: (pl.anchor.dy - 52).clamp(4.0, box.height - 40),
+                      width: 180,
+                      child: IgnorePointer(
+                        child:
+                            Column(mainAxisSize: MainAxisSize.min, children: [
+                          Container(
+                            key: const ValueKey('pin-peek'),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.black87,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              p.zh.isEmpty ? p.word : '${p.word}  ${p.zh}',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ]),
+                      ),
+                    ),
               if (widget.overlay != null)
                 Positioned.fill(child: widget.overlay!),
               if (_queue.isNotEmpty || _found != null)

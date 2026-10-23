@@ -15,6 +15,7 @@ import '../widgets/mobile/dialogs.dart';
 import '../widgets/mobile/m_icon.dart';
 import '../services/photo_store.dart';
 import '../widgets/mobile/photo_widgets.dart';
+import 'database_library_screen.dart';
 import 'flashcard_screen.dart';
 
 /// 單字詳情 — Figma word-detail-view (11:173), extended with spec section
@@ -260,6 +261,12 @@ class _WordBody extends StatelessWidget {
             when !PhotoStore.lostOriginal(p))
           (photo: p, occ: o),
     ];
+    final packEntry = contexts.isEmpty
+        ? pack.lookup(entry.word, pos: entry.pos)?.entry
+        : null;
+    final databaseImages = packEntry == null
+        ? const <Map<String, dynamic>>[]
+        : databaseEntryImages(pack.catalogImages, packEntry);
     // A part of speech with no meaning yet is left out whole (cigarette 動詞);
     // with none left there is no 詞性與意思 title at all.
     final meaningUsages = [
@@ -459,6 +466,34 @@ class _WordBody extends StatelessWidget {
                 );
               },
             ),
+          ),
+        ),
+      // 問題回報 #617: a word with no photo of the learner's own (added from
+      // the database or by hand) still shows the database pictures that tag
+      // it, with their word labels.
+      if (contexts.isEmpty && databaseImages.isNotEmpty)
+        _Section(
+          label: '資料庫圖片（${databaseImages.length}）',
+          child: Column(
+            children: [
+              for (final image in databaseImages.take(3))
+                Padding(
+                  padding: const EdgeInsets.only(bottom: MSpace.sm),
+                  child: SizedBox(
+                      height: 240, child: DatabaseImageTile(image: image)),
+                ),
+            ],
+          ),
+        ),
+      if (entry.tags.isNotEmpty)
+        _Section(
+          label: '標籤',
+          child: Wrap(
+            spacing: MSpace.xs,
+            runSpacing: MSpace.xs,
+            children: [
+              for (final tag in entry.tags) TagChip(tag, localize: false)
+            ],
           ),
         ),
       if (entry.meaning.isEmpty) const UiText('{N}意思尚未補齊，連線後會自動更新。'),

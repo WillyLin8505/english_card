@@ -170,6 +170,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
   }
 
   final _precached = <String>{};
+  String? _upcomingFor;
 
   /// Loads the card back's photo, and the next ones a swipe shows, while
   /// the front is still up, so they are there when the card turns (card
@@ -179,15 +180,22 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     final s = _session;
     final p = s?.photo;
     if (s == null || p == null) return;
+    final warmUpcoming = _upcomingFor != s.card?.id;
     final options = [for (final o in s.photoOptions) o.$1];
     final at = options.indexWhere((o) => o.id == p.id);
     final width = MediaQuery.sizeOf(context).width;
     if (_precached.length > 60) _precached.clear();
-    for (final photo in [p, ...options.skip(at + 1).take(2)]) {
+    for (final photo in [
+      p,
+      ...options.skip(at + 1).take(2),
+      // Once per card: the guess walks every eligible card.
+      if (warmUpcoming) ...s.upcomingPhotos(),
+    ]) {
       if (!_precached.add(photo.id)) continue;
       precachePhoto(context, photo, AppScope.of(context).photoStore,
           Size(math.max(width - 64, 200), 200));
     }
+    _upcomingFor = s.card?.id;
   }
 
   /// Ends the run. With [summary], a run in which at least one card was

@@ -85,6 +85,12 @@ class _InteractiveExerciseState extends State<_InteractiveExercise> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (x.type == ReviewExerciseType.sentenceCloze) ...[
+          // Card #561 (issue #609): the fill-in front shows the word's photo
+          // too, unmarked, so the sentence and the picture work together.
+          if (widget.session.photo != null) ...[
+            _photo(mark: false),
+            const SizedBox(height: 18),
+          ],
           _title(x.prompt),
           if (x.translation != null)
             Text(x.translation!,

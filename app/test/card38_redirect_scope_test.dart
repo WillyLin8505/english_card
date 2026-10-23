@@ -74,7 +74,8 @@ void main() {
         'catalog_images': [{
           'id': 1, 'url': '/api/image?id=1', 'status': 'ready',
           'tags': [{'lexeme_id': 1, 'sense_id': 10, 'review_status': 'approved'}],
-          'labels': [for (final id in [1, 9, 3]) {'lexeme_id': id, 'point': [0.5, 0.5]}],
+          // Spread out: drop spots closer than dragMinGap are never paired (#557).
+          'labels': [for (final (i, id) in [1, 9, 3].indexed) {'lexeme_id': id, 'point': [0.2 + 0.3 * i, 0.5]}],
         }],
       });
       final names = {'coat', 'goat', 'boats', if (ownBase) 'boat'};

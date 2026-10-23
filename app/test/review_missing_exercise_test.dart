@@ -81,7 +81,7 @@ void main() {
         status: WordDataStatus.complete);
     final after = FlashcardSession(repo);
     addTearDown(after.dispose);
-    expect(after.exercise?.prompt, 'She eats an ＿＿＿＿.');
+    expect(after.exercise?.prompt, 'She eats an ＿＿＿＿＿.');
   });
 
   testWidgets('Again continues without inflating failure records',
