@@ -1,4 +1,5 @@
 import '../../l10n/ui_text.dart';
+import '../../app/app_scope.dart';
 import 'package:flutter/material.dart';
 
 import '../../models/card_template.dart';
@@ -8,6 +9,7 @@ import '../../services/card_report.dart';
 import '../../services/word_database_repository.dart';
 import '../../services/word_selector.dart';
 import '../../theme/mobile_theme.dart';
+import 'photo_cache.dart';
 import 'photo_widgets.dart';
 import 'word_details_editor.dart';
 
@@ -298,17 +300,28 @@ class _SaveToAlbumDialogState extends State<_SaveToAlbumDialog> {
 
   /// The album's cover (same pick as the 相片冊 card), so the chip shows
   /// the pictures inside (問題回報 #612).
+  /// A plain fixed-size [Image], not [PhotoImage]: an AlertDialog sizes its
+  /// content intrinsically, which a LayoutBuilder (inside PhotoImage) can't
+  /// answer — the dialog threw during layout and showed blank (Mac M87).
   Widget? _albumCover(Album a) {
-    final Widget? image = a.coverAsset != null
-        ? Image.asset(a.coverAsset!, fit: BoxFit.cover)
+    const side = 28.0;
+    final ImageProvider<Object>? source = a.coverAsset != null
+        ? AssetImage(a.coverAsset!)
         : switch (widget.repository.albumCoverPhoto(a.id)) {
-            final Photo p => PhotoImage(p),
+            final Photo p => photoProvider(p, AppScope.of(context).photoStore,
+                const Size(side, side), MediaQuery.devicePixelRatioOf(context)),
             _ => null,
           };
-    if (image == null) return null;
+    if (source == null) return null;
     return ClipRRect(
       borderRadius: BorderRadius.circular(6),
-      child: SizedBox(width: 28, height: 28, child: image),
+      child: Image(
+        image: source,
+        width: side,
+        height: side,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => const SizedBox(width: side, height: side),
+      ),
     );
   }
 
