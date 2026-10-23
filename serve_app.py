@@ -641,7 +641,8 @@ class Handler(SimpleHTTPRequestHandler):
         except ValueError:
             self.send_error(400)
             return
-        if length > 256 * 1024:
+        # 2 MB: a full-size report screenshot (390×844 PNG ≈ 400–700 KB base64), Mac 10/24
+        if length > 2 * 1024 * 1024:
             self.send_error(413)
             return
         body = self.rfile.read(length) if length else None
@@ -689,7 +690,7 @@ class Handler(SimpleHTTPRequestHandler):
         keep = {k: str(data[k])[:4000] for k in ('title', 'detail', 'lemma') if data.get(k)}
         keep['title'] = keep['title'][:300]
         shot = data.get('screenshot')
-        if isinstance(shot, str) and re.match(r'data:image/(png|jpeg);base64,[A-Za-z0-9+/=]+$', shot)                 and len(shot) <= 200 * 1024:
+        if isinstance(shot, str) and re.match(r'data:image/(png|jpeg);base64,[A-Za-z0-9+/=]+$', shot)                 and len(shot) <= 1900 * 1024:
             keep['screenshot'] = shot
         keep.update(kind='bug', severity='medium', area='app', reporter='App 使用者')
         return json.dumps(keep, ensure_ascii=False).encode('utf-8')

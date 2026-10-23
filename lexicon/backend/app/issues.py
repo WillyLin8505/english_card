@@ -47,7 +47,7 @@ class IssueBody(BaseModel):
     code_ref: str | None = None
     spec_ref: str | None = None
     reporter: str | None = None
-    screenshot: str | None = PField(default=None, max_length=400_000, pattern=r"^data:image/(png|jpeg);base64,")
+    screenshot: str | None = PField(default=None, max_length=2_000_000, pattern=r"^data:image/(png|jpeg);base64,")
     note: str | None = None          # a line for the history, not stored as a field
 
 
