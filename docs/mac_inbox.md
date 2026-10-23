@@ -1405,3 +1405,8 @@ commit `cc96e8f3`（Windows：flutter analyze 無 error、01:11 +603 ~2: All tes
 
 Windows 這邊沒有資料或伺服器的部分可做，所以沒動資料、沒備份、沒跑 golden/QC。
 若 Mac 需要新增標籤的後端 API 或欄位，請在 mac_verify_results 提出，再開卡給 Windows。
+
+## M115（2026-10-23 23:59）狀態：待做
+commit `7acb2a65`（Windows：flutter analyze 無 error、01:17 +605 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #591：問題回報 #666：[給 Mac] [意見回饋] 照片詳情：多點動詞 難度提高等那些功能 目前沒有看到你有新增標籤
+  結果：未改任何資料或程式：問題回報 #666 是 App 畫面（照片詳情缺少新增標籤的操作），依 10/23 分工歸 Mac，已由 inbox M108 接手。
