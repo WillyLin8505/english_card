@@ -1628,7 +1628,7 @@ commit `d91555fb`（Windows：flutter analyze 無 error、01:27 +644 ~2: All tes
 - 卡 #604：問題回報 #678：[owner] 基礎 3000 字的 C1（35 字）、C2（4 字）切片太小，看起來像壞掉
   結果：全部完成：新增「進階單字・C1」「進階單字・C2」各 400 字（有中文、例句、發音、圖），並把 basic-3000-c1（35 字）、basic-3000-c2（4 字）下架。
 
-## M138（2026-10-24 02:29）狀態：待做（Windows 卡 #585 交給 Mac 的 App 畫面部分）
+## M138（2026-10-24 02:29）狀態：完成
 卡：問題回報 #657：[owner] 補真人發音第一步：用 Wikimedia 補約 757 個字，並查 Forvo／Free Dictionary 等音檔來源的
 
 App 播放時顯示 speaker／授權標示（資料在 audio_assets.speaker／license／source_page）。
