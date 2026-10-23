@@ -14,8 +14,8 @@ import 'learning_content.dart'
     show formLabel, frenchGenderLabel, frenchWithArticle, posLabel;
 import 'lexicon_sqlite_stub.dart' if (dart.library.ffi) 'lexicon_sqlite.dart';
 
-export 'lexicon_sqlite_stub.dart'
-    if (dart.library.ffi) 'lexicon_sqlite.dart' show LexiconSqlite;
+export 'lexicon_sqlite_stub.dart' if (dart.library.ffi) 'lexicon_sqlite.dart'
+    show LexiconSqlite;
 
 /// The downloaded language pack (spec section 08, 資料比對階段): one
 /// direction (target → native) exported by the lexicon admin as
@@ -121,9 +121,9 @@ class LexiconPack extends ChangeNotifier {
     final String bundledVersion;
     try {
       dir = await storageDirectory();
-      final manifest = jsonDecode(
-              await bundle.loadString(manifestAssetFor(target, native)))
-          as Map<String, dynamic>;
+      final manifest =
+          jsonDecode(await bundle.loadString(manifestAssetFor(target, native)))
+              as Map<String, dynamic>;
       bundledVersion = manifest['created_at'] as String;
     } catch (e) {
       debugPrint('LexiconPack: no bundled SQLite pack for $target-$native: $e');
@@ -144,11 +144,12 @@ class LexiconPack extends ChangeNotifier {
       if (_db?.path == path) _closeDb();
       await tmp.rename(path);
     }
-    loadSqlite(path);
+    replaceWith(await openSqlite(path));
     return true;
   }
 
-  static String bundledSqlitePath(Directory dir, String target, String native) =>
+  static String bundledSqlitePath(
+          Directory dir, String target, String native) =>
       '${dir.path}/$target-$native.bundled.sqlite';
 
   /// Opens a SQLite pack file and indexes its heads. Throws when the file is
@@ -161,11 +162,35 @@ class LexiconPack extends ChangeNotifier {
   }
 
   void _installFromDb(LexiconSqlite db) {
-    final source =
-        identical(db, _source?.db) ? _source! : LexSource(db);
+    final source = identical(db, _source?.db) ? _source! : LexSource(db);
     _install(db.meta(), db.heads(),
         (raw) => LexEntry.fromJson(raw, lazyFrom: source),
         source: source);
+  }
+
+  /// [loadSqlite] off the UI thread: the file is opened and its heads
+  /// indexed on a background isolate; only the open connection is made
+  /// here. Before indexing, the file is copied from [copyFrom] and patched
+  /// with [deltaJson] (a server delta as UTF-8 JSON) — a failed copy is
+  /// deleted. A pack that is not [target]-[native] with a version throws;
+  /// a good one is then renamed to [renameTo]. Install with [replaceWith].
+  /// 問題回報：Mac 實機量測同步新詞庫時主執行緒卡 1,151ms（M-PERF2）。
+  static Future<LexiconPack> openSqlite(String path,
+      {String? copyFrom,
+      Uint8List? deltaJson,
+      String? target,
+      String? native,
+      String? renameTo}) async {
+    final pack = await compute(_indexSqlite, (
+      path: path,
+      copyFrom: copyFrom,
+      deltaJson: deltaJson,
+      target: target,
+      native: native,
+      renameTo: renameTo,
+    ));
+    pack._source!.attach(LexiconSqlite.open(renameTo ?? path));
+    return pack;
   }
 
   /// Applies a server delta to the open SQLite pack and re-indexes it.
@@ -188,16 +213,23 @@ class LexiconPack extends ChangeNotifier {
   /// Computes every word's [LexEntry.learnerMeaning] in the background, a
   /// few hundred words per frame, so the first search in the 資料庫單字本
   /// does not read 9k sense rows at once. Stops when the pack changes.
-  Future<void> warmMeanings({int chunk = 300}) async {
+  /// A slice also ends after [budget]: 300 words took 15 ms on a Mac,
+  /// several times that on a phone (M-PERF2).
+  Future<void> warmMeanings(
+      {int chunk = 300,
+      Duration budget = const Duration(milliseconds: 4)}) async {
     final source = _source;
     if (source == null) return;
-    final words = catalogWords;
-    for (var i = 0; i < words.length; i += chunk) {
+    final watch = Stopwatch()..start();
+    var n = 0;
+    for (final e in catalogWords) {
       if (!identical(source, _source)) return;
-      for (final e in words.skip(i).take(chunk)) {
-        if (e.full) e.learnerMeaning;
+      if (e.full) e.learnerMeaning;
+      if (++n >= chunk || watch.elapsed >= budget) {
+        await Future<void>.delayed(Duration.zero);
+        n = 0;
+        watch.reset();
       }
-      await Future<void>.delayed(Duration.zero);
     }
   }
 
@@ -216,9 +248,10 @@ class LexiconPack extends ChangeNotifier {
     catalogImages = [];
   }
 
-  void loadJson(Map<String, dynamic> j) =>
-      _install(j, (j['lexemes'] as List? ?? const []).cast<Map>(),
-          (raw) => LexEntry.fromJson(raw));
+  void loadJson(Map<String, dynamic> j) => _install(
+      j,
+      (j['lexemes'] as List? ?? const []).cast<Map>(),
+      (raw) => LexEntry.fromJson(raw));
 
   /// Replaces the pack: metadata from [j] (a JSON pack or SQLite meta), one
   /// entry per row of [rows] (pointer rows become redirects).
@@ -256,9 +289,8 @@ class LexiconPack extends ChangeNotifier {
         pointers['${raw['normalized']}'] = to.toInt();
         continue;
       }
-      final e = make(raw is Map<String, dynamic>
-          ? raw
-          : Map<String, dynamic>.from(raw));
+      final e = make(
+          raw is Map<String, dynamic> ? raw : Map<String, dynamic>.from(raw));
       _byId[e.id] = e;
       if (!e.full) continue;
       _byLemma.putIfAbsent(e.normalized, () => []).add(e);
@@ -451,9 +483,16 @@ class LexiconPack extends ChangeNotifier {
 /// (learnerMeaning, then cached as a string on the entry); the body
 /// (examples, relations…) only for the word on screen.
 class LexSource {
-  LexSource(this.db);
+  LexSource(LexiconSqlite this._db);
 
-  final LexiconSqlite db;
+  /// Built on a background isolate ([LexiconPack.openSqlite]): the file is
+  /// [attach]ed on the UI isolate before any entry reads it.
+  LexSource.detached();
+
+  LexiconSqlite? _db;
+  LexiconSqlite? get db => _db;
+
+  void attach(LexiconSqlite db) => _db = db;
   final _senses = <int, List<LexSense>>{};
   final _details = <int, LexDetail>{};
   static const senseCacheSize = 3000;
@@ -462,7 +501,7 @@ class LexSource {
   List<LexSense> senses(int id) {
     final cached = _senses.remove(id);
     if (cached != null) return _senses[id] = cached;
-    final parsed = LexEntry.parseSenses(db.senses(id));
+    final parsed = LexEntry.parseSenses(_db?.senses(id));
     if (_senses.length >= senseCacheSize) _senses.remove(_senses.keys.first);
     return _senses[id] = parsed;
   }
@@ -470,7 +509,7 @@ class LexSource {
   LexDetail detail(int id) {
     final cached = _details.remove(id);
     if (cached != null) return _details[id] = cached;
-    final parsed = LexDetail.fromJson(db.body(id) ?? const {});
+    final parsed = LexDetail.fromJson(_db?.body(id) ?? const {});
     if (_details.length >= detailCacheSize) {
       _details.remove(_details.keys.first);
     }
@@ -484,7 +523,7 @@ class LexSource {
 
   void close() {
     invalidate();
-    db.close();
+    _db?.close();
   }
 }
 
@@ -769,7 +808,8 @@ class LexEntry {
   final Map<String, String> _missing;
 
   List<LexSense> get senses => _senses ?? _source?.senses(id) ?? const [];
-  LexDetail get detail => _detail ??
+  LexDetail get detail =>
+      _detail ??
       _source?.detail(id) ??
       LexDetail(
           ipa: _ipa,
@@ -1168,5 +1208,55 @@ class LexEntry {
               hideByDefault: r.hideByDefault),
       ],
     );
+  }
+}
+
+/// The background half of [LexiconPack.openSqlite]: copy, patch, then index
+/// the heads into a pack whose entries read from a detached [LexSource].
+LexiconPack _indexSqlite(
+    ({
+      String path,
+      String? copyFrom,
+      Uint8List? deltaJson,
+      String? target,
+      String? native,
+      String? renameTo,
+    }) job) {
+  final path = job.path, copyFrom = job.copyFrom, deltaJson = job.deltaJson;
+  if (copyFrom != null) File(copyFrom).copySync(path);
+  try {
+    if (deltaJson != null) {
+      final db = LexiconSqlite.open(path);
+      try {
+        db.applyDelta(
+            jsonDecode(utf8.decode(deltaJson)) as Map<String, dynamic>);
+      } finally {
+        db.close();
+      }
+    }
+    final pack = LexiconPack();
+    final db = LexiconSqlite.open(path, readOnly: true);
+    try {
+      final source = LexSource.detached();
+      pack._install(db.meta(), db.heads(),
+          (raw) => LexEntry.fromJson(raw, lazyFrom: source),
+          source: source);
+    } finally {
+      db.close();
+    }
+    if ((job.target != null && pack.target != job.target) ||
+        (job.native != null && pack.native != job.native) ||
+        (job.target != null && pack.version == null)) {
+      throw const FormatException('Wrong dictionary language');
+    }
+    if (job.renameTo != null) File(path).renameSync(job.renameTo!);
+    return pack;
+  } catch (_) {
+    if (copyFrom != null) {
+      try {
+        File(path).deleteSync();
+      } catch (_) {}
+    }
+    rethrow;
   }
 }

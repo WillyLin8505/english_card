@@ -195,6 +195,42 @@ class WordPin extends StatelessWidget {
     return _measure(word, second, large, scaler, maxWidth, base);
   }
 
+  // 問題回報：Mac 實機量測第二輪 照片詳情 64ms／翻卡 87ms（M-PERF2）: every
+  // build measured each label again with TextPainter (twice: for the layout
+  // and for the badge). The sizes are kept until the fonts change.
+  static final _sizes = <(
+    String,
+    String,
+    bool,
+    TextScaler,
+    bool,
+    double?,
+    TextStyle?,
+    String
+  ),
+      Size>{};
+  static bool _watchingFonts = false;
+
+  /// [badgeSize], measured once per label (M-PERF2).
+  static Size _sizeOf(String word, String zh, bool large, TextScaler scaler,
+      {bool linked = true,
+      double? maxWidth,
+      TextStyle? base,
+      String entryType = 'word'}) {
+    if (!_watchingFonts) {
+      _watchingFonts = true;
+      PaintingBinding.instance.systemFonts.addListener(_sizes.clear);
+    }
+    if (_sizes.length > 500) _sizes.clear();
+    return _sizes.putIfAbsent(
+        (word, zh, large, scaler, linked, maxWidth, base, entryType),
+        () => badgeSize(word, zh, large, scaler,
+            linked: linked,
+            maxWidth: maxWidth,
+            base: base,
+            entryType: entryType));
+  }
+
   // Padding 10 + 10, border 1 + 1.
   static const _sides = 22.0;
 
@@ -229,7 +265,7 @@ class WordPin extends StatelessWidget {
         ? zhStyle(large).copyWith(fontStyle: FontStyle.italic)
         : zhStyle(large);
     final stacked = maxWidth != null &&
-        badgeSize(word, zh, large, MediaQuery.textScalerOf(context),
+        _sizeOf(word, zh, large, MediaQuery.textScalerOf(context),
                     linked: linked,
                     entryType: entryType,
                     base: DefaultTextStyle.of(context).style)
@@ -536,6 +572,10 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
   List<Object>? _layoutKey;
   List<PinPlacement> _layout = const [];
 
+  /// M-PERF2: the last layouts of every photo, so opening a photo again
+  /// (or its card back) does not lay its labels out again.
+  static final _recent = <_LayoutKey, List<PinPlacement>>{};
+
   List<PinPlacement> _placements(List<PinItem> items, Size box) {
     final key = <Object>[
       box,
@@ -546,10 +586,15 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
     ];
     if (_layoutKey == null || !listEquals(_layoutKey, key)) {
       _layoutKey = key;
-      _layout = layoutPins(items, box,
-          reserveTop: widget.reserveTop,
-          reserveBottom: widget.reserveBottom,
-          avoid: widget.avoid);
+      final shared = _LayoutKey(key);
+      final hit = _recent.remove(shared);
+      _layout = hit ??
+          layoutPins(items, box,
+              reserveTop: widget.reserveTop,
+              reserveBottom: widget.reserveBottom,
+              avoid: widget.avoid);
+      _recent[shared] = _layout;
+      if (_recent.length > 64) _recent.remove(_recent.keys.first);
     }
     return _layout;
   }
@@ -569,7 +614,7 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
               PinItem(
                   p.id,
                   geo.toBox(p.anchor),
-                  WordPin.badgeSize(p.word, p.zh, widget.largePins, scaler,
+                  WordPin._sizeOf(p.word, p.zh, widget.largePins, scaler,
                       entryType: p.entryType,
                       linked: p.linked,
                       // layoutPins' margin: a long label wraps in full.
@@ -720,6 +765,21 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
       ),
     );
   }
+}
+
+/// [_PinnedPhotoState._placements]' inputs as a map key (M-PERF2).
+class _LayoutKey {
+  final List<Object> parts;
+  @override
+  final int hashCode;
+
+  _LayoutKey(this.parts) : hashCode = Object.hashAll(parts);
+
+  @override
+  bool operator ==(Object other) =>
+      other is _LayoutKey &&
+      other.hashCode == hashCode &&
+      listEquals(other.parts, parts);
 }
 
 /// 問題回報 #442: a label that has dropped off the photo fades out, then

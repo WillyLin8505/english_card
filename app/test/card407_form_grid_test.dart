@@ -97,6 +97,8 @@ void main() {
           onOpen: () {},
           onOpenWord: onOpenWord,
         ))));
+    // M-PERF2: the sections under the photo come one frame each.
+    await tester.pumpAndSettle();
     return repo;
   }
 
@@ -110,20 +112,22 @@ void main() {
 
   testWidgets('photo labels are on by default and can be switched off',
       (tester) async {
-    await pumpBack(tester,
-        photos: [(photo, const LabelPoint(0.3, 0.4), null)]);
-    expect(tester.widget<PinnedPhoto>(find.byType(PinnedPhoto)).pins,
-        isNotEmpty);
+    await pumpBack(tester, photos: [(photo, const LabelPoint(0.3, 0.4), null)]);
+    expect(
+        tester.widget<PinnedPhoto>(find.byType(PinnedPhoto)).pins, isNotEmpty);
     await pumpBack(tester,
         settings: AppSettings.inMemory(showPhotoLabels: false),
         photos: [(photo, const LabelPoint(0.3, 0.4), null)]);
-    expect(
-        tester.widget<PinnedPhoto>(find.byType(PinnedPhoto)).pins, isEmpty);
+    expect(tester.widget<PinnedPhoto>(find.byType(PinnedPhoto)).pins, isEmpty);
   });
 
   testWidgets('forms: one cell per kind, equal width, nothing overflows',
       (tester) async {
-    for (final size in const [Size(320, 2000), Size(402, 2000), Size(900, 2000)]) {
+    for (final size in const [
+      Size(320, 2000),
+      Size(402, 2000),
+      Size(900, 2000)
+    ]) {
       await pumpBack(tester, size: size);
       const kinds = [
         '第三人稱單數',
@@ -135,8 +139,7 @@ void main() {
         '副詞',
       ];
       for (final k in kinds) {
-        expect(find.byKey(ValueKey('form-cell-$k')), findsOneWidget,
-            reason: k);
+        expect(find.byKey(ValueKey('form-cell-$k')), findsOneWidget, reason: k);
       }
       // 動詞原形 is the headword itself: no cell.
       expect(find.byKey(const ValueKey('form-cell-動詞原形')), findsNothing);
@@ -162,12 +165,19 @@ void main() {
   });
 
   test('WordLinks: a dictionary-only word gets a pack target', () {
-    final repo = WordDatabaseRepository(clock: () => testNow, entries: [decide()]);
+    final repo =
+        WordDatabaseRepository(clock: () => testNow, entries: [decide()]);
     final links = WordLinks.of(repo);
     expect(links.idFor('decide'), 'w-decide');
     expect(links.idFor('decision'), 'pack:2');
     expect(links.idFor('zzzz'), isNull);
     final segs = links.segments('A decisive decision.');
-    expect([for (final s in segs) if (s.id != null) s.id], ['pack:3', 'pack:2']);
+    expect([
+      for (final s in segs)
+        if (s.id != null) s.id
+    ], [
+      'pack:3',
+      'pack:2'
+    ]);
   });
 }

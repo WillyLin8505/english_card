@@ -876,8 +876,9 @@ class WordDatabaseRepository extends ChangeNotifier {
     if (scores.isNotEmpty) {
       return scores.entries.reduce((a, b) => b.value > a.value ? b : a).key;
     }
-    final at = photosInAlbum(album.id).map((p) => p.takenAt).fold<DateTime>(
-        album.createdAt, (a, b) => b.isAfter(a) ? b : a);
+    final at = photosInAlbum(album.id)
+        .map((p) => p.takenAt)
+        .fold<DateTime>(album.createdAt, (a, b) => b.isAfter(a) ? b : a);
     return '${at.year} 年 ${at.month} 月';
   }
 
@@ -939,15 +940,77 @@ class WordDatabaseRepository extends ChangeNotifier {
   /// photo ↔ lexeme_id；釋義、發音、例句直接由詞庫讀取). Learner edits are
   /// kept. Returns how many photos and words changed.
   int linkLexicon(LexiconPack pack) {
+    _finishLink();
+    var changed = 0;
+    for (final n in _linkSteps(pack)) {
+      changed += n;
+    }
+    return changed;
+  }
+
+  /// [linkLexicon] in slices of about [budget], yielding to the UI between
+  /// them: a new pack linked into 300 words took 120 ms in one go on a
+  /// Mac. 問題回報：Mac 實機量測同步新詞庫時主執行緒卡 1,151ms（M-PERF2）。
+  /// A [linkLexicon] call meanwhile finishes this one first.
+  Future<int> linkLexiconInBatches(LexiconPack pack,
+      {Duration budget = const Duration(milliseconds: 8)}) async {
+    _finishLink();
+    final steps = _linkSteps(pack).iterator;
+    _pendingLink = steps;
+    var changed = 0;
+    final watch = Stopwatch()..start();
+    try {
+      while (identical(_pendingLink, steps) && !_disposed) {
+        if (!steps.moveNext()) break;
+        changed += steps.current;
+        if (watch.elapsed >= budget) {
+          _linkPauses++;
+          await Future<void>.delayed(Duration.zero);
+          watch.reset();
+        }
+      }
+    } finally {
+      if (identical(_pendingLink, steps)) _pendingLink = null;
+    }
+    return changed;
+  }
+
+  Iterator<int>? _pendingLink;
+
+  /// Counts the pauses of [linkLexiconInBatches]: after one, the steps
+  /// re-read the photos and words the learner may have changed meanwhile.
+  int _linkPauses = 0;
+
+  void _finishLink() {
+    final pending = _pendingLink;
+    _pendingLink = null;
+    if (pending == null) return;
+    while (pending.moveNext()) {}
+  }
+
+  /// The work of [linkLexicon], one photo or word per step (each yields how
+  /// many changed).
+  Iterable<int> _linkSteps(LexiconPack pack) sync* {
     final update = _linkedPack != null &&
         pack.version != null &&
         pack.version != _linkedVersion;
     _linkedPack = pack;
     _linkedVersion = pack.version;
     if (pack.cardTemplate != null) updateTemplate(pack.cardTemplate!);
-    if (pack.isEmpty) return 0;
-    var changed = 0;
-    for (final p in [..._photos]) {
+    if (pack.isEmpty) return;
+    var pauses = _linkPauses;
+    // The snapshot as it is now, or after a pause as the repository has it.
+    Map<String, T>? afterPause<T>(Iterable<T> items, String Function(T) id) {
+      if (pauses == _linkPauses) return null;
+      return {for (final x in items) id(x): x};
+    }
+
+    Map<String, Photo>? photoNow;
+    for (final snap in [..._photos]) {
+      photoNow = afterPause(_photos, (p) => p.id) ?? photoNow;
+      pauses = _linkPauses;
+      final p = photoNow == null ? snap : photoNow[snap.id];
+      if (p == null) continue;
       final editedWords = {
         for (final o in occurrencesInPhoto(p.id))
           if (o.userEdited && entry(o.wordEntryId) != null)
@@ -970,24 +1033,42 @@ class WordDatabaseRepository extends ChangeNotifier {
       }
       if (differs) {
         updatePhoto(p.copyWith(candidates: linked));
-        changed++;
+        yield 1;
+      } else {
+        yield 0;
       }
     }
     // One card per word (owner 2026-10-14, 問題回報 #51): a word saved
     // under one of its forms (runs, tethered) joins its word's card.
-    for (final e in [..._entries]) {
-      if (e.language != pack.target) continue;
+    Map<String, WordEntry>? entryNow;
+    for (final snap in [..._entries]) {
+      entryNow = afterPause(_entries, (e) => e.id) ?? entryNow;
+      pauses = _linkPauses;
+      final e = entryNow == null ? snap : entryNow[snap.id];
+      if (e == null || e.language != pack.target) continue;
       final hit = pack.lookup(e.word, pos: e.pos);
-      if (hit == null || hit.entry.normalized == e.word) continue;
+      if (hit == null || hit.entry.normalized == e.word) {
+        yield 0;
+        continue;
+      }
       if (hit.via == 'form' || hit.via == 'family') {
         _foldInto(e, hit.entry);
-        changed++;
+        yield 1;
+      } else {
+        yield 0;
       }
     }
-    for (final e in [..._entries]) {
-      if (e.language != pack.target) continue;
+    entryNow = null;
+    for (final snap in [..._entries]) {
+      entryNow = afterPause(_entries, (e) => e.id) ?? entryNow;
+      pauses = _linkPauses;
+      final e = entryNow == null ? snap : entryNow[snap.id];
+      if (e == null || e.language != pack.target) continue;
       final hit = pack.lookup(e.word, pos: e.pos);
-      if (hit == null) continue;
+      if (hit == null) {
+        yield 0;
+        continue;
+      }
       final x = hit.entry;
       // The pack dropped this part of speech for the word (問題回報 #436):
       // the card moves to the pos the pack kept, so it keeps updating. A pos
@@ -996,11 +1077,7 @@ class WordDatabaseRepository extends ChangeNotifier {
       if (moved && e.userEdited.contains(WordField.pos)) continue;
       final pos = !moved
           ? e.pos
-          : switch (x.pos) {
-              'adj' => 'adj.',
-              'adv' => 'adv.',
-              final p => p
-            };
+          : switch (x.pos) { 'adj' => 'adj.', 'adv' => 'adv.', final p => p };
       final detail = pack.detailFor(x);
       final fresh = WordEntry.fromUserInput(
         id: e.id,
@@ -1057,7 +1134,6 @@ class WordDatabaseRepository extends ChangeNotifier {
       if (jsonEncode(merged) != jsonEncode(e.toJson())) {
         final next = WordEntry.fromJson(merged);
         _putEntry(next);
-        changed++;
         if (update) {
           final filled = missingFieldNames(e).toSet()
             ..removeAll(missingFieldNames(next));
@@ -1065,10 +1141,12 @@ class WordDatabaseRepository extends ChangeNotifier {
             (_filledByUpdate[e.id] ??= {}).addAll(filled);
           }
         }
+        yield 1;
+      } else {
+        yield 0;
       }
     }
     notifyListeners();
-    return changed;
   }
 
   void updatePhoto(Photo photo) {
@@ -1615,8 +1693,7 @@ class WordDatabaseRepository extends ChangeNotifier {
 
       due = [
         ...cap(due.where(isNew).toList(), newLimit, done.newCards),
-        ...cap(due.where((c) => !isNew(c)).toList(), reviewLimit,
-            done.reviews),
+        ...cap(due.where((c) => !isNew(c)).toList(), reviewLimit, done.reviews),
       ];
     }
     if (!includeFuture) return due;

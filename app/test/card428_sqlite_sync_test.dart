@@ -35,7 +35,8 @@ Map<String, dynamic> pack(String version, String meaning) => {
       ],
     };
 
-Map<String, dynamic> delta(Map<String, dynamic> from, Map<String, dynamic> to) =>
+Map<String, dynamic> delta(
+        Map<String, dynamic> from, Map<String, dynamic> to) =>
     {
       'delta_version': 1,
       'base_version': from['created_at'],
@@ -46,7 +47,9 @@ Map<String, dynamic> delta(Map<String, dynamic> from, Map<String, dynamic> to) =
       'order': [for (final r in to['lexemes'] as List) r['id']],
       'upserts': [
         for (final r in to['lexemes'] as List)
-          if (!(from['lexemes'] as List).any((o) => jsonEncode(o) == jsonEncode(r))) r
+          if (!(from['lexemes'] as List)
+              .any((o) => jsonEncode(o) == jsonEncode(r)))
+            r
       ],
     };
 
@@ -137,7 +140,8 @@ void main() {
     expect(requests.last.queryParameters['since'], 'v1');
     expect(LexiconPack.instance.version, 'v1');
 
-    // A new version: a delta patches the downloaded file in place.
+    // A new version: a delta patches a copy of the downloaded file, which
+    // replaces it (M-PERF2: off the UI thread).
     previous = current;
     current = pack('v2', '蘋果二');
     await s.refresh();
@@ -156,8 +160,7 @@ void main() {
     await s.refresh();
     expect(LexiconPack.instance.version, 'v3');
     expect(repo.entry(id)!.meaning, '蘋果三');
-    final kept =
-        downloads().map((f) => f.path.replaceAll('\\', '/')).toList();
+    final kept = downloads().map((f) => f.path.replaceAll('\\', '/')).toList();
     expect(kept, isNot(contains(path.replaceAll('\\', '/'))),
         reason: 'the old download is gone');
     expect(kept, hasLength(1));
@@ -174,7 +177,8 @@ void main() {
     LexiconPack.instance.clear();
 
     final restartedRepo = WordDatabaseRepository();
-    final rid = restartedRepo.addWord(word: 'apple', pos: 'noun', meaning: '').id;
+    final rid =
+        restartedRepo.addWord(word: 'apple', pos: 'noun', meaning: '').id;
     var asked = 0;
     final restarted = service(MockClient((request) async {
       asked++;
@@ -207,15 +211,16 @@ void main() {
     expect(LexiconPack.instance.version, 'v1');
     expect(repo.entry(id)!.meaning, '蘋果一');
     expect(downloads(), hasLength(1));
-    expect(Directory('${directory.path}/lexicon')
+    expect(
+        Directory('${directory.path}/lexicon')
             .listSync()
             .where((f) => f.path.endsWith('.part')),
         isEmpty);
   });
 
   test('a server that still answers JSON is handled as before', () async {
-    final s = service(
-        MockClient((_) async => jsonResponse(pack('j1', '蘋果 JSON'))));
+    final s =
+        service(MockClient((_) async => jsonResponse(pack('j1', '蘋果 JSON'))));
     await s.start(AppSettings.inMemory(), () => repo);
     expect(LexiconPack.instance.fromSqlite, isFalse);
     expect(LexiconPack.instance.version, 'j1');

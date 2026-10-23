@@ -30,7 +30,8 @@ String reviewScopeLabel(WordDatabaseRepository repo, String scope) {
   if (scope == 'weak') return '弱項單字';
   if (scope.startsWith('album:')) {
     final a = repo.album(scope.substring(6));
-    if (a != null) return a.deckSlug != null ? '卡片集：${a.name}' : '相片冊：${a.name}';
+    if (a != null)
+      return a.deckSlug != null ? '卡片集：${a.name}' : '相片冊：${a.name}';
   }
   return '全部';
 }
@@ -51,7 +52,8 @@ class _Intro extends StatelessWidget {
       builder: (context, _) {
         final (albumId, cardScope) =
             reviewScopeOf(repo, fixedAlbumId, settings.reviewScope);
-        final albumCards = albumId == null ? null : repo.cardIdsInAlbum(albumId);
+        final albumCards =
+            albumId == null ? null : repo.cardIdsInAlbum(albumId);
         final probe = FlashcardSession(repo,
             continuous: true, albumId: albumId, cardScope: cardScope);
         final any = !probe.finished;
@@ -145,22 +147,27 @@ class _ScopeGrid extends StatelessWidget {
     final repo = scope.repository;
     final settings = scope.settings;
     final due = repo.eligibleCards(
-        newLimit: settings.dailyNewLimit, reviewLimit: settings.dailyReviewLimit);
+        newLimit: settings.dailyNewLimit,
+        reviewLimit: settings.dailyReviewLimit);
     int dueIn(Set<String>? ids) =>
         ids == null ? due.length : due.where((c) => ids.contains(c.id)).length;
     final tiles = <(String, String, int, bool)>[
       ('all', '綜合', dueIn(null), false),
       for (final a in repo.albums)
-        ('album:${a.id}', a.name, dueIn(repo.cardIdsInAlbum(a.id)),
-            a.deckSlug != null),
+        (
+          'album:${a.id}',
+          a.name,
+          dueIn(repo.cardIdsInAlbum(a.id)),
+          a.deckSlug != null
+        ),
       ('new', '今天新加的單字', dueIn(repo.cardIdsAddedToday()), false),
       ('weak', '弱項單字', dueIn(repo.weakCardIds()), false),
     ];
     final saved = settings.reviewScope;
-    final last = saved.startsWith('album:') &&
-            repo.album(saved.substring(6)) == null
-        ? 'all'
-        : saved;
+    final last =
+        saved.startsWith('album:') && repo.album(saved.substring(6)) == null
+            ? 'all'
+            : saved;
     return ListView(
       padding: const EdgeInsets.all(MSpace.md),
       children: [
@@ -205,8 +212,8 @@ class _ScopeGrid extends StatelessWidget {
                                 11, FontWeight.w700, MColors.primary)),
                       if (downloaded)
                         UiText('卡片集',
-                            style:
-                                MFont.inter(11, FontWeight.w600, MColors.muted)),
+                            style: MFont.inter(
+                                11, FontWeight.w600, MColors.muted)),
                       const Spacer(),
                       UiText(name,
                           maxLines: 2,
@@ -214,7 +221,8 @@ class _ScopeGrid extends StatelessWidget {
                           style: MFont.inter(15, FontWeight.w700, MColors.ink)),
                       const SizedBox(height: 4),
                       UiText(count > 0 ? '今天 $count 張' : '今天沒有到期',
-                          style: MFont.inter(12, FontWeight.w600, MColors.muted)),
+                          style:
+                              MFont.inter(12, FontWeight.w600, MColors.muted)),
                     ],
                   ),
                 ),
@@ -307,6 +315,16 @@ class FlashcardCardView extends StatelessWidget {
         }
       }
     }
+    // 問題回報：Mac 實機量測翻卡 108ms（M-PERF）: the back is worked out
+    // while the front is up, so turning the card does not wait for it.
+    if (!session.showingBack) {
+      FlashcardBack.prepare(context, repo, entry,
+          card: card,
+          template: repo.template,
+          learnerLevel: repo.profile.cefr,
+          activePos: activeUsage?.pos,
+          activeDefinition: activeSense?.definition);
+    }
     final native = scope.settings.nativeLanguage;
     final bottom = MediaQuery.paddingOf(context).bottom;
     final look = CardLook.of(context);
@@ -318,34 +336,34 @@ class FlashcardCardView extends StatelessWidget {
             child: _CardFrame(
                 look: look,
                 child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 180),
-              child: session.showingBack
-                  ? FlashcardBack(
-                      key: ValueKey('back:${card.id}'),
-                      entry: entry,
-                      activePos: activeUsage?.pos,
-                      activeMeaning: activeSense?.meaning,
-                      activeDefinition: activeSense?.definition,
-                      card: card,
-                      photo: session.photo,
-                      anchor: session.anchor,
-                      photoCredit: session.photoCredit,
-                      photos: session.photoOptions,
-                      onPhotoSelected: session.selectPhoto,
-                      answerCorrect: session.answerCorrect,
-                      submittedAnswer: session.submittedAnswer,
-                      correctAnswer: session.exercise?.answer,
-                      template: repo.template,
-                      learnerLevel: repo.profile.cefr,
-                      onPlay: () => scope.speakEntry(context, entry,
-                          language: repo.language),
-                      onOpen: () => scope.navigator.openWord(entry.id),
-                    )
-                  : FlashcardFront(
-                      key: ValueKey('front:${card.id}'),
-                      entry: entry,
-                      session: session),
-            )),
+                  duration: const Duration(milliseconds: 180),
+                  child: session.showingBack
+                      ? FlashcardBack(
+                          key: ValueKey('back:${card.id}'),
+                          entry: entry,
+                          activePos: activeUsage?.pos,
+                          activeMeaning: activeSense?.meaning,
+                          activeDefinition: activeSense?.definition,
+                          card: card,
+                          photo: session.photo,
+                          anchor: session.anchor,
+                          photoCredit: session.photoCredit,
+                          photos: session.photoOptions,
+                          onPhotoSelected: session.selectPhoto,
+                          answerCorrect: session.answerCorrect,
+                          submittedAnswer: session.submittedAnswer,
+                          correctAnswer: session.exercise?.answer,
+                          template: repo.template,
+                          learnerLevel: repo.profile.cefr,
+                          onPlay: () => scope.speakEntry(context, entry,
+                              language: repo.language),
+                          onOpen: () => scope.navigator.openWord(entry.id),
+                        )
+                      : FlashcardFront(
+                          key: ValueKey('front:${card.id}'),
+                          entry: entry,
+                          session: session),
+                )),
           ),
         ),
         // Fixed at the bottom (spec: 畫面底部固定「顯示答案」／四個評分按鈕).
@@ -386,7 +404,6 @@ class FlashcardCardView extends StatelessWidget {
     );
   }
 }
-
 
 /// The card around the front and the back, in the chosen 卡片樣式
 /// (問題回報 #317); the classic style has none.

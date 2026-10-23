@@ -99,7 +99,17 @@ List<PinPlacement> layoutPins(List<PinItem> items, Size box,
 
     final w = it.badge.width, h = it.badge.height;
     // 132 sits just under the landscape leader limit (60% of the short side).
-    for (final r in const [12.0, 24.0, 40.0, 60.0, 86.0, 104.0, 118.0, 132.0, 150.0]) {
+    for (final r in const [
+      12.0,
+      24.0,
+      40.0,
+      60.0,
+      86.0,
+      104.0,
+      118.0,
+      132.0,
+      150.0
+    ]) {
       for (var k = 0; k < 24; k++) {
         final a = k * math.pi / 12;
         final dir = Offset(math.cos(a), math.sin(a));
@@ -142,82 +152,6 @@ List<PinPlacement> layoutPins(List<PinItem> items, Size box,
     return i.width > 0 && i.height > 0 ? i.width * i.height : 0;
   }
 
-  bool segmentHitsRect(Offset p, Offset q, Rect r) {
-    if (r.contains(p) || r.contains(q)) return true;
-    Offset corner(int i) =>
-        [r.topLeft, r.topRight, r.bottomRight, r.bottomLeft][i];
-    for (var i = 0; i < 4; i++) {
-      if (_segmentsCross(p, q, corner(i), corner((i + 1) % 4))) return true;
-    }
-    return false;
-  }
-
-  // Edge-to-edge distance between two badges (negative when they overlap).
-  double gap(Rect a, Rect b) => math.max(
-        (a.center.dx - b.center.dx).abs() - (a.width + b.width) / 2,
-        (a.center.dy - b.center.dy).abs() - (a.height + b.height) / 2,
-      );
-
-  double cost(PinItem it, Rect r, Map<String, PinPlacement> placed) {
-    final joint = Offset(it.anchor.dx.clamp(r.left, r.right),
-        it.anchor.dy.clamp(r.top, r.bottom));
-    final leader = (joint - it.anchor).distance;
-    // A short leader is as good as none; past that, every pixel counts.
-    // Long ones cost more still: a label should stay near its object.
-    var c = leader <= 24 ? leader * 0.5 : 12 + (leader - 24) * 1.1;
-    if (leader > 60) c += (leader - 60) * 2;
-    // The badge must not cover any dot, its own included: worse than any
-    // leader line (問題回報 #61: crowded landscape photos hid a dot).
-    for (final d in dots) {
-      final hit = r.inflate(5).contains(d);
-      if (hit) c += 6000;
-    }
-    for (final a in avoid) {
-      if (r.inflate(4).overlaps(a)) c += 400 + overlap(r.inflate(4), a) * 60;
-    }
-    final centre = r.center;
-    var left = centre.dx < area.center.dx ? 1 : 0, right = 1 - left;
-    for (final p in placed.values) {
-      if (p.id == it.id) continue;
-      c += overlap(r.inflate(4), p.badge) * 60;
-      // Spread labels out: nearby badges repel, and keep a clear gap.
-      final g = gap(r, p.badge);
-      c += 3200 / (math.max(g, 0) + 28);
-      if (g < 12) c += (12 - g) * 8;
-      if (p.badge.center.dx < area.center.dx) {
-        left++;
-      } else {
-        right++;
-      }
-      // Leader lines neither cross each other nor run under badges.
-      if (leader > 1 &&
-          p.leaderLength > 1 &&
-          _segmentsCross(it.anchor, joint, p.anchor, p.joint)) {
-        c += 180;
-      }
-      if (leader > 1 && segmentHitsRect(it.anchor, joint, p.badge.deflate(1))) {
-        c += 220;
-      }
-      if (p.leaderLength > 1 &&
-          segmentHitsRect(p.anchor, p.joint, r.deflate(1))) {
-        c += 220;
-      }
-    }
-    // Balance: about as many labels on the left of the photo as on the right.
-    c += 18 * (left - right).abs();
-    // Lean outward from the middle of the objects, for balance.
-    final out = it.anchor - centroid;
-    final toward = centre - it.anchor;
-    if (out.distance > 1 && toward.distance > 1) {
-      final cos = (out.dx * toward.dx + out.dy * toward.dy) /
-          (out.distance * toward.distance);
-      c -= 14 * cos;
-    }
-    // A slight preference for labels above their objects, as people read.
-    if (centre.dy < it.anchor.dy) c -= 4;
-    return c;
-  }
-
   // Most crowded first: they have the fewest good spots.
   int crowd(PinItem it) =>
       dots.where((d) => d != it.anchor && (d - it.anchor).distance < 80).length;
@@ -236,34 +170,129 @@ List<PinPlacement> layoutPins(List<PinItem> items, Size box,
     return false;
   }
 
-  bool overlapsBadge(Rect r, String id) {
-    for (final p in placed.values) {
-      if (p.id != id && overlap(r, p.badge) > 0) return true;
-    }
-    return false;
-  }
-
-  // 0 free and close, 1 free but the leader is past 60% of the short side,
-  // 2 covers a dot, 3 overlaps another label. Lower wins, then [cost].
-  int tier(PinItem it, Rect r) {
-    if (overlapsBadge(r, it.id)) return 3;
-    if (coversDot(r)) return 2;
-    final joint = Offset(it.anchor.dx.clamp(r.left, r.right),
-        it.anchor.dy.clamp(r.top, r.bottom));
-    if ((joint - it.anchor).distance > box.shortestSide * 0.6) return 1;
-    return 0;
-  }
+  // 問題回報：Mac 實機量測第二輪 照片詳情 64ms／翻卡 87ms（M-PERF2）: the same
+  // tiers and cost as before, worked out on plain numbers (no rectangles
+  // made per spot), and a spot that can no longer beat the best one so far
+  // stops being scored. The result is the same, bit for bit.
+  final dotX = [for (final d in dots) d.dx];
+  final dotY = [for (final d in dots) d.dy];
+  final areaCx = area.center.dx;
+  final longLeader = box.shortestSide * 0.6;
 
   PinPlacement best(PinItem it) {
+    final others = [
+      for (final p in placed.values)
+        if (p.id != it.id) _Placed(p),
+    ];
+    final ax = it.anchor.dx, ay = it.anchor.dy;
+    final out = it.anchor - centroid;
+    final outDistance = out.distance;
     Rect? bestRect;
     var bestTier = 9;
     var bestCost = double.infinity;
     for (final r in cands[it.id]!) {
-      final t = tier(it, r);
-      if (t > bestTier) continue;
-      final c = cost(it, r, placed);
-      if (t < bestTier || c < bestCost) {
-        bestTier = t;
+      final l = r.left, t = r.top, rr = r.right, b = r.bottom;
+      // 0 free and close, 1 free but the leader is past 60% of the short
+      // side, 2 covers a dot, 3 overlaps another label. Lower wins, then
+      // the cost.
+      var tier = 0;
+      for (final p in others) {
+        final iw = math.min(rr, p.right) - math.max(l, p.left);
+        final ih = math.min(b, p.bottom) - math.max(t, p.top);
+        if (iw > 0 && ih > 0 && iw * ih > 0) {
+          tier = 3;
+          break;
+        }
+      }
+      final jx = ax.clamp(l, rr), jy = ay.clamp(t, b);
+      final ldx = jx - ax, ldy = jy - ay;
+      final leader = math.sqrt(ldx * ldx + ldy * ldy);
+      if (tier == 0) {
+        final pl = l - 2, pt = t - 2, pr = rr + 2, pb = b + 2;
+        for (var i = 0; i < dotX.length; i++) {
+          final x = dotX[i], y = dotY[i];
+          if (x >= pl && x < pr && y >= pt && y < pb) {
+            tier = 2;
+            break;
+          }
+        }
+        if (tier == 0 && leader > longLeader) tier = 1;
+      }
+      if (tier > bestTier) continue;
+      // Only a lower tier wins whatever it costs; in the same tier the
+      // terms still to come take off at most 18.
+      final prune = tier == bestTier && bestCost.isFinite;
+      final cut = bestCost + 19;
+
+      // A short leader is as good as none; past that, every pixel counts.
+      // Long ones cost more still: a label should stay near its object.
+      var c = leader <= 24 ? leader * 0.5 : 12 + (leader - 24) * 1.1;
+      if (leader > 60) c += (leader - 60) * 2;
+      // The badge must not cover any dot, its own included: worse than any
+      // leader line (問題回報 #61: crowded landscape photos hid a dot).
+      final hl = l - 5, ht = t - 5, hr = rr + 5, hb = b + 5;
+      for (var i = 0; i < dotX.length; i++) {
+        final x = dotX[i], y = dotY[i];
+        if (x >= hl && x < hr && y >= ht && y < hb) c += 6000;
+      }
+      for (final a in avoid) {
+        if (r.inflate(4).overlaps(a)) c += 400 + overlap(r.inflate(4), a) * 60;
+      }
+      if (prune && c > cut) continue;
+      final rw = rr - l, rh = b - t;
+      final cx = l + rw / 2.0, cy = t + rh / 2.0;
+      var left = cx < areaCx ? 1 : 0, right = 1 - left;
+      final il = l - 4, it4 = t - 4, ir = rr + 4, ib = b + 4;
+      final dl = l + 1, dt = t + 1, dr = rr - 1, db = b - 1;
+      var dropped = false;
+      for (final p in others) {
+        final iw = math.min(ir, p.right) - math.max(il, p.left);
+        final ih = math.min(ib, p.bottom) - math.max(it4, p.top);
+        c += (iw > 0 && ih > 0 ? iw * ih : 0) * 60;
+        // Spread labels out: nearby badges repel, and keep a clear gap.
+        final g = math.max((cx - p.cx).abs() - (rw + p.width) / 2,
+            (cy - p.cy).abs() - (rh + p.height) / 2);
+        c += 3200 / (math.max(g, 0) + 28);
+        if (g < 12) c += (12 - g) * 8;
+        if (p.cx < areaCx) {
+          left++;
+        } else {
+          right++;
+        }
+        // Leader lines neither cross each other nor run under badges.
+        if (leader > 1 &&
+            p.leaderLength > 1 &&
+            _crosses(ax, ay, jx, jy, p.ax, p.ay, p.jx, p.jy)) {
+          c += 180;
+        }
+        if (leader > 1 &&
+            _segmentHits(ax, ay, jx, jy, p.dl, p.dt, p.dr, p.db)) {
+          c += 220;
+        }
+        if (p.leaderLength > 1 &&
+            _segmentHits(p.ax, p.ay, p.jx, p.jy, dl, dt, dr, db)) {
+          c += 220;
+        }
+        if (prune && c > cut) {
+          dropped = true;
+          break;
+        }
+      }
+      if (dropped) continue;
+      // Balance: about as many labels on the left of the photo as on the right.
+      c += 18 * (left - right).abs();
+      // Lean outward from the middle of the objects, for balance.
+      final tx = cx - ax, ty = cy - ay;
+      final towardDistance = math.sqrt(tx * tx + ty * ty);
+      if (outDistance > 1 && towardDistance > 1) {
+        final cos =
+            (out.dx * tx + out.dy * ty) / (outDistance * towardDistance);
+        c -= 14 * cos;
+      }
+      // A slight preference for labels above their objects, as people read.
+      if (cy < ay) c -= 4;
+      if (tier < bestTier || c < bestCost) {
+        bestTier = tier;
         bestCost = c;
         bestRect = r;
       }
@@ -360,7 +389,8 @@ List<PinPlacement> layoutPins(List<PinItem> items, Size box,
       if (map == null) continue;
       final viol = violations(map);
       final better = viol.$1 + viol.$2 < bestViol.$1 + bestViol.$2 ||
-          (viol.$1 + viol.$2 == bestViol.$1 + bestViol.$2 && viol.$1 < bestViol.$1);
+          (viol.$1 + viol.$2 == bestViol.$1 + bestViol.$2 &&
+              viol.$1 < bestViol.$1);
       if (better) {
         bestViol = viol;
         bestMap = map;
@@ -370,13 +400,77 @@ List<PinPlacement> layoutPins(List<PinItem> items, Size box,
   return [for (final it in items) bestMap[it.id]!];
 }
 
-bool _segmentsCross(Offset a, Offset b, Offset c, Offset d) {
-  double cross(Offset o, Offset p, Offset q) =>
-      (p.dx - o.dx) * (q.dy - o.dy) - (p.dy - o.dy) * (q.dx - o.dx);
-  final d1 = cross(c, d, a),
-      d2 = cross(c, d, b),
-      d3 = cross(a, b, c),
-      d4 = cross(a, b, d);
+/// A placed badge as plain numbers, for [layoutPins]' inner loop (M-PERF2).
+class _Placed {
+  final double left, top, right, bottom, width, height, cx, cy;
+  final double ax, ay, jx, jy, leaderLength;
+
+  /// The badge less 1 on each side, which leader lines must not cross.
+  final double dl, dt, dr, db;
+
+  factory _Placed(PinPlacement p) {
+    final b = p.badge;
+    final joint = p.joint;
+    return _Placed._(
+      b.left,
+      b.top,
+      b.right,
+      b.bottom,
+      b.width,
+      b.height,
+      b.left + b.width / 2.0,
+      b.top + b.height / 2.0,
+      p.anchor.dx,
+      p.anchor.dy,
+      joint.dx,
+      joint.dy,
+      p.leaderLength,
+      b.left + 1,
+      b.top + 1,
+      b.right - 1,
+      b.bottom - 1,
+    );
+  }
+
+  const _Placed._(
+      this.left,
+      this.top,
+      this.right,
+      this.bottom,
+      this.width,
+      this.height,
+      this.cx,
+      this.cy,
+      this.ax,
+      this.ay,
+      this.jx,
+      this.jy,
+      this.leaderLength,
+      this.dl,
+      this.dt,
+      this.dr,
+      this.db);
+}
+
+/// Whether the segments a→b and c→d cross (touching does not count).
+bool _crosses(double ax, double ay, double bx, double by, double cx, double cy,
+    double dx, double dy) {
+  final d1 = (dx - cx) * (ay - cy) - (dy - cy) * (ax - cx),
+      d2 = (dx - cx) * (by - cy) - (dy - cy) * (bx - cx),
+      d3 = (bx - ax) * (cy - ay) - (by - ay) * (cx - ax),
+      d4 = (bx - ax) * (dy - ay) - (by - ay) * (dx - ax);
   return ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) &&
       ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0));
+}
+
+/// Whether the segment p→q touches the rectangle [l, t, r, b]: an end
+/// inside it, or crossing one of its sides.
+bool _segmentHits(double px, double py, double qx, double qy, double l,
+    double t, double r, double b) {
+  if (px >= l && px < r && py >= t && py < b) return true;
+  if (qx >= l && qx < r && qy >= t && qy < b) return true;
+  return _crosses(px, py, qx, qy, l, t, r, t) ||
+      _crosses(px, py, qx, qy, r, t, r, b) ||
+      _crosses(px, py, qx, qy, r, b, l, b) ||
+      _crosses(px, py, qx, qy, l, b, l, t);
 }
