@@ -1208,7 +1208,7 @@ commit `533bd111`（Windows：flutter analyze 無 error、01:09 +580 ~2: All tes
 - 卡 #558：問題回報 #605：[卡片回報] money（noun）翻譯錯
   結果：全部完成：money 的圖（asset 10290）與全庫 1031 張純文字截圖／文件圖已退件（5286 筆配圖關聯 → rejected），golden／QC 無退步。
 
-## M90（2026-10-23 19:56）狀態：待做（owner 優先）
+## M90（2026-10-23 19:56）狀態：待做（已裝最新、7 項已驗；#639–#643 等 Windows 修好再驗）
 owner 19:00 之後在 iPhone 送出的新回報。**都已由 Windows 派出**，Mac 不要重修；修好後 mac_sync 會開 M 項，再請 Mac 在 iPhone 驗證。
 
 | # | 頁面 | 內容 | Windows 狀態 |
