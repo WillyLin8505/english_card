@@ -830,3 +830,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 |----|----|----|----|----|
 | #619 詞形變化要有所有時態 | 通過 | Mac 5f4ec6a2：英文動詞加「現在式」「未來式（will＋原形）」，依時間排序；依卡片詞性過濾不屬於它的變化（形容詞不再出現 happied 等）；forms_all_tenses_test。已裝到 owner 的 iPhone | — | — |
 | #619 詞庫缺的變化形（交 Windows） | 不通過 | App 不自己產生過去式等規則變化（不規則動詞會錯），詞庫缺的部分要 Windows 補；另外 happy 等形容詞帶動詞變化、名詞帶比較級的資料仍在詞庫裡，App 已過濾但資料應修正。M100 說 App pack 要重新匯出才看得到新形態，請匯出後通知 Mac 驗證 | — | 中 |
+
+## 2026-10-23 M101（線上詞庫）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| 卡 #563（#611）weather 標籤等級 | 通過 | 線上詞庫 3d5544d5…：weather（A1）的 11 張圖，標籤等級都等於各字自己的詞庫等級（stone A1、texture C1、shadow A2…）。另統計全庫 -ed／-ing 形容詞標籤 1,334 筆，有 454 筆和原形等級不同（polished B2／polish C1、detailed B2／detail A2、covered A1／cover A2…），多半是動詞＋ed，不在這次「名詞＋ed/ing 跟原形」規則內，供 Windows 參考 | — | — |

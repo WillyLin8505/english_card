@@ -1289,7 +1289,7 @@ commit `dcd77118`（Windows：flutter analyze 無 error、01:01 +583 ~2: All tes
 
 App pack 要重新匯出，使用者才看得到新形態。
 
-## M101（2026-10-23 22:38）狀態：待做
+## M101（2026-10-23 22:38）狀態：完成
 commit `8443c1b2`（Windows：flutter analyze 無 error、01:13 +584 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #563：問題回報 #611：[意見回饋] 複習：weather 有些標籤的等級分類還是錯的
   結果：全部完成：依 owner 決定 B（#638）還原「名詞＋ed/ing 形容詞」等級規則，4329 筆標籤（2749 張圖、339 字）回到「衍生字跟著原形等級」。
