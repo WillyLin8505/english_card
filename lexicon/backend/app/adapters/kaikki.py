@@ -527,9 +527,15 @@ class Kaikki(SourceAdapter):
                 # A later etymology (sofa 2: a Mali Empire soldier) is a
                 # different word that happens to share the spelling; the
                 # label lets the app keep it off the card's main meaning.
+                # Not when the sense is established (card #539, 問題回報 #579):
+                # second 「unit of time」, tip 「gratuity」, school 「group of
+                # fish」 are everyday meanings that only share a spelling by
+                # accident of etymology; Wiktionary's translation table of
+                # such a sense is large, an obscure one's is empty.
                 ety = str(s["entry"].get("etymology_number") or "")
                 labels = sorted(set(s["sense"].get("tags", [])) & LABEL_TAGS)
-                if ety.isdigit() and int(ety) > 1:
+                if ety.isdigit() and int(ety) > 1 and not (
+                        not s["low"] and established_sense(s["entry"], s["sense"])):
                     labels.append(f"etymology-{ety}")
                 add({"pos": s["pos"], "gloss": s["gloss"], "sense_key": s["sense_key"],
                      "labels": labels,
@@ -1014,6 +1020,40 @@ def _fr_part_meanings(bd: dict, pos: str | None) -> dict:
 def _stem(token: str) -> str:
     """A plural or third-person -s off, for matching glosses."""
     return token[:-1] if len(token) > 3 and token.endswith("s") and not token.endswith("ss") else token
+
+
+# A sense whose Wiktionary translation table lists at least this many
+# translations is an established meaning, whatever etymology it sits under
+# (card #539): second 「unit of time」 214, tip 「gratuity」 115, school 「group
+# of fish」 71, down 「feathers」 70 — against 0 for and 「breath」, a 「ace」,
+# tip 「a tram for coal」. Senses with 5–9 are mostly obscure (yard 「spar」).
+ESTABLISHED_TRANSLATIONS = 10
+
+
+def translation_counts(entry: dict) -> list[int]:
+    """Per sense of the entry: how many translations Wiktionary lists for
+    it — its own table plus the entry-level tables attached to it (by the
+    table's title, else Kaikki's _dis1 weights)."""
+    senses = entry.get("senses") or []
+    counts = [len(s.get("translations") or []) for s in senses]
+    tables = entry.get("translations") or []
+    if tables and senses:
+        from ..sense_order import _attached_senses
+        for t in tables:
+            for i in _attached_senses(t, senses) or ():
+                if i < len(senses):
+                    counts[i] += 1
+    return counts
+
+
+def established_sense(entry: dict, sense: dict) -> bool:
+    """Is ``sense`` (one of ``entry``'s) an established meaning: a
+    translation table of ESTABLISHED_TRANSLATIONS or more?"""
+    senses = entry.get("senses") or []
+    for i, s in enumerate(senses):
+        if s is sense:
+            return translation_counts(entry)[i] >= ESTABLISHED_TRANSLATIONS
+    return False
 
 
 def _main_etymology(entries: list[dict]) -> list[dict]:

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import re
+import unicodedata
 from functools import lru_cache
 from pathlib import Path
 
@@ -549,6 +550,8 @@ _AFFIX_SUFFIX = {
     "able": "əbəl", "hood": "hʊd", "ship": "ʃɪp", "dom": "dəm", "like": "laɪk",
     "en": "ən", "ery": ("əɹi", "ɚi"), "ward": ("wəd", "wɚd"), "wards": ("wədz", "wɚdz"),
     "some": "səm", "fold": "fəʊld", "ling": "lɪŋ", "let": "lət", "ette": "ɛt",
+    # Combining forms Wiktionary files as suffixes (問題回報 #209: repair + -person).
+    "person": ("pɜːsən", "pɜɹsən"), "proof": "pɹuːf",
 }
 _AFFIX_PREFIX = {
     "un": "ʌn", "non": ("nɒn", "nɑn"), "re": "ɹiː", "pre": "pɹiː", "de": "diː",
@@ -917,21 +920,41 @@ def _fr_form_verbs(form: str) -> tuple[tuple[str, bool], ...]:
     return tuple(sorted(out.items()))
 
 
+@lru_cache(maxsize=20_000)
+def _fr_verb_lemma(word: str) -> bool:
+    """French Wiktionary gives ``word`` a verb meaning of its own (être,
+    aller), not only form-of senses (fait, poli, admis — participles)."""
+    from .. import kaikki_index
+    from .base import is_form_sense
+    return any(str(e.get("word", "")).lower() == word and e.get("pos") == "verb"
+               and any(not is_form_sense(s) for s in e.get("senses") or [])
+               for e in kaikki_index.lookup("fr", word) or [])
+
+
+def _unaccent(word: str) -> str:
+    return "".join(c for c in unicodedata.normalize("NFD", word) if not unicodedata.combining(c))
+
+
 def fr_shared_verb_forms(lemma: str, verb_forms) -> frozenset[str]:
     """Conjugations of ``lemma`` that another verb, at least a fifth as
     frequent, uses in a common tense (問題回報 #582): suivre's « suis » is
     almost always être, so it finds and matches no example sentence. être
     keeps « suis » (suivre is far rarer); vivre keeps « vis » (voir's use is
-    the past historic); the infinitive is never shared away."""
+    the past historic); the infinitive is never shared away. The verb the
+    lemma itself conjugates (aimé → aimer, connaitre → connaître) and a
+    participle entry (polis → poli) are not other verbs."""
     lemma = (lemma or "").lower()
-    own = fr_zipf(lemma)
+    own_bases = {b for b, _ in _fr_form_verbs(lemma)} | {lemma, _unaccent(lemma)}
+    own = max(fr_zipf(b) for b in own_bases)  # paraitre counts as paraître
     shared = set()
     for f in verb_forms:
         f = (f or "").lower()
         if not f or f == lemma or " " in f:
             continue
         for base, common in _fr_form_verbs(f):
-            if not common or base == lemma or fold(base) == fold(lemma):
+            if not common or base in own_bases or _unaccent(base) in own_bases:
+                continue
+            if not _fr_verb_lemma(base):
                 continue
             if fr_zipf(base) >= own - 0.7:  # the other verb ≥ 1/5 as frequent
                 shared.add(f)

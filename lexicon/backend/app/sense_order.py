@@ -21,7 +21,12 @@ materialize() orders the definition items with order_senses():
   3. hand-reviewed common senses first (PREFERRED_GLOSSES for French,
      quality/en_common_senses.json for English — card #381: train's first
      Kaikki sense is a dress's train);
-  4. otherwise the dictionary's order (stable sort).
+  4. for English, the etymology whose current senses have the largest
+     Wiktionary translation tables first (card #539: second 「unit of
+     time」 before 「number two in a series」, down 「feathers」 before 「a
+     negative aspect」) — Kaikki's etymology-N label no longer demotes an
+     established sense (adapters/kaikki.py established_sense);
+  5. otherwise the dictionary's order (stable sort).
 
 Items carry their Kaikki topics since this card; older items are looked up
 in the Kaikki index by gloss.
@@ -66,10 +71,10 @@ def _kaikki_pos(e: dict) -> str | None:
 
 
 @lru_cache(maxsize=100_000)
-def kaikki_sense_info(target: str, lemma: str, pos: str, gloss: str) -> tuple[tuple[str, ...], tuple[str, ...]]:
-    """(topics, tags) of the Kaikki sense whose first gloss is ``gloss`` —
-    for items stored before this card, which carry neither topics nor the
-    tags outside LABEL_TAGS (historical)."""
+def kaikki_sense_info(target: str, lemma: str, pos: str, gloss: str) -> tuple[tuple[str, ...], tuple[str, ...], str]:
+    """(topics, tags, etymology number) of the Kaikki sense whose first
+    gloss is ``gloss`` — for items stored before this card, which carry
+    neither topics nor the tags outside LABEL_TAGS (historical)."""
     from . import kaikki_index
     for e in kaikki_index.lookup(target, lemma) or []:
         if str(e.get("word", "")) != lemma or _kaikki_pos(e) != pos:
@@ -77,8 +82,48 @@ def kaikki_sense_info(target: str, lemma: str, pos: str, gloss: str) -> tuple[tu
         for s in e.get("senses") or []:
             if (s.get("glosses") or [""])[0].strip() == gloss:
                 return (tuple(sorted(set(s.get("topics") or []))),
-                        tuple(sorted(str(t).lower() for t in s.get("tags") or [])))
-    return (), ()
+                        tuple(sorted(str(t).lower() for t in s.get("tags") or [])),
+                        str(e.get("etymology_number") or "1"))
+    return (), (), ""
+
+
+@lru_cache(maxsize=50_000)
+def etymology_weights(target: str, lemma: str, pos: str) -> tuple[tuple[str, int], ...]:
+    """((etymology number, weight), …) of the Kaikki entries of ``lemma``
+    in ``pos``: the weight is the sum of the translation-table sizes of the
+    etymology's current senses — how established its meanings are (card
+    #539: second's 「unit of time」 etymology outweighs 「number two」's)."""
+    from . import kaikki_index
+    from .adapters.kaikki import LOW_TAGS, translation_counts
+    weights: dict[str, int] = {}
+    for e in kaikki_index.lookup(target, lemma) or []:
+        if str(e.get("word", "")) != lemma or _kaikki_pos(e) != pos:
+            continue
+        ety = str(e.get("etymology_number") or "1")
+        weights.setdefault(ety, 0)
+        for s, n in zip(e.get("senses") or [], translation_counts(e)):
+            tags = {str(t).lower() for t in s.get("tags") or []}
+            if not tags & (OUT_OF_USE_LABELS | LOW_TAGS):
+                weights[ety] += n
+    return tuple(weights.items())
+
+
+def _etymology_group_rank(item: dict, target: str, lemma: str) -> int:
+    """English only: the rank of the item's etymology among the headword's
+    etymologies in that part of speech, heaviest translation evidence
+    first; Wiktionary's order breaks ties. 0 when the word has one
+    etymology or the sense is not found in the index."""
+    if target != "en":
+        return 0
+    pos, gloss = str(item.get("pos") or ""), str(item.get("gloss") or "")
+    weights = dict(etymology_weights(target, lemma, pos))
+    if len(weights) < 2:
+        return 0
+    ety = kaikki_sense_info(target, lemma, pos, gloss)[2]
+    if ety not in weights:
+        return 0
+    order = sorted(weights, key=lambda k: (-weights[k], int(k) if k.isdigit() else 0))
+    return order.index(ety)
 
 
 def topics_of(target: str, lemma: str, pos: str, gloss: str) -> tuple[str, ...]:
@@ -257,8 +302,12 @@ def _preferred_index(item: dict, target: str, lemma: str) -> int:
 
 
 def order_senses(items: list[dict], target: str, lemma: str) -> list[dict]:
-    """The definition items in the order their senses get ordinals."""
-    return sorted(items, key=lambda it: (sense_rank(it, target, lemma), _preferred_index(it, target, lemma)))
+    """The definition items in the order their senses get ordinals:
+    current senses first, then the reviewed common ones, then (English) the
+    etymology with the most established senses — second 「unit of time」
+    before 「number two in a series」 (card #539); Wiktionary's order last."""
+    return sorted(items, key=lambda it: (sense_rank(it, target, lemma), _preferred_index(it, target, lemma),
+                                         _etymology_group_rank(it, target, lemma)))
 
 def english_sense_translations(english: str, pos: str, target: str, gloss: str) -> set[str] | None:
     """The ``target``-language words English Wiktionary lists under the one
