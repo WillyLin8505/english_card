@@ -303,7 +303,7 @@ def rest_until(agent: str, usage: dict, now: datetime) -> datetime | None:
 def reset_from_line(line: str, now: datetime) -> datetime | None:
     """「You've hit your session limit · resets 6:10am (Asia/Taipei)」 → the next 6:10 Taipei
     (10/23: without this a limit that reset at 06:10 kept the CLIs resting until 11:13)."""
-    m = re.search(r"resets\s+(\d{1,2})(?::(\d{2}))?\s*([ap]m)", line, re.I)
+    m = re.search(r"(?:resets|try again at)\s+(\d{1,2})(?::(\d{2}))?\s*([ap]m)", line, re.I)
     if not m:
         return None
     h = int(m.group(1)) % 12 + (12 if m.group(3).lower() == "pm" else 0)
@@ -558,6 +558,11 @@ class Tick:
             # a limit line in an old log (an adopted card from hours ago) says nothing about now
             fresh_log = lg.exists() and time.time() - lg.stat().st_mtime < 5 * 3600
             limit_line = detect_limit(log_text) if alive is False and fresh_log else None
+            if alive and fresh_log and not rm and detect_limit(log_text) and run.get("pid"):
+                # 10/24 #604: Codex printed its usage limit and then sat there for half an hour,
+                # holding the card — end it and treat it as a limit
+                subprocess.run(["taskkill", "/PID", str(run["pid"]), "/T", "/F"], capture_output=True)
+                alive, limit_line = False, detect_limit(log_text)
             # the CLI we launched is still running after writing result.md: it may be rewriting it
             # (card #431), so wait longer before collecting the card
             pid_up = bool(run.get("pid")) and pid_alive(run["pid"])
