@@ -484,6 +484,29 @@ class WordDatabaseRepository extends ChangeNotifier {
   Photo? albumCoverPhoto(String albumId) =>
       photosInAlbum(albumId).where(PhotoStore.canShow).firstOrNull;
 
+  /// The picture on a 複習 tile with no album of its own (綜合, 今天新加的,
+  /// 弱項): the newest photo that can be shown of one of [cardIds]' words,
+  /// or of any word being learned when [cardIds] is null. A photo outside
+  /// [avoid] (already on another tile) is preferred.
+  Photo? reviewCoverPhoto(Set<String>? cardIds,
+      {Set<String> avoid = const {}}) {
+    final words = {
+      for (final c in _cards)
+        if (!c.archived && (cardIds == null || cardIds.contains(c.id)))
+          c.wordEntryId,
+    };
+    final ids = {
+      for (final o in _occurrences)
+        if (words.contains(o.wordEntryId)) o.photoId,
+    };
+    final shown = [
+      for (final p in photos)
+        if (ids.contains(p.id) && PhotoStore.canShow(p)) p
+    ];
+    return shown.where((p) => !avoid.contains(p.id)).firstOrNull ??
+        shown.firstOrNull;
+  }
+
   /// 學習洞察: review counts, level changes and weak words.
   LearningInsights insights() {
     final wordOfCard = {for (final c in _cards) c.id: c.wordEntryId};
@@ -1139,10 +1162,8 @@ class WordDatabaseRepository extends ChangeNotifier {
       merged['translatedFor'] = pack.native;
       // A dictionary gap is explicit, not an endless background loading state.
       if (!keepMeaning) {
-        merged['dataStatus'] =
-            x.nativeMeaning == null ? 'failed' : 'complete';
-        merged['dataError'] =
-            x.nativeMeaning == null ? '詞庫尚未提供{N}意思' : null;
+        merged['dataStatus'] = x.nativeMeaning == null ? 'failed' : 'complete';
+        merged['dataError'] = x.nativeMeaning == null ? '詞庫尚未提供{N}意思' : null;
       }
       if (jsonEncode(merged) != jsonEncode(e.toJson())) {
         final next = WordEntry.fromJson(merged);

@@ -30,8 +30,9 @@ String reviewScopeLabel(WordDatabaseRepository repo, String scope) {
   if (scope == 'weak') return '弱項單字';
   if (scope.startsWith('album:')) {
     final a = repo.album(scope.substring(6));
-    if (a != null)
+    if (a != null) {
       return a.deckSlug != null ? '卡片集：${a.name}' : '相片冊：${a.name}';
+    }
   }
   return '全部';
 }
@@ -151,17 +152,38 @@ class _ScopeGrid extends StatelessWidget {
         reviewLimit: settings.dailyReviewLimit);
     int dueIn(Set<String>? ids) =>
         ids == null ? due.length : due.where((c) => ids.contains(c.id)).length;
-    final tiles = <(String, String, int, bool)>[
-      ('all', '綜合', dueIn(null), false),
+    // Album tiles show the album's newest photo; the other tiles a photo of
+    // one of their words, a different one from the tiles before when they can.
+    final albumTiles = [
       for (final a in repo.albums)
         (
           'album:${a.id}',
           a.name,
           dueIn(repo.cardIdsInAlbum(a.id)),
-          a.deckSlug != null
+          a.deckSlug != null,
+          repo.albumCoverPhoto(a.id),
+          a.coverAsset,
         ),
-      ('new', '今天新加的單字', dueIn(repo.cardIdsAddedToday()), false),
-      ('weak', '弱項單字', dueIn(repo.weakCardIds()), false),
+    ];
+    final used = {
+      for (final t in albumTiles)
+        if (t.$5 case final p?) p.id,
+    };
+    Photo? coverOf(Set<String>? ids) {
+      final p = repo.reviewCoverPhoto(ids, avoid: used);
+      if (p != null) used.add(p.id);
+      return p;
+    }
+
+    // (scope, name, due today, from 卡片集, cover photo, bundled cover).
+    final allCover = coverOf(null);
+    final newIds = repo.cardIdsAddedToday();
+    final weakIds = repo.weakCardIds();
+    final tiles = <(String, String, int, bool, Photo?, String?)>[
+      ('all', '綜合', dueIn(null), false, allCover, null),
+      ...albumTiles,
+      ('new', '今天新加的單字', dueIn(newIds), false, coverOf(newIds), null),
+      ('weak', '弱項單字', dueIn(weakIds), false, coverOf(weakIds), null),
     ];
     final saved = settings.reviewScope;
     final last =
@@ -185,7 +207,7 @@ class _ScopeGrid extends StatelessWidget {
           crossAxisSpacing: MSpace.sm,
           childAspectRatio: 1.0,
           children: [
-            for (final (value, name, count, downloaded) in tiles)
+            for (final (value, name, count, downloaded, cover, asset) in tiles)
               Tap(
                 label: '$name，今天 $count 張',
                 onTap: () {
@@ -193,7 +215,6 @@ class _ScopeGrid extends StatelessWidget {
                   onStart();
                 },
                 child: Container(
-                  padding: const EdgeInsets.all(MSpace.sm),
                   decoration: BoxDecoration(
                     color: value == 'all' ? MColors.primarySoft : Colors.white,
                     borderRadius: MRadii.rLg,
@@ -202,28 +223,66 @@ class _ScopeGrid extends StatelessWidget {
                         ? Border.all(color: MColors.primary, width: 1.5)
                         : null,
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (value == last)
-                        UiText('上次複習',
-                            style: MFont.inter(
-                                11, FontWeight.w700, MColors.primary)),
-                      if (downloaded)
-                        UiText('卡片集',
-                            style: MFont.inter(
-                                11, FontWeight.w600, MColors.muted)),
-                      const Spacer(),
-                      UiText(name,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: MFont.inter(15, FontWeight.w700, MColors.ink)),
-                      const SizedBox(height: 4),
-                      UiText(count > 0 ? '今天 $count 張' : '今天沒有到期',
-                          style:
-                              MFont.inter(12, FontWeight.w600, MColors.muted)),
-                    ],
+                  child: ClipRRect(
+                    borderRadius: MRadii.rLg,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // The cover: the album's newest photo, or a photo of
+                        // one of the tile's words; a plain block without one.
+                        Expanded(
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              if (asset != null)
+                                Image.asset(asset, fit: BoxFit.cover)
+                              else if (cover != null)
+                                PhotoImage(cover)
+                              else
+                                ColoredBox(
+                                    color: value == 'all'
+                                        ? MColors.primarySoft
+                                        : MColors.albumPill),
+                              Positioned(
+                                top: 6,
+                                left: 6,
+                                right: 6,
+                                child: Wrap(
+                                  spacing: 4,
+                                  runSpacing: 4,
+                                  children: [
+                                    if (value == last)
+                                      const _TileBadge('上次複習',
+                                          color: MColors.primary),
+                                    if (downloaded)
+                                      const _TileBadge('卡片集',
+                                          color: MColors.muted),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(
+                              MSpace.sm, 6, MSpace.sm, MSpace.sm),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              UiText(name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: MFont.inter(
+                                      15, FontWeight.w700, MColors.ink)),
+                              const SizedBox(height: 2),
+                              UiText(count > 0 ? '今天 $count 張' : '今天沒有到期',
+                                  style: MFont.inter(
+                                      12, FontWeight.w600, MColors.muted)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -232,6 +291,24 @@ class _ScopeGrid extends StatelessWidget {
       ],
     );
   }
+}
+
+/// A small label on a 複習 tile's cover (上次複習, 卡片集), readable on a photo.
+class _TileBadge extends StatelessWidget {
+  final String text;
+  final Color color;
+
+  const _TileBadge(this.text, {required this.color});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.92),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: UiText(text, style: MFont.inter(11, FontWeight.w700, color)),
+      );
 }
 
 /// The end of a run (spec §7's deferred 測驗結束畫面, card #217): how many
