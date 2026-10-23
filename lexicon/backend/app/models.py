@@ -823,6 +823,7 @@ class IssueReport(Base):
     code_ref: Mapped[str | None] = mapped_column(Text)
     spec_ref: Mapped[str | None] = mapped_column(Text)
     reporter: Mapped[str] = mapped_column(String(32), default="manual")
+    screenshot: Mapped[str | None] = mapped_column(Text)     # data:image/png;base64 from the App (#667)
     history: Mapped[list] = mapped_column(Json, default=list)
     created_at: Mapped[datetime] = _now()
     updated_at: Mapped[datetime] = _updated()

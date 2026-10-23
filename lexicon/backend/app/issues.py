@@ -47,6 +47,7 @@ class IssueBody(BaseModel):
     code_ref: str | None = None
     spec_ref: str | None = None
     reporter: str | None = None
+    screenshot: str | None = PField(default=None, max_length=400_000, pattern=r"^data:image/(png|jpeg);base64,")
     note: str | None = None          # a line for the history, not stored as a field
 
 
@@ -62,12 +63,16 @@ def _check(body: IssueBody):
             raise HTTPException(422, f"不認得的{what}：{value}")
 
 
-def issue_dict(r: m.IssueReport) -> dict:
-    return {c: getattr(r, c) for c in (
+def issue_dict(r: m.IssueReport, with_screenshot: bool = False) -> dict:
+    out = {c: getattr(r, c) for c in (
         "id", "kind", "status", "severity", "area", "title", "detail", "steps", "expected",
         "actual", "resolution", "options", "decision", "target_language", "native_language",
         "lemma", "code_ref", "spec_ref", "reporter", "history", "created_at", "updated_at",
         "resolved_at", "difficulty", "difficulty_reason")}
+    out["has_screenshot"] = bool(r.screenshot)
+    if with_screenshot:
+        out["screenshot"] = r.screenshot
+    return out
 
 
 def _now() -> str:
@@ -140,7 +145,7 @@ def register(app, auth):
         r = s.get(m.IssueReport, issue_id)
         if not r:
             raise HTTPException(404, "找不到這筆回報")
-        return issue_dict(r)
+        return issue_dict(r, with_screenshot=True)
 
     @app.post("/issues", dependencies=[auth], status_code=201)
     def create_issue(body: IssueBody, s: Session = DB):

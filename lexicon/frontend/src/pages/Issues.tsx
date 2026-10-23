@@ -6,6 +6,19 @@ import { Empty, ErrorBox, Link, Loading, Modal, fmtTime, useLoad, useToast } fro
 // studio; requirements not built yet; and questions waiting for your decision.
 
 type HistoryEntry = { at: string; by: string; note: string | null; changes: { field: string; from: unknown; to: unknown }[] };
+function Screenshot({ id }: { id: number }) {
+  const one = useLoad<{ screenshot: string | null }>(`/issues/${id}`);
+  if (!one.data?.screenshot) return null;
+  return (
+    <div className="issue-field">
+      <small className="muted">附件截圖</small>
+      <a href={one.data.screenshot} target="_blank" rel="noreferrer">
+        <img src={one.data.screenshot} alt="App 回報截圖" style={{ maxWidth: 320, maxHeight: 480, display: "block" }} />
+      </a>
+    </div>
+  );
+}
+
 export type Issue = {
   id: number;
   kind: string;
@@ -26,6 +39,7 @@ export type Issue = {
   code_ref: string | null;
   spec_ref: string | null;
   reporter: string;
+  has_screenshot?: boolean;
   history: HistoryEntry[];
   created_at: string;
   updated_at: string;
@@ -196,6 +210,7 @@ export default function Issues() {
                 {expanded && (
                   <div className="issue-body">
                     <Text label="說明" value={i.detail} />
+                    {i.has_screenshot && <Screenshot id={i.id} />}
                     <Text label="重現步驟" value={i.steps} />
                     <div className="grid2">
                       <Text label="預期" value={i.expected} />

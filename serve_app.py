@@ -688,6 +688,9 @@ class Handler(SimpleHTTPRequestHandler):
             return None
         keep = {k: str(data[k])[:4000] for k in ('title', 'detail', 'lemma') if data.get(k)}
         keep['title'] = keep['title'][:300]
+        shot = data.get('screenshot')
+        if isinstance(shot, str) and re.match(r'data:image/(png|jpeg);base64,[A-Za-z0-9+/=]+$', shot)                 and len(shot) <= 200 * 1024:
+            keep['screenshot'] = shot
         keep.update(kind='bug', severity='medium', area='app', reporter='App 使用者')
         return json.dumps(keep, ensure_ascii=False).encode('utf-8')
 

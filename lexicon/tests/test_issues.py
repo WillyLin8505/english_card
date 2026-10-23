@@ -77,3 +77,11 @@ def test_issue_validation(client):
     i = client.post("/issues", headers=H, json={"title": "x"}).json()
     assert client.delete(f"/issues/{i['id']}", headers=H).status_code == 204
     assert client.get(f"/issues/{i['id']}", headers=H).status_code == 404
+
+
+def test_issue_screenshot_roundtrip(client):
+    shot = "data:image/png;base64,iVBORw0KGgo="
+    made = client.post("/issues", headers=H, json={"title": "with shot", "screenshot": shot}).json()
+    assert made["has_screenshot"] and "screenshot" not in made
+    assert client.get(f"/issues/{made['id']}", headers=H).json()["screenshot"] == shot
+    assert client.post("/issues", headers=H, json={"title": "bad", "screenshot": "http://x"}).status_code == 422
