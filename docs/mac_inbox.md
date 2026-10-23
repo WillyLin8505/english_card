@@ -1254,3 +1254,10 @@ owner 在 iPhone 送出的回報（#626：App 畫面與互動由 Mac 修）。�
 commit `b1ab5e02`（Windows：flutter analyze 無 error、01:01 +583 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #577：問題回報 #648：[給 Mac] [意見回饋] 複習：這裡沒有出現我下載的單字庫耶
   結果：這張卡是 App「複習」畫面的問題（下載的單字庫沒出現在複習），依 owner 10/23 #626 分工歸 Mac；Windows 沒有改任何程式或資料。
+
+## M96（2026-10-23 22:00）狀態：待做
+commit `dcd77118`（Windows：flutter analyze 無 error、01:01 +583 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #579：問題回報 #650：[給 Mac] [意見回饋] 複習：並且圖片都需要花一兩秒才出來
+  結果：結論：#650（複習圖片要一兩秒才出現）是 App 畫面的載入問題，依 10/23 #626 分工歸 Mac；本卡沒改任何資料或程式。已在 Mac inbox M93。
+- 卡 #580：問題回報 #651：[給 Mac] [意見回饋] 複習：有時候那個藍色的點會跑出圖片外是圖片被截到的問題嗎？還是標示
+  結果：結論：不是詞庫資料問題，是 App 畫面問題（照片用 BoxFit.cover 置中裁切，物件在被裁掉的部分時，藍點算出來就在框外）。Windows 不改，交給 Mac。；需要 Mac：複習頁的照片 app/lib/widgets/mobile/photowidgets.dart 的 CoverGeometry（約第 
