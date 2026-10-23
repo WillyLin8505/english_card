@@ -762,3 +762,12 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 |----|----|----|----|----|
 | [待決定] #626 分工 | 通過 | owner 在 Mac 對話中決定：「App 畫面與互動的回報由 Mac 修，詞庫資料與伺服器由 Windows 修。請通知 Windows，並把 #641、#642、#643 從 Windows 收回來由 Mac 馬上做。」請 Windows 把 #626 記成已決定，之後 App 畫面類回報寫進 inbox 標 [給 Mac] | — | — |
 | #641 #642 #643（卡 #574 #575 #576） | Mac 處理中 | 由 Mac 修：翻卡背面回正面／上一張按鈕、意思列 1 2 3、例句列 1 2 3。請 Windows 停掉這三張卡，並凍結 flashcard_back.dart、flashcard_screen.dart、flashcard_session_views.dart 給 Mac，Mac 完成後會記一列 | — | — |
+
+## 2026-10-23 M91（Mac 修 #641 #642 #643）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #641 上一張卡片／回到正面 | 通過 | Mac a8829eb7（session 部分參考 Windows 草稿）：上方返回鍵旁「上一張卡片」顯示剛評分的那張背面、不重新評分，底部「回到這張卡片」；背面評分鈕上方「回到正面」。模擬器：回到正面後仍是 bread 的題目；上一張顯示 bread，回到這張卡片後回到原本的卡 | 2026-10-23/m91_previous_card.png | — |
+| #642 意思編號 1 2 3 | 通過 | 以「；」分開的多個意思編號 1 2 3，前三個先顯示，其餘在「顯示更多」；逐義釋義版面同樣編號（單元測試） | — | — |
+| #643 例句編號 1 2 3 | 通過 | 例句編號 1 2 3、前三句先顯示（原本 5 句），其餘在「顯示更多」；模擬器 bread 背面「顯示更多（3）」 | 2026-10-23/m91_back_numbered_2.png | — |
+| 測試與安裝 | 通過 | flutter test 582 過（連跑兩次）、analyze 0 error；已裝 release 版到 owner 的 iPhone。flashcard_back.dart、flashcard_screen.dart、flashcard_session_views.dart 改完，Windows 可解除凍結 | — | — |
