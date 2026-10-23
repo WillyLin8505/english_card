@@ -7,6 +7,7 @@ snapshots). Violations are grouped by rule, never per word.
 from __future__ import annotations
 
 import json
+import os
 from collections import Counter, defaultdict
 from pathlib import Path
 
@@ -73,6 +74,11 @@ def strip_stubs(pack: dict) -> dict:
 
 
 
+# Gate floor for photo.fewer_than_3_tags (key name kept for baselines). Raise to 5
+# (LEXICON_QC_PHOTO_MIN_TAGS=5) once the card-555 re-label has finished.
+PHOTO_MIN_TAGS = int(os.environ.get("LEXICON_QC_PHOTO_MIN_TAGS", "3"))
+
+
 def validate(pack: dict) -> dict[str, list]:
     """Contract violations: rule -> list of evidence (ids)."""
     by_id, redirects = _index(pack)
@@ -129,7 +135,7 @@ def validate(pack: dict) -> dict[str, list]:
             v["redirect.target_not_full"].append([rid, to])
     for im in pack.get("catalog_images") or []:
         tags = im.get("tags") or []
-        if len(tags) < 3:
+        if len(tags) < PHOTO_MIN_TAGS:
             v["photo.fewer_than_3_tags"].append(im["id"])
         for t in tags:
             lid = t.get("lexeme_id")

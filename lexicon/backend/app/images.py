@@ -3103,7 +3103,72 @@ def tag_pending(s, limit=1, quick_only=False):
         except (ValueError, OSError):
             pass
         done += 1
+    if not done and not quick_only:
+        done += retag_short(s, limit)  # lowest priority: nothing else waits
     return done
+
+
+RETAG_SHORT = os.environ.get('LEXICON_RETAG_SHORT', '1') != '0'
+# Pictures last labelled before the per-level-5 default (card #448 r3, 2026-10-22 03:52 +08).
+RETAG_BEFORE = datetime.fromisoformat(
+    os.environ.get('LEXICON_RETAG_BEFORE', '2026-10-21T20:00:00+00:00'))
+
+
+def _retag_filters():
+    """Done pictures that still have a CEFR level under CEFR_PER_LEVEL labels and
+    were last tagged before the new default (or were queued by request_retag)."""
+    under = text(
+        "EXISTS (SELECT 1 FROM unnest(CAST(:levels AS text[])) lv WHERE"
+        " (SELECT count(*) FROM json_array_elements(COALESCE(image_assets.tags::json, '[]'::json)) t"
+        " WHERE upper(t->>'cefr') = lv) < :per)"
+    ).bindparams(levels=list(CEFR_LEVELS), per=CEFR_PER_LEVEL)
+    return (
+        m.ImageAsset.status == 'ready',
+        m.ImageAsset.safety_status == 'safe',
+        m.ImageAsset.tag_status == 'done',
+        or_(m.ImageAsset.tagged_at.is_(None), m.ImageAsset.tagged_at < RETAG_BEFORE),
+        or_(m.ImageAsset.tag_retry_at.is_(None),
+            m.ImageAsset.tag_retry_at <= datetime.now(timezone.utc)),
+        under,
+    )
+
+
+def retag_short(s, limit=1) -> int:
+    """Background re-label of done pictures short of five per level (#593).
+    The picture stays tag_status 'done' the whole time, so it never leaves the
+    App; a failed attempt still counts as tried (tagged_at) and is not repeated."""
+    if not RETAG_SHORT or agent_pause.is_paused('Qwen'):
+        return 0
+    waiting = s.scalars(select(m.ImageAsset).where(*_retag_filters())
+                        .order_by(m.ImageAsset.id).limit(limit + 20)).all()
+    done = 0
+    for asset in _claim_pictures(s, list(waiting), limit):
+        try:
+            tag_asset(s, asset.id)
+        except TaggerUnavailable:
+            return done
+        except (ValueError, OSError):
+            if asset.safety_status != 'blocked':
+                asset.tag_status = 'done'
+            asset.tag_attempts = 0
+            asset.tag_retry_at = None
+            asset.tagged_at = datetime.now(timezone.utc)
+        done += 1
+    return done
+
+
+def request_retag(s, asset_id: int) -> bool:
+    """Queue one done picture whose labels are short of five per level for the
+    background re-label; False if it is complete or not a done picture."""
+    asset = s.get(m.ImageAsset, asset_id)
+    if asset is None:
+        raise ValueError('圖片不存在')
+    filters = _retag_filters()
+    if s.scalar(select(m.ImageAsset.id).where(
+            m.ImageAsset.id == asset_id, *filters[:3], filters[-1])) is None:
+        return False
+    asset.tagged_at = None
+    return True
 
 
 class SearchBody(BaseModel):
@@ -3330,6 +3395,13 @@ def register(app, auth):
         except (ValueError, OSError) as e:
             s.commit()  # preserve failure diagnostics before the HTTP error rolls back
             raise HTTPException(400, str(e))
+
+    @app.post('/images/{asset_id}/retag-short', dependencies=[auth])
+    def retag_short_endpoint(asset_id: int, s=Depends(db.get_session)):
+        try:
+            return {'queued': request_retag(s, asset_id)}
+        except ValueError as e:
+            raise HTTPException(404, str(e))
 
     @app.get('/images/{asset_id}/file')
     def image_file(asset_id: int, s=Depends(db.get_session)):

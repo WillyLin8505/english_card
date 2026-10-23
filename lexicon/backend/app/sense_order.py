@@ -137,18 +137,20 @@ def etymology_order(weights: dict[str, int]) -> list[str]:
 
 
 @lru_cache(maxsize=100_000)
-def kaikki_sense_translations(target: str, lemma: str, pos: str, gloss: str) -> int | None:
-    """How many translations Wiktionary lists for the Kaikki sense whose
-    first gloss is ``gloss`` (adapters.kaikki.translation_counts); None when
-    the index does not know the gloss."""
+def kaikki_sense_translations(target: str, lemma: str, pos: str, gloss: str) -> tuple[str, int] | None:
+    """(etymology number, how many translations Wiktionary lists) of the
+    Kaikki sense whose first or last gloss is ``gloss`` — the adapter stores
+    the last one of a subsense (adapters.kaikki.translation_counts); None
+    when the index does not know the gloss."""
     from . import kaikki_index
     from .adapters.kaikki import translation_counts
     for e in kaikki_index.lookup(target, lemma) or []:
         if str(e.get("word", "")) != lemma or _kaikki_pos(e) != pos:
             continue
         for i, s in enumerate(e.get("senses") or []):
-            if (s.get("glosses") or [""])[0].strip() == gloss:
-                return translation_counts(e)[i]
+            gl = s.get("glosses") or s.get("raw_glosses") or [""]
+            if gloss in (gl[0].strip(), gl[-1].strip()):
+                return str(e.get("etymology_number") or "1"), translation_counts(e)[i]
     return None
 
 
@@ -172,12 +174,12 @@ def _etymology_group_rank(item: dict, target: str, lemma: str) -> int:
     if len(weights) < 2:
         return 0
     first = min(weights, key=_ety_num)
-    ety = kaikki_sense_info(target, lemma, pos, gloss)[2]
+    ety, count = kaikki_sense_translations(target, lemma, pos, gloss) or ("", 0)
     if not ety:
         ety = next((l.split("-", 1)[1] for l in _labels(item) if l.startswith("etymology-")), first)
     if ety == first:
         return 1
-    if (kaikki_sense_translations(target, lemma, pos, gloss) or 0) < ESTABLISHED_TRANSLATIONS:
+    if count < ESTABLISHED_TRANSLATIONS:
         return 2
     order = etymology_order(weights)
     return 0 if ety in order[: order.index(first)] else 1
