@@ -1065,3 +1065,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 單字集圖片頁標示該程度的字 | 通過 | 原本每張圖顯示的多是 tree、sky 等 A1 字；Mac dc9746da：單一程度的單字集只標該程度的字、只列有該程度標籤的圖，C1 頁顯示 threshold、texture、glossy、fender…。已裝 release 到 owner 的 iPhone | 2026-10-24/m137_word_deck_photos.png | — |
 | owner iPhone | 通過 | 已裝最新 release；下載進階單字會在 owner 的單字本加 400 個字，Mac 不代下載，由 owner 自己決定要不要加 | — | — |
 | CEFR 分級怪字（交 Windows） | 不通過 | Windows 已註記：進階單字・C1 裡有 removed、jersey 這類分級可疑的字；模擬器圖片頁另看到 noodle 標成 C1。請檢查 CEFR 來源（estimate）對常見字的分級 | — | 低 |
+
+## 2026-10-24 M137
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| 卡 #604（#678） | 通過 | 見 M136：進階單字 C1／C2 已在模擬器驗證並修了圖片頁的標示（dc9746da） | 2026-10-24/m137_word_deck_photos.png | — |
