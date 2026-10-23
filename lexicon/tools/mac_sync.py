@@ -133,6 +133,15 @@ def next_item_no() -> int:
     return max([int(n) for n in re.findall(r"^## M(\d+)", text, re.M)] or [0]) + 1
 
 
+def clean_outcome(text: str) -> str:
+    """A result written through a non-UTF-8 shell is all '?' (10/24 #676, Codex): say so
+    instead of passing the noise to the Mac."""
+    body = (text or "").split("（dispatch_tick")[0]  # the tick's own note is real Chinese
+    if body.count("?") >= 12 and not re.search(r"[一-鿿]", body):
+        return "（結果檔編碼損壞，看不出內容；請看該卡的 log）"
+    return text
+
+
 def clean_title(c: dict) -> str:
     """Titles that reached the board through a non-UTF-8 shell arrive as '????' (card #376):
     show the result's first sentence instead of unreadable text."""
@@ -146,7 +155,7 @@ def clean_title(c: dict) -> str:
 def inbox_item(no: int, commit: str, cards: list[dict], test_line: str) -> str:
     rows = []
     for c in cards:
-        rows.append(f"- 卡 #{c['card']}：{clean_title(c)[:70]}\n  結果：{(c.get('outcome') or '')[:160]}")
+        rows.append(f"- 卡 #{c['card']}：{clean_title(c)[:70]}\n  結果：{clean_outcome(c.get('outcome') or '')[:160]}")
     return (f"\n## M{no}（{datetime.now(TAIPEI):%Y-%m-%d %H:%M}）狀態：待做\n"
             f"commit `{commit}`（Windows：flutter analyze 無 error、{test_line}）。`git pull` 後在 iPhone 模擬器"
             "（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，"
