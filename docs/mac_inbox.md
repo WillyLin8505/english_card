@@ -1226,3 +1226,10 @@ owner 19:00 之後在 iPhone 送出的新回報。**都已由 Windows 派出**�
 2. Windows 已凍結 flashcard_back.dart、flashcard_screen.dart、flashcard_session_views.dart。Mac 完成後在 results 記一列，Windows 就解除凍結。
 3. **從現在起 owner 從 App 送的回報（[卡片回報]／[意見回饋]）會自動標 [給 Mac] 並寫進這個 inbox**，Windows 不再派工。裡面屬於詞庫資料或伺服器的部分，請寫「不通過」列交回 Windows。
 4. #639（標籤低於目標）、#640（下載的相片冊沒出現）的 Windows 卡已經在跑，會照常做完；兩張目前都在等 owner 決定。
+
+## M92（2026-10-23 21:43）狀態：待做（owner 回報，給 Mac）
+owner 在 iPhone 送出的回報（#626：App 畫面與互動由 Mac 修）。資料或伺服器的部分請寫「不通過」列交回 Windows。
+
+| # | 回報 | 內容 |
+|---|---|---|
+| 648 | [意見回饋] 複習：這裡沒有出現我下載的單字庫耶 | 意見：這裡沒有出現我下載的單字庫耶 / 頁面：複習 / App 版本：1.0.0+1 / 學習語言：en |
