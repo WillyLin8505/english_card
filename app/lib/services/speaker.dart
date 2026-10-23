@@ -21,9 +21,59 @@ abstract interface class Speaker {
   Future<void> stop();
 }
 
+/// The best installed TTS voice for [locale] from FlutterTts.getVoices
+/// (owner 2026-10-23: the default iPhone voice sounds robotic): a premium
+/// or enhanced one, never Apple's novelty or Eloquence voices. Null when
+/// there is none, so the platform's default voice for the locale is kept.
+Map<String, String>? bestTtsVoice(List<dynamic> voices, String locale) {
+  String norm(String s) => s.replaceAll('_', '-').toLowerCase();
+  int rank(String? quality) => switch (quality) {
+        'premium' => 2,
+        'enhanced' => 1,
+        _ => 0,
+      };
+  Map<String, String>? best;
+  var bestRank = 0;
+  for (final v in voices) {
+    if (v is! Map) continue;
+    final voice = {
+      for (final e in v.entries)
+        if (e.value != null) '${e.key}': '${e.value}',
+    };
+    if (norm(voice['locale'] ?? '') != norm(locale)) continue;
+    final id = (voice['identifier'] ?? '').toLowerCase();
+    if (id.contains('speech.synthesis.voice') || id.contains('eloquence')) {
+      continue;
+    }
+    final r = rank(voice['quality']);
+    if (r > bestRank) {
+      best = voice;
+      bestRank = r;
+    }
+  }
+  return best;
+}
+
 class DeviceSpeaker implements Speaker {
   FlutterTts? _tts;
   AudioPlayer? _player;
+  // bestTtsVoice per locale, looked up once (null: keep the default voice).
+  final _voices = <String, Map<String, String>?>{};
+
+  Future<void> _useBestVoice(FlutterTts tts, String locale) async {
+    if (kIsWeb) return;
+    if (!_voices.containsKey(locale)) {
+      try {
+        _voices[locale] =
+            bestTtsVoice(await tts.getVoices as List<dynamic>? ?? [], locale);
+      } catch (e) {
+        debugPrint('TTS voices unavailable: $e');
+        _voices[locale] = null;
+      }
+    }
+    final voice = _voices[locale];
+    if (voice != null) await tts.setVoice(voice);
+  }
 
   static String _locale(String language, String accent) => switch (language) {
         'fr' => 'fr-FR',
@@ -76,10 +126,11 @@ class DeviceSpeaker implements Speaker {
         if (!done.isCompleted) done.complete(false);
       });
       await tts.setLanguage(_locale(language, accent));
+      await _useBestVoice(tts, _locale(language, accent));
       await tts.setSpeechRate(kIsWeb ? 0.8 : 0.45);
       await tts.speak(text);
-      return await done.future.timeout(const Duration(seconds: 6),
-          onTimeout: () => true);
+      return await done.future
+          .timeout(const Duration(seconds: 6), onTimeout: () => true);
     } catch (e) {
       debugPrint('TTS unavailable: $e');
       return false;
