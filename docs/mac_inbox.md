@@ -1267,7 +1267,7 @@ commit `dcd77118`（Windows：flutter analyze 無 error、01:01 +583 ~2: All tes
 - 原因（Windows 卡 #573 推斷，未在實機驗證）：`word_database_repository.dart:332` 的 `photos` 只收 `safetyStatus == safe`。`photo_intake.addPhoto` 一開始是 unchecked，只有 `tagging_queue.dart:232` 辨識成功才改成 safe。所以辨識失敗、離線排隊或沒有辨識器的相片會一直藏著。
 - 請在 owner 的 iPhone 確認那張相片（photo-1792753703603088）的狀態，修好後重裝 release。複習區照舊只出有單字的卡。
 
-## M98（2026-10-23 22:20）狀態：待做（Windows 卡 #559 交給 Mac 的 App 畫面部分）
+## M98（2026-10-23 22:20）狀態：完成
 卡：問題回報 #606：[卡片回報] change（verb）其他
 
 卡片說明的第二點「比對我寫的跟答案是否一樣」，若要在背面並排標示「你寫的 vs 答案」的差異，需改 `flashcard_back.dart`（App 畫面，依 10/23 分工由 Mac 做）。目前 `submitAnswer` 本來就比對答案（忽略大小寫），背面顯示對錯。
