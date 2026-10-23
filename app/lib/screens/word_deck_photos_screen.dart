@@ -15,7 +15,7 @@ import 'database_library_screen.dart' show DatabaseImageTile, databaseImageTags;
 /// deck's words (or the word its pictures come from, [LexEntry.pictureIds]).
 List<Map<String, dynamic>> wordDeckImages(
     WordDatabaseRepository repo, InstalledDeck deck, LexiconPack pack,
-    {int max = 300}) {
+    {int max = 300, String? level}) {
   final ids = <int>{};
   for (final id in deck.entryIds(repo)) {
     final e = repo.entry(id);
@@ -29,8 +29,11 @@ List<Map<String, dynamic>> wordDeckImages(
   if (ids.isEmpty) return const [];
   return [
     for (final image in pack.catalogImages)
-      if (databaseImageTags(image)
-          .any((t) => ids.contains((t['lexeme_id'] as num?)?.toInt())))
+      // A one-level set keeps pictures where a set word is tagged at that
+      // level (a word tagged at another level there shows no label).
+      if (databaseImageTags(image).any((t) =>
+          ids.contains((t['lexeme_id'] as num?)?.toInt()) &&
+          (level == null || t['cefr'] == level)))
         image,
   ].take(max).toList();
 }
@@ -54,6 +57,15 @@ class _WordDeckPhotosScreenState extends State<WordDeckPhotosScreen> {
 
   final _library = DeckLibrary.instance;
 
+  /// A one-level set (進階單字・C1, 基礎 3000 字・A2…): its pictures label
+  /// only that level's words, so the set's words stand out among the
+  /// everyday ones on the same picture (M137: a C1 set showed tree, sky…).
+  String? get _level {
+    final cefr = _deck.info.cefr;
+    if (cefr == null) return null;
+    return _deck.info.slug.endsWith('-${cefr.toLowerCase()}') ? cefr : null;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -72,7 +84,8 @@ class _WordDeckPhotosScreenState extends State<WordDeckPhotosScreen> {
   }
 
   List<Map<String, dynamic>> _findImages() => wordDeckImages(
-      AppScope.of(context).repository, _deck, LexiconPack.instance);
+      AppScope.of(context).repository, _deck, LexiconPack.instance,
+      level: _level);
 
   @override
   void didChangeDependencies() {
@@ -121,7 +134,7 @@ class _WordDeckPhotosScreenState extends State<WordDeckPhotosScreen> {
                       ),
                       itemCount: images.length,
                       itemBuilder: (context, i) =>
-                          DatabaseImageTile(image: images[i]),
+                          DatabaseImageTile(image: images[i], level: _level),
                     ),
             ),
           ],
