@@ -178,7 +178,7 @@ class PhotoIntake {
       return (await rootBundle.load(photo.assetPath!)).buffer.asUint8List();
     }
     if (photo.filePath != null && !kIsWeb) {
-      return File(photo.filePath!).readAsBytes();
+      return File(PhotoStore.localPath(photo.filePath!)).readAsBytes();
     }
     if (photo.storedKey != null) {
       return photoStore.storedBytes(photo.storedKey!);

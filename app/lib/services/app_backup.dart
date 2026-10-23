@@ -101,7 +101,7 @@ class AppBackup {
     Future<Uint8List?> bytesOf(Map<String, dynamic> p) async {
       final path = p['filePath'] as String?;
       final key = p['storedKey'] as String?;
-      if (path != null && !kIsWeb) return readFile!(path);
+      if (path != null && !kIsWeb) return readFile!(PhotoStore.localPath(path));
       if (key != null) return photoStore.storedBytes(key);
       return null;
     }

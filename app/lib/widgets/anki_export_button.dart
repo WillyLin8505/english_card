@@ -13,6 +13,7 @@ import '../models/photo.dart';
 import '../services/anki_export.dart';
 import '../services/deck_library.dart';
 import '../services/lexicon_pack.dart';
+import '../services/photo_store.dart';
 import '../theme/mobile_theme.dart';
 import 'mobile/common.dart';
 
@@ -44,8 +45,7 @@ class _AnkiExportButtonState extends State<AnkiExportButton> {
     if (!mounted) return null;
     final options = <(String, AnkiExportScope)>[
       ('全部單字（${repo.wordCount}）', const AnkiExportScope.all()),
-      for (final a in repo.albums)
-        ('相簿：${a.name}', AnkiExportScope.album(a)),
+      for (final a in repo.albums) ('相簿：${a.name}', AnkiExportScope.album(a)),
       for (final d in decks.installed)
         ('卡片集：${d.info.title}', AnkiExportScope.deck(d)),
     ];
@@ -75,10 +75,12 @@ class _AnkiExportButtonState extends State<AnkiExportButton> {
     try {
       Future<Uint8List?> photoBytes(Photo p) async {
         if (p.filePath != null && !kIsWeb) {
-          final f = File(p.filePath!);
+          final f = File(PhotoStore.localPath(p.filePath!));
           if (await f.exists()) return f.readAsBytes();
         }
-        if (p.storedKey != null) return scope.photoStore.storedBytes(p.storedKey!);
+        if (p.storedKey != null) {
+          return scope.photoStore.storedBytes(p.storedKey!);
+        }
         if (p.assetPath != null) return assetBytes(p.assetPath!);
         return null;
       }
@@ -97,10 +99,12 @@ class _AnkiExportButtonState extends State<AnkiExportButton> {
       }
       final d = DateTime.now();
       String two(int v) => v.toString().padLeft(2, '0');
-      final name = 'english_card_anki_${d.year}${two(d.month)}${two(d.day)}.zip';
+      final name =
+          'english_card_anki_${d.year}${two(d.month)}${two(d.day)}.zip';
       final XFile file;
       if (kIsWeb) {
-        file = XFile.fromData(result.bytes, name: name, mimeType: 'application/zip');
+        file = XFile.fromData(result.bytes,
+            name: name, mimeType: 'application/zip');
       } else {
         final dir = await getTemporaryDirectory();
         final path = '${dir.path}${Platform.pathSeparator}$name';
@@ -142,12 +146,9 @@ class _AnkiExportButtonState extends State<AnkiExportButton> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TextButton(
-            onPressed: _busy ? null : _export,
-            child: const UiText('匯出到 Anki')),
+            onPressed: _busy ? null : _export, child: const UiText('匯出到 Anki')),
         UiText(
-            _busy
-                ? '正在建立 Anki 匯入檔…'
-                : '把單字卡連同照片和發音存成 Anki 檔，可以存到檔案或傳到其他 App。',
+            _busy ? '正在建立 Anki 匯入檔…' : '把單字卡連同照片和發音存成 Anki 檔，可以存到檔案或傳到其他 App。',
             style: MFont.manrope(12, FontWeight.w600, MColors.muted)),
       ],
     );

@@ -24,8 +24,7 @@ import '../../services/photo_store.dart';
 /// as wide as it is shown, so near-equal boxes share one cache entry.
 const photoDecodeWidths = [128, 256, 384, 512, 768, 1024, 1536, 2048];
 
-int photoDecodeBucket(double px) => photoDecodeWidths.firstWhere(
-    (w) => px <= w,
+int photoDecodeBucket(double px) => photoDecodeWidths.firstWhere((w) => px <= w,
     orElse: () => photoDecodeWidths.last);
 
 /// The width in pixels to decode [photo] at so it fills [box] with [fit]
@@ -40,7 +39,8 @@ int? photoDecodeWidth(Photo photo, Size box, double dpr,
   }
   final sx = box.width / w, sy = box.height / h;
   final contain = fit == BoxFit.contain || fit == BoxFit.scaleDown;
-  return photoDecodeBucket(w * (contain ? math.min(sx, sy) : math.max(sx, sy)) * dpr);
+  return photoDecodeBucket(
+      w * (contain ? math.min(sx, sy) : math.max(sx, sy)) * dpr);
 }
 
 /// The full-size pixels of [photo]; null for a photo without an image
@@ -52,7 +52,9 @@ ImageProvider<Object>? photoSource(Photo photo, PhotoStore? store) {
     if (kIsWeb) return NetworkImage(photo.networkUrl!);
     return CachedNetworkPhoto(photo.networkUrl!);
   }
-  if (photo.filePath != null && !kIsWeb) return FileImage(File(photo.filePath!));
+  if (photo.filePath != null && !kIsWeb) {
+    return FileImage(File(PhotoStore.localPath(photo.filePath!)));
+  }
   if (photo.storedKey != null && store != null) {
     return StoredPhotoImage(store, photo.storedKey!);
   }
@@ -163,7 +165,8 @@ class CachedNetworkPhoto extends ImageProvider<CachedNetworkPhoto> {
     final response = await (await _client.getUrl(url)).close();
     if (response.statusCode != HttpStatus.ok) {
       await response.drain<void>();
-      throw NetworkImageLoadException(statusCode: response.statusCode, uri: url);
+      throw NetworkImageLoadException(
+          statusCode: response.statusCode, uri: url);
     }
     final bytes = await consolidateHttpClientResponseBytes(response);
     if (bytes.isEmpty) throw StateError('empty image: $url');
