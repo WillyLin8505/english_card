@@ -19,6 +19,20 @@ part of '../screens/flashcard_screen.dart';
   return (null, null);
 }
 
+/// Whether a run over [scope] (a 複習 tile) has a card to show now,
+/// extra practice included.
+bool reviewableIn(WordDatabaseRepository repo, String scope) {
+  final (albumId, cardScope) = reviewScopeOf(repo, null, scope);
+  final probe = FlashcardSession(repo,
+      continuous: true, albumId: albumId, cardScope: cardScope);
+  final any = !probe.finished;
+  probe.dispose();
+  return any;
+}
+
+bool reviewableAnywhere(WordDatabaseRepository repo) =>
+    reviewableIn(repo, 'all');
+
 /// The cards of a downloaded 單字集 (問題回報 #648): a word deck adds words
 /// but no 相片冊, so its 複習 tile goes by the deck's words — all of them,
 /// also those that were in the 單字本 before (問題回報 #668).
@@ -90,8 +104,16 @@ class _Intro extends StatelessWidget {
             continuous: true, albumId: albumId, cardScope: cardScope);
         final any = !probe.finished;
         probe.dispose();
-        // Something to review: pick which book (問題回報 #440).
-        if (fixedAlbumId == null && any) return _ScopeGrid(onStart: onStart);
+        // Pick which book (問題回報 #440). 問題回報 #683: the books are always
+        // listed when there are any — the last pick being empty (a word set
+        // still waiting for its meanings) used to hide every other book.
+        if (fixedAlbumId == null &&
+            (any ||
+                repo.albums.isNotEmpty ||
+                _wordDecks(repo).isNotEmpty ||
+                reviewableAnywhere(repo))) {
+          return _ScopeGrid(onStart: onStart);
+        }
         // 每日上限 (問題回報 #398): today's share, not the whole backlog.
         final today = repo
             .eligibleCards(
@@ -287,6 +309,16 @@ class _ScopeGrid extends StatelessWidget {
               Tap(
                 label: '$name，今天 $count 張',
                 onTap: () {
+                  // 問題回報 #683: a book with nothing to review says why
+                  // instead of opening an empty run.
+                  if (!reviewableIn(repo, value)) {
+                    showToast(
+                        context,
+                        repo.hasCardsWaitingForMeaning
+                            ? '這一本現在沒有可以複習的卡，單字的{N}意思補齊後會自動加入'
+                            : '這一本現在沒有可以複習的卡');
+                    return;
+                  }
                   settings.reviewScope = value;
                   onStart();
                 },
