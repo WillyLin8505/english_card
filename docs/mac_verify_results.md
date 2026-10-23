@@ -1055,3 +1055,13 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 |----|----|----|----|----|
 | #683 複習頁直接列出所有相片集，點了就學 | 通過 | 截圖 683.png：複習頁只有「等待詞庫補齊」。原因：顯不顯示格子看「上次選的那一本」，上次選的是還在等中文的 C2 單字集，其他相片冊全被藏起來。Mac 8676be01：有相片冊、單字集或任何可複習的卡就一律列出格子；點到沒卡可複習的那一格會說明原因，不開空的複習。review_grid_always_test | docs/mac_handover/683.png | — |
 | #684 單字詳情的聲音要等很久 | 通過 | 原因：錄音每次都用 UrlSource 從伺服器（經 Cloudflare）重新下載。Mac b3e9d44c：錄音存在手機快取（audio_cache，上限 300 檔／50 MB），同網址只下載一次；打開單字詳情與複習卡正面時先預載英美兩個錄音；下載不成功就退回原本串流再退回 TTS。card684 測試 7 項；flutter test 643 過；已裝 release 到 owner 的 iPhone（實機第二聲是否立即待 owner 試） | docs/mac_handover/684.png | — |
+
+## 2026-10-24 M136／M137（進階單字卡片集）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #678 進階單字・C1／C2 上架 | 通過 | /api/decks：新增 advanced-c1、advanced-c2 各 400 字，basic-3000-c1／c2 已不在清單。C1 有 10 個、C2 有 3 個字線上詞庫還沒有中文（如 constitutional、judicial、tactical），中文補齊前不會進複習 | — | — |
+| 模擬器下載進階單字・C1 | 通過 | 卡片集頁「已加入「進階單字・C1」，可以開始複習」；相片冊出現「進階單字・C1 · 400 個單字」；複習頁出現該格「今天 20 張」 | 2026-10-24/m137_review_tiles.png | — |
+| 單字集圖片頁標示該程度的字 | 通過 | 原本每張圖顯示的多是 tree、sky 等 A1 字；Mac dc9746da：單一程度的單字集只標該程度的字、只列有該程度標籤的圖，C1 頁顯示 threshold、texture、glossy、fender…。已裝 release 到 owner 的 iPhone | 2026-10-24/m137_word_deck_photos.png | — |
+| owner iPhone | 通過 | 已裝最新 release；下載進階單字會在 owner 的單字本加 400 個字，Mac 不代下載，由 owner 自己決定要不要加 | — | — |
+| CEFR 分級怪字（交 Windows） | 不通過 | Windows 已註記：進階單字・C1 裡有 removed、jersey 這類分級可疑的字；模擬器圖片頁另看到 noodle 標成 C1。請檢查 CEFR 來源（estimate）對常見字的分級 | — | 低 |
