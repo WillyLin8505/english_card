@@ -532,6 +532,10 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                               onSelect: _settleBar,
                             ),
                           ),
+                          _AfterFrames(
+                            frames: _after(1),
+                            child: _levelRow(photo, session),
+                          ),
                           if (_placing case final w?)
                             _PlacingBar(
                               word: displayWord(w.word),
@@ -624,9 +628,58 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
     return null;
   }
 
+  /// 問題回報 #674: the label options (多看動詞、難一點、重新掃描…) sit right
+  /// under the difficulty bar they go with, not below the word list (#451).
+  Widget _levelRow(Photo photo, PhotoWordSession session) {
+    final topping = AppScope.of(context).queue.isToppingUp(photo.id);
+    // 問題回報 #675: a harder setting than any word the AI found here shows
+    // fewer words; say why and how to get harder ones.
+    final hardest = photo.candidates.isEmpty
+        ? -1
+        : photo.candidates
+            .map((c) => levelIndex(c.level))
+            .reduce((a, b) => a > b ? a : b);
+    final short = hardest >= 0 && session.target > hardest;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (short)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: UiText(
+                  'AI 在這張照片找到的字最難到 ${cefrLevels[hardest]}，按「難一點」或「重新掃描標籤」請 AI 找更難的字',
+                  key: const ValueKey('level-short-hint'),
+                  style: MFont.manrope(12, FontWeight.w600, MColors.muted)),
+            ),
+          _LevelRow(
+          bias: session.bias,
+          busy: topping ||
+              session.fetchingMore != null ||
+              session.rescanning,
+          busyLabel: session.rescanning
+              ? 'AI 正在重新掃描…'
+              : session.fetchingMore == null
+                  ? null
+                  : 'AI 正在找更多${PhotoWordSession.focusLabel(session.fetchingMore!)}…',
+          onBias: session.setBias,
+          onEasier: session.target > 0
+              ? () => session.setTarget(session.target - 1)
+              : null,
+          onHarder: session.target < cefrLevels.length - 1
+              ? () => session.setTarget(session.target + 1)
+              : null,
+          // 問題回報 #670: read the whole photo again.
+          onRescan: session.rescanning ? null : session.rescan,
+        ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildList(Photo photo, PhotoWordSession session, List<OldWord> old) {
     final scope = AppScope.of(context);
-    final topping = scope.queue.isToppingUp(photo.id);
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
       child: Column(
@@ -719,29 +772,6 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                               12, FontWeight.w600, MColors.muted)),
                     ),
                   ],
-                ),
-                // 問題回報 #451: the list's shortcuts sit under the words too, so
-                // the first word is the first thing under the list title.
-                const SizedBox(height: 4),
-                _LevelRow(
-                  bias: session.bias,
-                  busy: topping ||
-                      session.fetchingMore != null ||
-                      session.rescanning,
-                  busyLabel: session.rescanning
-                      ? 'AI 正在重新掃描…'
-                      : session.fetchingMore == null
-                          ? null
-                          : 'AI 正在找更多${PhotoWordSession.focusLabel(session.fetchingMore!)}…',
-                  onBias: session.setBias,
-                  onEasier: session.target > 0
-                      ? () => session.setTarget(session.target - 1)
-                      : null,
-                  onHarder: session.target < cefrLevels.length - 1
-                      ? () => session.setTarget(session.target + 1)
-                      : null,
-                  // 問題回報 #670: read the whole photo again.
-                  onRescan: session.rescanning ? null : session.rescan,
                 ),
               ],
             ),

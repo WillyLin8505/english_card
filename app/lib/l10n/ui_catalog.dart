@@ -974,6 +974,10 @@ class _UiTemplate {
 }
 
 const _templateCopy = <String, (String, String)>{
+  'AI 在這張照片找到的字最難到 {0}，按「難一點」或「重新掃描標籤」請 AI 找更難的字': (
+    'The hardest word the AI found here is {0}; tap “Harder” or “Rescan labels” for harder words',
+    'Le mot le plus difficile trouvé ici est {0} ; touchez « Plus difficile » ou « Réanalyser » pour en trouver'
+  ),
   '這 {0} 個字在詞庫裡還沒有圖片，可以先看單字': (
     'No lexicon pictures for these {0} words yet; here are the words',
     'Pas encore d’images pour ces {0} mots ; voici les mots'
