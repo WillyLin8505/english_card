@@ -658,3 +658,12 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | S2 模擬器回歸（英文帳戶） | 通過 | 複習 40 張不同單字 37 個、同字最多 3 次、提示只算一次、回報此卡片、刪除可復原、背面英式美式與無等級字、預設 B 樣式、設定各項、圖片集變相片冊、照片詳情左滑可復原、單字詳情收合都照舊；測試裡資料庫搜尋、卡片集入口、要找什麼這幾步是 App 已拿掉的畫面，不算 | — | — |
 | S2 模擬器回歸（法語帳戶） | 未能驗證 | App 目前學習語言只開放英文（app_settings.dart availableLearningLanguages = {'en'}），法文顯示「即將推出」，模擬器上開不了學法語的帳戶；下一輪改用母語法文（介面法文）跑一輪 | — | — |
 | S5 公開網址健康 | 通過 | 11:53 /api/decks 回 200（2.2 秒）、/api/audio 加 Range 回 206（content-range bytes 0-1/21688） | — | — |
+
+## 2026-10-23 M84（owner 的 iPhone 12 裝最新 release 版）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M84 安裝 | 通過 | owner 的 iPhone 12 已裝 release 版（flutter build ios --release --dart-define-from-file=iphone.json，devicectl 安裝並啟動）。第一次裝 main dac8d06f，之後再裝 d4236e8c（含複習頁封面）。拔線後可用。金鑰沒寫進 repo，等 owner 自己掃 QR code | — | — |
+| M84 新版功能 | 通過（程式面） | 這版程式裡有：設定 → 進階設定 →「掃描 QR code」（settings_screen.dart:531）、每頁右上「意見回饋」鈕（feedback_button.dart，#587）；模擬器截圖右上角可見意見回饋鈕。實機畫面請 owner 打開確認 | 2026-10-23/review_covers.png | — |
+| owner 要求：複習頁封面 | 通過 | Mac d4236e8c：複習頁每格加封面。相片冊格用該相片冊最新照片；綜合／今天新加的單字／弱項單字用其中一個字的照片，盡量不跟別格重複；沒照片維持色塊。flutter test 571 過、analyze 0 issue。flashcard_session_views.dart 已改完並 push，Windows 可解除凍結 | 2026-10-23/review_covers.png | — |
+| Mac 修正 | 通過 | 55589039：詞庫刪掉有中文的詞性時，搬到別的詞性的卡保留原本意思（somewhere／sue，穩定性模擬找到）；6323f084：單字詳情不再出現空白「詞性與意思」標題與空詞性區塊，stub 頁加說明，已在單字本的字按鈕顯示「已在我的單字本 ✓」 | — | — |
