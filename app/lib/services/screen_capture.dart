@@ -6,11 +6,11 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
 /// 問題回報 #664: what the learner is looking at when they tap 意見回饋, so the
-/// report shows the problem. A small PNG (the server takes up to 256 KB per
-/// report): [scale] of the logical size, smaller again if still too big.
+/// report shows the problem. A PNG at [scale] of the logical size (full size:
+/// the server takes 2 MB per report since M132), smaller if over [maxBytes].
 /// Null when nothing could be captured (tests, web).
 Future<Uint8List?> captureScreen(GlobalKey boundary,
-    {double scale = 0.75, int maxBytes = 180 * 1024}) async {
+    {double scale = 1.0, int maxBytes = 1300 * 1024}) async {
   try {
     final box = boundary.currentContext?.findRenderObject();
     if (box is! RenderRepaintBoundary || !box.hasSize) return null;
