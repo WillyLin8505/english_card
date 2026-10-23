@@ -52,7 +52,7 @@ WordEntry _word(String word) => WordEntry(
 void main() {
   tearDown(() => LexiconPack.instance.clear());
 
-  testWidgets('a flip plays only the accents that have a recording',
+  testWidgets('a flip plays recorded accents first, then the other in TTS',
       (tester) async {
     LexiconPack.instance.loadJson({
       'schema_version': 3,
@@ -65,25 +65,24 @@ void main() {
       ],
     });
     final speaker = _RecordingSpeaker();
-    final app =
-        await pumpApp(tester, initialTab: AppTab.settings, speaker: speaker);
+    await pumpApp(tester, initialTab: AppTab.settings, speaker: speaker);
     final context = tester.element(find.byType(Scaffold).first);
 
     await playBothAccents(context, _word('water'));
     expect(speaker.calls.map((c) => c.$1), ['en-GB', 'en-US']);
     expect(speaker.calls.every((c) => c.$2 != null), isTrue);
 
+    // Only an American recording: it plays first, British TTS second.
     speaker.calls.clear();
     await playBothAccents(context, _word('yak'));
-    expect(speaker.calls, hasLength(1), reason: '不先用 TTS 唸英式');
-    expect(speaker.calls.single.$1, 'en-US');
-    expect(speaker.calls.single.$2, endsWith('yak-US.mp3'));
+    expect(speaker.calls.map((c) => c.$1), ['en-US', 'en-GB']);
+    expect(speaker.calls.first.$2, endsWith('yak-US.mp3'));
+    expect(speaker.calls.last.$2, isNull);
 
-    // No recording at all: TTS once, in 設定's accent.
-    app.settings.englishAccent = 'en-US';
+    // No recording at all: both accents in TTS.
     speaker.calls.clear();
     await playBothAccents(context, _word('zebu'));
-    expect(speaker.calls, [('en-US', null)]);
+    expect(speaker.calls, [('en-GB', null), ('en-US', null)]);
   });
 
   test('bestTtsVoice prefers premium, then enhanced, never novelty voices', () {

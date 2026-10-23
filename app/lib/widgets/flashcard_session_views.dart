@@ -549,7 +549,10 @@ class FlashcardCardView extends StatelessWidget {
               // 問題回報 #641: the card just graded is shown again; it is
               // not graded twice, the button goes back to the current one.
               ? Column(mainAxisSize: MainAxisSize.min, children: [
-                  UiText('這是上一張卡片，已經評分過',
+                  UiText(
+                      session.stepsBack <= 1
+                          ? '這是上一張卡片，已經評分過'
+                          : '往前第 ${session.stepsBack} 張，已經評分過',
                       style: MFont.manrope(13, FontWeight.w600, MColors.muted)),
                   const SizedBox(height: 6),
                   PrimaryButton(

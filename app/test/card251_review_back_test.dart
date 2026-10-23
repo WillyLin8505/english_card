@@ -321,9 +321,8 @@ void main() {
     await tester.tap(find.text('顯示答案'));
     await tester.pumpAndSettle();
     expect(find.byType(FlashcardBack), findsOneWidget);
-    // apple has no recording here, so TTS says it once in 設定's accent
-    // (owner 2026-10-23); both recorded accents play in order — see
+    // Both accents (#649); recorded ones would go first — see
     // flip_pronunciation_test.dart.
-    expect(speaker.accents, ['en-GB']);
+    expect(speaker.accents, ['en-GB', 'en-US']);
   });
 }

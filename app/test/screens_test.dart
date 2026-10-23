@@ -429,10 +429,9 @@ void main() {
       await tester.tap(find.text('顯示答案'));
       await tester.pumpAndSettle();
       expect(find.byType(FlashcardBack), findsOneWidget);
-      // Card #251: both accents in a row when both have a recording; this
-      // word has none, so TTS says it once (owner 2026-10-23).
-      expect((app.speaker as SilentSpeaker).said, hasLength(1),
-          reason: '沒有真人錄音時只用 TTS 唸一次');
+      // Card #251 / #649: both accents in a row, recordings first.
+      expect((app.speaker as SilentSpeaker).said, hasLength(2),
+          reason: '翻到背面時英式、美式各一次');
       // Native-language grades with their next interval.
       expect(find.text('忘記'), findsOneWidget);
       expect(find.text('很容易'), findsOneWidget);

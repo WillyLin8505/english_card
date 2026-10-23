@@ -63,6 +63,25 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('return-to-current')));
     await tester.pumpAndSettle();
     expect(currentWord(tester), second);
+
+    // 問題回報 #652: 上一張 goes back more than one card.
+    await tester.tap(find.text('顯示答案'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('記得'));
+    await tester.pumpAndSettle();
+    final third = currentWord(tester);
+    await tester.tap(prev);
+    await tester.pumpAndSettle();
+    expect(currentWord(tester), second);
+    await tester.tap(prev);
+    await tester.pumpAndSettle();
+    expect(currentWord(tester), first);
+    expect(find.text('往前第 2 張，已經評分過'), findsOneWidget);
+    expect(tester.widget<NavIconButton>(prev).onTap, isNull,
+        reason: 'the first card of the run');
+    await tester.tap(find.byKey(const ValueKey('return-to-current')));
+    await tester.pumpAndSettle();
+    expect(currentWord(tester), third);
     expect(find.byType(FlashcardFront), findsOneWidget);
   });
 

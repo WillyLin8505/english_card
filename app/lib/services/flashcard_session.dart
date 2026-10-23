@@ -292,10 +292,18 @@ class FlashcardSession extends ChangeNotifier {
 
   /// 問題回報 #641: the card just graded, kept so the learner can look at it
   /// again; and the card they were on while they do (grading is not repeated).
-  _CardSnap? _previous;
+  // 問題回報 #652: every card graded this run (newest last, up to
+  // [_historyLimit]), so 上一張 can be pressed again and again.
+  static const _historyLimit = 50;
+  final _history = <_CardSnap>[];
+  int? _viewing; // index in [_history] while looking back
   _CardSnap? _ahead;
   bool get viewingPrevious => _ahead != null;
-  bool get canGoPrevious => _previous != null && _ahead == null;
+  bool get canGoPrevious =>
+      _history.isNotEmpty && (_viewing == null || _viewing! > 0);
+
+  /// While looking back: how many cards back (1 = the last one graded).
+  int get stepsBack => _viewing == null ? 0 : _history.length - _viewing!;
   bool get canFlipToFront => _back && _ahead == null;
 
   _CardSnap _snap() => _CardSnap(
@@ -356,8 +364,9 @@ class FlashcardSession extends ChangeNotifier {
   /// possible, the next tap returns to the card the learner was on.
   void goPrevious() {
     if (!canGoPrevious || _cardId == null) return;
-    _ahead = _snap();
-    _restore(_previous!);
+    _ahead ??= _snap();
+    _viewing = (_viewing ?? _history.length) - 1;
+    _restore(_history[_viewing!]);
     notifyListeners();
   }
 
@@ -366,6 +375,7 @@ class FlashcardSession extends ChangeNotifier {
     final ahead = _ahead;
     if (ahead == null) return;
     _ahead = null;
+    _viewing = null;
     _restore(ahead);
     notifyListeners();
   }
@@ -397,7 +407,8 @@ class FlashcardSession extends ChangeNotifier {
       _rating = false;
     }
     _reviewed++;
-    _previous = _snap();
+    _history.add(_snap());
+    if (_history.length > _historyLimit) _history.removeAt(0);
     if (rating == Rating.again) {
       final repeats = _againRepeats[id] ?? 0;
       // Continuous mode caps returns too (問題回報 #319): past the cap the
@@ -515,9 +526,10 @@ class FlashcardSession extends ChangeNotifier {
             caseSensitive: false);
         final matches = pattern.allMatches(example.text).toList();
         if (matches.length != 1) continue;
-        // One underscore per letter, so the learner sees the answer's length
-        // (card #559); a space or hyphen in the form keeps its own slot.
-        final blank = matches.single.group(0)!.replaceAll(RegExp(r'\S'), '＿');
+        // One underscore per letter, spaced so they can be counted (問題回報
+        // #606: ＿＿＿＿＿ ran together into one line); a hyphen stays, and
+        // a space between words is a wider gap.
+        final blank = clozeBlank(matches.single.group(0)!);
         final prompt = example.text
             .replaceRange(matches.single.start, matches.single.end, blank);
         // Use the same strict substring policy as the preview: another form
@@ -1038,6 +1050,16 @@ class FlashcardSession extends ChangeNotifier {
     return found;
   }
 }
+
+/// The blank of a 句子填空: `_ _ _ _ _` for "apple", one per letter.
+String clozeBlank(String answer) => [
+      for (final c in answer.split(''))
+        c == ' '
+            ? ' '
+            : c == '-'
+                ? '-'
+                : '_'
+    ].join(' ');
 
 class _CardSnap {
   final String? cardId, usageId, senseId, credit, submitted;

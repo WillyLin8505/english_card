@@ -14,19 +14,22 @@ Future<bool> playAccent(
   return ok;
 }
 
-/// Card #251: when the card turns, the word is heard in both accents,
-/// British first and then American, one after the other. Only accents with
-/// a real recording are played (owner 2026-10-23: a TTS British voice before
-/// the American recording sounded robotic — 67% of A1 words have no British
-/// clip); a word with no recording at all is said once, in 設定's accent.
+/// Card #251: when the card turns, the word is heard in both accents.
+/// Real recordings go first (問題回報 #607 #649: the TTS voice before an
+/// American recording sounded robotic — 67% of A1 words have no British
+/// clip), then the accent without one in the TTS voice, so both are always
+/// heard and the first is a person whenever there is a recording.
 Future<void> playBothAccents(BuildContext context, WordEntry entry) async {
+  const both = ['en-GB', 'en-US'];
   final recorded = [
-    for (final accent in const ['en-GB', 'en-US'])
+    for (final accent in both)
       if (accentAudioUrl(entry, accent) != null) accent,
   ];
-  final accents = recorded.isNotEmpty
-      ? recorded
-      : [AppScope.of(context).settings.englishAccent];
+  final accents = [
+    ...recorded,
+    for (final accent in both)
+      if (!recorded.contains(accent)) accent,
+  ];
   for (final accent in accents) {
     if (!context.mounted) return;
     if (!await playAccent(context, entry, accent)) return;
@@ -880,18 +883,27 @@ class FlashcardBack extends StatelessWidget {
                 UiText(answerCorrect! ? '答對了' : '答錯了',
                     style: MFont.manrope(17, FontWeight.w800,
                         answerCorrect! ? MColors.success : MColors.againFg)),
-                if (submittedAnswer?.isNotEmpty == true) ...[
-                  const SizedBox(height: 4),
-                  UiText('你的答案：${displayWord(submittedAnswer!)}',
-                      style:
-                          MFont.manrope(14, FontWeight.w600, MColors.gray700)),
-                ],
                 if (answerCorrect == false &&
+                    submittedAnswer?.isNotEmpty == true &&
                     correctAnswer?.isNotEmpty == true) ...[
-                  const SizedBox(height: 2),
-                  UiText('正確答案：${displayWord(correctAnswer!)}',
-                      style:
-                          MFont.manrope(14, FontWeight.w700, MColors.gray900)),
+                  // 問題回報 #606: yours against the answer, letter by letter.
+                  const SizedBox(height: 6),
+                  AnswerComparison(
+                      submitted: submittedAnswer!, answer: correctAnswer!),
+                ] else ...[
+                  if (submittedAnswer?.isNotEmpty == true) ...[
+                    const SizedBox(height: 4),
+                    UiText('你的答案：${displayWord(submittedAnswer!)}',
+                        style: MFont.manrope(
+                            14, FontWeight.w600, MColors.gray700)),
+                  ],
+                  if (answerCorrect == false &&
+                      correctAnswer?.isNotEmpty == true) ...[
+                    const SizedBox(height: 2),
+                    UiText('正確答案：${displayWord(correctAnswer!)}',
+                        style: MFont.manrope(
+                            14, FontWeight.w700, MColors.gray900)),
+                  ],
                 ],
               ],
             ),
@@ -1424,7 +1436,9 @@ class _AnchorDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(builder: (context, c) {
-        final geo = CoverGeometry(Size(c.maxWidth, c.maxHeight), photo);
+        // Same shift as the photo under it (#651).
+        final geo =
+            CoverGeometry.of(context, Size(c.maxWidth, c.maxHeight), photo);
         final at = geo.toBox(anchor);
         if (onMoved != null) {
           return Stack(children: [
@@ -1531,6 +1545,8 @@ class _PhotoPagerState extends State<_PhotoPager> {
     final credit = o.$3?.trim();
     return PinnedPhoto(
       photo: p,
+      // 問題回報 #651: the photo shifts so this card's dot stays inside.
+      focus: a,
       onPhotoLongPress: credit == null || credit.isEmpty
           ? null
           : () => showDialog<void>(
@@ -1667,4 +1683,66 @@ class _HeroWord extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: look.headword),
       );
+}
+
+/// 問題回報 #606: the learner's answer above the right one, letter by
+/// letter — a letter that differs is red in theirs and bold in the answer.
+class AnswerComparison extends StatelessWidget {
+  final String submitted;
+  final String answer;
+
+  const AnswerComparison(
+      {super.key, required this.submitted, required this.answer});
+
+  /// Which letters of [a] differ from [b] at the same place (any case).
+  static List<bool> differences(String a, String b) => [
+        for (var i = 0; i < a.length; i++)
+          i >= b.length || a[i].toLowerCase() != b[i].toLowerCase(),
+      ];
+
+  Widget _line(BuildContext context, String label, String text, List<bool> diff,
+      TextStyle same, TextStyle changed) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 76,
+          child: UiText(label,
+              style: MFont.manrope(13, FontWeight.w600, MColors.gray700)),
+        ),
+        Expanded(
+          child: Text.rich(
+            TextSpan(children: [
+              for (var i = 0; i < text.length; i++)
+                TextSpan(text: text[i], style: diff[i] ? changed : same),
+            ]),
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final base = MFont.manrope(17, FontWeight.w700, MColors.gray900)
+        .copyWith(letterSpacing: 1.5);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _line(
+            context,
+            '你的答案',
+            submitted,
+            differences(submitted, answer),
+            base,
+            base.copyWith(
+                color: MColors.againFg,
+                decoration: TextDecoration.underline,
+                decorationColor: MColors.againFg)),
+        const SizedBox(height: 4),
+        _line(context, '正確答案', answer, differences(answer, submitted), base,
+            base.copyWith(color: MColors.success, fontWeight: FontWeight.w900)),
+      ],
+    );
+  }
 }

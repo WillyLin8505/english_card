@@ -2,6 +2,8 @@
 /// content. Missing keys/languages deliberately retain the original copy.
 const uiCatalog = <String, (String, String)>{
   '意見回饋': ('Feedback', 'Commentaires'),
+  '你的答案': ('Yours', 'Votre réponse'),
+  '正確答案': ('Answer', 'Réponse'),
   // 問題回報 #641.
   '上一張卡片': ('Previous card', 'Carte précédente'),
   '回到正面': ('Back to front', 'Revoir le recto'),
@@ -963,6 +965,10 @@ class _UiTemplate {
 }
 
 const _templateCopy = <String, (String, String)>{
+  '往前第 {0} 張，已經評分過': (
+    '{0} cards back; already graded',
+    '{0} cartes en arrière ; déjà notée'
+  ),
   '已在這個位置加上「{0}」': ('Added “{0}” here', '« {0} » ajouté ici'),
   '全部加入（{0}）': ('Add all ({0})', 'Tout ajouter ({0})'),
   '已加入 {0} 個單字': ('{0} words added', '{0} mots ajoutés'),
