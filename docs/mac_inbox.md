@@ -1197,3 +1197,8 @@ commit `f21a92c2`（Windows：flutter analyze 無 error、01:34 +576 ~2: All tes
   結果：長按照片上某個點位（32px 內）→ 立刻在點旁顯示該字與中文的黑色提示，放手消失；analyze 無問題，4 個照片測試檔 17 項全過。
 - 卡 #564：問題回報 #612：[意見回饋] 相片冊：這裡也要呈現裡面包含的圖片當封面
   結果：全部完成：相片冊主頁與「存到相片冊」對話框都已用相簿內的圖片當封面；不需改資料、無缺漏需補。；檢查結果（#624 決定：複習和相片冊都要封面）：
+
+## M88（2026-10-23 18:58）狀態：待做
+commit `7b8c97cb`（Windows：flutter analyze 無 error、01:07 +576 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #571：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
+  結果：全部完成：flutter test 576 過／2 skip／0 失敗，flutter analyze 0 error（1 個既有 unusedimport warning）。
