@@ -1341,3 +1341,10 @@ owner 在 iPhone 送出的回報（#626：App 畫面與互動由 Mac 修）。�
 commit `3d9fbda8`（Windows：flutter analyze 無 error、01:18 +602 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #587：問題回報 #637：[owner] [Mac] 2026-10-23 M87（iPhone 模擬器）：happy 的詞形
   結果：全部完成：全庫只有 2 字（happy、crumbly）同時有 -er/-est 與 more/most，已只留 -er/-est；匯入規則也改了，之後不會再出現。
+
+## M108（2026-10-23 23:43）狀態：待做（owner 回報，給 Mac）
+owner 在 iPhone 送出的回報（#626：App 畫面與互動由 Mac 修）。資料或伺服器的部分請寫「不通過」列交回 Windows。
+
+| # | 回報 | 內容 |
+|---|---|---|
+| 666 | [意見回饋] 照片詳情：多點動詞 難度提高等那些功能 目前沒有看到你有新增標籤 | 意見：多點動詞 難度提高等那些功能 目前沒有看到你有新增標籤 / 頁面：照片詳情 / 單字／照片 id：photo-deck-1792592460433879 / App 版本：1.0.0+1 / 學習語言：en |
