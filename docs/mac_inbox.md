@@ -1074,3 +1074,8 @@ commit `f09d89ea`（Windows：flutter analyze 無 error、01:10 +558 ~2: All tes
 commit `13388d76`（Windows：flutter analyze 無 error、01:12 +558 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #224：模擬使用者・拍照
   結果：第 161 輪：2/2 通過（photoui＋pins 全段），14,767 張照片／44,301 次排版，標籤遮點 1（同上輪），沒有新錯誤；UX 建議 #583、#584（待決定）。
+
+## M76（2026-10-23 12:25）狀態：待做
+commit `1858bf24`（Windows：flutter analyze 無 error、  D:/vibe_coding/english_card/app/test/screens_test.dart: 選擇照片 → 背景辨識 → 選詞 完成 saves the photo; candidates arrive; leaving creates cards（1 個測試檔重跑一次就過：同時有別的 flutter test 在跑））。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #541：問題回報 #581：「容易混淆的字」的中文用了對方的冷門意思：page→pale「柵欄」、dot→date「椰棗」、mo
+  結果：全部完成：#581 已在 app pack 修正（2,954 → 269 個容易混淆的字中文錯用對方冷門義項，A1/A2 865 → 72），golden／QC 無退步。
