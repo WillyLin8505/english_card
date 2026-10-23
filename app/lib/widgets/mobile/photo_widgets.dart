@@ -22,7 +22,8 @@ export 'photo_cache.dart' show precachePhoto;
 /// that shows the photo with [BoxFit.cover], and back. Photos without a
 /// known size (placeholders) simply fill the box. [alignment] is the
 /// photo's (the same as [Image.alignment]): which part of an image larger
-/// than the box stays in view.
+/// than the box stays in view. With [fit] [BoxFit.contain] (照片詳情,
+/// 問題回報 #664) the whole photo shows, letterboxed: nothing is cropped.
 class CoverGeometry {
   final double scale;
   final double imageWidth;
@@ -32,12 +33,13 @@ class CoverGeometry {
   CoverGeometry._(this.scale, this.imageWidth, this.imageHeight, this.offset);
 
   factory CoverGeometry(Size box, Photo photo,
-      {Alignment alignment = Alignment.center}) {
+      {Alignment alignment = Alignment.center, BoxFit fit = BoxFit.cover}) {
     final w = photo.width?.toDouble(), h = photo.height?.toDouble();
     if (!photo.hasImage || w == null || h == null || w <= 0 || h <= 0) {
       return CoverGeometry._(1, box.width, box.height, Offset.zero);
     }
-    final s = box.width / w > box.height / h ? box.width / w : box.height / h;
+    final sx = box.width / w, sy = box.height / h;
+    final s = fit == BoxFit.contain ? math.min(sx, sy) : math.max(sx, sy);
     final free = Offset(box.width - w * s, box.height - h * s) / 2;
     return CoverGeometry._(s, w, h,
         Offset(free.dx * (1 + alignment.x), free.dy * (1 + alignment.y)));
@@ -46,7 +48,9 @@ class CoverGeometry {
   /// The geometry of [photo] drawn in a [PinnedPhoto] above [context]: it
   /// may have moved the photo to keep its focus in view (問題回報 #651).
   factory CoverGeometry.of(BuildContext context, Size box, Photo photo) =>
-      CoverGeometry(box, photo, alignment: PhotoAlignment.of(context));
+      CoverGeometry(box, photo,
+          alignment: PhotoAlignment.of(context),
+          fit: PhotoAlignment.fitOf(context));
 
   /// 問題回報 #651: with [BoxFit.cover] centred, a spot near the edge of a
   /// photo much wider (or taller) than its box is cropped away, and its dot
@@ -78,6 +82,12 @@ class CoverGeometry {
     );
   }
 
+  /// The part of [box] the photo covers (問題回報 #664): the whole box with
+  /// [BoxFit.cover], the photo's letterboxed rectangle with contain.
+  Rect visibleIn(Size box) =>
+      (offset & Size(imageWidth * scale, imageHeight * scale))
+          .intersect(Offset.zero & box);
+
   Offset toBox(LabelPoint p) =>
       offset + Offset(p.x * imageWidth * scale, p.y * imageHeight * scale);
 
@@ -92,15 +102,26 @@ class CoverGeometry {
 class PhotoAlignment extends InheritedWidget {
   final Alignment alignment;
 
+  /// How the photo is fitted in its box (問題回報 #664).
+  final BoxFit fit;
+
   const PhotoAlignment(
-      {super.key, required this.alignment, required super.child});
+      {super.key,
+      required this.alignment,
+      this.fit = BoxFit.cover,
+      required super.child});
 
   static Alignment of(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<PhotoAlignment>()?.alignment ??
       Alignment.center;
 
+  static BoxFit fitOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<PhotoAlignment>()?.fit ??
+      BoxFit.cover;
+
   @override
-  bool updateShouldNotify(PhotoAlignment old) => old.alignment != alignment;
+  bool updateShouldNotify(PhotoAlignment old) =>
+      old.alignment != alignment || old.fit != fit;
 }
 
 /// A photo's pixels, whichever way they are stored (see [Photo]); photos
@@ -511,6 +532,36 @@ class PinnedPhoto extends StatefulWidget {
   /// only label's anchor when there is exactly one.
   final LabelPoint? focus;
 
+  /// How the photo fills the box. [BoxFit.contain] (照片詳情, 問題回報 #664)
+  /// shows all of it: no label lands on a part cropped away, and badges
+  /// stay on the photo, not on the bars beside it.
+  final BoxFit fit;
+
+  /// The fit [photo] is drawn with when [fit] is asked for: a photo of
+  /// unknown size keeps [BoxFit.cover], the only fit its labels can be
+  /// mapped through ([CoverGeometry] then simply fills the box).
+  static BoxFit fitFor(Photo photo, BoxFit fit) {
+    final w = photo.width, h = photo.height;
+    return photo.hasImage && w != null && h != null && w > 0 && h > 0
+        ? fit
+        : BoxFit.cover;
+  }
+
+  /// 問題回報 #664: the height of a frame [width] wide that shows all of
+  /// [photo] at its own shape — at most [maxHeight] (a very tall photo is
+  /// then shown whole with [BoxFit.contain], with bars beside it). A photo
+  /// of unknown size gets [fallback].
+  static double frameHeight(Photo photo, double width,
+      {required double maxHeight,
+      double minHeight = 160,
+      double fallback = 320}) {
+    final w = photo.width, h = photo.height;
+    final natural = fitFor(photo, BoxFit.contain) == BoxFit.contain
+        ? width * h! / w!
+        : fallback;
+    return natural.clamp(math.min(minHeight, maxHeight), maxHeight).toDouble();
+  }
+
   const PinnedPhoto({
     super.key,
     required this.photo,
@@ -531,6 +582,7 @@ class PinnedPhoto extends StatefulWidget {
     this.avoid = const [],
     this.revealNew = false,
     this.focus,
+    this.fit = BoxFit.cover,
   });
 
   @override
@@ -572,9 +624,15 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
     _queue.removeWhere((id) => !ids.contains(id));
     if (!widget.revealNew) return;
     final known = {for (final p in old.pins) p.id};
+    // 問題回報 #665: a label already shown on this photo (gone for a moment
+    // while the 難度 bar moved) comes back where it was, without popping in.
     final fresh = [
       for (final p in widget.pins)
-        if (!p.muted && !known.contains(p.id) && !_queue.contains(p.id)) p,
+        if (!p.muted &&
+            !known.contains(p.id) &&
+            !_queue.contains(p.id) &&
+            !_memory.containsKey(p.id))
+          p,
     ]..sort((a, b) => a.anchor.y != b.anchor.y
         ? a.anchor.y.compareTo(b.anchor.y)
         : a.anchor.x.compareTo(b.anchor.x));
@@ -651,23 +709,66 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
   /// (or its card back) does not lay its labels out again.
   static final _recent = <_LayoutKey, List<PinPlacement>>{};
 
-  List<PinPlacement> _placements(List<PinItem> items, Size box) {
-    final key = <Object>[
+  /// 問題回報 #665: where each label was laid out (before any drag) in
+  /// [_memoryFrame]. A label already on the photo keeps its spot when the
+  /// list changes (難度 bar, 加字／刪字); only new ones look for a place,
+  /// in the space left.
+  final Map<String, PinPlacement> _memory = {};
+  List<Object>? _memoryFrame;
+
+  /// Lays the labels out inside [area], the part of [box] the photo
+  /// covers (問題回報 #664: never on a part cropped away or on the bars).
+  List<PinPlacement> _placements(List<PinItem> items, Size box, Rect area) {
+    final frame = <Object>[
       box,
+      area,
       widget.reserveTop,
       widget.reserveBottom,
       ...widget.avoid,
+    ];
+    final key = <Object>[
+      ...frame,
       for (final it in items) ...[it.id, it.anchor, it.badge],
     ];
     if (_layoutKey == null || !listEquals(_layoutKey, key)) {
       _layoutKey = key;
+      if (!listEquals(_memoryFrame, frame)) {
+        _memory.clear();
+        _memoryFrame = frame;
+      }
       final shared = _LayoutKey(key);
       final hit = _recent.remove(shared);
-      _layout = hit ??
-          layoutPins(items, box,
-              reserveTop: widget.reserveTop,
-              reserveBottom: widget.reserveBottom,
-              avoid: widget.avoid);
+      final origin = area.topLeft;
+      final keep = _memory.isEmpty
+          ? const <PinPlacement>[]
+          : [
+              // Labels on the photo now first, then ones seen before.
+              for (final pl in _layout)
+                if (_memory[pl.id] case final m?) m,
+              for (final m in _memory.values)
+                if (!_layout.any((pl) => pl.id == m.id)) m,
+            ];
+      _layout = keep.isEmpty && hit != null
+          ? hit
+          : [
+              for (final pl in layoutPins([
+                for (final it in items)
+                  PinItem(it.id, it.anchor - origin, it.badge),
+              ], area.size,
+                  reserveTop: math.max(0.0, widget.reserveTop - area.top),
+                  reserveBottom: math.max(
+                      0.0, widget.reserveBottom - (box.height - area.bottom)),
+                  avoid: [for (final a in widget.avoid) a.shift(-origin)],
+                  keep: [
+                    for (final k in keep)
+                      PinPlacement(
+                          k.id, k.anchor - origin, k.badge.shift(-origin)),
+                  ]))
+                PinPlacement(pl.id, pl.anchor + origin, pl.badge.shift(origin)),
+            ];
+      for (final pl in _layout) {
+        _memory[pl.id] = pl;
+      }
       _recent[shared] = _layout;
       if (_recent.length > 64) _recent.remove(_recent.keys.first);
     }
@@ -683,10 +784,14 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
           final box = Size(c.maxWidth, c.maxHeight);
           final focus = widget.focus ??
               (widget.pins.length == 1 ? widget.pins.single.anchor : null);
-          final alignment = focus == null
+          final fit = PinnedPhoto.fitFor(widget.photo, widget.fit);
+          final alignment = focus == null || fit == BoxFit.contain
               ? Alignment.center
               : CoverGeometry.focusing(box, widget.photo, focus);
-          final geo = CoverGeometry(box, widget.photo, alignment: alignment);
+          final geo =
+              CoverGeometry(box, widget.photo, alignment: alignment, fit: fit);
+          // Labels and their dots stay on the photo itself (問題回報 #664).
+          final area = geo.visibleIn(box);
           final scaler = MediaQuery.textScalerOf(context);
           final byId = {for (final p in widget.pins) p.id: p};
           final placed = _placements([
@@ -698,9 +803,9 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
                       entryType: p.entryType,
                       linked: p.linked,
                       // layoutPins' margin: a long label wraps in full.
-                      maxWidth: box.width - 12,
+                      maxWidth: area.width - 12,
                       base: DefaultTextStyle.of(context).style)),
-          ], box);
+          ], box, area);
           // While a label is dragged, it and its dot move together.
           PinPlacement shown(PinPlacement pl) => pl.id == _dragging
               ? PinPlacement(
@@ -711,7 +816,8 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
             _lastPlaced[pl.id] = pl;
           }
           Offset clampToBox(Offset o) => Offset(
-              o.dx.clamp(4.0, box.width - 4), o.dy.clamp(4.0, box.height - 4));
+              o.dx.clamp(area.left + 4, math.max(area.left + 4, area.right - 4)),
+              o.dy.clamp(area.top + 4, math.max(area.top + 4, area.bottom - 4)));
           return Stack(
             clipBehavior: Clip.hardEdge,
             children: [
@@ -736,6 +842,7 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
                 // The photo stays still while labels pop in (#409).
                 child: RepaintBoundary(
                   child: PhotoImage(widget.photo,
+                      fit: fit,
                       alignment: alignment,
                       imageErrorBuilder: widget.imageErrorBuilder,
                       onImageState: widget.onImageState),
@@ -860,7 +967,9 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
               if (widget.overlay != null)
                 Positioned.fill(
                     child: PhotoAlignment(
-                        alignment: alignment, child: widget.overlay!)),
+                        alignment: alignment,
+                        fit: fit,
+                        child: widget.overlay!)),
               if (_queue.isNotEmpty || _found != null)
                 Positioned(
                   left: 0,

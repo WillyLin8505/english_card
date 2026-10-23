@@ -51,11 +51,17 @@ class PinPlacement {
 /// [reserveTop] / [reserveBottom] keep bands of the photo clear for things
 /// drawn over it (a status chip, a notice); badges also keep off the
 /// [avoid] rectangles (a control over a corner of the photo).
+///
+/// [keep] (問題回報 #665) are badges already on the photo, in order of
+/// priority: a label whose dot and badge size are unchanged stays exactly
+/// there (when it is still inside the photo and clear of the labels kept
+/// before it), and only the other labels are placed, around them.
 List<PinPlacement> layoutPins(List<PinItem> items, Size box,
     {double margin = 6,
     double reserveTop = 0,
     double reserveBottom = 0,
-    List<Rect> avoid = const []}) {
+    List<Rect> avoid = const [],
+    List<PinPlacement> keep = const []}) {
   if (items.isEmpty) return const [];
   // A badge wider than the photo can't stay inside it: it gets the photo's
   // width and WordPin wraps the text onto another line.
@@ -159,8 +165,36 @@ List<PinPlacement> layoutPins(List<PinItem> items, Size box,
       final c = crowd(b).compareTo(crowd(a));
       return c != 0 ? c : a.anchor.dy.compareTo(b.anchor.dy);
     });
-  final cands = {for (final it in items) it.id: candidates(it)};
   final placed = <String, PinPlacement>{};
+  // 問題回報 #665: labels already on the photo stay where they are.
+  final byId = {for (final it in items) it.id: it};
+  for (final k in keep) {
+    final it = byId[k.id];
+    if (it == null || placed.containsKey(k.id)) continue;
+    if ((it.anchor - k.anchor).distance > 0.5 ||
+        (it.badge.width - k.badge.width).abs() > 0.5 ||
+        (it.badge.height - k.badge.height).abs() > 0.5) {
+      continue;
+    }
+    final r = k.badge;
+    if (r.left < -0.5 ||
+        r.top < -0.5 ||
+        r.right > box.width + 0.5 ||
+        r.bottom > box.height + 0.5) {
+      continue;
+    }
+    if (placed.values.any((p) => overlap(p.badge, r) > 0)) continue;
+    placed[k.id] = PinPlacement(it.id, it.anchor, r);
+  }
+  final fixed = Set<String>.of(placed.keys);
+  if (fixed.length == items.length) {
+    return [for (final it in items) placed[it.id]!];
+  }
+  final free = [
+    for (final it in order)
+      if (!fixed.contains(it.id)) it
+  ];
+  final cands = {for (final it in free) it.id: candidates(it)};
 
   bool coversDot(Rect r) {
     final padded = r.inflate(2);
@@ -300,11 +334,11 @@ List<PinPlacement> layoutPins(List<PinItem> items, Size box,
     return PinPlacement(it.id, it.anchor, bestRect!);
   }
 
-  for (final it in order) {
+  for (final it in free) {
     placed[it.id] = best(it);
   }
   for (var pass = 0; pass < 3; pass++) {
-    for (final it in order) {
+    for (final it in free) {
       placed.remove(it.id);
       placed[it.id] = best(it);
     }
@@ -327,10 +361,11 @@ List<PinPlacement> layoutPins(List<PinItem> items, Size box,
   }
 
   Map<String, PinPlacement>? columnPack(List<PinItem> seq) {
-    final used = <Rect>[];
-    final map = <String, PinPlacement>{};
+    final used = <Rect>[for (final id in fixed) placed[id]!.badge];
+    final map = <String, PinPlacement>{for (final id in fixed) id: placed[id]!};
     final limit = box.shortestSide * 0.6;
     for (final it in seq) {
+      if (fixed.contains(it.id)) continue;
       final w = it.badge.width, h = it.badge.height;
       Rect? picked;
       var pickedKey = (9, 9, double.infinity);

@@ -498,7 +498,13 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                           key: _photoKey,
                           padding: const EdgeInsets.all(MSpace.md),
                           child: Container(
-                            height: 320,
+                            // 問題回報 #664: the whole photo, at its shape.
+                            height: PinnedPhoto.frameHeight(
+                                photo,
+                                MediaQuery.sizeOf(context).width -
+                                    2 * MSpace.md,
+                                maxHeight:
+                                    MediaQuery.sizeOf(context).height * 0.62),
                             decoration:
                                 MDecor.heroPhotoFrame(radius: MRadii.xxl),
                             clipBehavior: Clip.antiAlias,
@@ -508,7 +514,9 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                                 ? ClipRRect(
                                     borderRadius: BorderRadius.circular(24),
                                     child: RepaintBoundary(
-                                        child: PhotoImage(photo)),
+                                        child: PhotoImage(photo,
+                                            fit: PinnedPhoto.fitFor(
+                                                photo, BoxFit.contain))),
                                   )
                                 : _pinnedPhoto(photo, session, old),
                           ),
@@ -587,6 +595,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
       scanning: _scanning,
       overlay: _overlayFor(photo, session),
       revealNew: true,
+      fit: BoxFit.contain,
     );
   }
 

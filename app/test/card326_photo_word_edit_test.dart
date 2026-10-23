@@ -219,7 +219,18 @@ void main() {
       await tester.ensureVisible(find.byType(PinnedPhoto));
       await tester.pumpAndSettle();
       final photo = tester.getRect(find.byType(PinnedPhoto));
-      await tester.tapAt(photo.bottomLeft + const Offset(90, -30));
+      // A spot clear of every label: the frame now takes the photo's shape
+      // (問題回報 #664), so where labels sit depends on its size.
+      final labels = [
+        for (final e in find.byType(WordPin).evaluate())
+          tester.getRect(find.byWidget(e.widget)).inflate(4),
+      ];
+      final spot = [
+        for (var dx = 30.0; dx < photo.width - 30; dx += 10)
+          for (var dy = 20.0; dy < photo.height / 2 - 20; dy += 10)
+            photo.bottomLeft + Offset(dx, -dy),
+      ].firstWhere((o) => !labels.any((r) => r.contains(o)));
+      await tester.tapAt(spot);
       await tester.pumpAndSettle();
       expect(find.byKey(const ValueKey('placing-bar')), findsNothing);
       final pin = tester
