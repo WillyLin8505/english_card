@@ -8,6 +8,10 @@ const uiCatalog = <String, (String, String)>{
     'No lexicon pictures for this word set yet',
     'Pas encore d’images pour cette liste de mots'
   ),
+  '附上這個畫面的截圖': (
+    'Attach a screenshot of this screen',
+    'Joindre une capture de cet écran'
+  ),
   // 問題回報 #641.
   '上一張卡片': ('Previous card', 'Carte précédente'),
   '回到正面': ('Back to front', 'Revoir le recto'),
