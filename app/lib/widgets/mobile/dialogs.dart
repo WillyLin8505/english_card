@@ -245,15 +245,19 @@ typedef SavePhotoChoice = ({
 /// The name is automatic (the default title; rename it in 照片詳情), and it
 /// always looks for both things and printed text (問題回報 #409: no name
 /// or 找什麼 questions). Returns null if cancelled.
+/// [count] > 1: several photos picked at once (問題回報 #677) — asked once,
+/// the choice applies to all of them.
 Future<SavePhotoChoice?> showSaveToAlbumDialog(
   BuildContext context, {
   required WordDatabaseRepository repository,
   required String defaultTitle,
   String? albumId,
+  int count = 1,
 }) =>
     showDialog<SavePhotoChoice>(
       context: context,
-      builder: (_) => _SaveToAlbumDialog(repository, defaultTitle, albumId),
+      builder: (_) =>
+          _SaveToAlbumDialog(repository, defaultTitle, albumId, count),
     );
 
 /// The album last saved to (問題回報 #563): the default for the next photo,
@@ -264,8 +268,10 @@ class _SaveToAlbumDialog extends StatefulWidget {
   final WordDatabaseRepository repository;
   final String defaultTitle;
   final String? albumId;
+  final int count;
 
-  const _SaveToAlbumDialog(this.repository, this.defaultTitle, this.albumId);
+  const _SaveToAlbumDialog(
+      this.repository, this.defaultTitle, this.albumId, this.count);
 
   @override
   State<_SaveToAlbumDialog> createState() => _SaveToAlbumDialogState();
@@ -332,7 +338,7 @@ class _SaveToAlbumDialogState extends State<_SaveToAlbumDialog> {
   Widget build(BuildContext context) {
     final albums = widget.repository.albums;
     return AlertDialog(
-      title: _title('存到相片冊'),
+      title: _title(widget.count > 1 ? '存到相片冊（${widget.count} 張）' : '存到相片冊'),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -377,7 +383,7 @@ class _SaveToAlbumDialogState extends State<_SaveToAlbumDialog> {
       actions: [
         TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const UiText('不要這張')),
+            child: UiText(widget.count > 1 ? '取消' : '不要這張')),
         FilledButton(
           onPressed:
               (_creating ? _newAlbum.text.trim().isNotEmpty : _albumId != null)
