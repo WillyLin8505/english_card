@@ -43,7 +43,8 @@ _cache = {}
 # and downloads a pack's images/audio in bursts).
 RATE_LIMITS = {'/api/lexicon': 30, '/api/image': 600, '/api/audio': 600,
                '/api/decks': 60,
-               '/api/account': 30, '/api/shares': 60}   # accounts + sharing (card #324)   # 卡片集: the list and one deck's content (card #323)
+               '/api/account': 30, '/api/shares': 60,
+               '/api/issues': 10}   # keyless App card reports (10/23)   # accounts + sharing (card #324)   # 卡片集: the list and one deck's content (card #323)
 RATE_HITS: dict = {}
 RATE_LOCK = threading.Lock()
 
@@ -631,7 +632,8 @@ class Handler(SimpleHTTPRequestHandler):
         /api/issues[/id] go to the admin API through the board proxy (5173,
         which adds the admin key). From the internet the tagger's X-API-Key
         is required, like tagging."""
-        if not self.key_ok():
+        keyed = self.key_ok()
+        if not keyed and method != 'POST':
             self.send_error(401, 'X-API-Key required from another device')
             return
         try:
@@ -643,6 +645,16 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_error(413)
             return
         body = self.rfile.read(length) if length else None
+        if not keyed:
+            # 10/23: the owner's iPhone reports came back 401 (no key in that build) and never
+            # reached 問題回報. Without a key only a learner's card report gets through — a new
+            # bug from 「App 使用者」, nothing else — and at most RATE_LIMITS per minute.
+            body = self.app_report(body)
+            if body is None:
+                self.send_error(401, 'X-API-Key required from another device')
+                return
+            if not self.within_rate('/api/issues'):
+                return
         request = Request('http://127.0.0.1:5173' + self.path, data=body, method=method,
                           headers={'Content-Type': 'application/json'})
         try:
@@ -660,6 +672,24 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_header('Content-Length', str(len(data)))
         self.end_headers()
         self.wfile.write(data)
+
+    @staticmethod
+    def app_report(body):
+        """A keyless /api/issues POST as the App's CardReport sends it, reduced to the fields
+        a learner may set; None when it isn't one."""
+        try:
+            data = json.loads(body or b'{}')
+        except ValueError:
+            return None
+        if not isinstance(data, dict):
+            return None
+        title = str(data.get('title') or '')
+        if not title.startswith('[卡片回報]') or data.get('reporter') != 'App 使用者':
+            return None
+        keep = {k: str(data[k])[:4000] for k in ('title', 'detail', 'lemma') if data.get(k)}
+        keep['title'] = keep['title'][:300]
+        keep.update(kind='bug', severity='medium', area='app', reporter='App 使用者')
+        return json.dumps(keep, ensure_ascii=False).encode('utf-8')
 
     def do_PUT(self):
         if not self.allowed_request():
