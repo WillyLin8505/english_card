@@ -7,9 +7,11 @@ import '../theme/mobile_theme.dart';
 import '../widgets/mobile/common.dart';
 import '../widgets/mobile/m_icon.dart';
 import '../widgets/mobile/photo_widgets.dart';
+import '../services/deck_library.dart';
 import 'deck_browser_screen.dart';
 import 'photo_grid_screen.dart';
 import 'photo_picker_screen.dart';
+import 'word_deck_photos_screen.dart';
 
 /// 我的相片冊 — Figma photo-album-page (17:5), the 相片冊 tab: albums by
 /// category, and 選擇新照片.
@@ -48,8 +50,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
         content: TextField(controller: controller, autofocus: true),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const UiText('取消')),
+              onPressed: () => Navigator.pop(ctx), child: const UiText('取消')),
           TextButton(
               onPressed: () => Navigator.pop(ctx, controller.text),
               child: const UiText('儲存')),
@@ -74,14 +75,28 @@ class _AlbumScreenState extends State<AlbumScreen> {
     final scope = AppScope.of(context);
     final repo = scope.repository;
     return ListenableBuilder(
-      listenable: repo,
+      listenable: Listenable.merge([repo, DeckLibrary.instance]),
       builder: (context, _) {
-        final groups = repo.albumGroups();
+        // 問題回報 #663: downloaded 單字集 are listed too (with the 圖片集,
+        // under the same pill); they open their words' lexicon pictures.
+        final wordDecks = [
+          for (final d in DeckLibrary.instance.installed)
+            if (!d.info.isPhotos && d.wordEntryIds.isNotEmpty) d,
+        ];
+        final groups = [
+          ...repo.albumGroups(),
+          if (wordDecks.isNotEmpty &&
+              !repo.albumGroups().contains(deckAlbumGroup))
+            deckAlbumGroup,
+        ];
         if (_category != null && !groups.contains(_category)) _category = null;
         final albums = [
           for (final a in repo.albums)
             if (_category == null || repo.albumGroup(a) == _category) a,
         ];
+        final decks = _category == null || _category == deckAlbumGroup
+            ? wordDecks
+            : const <InstalledDeck>[];
         return Scaffold(
           backgroundColor: MColors.canvas,
           body: SafeArea(
@@ -93,8 +108,8 @@ class _AlbumScreenState extends State<AlbumScreen> {
                   leading: RoundIconButton(
                     label: '返回',
                     icon: const MSvg(MIcon.arrowLeft, size: 20),
-                    onTap:
-                        widget.onBack ?? () => scope.navigator.selectTab(AppTab.camera),
+                    onTap: widget.onBack ??
+                        () => scope.navigator.selectTab(AppTab.camera),
                   ),
                   trailing: RoundIconButton(
                     label: '搜尋照片',
@@ -130,11 +145,21 @@ class _AlbumScreenState extends State<AlbumScreen> {
                       crossAxisSpacing: MSpace.sm,
                       mainAxisExtent: 180,
                     ),
-                    itemCount: albums.length + 1,
+                    itemCount: albums.length + decks.length + 1,
                     itemBuilder: (context, i) {
-                      if (i == albums.length) {
+                      if (i >= albums.length &&
+                          i < albums.length + decks.length) {
+                        final d = decks[i - albums.length];
+                        return WordDeckAlbumCard(
+                            deck: d,
+                            onTap: () => Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                    builder: (_) =>
+                                        WordDeckPhotosScreen(deck: d))));
+                      }
+                      if (i == albums.length + decks.length) {
                         return _DownloadAlbumTile(
-                            hint: repo.albums.isEmpty
+                            hint: repo.albums.isEmpty && wordDecks.isEmpty
                                 ? '還沒有相片：去拍照，或到卡片集下載圖片集'
                                 : null,
                             onTap: _downloadAlbums);
@@ -242,7 +267,8 @@ class _AlbumCard extends StatelessWidget {
                           album.author == null
                               ? '卡片集'
                               : '卡片集 · ${album.author}',
-                          style: MFont.inter(11, FontWeight.w600, Colors.white)),
+                          style:
+                              MFont.inter(11, FontWeight.w600, Colors.white)),
                     ),
                   ),
                 ),
@@ -261,31 +287,32 @@ class _AlbumCard extends StatelessWidget {
                   ),
                 ),
               ),
-            Padding(
-              padding: const EdgeInsets.all(MSpace.sm),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(album.name,
-                      style: MFont.inter(15, FontWeight.w700, Colors.white)),
-                  const SizedBox(height: 4),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: MSpace.xs, vertical: 2),
-                    decoration: MDecor.softPanel(
-                      color: MColors.frost,
-                      radius: 10,
+              Padding(
+                padding: const EdgeInsets.all(MSpace.sm),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(album.name,
+                        style: MFont.inter(15, FontWeight.w700, Colors.white)),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: MSpace.xs, vertical: 2),
+                      decoration: MDecor.softPanel(
+                        color: MColors.frost,
+                        radius: 10,
+                      ),
+                      child: UiText('$wordCount 個單字',
+                          style:
+                              MFont.inter(11, FontWeight.w600, Colors.white)),
                     ),
-                    child: UiText('$wordCount 個單字',
-                        style: MFont.inter(11, FontWeight.w600, Colors.white)),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
       ),
     );
   }

@@ -4,6 +4,10 @@ const uiCatalog = <String, (String, String)>{
   '意見回饋': ('Feedback', 'Commentaires'),
   '你的答案': ('Yours', 'Votre réponse'),
   '正確答案': ('Answer', 'Réponse'),
+  '詞庫還沒有這個單字集的圖片': (
+    'No lexicon pictures for this word set yet',
+    'Pas encore d’images pour cette liste de mots'
+  ),
   // 問題回報 #641.
   '上一張卡片': ('Previous card', 'Carte précédente'),
   '回到正面': ('Back to front', 'Revoir le recto'),
@@ -966,6 +970,10 @@ class _UiTemplate {
 }
 
 const _templateCopy = <String, (String, String)>{
+  '單字集 · {0} 個單字 · {1} 張詞庫圖片': (
+    'Word set · {0} words · {1} lexicon pictures',
+    'Liste de mots · {0} mots · {1} images'
+  ),
   '往前第 {0} 張，已經評分過': (
     '{0} cards back; already graded',
     '{0} cartes en arrière ; déjà notée'
