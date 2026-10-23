@@ -1,7 +1,7 @@
 part of '../screens/photo_detail_screen.dart';
 
 /// The shortcuts under the word list: 「多看動詞」「多看形容詞」「簡單一點」
-/// 「難一點」, and a note while more candidates load. The level itself is on
+/// 「難一點」「重新掃描標籤」, and a note while more candidates load. The level itself is on
 /// the difficulty bar under the photo (問題回報 #444: it used to be repeated here).
 class _LevelRow extends StatelessWidget {
   final PosBias bias;
@@ -13,6 +13,9 @@ class _LevelRow extends StatelessWidget {
   final VoidCallback? onEasier;
   final VoidCallback? onHarder;
 
+  /// 重新掃描標籤 (問題回報 #670); null while a scan runs.
+  final VoidCallback? onRescan;
+
   const _LevelRow({
     required this.bias,
     required this.busy,
@@ -20,6 +23,7 @@ class _LevelRow extends StatelessWidget {
     required this.onBias,
     required this.onEasier,
     required this.onHarder,
+    this.onRescan,
   });
 
   @override
@@ -55,6 +59,11 @@ class _LevelRow extends StatelessWidget {
               ),
               FilterPill(label: '簡單一點', onTap: onEasier),
               FilterPill(label: '難一點', onTap: onHarder),
+              FilterPill(
+                key: const ValueKey('rescan-tags'),
+                label: '重新掃描標籤',
+                onTap: onRescan,
+              ),
             ],
           ),
         ],

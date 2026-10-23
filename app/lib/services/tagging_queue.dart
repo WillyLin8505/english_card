@@ -351,6 +351,7 @@ class TaggingQueue extends ChangeNotifier {
   }
 
   final _toppingUp = <String, Future<int>>{};
+  final _toppingFocus = <String, String?>{};
   final _asked = <String>{};
 
   bool isToppingUp(String photoId) => _toppingUp.containsKey(photoId);
@@ -360,6 +361,11 @@ class TaggingQueue extends ChangeNotifier {
   /// pictures (卡片集) count too — they have their image (問題回報 #666).
   bool canAskMore(Photo photo) =>
       settings.taggingConfigured && photo.scanMode.findsObjects;
+
+  /// Whether 重新掃描標籤 (問題回報 #670) can read [photo] again: things in
+  /// it need a recognizer, text needs the phone's reader.
+  bool canRescan(Photo photo) =>
+      canAskMore(photo) || (photo.scanMode.findsText && TextScan.available);
 
   /// Whether more candidates of [focus] can still be asked for.
   bool canTopUp(Photo photo, String focus) =>
@@ -371,12 +377,19 @@ class TaggingQueue extends ChangeNotifier {
   /// adds them to its pool (spec: 候選不足才重新呼叫模型). Returns how many
   /// new words arrived; each focus is asked for once per photo — unless the
   /// request failed (offline, server error), then it can be tried again.
+  /// [again]: the learner tapped 多看動詞 / 難一點 (問題回報 #671), so the
+  /// photo is scanned for that kind every time; the same request already
+  /// on its way is waited for instead of sent twice.
   /// A request while another one for the photo runs waits for it first
   /// (問題回報 #666: the learner's tap must not be dropped as "nothing").
   Future<int> topUp(String photoId,
-      {required String focus, required String level}) async {
-    final running = _toppingUp[photoId];
-    if (running != null) {
+      {required String focus,
+      required String level,
+      bool again = false}) async {
+    for (var running = _toppingUp[photoId];
+        running != null;
+        running = _toppingUp[photoId]) {
+      if (again && _toppingFocus[photoId] == focus) return running;
       try {
         await running;
       } catch (_) {
@@ -386,22 +399,71 @@ class TaggingQueue extends ChangeNotifier {
     final repo = repository();
     final photo = repo.photo(photoId);
     if (photo == null ||
-        _toppingUp.containsKey(photoId) ||
-        !canTopUp(photo, focus)) {
+        !(again ? canAskMore(photo) : canTopUp(photo, focus))) {
       return 0;
     }
     final key = '$photoId|$focus';
     _asked.add(key);
-    final request = _topUp(repo, photo, focus: focus, level: level);
-    _toppingUp[photoId] = request;
-    notifyListeners();
     try {
-      return await request;
+      return await _run(photoId, focus,
+          () => _topUp(repo, photo, focus: focus, level: level));
     } catch (_) {
       _asked.remove(key);
       rethrow;
+    }
+  }
+
+  /// 重新掃描標籤 (問題回報 #670): the whole photo is read again, without a
+  /// focus, asking for words its pool doesn't have yet. New ones join the
+  /// pool — nothing in it is replaced — and are returned.
+  Future<List<String>> rescan(String photoId) async {
+    for (var running = _toppingUp[photoId];
+        running != null;
+        running = _toppingUp[photoId]) {
+      try {
+        await running;
+      } catch (_) {
+        // That request's caller reports it.
+      }
+    }
+    final repo = repository();
+    final photo = repo.photo(photoId);
+    if (photo == null) return const [];
+    if (!canRescan(photo)) throw TaggingNotConfigured();
+    final level = cefrLevels[(repo.profile.level + photo.difficultyOffset)
+        .clamp(0, cefrLevels.length - 1)];
+    final fresh = <String>[];
+    await _run(photoId, null, () async {
+      final found = await _request(photo,
+          level: level, exclude: [for (final c in photo.candidates) c.word]);
+      final latest = repo.photo(photo.id);
+      if (latest == null) return 0;
+      final merged = _merge(latest.candidates, found);
+      fresh.addAll([
+        for (final c in merged.skip(latest.candidates.length)) c.word,
+      ]);
+      repo.updatePhoto(latest.copyWith(
+        candidates: merged,
+        taggingStatus: TaggingStatus.done,
+        safetyStatus: PhotoSafetyStatus.safe,
+        taggingError: () => null,
+      ));
+      return fresh.length;
+    });
+    return fresh;
+  }
+
+  Future<int> _run(
+      String photoId, String? focus, Future<int> Function() ask) async {
+    final request = ask();
+    _toppingUp[photoId] = request;
+    _toppingFocus[photoId] = focus;
+    notifyListeners();
+    try {
+      return await request;
     } finally {
       _toppingUp.remove(photoId);
+      _toppingFocus.remove(photoId);
       if (!_disposed) notifyListeners();
     }
   }

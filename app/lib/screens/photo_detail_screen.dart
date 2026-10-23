@@ -725,10 +725,14 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                 const SizedBox(height: 4),
                 _LevelRow(
                   bias: session.bias,
-                  busy: topping || session.fetchingMore != null,
-                  busyLabel: session.fetchingMore == null
-                      ? null
-                      : 'AI 正在找更多${PhotoWordSession.focusLabel(session.fetchingMore!)}…',
+                  busy: topping ||
+                      session.fetchingMore != null ||
+                      session.rescanning,
+                  busyLabel: session.rescanning
+                      ? 'AI 正在重新掃描…'
+                      : session.fetchingMore == null
+                          ? null
+                          : 'AI 正在找更多${PhotoWordSession.focusLabel(session.fetchingMore!)}…',
                   onBias: session.setBias,
                   onEasier: session.target > 0
                       ? () => session.setTarget(session.target - 1)
@@ -736,6 +740,8 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                   onHarder: session.target < cefrLevels.length - 1
                       ? () => session.setTarget(session.target + 1)
                       : null,
+                  // 問題回報 #670: read the whole photo again.
+                  onRescan: session.rescanning ? null : session.rescan,
                 ),
               ],
             ),
