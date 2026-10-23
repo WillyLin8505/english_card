@@ -10,8 +10,10 @@ import 'word_candidate.dart';
 /// tagger is reachable again; nobody is notified.
 enum TaggingStatus { none, pending, tagging, done, failed }
 
-/// New user photos stay hidden until the combined safety and label pass
-/// accepts them. Legacy and bundled photos default to safe.
+/// New user photos start [unchecked] until the combined safety and label
+/// pass accepts them; they are shown in the 相片冊 meanwhile (問題回報
+/// #640). A photo the server rejects as unsafe (HTTP 451) is deleted, not
+/// kept with a status. Legacy and bundled photos default to safe.
 enum PhotoSafetyStatus { unchecked, safe }
 
 /// Where a photo's pixels live. Exactly one of these is set, checked in

@@ -328,16 +328,19 @@ class WordDatabaseRepository extends ChangeNotifier {
   CardTemplate get template => _template;
   UserVocabularyProfile get profile => _profile;
 
-  /// Newest first.
-  List<Photo> get photos => ([
-        for (final p in _photos)
-          if (p.safetyStatus == PhotoSafetyStatus.safe) p
-      ]..sort((a, b) => b.takenAt.compareTo(a.takenAt)));
-
-  /// Includes photos waiting for their first safety check. Queue use only;
-  /// screens and cards use [photos], so unchecked pixels never appear.
-  List<Photo> get allPhotos =>
+  /// Newest first. Photos still waiting for their first safety check
+  /// ([PhotoSafetyStatus.unchecked]: queued offline, no tagger, or the
+  /// tagger failed) are shown too (問題回報 #640, owner chose A): they used
+  /// to stay hidden forever when tagging never succeeded. Only the photos
+  /// the server rejects as unsafe (HTTP 451) are hidden, and TaggingQueue
+  /// removes those from the repository outright, so nothing here can show
+  /// them.
+  List<Photo> get photos =>
       [..._photos]..sort((a, b) => b.takenAt.compareTo(a.takenAt));
+
+  /// Same as [photos]; kept for the queue and the duplicate check, which
+  /// read every photo whatever its safety state.
+  List<Photo> get allPhotos => photos;
 
   List<Album> get albums => List.unmodifiable(_albums);
 

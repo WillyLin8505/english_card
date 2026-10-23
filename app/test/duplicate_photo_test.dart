@@ -31,7 +31,7 @@ void main() {
     expect(intake.findDuplicate(bytes('same')), isNull);
     final photo = await intake.addPhoto(bytes('same'), title: '第一張');
     expect(photo.contentHash, PhotoIntake.hashBytes(bytes('same')));
-    // Still awaiting its safety check — not in repo.photos yet.
+    // Still awaiting its safety check, but already listed (#640).
     expect(photo.safetyStatus, PhotoSafetyStatus.unchecked);
     expect(intake.findDuplicate(bytes('same'))?.id, photo.id);
     expect(intake.findDuplicate(bytes('other')), isNull);

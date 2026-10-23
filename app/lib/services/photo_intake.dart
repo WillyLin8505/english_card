@@ -82,7 +82,6 @@ class PhotoIntake {
   /// second copy). Bundled samples and pre-hash photos never match.
   Photo? findDuplicate(Uint8List bytes) {
     final hash = hashBytes(bytes);
-    // allPhotos: a photo added a moment ago still awaits its safety check.
     return repository()
         .allPhotos
         .where((p) => p.contentHash != null && p.contentHash == hash)
