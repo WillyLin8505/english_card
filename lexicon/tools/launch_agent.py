@@ -291,6 +291,16 @@ def main():
     model = None
     level = card_level(t)
     tuned_model, effort = tuned_for(a.agent, level)
+    if kind == "claude" and level == 4:
+        # owner 10/23 (token savings): an auto-graded 極難 card runs on Opus; Fable only for
+        # the cards listed in agent_capabilities.json fable_cards
+        try:
+            from card_difficulty import load_capabilities
+            fable = int(a.card) in set(load_capabilities().get("fable_cards", []))
+        except Exception:  # noqa: BLE001
+            fable = False
+        if not fable:
+            tuned_model = "claude-opus-5-5"
     if kind == "codex":
         cmd = [CODEX, "exec", "-s", "danger-full-access"]
         if effort:

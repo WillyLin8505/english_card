@@ -1,62 +1,148 @@
 {
   "_doc": "Which board cards each AI may take (card #156). difficulty: 1 簡單 · 2 中等 · 3 困難 · 4 極難. pick_card.py and launch_agent.py read this file; the board's AI 機器人 panel shows it (GET /api/schedule/agents-info). Edit here, no restart needed for tools; the API re-reads it every 60 s.",
   "levels": {
-    "1": {"label": "簡單", "meaning": "機械式、單一檔案或只跑既有腳本回報數字；不改資料"},
-    "2": {"label": "中等", "meaning": "單一模組的修正或常態檢查，有測試可依循；資料風險低"},
-    "3": {"label": "困難", "meaning": "跨模組、要找根因、或會批次改資料（需備份＋golden/QC）"},
-    "4": {"label": "極難", "meaning": "系統性重構、架構或流程決策、需要大量判斷與使用者體驗評估"}
+    "1": {
+      "label": "簡單",
+      "meaning": "機械式、單一檔案或只跑既有腳本回報數字；不改資料"
+    },
+    "2": {
+      "label": "中等",
+      "meaning": "單一模組的修正或常態檢查，有測試可依循；資料風險低"
+    },
+    "3": {
+      "label": "困難",
+      "meaning": "跨模組、要找根因、或會批次改資料（需備份＋golden/QC）"
+    },
+    "4": {
+      "label": "極難",
+      "meaning": "系統性重構、架構或流程決策、需要大量判斷與使用者體驗評估"
+    }
   },
   "agents": {
     "Claude Code": {
-      "match": ["Claude"],
+      "match": [
+        "Claude"
+      ],
       "max_difficulty": 4,
       "prefer_min_difficulty": 3,
       "cost_tier": "高（週額度最少，留給難題）",
-      "strengths": ["跨模組根因分析", "資料遷移與批次修正", "模擬使用者／UX 判斷", "極難卡"],
-      "avoid": ["純機械的常態掃描（浪費週額度）"],
+      "strengths": [
+        "跨模組根因分析",
+        "資料遷移與批次修正",
+        "模擬使用者／UX 判斷",
+        "極難卡"
+      ],
+      "avoid": [
+        "純機械的常態掃描（浪費週額度）"
+      ],
       "_model_note": "使用者 10/18：不固定模型，依卡片難度自動選（簡單 Haiku、中等 Sonnet、困難 Opus、極難 Fable）。",
-      "models_by_difficulty": {"1": "claude-haiku-5-5", "2": "claude-sonnet-5-5", "3": "claude-opus-5-5", "4": "claude-fable-5-1"}
+      "models_by_difficulty": {
+        "1": "claude-haiku-5-5",
+        "2": "claude-sonnet-5-5",
+        "3": "claude-opus-5-5",
+        "4": "claude-fable-5-1"
+      }
     },
     "Codex": {
-      "match": ["Codex"],
+      "match": [
+        "Codex"
+      ],
       "max_difficulty": 3,
       "prefer_min_difficulty": 2,
       "cost_tier": "中",
-      "strengths": ["中難度程式修改＋測試", "後端/Flutter bug 修正", "QC 與 golden 驗證"],
-      "avoid": ["需要大量產品判斷的極難卡"],
-      "reasoning_effort_by_difficulty": {"1": "low", "2": "medium", "3": "high", "4": "high"}
+      "strengths": [
+        "中難度程式修改＋測試",
+        "後端/Flutter bug 修正",
+        "QC 與 golden 驗證"
+      ],
+      "avoid": [
+        "需要大量產品判斷的極難卡"
+      ],
+      "reasoning_effort_by_difficulty": {
+        "1": "low",
+        "2": "medium",
+        "3": "high",
+        "4": "high"
+      }
     },
     "Cursor CLI": {
-      "match": ["Cursor"],
+      "match": [
+        "Cursor"
+      ],
       "max_difficulty": 3,
       "prefer_min_difficulty": 1,
       "cost_tier": "低（Cursor Models 方案內額度）",
-      "strengths": ["常態檢查與回報", "中等程式修改", "困難卡在 Claude/Codex 沒額度時可接（用 grok-4.7-high）"],
-      "avoid": ["極難卡", "第三方模型（另計費）"],
-      "models_by_difficulty": {"1": "grok-4.7-low", "2": "grok-4.7-medium", "3": "grok-4.7-high", "4": "grok-4.7-xhigh"}
+      "strengths": [
+        "常態檢查與回報",
+        "中等程式修改",
+        "困難卡在 Claude/Codex 沒額度時可接（用 grok-4.7-high）"
+      ],
+      "avoid": [
+        "極難卡",
+        "第三方模型（另計費）"
+      ],
+      "models_by_difficulty": {
+        "1": "grok-4.7-low",
+        "2": "grok-4.7-medium",
+        "3": "grok-4.7-high",
+        "4": "grok-4.7-xhigh"
+      }
     },
     "Qwen": {
-      "match": ["Qwen"],
+      "match": [
+        "Qwen"
+      ],
       "max_difficulty": 0,
       "cost_tier": "免費（本機）",
-      "strengths": ["圖片標籤", "標籤評分", "翻譯"],
-      "avoid": ["看板卡片（不接卡，只跑背景佇列）"],
+      "strengths": [
+        "圖片標籤",
+        "標籤評分",
+        "翻譯"
+      ],
+      "avoid": [
+        "看板卡片（不接卡，只跑背景佇列）"
+      ],
       "dispatchable": false
     },
     "Grokbot": {
-      "match": ["Grokbot"],
+      "match": [
+        "Grokbot"
+      ],
       "max_difficulty": 2,
       "cost_tier": "中（Grok Bot 用量）",
-      "strengths": ["派工與看板維護", "小型工具與設定修改"],
-      "avoid": ["長時間程式工作（交給上面三個 AI）"],
+      "strengths": [
+        "派工與看板維護",
+        "小型工具與設定修改"
+      ],
+      "avoid": [
+        "長時間程式工作（交給上面三個 AI）"
+      ],
       "dispatchable": false
     }
   },
-  "night_only_tasks": [167],
+  "night_only_tasks": [
+    167
+  ],
   "_night_166_note": "owner 10/18 晚：Qwen 暫停期間 #166 改由 Claude 直接寫例句，不再限夜間。",
-  "night_window": {"start": "01:00", "end": "07:00", "tz": "Asia/Taipei"},
+  "night_window": {
+    "start": "01:00",
+    "end": "07:00",
+    "tz": "Asia/Taipei"
+  },
   "_night_note": "使用者 10/17 決定：吃 Qwen 的卡（#166 例句重寫、#167 照片標籤綁定）只在夜間 01:00–07:00（台北）派；其他時間 pick_card.py 跳過，手動派工前用 pick_card.py --check-task <id> 確認（卡 #172）。",
-  "skip_tasks": [13, 27],
-  "skip_issues": [192, 202, 203, 204, 205, 206],
-  "_skip_note": "#13 是 Grokbot 自己的派工巡檢；#27 很吃 Ollama，先跳過；問題回報 #192、#202–206 依使用者決定跳過。"
+  "skip_tasks": [
+    13,
+    27
+  ],
+  "skip_issues": [
+    192,
+    202,
+    203,
+    204,
+    205,
+    206
+  ],
+  "_skip_note": "#13 是 Grokbot 自己的派工巡檢；#27 很吃 Ollama，先跳過；問題回報 #192、#202–206 依使用者決定跳過。",
+  "fable_cards": [],
+  "_fable_note": "owner 10/23 省 token：極難卡預設用 Opus；只有列在 fable_cards 的卡用 Fable。"
 }

@@ -113,7 +113,9 @@ def checks() -> tuple[bool, str]:
 
 def report_failure(text: str, cards: list[dict]):
     items = http("GET", "/issues").get("items", [])
-    open_ = [i for i in items if i.get("title") == FAIL_TITLE and i.get("status") not in ("fixed", "wont_fix")]
+    # owner 10/23 (token savings): one issue for every test failure — reopen the latest one,
+    # even after it was fixed, instead of opening a new issue (and a new CLI) each time
+    open_ = sorted((i for i in items if i.get("title") == FAIL_TITLE), key=lambda i: i["id"], reverse=True)
     detail = (f"mac_sync {datetime.now(TAIPEI):%m/%d %H:%M}：等著推給 Mac 的卡 "
               f"{'、'.join('#' + str(c['card']) for c in cards)}，但 Windows 上檢查沒過，所以沒有 push。\n{text}\n"
               "修到 flutter analyze 無 error、flutter test 全過；不要為了過而刪測試。")

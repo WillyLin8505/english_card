@@ -55,12 +55,14 @@ API = "http://127.0.0.1:5173/api"
 TAIPEI = timezone(timedelta(hours=8))
 AGENTS = ["Claude Code", "Codex", "Cursor CLI"]
 SWARM_PREFIX = "Claude CLI "
+CODEX_PREFIX = "Codex CLI "  # owner 10/23: Codex has plenty of tokens — its own parallel CLIs
 MAC_PREFIX = "[給 Mac]"
 
 
 def is_swarm(agent: str | None) -> bool:
-    """An issue-swarm Claude CLI ("Claude CLI 3"); shares Claude Code's quota."""
-    return bool(agent) and agent.startswith(SWARM_PREFIX) and agent[len(SWARM_PREFIX):].isdigit()
+    """An issue-swarm CLI: "Claude CLI 3" (Claude Code's quota) or "Codex CLI 2" (Codex's)."""
+    return bool(agent) and any(agent.startswith(p) and agent[len(p):].isdigit()
+                               for p in (SWARM_PREFIX, CODEX_PREFIX))
 
 
 def is_card_alias(agent: str | None) -> bool:
@@ -70,13 +72,15 @@ def is_card_alias(agent: str | None) -> bool:
 
 
 def quota_agent(agent: str) -> str:
+    if agent.startswith(CODEX_PREFIX):
+        return "Codex"
     return "Claude Code" if is_swarm(agent) or is_card_alias(agent) else agent
 
 
-def free_slot(used: set[str], limit: int) -> str | None:
+def free_slot(used: set[str], limit: int, prefix: str = SWARM_PREFIX) -> str | None:
     for n in range(1, limit + 1):
-        if f"{SWARM_PREFIX}{n}" not in used:
-            return f"{SWARM_PREFIX}{n}"
+        if f"{prefix}{n}" not in used:
+            return f"{prefix}{n}"
     return None
 NO_WINDOW = 0x08000000
 BREAKAWAY = 0x01000000
@@ -792,11 +796,14 @@ class Tick:
         cfg = self.cfg.get("issue_swarm") or {}
         if not cfg.get("enabled"):
             return set()
-        if self.limited("Claude Code"):
-            log("issue swarm: Claude quota exhausted → wait")
-            return set()
         from pick_card import candidates
         bots = {b.get("agent"): b for b in board.get("bots", [])}
+        claude_ok = not self.limited("Claude Code")
+        codex_n = int(cfg.get("codex_parallel", 0))
+        codex_ok = bool(codex_n) and not self.limited("Codex") and not (bots.get("Codex") or {}).get("paused")
+        if not (claude_ok or codex_ok):
+            log("issue swarm: Claude and Codex quota exhausted → wait")
+            return set()
         used = {r["agent"] for r in self.state["runs"].values() if is_swarm(r["agent"])}
         used |= {a for a, b in bots.items() if is_swarm(a) and (b.get("paused") or any(
             t.get("status") == "in_progress" for t in b.get("doing", [])))}
@@ -861,10 +868,16 @@ class Tick:
         issues = [c for c in issues if not self.prior_busy(c.get("task_id"))]
         taken = set()
         for c in issues:
-            agent = free_slot(used, limit)
+            # Codex first for cards it may take (≤ 3), Claude for the rest and when Codex is full
+            agent = (free_slot(used, codex_n, CODEX_PREFIX)
+                     if codex_ok and int(c.get("difficulty") or 3) <= 3 else None)
+            if not agent and claude_ok:
+                agent = free_slot(used, limit)
             if not agent:
-                log(f"issue swarm: {limit} Claude CLIs busy, {len(issues) - len(taken)} issue(s) wait")
-                break
+                if claude_ok:
+                    log(f"issue swarm: {limit} Claude CLIs busy, {len(issues) - len(taken)} issue(s) wait")
+                    break
+                continue
             used.add(agent)
             taken.add(c["key"])
             self.launch(agent, c)
