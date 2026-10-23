@@ -779,14 +779,7 @@ class FlashcardSession extends ChangeNotifier {
         // shown; then the Again card comes back early rather than repeating.
         // A word that reached [maxRunAppearances] waits for FSRS, not for
         // this pool (問題回報 #319); when no word is left the run ends.
-        final pool = [
-          for (final c in repo.eligibleCards(includeFuture: true))
-            if (!_again.containsKey(c.id) && !_worn(c.id) && _inRun(c.id)) c,
-        ];
-        final practice = pool..shuffle(_random);
-        practice.sort(
-            (a, b) => (_shownAt[a.id] ?? -1).compareTo(_shownAt[b.id] ?? -1));
-        final best = practice.firstOrNull;
+        final best = _practiceQueue().firstOrNull;
         if (best != null &&
             (_again.isEmpty ||
                 _step - (_shownAt[best.id] ?? -againGap) >= againGap)) {
@@ -861,8 +854,46 @@ class FlashcardSession extends ChangeNotifier {
   }
 
   /// Planned photos of likely next cards, including their swipe neighbours.
+  /// Extra practice's order: shuffled once per run (not on every pick), so
+  /// the cards coming next are known and their photos can be loaded ahead
+  /// (問題回報 #650: a practice card's photo took 1.5 s to appear).
+  final _practiceRank = <String, int>{};
+
+  List<LearningCard> _practiceQueue() {
+    final pool = [
+      for (final c in repo.eligibleCards(includeFuture: true))
+        if (!_again.containsKey(c.id) && !_worn(c.id) && _inRun(c.id)) c,
+    ];
+    final unranked = [
+      for (final c in pool)
+        if (!_practiceRank.containsKey(c.id)) c.id
+    ]..shuffle(_random);
+    for (final id in unranked) {
+      _practiceRank[id] = _practiceRank.length;
+    }
+    return pool
+      ..sort((a, b) {
+        final shown = (_shownAt[a.id] ?? -1).compareTo(_shownAt[b.id] ?? -1);
+        return shown != 0
+            ? shown
+            : _practiceRank[a.id]!.compareTo(_practiceRank[b.id]!);
+      });
+  }
+
   List<Photo> upcomingPhotos({int cards = 3, int perCard = 2}) {
     final now = repo.clock();
+    // Nothing due: extra practice goes by its own order (#650).
+    if (continuous &&
+        repo
+            .eligibleCards(newLimit: newLimit, reviewLimit: reviewLimit)
+            .where((c) => _inRun(c.id))
+            .isEmpty) {
+      return [
+        for (final c
+            in _practiceQueue().where((c) => c.id != _cardId).take(cards))
+          for (final o in _previewPhotos(c.wordEntryId).take(perCard)) o.$1,
+      ];
+    }
     final eligible = [
       for (final c
           in repo.eligibleCards(newLimit: newLimit, reviewLimit: reviewLimit))
