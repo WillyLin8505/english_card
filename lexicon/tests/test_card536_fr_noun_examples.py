@@ -24,7 +24,27 @@ def test_object_pronoun_and_verb_uses_stay():
                          frozenset(PLACER - {"placer"})) != "other"
 
 
+LIVRER = {"livrer", "livre", "livres", "livrons", "livrez", "livrent", "livré", "livrant"}
+
+
+def test_adverb_and_partitive_before_the_adjective():
+    only = frozenset(LIVRER - {"livrer"})
+    for t in ("C'est un très petit livre.", "De nombreux livres furent volés.",
+              "Tu as de nombreux livres.", "Il a d'autres livres."):
+        assert _usage_pos_fr(t, LIVRER, only) == "other", t
+    for t in ("Il livre de nouveau.", "Le paquet a été livré hier.", "On le livre très vite."):
+        assert _usage_pos_fr(t, LIVRER, only) == "verb", t
+
+
 def test_pronoun_before_a_form_that_is_no_noun():
     only = frozenset(STOPPER - {"stopper"})
     assert _usage_pos_fr("Comment le stoppons-nous ?", STOPPER, only) == "verb"
     assert _usage_pos_fr("Je ne veux pas que quelqu'un stoppe ça.", STOPPER, only) == "verb"
+
+
+def test_second_sentence_and_quelque():
+    only = frozenset(LIVRER - {"livrer"})
+    for t in ("Mon oncle m'a donné un livre hier. Voici le livre.",
+              "Quelque livre que tu lises, lis-le avec attention."):
+        assert _usage_pos_fr(t, LIVRER, only) == "other", t
+    assert _usage_pos_fr("Hier, Marie la place ici.", PLACER, frozenset(PLACER - {"placer"})) != "other"

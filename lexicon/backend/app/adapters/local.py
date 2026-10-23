@@ -769,6 +769,45 @@ def derived_affix_ipa(word: str) -> list[dict]:
     return out[:3]
 
 
+# Respelled or syllable-dotted base IPA (ˌantɪjklɑj, ˌæn.θɹoʊ) is not copied into a derivative.
+_ODD_IPA = re.compile(r"[.()]|[aɪ]j")
+
+
+def stress_suffix_ipa(word: str) -> list[dict]:
+    """Two suffixes whose stress effect is regular (問題回報 #209, card 551):
+    -ically = base-ic + ally (chaotic → chaotically, same stress, ends -ɪkli) and
+    -isation/-ization = base-ise/-ize + ation (main stress moves to the
+    -ation syllable, the base's own main stress becomes secondary).
+    The base must already have phonemic IPA; the value is an estimate."""
+    w = word.lower()
+    out: list[dict] = []
+    if w.endswith("ically") and len(w) > 9:
+        base = w[:-4]
+        for row in _base_phonemic(base):
+            body = row["ipa"].strip("/")
+            if body.endswith("ɪk") and not _ODD_IPA.search(body):
+                out.append({"ipa": f"/{body}li/", "accent": row.get("accent") or [],
+                            "composed": True, "estimate": True, "base": f"{base} + -ally",
+                            "derived": "spelling"})
+    m_ = re.fullmatch(r"([a-z]{4,})(is|iz)ation", w)
+    if m_:
+        for verb in (m_.group(1) + "ise", m_.group(1) + "ize"):
+            for row in _base_phonemic(verb):
+                body = row["ipa"].strip("/")
+                if not body.endswith("aɪz") or "ˈ" not in body or _ODD_IPA.search(body):
+                    continue
+                body = body.replace("ˈ", "ˌ")[:-1] + "ˈzeɪʃən"
+                out.append({"ipa": f"/{body}/", "accent": row.get("accent") or [],
+                            "composed": True, "estimate": True, "base": f"{verb} + -ation",
+                            "derived": "spelling"})
+    seen, uniq = set(), []
+    for r in out:
+        if r["ipa"] not in seen:
+            seen.add(r["ipa"])
+            uniq.append(r)
+    return uniq[:3]
+
+
 @lru_cache(maxsize=20_000)
 def _family_cap(word: str, language: str) -> int | None:
     """One level above the word's base's listed level (sunny <= sun + 1;
@@ -1030,7 +1069,8 @@ class LocalCalc(SourceAdapter):
             # with the suffix's sound; else a derivative's parts (frother,
             # 問題回報 #291), an estimate with a lower confidence.
             for v in (inflected_ipa(ctx.lemma) or derived_adjective_ipa(ctx.lemma)
-                      or linked_base_ipa(ctx.lemma) or derived_affix_ipa(ctx.lemma)):
+                      or linked_base_ipa(ctx.lemma) or derived_affix_ipa(ctx.lemma)
+                      or stress_suffix_ipa(ctx.lemma)):
                 C.append(Candidate(f, "en", v, v["ipa"],
                                    confidence=0.5 if v.get("estimate") else 0.6,
                                    source_record_id=ctx.lemma))
@@ -1246,7 +1286,7 @@ _FR_PREPOSITIONS = {"de", "d", "sur", "sous", "avec", "sans", "par", "pour", "ch
                     "contre", "dans", "entre", "à", "selon", "malgré", "parmi"}
 _FR_NOUN_DET = {"un", "une", "des", "du", "au", "aux", "cet", "cette", "ces", "mon", "ma", "mes",
                 "ton", "ta", "tes", "son", "sa", "ses", "notre", "votre", "nos", "vos", "leurs",
-                "quel", "quelle", "quels", "quelles", "chaque", "plusieurs", "quelques", "aucun",
+                "quel", "quelle", "quels", "quelles", "chaque", "plusieurs", "quelque", "quelques", "aucun",
                 "aucune", "nul", "nulle", "certains", "certaines", "divers", "diverses",
                 } | _FR_NUMBERS | _FR_PREPOSITIONS
 _FR_ARTICLE = {"le", "la", "les", "l"}
@@ -1254,6 +1294,10 @@ _FR_ARTICLE = {"le", "la", "les", "l"}
 # «ne la place pas», «qui les force», «te l'adresse».
 _FR_CLITIC_HOSTS = {"je", "j", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles", "ne", "n",
                     "me", "m", "te", "t", "se", "s", "lui", "y", "en", "qui"}
+# Capitalised words that open a sentence rather than name someone.
+_FR_SENTENCE_START = {"voici", "voilà", "et", "mais", "puis", "alors", "donc", "ensuite", "enfin",
+                      "oui", "non", "regarde", "regardez", "prends", "prenez", "donne", "donnez",
+                      "où", "quand", "comme", "c", "ça", "cela", "ceci"}
 # Adjectives that stand before the noun: «un petit masque», «la grande place».
 _FR_PRENOMINAL = {
     "petit", "petite", "petits", "petites", "grand", "grande", "grands", "grandes", "bon", "bonne",
@@ -1264,7 +1308,10 @@ _FR_PRENOMINAL = {
     "mêmes", "seul", "seule", "seuls", "seules", "vrai", "vraie", "vrais", "vraies", "joli", "jolie",
     "jolis", "jolies", "long", "longue", "longs", "longues", "haut", "haute", "meilleur",
     "meilleure", "meilleurs", "meilleures", "pire", "double", "simple", "deuxième", "troisième",
-    "énorme", "énormes", "excellent", "excellente", "gentil", "gentille", "immense", "large"}
+    "énorme", "énormes", "excellent", "excellente", "gentil", "gentille", "immense", "large",
+    "nombreux", "nombreuses", "chouette", "chouettes", "faux", "fausse", "fausses"}
+# un très petit livre, une si belle fête: a degree adverb before that adjective.
+_FR_DEGREE = {"très", "si", "trop", "assez", "aussi", "plus", "moins", "bien", "tout", "toute"}
 
 
 def _fr_det_led(toks: list[str], cased: list[str], i: int) -> bool:
@@ -1286,15 +1333,24 @@ def _fr_det_led(toks: list[str], cased: list[str], i: int) -> bool:
         if j == 0:
             return True
         host = toks[j - 1]
-        name = j - 1 > 0 and cased[j - 1][:1].isupper()
+        # «Voici le livre.» mid-text: a capital after a full stop, not a name (#575)
+        name = j - 1 > 0 and cased[j - 1][:1].isupper() and host not in _FR_SENTENCE_START
         return host not in _FR_CLITIC_HOSTS and not name
     if i and toks[i - 1] in _FR_NUMBERS and toks[i].endswith(("é", "ée", "és", "ées")):
         return False  # cinq divisé par trois
     if det(i - 1):
         return True
     # un petit masque — not «à nouveau enfermé», «de même placé»
-    return (i > 1 and toks[i - 1] in _FR_PRENOMINAL and toks[i - 2] not in _FR_PREPOSITIONS
-            and det(i - 2))
+    # de nombreux livres, d'autres places: a plural adjective after de is partitive (#575)
+    if i > 1 and toks[i - 1] in _FR_PRENOMINAL and toks[i - 1].endswith(("s", "x")) \
+            and toks[i - 2] in ("de", "d") and toks[i - 1] not in ("plus", "mauvais", "gros"):
+        return True
+    if i > 1 and toks[i - 1] in _FR_PRENOMINAL and toks[i - 2] not in _FR_PREPOSITIONS:
+        if det(i - 2):
+            return True
+        # un très petit livre (#575)
+        return i > 2 and toks[i - 2] in _FR_DEGREE and det(i - 3)
+    return False
 
 
 def _fr_other_lemma(form: str) -> bool:

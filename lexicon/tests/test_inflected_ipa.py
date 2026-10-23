@@ -84,3 +84,12 @@ def test_local_calc_offers_it_as_ipa(monkeypatch):
     cands = LocalCalc().normalize("ipa", None, Context("en", "zh-TW", "drizzled", "drizzled"))
     assert [(c.value["ipa"], c.value["composed"], c.value["base"]) for c in cands] \
         == [("/ˈdɹɪzəld/", True, "drizzle")]
+
+
+def test_stress_suffix_ipa_card551():
+    from app.adapters.local import stress_suffix_ipa
+    got = {v["ipa"] for v in stress_suffix_ipa("chaotically")}
+    assert "/keɪˈɒtɪkli/" in got
+    assert any(v.endswith("aɪˈzeɪʃən/") for v in (x["ipa"] for x in stress_suffix_ipa("neutralisation")))
+    assert stress_suffix_ipa("anticlimactically") == []
+    assert stress_suffix_ipa("table") == []
