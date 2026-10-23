@@ -39,7 +39,37 @@ class PhotoStore {
     final dir =
         Directory('${docs.path}${Platform.pathSeparator}english_card_photos');
     await dir.create(recursive: true);
+    photosDirectory = dir.path;
     return PhotoStore._(null, dir);
+  }
+
+  /// This install's photo folder. iOS gives the app a new container path on
+  /// every install and update, so a saved [Photo.filePath] can name a folder
+  /// that is gone while the picture is still here (問題回報 #614).
+  @visibleForTesting
+  static String? photosDirectory;
+
+  static final _resolved = <String, String>{};
+
+  /// Where [path] (a saved [Photo.filePath]) is on this install: the path
+  /// itself when it exists, else the same file name in [photosDirectory].
+  static String localPath(String path) {
+    if (kIsWeb) return path;
+    final known = _resolved[path];
+    if (known != null) return known;
+    var found = path;
+    try {
+      final dir = photosDirectory;
+      if (!File(path).existsSync() && dir != null) {
+        final name = path.split(RegExp(r'[/\\]')).last;
+        final here = '$dir${Platform.pathSeparator}$name';
+        if (name.isNotEmpty && File(here).existsSync()) found = here;
+      }
+    } on FileSystemException {
+      // Keep [path]; lostOriginal reports it.
+    }
+    if (found != path || File(found).existsSync()) _resolved[path] = found;
+    return found;
   }
 
   /// Saves [bytes] for [photoId]. Returns where it went: a file path, or
@@ -69,8 +99,7 @@ class PhotoStore {
   /// Whether [photo]'s picture can be shown now. A photo whose original
   /// file is gone (deleted, or no permission to read it) cannot: callers
   /// show another picture of the word instead of a broken one (問題回報 #279).
-  static bool canShow(Photo photo) =>
-      photo.hasImage && !lostOriginal(photo);
+  static bool canShow(Photo photo) => photo.hasImage && !lostOriginal(photo);
 
   /// Whether [photo] points at an original file that is gone. Photos that
   /// never had a picture are not "lost": lists keep drawing their
@@ -79,7 +108,7 @@ class PhotoStore {
     final path = photo.filePath;
     if (path == null || kIsWeb) return false;
     try {
-      return !File(path).existsSync();
+      return !File(localPath(path)).existsSync();
     } on FileSystemException {
       return true;
     }
