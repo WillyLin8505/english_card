@@ -40,6 +40,7 @@ API = "http://127.0.0.1:5173/api"
 TAIPEI = timezone(timedelta(hours=8))
 APP_RE = re.compile(r"app/|flutter|\.dart\b|iOS|iPhone|畫面|Widget", re.I)
 FAIL_TITLE = "[Windows] flutter test 失敗：修好才會推給 Mac 驗證"
+TEST_FILE_RE = re.compile(r"(\S+?\.dart)(?::| \[E\])")
 FLUTTER = "flutter.bat" if os.name == "nt" else "flutter"
 NO_WINDOW = 0x08000000 if os.name == "nt" else 0
 
@@ -94,8 +95,19 @@ def checks() -> tuple[bool, str]:
     t = sh(FLUTTER, "test", cwd=APP, timeout=2400)
     tail = (t.stdout + t.stderr).strip().splitlines()[-1:] or [""]
     if t.returncode != 0:
-        failed = [l for l in (t.stdout + t.stderr).splitlines() if "[E]" in l][:15]
-        return False, "flutter test 失敗：" + tail[0] + "\n" + "\n".join(failed)
+        failed = [l for l in (t.stdout + t.stderr).splitlines() if "[E]" in l]
+        # Other agents run `flutter test` in the same app/ at the same time: their runs rebuild
+        # build/unit_test_assets under ours (missing AssetManifest.bin / ink_sparkle.frag) and
+        # load the CPU so waits time out (問題回報 #571). Rerun the failed files once, alone;
+        # only failures that repeat count.
+        files = sorted({m.group(1) for l in failed if (m := TEST_FILE_RE.search(l))})
+        if files and len(files) <= 25:
+            r = sh(FLUTTER, "test", "--concurrency=1", *files, cwd=APP, timeout=1800)
+            if r.returncode == 0:
+                return True, tail[0] + f"（{len(files)} 個測試檔重跑一次就過：同時有別的 flutter test 在跑）"
+            failed = [l for l in (r.stdout + r.stderr).splitlines() if "[E]" in l]
+            tail = (r.stdout + r.stderr).strip().splitlines()[-1:] or [""]
+        return False, "flutter test 失敗：" + tail[0] + "\n" + "\n".join(failed[:15])
     return True, tail[0]
 
 

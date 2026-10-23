@@ -77,7 +77,7 @@ void main() {
       (tester) async {
     for (var count = 0; count <= 3; count++) {
       await pumpTags(tester, count: count);
-      expect(find.byType(TextButton), findsNothing);
+      expect(find.textContaining('展開全部'), findsNothing);
       if (count > 0) {
         expect(find.text('A1-word$count · 意思$count'), findsOneWidget);
       }

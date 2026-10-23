@@ -2,8 +2,8 @@
  "schema_version": 5,
  "target_language": "en",
  "native_language": "zh-TW",
- "created_at": "fc609b3cf05b14e918bb65bd2ab6eda32df7b134f18c8cee22df8c49077a99eb",
- "bundled_at": "2026-10-23T06:54:48+0800",
+ "created_at": "01f91fa3cc503d0cfff9ee4a7ef864a6ea14e88a5d0f996ed4364f5bb5f2e575",
+ "bundled_at": "2026-10-23T11:27:04+0800",
  "bundle": "card268_bundle_pack.py",
  "settings": {
   "examples": 6,
@@ -15,24 +15,24 @@
  "counts": {
   "lexemes": 12813,
   "full": 12164,
-  "examples": 53195,
+  "examples": 53563,
   "relations": 230124,
   "recordings": 10214,
   "lexemes_with_picture": 4317,
   "catalog_images": 2600,
   "images_bytes": 47356336,
-  "pack_bytes": 80919185,
-  "source_created_at": "fc609b3cf05b14e918bb65bd2ab6eda32df7b134f18c8cee22df8c49077a99eb",
-  "source_bytes": 380576982,
-  "sqlite_bytes": 41414656
+  "pack_bytes": 81012511,
+  "source_created_at": "01f91fa3cc503d0cfff9ee4a7ef864a6ea14e88a5d0f996ed4364f5bb5f2e575",
+  "source_bytes": 380328909,
+  "sqlite_bytes": 41422848
  },
  "cefr": {
-  "A1": 1010,
-  "C1": 2021,
-  "B1": 2049,
-  "C2": 3179,
-  "B2": 2558,
-  "A2": 1305,
+  "A1": 1012,
+  "C1": 2035,
+  "B1": 2066,
+  "C2": 3128,
+  "B2": 2572,
+  "A2": 1309,
   "-": 42
  }
 }

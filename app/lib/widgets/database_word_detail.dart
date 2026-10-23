@@ -161,40 +161,7 @@ class DatabaseWordScreen extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
-                    onPressed: () {
-                      final repo = scope.repository;
-                      final messenger = ScaffoldMessenger.of(context)
-                        ..removeCurrentSnackBar();
-                      try {
-                        final added = repo.addWord(
-                            word: word.lemma,
-                            pos: shortPos(word.pos),
-                            meaning: word.learnerMeaning ?? '',
-                            level: word.cefr);
-                        // No Chinese yet: the card waits (問題回報 #44, #100).
-                        // Checked before linkLexicon: a form folded into an
-                        // existing card (問題回報 #51) drops this id, which
-                        // would otherwise read back as "no meaning yet"
-                        // even though it was added with one.
-                        final waiting = (repo.entry(added.id)?.meaning ?? '')
-                            .trim()
-                            .isEmpty;
-                        repo.linkLexicon(pack);
-                        messenger.showSnackBar(SnackBar(
-                            content: UiText(waiting
-                                ? '已加入我的單字本；{N}意思補齊後會自動排進複習'
-                                : '已加入我的單字本與複習')));
-                      } on DuplicateWordException {
-                        // Swiped away as 已學會 earlier: adding it again means
-                        // studying it again (問題回報 #99).
-                        final e = repo.entryByWord(word.lemma);
-                        final archived = e != null && repo.isArchived(e.id);
-                        if (archived) repo.restoreWord(e.word);
-                        messenger.showSnackBar(SnackBar(
-                            content: UiText(
-                                archived ? '已從「已學會」放回複習' : '這個單字已在我的單字本')));
-                      }
-                    },
+                    onPressed: () => addDatabaseWord(context, pack, word),
                     child: const UiText('加入我的單字本與複習')),
               ),
               const SizedBox(height: MSpace.md),
@@ -308,4 +275,51 @@ class DatabaseWordScreen extends StatelessWidget {
                         height: 240, child: DatabaseImageTile(image: image))),
             ]));
       });
+}
+
+/// Adds a pack word to 我的單字本 and review; shared by the word detail and
+/// the photo's tag list (問題回報 #577). Returns true when newly added.
+/// [quiet] skips the snackbar (bulk add reports once).
+bool addDatabaseWord(BuildContext context, LexiconPack pack, LexEntry word,
+    {bool quiet = false}) {
+  final repo = AppScope.of(context).repository;
+  final messenger = ScaffoldMessenger.of(context);
+  if (!quiet) messenger.removeCurrentSnackBar();
+  try {
+    final added = repo.addWord(
+        word: word.lemma,
+        pos: shortPos(word.pos),
+        meaning: word.learnerMeaning ?? '',
+        level: word.cefr);
+    // No Chinese yet: the card waits (問題回報 #44, #100). Checked before
+    // linkLexicon: a form folded into an existing card (問題回報 #51) drops
+    // this id, which would read back as "no meaning yet".
+    final waiting = (repo.entry(added.id)?.meaning ?? '').trim().isEmpty;
+    repo.linkLexicon(pack);
+    if (!quiet) {
+      messenger.showSnackBar(SnackBar(
+          content: UiText(waiting
+              ? '已加入我的單字本；{N}意思補齊後會自動排進複習'
+              : '已加入我的單字本與複習')));
+    }
+    return true;
+  } on DuplicateWordException {
+    // Swiped away as 已學會 earlier: adding it again means studying it
+    // again (問題回報 #99).
+    final e = repo.entryByWord(word.lemma);
+    final archived = e != null && repo.isArchived(e.id);
+    if (archived) repo.restoreWord(e.word);
+    if (!quiet) {
+      messenger.showSnackBar(SnackBar(
+          content: UiText(archived ? '已從「已學會」放回複習' : '這個單字已在我的單字本')));
+    }
+    return archived;
+  }
+}
+
+/// In 我的單字本 and not archived.
+bool databaseWordCollected(BuildContext context, LexEntry word) {
+  final repo = AppScope.of(context).repository;
+  final e = repo.entryByWord(word.lemma);
+  return e != null && !repo.isArchived(e.id);
 }

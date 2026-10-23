@@ -117,10 +117,21 @@ Future<TestApp> pumpApp(
 /// Lets real async work (HTTP mocks, microtasks) finish between frames.
 /// With [until], keeps going (up to [maxRounds]) until it holds: on a busy
 /// machine three 30 ms rounds are not enough for a save → tag chain
-/// (問題回報 #540).
+/// (問題回報 #540). [maxRounds] alone was still too short when mac_sync's full
+/// suite shared the CPU with other agents' runs (問題回報 #571), so it also
+/// waits at least [minWait] of real time before giving up.
 Future<void> settle(WidgetTester tester,
-    {int rounds = 3, bool Function()? until, int maxRounds = 200}) async {
-  for (var i = 0; i < rounds || (until != null && !until() && i < maxRounds); i++) {
+    {int rounds = 3,
+    bool Function()? until,
+    int maxRounds = 200,
+    Duration minWait = const Duration(seconds: 20)}) async {
+  final clock = Stopwatch()..start();
+  for (var i = 0;
+      i < rounds ||
+          (until != null &&
+              !until() &&
+              (i < maxRounds || clock.elapsed < minWait));
+      i++) {
     await tester
         .runAsync(() => Future<void>.delayed(const Duration(milliseconds: 30)));
     await tester.pumpAndSettle();

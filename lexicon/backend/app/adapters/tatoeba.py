@@ -21,7 +21,7 @@ from ..quality import example_flags
 from ..text import CJK, example_key, fold, looks_simplified, opencc
 from . import http
 from .base import Candidate, Context, SourceAdapter
-from .local import LEVELS, _usage_pos, _verb_only_forms, sentence_level, word_forms
+from .local import LEVELS, _usage_pos, _usage_pos_fr, _verb_only_forms, sentence_level, word_forms
 
 CODE3 = {"en": "eng", "fr": "fra", "zh-TW": "cmn"}
 EXPORTS = "https://downloads.tatoeba.org/exports/per_language"
@@ -185,6 +185,7 @@ class Tatoeba(SourceAdapter):
             buckets = {level: [] for level in LEVELS}
             forms = word_forms(ctx)
             form_list = list(forms)
+            verb_only = _verb_only_forms(ctx) if ctx.target == "fr" else frozenset()
             for s in sentences:
                 if ctx.target != "zh-TW" and len(s["text"].split()) > catalog.MAX_EXAMPLE_WORDS:
                     continue
@@ -206,6 +207,10 @@ class Tatoeba(SourceAdapter):
                         use = _usage_pos(s["text"], forms, _verb_only_forms(ctx), ctx.lemma)
                         if use and use not in poses and use != "other":
                             continue
+                elif ctx.target == "fr" and _usage_pos_fr(s["text"], forms, verb_only) == "other":
+                    # 「la place」 on placer, 「un masque」 on masquer: a verb form
+                    # after a determiner is a noun, another word (問題回報 #575).
+                    continue
                 level = sentence_level(s["text"], forms) if ctx.target == "en" \
                     else length_level(s["text"])
                 buckets[level].append({**s, "_odd": "odd_name" in flags,

@@ -122,8 +122,6 @@ String? databaseTagLevel(Map<String, dynamic> tag, LexiconPack pack) {
   return cefrLevels.contains(level) ? level : null;
 }
 
-/// The tag's level is a frequency estimate, not from the CEFR-J / Octanove
-/// lists (問題回報 #139 decision: 標「估算」; #132 noodle C1).
 /// Where a catalog label's pin goes, or null when it has no usable point.
 /// The model's "middle of the picture" (0.5, 0.5) becomes the middle of its
 /// box. Card #225 round 160: 517 labels on 124 photos sit at (0, 0) — the
@@ -146,6 +144,8 @@ String? databaseTagLevel(Map<String, dynamic> tag, LexiconPack pack) {
   return (x, y);
 }
 
+/// The tag's level is a frequency estimate, not from the CEFR-J / Octanove
+/// lists (問題回報 #139 decision: 標「估算」; #132 noodle C1).
 bool databaseTagEstimated(Map<String, dynamic> tag, LexiconPack pack) {
   final source = tag['cefr_source'];
   if (source != null) {

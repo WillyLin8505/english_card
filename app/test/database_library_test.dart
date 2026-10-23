@@ -218,6 +218,26 @@ void main() {
   });
 
   testWidgets(
+      'photo tag list marks a collected word with ✓ (問題回報 #577)',
+      (tester) async {
+    await pumpApp(tester,
+        initialTab: AppTab.album,
+        databaseLibrary: true,
+        size: const Size(360, 740));
+    await tester.pumpAndSettle();
+    expect(find.text('未分級：apple · 蘋果'), findsOneWidget);
+    await tester.tap(find.byType(DatabaseImageTile));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView).last, const Offset(0, -300));
+    await tester.pumpAndSettle();
+    // apple is already in the seeded 單字本: ✓, nothing left to add.
+    expect(find.byIcon(Icons.check_circle), findsOneWidget);
+    expect(find.byIcon(Icons.add_circle_outline), findsNothing);
+    expect(find.textContaining('全部加入'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
       'every database image has a bilingual label and opens its exact word',
       (tester) async {
     await pumpApp(tester,
@@ -230,6 +250,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('已確認'), findsNothing);
     expect(find.text('apple · 蘋果'), findsOneWidget);
+    await tester.drag(find.byType(ListView).last, const Offset(0, -300));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('apple · 蘋果'));
     await tester.pumpAndSettle();
     expect(find.text('資料庫圖片（1）'), findsOneWidget);

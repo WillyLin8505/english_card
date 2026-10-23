@@ -1144,26 +1144,114 @@ FR_PHRASE_END = {"est", "sont", "était", "étaient", "sera", "seront", "a", "on
                  "jamais", "déjà", "maintenant", "hier", "demain", "puis", "donc", "si"}
 
 
+# Determiners that never stand before a verb (問題回報 #575). Not le / la /
+# les / l' (object pronouns: «il la place»), leur («je leur livre»), ce («ce
+# faisant») or tout («tout compte fait»).
+# trois places
+_FR_NUMBERS = {"deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf", "dix", "vingt",
+               "cent", "mille"}
+# pas de place, sur place, à part: no finite verb or participle follows a
+# preposition (a verb after de is the infinitive; en does: «il en place»).
+_FR_PREPOSITIONS = {"de", "d", "sur", "sous", "avec", "sans", "par", "pour", "chez", "vers",
+                    "contre", "dans", "entre", "à", "selon", "malgré", "parmi"}
+_FR_NOUN_DET = {"un", "une", "des", "du", "au", "aux", "cet", "cette", "ces", "mon", "ma", "mes",
+                "ton", "ta", "tes", "son", "sa", "ses", "notre", "votre", "nos", "vos", "leurs",
+                "quel", "quelle", "quels", "quelles", "chaque", "plusieurs", "quelques", "aucun",
+                "aucune", "nul", "nulle", "certains", "certaines", "divers", "diverses",
+                } | _FR_NUMBERS | _FR_PREPOSITIONS
+_FR_ARTICLE = {"le", "la", "les", "l"}
+# Before le / la / les / l' these make it the object pronoun: «je le livre»,
+# «ne la place pas», «qui les force», «te l'adresse».
+_FR_CLITIC_HOSTS = {"je", "j", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles", "ne", "n",
+                    "me", "m", "te", "t", "se", "s", "lui", "y", "en", "qui"}
+# Adjectives that stand before the noun: «un petit masque», «la grande place».
+_FR_PRENOMINAL = {
+    "petit", "petite", "petits", "petites", "grand", "grande", "grands", "grandes", "bon", "bonne",
+    "bons", "bonnes", "beau", "bel", "belle", "beaux", "belles", "nouveau", "nouvel", "nouvelle",
+    "nouveaux", "nouvelles", "vieux", "vieil", "vieille", "vieilles", "jeune", "jeunes", "gros",
+    "grosse", "grosses", "mauvais", "mauvaise", "mauvaises", "autre", "autres", "premier",
+    "première", "premiers", "premières", "dernier", "dernière", "derniers", "dernières", "même",
+    "mêmes", "seul", "seule", "seuls", "seules", "vrai", "vraie", "vrais", "vraies", "joli", "jolie",
+    "jolis", "jolies", "long", "longue", "longs", "longues", "haut", "haute", "meilleur",
+    "meilleure", "meilleurs", "meilleures", "pire", "double", "simple", "deuxième", "troisième",
+    "énorme", "énormes", "excellent", "excellente", "gentil", "gentille", "immense", "large"}
+
+
+def _fr_det_led(toks: list[str], cased: list[str], i: int) -> bool:
+    """The token at ``i`` heads a noun phrase: a determiner just before it,
+    or before one pre-nominal adjective (un masque, au cours, ma part, la
+    bouche, un petit masque). le / la / les / l' after a subject or clitic
+    pronoun is the object pronoun (il la place, je l'adresse), and after a
+    name it may be one too (Marie la place)."""
+    def det(j: int) -> bool:
+        if j < 0:
+            return False
+        if toks[j] in _FR_NOUN_DET:
+            # quelqu'un fouille, l'un assemble: the pronoun, then the verb
+            return not (toks[j] in ("un", "une") and j > 0 and toks[j - 1] in ("quelqu", "l"))
+        if toks[j] == "ce":
+            return not toks[i].endswith("ant")  # ce masque; not «ce faisant»
+        if toks[j] not in _FR_ARTICLE:
+            return False
+        if j == 0:
+            return True
+        host = toks[j - 1]
+        name = j - 1 > 0 and cased[j - 1][:1].isupper()
+        return host not in _FR_CLITIC_HOSTS and not name
+    if i and toks[i - 1] in _FR_NUMBERS and toks[i].endswith(("é", "ée", "és", "ées")):
+        return False  # cinq divisé par trois
+    if det(i - 1):
+        return True
+    # un petit masque — not «à nouveau enfermé», «de même placé»
+    return (i > 1 and toks[i - 1] in _FR_PRENOMINAL and toks[i - 2] not in _FR_PREPOSITIONS
+            and det(i - 2))
+
+
+def _fr_other_lemma(form: str) -> bool:
+    """A verb form that is also a French lemma of its own (or its plural),
+    per Lexique: masque, place, cours, accusé, lions → lion. Not «stoppons»
+    or «embellit»: there le / l' before it is the object pronoun («comment le
+    stoppons-nous», «et l'embellit»)."""
+    lemmas = _fr_lexique()
+    return form in lemmas or (form[-1:] in ("s", "x") and form[:-1] in lemmas)
+
+
+def _fr_tokens(text: str) -> tuple[list[str], list[str]]:
+    """Words lower-cased and as written, split at elisions (l'école → l, école)."""
+    raw = [p for t in re.split(r"[^A-Za-zÀ-ÿœæŒÆ'’]+", (text or "").replace("’", "'"))
+           for p in t.strip("'").split("'") if p]
+    return [t.lower() for t in raw], raw
+
+
 def _usage_pos_fr(text: str, forms, verb_only) -> str | None:
     """Which part of speech the French headword is in this sentence: "noun"
     after a determiner when the noun phrase ends there (la maison est…,
     une belle maison), "verb" for a form only the verb has (mangeons),
-    "other" when the word is not there, else None (unclear)."""
-    toks = [t.strip("'") for t in re.split(r"[^a-zà-ÿœæ']+", (text or "").lower())]
-    toks = [p for t in toks for p in t.split("'") if p]
+    "other" when the word is not there, else None (unclear).
+
+    A form only the verb has, right after a determiner, is a noun spelt the
+    same — another word (問題回報 #575): la place (placer), le livre
+    (livrer), un masque (masquer), au cours (courir), ma part (partir). When
+    every use in the sentence is such a noun, the sentence is "other"."""
+    toks, cased = _fr_tokens(text)
     if not any(t in forms for t in toks):
         return "other"
+    foreign = own = False
     for i, t in enumerate(toks):
         if t not in forms:
             continue
         if t in verb_only:
+            if _fr_det_led(toks, cased, i) and _fr_other_lemma(t):
+                foreign = True
+                continue
             return "verb"
+        own = True  # «la place pour placer…»: the infinitive is this word
         near_det = i > 0 and (toks[i - 1] in FR_DETERMINERS
                               or (i > 1 and toks[i - 2] in FR_DETERMINERS))
         ends = i == len(toks) - 1 or toks[i + 1] in FR_PHRASE_END
         if near_det and ends:
             return "noun"
-    return None
+    return "other" if foreign and not own else None
 
 
 # Finite copulas only. Bare "be" is "must be shadow" (a noun), not "is tired".
