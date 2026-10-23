@@ -701,6 +701,7 @@ class Tick:
                     changed = True
                 self.write("PUT", f"/issues/{int(iid)}", {"by": "Grokbot", "status": "fixed",
                            "resolution": f"已回答，卡 #{cid} 照決定繼續"}, "ask closed")
+                self.decision_to_mac(int(iid), i, t)
             except Exception as e:  # noqa: BLE001
                 log(f"answered #{iid}: {e}")
         return changed
@@ -1201,6 +1202,28 @@ class Tick:
         out = (r.stdout + r.stderr).decode("utf-8", "replace").strip()
         log(f"serve_app restart: {out[-200:]}")
         return r.returncode == 0, out
+
+    def decision_to_mac(self, iid: int, issue: dict, task: dict):
+        """The Mac can't read 問題回報 (no key): an owner decision on a card that came from the owner's
+        App reports is written into docs/mac_inbox.md, so the Mac's App work follows it (10/23 #619:
+        the Mac added 未來式 although the owner had chosen 「不加」)."""
+        decision = issue.get("decision") or ""
+        reporters = []
+        for n in task.get("issue_ids") or []:
+            try:
+                reporters.append(str(http("GET", f"/issues/{n}").get("reporter") or ""))
+            except Exception:  # noqa: BLE001
+                pass
+        if not decision or not any(r.startswith("App 使用者") for r in reporters):
+            return
+        inbox = ROOT / "docs" / "mac_inbox.md"
+        no = max([int(n) for n in re.findall(r"^## M(\d+)", inbox.read_text(encoding="utf-8"), re.M)] or [0]) + 1
+        with inbox.open("a", encoding="utf-8", newline="\n") as f:
+            f.write(f"\n## M{no}（{self.now:%Y-%m-%d %H:%M}）狀態：參考（owner 的決定）\n"
+                    f"卡：{str(task.get('title') or '')[:80]}\n"
+                    f"問題：{str(issue.get('title') or '')[:150]}\n**owner 決定**：{decision[:600]}\n"
+                    "App 畫面若和這個決定不同，請照決定改。\n")
+        log(f"decision #{iid} copied to the Mac inbox (M{no})")
 
     def hand_to_mac(self, card_id: int, task: dict, text: str):
         """#626: a card's 「需要 Mac：…」 part (App screens) goes to docs/mac_inbox.md for the Mac."""
