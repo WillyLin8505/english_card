@@ -24,6 +24,7 @@ import 'database_library_screen.dart' show DatabaseWordScreen;
 import '../widgets/mobile/dialogs.dart';
 import '../widgets/mobile/m_icon.dart';
 import '../widgets/mobile/photo_widgets.dart';
+import '../widgets/mobile/photo_cache.dart' show photoProvider;
 
 part '../widgets/flashcard_session_views.dart';
 part '../widgets/flashcard_front.dart';
@@ -169,33 +170,36 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     _precacheBackPhoto();
   }
 
-  final _precached = <String>{};
-  String? _upcomingFor;
+  final _warming = <ImageProvider<Object>>{};
+  double? _reviewWidth;
 
-  /// Loads the card back's photo, and the next ones a swipe shows, while
-  /// the front is still up, so they are there when the card turns (card
-  /// #252). The size matches the back's 200-high photo closely enough to
-  /// share its decode width.
+  // Use the same layout and style as the rendered front/back. A photo ID
+  // alone is not a cache key: decode size, failed loads and eviction matter.
   void _precacheBackPhoto() {
     final s = _session;
-    final p = s?.photo;
-    if (s == null || p == null) return;
-    final warmUpcoming = _upcomingFor != s.card?.id;
+    final width = _reviewWidth;
+    if (s == null || width == null) return;
+    final scope = AppScope.of(context);
+    final look = CardLook.forStyle(scope.settings.cardStyle);
+    final contentWidth = math.max(1.0,
+        width - 40 - (look.card == null ? 0 : look.cardPadding.horizontal));
+    final dpr = MediaQuery.devicePixelRatioOf(context);
     final options = [for (final o in s.photoOptions) o.$1];
-    final at = options.indexWhere((o) => o.id == p.id);
-    final width = MediaQuery.sizeOf(context).width;
-    if (_precached.length > 60) _precached.clear();
-    for (final photo in [
-      p,
+    final at = options.indexWhere((o) => o.id == s.photo?.id);
+    final photos = [
+      if (s.photo case final p?) p,
       ...options.skip(at + 1).take(2),
-      // Once per card: the guess walks every eligible card.
-      if (warmUpcoming) ...s.upcomingPhotos(),
-    ]) {
-      if (!_precached.add(photo.id)) continue;
-      precachePhoto(context, photo, AppScope.of(context).photoStore,
-          Size(math.max(width - 64, 200), 200));
+      ...s.upcomingPhotos(),
+    ];
+    for (final photo in photos) {
+      for (final height in {look.frontPhotoHeight, look.photoHeight}) {
+        final provider = photoProvider(
+            photo, scope.photoStore, Size(contentWidth, height), dpr);
+        if (provider == null || !_warming.add(provider)) continue;
+        precacheImage(provider, context, onError: (_, __) {})
+            .whenComplete(() => _warming.remove(provider));
+      }
     }
-    _upcomingFor = s.card?.id;
   }
 
   /// Ends the run. With [summary], a run in which at least one card was
@@ -338,7 +342,8 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
                             ? _dismissSummary
                             : widget.albumId != null
                                 ? () => Navigator.of(context).pop()
-                                : () => scope.navigator.selectTab(AppTab.camera))
+                                : () =>
+                                    scope.navigator.selectTab(AppTab.camera))
                     : BackNavButton(onTap: () => _end(summary: true)),
                 trailing: s == null || s.finished
                     ? null
@@ -368,14 +373,19 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
                         ? _Finished(
                             reviewed: _lastRunReviewed!,
                             onDone: _dismissSummary)
-                        : _Intro(
-                            onStart: _start, fixedAlbumId: widget.albumId)
+                        : _Intro(onStart: _start, fixedAlbumId: widget.albumId)
                     : s.finished
                         ? _Finished(
                             reviewed: s.reviewed,
                             onDone: widget.albumId != null ? _leave : _end)
                         : CardLookScope(
-                            look: look, child: FlashcardCardView(session: s)),
+                            look: look,
+                            child:
+                                LayoutBuilder(builder: (context, constraints) {
+                              _reviewWidth = constraints.maxWidth;
+                              _precacheBackPhoto();
+                              return FlashcardCardView(session: s);
+                            })),
               ),
             ],
           ),

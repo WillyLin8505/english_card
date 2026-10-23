@@ -347,7 +347,8 @@ class FlashcardSession extends ChangeNotifier {
               !repo.isEligible(card!, repo.clock()) ||
               (_limited &&
                   !repo
-                      .eligibleCards(newLimit: newLimit, reviewLimit: reviewLimit)
+                      .eligibleCards(
+                          newLimit: newLimit, reviewLimit: reviewLimit)
                       .any((c) => c.id == _cardId)));
       _shownAt[_cardId!] = _step;
       _appearances[_cardId!] = (_appearances[_cardId!] ?? 0) + 1;
@@ -377,8 +378,7 @@ class FlashcardSession extends ChangeNotifier {
     // card's own part of speech stays, and a word with only rare ones is kept.
     final all = original.effectiveUsages;
     final own = shortPos(original.pos);
-    final common =
-        all.where((u) => !u.rare || shortPos(u.pos) == own).toList();
+    final common = all.where((u) => !u.rare || shortPos(u.pos) == own).toList();
     final usages = common.isEmpty ? all : common;
     for (var i = 0; i < usages.length; i++) {
       final usage = usages[(_step + i) % usages.length];
@@ -667,8 +667,8 @@ class FlashcardSession extends ChangeNotifier {
     }
     final now = repo.clock();
     final eligible = [
-      for (final c in repo.eligibleCards(
-          newLimit: newLimit, reviewLimit: reviewLimit))
+      for (final c
+          in repo.eligibleCards(newLimit: newLimit, reviewLimit: reviewLimit))
         if (!_shownAt.containsKey(c.id) &&
             !_again.containsKey(c.id) &&
             _inRun(c.id))
@@ -763,14 +763,12 @@ class FlashcardSession extends ChangeNotifier {
     return {for (final c in cards) c.id: score(c)};
   }
 
-  /// Photos of the cards most likely to come next (the most forgotten
-  /// eligible ones), for the screen to load before they are shown (問題回報
-  /// #618: 圖片要等約 1 秒). The real pick is random, so this is a guess.
+  /// Planned photos of likely next cards, including their swipe neighbours.
   List<Photo> upcomingPhotos({int cards = 3, int perCard = 2}) {
     final now = repo.clock();
     final eligible = [
-      for (final c in repo.eligibleCards(
-          newLimit: newLimit, reviewLimit: reviewLimit))
+      for (final c
+          in repo.eligibleCards(newLimit: newLimit, reviewLimit: reviewLimit))
         if (c.id != _cardId &&
             !_shownAt.containsKey(c.id) &&
             !_again.containsKey(c.id) &&
@@ -788,21 +786,44 @@ class FlashcardSession extends ChangeNotifier {
     eligible.insertAll(0, jumps.take(2));
     return [
       for (final c in eligible.take(cards))
-        for (final o in _photosOf(c.wordEntryId).take(perCard)) o.$1,
+        for (final o in _previewPhotos(c.wordEntryId).take(perCard)) o.$1,
     ];
+  }
+
+  final _photoPlans = <String, String>{};
+
+  List<CardPhoto> _optionsFor(String wordId) {
+    final all = _photosOf(wordId);
+    final inAlbum = [
+      for (final o in all)
+        if (_albumPhotos?.contains(o.$1.id) ?? false) o,
+    ];
+    return inAlbum.isEmpty ? all : inAlbum;
+  }
+
+  CardPhoto _plannedPhoto(String wordId, List<CardPhoto> options) {
+    final fresh =
+        options.where((o) => !_recentPhotos.contains(o.$1.id)).toList();
+    final pool = fresh.isEmpty ? options : fresh;
+    final planned =
+        pool.where((o) => o.$1.id == _photoPlans[wordId]).firstOrNull;
+    if (planned != null) return planned;
+    final chosen = pool[_random.nextInt(pool.length)];
+    _photoPlans[wordId] = chosen.$1.id;
+    return chosen;
+  }
+
+  List<CardPhoto> _previewPhotos(String wordId) {
+    final options = _optionsFor(wordId);
+    if (options.isEmpty) return options;
+    final chosen = _plannedPhoto(wordId, options);
+    return [chosen, ...options.where((o) => o.$1.id != chosen.$1.id)];
   }
 
   void _choosePhoto() {
     final c = card;
     if (c == null) return;
-    final all = _photosOf(c.wordEntryId);
-    // An album run shows only the album's pictures of the word; when the
-    // album has none of them left, any picture of the word is shown.
-    final inAlbum = [
-      for (final o in all)
-        if (_albumPhotos?.contains(o.$1.id) ?? false) o,
-    ];
-    final options = _photoOptions = inAlbum.isEmpty ? all : inAlbum;
+    final options = _photoOptions = _optionsFor(c.wordEntryId);
     if (options.isEmpty) {
       _photo = null;
       _anchor = null;
@@ -810,10 +831,8 @@ class FlashcardSession extends ChangeNotifier {
       _photoCredit = null;
       return;
     }
-    final fresh =
-        options.where((o) => !_recentPhotos.contains(o.$1.id)).toList();
-    final pickFrom = fresh.isEmpty ? options : fresh;
-    final chosen = pickFrom[_random.nextInt(pickFrom.length)];
+    final chosen = _plannedPhoto(c.wordEntryId, options);
+    _photoPlans.remove(c.wordEntryId);
     _photo = chosen.$1;
     _anchor = chosen.$2;
     _box = _boxes[chosen.$1.id];
