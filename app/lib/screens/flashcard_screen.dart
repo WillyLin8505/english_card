@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import '../app/app_scope.dart';
 import '../models/card_template.dart';
 import '../services/accent_audio.dart';
+import '../services/deck_library.dart';
 import '../services/lexicon_pack.dart';
 import '../models/learning_card.dart';
 import '../models/photo.dart';
@@ -24,7 +25,9 @@ import 'database_library_screen.dart' show DatabaseWordScreen;
 import '../widgets/mobile/dialogs.dart';
 import '../widgets/mobile/m_icon.dart';
 import '../widgets/mobile/photo_widgets.dart';
-import '../widgets/mobile/photo_cache.dart' show photoProvider;
+import '../widgets/mobile/photo_cache.dart'
+    show CachedNetworkPhoto, photoProvider;
+import '../services/pack_media.dart' show packMediaIsAsset, resolvePackMedia;
 
 part '../widgets/flashcard_session_views.dart';
 part '../widgets/flashcard_front.dart';

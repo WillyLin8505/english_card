@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'l10n/ui_text.dart';
+import 'services/deck_library.dart';
 import 'services/dictionary_sync.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -67,6 +68,9 @@ Future<void> main() async {
           .load(target: language, native: settings.nativeLanguage);
     }
     final store = await HiveWordDatabaseStore.open(language: language);
+    // Downloaded 卡片集 for this language: 複習 lists the word decks as
+    // tiles (問題回報 #648), so they must be known from the start.
+    await DeckLibrary.instance.load(language);
     // Database content is shown by the live catalog. Personal collections
     // start empty; existing saved photos and review records stay intact.
     if (store.needsSeed) {

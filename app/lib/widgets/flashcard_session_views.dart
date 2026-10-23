@@ -12,8 +12,34 @@ part of '../screens/flashcard_screen.dart';
     final id = scope.substring(6);
     if (repo.album(id) != null) return (id, null);
   }
+  if (scope.startsWith('deck:')) {
+    final deck = DeckLibrary.instance.installedDeck(scope.substring(5));
+    if (deck != null) return (null, deckCardIds(repo, deck));
+  }
   return (null, null);
 }
+
+/// The cards of a downloaded 單字集 (問題回報 #648): a word deck adds words
+/// but no 相片冊, so its 複習 tile goes by the words the deck added.
+Set<String> deckCardIds(WordDatabaseRepository repo, InstalledDeck deck) => {
+      for (final id in deck.wordEntryIds)
+        if (repo.cardOf(id) case final c? when !c.archived) c.id,
+    };
+
+/// A word deck tile's picture: a photo of one of its words, a different one
+/// from the album tiles when it can (and remembered in [used]).
+Photo? coverOfDeck(
+    WordDatabaseRepository repo, Set<String> ids, Set<String> used) {
+  final p = repo.reviewCoverPhoto(ids, avoid: used);
+  if (p != null) used.add(p.id);
+  return p;
+}
+
+/// Downloaded 單字集 (word decks, not picture decks) that have cards.
+List<InstalledDeck> _wordDecks(WordDatabaseRepository repo) => [
+      for (final d in DeckLibrary.instance.installed)
+        if (!d.info.isPhotos && deckCardIds(repo, d).isNotEmpty) d,
+    ];
 
 /// Whether keyboard shortcut hints (空白鍵) mean anything: desktop only.
 bool _hasKeyboard(BuildContext context) => switch (Theme.of(context).platform) {
@@ -33,6 +59,10 @@ String reviewScopeLabel(WordDatabaseRepository repo, String scope) {
     if (a != null) {
       return a.deckSlug != null ? '卡片集：${a.name}' : '相片冊：${a.name}';
     }
+  }
+  if (scope.startsWith('deck:')) {
+    final d = DeckLibrary.instance.installedDeck(scope.substring(5));
+    if (d != null) return '單字集：${d.info.title}';
   }
   return '全部';
 }
@@ -144,6 +174,14 @@ class _ScopeGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Word decks live in the deck library (loaded at start-up, main.dart),
+    // not in the repository.
+    return ListenableBuilder(
+        listenable: DeckLibrary.instance,
+        builder: (context, _) => _grid(context));
+  }
+
+  Widget _grid(BuildContext context) {
     final scope = AppScope.of(context);
     final repo = scope.repository;
     final settings = scope.settings;
@@ -169,6 +207,17 @@ class _ScopeGrid extends StatelessWidget {
       for (final t in albumTiles)
         if (t.$5 case final p?) p.id,
     };
+    final deckTiles = [
+      for (final d in _wordDecks(repo))
+        (
+          'deck:${d.info.slug}',
+          d.info.title,
+          dueIn(deckCardIds(repo, d)),
+          true,
+          coverOfDeck(repo, deckCardIds(repo, d), used),
+          null,
+        ),
+    ];
     Photo? coverOf(Set<String>? ids) {
       final p = repo.reviewCoverPhoto(ids, avoid: used);
       if (p != null) used.add(p.id);
@@ -179,17 +228,42 @@ class _ScopeGrid extends StatelessWidget {
     final allCover = coverOf(null);
     final newIds = repo.cardIdsAddedToday();
     final weakIds = repo.weakCardIds();
-    final tiles = <(String, String, int, bool, Photo?, String?)>[
+    final base = <(String, String, int, bool, Photo?, String?)>[
       ('all', '綜合', dueIn(null), false, allCover, null),
       ...albumTiles,
+      ...deckTiles,
       ('new', '今天新加的單字', dueIn(newIds), false, coverOf(newIds), null),
       ('weak', '弱項單字', dueIn(weakIds), false, coverOf(weakIds), null),
     ];
+    // A downloaded 單字集 has no photos of its own; its deck cover, if the
+    // deck has one, is the tile's picture (問題回報 #648).
+    final tiles = [
+      for (final t in base)
+        (
+          t.$1,
+          t.$2,
+          t.$3,
+          t.$4,
+          t.$5,
+          t.$6,
+          t.$1.startsWith('deck:')
+              ? switch (DeckLibrary.instance
+                  .installedDeck(t.$1.substring(5))
+                  ?.info
+                  .coverAssetId) {
+                  final int id => DeckLibrary.instance.imageUri(id).toString(),
+                  _ => null,
+                }
+              : null,
+        ),
+    ];
     final saved = settings.reviewScope;
-    final last =
-        saved.startsWith('album:') && repo.album(saved.substring(6)) == null
-            ? 'all'
-            : saved;
+    final last = (saved.startsWith('album:') &&
+                repo.album(saved.substring(6)) == null) ||
+            (saved.startsWith('deck:') &&
+                DeckLibrary.instance.installedDeck(saved.substring(5)) == null)
+        ? 'all'
+        : saved;
     return ListView(
       padding: const EdgeInsets.all(MSpace.md),
       children: [
@@ -207,7 +281,8 @@ class _ScopeGrid extends StatelessWidget {
           crossAxisSpacing: MSpace.sm,
           childAspectRatio: 1.0,
           children: [
-            for (final (value, name, count, downloaded, cover, asset) in tiles)
+            for (final (value, name, count, downloaded, cover, asset, url)
+                in tiles)
               Tap(
                 label: '$name，今天 $count 張',
                 onTap: () {
@@ -238,6 +313,8 @@ class _ScopeGrid extends StatelessWidget {
                                 Image.asset(asset, fit: BoxFit.cover)
                               else if (cover != null)
                                 PhotoImage(cover)
+                              else if (url != null)
+                                _NetworkCover(url)
                               else
                                 ColoredBox(
                                     color: value == 'all'
@@ -290,6 +367,26 @@ class _ScopeGrid extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+/// A downloaded deck's cover picture on its 複習 tile (問題回報 #648).
+class _NetworkCover extends StatelessWidget {
+  final String url;
+
+  const _NetworkCover(this.url);
+
+  @override
+  Widget build(BuildContext context) {
+    final resolved = resolvePackMedia(url);
+    const blank = ColoredBox(color: MColors.albumPill);
+    return packMediaIsAsset(resolved)
+        ? Image.asset(resolved,
+            fit: BoxFit.cover, errorBuilder: (_, __, ___) => blank)
+        : Image(
+            image: CachedNetworkPhoto(resolved),
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => blank);
   }
 }
 
