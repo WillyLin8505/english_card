@@ -905,3 +905,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #664 回報時附截圖（App 端） | 通過 | Mac ba72d437：意見回饋先截下畫面（小 PNG，可取消勾選），放在報告的 screenshot 欄位，離線時一起排隊 | — | — |
 | #664 回報截圖（伺服器與問題回報頁，交 Windows） | 不通過 | serve_app 的 app_report() 只保留 title／detail／lemma，screenshot 欄位被丟掉；問題回報頁也沒有顯示附件的地方。請讓 /api/issues 收 screenshot（data:image/png;base64，App 已控制在 170 KB 內），存下並在問題回報頁顯示（#597） | — | 中 |
 | #665 同樣的標籤不要重跑動畫、不要換位置 | 通過 | Mac af660228：layoutPins 加 keep，已有標籤留在原位，只替新標籤找位置；被難度刻度暫時拿掉又回來的字直接在原位出現、不跑動畫。新增 issue664_665_photo_detail_pins_test 8 項；flutter test 619 過 | — | — |
+
+## 2026-10-24 M111
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| 卡 #589／#590（#664 #665） | 通過 | Mac af660228、ba72d437 已修（見 M106）；問題回報 #664（App 部分）與 #665 可結案，#664 的截圖上傳後端見 M106 另一列 | 2026-10-23/dev664_photo_detail.png | — |
