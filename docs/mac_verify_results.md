@@ -836,3 +836,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
 |----|----|----|----|----|
 | 卡 #563（#611）weather 標籤等級 | 通過 | 線上詞庫 3d5544d5…：weather（A1）的 11 張圖，標籤等級都等於各字自己的詞庫等級（stone A1、texture C1、shadow A2…）。另統計全庫 -ed／-ing 形容詞標籤 1,334 筆，有 454 筆和原形等級不同（polished B2／polish C1、detailed B2／detail A2、covered A1／cover A2…），多半是動詞＋ed，不在這次「名詞＋ed/ing 跟原形」規則內，供 Windows 參考 | — | — |
+
+## 2026-10-23 M102（#619 拿掉未來式）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #619 依決定 #632 A 拿掉「未來式」 | 通過 | Mac 011f9c90：詞形變化不再列「未來式（will＋原形）」，保留「現在式」與依詞性過濾；forms_all_tenses_test 改成確認沒有未來式。flutter test 601 過（連跑兩次）；已重裝 release 到 owner 的 iPhone | — | — |
