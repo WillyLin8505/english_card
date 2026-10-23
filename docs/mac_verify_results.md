@@ -866,3 +866,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
 |----|----|----|----|----|
 | 卡 #587（#637）happy 的詞形 | 通過 | 線上詞庫 da97767e…：沒有任何字同時有 -er／-est 與 more／most；happy 只剩 happier／happiest，crumbly 只剩 crumblier／crumbliest | — | — |
+
+## 2026-10-23 M109
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| 卡 #588（#663） | 通過 | 已確認 owner 的 iPhone 裝的是 basic-3000-c2（kind=words，單字集，不會建相簿）與 food-b1（kind=photos，本來就在相片冊）。Mac 8669631e 已讓相片冊列出單字集並可點開看詞庫圖片（見 M105）；問題回報 #663 可結案 | 2026-10-23/m105_word_deck_photos.png | — |
