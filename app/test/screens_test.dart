@@ -368,16 +368,14 @@ void main() {
       expect(find.text('Plate'), findsNothing, reason: 'five words per photo');
     });
 
-    testWidgets('with no photo yet, the bottom chip opens the picker',
+    testWidgets('with no photo yet, there is no bottom chip (問題回報 #613)',
         (tester) async {
       await pumpApp(tester,
           repository: WordDatabaseRepository(clock: () => testNow));
       await tester.runAsync(
           () => Future<void>.delayed(const Duration(milliseconds: 100)));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('先選一張照片開始學習'));
-      await tester.pumpAndSettle();
-      expect(find.byType(PhotoPickerScreen), findsOneWidget);
+      expect(find.text('先選一張照片開始學習'), findsNothing);
     });
   });
 
