@@ -1132,3 +1132,8 @@ commit `1cc4a767`（Windows：flutter analyze 無 error、00:56 +571 ~2: All tes
   結果：本輪（r4）未改程式與資料；拖曳條 widget 測試 4/4 通過，後端測試因共用測試 DB 衝突無法驗證，剩餘 4 項已開問題回報 #593。
 - 卡 #553：問題回報 #589：詞庫：重新整理詞條（force_refresh 詞義）會刪掉只存在 example_translat
   結果：已修（選項 A）：materialize 重新整理不再刪 AI 例句翻譯；新測試因共用測試 DB 被其他 agent 佔用，尚未跑成功（未驗證）。；- 新測試 lexicon/tests/testcard553aiexampletranslationkept.py（AI 保留、非 AI 被刪）。
+
+## M82（2026-10-23 16:44）狀態：待做
+commit `8bcd02d6`（Windows：flutter analyze 無 error、01:01 +571 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #554：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
+  結果：全部完成：flutter test 571 通過（~2 skipped）、flutter analyze 0 error（1 個既有 info，在凍結檔 flashcardsessionviews.dart，未動）。
