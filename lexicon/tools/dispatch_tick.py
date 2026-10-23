@@ -894,7 +894,7 @@ class Tick:
         def from_owner(c) -> bool:
             title = str(c.get("title") or "")
             # a failing flutter test blocks the owner's fixes from reaching the iPhone: same priority
-            if any(tag in title for tag in ("[owner]", "[卡片回報]", "[意見回饋]", "flutter test 失敗")):
+            if any(tag in title for tag in ("[owner]", "[卡片回報]", "[意見回饋]", "flutter test 失敗", "交 Windows")):
                 return True
             ids = [c["issue_id"]] if c.get("issue_id") else task_issues.get(c.get("task_id"), [])
             return any(reporters.get(i, "").startswith(("owner", "App 使用者")) for i in ids)
