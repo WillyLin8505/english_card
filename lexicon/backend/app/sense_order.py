@@ -21,11 +21,12 @@ materialize() orders the definition items with order_senses():
   3. hand-reviewed common senses first (PREFERRED_GLOSSES for French,
      quality/en_common_senses.json for English — card #381: train's first
      Kaikki sense is a dress's train);
-  4. for English, the etymology whose current senses have the largest
-     Wiktionary translation tables first (card #539: second 「unit of
+  4. for English, a later etymology whose Wiktionary translation tables
+     clearly outweigh the first's comes first (card #539: second 「unit of
      time」 before 「number two in a series」, down 「feathers」 before 「a
-     negative aspect」) — Kaikki's etymology-N label no longer demotes an
-     established sense (adapters/kaikki.py established_sense);
+     negative aspect」; etymology_order) — Kaikki's etymology-N label no
+     longer demotes an established sense (adapters/kaikki.py
+     established_sense);
   5. otherwise the dictionary's order (stable sort).
 
 Items carry their Kaikki topics since this card; older items are looked up
@@ -90,29 +91,54 @@ def kaikki_sense_info(target: str, lemma: str, pos: str, gloss: str) -> tuple[tu
 @lru_cache(maxsize=50_000)
 def etymology_weights(target: str, lemma: str, pos: str) -> tuple[tuple[str, int], ...]:
     """((etymology number, weight), …) of the Kaikki entries of ``lemma``
-    in ``pos``: the weight is the sum of the translation-table sizes of the
-    etymology's current senses — how established its meanings are (card
-    #539: second's 「unit of time」 etymology outweighs 「number two」's)."""
+    in ``pos``: the weight is the number of translations Wiktionary lists
+    for the etymology — the tables of its current senses plus the entry's
+    own tables (hip's 140 pelvis translations match no sense title) — how
+    established its meanings are (card #539: second's 「unit of time」
+    etymology outweighs 「number two」's)."""
     from . import kaikki_index
-    from .adapters.kaikki import LOW_TAGS, translation_counts
+    from .adapters.kaikki import LOW_TAGS
     weights: dict[str, int] = {}
     for e in kaikki_index.lookup(target, lemma) or []:
         if str(e.get("word", "")) != lemma or _kaikki_pos(e) != pos:
             continue
         ety = str(e.get("etymology_number") or "1")
         weights.setdefault(ety, 0)
-        for s, n in zip(e.get("senses") or [], translation_counts(e)):
+        weights[ety] += len(e.get("translations") or [])
+        for s in e.get("senses") or []:
             tags = {str(t).lower() for t in s.get("tags") or []}
             if not tags & (OUT_OF_USE_LABELS | LOW_TAGS):
-                weights[ety] += n
+                weights[ety] += len(s.get("translations") or [])
     return tuple(weights.items())
+
+
+# A later etymology comes before the first one only when its translation
+# evidence is clearly stronger: at least this many translations and twice
+# the first etymology's (phone's 「speech segment」 has 31 against 0 for the
+# telephone, whose table Wiktionary keeps under telephone — not enough).
+DOMINANT_MIN_TRANSLATIONS = 50
+
+
+def _ety_num(k: str) -> int:
+    return int(k) if k.isdigit() else 0
+
+
+def etymology_order(weights: dict[str, int]) -> list[str]:
+    """Etymology numbers in sense order: the later etymologies that dominate
+    the first (DOMINANT_MIN_TRANSLATIONS and twice its weight), heaviest
+    first; then the first etymology; then the rest by weight."""
+    first = min(weights, key=_ety_num)
+    bar = max(DOMINANT_MIN_TRANSLATIONS, 2 * weights[first])
+    later = sorted((k for k in weights if k != first), key=lambda k: (-weights[k], _ety_num(k)))
+    dominant = [k for k in later if weights[k] >= bar]
+    return dominant + [first] + [k for k in later if k not in dominant]
 
 
 def _etymology_group_rank(item: dict, target: str, lemma: str) -> int:
     """English only: the rank of the item's etymology among the headword's
-    etymologies in that part of speech, heaviest translation evidence
-    first; Wiktionary's order breaks ties. 0 when the word has one
-    etymology or the sense is not found in the index."""
+    etymologies in that part of speech (etymology_order). 0 when the word
+    has one etymology; a sense the index does not know by its gloss takes
+    the etymology its label names, else the first."""
     if target != "en":
         return 0
     pos, gloss = str(item.get("pos") or ""), str(item.get("gloss") or "")
@@ -120,10 +146,10 @@ def _etymology_group_rank(item: dict, target: str, lemma: str) -> int:
     if len(weights) < 2:
         return 0
     ety = kaikki_sense_info(target, lemma, pos, gloss)[2]
-    if ety not in weights:
-        return 0
-    order = sorted(weights, key=lambda k: (-weights[k], int(k) if k.isdigit() else 0))
-    return order.index(ety)
+    if not ety:
+        ety = next((l.split("-", 1)[1] for l in _labels(item) if l.startswith("etymology-")), "")
+    order = etymology_order(weights)
+    return order.index(ety) if ety in order else order.index(min(weights, key=_ety_num))
 
 
 def topics_of(target: str, lemma: str, pos: str, gloss: str) -> tuple[str, ...]:
@@ -307,10 +333,7 @@ def order_senses(items: list[dict], target: str, lemma: str) -> list[dict]:
     etymology with the most established senses — second 「unit of time」
     before 「number two in a series」 (card #539); Wiktionary's order last."""
     return sorted(items, key=lambda it: (sense_rank(it, target, lemma), _preferred_index(it, target, lemma),
-                                         _etymology_group_rank(it, target, lemma),
-                                         # within the etymology, the senses Kaikki's label still
-                                         # marks as another word (no translation table) last
-                                         any(l.startswith("etymology-") for l in _labels(it))))
+                                         _etymology_group_rank(it, target, lemma)))
 
 def english_sense_translations(english: str, pos: str, target: str, gloss: str) -> set[str] | None:
     """The ``target``-language words English Wiktionary lists under the one

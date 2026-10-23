@@ -66,6 +66,14 @@ DICTIONARY = {
     "thug": [{"word": "thug", "pos": "noun", "sounds": [{"ipa": "/θʌɡ/"}]}],
     "bother": [{"word": "bother", "pos": "verb", "sounds": [
         {"ipa": "/ˈbɒðə/", "tags": ["UK"]}, {"ipa": "/ˈbɑðɚ/", "tags": ["US"]}]}],
+    # Combining forms Wiktionary files as suffixes (問題回報 #209: repairperson).
+    "repairperson": [{"word": "repairperson", "pos": "noun", "etymology_templates": [
+        {"name": "suffix", "args": {"1": "en", "2": "repair", "3": "person"}}]}],
+    "repair": [{"word": "repair", "pos": "verb", "sounds": [
+        {"ipa": "/ɹɪˈpɛə/", "tags": ["UK"]}, {"ipa": "/ɹɪˈpɛɹ/", "tags": ["US"]}]}],
+    "soundproof": [{"word": "soundproof", "pos": "adj", "etymology_templates": [
+        {"name": "suffix", "args": {"1": "en", "2": "sound", "3": "proof"}}]}],
+    "sound": [{"word": "sound", "pos": "noun", "sounds": [{"ipa": "/saʊnd/"}]}],
     "wind": [{"word": "wind", "pos": "noun", "sounds": [{"ipa": "/wɪnd/"}]},
              {"word": "wind", "pos": "verb", "etymology_number": 2,
               "sounds": [{"ipa": "/waɪnd/"}]}],
@@ -106,6 +114,12 @@ def test_sounds_at_the_seam(monkeypatch):
     assert _ipa("crumbly") == [("/ˈkɹʌmbli/", [])]  # syllabic -le loses its schwa
     # Linking r in the UK form, ɚ → əɹ in the US form.
     assert _ipa("watery") == [("/ˈwɔːtəɹi/", ["UK"]), ("/ˈwɔtəɹi/", ["US"])]
+
+
+def test_combining_forms_filed_as_suffixes(monkeypatch):
+    _sources(monkeypatch)
+    assert _ipa("repairperson") == [("/ɹɪˈpɛəpɜːsən/", ["UK"]), ("/ɹɪˈpɛɹpɜɹsən/", ["US"])]
+    assert _ipa("soundproof") == [("/ˈsaʊndpɹuːf/", [])]
 
 
 def test_unknown_or_stress_moving_suffixes_are_left_alone(monkeypatch):

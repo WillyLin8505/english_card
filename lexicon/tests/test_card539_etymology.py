@@ -63,3 +63,12 @@ def test_english_order_puts_the_heavier_etymology_first(monkeypatch):
     assert got == ["A unit of ti", "A unit of an", "Something th", "A second-cla", "Aid; assista"]
     # French keeps the dictionary's order for the same labels
     assert [it["gloss"][:12] for it in sense_order.order_senses(items, "fr", "second")][0] == "Something th"
+
+
+def test_a_later_etymology_needs_clearly_stronger_evidence():
+    # phone: the telephone's table sits under telephone (0), phonetics has 31
+    assert sense_order.etymology_order({"1": 0, "2": 31}) == ["1", "2"]
+    assert sense_order.etymology_order({"1": 0, "2": 506}) == ["2", "1"]          # duck 鴨子
+    assert sense_order.etymology_order({"1": 122, "2": 294, "3": 42}) == ["2", "1", "3"]  # second
+    assert sense_order.etymology_order({"1": 83, "2": 16, "4": 115, "5": 72}) == ["1", "4", "5", "2"]  # tip
+    assert sense_order.etymology_order({"1": 4, "2": 22, "3": 110}) == ["3", "1", "2"]  # down
