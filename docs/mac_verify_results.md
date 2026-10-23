@@ -755,3 +755,10 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #616 長按辨識 | 通過 | Mac 8a8e4e2a 重做並裝到 owner iPhone；自動測試 3 項通過，等 owner 實際試用 | — | — |
 | #617 單字詳情圖片與標籤 | 通過 | 見 M87（實機與模擬器） | 2026-10-23/m87_568_word_detail.png | — |
 | #639–#643 | Mac 處理中 | Windows 卡 #572–#576 修好、mac_sync 開 M 項後在 iPhone 驗證 | — | — |
+
+## 2026-10-23 owner 決定 #626：App 畫面給 Mac
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| [待決定] #626 分工 | 通過 | owner 在 Mac 對話中決定：「App 畫面與互動的回報由 Mac 修，詞庫資料與伺服器由 Windows 修。請通知 Windows，並把 #641、#642、#643 從 Windows 收回來由 Mac 馬上做。」請 Windows 把 #626 記成已決定，之後 App 畫面類回報寫進 inbox 標 [給 Mac] | — | — |
+| #641 #642 #643（卡 #574 #575 #576） | Mac 處理中 | 由 Mac 修：翻卡背面回正面／上一張按鈕、意思列 1 2 3、例句列 1 2 3。請 Windows 停掉這三張卡，並凍結 flashcard_back.dart、flashcard_screen.dart、flashcard_session_views.dart 給 Mac，Mac 完成後會記一列 | — | — |
