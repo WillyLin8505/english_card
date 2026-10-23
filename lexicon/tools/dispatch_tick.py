@@ -1079,6 +1079,7 @@ class Tick:
                     board = http("GET", "/schedule/board")
             except Exception as e:  # noqa: BLE001
                 log(f"mac_results_to_issues failed: {e}")
+        self.route_app_reports()
         if self.cfg.get("hold_new_launches"):
             # owner 10/23 「現有的事情做完就先不要再派新的」: finish and collect, launch nothing
             log("hold_new_launches: collecting only, no new CLIs"
@@ -1189,6 +1190,37 @@ class Tick:
         out = (r.stdout + r.stderr).decode("utf-8", "replace").strip()
         log(f"serve_app restart: {out[-200:]}")
         return r.returncode == 0, out
+
+    def route_app_reports(self):
+        """owner 10/23 (#626): App 畫面與互動由 Mac 修。The owner's reports from the App go to the Mac:
+        titled 「[給 Mac]」 (the swarm skips them) and listed in docs/mac_inbox.md (mac_sync pushes it).
+        Data / server parts come back as 「不通過」 rows in mac_verify_results.md → issues here."""
+        if not (self.cfg.get("mac_sync") or {}).get("app_reports_to_mac", True) or self.dry:
+            return
+        try:
+            items = http("GET", "/issues").get("items", [])
+        except Exception as e:  # noqa: BLE001
+            log(f"route_app_reports: /issues failed ({e})")
+            return
+        new = [i for i in items if str(i.get("reporter") or "").startswith("App 使用者")
+               and i.get("status") == "open" and MAC_PREFIX not in str(i.get("title") or "")]
+        if not new:
+            return
+        inbox = ROOT / "docs" / "mac_inbox.md"
+        text = inbox.read_text(encoding="utf-8")
+        no = max([int(n) for n in re.findall(r"^## M(\d+)", text, re.M)] or [0]) + 1
+        rows = [f"\n## M{no}（{self.now:%Y-%m-%d %H:%M}）狀態：待做（owner 回報，給 Mac）",
+                "owner 在 iPhone 送出的回報（#626：App 畫面與互動由 Mac 修）。資料或伺服器的部分請寫「不通過」列交回 Windows。",
+                "", "| # | 回報 | 內容 |", "|---|---|---|"]
+        for i in sorted(new, key=lambda i: i["id"]):
+            detail = str(i.get("detail") or "").replace("|", "／").replace("\n", " / ")
+            rows.append(f"| {i['id']} | {str(i.get('title') or '')[:60]} | {detail[:400]} |")
+            self.write("PUT", f"/issues/{i['id']}", {"by": "Grokbot", "title": f"{MAC_PREFIX} {i.get('title') or ''}"[:300],
+                       "resolution": f"給 Mac（inbox M{no}）"}, "app report → Mac")
+        with inbox.open("a", encoding="utf-8", newline="\n") as f:
+            f.write("\n".join(rows) + "\n")
+        log(f"route_app_reports: {len(new)} owner report(s) → Mac inbox M{no}")
+        self.event("dispatched", agent="Mac", outcome=f"owner 的 {len(new)} 筆 App 回報交給 Mac（inbox M{no}）")
 
     def sweep_orphans(self) -> bool:
         """Cards left in_progress by a holder that went away (a closed session, an unnamed CLI)

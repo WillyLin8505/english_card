@@ -1,0 +1,251 @@
+diff --git a/app/lib/screens/flashcard_screen.dart b/app/lib/screens/flashcard_screen.dart
+index 447f007e..27dd6045 100644
+--- a/app/lib/screens/flashcard_screen.dart
++++ b/app/lib/screens/flashcard_screen.dart
+@@ -367,6 +367,23 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
+                         ),
+                       ]),
+               ),
++              if (s != null && !s.finished)
++                Padding(
++                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
++                  child: Row(children: [
++                    TextButton.icon(
++                      onPressed: s.canGoPrevious ? s.goPrevious : null,
++                      icon: const Icon(Icons.arrow_back, size: 18),
++                      label: const UiText('上一張卡片'),
++                    ),
++                    const Spacer(),
++                    TextButton.icon(
++                      onPressed: s.canFlipToFront ? s.flipToFront : null,
++                      icon: const Icon(Icons.flip_to_front, size: 18),
++                      label: const UiText('回到正面'),
++                    ),
++                  ]),
++                ),
+               Expanded(
+                 child: s == null
+                     ? _lastRunReviewed != null
+diff --git a/app/lib/services/flashcard_session.dart b/app/lib/services/flashcard_session.dart
+index 346fbed9..7d906b8b 100644
+--- a/app/lib/services/flashcard_session.dart
++++ b/app/lib/services/flashcard_session.dart
+@@ -171,7 +171,7 @@ class FlashcardSession extends ChangeNotifier {
+   }
+ 
+   void _repositoryChanged() {
+-    if (_rating || finished) return;
++    if (_rating || finished || _ahead != null) return;
+     final current = card;
+     if (current == null ||
+         current.archived ||
+@@ -290,9 +290,80 @@ class FlashcardSession extends ChangeNotifier {
+     notifyListeners();
+   }
+ 
++  /// 問題回報 #641: the card just graded, kept so the learner can look at it
++  /// again; and the card they were on while they do (grading is not repeated).
++  _CardSnap? _previous;
++  _CardSnap? _ahead;
++  bool get viewingPrevious => _ahead != null;
++  bool get canGoPrevious => _previous != null && _ahead == null;
++  bool get canFlipToFront => _back && _ahead == null;
++
++  _CardSnap _snap() => _CardSnap(
++      _cardId, _usageId, _senseId, _photo, _anchor, _box, _photoCredit, _back,
++      _exercise, _correct, _submittedAnswer, _attempts, _hintCount, _practice,
++      _photoOptions);
++
++  void _restore(_CardSnap c) {
++    _cardId = c.cardId;
++    _usageId = c.usageId;
++    _senseId = c.senseId;
++    _photo = c.photo;
++    _anchor = c.anchor;
++    _box = c.box;
++    _photoCredit = c.credit;
++    _back = c.back;
++    _exercise = c.exercise;
++    _correct = c.correct;
++    _submittedAnswer = c.submitted;
++    _attempts = c.attempts;
++    _hintCount = c.hints;
++    _practice = c.practice;
++    _photoOptions = c.options;
++    _photoAttempt++;
++    _photoGuarded = false;
++    _photoReady = true;
++    _photoFailed = false;
++  }
++
++  /// 回到正面: look at the question again before grading.
++  void flipToFront() {
++    if (!canFlipToFront) return;
++    _back = false;
++    _correct = null;
++    _submittedAnswer = null;
++    _attempts = 0;
++    _hintCount = 0;
++    _photoAttempt++;
++    _photoGuarded = false;
++    _photoReady = true;
++    _photoFailed = false;
++    notifyListeners();
++  }
++
++  /// 上一張: show the card just graded (back side); grading it again is not
++  /// possible, the next tap returns to the card the learner was on.
++  void goPrevious() {
++    if (!canGoPrevious || _cardId == null) return;
++    _ahead = _snap();
++    _restore(_previous!);
++    notifyListeners();
++  }
++
++  void _returnFromPrevious() {
++    final ahead = _ahead;
++    if (ahead == null) return;
++    _ahead = null;
++    _restore(ahead);
++    notifyListeners();
++  }
++
+   void rate(Rating rating) {
+     final id = _cardId;
+     if (id == null || !_back) return;
++    if (_ahead != null) {
++      _returnFromPrevious();
++      return;
++    }
+     // Reviewing notifies the repository synchronously. Advance exactly once
+     // after recording this grade, rather than inside that notification.
+     _rating = true;
+@@ -313,6 +384,7 @@ class FlashcardSession extends ChangeNotifier {
+       _rating = false;
+     }
+     _reviewed++;
++    _previous = _snap();
+     if (rating == Rating.again) {
+       final repeats = _againRepeats[id] ?? 0;
+       // Continuous mode caps returns too (問題回報 #319): past the cap the
+@@ -953,3 +1025,31 @@ class FlashcardSession extends ChangeNotifier {
+     return found;
+   }
+ }
++
++class _CardSnap {
++  final String? cardId, usageId, senseId, credit, submitted;
++  final Photo? photo;
++  final LabelPoint? anchor;
++  final Rect? box;
++  final bool back, practice;
++  final ReviewExercise? exercise;
++  final bool? correct;
++  final int attempts, hints;
++  final List<CardPhoto> options;
++  _CardSnap(
++      this.cardId,
++      this.usageId,
++      this.senseId,
++      this.photo,
++      this.anchor,
++      this.box,
++      this.credit,
++      this.back,
++      this.exercise,
++      this.correct,
++      this.submitted,
++      this.attempts,
++      this.hints,
++      this.practice,
++      this.options);
++}
+diff --git a/app/lib/widgets/flashcard_back.dart b/app/lib/widgets/flashcard_back.dart
+index 1ff61b51..d8afea80 100644
+--- a/app/lib/widgets/flashcard_back.dart
++++ b/app/lib/widgets/flashcard_back.dart
+@@ -563,7 +563,8 @@ class FlashcardBack extends StatelessWidget {
+                     if (meanings == null || meanings.isEmpty)
+                       Text(meaning)
+                     else
+-                      for (final sense in meanings) Text(sense.native!),
++                      for (var i = 0; i < meanings.length; i++)
++                        Text('${i + 1}. ${meanings[i].native!}'),
+                   ],
+                   initial: 3));
+         }
+@@ -578,7 +579,20 @@ class FlashcardBack extends StatelessWidget {
+                 Row(children: [TagChip(posLabel(pos))]),
+                 const SizedBox(height: 6),
+               ],
+-              Text(meaning, style: look.meaning),
++              // 問題回報 #642: list the meanings as 1, 2, 3 (first three,
++              // the rest behind 「顯示更多」) instead of one long line.
++              Builder(builder: (_) {
++                final parts = meaning
++                    .split(RegExp(r'[；;]'))
++                    .map((p) => p.trim())
++                    .where((p) => p.isNotEmpty)
++                    .toList();
++                if (parts.length < 2) return Text(meaning, style: look.meaning);
++                return ShowMoreItems(initial: 3, children: [
++                  for (var i = 0; i < parts.length; i++)
++                    Text('${i + 1}. ${parts[i]}', style: look.meaning),
++                ]);
++              }),
+               if (definition != null)
+                 LinkedText(definition,
+                     style: MFont.manrope(14, FontWeight.w600, MColors.muted),
+@@ -635,18 +649,30 @@ class FlashcardBack extends StatelessWidget {
+               field,
+               [
+                 // Item 4: the sentences sit close together.
+-                for (final x in recommended)
++                // 問題回報 #643: numbered 1, 2, 3 like the meanings (#642).
++                for (final (i, x) in recommended.indexed)
+                   Container(
+                     margin: EdgeInsets.only(bottom: look.exampleGap),
+                     padding: look.examplePadding,
+                     decoration: look.example,
+-                    child: ExampleText(
+-                        example: x,
+-                        links: links,
+-                        onOpenWord: onOpenWord,
+-                        showTranslation:
+-                            template.publishedLayout?['show_translation'] !=
+-                                false),
++                    child: Row(
++                      crossAxisAlignment: CrossAxisAlignment.start,
++                      children: [
++                        if (recommended.length > 1) ...[
++                          Text('${i + 1}.', style: look.meaning),
++                          const SizedBox(width: 6),
++                        ],
++                        Expanded(
++                          child: ExampleText(
++                              example: x,
++                              links: links,
++                              onOpenWord: onOpenWord,
++                              showTranslation: template
++                                      .publishedLayout?['show_translation'] !=
++                                  false),
++                        ),
++                      ],
++                    ),
+                   ),
+               ],
+               initial: 5),
+diff --git a/app/test/screens_test.dart b/app/test/screens_test.dart
+index 7757ac58..0788f364 100644
+--- a/app/test/screens_test.dart
++++ b/app/test/screens_test.dart
+@@ -454,7 +454,8 @@ void main() {
+       await tester.pumpAndSettle();
+       expect(find.text('自由加練，不更動下次複習時間'), findsNothing);
+       expect(find.bySemanticsLabel('刪除此卡片'), findsOneWidget);
+-      expect(find.textContaining('張'), findsNothing, reason: 'no card counts');
++      expect(find.textContaining(RegExp(r'\d+\s*張')), findsNothing,
++          reason: 'no card counts');
+     });
+ 
+     test('firstLetterHint keeps words and spaces', () {

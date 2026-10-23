@@ -1220,3 +1220,9 @@ owner 19:00 之後在 iPhone 送出的新回報。**都已由 Windows 派出**�
 | 643 | 複習 | 例句也要123 | 派出：卡 #576 |
 
 另外：請重裝最新 main 的 release 版到 owner 的 iPhone。已修好的 #604、#605、#609、#612、#613、#616、#617 都在 main 上，請逐項驗證。
+
+## M91（2026-10-23 20:12）狀態：待做（owner #626 決定：App 畫面由 Mac 修）
+1. **#641（回到正面／上一張卡片按鈕）、#642（意思只列 1 2 3）、#643（例句只列 1 2 3）收回給 Mac**。Windows 卡 #574–#576 已取消，改動沒有推。它們的草稿在 `docs/mac_handover/cards574-576_windows_draft.patch`，要不要參考由 Mac 決定。
+2. Windows 已凍結 flashcard_back.dart、flashcard_screen.dart、flashcard_session_views.dart。Mac 完成後在 results 記一列，Windows 就解除凍結。
+3. **從現在起 owner 從 App 送的回報（[卡片回報]／[意見回饋]）會自動標 [給 Mac] 並寫進這個 inbox**，Windows 不再派工。裡面屬於詞庫資料或伺服器的部分，請寫「不通過」列交回 Windows。
+4. #639（標籤低於目標）、#640（下載的相片冊沒出現）的 Windows 卡已經在跑，會照常做完；兩張目前都在等 owner 決定。

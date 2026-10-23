@@ -35,5 +35,9 @@ Follow them even if the card prompt below is silent on the topic.
 
 - 【manager 10/20】你是派工程式開的 CLI：**不要用 task.py（hello/start/next/progress/done）**，也不要 PUT 卡片的 agent／status——那會把卡改到別的名字（例如「Claude · card385」），派工程式就收不到你的結果。進度只用 `PUT /api/tasks/<id>` 的 `progress`，結束時寫 result.md 就好。
 
+## 分工（owner 10/23 #626）與暫時凍結
+App 畫面與互動由 Mac 修；Windows 的卡只做詞庫資料、伺服器、工具。卡片需要改 App 畫面時，資料部分做完，畫面部分寫進 result.md「需要 Mac：…」並停下。
+**凍結給 Mac（Mac 通知完成前不要改）**：`app/lib/widgets/flashcard_back.dart`、`app/lib/screens/flashcard_screen.dart`、`app/lib/widgets/flashcard_session_views.dart`。
+
 ## 要 owner 決定的問題（owner 10/23）
 result.md 第一段「需要你決定：…」**最多 300 字**：問題一句、選項 A／B…、「建議：X，因為…」（一定要有建議）。細節放空一行之後。派工程式只把這一段貼到問題回報頁。開 [待決定] 問題回報時也一樣。
