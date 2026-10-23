@@ -7,6 +7,7 @@
 // the whole state saved and reloaded through Hive at the end.
 //
 //   flutter test test/simulation/fuzz_simulation.dart  (SIM_PACK, SIM_STEPS, SIM_SEED)
+// Without ../tagger/cache (git-ignored, e.g. on a Mac) the photo part is skipped.
 
 import 'dart:convert';
 import 'dart:io';
@@ -73,10 +74,18 @@ void main() {
     final pack = LexiconPack.instance
       ..loadJson(jsonDecode(File(env['SIM_PACK'] ?? 'assets/lexicon/en-zh-TW.json')
           .readAsStringSync()) as Map<String, dynamic>);
+    final cache = Directory('../tagger/cache');
     final replies = [
-      for (final file in Directory('../tagger/cache').listSync().whereType<File>())
-        if (!file.uri.pathSegments.last.startsWith('score-')) file
+      if (cache.existsSync())
+        for (final file in cache.listSync().whereType<File>())
+          if (!file.uri.pathSegments.last.startsWith('score-')) file
     ]..sort((a, b) => a.path.compareTo(b.path));
+    if (replies.isEmpty) {
+      // tagger/cache is git-ignored: without the tagger's replies (a Mac)
+      // no photo arrives, and the photo-page actions never run.
+      // ignore: avoid_print
+      print('fuzz_simulation：沒有 ../tagger/cache 的照片回覆，略過「新照片」與照片頁動作，只跑其他動作。');
+    }
     final dir = await Directory.systemTemp.createTemp('fuzz_sim');
     addTearDown(() async {
       await Hive.close();

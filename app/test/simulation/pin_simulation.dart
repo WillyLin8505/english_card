@@ -6,6 +6,7 @@
 // object's dot, and stay inside the photo.
 //
 //   flutter test test/simulation/pin_simulation.dart
+// Without ../tagger/cache (git-ignored, e.g. on a Mac) it is skipped.
 // Optional bounded runs: SIM_PIN_FILES is a JSON array of cache file paths;
 // SIM_PIN_START/SIM_PIN_COUNT select a slice, and SIM_OUT isolates its report.
 
@@ -28,11 +29,20 @@ void main() {
     final env = Platform.environment;
     // A fixed manifest keeps chunk boundaries stable while the tagger adds files.
     final manifest = env['SIM_PIN_FILES'];
+    final cache = Directory('../tagger/cache');
+    if (manifest == null && !cache.existsSync()) {
+      // tagger/cache is git-ignored: a checkout without the tagger's replies
+      // (a Mac) has nothing to lay out.
+      // ignore: avoid_print
+      print('pin_simulation：沒有 ../tagger/cache（也沒有 SIM_PIN_FILES），沒有照片回覆可排版，略過。');
+      markTestSkipped('no ../tagger/cache and no SIM_PIN_FILES');
+      return;
+    }
     final files = manifest != null
         ? (jsonDecode(File(manifest).readAsStringSync()) as List)
             .map((path) => File(path as String))
             .toList()
-        : Directory('../tagger/cache')
+        : cache
             .listSync()
             .whereType<File>()
             .where((f) => !f.uri.pathSegments.last.startsWith('score-'))
