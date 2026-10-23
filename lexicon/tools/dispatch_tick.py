@@ -1238,6 +1238,22 @@ class Tick:
                     f"卡：{str(task.get('title') or '')[:80]}\n\n{part}\n")
         log(f"#{card_id}: App part handed to the Mac (inbox M{no})")
 
+    def save_screenshot(self, iid: int) -> str | None:
+        """The Mac can't read 問題回報 (no key): a report's screenshot is saved as
+        docs/mac_handover/<id>.png|jpg for it (Mac 10/24, #673 was one line plus a screenshot)."""
+        import base64
+        try:
+            data = str(http("GET", f"/issues/{iid}").get("screenshot") or "")
+        except Exception:  # noqa: BLE001
+            return None
+        m = re.match(r"data:image/(png|jpeg);base64,(.+)", data, re.S)
+        if not m:
+            return None
+        rel = f"docs/mac_handover/{iid}.{'png' if m.group(1) == 'png' else 'jpg'}"
+        (ROOT / rel).parent.mkdir(parents=True, exist_ok=True)
+        (ROOT / rel).write_bytes(base64.b64decode(m.group(2)))
+        return rel
+
     def route_app_reports(self):
         """owner 10/23 (#626): App 畫面與互動由 Mac 修。The owner's reports from the App go to the Mac:
         titled 「[給 Mac]」 (the swarm skips them) and listed in docs/mac_inbox.md (mac_sync pushes it).
@@ -1261,7 +1277,9 @@ class Tick:
                 "", "| # | 回報 | 內容 |", "|---|---|---|"]
         for i in sorted(new, key=lambda i: i["id"]):
             detail = str(i.get("detail") or "").replace("|", "／").replace("\n", " / ")
-            rows.append(f"| {i['id']} | {str(i.get('title') or '')[:60]} | {detail[:400]} |")
+            shot = self.save_screenshot(i["id"])
+            rows.append(f"| {i['id']} | {str(i.get('title') or '')[:60]} | {detail[:400]}"
+                        + (f"（截圖：`{shot}`）" if shot else "") + " |")
             self.write("PUT", f"/issues/{i['id']}", {"by": "Grokbot", "title": f"{MAC_PREFIX} {i.get('title') or ''}"[:300],
                        "resolution": f"給 Mac（inbox M{no}）"}, "app report → Mac")
         with inbox.open("a", encoding="utf-8", newline="\n") as f:
