@@ -99,14 +99,16 @@ class _WordDeckPhotosScreenState extends State<WordDeckPhotosScreen> {
                 alignment: Alignment.centerLeft,
                 child: UiText(
                     images.isEmpty
-                        ? '詞庫還沒有這個單字集的圖片'
+                        ? '這 ${_deck.wordCount} 個字在詞庫裡還沒有圖片，可以先看單字'
                         : '單字集 · ${_deck.wordCount} 個單字 · ${images.length} 張詞庫圖片',
                     style: MFont.manrope(13, FontWeight.w600, MColors.muted)),
               ),
             ),
             Expanded(
+              // 問題回報 #673: a page with no pictures still shows the words
+              // (the C2 slice of 基礎 3000 字 is 4 abstract words).
               child: images.isEmpty
-                  ? const SizedBox.shrink()
+                  ? _WordList(deck: _deck)
                   : GridView.builder(
                       padding: const EdgeInsets.fromLTRB(
                           MSpace.md, 0, MSpace.md, MSpace.md),
@@ -172,4 +174,41 @@ class WordDeckAlbumCard extends StatelessWidget {
           ),
         ),
       );
+}
+
+/// The words of a deck with no lexicon pictures: each opens 單字詳情.
+class _WordList extends StatelessWidget {
+  final InstalledDeck deck;
+
+  const _WordList({required this.deck});
+
+  @override
+  Widget build(BuildContext context) {
+    final scope = AppScope.of(context);
+    final repo = scope.repository;
+    final entries = [
+      for (final id in deck.entryIds(repo))
+        if (repo.entry(id) case final e?) e
+    ]..sort((a, b) => a.word.compareTo(b.word));
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(MSpace.md, 0, MSpace.md, MSpace.md),
+      itemCount: entries.length,
+      separatorBuilder: (_, __) => const SizedBox(height: MSpace.xs),
+      itemBuilder: (context, i) {
+        final e = entries[i];
+        return Material(
+          color: MColors.surface,
+          borderRadius: MRadii.rLg,
+          child: ListTile(
+            key: ValueKey('deck-word-${e.word}'),
+            title: Text(e.word,
+                style: MFont.manrope(16, FontWeight.w800, MColors.ink)),
+            subtitle: e.meaning.trim().isEmpty ? null : Text(e.meaning),
+            trailing: const Icon(Icons.chevron_right_rounded),
+            onTap: () => scope.navigator.openWord(e.id),
+          ),
+        );
+      },
+    );
+  }
 }

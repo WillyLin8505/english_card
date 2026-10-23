@@ -73,4 +73,40 @@ void main() {
     expect(find.byType(WordDeckPhotosScreen), findsOneWidget);
     expect(find.text('單字集 · 2 個單字 · 2 張詞庫圖片'), findsOneWidget);
   });
+
+  testWidgets('a word set without pictures lists its words (#673)',
+      (tester) async {
+    LexiconPack.instance.loadJson({
+      'schema_version': 3,
+      'target_language': 'en',
+      'native_language': 'zh-TW',
+      'catalog_version': 1,
+      'lexemes': [
+        {'id': 20, 'lemma': 'counsel', 'normalized': 'counsel', 'pos': 'noun'},
+        {'id': 21, 'lemma': 'situate', 'normalized': 'situate', 'pos': 'verb'},
+      ],
+      'catalog_images': const [],
+    });
+    final lib = DeckLibrary(remote: false, persist: false);
+    DeckLibrary.instance = lib;
+    final app = await pumpApp(tester,
+        initialTab: AppTab.album, size: const Size(402, 1400));
+    await lib.install(
+        const DeckContent(
+            DeckInfo(
+                slug: 'c2', kind: 'words', title: '基礎 3000 字・C2', count: 2),
+            words: [
+              (word: 'counsel', pos: 'noun', level: 'C2'),
+              (word: 'situate', pos: 'verb', level: 'C2'),
+            ]),
+        repository: app.repository,
+        intake:
+            AppScope.of(tester.element(find.byType(Scaffold).first)).intake);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('基礎 3000 字・C2'));
+    await tester.pumpAndSettle();
+    expect(find.text('這 2 個字在詞庫裡還沒有圖片，可以先看單字'), findsOneWidget);
+    expect(find.byKey(const ValueKey('deck-word-counsel')), findsOneWidget);
+    expect(find.byKey(const ValueKey('deck-word-situate')), findsOneWidget);
+  });
 }
