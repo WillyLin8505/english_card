@@ -1098,3 +1098,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 線上 pack 帶出 speaker／source_page | 通過 | 03:3x 從公開網址抓 format=sqlite：14,245 個錄音中 speaker 14,120、source_page 14,245。多行的「Speaker: X\nRecorder: Y」有 5,882 筆，App 已整理成一個名字（b3c1f5ee）；另有 304 筆「No machine-readable author provided. X assumed…」，Mac 已改成只取 X（commit 見本列下一個） | — | — |
 | 模擬器單字詳情錄音者 | 通過 | 線上 pack 同步後，gold 的單字詳情音標下顯示「發音錄音：Shtooka Project · CC BY 3.0 us」；horn 顯示「My won · Public domain」 | 2026-10-24/m141_recording_credit.png | — |
 | owner iPhone | 通過 | 03:2x 手機鎖定，實機檢查沒有啟動；已重裝 release（含錄音者顯示與名字整理）。owner 打開 App 後會同步新詞庫，單字詳情就會出現錄音者 | — | — |
+
+## 2026-10-24 M142（法語學習者，模擬器）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| 卡 #496 法語模擬（英語母語者學法語） | 通過 | main 最新版、FRENCH_LEARNING=true 在模擬器重跑：新手引導選學法語＋母語英文可進主畫面；首頁、單字本、設定頁沒有中文字串；法語詞庫 6,153 詞；複習背面法文字頭不被改大寫、名詞帶冠詞（maison、temps、pomme…） | — | — |
