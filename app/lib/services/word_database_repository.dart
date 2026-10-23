@@ -1091,8 +1091,17 @@ class WordDatabaseRepository extends ChangeNotifier {
         now: e.createdAt,
       ).toJson();
       final merged = e.toJson();
+      // A move onto a pos the pack gives no meaning for keeps the meaning
+      // the card already shows (pack_update_simulation seed 1023: somewhere
+      // adv「到某處」→ noun, sue verb「起訴」→ noun), instead of blanking it
+      // into 「詞庫尚未提供中文意思」. A learner-edited meaning is kept below
+      // as before.
+      final keepMeaning = moved &&
+          x.nativeMeaning == null &&
+          e.meaning.trim().isNotEmpty &&
+          !e.userEdited.contains(WordField.meaning);
       for (final field in [
-        'meaning',
+        if (!keepMeaning) 'meaning',
         'register',
         'definition',
         'definitionEn',
@@ -1129,8 +1138,12 @@ class WordDatabaseRepository extends ChangeNotifier {
       }
       merged['translatedFor'] = pack.native;
       // A dictionary gap is explicit, not an endless background loading state.
-      merged['dataStatus'] = x.nativeMeaning == null ? 'failed' : 'complete';
-      merged['dataError'] = x.nativeMeaning == null ? '詞庫尚未提供{N}意思' : null;
+      if (!keepMeaning) {
+        merged['dataStatus'] =
+            x.nativeMeaning == null ? 'failed' : 'complete';
+        merged['dataError'] =
+            x.nativeMeaning == null ? '詞庫尚未提供{N}意思' : null;
+      }
       if (jsonEncode(merged) != jsonEncode(e.toJson())) {
         final next = WordEntry.fromJson(merged);
         _putEntry(next);
