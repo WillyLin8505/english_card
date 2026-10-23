@@ -4,6 +4,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show HapticFeedback;
 
 import '../../app/app_scope.dart';
 import '../../l10n/ui_text.dart';
@@ -424,8 +425,15 @@ class PinnedPhoto extends StatefulWidget {
   /// original image — used to place a word the learner added by hand.
   final ValueChanged<LabelPoint>? onPhotoTap;
 
-  /// Long-press that lands on no pin (e.g. the photo-credit dialog).
+  /// Long-press on the photo (e.g. the photo-credit dialog).
   final VoidCallback? onPhotoLongPress;
+
+  /// Long-press anywhere on the photo, with where (a fraction of the
+  /// original image): 長按辨識 asks the AI what is there (問題回報 #616).
+  final ValueChanged<LabelPoint>? onPhotoLongPressAt;
+
+  /// A spot being recognized: drawn as a ring until the answer comes.
+  final LabelPoint? scanning;
   final Widget? overlay;
   final WidgetBuilder? imageErrorBuilder;
   final ValueChanged<bool>? onImageState;
@@ -453,6 +461,8 @@ class PinnedPhoto extends StatefulWidget {
     this.onPinMoved,
     this.onPhotoTap,
     this.onPhotoLongPress,
+    this.onPhotoLongPressAt,
+    this.scanning,
     this.overlay,
     this.imageErrorBuilder,
     this.onImageState,
@@ -469,10 +479,6 @@ class PinnedPhoto extends StatefulWidget {
 class _PinnedPhotoState extends State<PinnedPhoto> {
   String? _dragging;
   Offset _dragBy = Offset.zero;
-
-  /// Pin whose dot is being long-pressed: its label is called out so the
-  /// learner can tell which word a point belongs to (問題回報 #616).
-  String? _peek;
 
   // 問題回報 #409: `_queue` holds the ids still waiting to pop in, one every
   // [_popGap]; `_popped` the ids that have popped in (they animate once).
@@ -649,21 +655,18 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
                 onTapUp: widget.onPhotoTap == null
                     ? null
                     : (d) => widget.onPhotoTap!(geo.fromBox(d.localPosition)),
-                onLongPressStart: (d) {
-                  String? hit;
-                  var best = 32.0;
-                  for (final pl in placed) {
-                    final dist = (pl.anchor - d.localPosition).distance;
-                    if (dist < best) {
-                      best = dist;
-                      hit = pl.id;
-                    }
-                  }
-                  setState(() => _peek = hit);
-                  if (hit == null) widget.onPhotoLongPress?.call();
-                },
-                onLongPressEnd: (_) => setState(() => _peek = null),
-                onLongPressCancel: () => setState(() => _peek = null),
+                onLongPressStart: widget.onPhotoLongPressAt == null &&
+                        widget.onPhotoLongPress == null
+                    ? null
+                    : (d) {
+                        final at = widget.onPhotoLongPressAt;
+                        if (at != null) {
+                          HapticFeedback.mediumImpact();
+                          at(geo.fromBox(d.localPosition));
+                        } else {
+                          widget.onPhotoLongPress?.call();
+                        }
+                      },
                 // The photo stays still while labels pop in (#409).
                 child: RepaintBoundary(
                   child: PhotoImage(widget.photo,
@@ -773,36 +776,20 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
                       ),
                     ),
                   ),
-              if (_peek case final id?)
-                if (byId[id] case final p?)
-                  for (final pl in placed.where((x) => x.id == id))
-                    Positioned(
-                      left: (pl.anchor.dx - 90).clamp(4.0, box.width - 184),
-                      top: (pl.anchor.dy - 52).clamp(4.0, box.height - 40),
-                      width: 180,
-                      child: IgnorePointer(
-                        child:
-                            Column(mainAxisSize: MainAxisSize.min, children: [
-                          Container(
-                            key: const ValueKey('pin-peek'),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: Colors.black87,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              p.zh.isEmpty ? p.word : '${p.word}  ${p.zh}',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                        ]),
-                      ),
+              if (widget.scanning case final spot?)
+                Positioned(
+                  left: geo.toBox(spot).dx - 28,
+                  top: geo.toBox(spot).dy - 28,
+                  child: const IgnorePointer(
+                    child: SizedBox(
+                      key: ValueKey('spot-scanning'),
+                      width: 56,
+                      height: 56,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 3, color: Colors.white),
                     ),
+                  ),
+                ),
               if (widget.overlay != null)
                 Positioned.fill(child: widget.overlay!),
               if (_queue.isNotEmpty || _found != null)
