@@ -4,6 +4,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
+import 'audio_file_cache.dart';
 import 'pack_media.dart';
 
 /// Word pronunciation (spec section 7: 翻到背面時自動播放單字真人發音；所有
@@ -54,9 +55,35 @@ Map<String, String>? bestTtsVoice(List<dynamic> voices, String locale) {
   return best;
 }
 
-class DeviceSpeaker implements Speaker {
+/// A [Speaker] that can download a recording ahead of time (問題回報
+/// #684), so the first tap does not wait for the network.
+abstract interface class AudioPrefetcher {
+  /// Starts downloading [audioUrl] in the background; never throws.
+  void prefetch(String? audioUrl);
+}
+
+/// Starts downloading [audioUrls] with [speaker] when it keeps recordings
+/// (DeviceSpeaker); a no-op otherwise (tests, SilentSpeaker).
+void prefetchRecordings(Speaker speaker, Iterable<String?> audioUrls) {
+  if (speaker case final AudioPrefetcher prefetcher) {
+    audioUrls.forEach(prefetcher.prefetch);
+  }
+}
+
+class DeviceSpeaker implements Speaker, AudioPrefetcher {
+  /// [cache] keeps server recordings on the device (問題回報 #684). [play]
+  /// replaces the audio player in tests: it gets the source to play.
+  DeviceSpeaker({AudioFileCache? cache, Future<void> Function(Source)? play})
+      : _cache = cache ?? AudioFileCache(),
+        _play = play;
+
+  final AudioFileCache _cache;
+  final Future<void> Function(Source)? _play;
   FlutterTts? _tts;
   AudioPlayer? _player;
+  // Bumped by stop(): a say() still downloading its clip when another one
+  // (or stop) comes does not play it afterwards.
+  var _generation = 0;
   // bestTtsVoice per locale, looked up once (null: keep the default voice).
   final _voices = <String, Map<String, String>?>{};
 
@@ -82,24 +109,43 @@ class DeviceSpeaker implements Speaker {
       };
 
   @override
+  void prefetch(String? audioUrl) => _cache.prefetch(audioUrl);
+
+  /// What to play for [audioUrl]: a bundled asset, the cached copy of a
+  /// server recording (downloaded now if needed), or — when that download
+  /// fails — the URL streamed as before.
+  Future<Source> _source(String audioUrl) async {
+    // UrlSource only plays http/file URLs. Bundled clips are Flutter
+    // assets; AssetSource's cache already prefixes `assets/`.
+    if (packMediaIsAsset(audioUrl)) {
+      return AssetSource(audioUrl.substring('assets/'.length));
+    }
+    final file = await _cache.file(audioUrl);
+    if (file != null) return DeviceFileSource(file.path);
+    return UrlSource(audioUrl);
+  }
+
+  @override
   Future<bool> say(String text,
       {required String language,
       String? audioUrl,
       String accent = 'en-GB'}) async {
     await stop();
+    final generation = _generation;
     if (audioUrl != null && audioUrl.isNotEmpty) {
       try {
+        final source = await _source(audioUrl);
+        if (generation != _generation) return true;
+        if (_play case final play?) {
+          await play(source);
+          return true;
+        }
         final player = _player ??= AudioPlayer();
         // Wait for the clip to end so two accents played in a row (card
         // #251: 英式、美式各一次) do not cut each other off; a clip that
         // never reports completion gives up after a few seconds.
         final Future<void> finished =
             player.onPlayerComplete.first.then<void>((_) {});
-        // UrlSource only plays http/file URLs. Bundled clips are Flutter
-        // assets; AssetSource's cache already prefixes `assets/`.
-        final source = packMediaIsAsset(audioUrl)
-            ? AssetSource(audioUrl.substring('assets/'.length))
-            : UrlSource(audioUrl);
         await player.play(source);
         await finished.timeout(const Duration(seconds: 6),
             onTimeout: () => null);
@@ -139,6 +185,7 @@ class DeviceSpeaker implements Speaker {
 
   @override
   Future<void> stop() async {
+    _generation++;
     try {
       await _player?.stop();
       await _tts?.stop();

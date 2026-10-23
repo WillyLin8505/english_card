@@ -12,6 +12,14 @@ const uiCatalog = <String, (String, String)>{
     'Attach a screenshot of this screen',
     'Joindre une capture de cet écran'
   ),
+  '這一本現在沒有可以複習的卡，單字的{N}意思補齊後會自動加入': (
+    'Nothing to review in this one yet; words join once their {N} meaning is in',
+    'Rien à réviser ici pour l’instant ; les mots arrivent dès que leur sens en {N} est prêt'
+  ),
+  '這一本現在沒有可以複習的卡': (
+    'Nothing to review in this one yet',
+    'Rien à réviser ici pour l’instant'
+  ),
   // 問題回報 #641.
   '上一張卡片': ('Previous card', 'Carte précédente'),
   '回到正面': ('Back to front', 'Revoir le recto'),
