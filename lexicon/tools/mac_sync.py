@@ -168,6 +168,36 @@ def mark_issues(cards: list[dict], no: int, commit: str):
                                                "by": "mac_sync"})
 
 
+def push_non_app() -> int:
+    """owner 10/23 「修改完就push」: changes outside app/ (lexicon, server, tools, docs) need no
+    flutter checks — commit and push them as they come. app/ still waits for its checks above."""
+    changed = [line[3:].strip().strip('"') for line in sh("git", "status", "--porcelain").stdout.splitlines()]
+    paths = [p for p in changed if p and not p.startswith(("app/", "lexicon/tmp/"))
+             and not ((ROOT / p).is_file() and (ROOT / p).stat().st_size > 50 * 1024 * 1024)]
+    if not paths:
+        log("no finished app cards since last sync; nothing else to push")
+        return 0
+    LOCK.write_text(str(os.getpid()))
+    try:
+        sh("git", "add", "-A", "--", *paths)
+        if sh("git", "diff", "--cached", "--quiet").returncode == 0:
+            return 0
+        r = sh("git", "commit", "-q", "-m", "Windows: lexicon / server / tools changes (mac_sync, no app/ code)")
+        if r.returncode != 0:
+            log(f"commit failed: {r.stderr[-300:]}")
+            return 1
+        sh("git", "fetch", "-q", "origin")
+        if sh("git", "merge", "-q", "--no-edit", "origin/main").returncode != 0:
+            log("merge with origin/main failed (non-app push)")
+            sh("git", "merge", "--abort")
+            return 1
+        p = sh("git", "push", "origin", "main")
+        log(f"pushed {len(paths)} non-app path(s)" if p.returncode == 0 else f"push failed: {p.stderr[-300:]}")
+        return 0 if p.returncode == 0 else 1
+    finally:
+        LOCK.unlink(missing_ok=True)
+
+
 def main(argv=None) -> int:
     sys.stdout.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
@@ -184,8 +214,7 @@ def main(argv=None) -> int:
             t = http("GET", f"/tasks/{cid}")
             cards.append({"card": cid, "t": "", "title": t.get("title"), "outcome": (t.get("progress") or "")[:200]})
     if not cards:
-        log("no finished app cards since last sync")
-        return 0
+        return 0 if a.dry_run else push_non_app()
     log(f"{len(cards)} app card(s) to hand over: {', '.join('#' + str(c['card']) for c in cards)}")
     if a.dry_run:
         return 0
