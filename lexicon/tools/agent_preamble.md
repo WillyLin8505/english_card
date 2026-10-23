@@ -35,5 +35,8 @@ Follow them even if the card prompt below is silent on the topic.
 
 - 【manager 10/20】你是派工程式開的 CLI：**不要用 task.py（hello/start/next/progress/done）**，也不要 PUT 卡片的 agent／status——那會把卡改到別的名字（例如「Claude · card385」），派工程式就收不到你的結果。進度只用 `PUT /api/tasks/<id>` 的 `progress`，結束時寫 result.md 就好。
 
+## 暫時凍結（Mac 10/23 18:50 通知，Mac 完成後由 Manager 移除）
+Mac 正在做「長按照片任一處 → AI 辨識該區塊 → 確認後加標籤」（問題回報 #616）。**不要修改** `app/lib/screens/photo_detail_screen.dart`、`app/lib/widgets/mobile/photo_widgets.dart` 裡的長按（onLongPress／GestureDetector 長按）相關程式。需要改到時寫「需要你決定：等 Mac 的 #616 push 後再改」並停下。
+
 ## 要 owner 決定的問題（owner 10/23）
 result.md 第一段「需要你決定：…」**最多 300 字**：問題一句、選項 A／B…、「建議：X，因為…」（一定要有建議）。細節放空一行之後。派工程式只把這一段貼到問題回報頁。開 [待決定] 問題回報時也一樣。
