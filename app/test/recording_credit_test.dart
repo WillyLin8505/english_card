@@ -35,6 +35,10 @@ void main() {
         RecordingCredit.cleanSpeaker('Recorder: John\nSpeaker: Jane'), 'Jane');
     expect(RecordingCredit.cleanSpeaker('Recorder: John'), 'John');
     expect(RecordingCredit.cleanSpeaker('Jane Doe'), 'Jane Doe');
+    expect(
+        RecordingCredit.cleanSpeaker('No machine-readable author provided. '
+            'Chris Melville assumed (based on copyright claims).'),
+        'Chris Melville');
     expect(RecordingCredit.cleanSpeaker('  \n '), isNull);
     expect(
         RecordingCredit.fromJson({

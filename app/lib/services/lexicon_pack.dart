@@ -700,6 +700,13 @@ class RecordingCredit {
       }
     }
     name ??= labelled.firstMatch(lines.first)?.group(2) ?? lines.first;
+    // Commons' "No machine-readable author provided. X assumed (based on
+    // copyright claims)." names X.
+    final assumed = RegExp(
+            r'^No machine-readable author provided\.\s*(.+?)\s+assumed\b',
+            caseSensitive: false)
+        .firstMatch(name.trim());
+    if (assumed != null) name = assumed.group(1)!;
     name = name.trim();
     if (name.isEmpty) return null;
     return name.length > 60 ? '${name.substring(0, 59)}…' : name;
