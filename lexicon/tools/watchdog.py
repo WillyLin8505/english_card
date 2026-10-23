@@ -48,7 +48,9 @@ def running(procs: list[str], *needles: str) -> bool:
 
 
 def console(title: str, command: str, cwd: Path):
-    subprocess.Popen(["cmd.exe", "/k", f"title {title} & {command}"], cwd=cwd, creationflags=NEW_CONSOLE)
+    # one raw command line: a list would escape the inner quotes as \" and cmd can't run them
+    # (10/23: the worker windows opened but never started a worker)
+    subprocess.Popen(f'cmd.exe /k "title {title} & {command}"', cwd=cwd, creationflags=NEW_CONSOLE)
 
 
 def ensure_all(log=print) -> list[str]:

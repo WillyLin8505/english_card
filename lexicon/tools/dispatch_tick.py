@@ -1076,10 +1076,14 @@ class Tick:
                     board = http("GET", "/schedule/board")
             except Exception as e:  # noqa: BLE001
                 log(f"mac_results_to_issues failed: {e}")
-        swarmed = self.swarm(board)
-        if swarmed and not self.dry:
-            board = http("GET", "/schedule/board")
-        self.dispatch(board)
+        if self.cfg.get("hold_new_launches"):
+            # owner 10/23 「現有的事情做完就先不要再派新的」: finish and collect, launch nothing
+            log("hold_new_launches: collecting only, no new CLIs")
+        else:
+            swarmed = self.swarm(board)
+            if swarmed and not self.dry:
+                board = http("GET", "/schedule/board")
+            self.dispatch(board)
         self.heartbeats(board)
         self.sync_issues()
         self.mac_sync()
