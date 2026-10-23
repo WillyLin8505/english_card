@@ -37,7 +37,6 @@ Follow them even if the card prompt below is silent on the topic.
 
 ## 分工（owner 10/23 #626）與暫時凍結
 App 畫面與互動由 Mac 修；Windows 的卡只做詞庫資料、伺服器、工具。卡片需要改 App 畫面時，資料部分做完，畫面部分寫進 result.md「需要 Mac：…」並停下。
-**凍結給 Mac（Mac 通知完成前不要改）**：`app/lib/widgets/flashcard_back.dart`、`app/lib/screens/flashcard_screen.dart`、`app/lib/widgets/flashcard_session_views.dart`。
 
 ## 要 owner 決定的問題（owner 10/23）
 result.md 第一段「需要你決定：…」**最多 300 字**：問題一句、選項 A／B…、「建議：X，因為…」（一定要有建議）。細節放空一行之後。派工程式只把這一段貼到問題回報頁。開 [待決定] 問題回報時也一樣。
