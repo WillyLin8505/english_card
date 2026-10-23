@@ -1137,3 +1137,8 @@ commit `1cc4a767`（Windows：flutter analyze 無 error、00:56 +571 ~2: All tes
 commit `8bcd02d6`（Windows：flutter analyze 無 error、01:01 +571 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #554：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
   結果：全部完成：flutter test 571 通過（~2 skipped）、flutter analyze 0 error（1 個既有 info，在凍結檔 flashcardsessionviews.dart，未動）。
+
+## M83（2026-10-23 17:54）狀態：待做
+commit `c1207cc8`（Windows：flutter analyze 無 error、00:57 +571 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #539：問題回報 #579：同一詞性裡「第二詞源」的常用義項全被標低優先、沒有中文：second 的「秒」、tip 的「小費」、
+  結果：第二詞源的常用義項不再被藏：637 字／1,655 個義項拿掉 etymology-N 標籤（A1–B1 1,040），「已確立卻被藏」從 502 降到 2，有中文的從 878 增加到 1,035；還有 557 個義項（282 字）缺中文，要等 Qwen 恢復後補（Qwen 目前暫停）。golden 與 QC 都沒有退
