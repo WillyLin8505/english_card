@@ -1445,7 +1445,7 @@ owner 在 iPhone 送出的回報（#626：App 畫面與互動由 Mac 修）。�
 - 剩下：等 owner 決定 A/B/C；C 才需要 Windows 資料卡。
 - 暫存檔 lexicon/logs/agents/card593_shot*.png 可刪。
 
-## M121（2026-10-24 00:53）狀態：待做（Windows 卡 #594 交給 Mac 的 App 畫面部分）
+## M121（2026-10-24 00:53）狀態：完成
 卡：問題回報 #669：[給 Mac] [意見回饋] 照片詳情：這裡的回報沒有截圖欸 全部都要ㄧㄡˇ
 
 照片詳情頁的「意見回饋」送出時沒有帶 `screenshot` 欄位（#669 `has_screenshot=false`）。同樣的回報在相片冊頁（#668）有截圖，所以後端 `lexicon/backend/app/issues.py` 的 screenshot 欄位正常，問題在照片詳情頁的送出流程。請 Mac 讓所有頁面（含照片詳情）的回饋都附截圖，並實測一次。
