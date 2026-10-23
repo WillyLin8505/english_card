@@ -15,6 +15,15 @@ String currentWord(WidgetTester tester) {
   return tester.widget<FlashcardBack>(find.byType(FlashcardBack)).entry.word;
 }
 
+/// 顯示答案, also for a photo exercise waiting on a picture the test has none of.
+Future<void> reveal(WidgetTester tester) async {
+  final front = find.byType(FlashcardFront);
+  final s = tester.widget<FlashcardFront>(front).session;
+  if (s != null && !s.canAnswer) s.reportPhotoState(s.photoAttempt, true);
+  s?.showAnswer();
+  await tester.pumpAndSettle();
+}
+
 void main() {
   test('meanings split into senses on ；', () {
     expect(FlashcardBack.meaningParts('國民、民族、人民；人們、人'), ['國民、民族、人民', '人們、人']);
@@ -35,8 +44,7 @@ void main() {
     expect(front, findsNothing, reason: 'already on the front');
 
     final first = currentWord(tester);
-    await tester.tap(find.text('顯示答案'));
-    await tester.pumpAndSettle();
+    await reveal(tester);
     expect(find.byType(FlashcardBack), findsOneWidget);
 
     // 回到正面: the question again, same card.
@@ -45,8 +53,7 @@ void main() {
     expect(find.byType(FlashcardFront), findsOneWidget);
     expect(currentWord(tester), first);
 
-    await tester.tap(find.text('顯示答案'));
-    await tester.pumpAndSettle();
+    await reveal(tester);
     await tester.tap(find.text('記得'));
     await tester.pumpAndSettle();
     final second = currentWord(tester);
@@ -65,8 +72,7 @@ void main() {
     expect(currentWord(tester), second);
 
     // 問題回報 #652: 上一張 goes back more than one card.
-    await tester.tap(find.text('顯示答案'));
-    await tester.pumpAndSettle();
+    await reveal(tester);
     await tester.tap(find.text('記得'));
     await tester.pumpAndSettle();
     final third = currentWord(tester);

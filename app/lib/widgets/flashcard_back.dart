@@ -475,7 +475,6 @@ class FlashcardBack extends StatelessWidget {
     '現在式',
     '第三人稱單數',
     '過去式',
-    '未來式',
     '現在分詞',
     '過去分詞',
     '複數',
@@ -566,9 +565,10 @@ class FlashcardBack extends StatelessWidget {
         add(e.key, e.value.word);
       }
     }
-    // 問題回報 #619: an English verb shows every tense — 現在式 and 未來式
-    // follow from the headword — and a form that does not belong to the
-    // card's part of speech (an adjective's 過去式 from bad data) is left out.
+    // 問題回報 #619: an English verb shows its base as 現在式 (no 未來式:
+    // will + base is not a form, owner decision #632 A), and a form that does
+    // not belong to the card's part of speech (an adjective's 過去式 from
+    // bad data) is left out.
     final pos = LexiconPack.packPos(activePos ?? source?.pos ?? entry.pos);
     if (entry.language == 'en') {
       const verbOnly = {'第三人稱單數', '過去式', '過去分詞', '現在分詞'};
@@ -580,7 +580,6 @@ class FlashcardBack extends StatelessWidget {
           (adjOnly.contains(kind) && pos != 'adj' && pos != 'adv'));
       if (pos == 'verb' && !head.contains(' ')) {
         byKind['現在式'] = head;
-        byKind['未來式'] = 'will $head';
       }
     }
     return [
