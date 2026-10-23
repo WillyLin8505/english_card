@@ -17,6 +17,16 @@ class DatabaseWordScreen extends StatelessWidget {
                   Center(child: UiText('這個單字已從資料庫移除', style: MFont.bodyMuted)));
         }
         final scope = AppScope.of(context);
+        // 問題回報 #684: the recordings are downloaded while the page is read.
+        scope.prefetchAudio((pack.target ?? 'en') == 'en'
+            ? [
+                for (final accent in const ['en-GB', 'en-US'])
+                  packAccentAudioUrl(word, accent, orDefault: true),
+              ]
+            : [
+                if (word.audio != null)
+                  packRecordingUrl(pack.mediaBase, word.audio!),
+              ]);
         final usages = pack
             .entriesFor(word.lemma)
             .where((entry) => entry.full && !entry.cardForm)

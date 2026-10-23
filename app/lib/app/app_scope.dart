@@ -152,6 +152,11 @@ class AppScope extends InheritedNotifier<AppSettings> {
                   orDefault: true)
               : entry.audioUrl);
 
+  /// Downloads these recordings in the background (問題回報 #684) so the
+  /// first 聽發音 does not wait for the server.
+  void prefetchAudio(Iterable<String?> audioUrls) =>
+      prefetchRecordings(speaker, audioUrls);
+
   @override
   bool updateShouldNotify(AppScope oldWidget) =>
       repository != oldWidget.repository ||

@@ -1051,6 +1051,14 @@ class FlashcardBack extends StatelessWidget {
   }) {
     if (identical(_preparing, entry)) return;
     _preparing = entry;
+    // 問題回報 #684: the recordings the back plays are downloaded now.
+    AppScope.of(context).prefetchAudio([
+      if (entry.language == 'en')
+        for (final accent in const ['en-GB', 'en-US'])
+          accentAudioUrl(entry, accent)
+      else
+        entry.audioUrl,
+    ]);
     final back = FlashcardBack(
       entry: entry,
       activePos: activePos,

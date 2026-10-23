@@ -46,6 +46,14 @@ class WordDetailScreen extends StatelessWidget {
           return const Scaffold(body: Center(child: UiText('找不到這個單字')));
         }
         final card = repo.cardOf(entry.id);
+        // 問題回報 #684: both accents' recordings are downloaded while the
+        // page is read, so 聽發音 plays at once.
+        scope.prefetchAudio(repo.language == 'en'
+            ? [
+                for (final accent in const ['en-GB', 'en-US'])
+                  accentAudioUrl(entry, accent, orDefault: true),
+              ]
+            : [entry.audioUrl]);
 
         Future<void> edit() async {
           final result = await showEditWordDialog(context, entry);
