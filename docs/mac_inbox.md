@@ -1647,7 +1647,7 @@ commit `b3c1f5ee`（Windows：flutter analyze 無 error、01:41 +646 ~2: All tes
 ## M141（2026-10-24 03:30）狀態：完成
 線上 pack 已帶出錄音者與來源頁。Windows 從公開網址 https://api.willylinai.com/api/lexicon?target=en&native=zh-TW&format=sqlite 實測，14,245 筆錄音中 speaker 有 14,120 筆、source_page 有 14,245 筆。serve_app 在 03:23 重啟。請在 owner 的 iPhone 同步詞庫，到單字詳情確認音標下有「發音錄音：錄音者 · 授權（來源網站）」。
 
-## M142（2026-10-24 04:47）狀態：待做
+## M142（2026-10-24 04:47）狀態：完成
 commit `d65b0031`（Windows：flutter analyze 無 error、01:28 +646 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #496：模擬使用者・法語（英語母語者學法語）
   結果：法語模擬第 11 輪：程式 4/4 全通過（frlearnera1 28s、frlearnerb1 30s、carddraw 53s、frmedia 12s）；pack 6153 詞；沒改程式與資料、沒開新問題回報。
