@@ -1651,3 +1651,10 @@ commit `b3c1f5ee`（Windows：flutter analyze 無 error、01:41 +646 ~2: All tes
 commit `d65b0031`（Windows：flutter analyze 無 error、01:28 +646 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #496：模擬使用者・法語（英語母語者學法語）
   結果：法語模擬第 11 輪：程式 4/4 全通過（frlearnera1 28s、frlearnerb1 30s、carddraw 53s、frmedia 12s）；pack 6153 詞；沒改程式與資料、沒開新問題回報。
+
+## M143（2026-10-24 09:13）狀態：待做（owner 回報，給 Mac）
+owner 在 iPhone 送出的回報（#626：App 畫面與互動由 Mac 修）。資料或伺服器的部分請寫「不通過」列交回 Windows。
+
+| # | 回報 | 內容 |
+|---|---|---|
+| 690 | [意見回饋] 照片詳情：我需要一次長按多個地方辨識標籤 | 意見：我需要一次長按多個地方辨識標籤 / 頁面：照片詳情 / 單字／照片 id：photo-1792775585474625 / App 版本：1.0.0+1 / 學習語言：en / 截圖：有（screenshot 欄位）（截圖：`docs/mac_handover/690.png`） |
