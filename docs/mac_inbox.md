@@ -1775,3 +1775,12 @@ commit `ac3767c6`（Windows：flutter analyze 無 error、01:51 +646 ~2: All tes
 commit `2d9b9224`（Windows：flutter analyze 無 error、00:58 +646 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #496：模擬使用者・法語（英語母語者學法語）
   結果：法語模擬第21輪：4/4通過（24/24/40/11秒）；6153詞、7878句缺英譯；補7則既有回報，畫面缺口需要Mac。
+
+## M160（2026-10-26 02:23）狀態：待做（Windows 卡 #496 交給 Mac 的 App 畫面部分）
+卡：模擬使用者・法語（英語母語者學法語）
+
+中文殘留、照片義項一致、正式引導旗標與實機相機／音訊驗收；資料例句由既有Qwen流程處理。
+環境：A1首次Flutter暫存目錄清理PathNotFoundException中斷（25秒）；保留card496_a1_first_attempt.log，改本輪專屬TEMP/TMP後26秒通過。
+變更：僅本輪測試產物、半尺寸QA圖、報告腳本與結果、回報證據；未改App/伺服器/詞庫，未呼叫Qwen或重啟服務，無commit/push。
+備份／還原：無資料修改或刪除，無需資料備份／還原指令；首次失敗log已保留。golden/QC未跑（純檢查），不宣稱通過。
+剩餘：Mac驗證畫面；#498補譯／音檔與#528義項流程持續；合規App代理可用後重驗即時pack/decks。無需owner新決策。
