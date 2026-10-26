@@ -1359,3 +1359,13 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 |----|----|----|----|----|
 | #735 GET /api/issues/status | 通過 | 公開網址不用金鑰：ids=724,726–729,735 都回 fixed |  | — |
 | #728 我的意見回饋顯示處理進度 | 通過 | owner 的 iPhone：#726–#729 都顯示「已處理 · #n」 | mac_verify_shots/2026-10-26/p735_my_feedback.png | — |
+
+## 2026-10-26 iPhone 12 重驗 M199–M201（tagger 23:12 重啟後）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M199 harder 補字變難 | 通過 | photo-1792753703603088、level=C2、排除 40：harder 回 iridescent、luminous、pedestrian、congregation、propulsion、architectural，比上次（congested、prominent 等）難；沒回排除過的字 |  | — |
+| M199 harder 補字的等級 | 不通過 | 照詞庫等級：luminous C1、architectural C1、pedestrian noun B2、propulsion B2，iridescent 和 congregation 不在詞庫；仍有 2 個低於 level-1（C1），濾得不完整 |  | 中 |
+| M199 一般補字（focus 無） | 不通過 | 回的 12 個跟重啟前完全一樣（architectural、prominent B1、congested、transportation…），看起來是快取舊結果，或一般補字沒套用新的等級過濾 |  | 中 |
+| M199 伺服器候選沒帶 cefr | 不通過 | tagger 回的候選沒帶等級，App 的 CEFR 表查不到時預設 B1（iridescent 顯示 B1）；照片詳情會再用詞庫校正，但詞庫沒有的字就停在 B1。建議 tagger 回 cefr |  | 低 |
+| M199 速度 | 不通過 | 一次補字 14–23 秒 |  | 低 |
