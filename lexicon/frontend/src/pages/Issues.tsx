@@ -303,7 +303,7 @@ function Decide({ issue, onDecide }: { issue: Issue; onDecide: (d: string) => vo
         </div>
       )}
       <div className="form-inline">
-        <input className="input" placeholder="或寫下你的決定…" value={own} onChange={(e) => setOwn(e.target.value)} aria-label="你的決定" />
+        <input className="input" placeholder="其他：以上都不滿意，寫下你要的…" value={own} onChange={(e) => setOwn(e.target.value)} aria-label="你的決定" />
         <button className="btn btn-primary btn-small" disabled={!own.trim()} onClick={() => onDecide(own.trim())}>送出決定</button>
       </div>
     </div>

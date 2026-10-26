@@ -98,6 +98,26 @@ def real_decision(text: str) -> bool:
     return bool(m) and not NO_DECISION_RE.match(text[m.end():m.end() + 40])
 
 
+OPTION_RE = re.compile(r"^\s*(?:選項\s*)?([A-Ca-c1-3])\s*[\.、：:．)）]\s*(.+)$")
+
+
+def decision_options(block: str) -> list[str]:
+    """owner 10/26: 問題回報頁上的決定要一眼看懂、最多三個選項可以點選，另有「其他」欄位。
+    The card's lines 「A：…」／「1. …」 become at most 3 buttons; the one its 「建議：X」 names is
+    marked （建議）."""
+    opts, keys = [], []
+    for line in block.splitlines():
+        m = OPTION_RE.match(line)
+        if m and len(opts) < 3:
+            keys.append(m.group(1).upper())
+            opts.append(m.group(2).strip()[:120])
+    rec = re.search(r"建議[：:]\s*(?:選項\s*)?([A-Ca-c1-3])", block)
+    if rec and rec.group(1).upper() in keys:
+        k = keys.index(rec.group(1).upper())
+        opts[k] = opts[k] + "（建議）"
+    return [f"{n + 1}. {o}" for n, o in enumerate(opts)]
+
+
 DECISION_RE = re.compile(r"需要你決定|待你決定|請你決定|需使用者決定|需要使用者決定|decision needed|needs owner", re.I)
 ALL_DONE_RE = re.compile(r"^\s*(全部完成|ALL DONE)", re.I | re.M)
 BLOCKER_RE = re.compile(r"^\s*(BLOCKED|卡住|無法完成)", re.I | re.M)
@@ -673,9 +693,11 @@ class Tick:
             block += "\n（卡片沒寫建議，見完整結果）"
         detail = block + f"\n\n完整結果：{rel}｜在「決定」欄回答後，卡 #{card_id} 會照你的決定繼續。"
         try:
-            i = http("POST", "/issues", {"kind": "decision", "severity": "high", "area": "app",
-                                        "title": f"[待決定] 卡 #{card_id}：{q}"[:300], "detail": detail,
-                                        "reporter": "派工程式"})
+            body = {"kind": "decision", "severity": "high", "area": "app",
+                    "title": f"[待決定] 卡 #{card_id}：{q}"[:300], "detail": detail, "reporter": "派工程式"}
+            if decision_options(block):
+                body["options"] = decision_options(block)
+            i = http("POST", "/issues", body)
             asks = self.state.setdefault("asks", {})
             asks[str(i["id"])] = card_id
             log(f"#{card_id}: decision asked as issue #{i['id']}")

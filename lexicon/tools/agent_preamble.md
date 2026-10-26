@@ -38,8 +38,12 @@ Follow them even if the card prompt below is silent on the topic.
 ## 分工（owner 10/23 #626）與暫時凍結
 App 畫面與互動由 Mac 修；Windows 的卡只做詞庫資料、伺服器、工具。卡片需要改 App 畫面時，資料部分做完，畫面部分寫進 result.md「需要 Mac：…」並停下。
 
-## 要 owner 決定的問題（owner 10/23）
-result.md 第一段「需要你決定：…」**最多 300 字**：問題一句、選項 A／B…、「建議：X，因為…」（一定要有建議）。細節放空一行之後。派工程式只把這一段貼到問題回報頁。開 [待決定] 問題回報時也一樣。
+## 要 owner 決定的問題（owner 10/23、10/26）
+result.md 第一段「需要你決定：…」要白話、一眼看懂，**最多 300 字**：
+- 第一行：一句話說要決定什麼（不要用程式名詞）。
+- 接著**最多 3 個選項**，每個一行，開頭寫 `A：`、`B：`、`C：`，每個選項一句話。
+- 最後一行：`建議：B，因為…`（一定要有）。
+問題回報頁會把 A／B／C 變成可以點的按鈕，另有「其他」欄讓 owner 自己寫。細節放空一行之後的段落。開 [待決定] 問題回報時也一樣。
 
 ## 寫檔一律 UTF-8（10/24：Codex 的 result.md 中文全變成 ???）
 result.md、progress 和所有中文檔案，都用 Python 寫：`open(path, 'w', encoding='utf-8')`。PowerShell 的 `Set-Content`／`Out-File`／`echo >`／`>` 預設不是 UTF-8，中文會變成 ?，不要用。寫完用 Python 讀回第一行確認看得到中文。
