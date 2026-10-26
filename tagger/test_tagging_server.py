@@ -51,7 +51,7 @@ def test_prompt_explicitly_excludes_names_and_invalidates_old_cache():
     assert "not company, product, model or person names" in prompt
     assert "Ignore words" in prompt and "logos" in prompt
     assert "safe=false" in prompt and "explicit adult nudity" in prompt
-    assert PROMPT_VERSION == "photo-tags-context-v10-level-target"
+    assert PROMPT_VERSION == "photo-tags-context-v11-harder-level"
 
 
 def test_cefr_prompt_lists_visible_objects_level_from_lexicon():
@@ -297,3 +297,17 @@ def test_compact_grammar_leaves_no_room_for_whitespace():
     assert '" "' not in grammar and "[ \t" not in grammar
     assert ts.compact_grammar({'type': 'object', 'properties': {'a': {'type': 'string'}},
                                'required': []}) is None
+
+
+def test_filter_harder_keeps_words_near_the_asked_level():
+    from tagging_server import Lexicon, filter_harder, zipf_level
+    lex = Lexicon.__new__(Lexicon)
+    freq = {'bright': 4.6, 'crowded': 3.98, 'luminous': 3.24, 'verdant': 2.7,
+            'iridescent': 2.8, 'dilapidated': 3.05, 'ornate': 3.19}
+    lex._zipf = lambda w, lang: freq.get(w, 5.0)
+    items = [{'word': w} for w in freq]
+    out = [i['word'] for i in filter_harder(items, lex, 'C2')]
+    assert 'bright' not in out and 'crowded' not in out and out[0] == 'verdant'
+    assert zipf_level(3.24) == 'C1' and zipf_level(2.0) == 'C2'
+    # too few qualify -> the rarest of the rest fill up to three
+    assert len(filter_harder([{'word': 'bright'}, {'word': 'crowded'}], lex, 'C2')) == 2

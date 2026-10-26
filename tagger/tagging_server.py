@@ -72,7 +72,7 @@ KEY_FILE = os.path.join(HERE, '.api_key')
 CMUDICT = os.path.join(ROOT, 'data', 'raw', 'cmudict.dict')
 DEFAULT_MODEL = 'qwen3.5:4b'
 MAX_BODY = 20 * 1024 * 1024
-PROMPT_VERSION = 'photo-tags-context-v10-level-target'
+PROMPT_VERSION = 'photo-tags-context-v11-harder-level'
 CACHE_DIR = os.path.join(HERE, 'cache')
 MODEL_CONTEXT = int(os.environ.get('TAGGER_NUM_CTX', '4096'))
 MODEL_MAX_TOKENS = int(os.environ.get('TAGGER_NUM_PREDICT', '1200'))
@@ -183,6 +183,8 @@ def build_prompt(level: str, lang: str = 'en', native: str = 'zh-TW',
     """
     lang_name = LANGS[lang]
     count = '4 to 6' if focus in ('harder', 'actions', 'descriptions') else '10 to 12'
+    if focus == 'harder' and lang == 'en' and level in LEVELS:
+        count = '8 to 10'  # the level filter in candidates() trims it back to 6
     lines = [
         f'Inspect this photo and return {count} useful {lang_name} labels.',
         'First check content safety. Set safe=false and return no candidates for pornography, '
@@ -207,6 +209,12 @@ def build_prompt(level: str, lang: str = 'en', native: str = 'zh-TW',
             f'labels above {level} whenever the photo supports them.')
     if focus in FOCUS:
         lines.append(FOCUS[focus])
+    if focus == 'harder' and lang == 'en' and level in LEVELS:
+        lines.append(
+            f'The learner is at CEFR {level}: every label must be rare, advanced vocabulary '
+            f'at CEFR {_shift(level, -1)} to {_shift(level, 1)} or above (words most '
+            'native speakers rarely use in daily talk, e.g. "iridescent", "dilapidated", '
+            '"verdant"); never a word a B1 learner already knows.')
     lines += [
         'For each candidate give:',
         f'- word: dictionary form (singular noun, base verb), lowercase, in {lang_name}',
@@ -721,6 +729,32 @@ def loads_salvaging(text: str):
     return json.loads(text[:end + 1] + ''.join(']' if c == '[' else '}' for c in reversed(open_)))
 
 
+def zipf_level(zipf: float) -> str:
+    """Frequency estimate of a word's CEFR level (same cut-offs as the backend's
+    frequency_profile), used only to steer top-up calls toward the asked level."""
+    for floor, lv in ((5.0, 'A1'), (4.5, 'A2'), (4.0, 'B1'), (3.5, 'B2'), (3.0, 'C1')):
+        if zipf >= floor:
+            return lv
+    return 'C2'
+
+
+def filter_harder(items: list[dict], lexicon: 'Lexicon | None', level: str,
+                  keep: int = 6) -> list[dict]:
+    """focus=harder: keep labels no easier than one band below `level` (rare words
+    first); if too few qualify, the rarest of the rest fill up to 3."""
+    zipf = getattr(lexicon, '_zipf', None) if lexicon is not None else None
+    if zipf is None or level not in LEVELS:
+        return items[:keep]
+    floor = LEVELS.index(_shift(level, -1))
+
+    def rarity(item: dict) -> float:
+        return min((zipf(w, 'en') for w in str(item['word']).split()), default=9.0)
+
+    ranked = sorted(items, key=rarity)
+    good = [i for i in ranked if LEVELS.index(zipf_level(rarity(i))) >= floor]
+    return (good + [i for i in ranked if i not in good][:max(0, 3 - len(good))])[:keep]
+
+
 class Lexicon:
     """Optional local word data: frequency, IPA and dictionary headwords."""
 
@@ -1090,6 +1124,8 @@ class Tagger:
             if content.get('safe') is not True:
                 raise UnsafeImage('explicit adult content')
             items = to_candidates(content.get('candidates', []), self.lexicon, exclude, lang)
+            if focus == 'harder' and lang == 'en':
+                items = filter_harder(items, self.lexicon, level)
             temporary = cache_file + f'.{os.getpid()}.tmp'
             try:
                 with open(temporary, 'w', encoding='utf-8') as f:
