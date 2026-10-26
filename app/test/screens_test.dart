@@ -14,7 +14,6 @@ import 'package:photo_english_app/models/vocabulary_profile.dart';
 import 'package:photo_english_app/models/word_entry.dart';
 import 'package:photo_english_app/screens/flashcard_screen.dart';
 import 'package:photo_english_app/screens/onboarding_screen.dart';
-import 'package:photo_english_app/screens/photo_picker_screen.dart';
 import 'package:photo_english_app/services/app_settings.dart';
 import 'package:photo_english_app/services/dictionary_sync.dart';
 import 'package:photo_english_app/services/speaker.dart';
@@ -448,6 +447,16 @@ void main() {
       await tester.pumpAndSettle();
       // Only two cards: the Again card comes back instead of stopping.
       expect(find.byType(FlashcardFront), findsOneWidget);
+      // A photo question waits for its photo (正在載入圖片…). The kitchen
+      // photo used to be decoded already by the 拍照 test above; since
+      // 問題回報 #727 that tab no longer shows it, so it loads here.
+      for (var i = 0;
+          i < 50 && find.text('正在載入圖片…').evaluate().isNotEmpty;
+          i++) {
+        await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 20)));
+        await tester.pump();
+      }
       await tester.tap(find.text('顯示答案'));
       await tester.pumpAndSettle();
       expect((app.speaker as SilentSpeaker).said.last, first);

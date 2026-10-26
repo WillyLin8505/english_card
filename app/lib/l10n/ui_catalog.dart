@@ -988,6 +988,8 @@ const uiCatalog = <String, (String, String)>{
   '單字': ('Word', 'Mot'),
   '英式': ('British', 'Britannique'),
   '美式': ('American', 'Américain'),
+  // 問題回報 #724: an accent with no recording is a synthesized voice.
+  '合成': ('Synthetic', 'Synthèse'),
   '收起': ('Show less', 'Réduire'),
   '哪個單字最適合這張照片？': (
     'Which word fits this photo best?',

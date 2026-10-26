@@ -84,6 +84,8 @@ class DeviceSpeaker implements Speaker, AudioPrefetcher {
   // Bumped by stop(): a say() still downloading its clip when another one
   // (or stop) comes does not play it afterwards.
   var _generation = 0;
+  // Completed by stop(), so a clip being waited on stops being waited on.
+  var _stopped = Completer<void>();
   // bestTtsVoice per locale, looked up once (null: keep the default voice).
   final _voices = <String, Map<String, String>?>{};
 
@@ -132,6 +134,7 @@ class DeviceSpeaker implements Speaker, AudioPrefetcher {
       String accent = 'en-GB'}) async {
     await stop();
     final generation = _generation;
+    final stopped = _stopped.future;
     if (audioUrl != null && audioUrl.isNotEmpty) {
       try {
         final source = await _source(audioUrl);
@@ -147,7 +150,10 @@ class DeviceSpeaker implements Speaker, AudioPrefetcher {
         final Future<void> finished =
             player.onPlayerComplete.first.then<void>((_) {});
         await player.play(source);
-        await finished.timeout(const Duration(seconds: 6),
+        // 問題回報 #729: stop() (the card changed) ends the wait at once
+        // rather than after the timeout.
+        await Future.any([finished, stopped]).timeout(
+            const Duration(seconds: 6),
             onTimeout: () => null);
         return true;
       } catch (e) {
@@ -174,6 +180,9 @@ class DeviceSpeaker implements Speaker, AudioPrefetcher {
       await tts.setLanguage(_locale(language, accent));
       await _useBestVoice(tts, _locale(language, accent));
       await tts.setSpeechRate(kIsWeb ? 0.8 : 0.45);
+      // 問題回報 #729: stopped while the voice was being set up (the card
+      // changed): the old card's word is not spoken afterwards.
+      if (generation != _generation) return true;
       await tts.speak(text);
       return await done.future
           .timeout(const Duration(seconds: 6), onTimeout: () => true);
@@ -186,6 +195,8 @@ class DeviceSpeaker implements Speaker, AudioPrefetcher {
   @override
   Future<void> stop() async {
     _generation++;
+    if (!_stopped.isCompleted) _stopped.complete();
+    _stopped = Completer<void>();
     try {
       await _player?.stop();
       await _tts?.stop();

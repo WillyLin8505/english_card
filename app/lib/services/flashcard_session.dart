@@ -889,7 +889,14 @@ class FlashcardSession extends ChangeNotifier {
       });
   }
 
-  List<Photo> upcomingPhotos({int cards = 3, int perCard = 2}) {
+  List<Photo> upcomingPhotos({int cards = 3, int perCard = 2}) => [
+        for (final c in upcomingCards(cards: cards))
+          ...plannedPhotos(c.wordEntryId).take(perCard),
+      ];
+
+  /// The cards likely to come next, most likely first (問題回報 #726: their
+  /// photos and recordings are loaded while this card is up).
+  List<LearningCard> upcomingCards({int cards = 3}) {
     final now = repo.clock();
     // Nothing due: extra practice goes by its own order (#650).
     if (continuous &&
@@ -897,11 +904,7 @@ class FlashcardSession extends ChangeNotifier {
             .eligibleCards(newLimit: newLimit, reviewLimit: reviewLimit)
             .where((c) => _inRun(c.id))
             .isEmpty) {
-      return [
-        for (final c
-            in _practiceQueue().where((c) => c.id != _cardId).take(cards))
-          for (final o in _previewPhotos(c.wordEntryId).take(perCard)) o.$1,
-      ];
+      return _practiceQueue().where((c) => c.id != _cardId).take(cards).toList();
     }
     final eligible = [
       for (final c
@@ -921,11 +924,13 @@ class FlashcardSession extends ChangeNotifier {
           if (repo.card(id) case final c? when !c.archived) c,
     ];
     eligible.insertAll(0, jumps.take(2));
-    return [
-      for (final c in eligible.take(cards))
-        for (final o in _previewPhotos(c.wordEntryId).take(perCard)) o.$1,
-    ];
+    return eligible.take(cards).toList();
   }
+
+  /// [wordId]'s photos as its card will show them: the one its front will
+  /// use first, then the others the back swipes to.
+  List<Photo> plannedPhotos(String wordId) =>
+      [for (final o in _previewPhotos(wordId)) o.$1];
 
   final _photoPlans = <String, String>{};
 
