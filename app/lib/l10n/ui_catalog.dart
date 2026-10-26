@@ -2,6 +2,9 @@
 /// content. Missing keys/languages deliberately retain the original copy.
 const uiCatalog = <String, (String, String)>{
   '意見回饋': ('Feedback', 'Commentaires'),
+  // M180 (owner #732): the photo's 詞性 × CEFR table.
+  '詞性 × 等級表': ('Part of speech × level', 'Nature × niveau'),
+  '加入單字本': ('Add to My words', 'Ajouter à Mes mots'),
   // 卡 #496 (M156–M162, 問題回報 #494): copy a French learner on an English
   // or French phone still saw in Chinese.
   '重新掃描標籤': ('Rescan labels', 'Réanalyser les étiquettes'),
@@ -86,10 +89,26 @@ const uiCatalog = <String, (String, String)>{
     'See the feedback and card reports sent from this phone, and delete them.',
     'Voir les commentaires et signalements envoyés depuis ce téléphone, et les supprimer.'
   ),
-  '這支手機送過的意見回饋與卡片回報。刪除只會從這支手機移除；還沒送出的就不會送出。': (
-    'Feedback and card reports sent from this phone. Deleting removes them from this phone only; unsent ones won’t be sent.',
-    'Commentaires et signalements envoyés depuis ce téléphone. Supprimer les retire de ce téléphone seulement ; ceux non envoyés ne le seront pas.'
+  // 問題回報 #716 / #728: deleting a sent one deletes its 問題回報 too; each
+  // shows whether it is being handled or done.
+  '這支手機送過的意見回饋與卡片回報，以及處理進度。刪除已送出的會連問題回報一起刪除；還沒送出的就不會送出。': (
+    'Feedback and card reports sent from this phone, and their progress. Deleting a sent one also deletes the report; unsent ones won’t be sent.',
+    'Commentaires et signalements envoyés depuis ce téléphone, et leur suivi. Supprimer un envoi supprime aussi le signalement ; ceux non envoyés ne le seront pas.'
   ),
+  '會從這支手機和問題回報一起刪除。': (
+    'It will be deleted from this phone and from the reports.',
+    'Il sera supprimé de ce téléphone et des signalements.'
+  ),
+  '沒辦法從問題回報刪除': (
+    'Couldn’t delete the report',
+    'Impossible de supprimer le signalement'
+  ),
+  '伺服器沒有刪掉這筆回報，紀錄先留在這支手機。可以稍後再試。': (
+    'The server didn’t delete this report, so it stays on this phone. You can try again later.',
+    'Le serveur n’a pas supprimé ce signalement ; il reste sur ce téléphone. Vous pouvez réessayer plus tard.'
+  ),
+  '只從這支手機移除': ('Remove from this phone only', 'Retirer de ce téléphone seulement'),
+  '先留著': ('Keep it', 'Le garder'),
   '還沒有送過意見回饋': ('No feedback sent yet', 'Aucun commentaire envoyé'),
   '還在排隊，連上網路後會送出': (
     'Waiting; sent once you’re online',
@@ -974,6 +993,15 @@ const uiCatalog = <String, (String, String)>{
     'Which word fits this photo best?',
     'Quel mot correspond le mieux à cette photo ?'
   ),
+  // 法語模擬 A1: the other review prompts were still in Chinese.
+  '把單字拖到照片中的正確位置': (
+    'Drag the word to the right place in the photo',
+    'Fais glisser le mot au bon endroit sur la photo'
+  ),
+  '把三個意思和單字配對': (
+    'Match the three meanings with their words',
+    'Associe les trois sens à leurs mots'
+  ),
   '等級為詞頻估算': (
     'Level is estimated from word frequency',
     'Niveau estimé d’après la fréquence'
@@ -1090,6 +1118,9 @@ class _UiTemplate {
 const _templateCopy = <String, (String, String)>{
   '發音錄音：{0}': ('Recording: {0}', 'Enregistrement : {0}'),
   '已送出 · #{0}': ('Sent · #{0}', 'Envoyé · #{0}'),
+  // 問題回報 #728.
+  '處理中 · #{0}': ('In progress · #{0}', 'En cours · #{0}'),
+  '已處理 · #{0}': ('Done · #{0}', 'Traité · #{0}'),
   // Before the generic 「{0} 張」 below (卡 #496).
   '每天最多 {0} 張新卡': ('Up to {0} new cards a day', 'Jusqu’à {0} nouvelles cartes par jour'),
   '每天最多複習 {0} 張': ('Up to {0} reviews a day', 'Jusqu’à {0} révisions par jour'),
@@ -1364,4 +1395,6 @@ const _templateCopy = <String, (String, String)>{
   '備份失敗：{0}': ('Backup failed: {0}', 'Échec de la sauvegarde : {0}'),
   '還原失敗：{0}': ('Restore failed: {0}', 'Échec de la restauration : {0}'),
   '來源：{0}': ('Source: {0}', 'Source : {0}'),
+  // M180 (owner #732): the photo's 詞性 × CEFR table.
+  '已加入「{0}」': ('Added “{0}”', '« {0} » ajouté'),
 };

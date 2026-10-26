@@ -356,7 +356,8 @@ void main() {
   });
 
   group('拍照', () {
-    testWidgets('without a camera, shows the newest photo and its words',
+    // 問題回報 #727: a clean frame, not the last photo with its words.
+    testWidgets('without a camera, says so without the last photo\'s words',
         (tester) async {
       await pumpApp(tester);
       await tester.runAsync(
@@ -365,8 +366,8 @@ void main() {
       expect(find.text('拍照學單字'), findsOneWidget);
       expect(find.text('目前無法使用相機'), findsOneWidget);
       expect(find.text('重試相機'), findsOneWidget);
-      expect(find.text('Cutting Board'), findsOneWidget);
-      expect(find.text('Plate'), findsNothing, reason: 'five words per photo');
+      expect(find.text('你可以按下方「選擇照片」，開始學單字。'), findsOneWidget);
+      expect(find.text('Cutting Board'), findsNothing);
     });
 
     testWidgets('with no photo yet, there is no bottom chip (問題回報 #613)',

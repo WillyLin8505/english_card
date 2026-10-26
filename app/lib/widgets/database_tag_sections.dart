@@ -80,7 +80,7 @@ class _DatabaseTagGroupState extends State<_DatabaseTagGroup> {
     final visibleTags = _expanded ? group.value : group.value.take(3);
     final out = <Widget>[];
     if (widget.compact) {
-      out.add(Text(_compactTagLabels(group, pack, visibleTags),
+      out.add(Text(_compactTagLabels(context, group, pack, visibleTags),
           style: MFont.inter(11, FontWeight.w500, MColors.muted)));
     } else {
       out.add(Padding(
@@ -181,16 +181,24 @@ class _DatabaseTagGroupState extends State<_DatabaseTagGroup> {
   }
 }
 
-String _compactTagLabels(MapEntry<String?, List<Map<String, dynamic>>> group,
-    LexiconPack pack, Iterable<Map<String, dynamic>> tags) {
+String _compactTagLabels(
+    BuildContext context,
+    MapEntry<String?, List<Map<String, dynamic>>> group,
+    LexiconPack pack,
+    Iterable<Map<String, dynamic>> tags) {
   final words = [
     for (final tag in tags)
       databaseImageLabels({
         'tags': [tag]
       }, pack)
   ];
-  final head = group.key == null ? '未分級' : levelLabel(group.key!);
-  return '$head：${words.join('、')}';
+  // The level in the interface language (法語模擬 A1: 「入門（A1）：cahier」
+  // in the English interface), with that language's punctuation.
+  final source = group.key == null ? '未分級' : levelLabel(group.key!);
+  final head = ui(context, source);
+  return head == source
+      ? '$head：${words.join('、')}'
+      : '$head: ${words.join(', ')}';
 }
 
 /// 「＋」 adds the word without leaving the photo; 「✓」 once collected

@@ -13,6 +13,7 @@ import '../models/word_candidate.dart';
 import '../models/word_entry.dart';
 import '../services/lexicon_pack.dart';
 import '../services/photo_intake.dart' show TaggingNotConfigured;
+import '../services/photo_word_grid.dart';
 import '../services/photo_word_session.dart';
 import '../services/word_database_repository.dart';
 import '../services/word_selector.dart';
@@ -21,6 +22,7 @@ import '../widgets/mobile/common.dart';
 import '../widgets/mobile/dialogs.dart';
 import '../widgets/mobile/m_icon.dart';
 import '../widgets/mobile/photo_widgets.dart';
+import '../widgets/mobile/photo_word_grid_table.dart';
 
 part '../widgets/photo_word_cards.dart';
 part '../widgets/photo_difficulty_controls.dart';
@@ -624,6 +626,12 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                               onSkip: () => setState(() => _placing = null),
                             ),
                           _buildList(photo, session, old),
+                          // M180 (owner #732): 詞性 × CEFR, under everything
+                          // else so nothing above moves.
+                          _AfterFrames(
+                            frames: _after(6),
+                            child: _wordGrid(photo, session, old),
+                          ),
                         ],
                       ],
                     ),
@@ -923,6 +931,83 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
         ],
       ),
     );
+  }
+
+  // ── 詞性 × CEFR 表格 (M180) ─────────────────────────────────────
+
+  /// The photo's words for the grid: the listed ones first, then the rest
+  /// of the AI's pool and the old words. (When the server returns its own
+  /// grid (Windows #731) its words go into [buildPhotoWordGrid] instead.)
+  Widget _wordGrid(Photo photo, PhotoWordSession session, List<OldWord> old) {
+    final repo = AppScope.of(context).repository;
+    final words = [
+      for (final w in session.words) GridWord.fromCandidate(w.candidate),
+      for (final c in photo.candidates) GridWord.fromCandidate(c),
+      for (final o in session.oldWords) GridWord.fromCandidate(o.candidate),
+    ];
+    final grid = buildPhotoWordGrid(words);
+    if (grid.isEmpty) return const SizedBox.shrink();
+    final listed = {for (final w in session.words) w.word.toLowerCase()};
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+      child: PhotoWordGridTable(
+        grid: grid,
+        known: {
+          for (final w in words)
+            if (listed.contains(w.word.toLowerCase()) ||
+                repo.entryByWord(w.word) != null)
+              w.word.toLowerCase(),
+        },
+        display: (w) => _shown(w.word, w.pos),
+        onWordTap: _gridTap,
+      ),
+    );
+  }
+
+  /// A word in the book (or on the list, saved first) opens 單字詳情; any
+  /// other word can be added to the photo's list like a long-press find —
+  /// pinned at its spot and saved into the word book on leaving.
+  Future<void> _gridTap(GridWord g) async {
+    final scope = AppScope.of(context);
+    final session = _session;
+    if (session == null) return;
+    final onList = session.words.where((w) => w.word == g.word).firstOrNull;
+    if (onList != null) return _openWord(onList);
+    if (scope.repository.entryByWord(g.word) case final e?) {
+      _save();
+      scope.navigator.openWord(e.id);
+      return;
+    }
+    final add = await showModalBottomSheet<bool>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: Text('${_shown(g.word, g.pos)}　${g.meaning}',
+                  style: MFont.manrope(16, FontWeight.w800, MColors.ink)),
+              subtitle: UiText(levelLabel(g.level)),
+            ),
+            ListTile(
+              key: const ValueKey('grid-add'),
+              leading: const Icon(Icons.add_rounded, color: MColors.primary),
+              title: const UiText('加入單字本'),
+              onTap: () => Navigator.pop(context, true),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (add != true || !mounted) return;
+    final c = g.candidate;
+    final w = c != null
+        ? session.addFound(c, g.point ?? c.point)
+        : session.add(
+            word: g.word, meaning: g.meaning, level: g.level, at: g.point);
+    if (w != null && mounted) {
+      showToast(context, '已加入「${_shown(w.word, w.candidate.pos)}」');
+    }
   }
 
   Widget _emptyState(Photo photo, PhotoWordSession session) {

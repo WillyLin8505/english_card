@@ -90,6 +90,10 @@ class FeedbackRecord {
   /// The screenshot as sent (`data:image/png;base64,…`), when there was one.
   final String? screenshot;
 
+  /// The 問題回報 status the server last reported (`open`, `in_progress`,
+  /// `fixed`, …), null until the server has said (問題回報 #728).
+  final String? status;
+
   const FeedbackRecord({
     required this.id,
     required this.title,
@@ -97,7 +101,24 @@ class FeedbackRecord {
     this.queued = true,
     this.issueNo,
     this.screenshot,
+    this.status,
   });
+
+  /// Statuses that mean the report has been dealt with (問題回報 #728).
+  static const doneStatuses = {
+    'fixed',
+    'done',
+    'resolved',
+    'closed',
+    'wontfix',
+    'rejected',
+    'duplicate',
+  };
+
+  /// True once handled, false while being handled, null when unknown.
+  bool? get handled => status == null
+      ? null
+      : doneStatuses.contains(status!.trim().toLowerCase());
 
   Uint8List? get screenshotBytes {
     final s = screenshot;
@@ -116,7 +137,17 @@ class FeedbackRecord {
       createdAt: createdAt,
       queued: false,
       issueNo: no ?? issueNo,
-      screenshot: screenshot);
+      screenshot: screenshot,
+      status: status);
+
+  FeedbackRecord withStatus(String? s) => FeedbackRecord(
+      id: id,
+      title: title,
+      createdAt: createdAt,
+      queued: queued,
+      issueNo: issueNo,
+      screenshot: screenshot,
+      status: s);
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -125,6 +156,7 @@ class FeedbackRecord {
         'queued': queued,
         if (issueNo != null) 'issueNo': issueNo,
         if (screenshot != null) 'screenshot': screenshot,
+        if (status != null) 'status': status,
       };
 
   static FeedbackRecord? fromJson(Object? json) {
@@ -138,6 +170,7 @@ class FeedbackRecord {
       queued: json['queued'] != false,
       issueNo: (json['issueNo'] as num?)?.toInt(),
       screenshot: json['screenshot'] as String?,
+      status: json['status'] is String ? json['status'] as String : null,
     );
   }
 }
@@ -266,17 +299,94 @@ class CardReportService extends ChangeNotifier {
     ];
   }
 
-  /// Removes the record from this phone; a queued one is not sent any more.
-  /// The 問題回報 on the server stays (deleting it there needs the admin
-  /// API, 問題回報 #701).
-  Future<void> delete(String id) async {
+  /// Deletes a sent record's 問題回報 on the server too (問題回報 #716:
+  /// `DELETE /api/issues/{id}` with the same X-API-Key reports are sent
+  /// with), then removes it here; a queued one is just not sent any more.
+  /// Returns false, keeping the record, when the server didn't delete it —
+  /// [localOnly] removes it from this phone anyway. A 404 counts as deleted
+  /// (it is already gone there).
+  Future<bool> delete(String id,
+      {String apiKey = '', bool localOnly = false}) async {
     await _load();
+    final record = _history.where((r) => r.id == id).firstOrNull;
+    final no = record?.issueNo;
+    final queued = _memory.any((e) => e.$1 == id);
+    if (!localOnly && !queued && no != null) {
+      if (!remote) return false;
+      try {
+        final response = await client
+            .delete(endpoint.replace(path: '/api/issues/$no'), headers: {
+          if (apiKey.trim().isNotEmpty) 'X-API-Key': apiKey.trim(),
+        }).timeout(const Duration(seconds: 20));
+        final ok = (response.statusCode >= 200 && response.statusCode < 300) ||
+            response.statusCode == 404;
+        if (!ok) return false;
+      } catch (e) {
+        debugPrint('CardReportService: delete failed: $e');
+        return false;
+      }
+    }
+    await _removeLocal(id);
+    return true;
+  }
+
+  Future<void> _removeLocal(String id) async {
     final before = _memory.length;
     _memory.removeWhere((e) => e.$1 == id);
     _history.removeWhere((r) => r.id == id);
     if (_memory.length != before) await _save();
     await _saveHistory();
     notifyListeners();
+  }
+
+  /// Asks the server whether each sent 問題回報 is being handled or done
+  /// (問題回報 #728): `GET /api/issues/status?ids=724,725` answering
+  /// `[{"id": 724, "status": "fixed"}, …]` (or `{"items": [...]}`). Until
+  /// the server offers it (or offline, or refused) nothing changes and the
+  /// list keeps 已送出 · #number. Returns whether any status changed.
+  Future<bool> refreshStatus({String apiKey = ''}) async {
+    await _load();
+    if (!remote) return false;
+    final ids = {
+      for (final r in _history)
+        if (!r.queued && r.issueNo != null) r.issueNo!
+    };
+    if (ids.isEmpty) return false;
+    final Object? json;
+    try {
+      final response = await client.get(
+          endpoint.replace(
+              path: '/api/issues/status',
+              queryParameters: {'ids': ids.join(',')}),
+          headers: {
+            if (apiKey.trim().isNotEmpty) 'X-API-Key': apiKey.trim(),
+          }).timeout(const Duration(seconds: 15));
+      if (response.statusCode != 200) return false;
+      json = _tryDecode(response.body);
+    } catch (e) {
+      debugPrint('CardReportService: status failed: $e');
+      return false;
+    }
+    final items = json is Map ? json['items'] : json;
+    if (items is! List) return false;
+    final statuses = <int, String>{
+      for (final item in items)
+        if (item is Map && item['id'] is num && item['status'] is String)
+          (item['id'] as num).toInt(): item['status'] as String
+    };
+    var changed = false;
+    for (var i = 0; i < _history.length; i++) {
+      final r = _history[i];
+      final s = statuses[r.issueNo];
+      if (r.queued || s == null || s == r.status) continue;
+      _history[i] = r.withStatus(s);
+      changed = true;
+    }
+    if (changed) {
+      await _saveHistory();
+      notifyListeners();
+    }
+    return changed;
   }
 
   /// Queues [report] and tries to send everything queued. Returns true when
