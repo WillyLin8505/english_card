@@ -366,13 +366,16 @@ class FlashcardBack extends StatelessWidget {
 
   /// 問題回報 #642 #643: meanings and examples as a numbered list, three at
   /// a time (the rest behind 顯示更多) — a long run of them was too much.
-  Widget _numbered(CardBackField field, List<Widget> items, CardLook look) =>
+  /// [name] tells two numbered lists of one field apart in their keys
+  /// (問題回報 #694: the definition under the meanings).
+  Widget _numbered(CardBackField field, List<Widget> items, CardLook look,
+          {String? name}) =>
       _items(
           field,
           [
             for (final (i, item) in items.indexed)
               Row(
-                key: ValueKey('numbered-${field.name}-${i + 1}'),
+                key: ValueKey('numbered-${name ?? field.name}-${i + 1}'),
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(
@@ -630,11 +633,27 @@ class FlashcardBack extends StatelessWidget {
                     [for (final p in parts) Text(p, style: look.meaning)], look)
               else
                 Text(meaning, style: look.meaning),
+              // 問題回報 #694: the English definition numbered 1 2 3 too.
               if (definition != null)
-                LinkedText(definition,
-                    style: MFont.manrope(14, FontWeight.w600, MColors.muted),
-                    links: links,
-                    onOpenWord: onOpenWord),
+                if (meaningParts(definition) case final parts
+                    when parts.length > 1)
+                  _numbered(
+                      field,
+                      [
+                        for (final p in parts)
+                          LinkedText(p,
+                              style: MFont.manrope(
+                                  14, FontWeight.w600, MColors.muted),
+                              links: links,
+                              onOpenWord: onOpenWord),
+                      ],
+                      look,
+                      name: 'definition')
+                else
+                  LinkedText(definition,
+                      style: MFont.manrope(14, FontWeight.w600, MColors.muted),
+                      links: links,
+                      onOpenWord: onOpenWord),
             ],
           ),
         );

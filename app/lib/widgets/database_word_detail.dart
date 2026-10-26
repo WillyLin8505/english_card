@@ -75,6 +75,17 @@ class DatabaseWordScreen extends StatelessWidget {
                 ],
               ),
             );
+        // 問題回報 #704: a related word or form opens its own detail page —
+        // the pack's id for it, or none when the pack lacks it (or it is
+        // this word).
+        VoidCallback? openWord(String text, {int? lexemeId}) {
+          final target = (lexemeId == null ? null : pack.byId(lexemeId)) ??
+              pack.lookup(text)?.entry;
+          if (target == null || target.id == word.id) return null;
+          return () => Navigator.of(context).push(MaterialPageRoute<void>(
+              builder: (_) => DatabaseWordScreen(wordId: target.id)));
+        }
+
         // Issue #399: a word already shown in an earlier section is skipped.
         final shown = <String>{};
         Widget relationSection(String label, String kind) {
@@ -90,7 +101,10 @@ class DatabaseWordScreen extends StatelessWidget {
               children: [
                 for (final relation in items)
                   TagChip('${relation.word}　${relation.native}',
-                      localize: false),
+                      key: ValueKey('relation-${relation.word}'),
+                      localize: false,
+                      onTap:
+                          openWord(relation.word, lexemeId: relation.lexemeId)),
               ],
             ),
           ]);
@@ -110,7 +124,9 @@ class DatabaseWordScreen extends StatelessWidget {
         final headerLabel = '${[
           if (word.entryType != 'word') entryTypeLabel(word.entryType),
           if (word.pos != 'unknown') posLabel(word.pos)
-        ].join(' / ')}${word.cefr == null || word.rareUsage ? '' : ' · ${levelLabel(word.cefr!)}'}'
+        ].join(' / ')}'
+            // 問題回報 #705: the level is the badge beside this line only,
+            // not written in it as well.
             '${word.rareUsage ? ' · 罕見用法' : ''}';
         final images = databaseEntryImages(pack.catalogImages, word);
         final sharesNounPicture =
@@ -219,17 +235,34 @@ class DatabaseWordScreen extends StatelessWidget {
                     TagChip(posLabel(usage.pos)),
                     const SizedBox(height: 6),
                     // Common senses first, slang/obsolete last (卡 #227).
-                    for (final sense in [
+                    // 問題回報 #698 #699: numbered 1 2 3 within each part of
+                    // speech, one per line.
+                    for (final (i, sense) in [
                       for (final tier in const [0, 1, 2])
-                        ...usage.senses.where((s) => s.displayTier == tier)
-                    ])
-                      if ((sense.native ?? '').trim().isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: MSpace.xxs),
-                          child: Text(sense.native!,
-                              style: MFont.manrope(
-                                  16, FontWeight.w700, MColors.primary)),
+                        ...usage.senses.where((s) =>
+                            s.displayTier == tier &&
+                            (s.native ?? '').trim().isNotEmpty)
+                    ].indexed)
+                      Padding(
+                        key: ValueKey('sense-${usage.id}-${i + 1}'),
+                        padding: const EdgeInsets.only(bottom: MSpace.xxs),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                              width: 26,
+                              child: Text('${i + 1}.',
+                                  style: MFont.manrope(
+                                      16, FontWeight.w800, MColors.primary)),
+                            ),
+                            Expanded(
+                              child: Text(sense.native!,
+                                  style: MFont.manrope(
+                                      16, FontWeight.w700, MColors.primary)),
+                            ),
+                          ],
                         ),
+                      ),
                     const SizedBox(height: MSpace.sm),
                   ],
               ]),
@@ -271,7 +304,11 @@ class DatabaseWordScreen extends StatelessWidget {
                             form.field == 'fr_gender'
                                 ? '${frenchWithArticle(word.lemma, form.form)}'
                                     '（${frenchGenderLabel(form.form)}）'
-                                : '${form.form}（${formLabel(form.label ?? form.field)}）'),
+                                : '${form.form}（${formLabel(form.label ?? form.field)}）',
+                            key: ValueKey('form-${form.form}'),
+                            onTap: form.field == 'fr_gender'
+                                ? null
+                                : openWord(form.form)),
                     ],
                   ),
                 ]),

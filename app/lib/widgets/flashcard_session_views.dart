@@ -535,42 +535,62 @@ class FlashcardCardView extends StatelessWidget {
     final native = scope.settings.nativeLanguage;
     final bottom = MediaQuery.paddingOf(context).bottom;
     final look = CardLook.of(context);
+    // 問題回報 #641 #692: look at the question again first — above the word
+    // and above the rating buttons.
+    Widget flipToFront(Key key) => Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            key: key,
+            style: TextButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+            onPressed: session.canFlipToFront ? session.flipToFront : null,
+            icon: const Icon(Icons.flip_to_front, size: 18),
+            label: const UiText('回到正面'),
+          ),
+        );
     return Column(
       children: [
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-            child: _CardFrame(
-                look: look,
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 180),
-                  child: session.showingBack
-                      ? FlashcardBack(
-                          key: ValueKey('back:${card.id}'),
-                          entry: entry,
-                          activePos: activeUsage?.pos,
-                          activeMeaning: activeSense?.meaning,
-                          activeDefinition: activeSense?.definition,
-                          card: card,
-                          photo: session.photo,
-                          anchor: session.anchor,
-                          photoCredit: session.photoCredit,
-                          photos: session.photoOptions,
-                          onPhotoSelected: session.selectPhoto,
-                          answerCorrect: session.answerCorrect,
-                          submittedAnswer: session.submittedAnswer,
-                          correctAnswer: session.exercise?.answer,
-                          template: repo.template,
-                          learnerLevel: repo.profile.cefr,
-                          onPlay: () => scope.speakEntry(context, entry,
-                              language: repo.language),
-                          onOpen: () => scope.navigator.openWord(entry.id),
-                        )
-                      : FlashcardFront(
-                          key: ValueKey('front:${card.id}'),
-                          entry: entry,
-                          session: session),
-                )),
+            child: Column(children: [
+              // 問題回報 #692: 回到正面 above the word too, not only at the
+              // bottom.
+              if (session.showingBack && !session.viewingPrevious)
+                flipToFront(const ValueKey('flip-to-front-top')),
+              _CardFrame(
+                  look: look,
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 180),
+                    child: session.showingBack
+                        ? FlashcardBack(
+                            key: ValueKey('back:${card.id}'),
+                            entry: entry,
+                            activePos: activeUsage?.pos,
+                            activeMeaning: activeSense?.meaning,
+                            activeDefinition: activeSense?.definition,
+                            card: card,
+                            photo: session.photo,
+                            anchor: session.anchor,
+                            photoCredit: session.photoCredit,
+                            photos: session.photoOptions,
+                            onPhotoSelected: session.selectPhoto,
+                            answerCorrect: session.answerCorrect,
+                            submittedAnswer: session.submittedAnswer,
+                            correctAnswer: session.exercise?.answer,
+                            template: repo.template,
+                            learnerLevel: repo.profile.cefr,
+                            onPlay: () => scope.speakEntry(context, entry,
+                                language: repo.language),
+                            onOpen: () => scope.navigator.openWord(entry.id),
+                          )
+                        : FlashcardFront(
+                            key: ValueKey('front:${card.id}'),
+                            entry: entry,
+                            session: session),
+                  )),
+            ]),
           ),
         ),
         // Fixed at the bottom (spec: 畫面底部固定「顯示答案」／四個評分按鈕).
@@ -599,20 +619,7 @@ class FlashcardCardView extends StatelessWidget {
               : session.showingBack
                   ? Column(mainAxisSize: MainAxisSize.min, children: [
                       // 問題回報 #641: look at the question again first.
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: TextButton.icon(
-                          key: const ValueKey('flip-to-front'),
-                          style: TextButton.styleFrom(
-                              visualDensity: VisualDensity.compact,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap),
-                          onPressed: session.canFlipToFront
-                              ? session.flipToFront
-                              : null,
-                          icon: const Icon(Icons.flip_to_front, size: 18),
-                          label: const UiText('回到正面'),
-                        ),
-                      ),
+                      flipToFront(const ValueKey('flip-to-front')),
                       RatingBar(
                         previews: session.ratingPreviews,
                         native: native,
