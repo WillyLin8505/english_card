@@ -1803,7 +1803,7 @@ commit `81d59547`（Windows：flutter analyze 無 error、01:21 +647 ~2: All tes
 - 卡 #496：模擬使用者・法語（英語母語者學法語）
   結果：法語模擬第23輪：3/4通過；A1因合法合併40→39觸發斷言；新回報#710、#711，6153詞仍有7878句缺英譯。
 
-## M164（2026-10-26 19:27）狀態：待做（Windows 卡 #618 交給 Mac 的 App 畫面部分）
+## M164（2026-10-26 19:27）狀態：完成
 卡：問題回報 #633：[Mac] 2026-10-23 M86（owner 的 iPhone 12 實機檢查）：相片冊主頁卡片集標籤
 
 app/lib/screens/album_screen.dart 約第 252–272 行，卡片集標籤 `卡片集 · ${album.author}` 放在 ConstrainedBox(maxWidth: 140)、字 11pt，沒設 maxLines／overflow。iPhone 12 上「卡片集 · English Card 編輯部」超過 140 寬，換成兩行，高度長高後壓到封面照片上的字。
@@ -1812,7 +1812,7 @@ app/lib/screens/album_screen.dart 約第 252–272 行，卡片集標籤 `卡片
 
 未動資料／程式；無備份、golden/QC 不受影響。
 
-## M165（2026-10-26 19:27）狀態：待做（Windows 卡 #619 交給 Mac 的 App 畫面部分）
+## M165（2026-10-26 19:27）狀態：完成
 卡：問題回報 #634：[Mac] 2026-10-23 M86（owner 的 iPhone 12 實機檢查）：database_simulation：等待提示與
 
 app/lib/widgets/database_word_detail.dart 的 addDatabaseWord（約 344–353 行）：
@@ -1824,7 +1824,7 @@ app/lib/widgets/database_word_detail.dart 的 addDatabaseWord（約 344–353 �
 
 未改任何檔案／資料；golden/QC 未跑（無變更）。
 
-## M166（2026-10-26 19:27）狀態：待做（Windows 卡 #620 交給 Mac 的 App 畫面部分）
+## M166（2026-10-26 19:27）狀態：完成
 卡：問題回報 #636：[Mac] 2026-10-23 M87（iPhone 模擬器）：#564 卡片集標籤壓到封面文字
 
 相片冊卡片左上「卡片集 · 作者」標籤（maxWidth 140、字 11px，未限行數）在作者名長（如「English Card 編輯部」）時換成兩行，標籤變高、往下蓋到封面上的文字。修法：在 UiText 加 maxLines: 1、overflow: TextOverflow.ellipsis（必要時 softWrap: false），或把 maxWidth 放寬為 約 (卡寬 - 16 - 右上沙漏徽章寬)；也可只顯示「卡片集」、作者移到詳情頁。非 iOS 專屬，各平台都會發生（字寬不同只是門檻不同）。
@@ -1834,7 +1834,7 @@ app/lib/widgets/database_word_detail.dart 的 addDatabaseWord（約 344–353 �
 - 未改資料，無備份；golden/QC 未跑（無資料變動）。
 - 剩下：Mac 改畫面並驗證，之後關 #636。
 
-## M167（2026-10-26 19:27）狀態：待做（Windows 卡 #621 交給 Mac 的 App 畫面部分）
+## M167（2026-10-26 19:27）狀態：完成
 卡：問題回報 #692：[給 Mac] [意見回饋] 複習：會到正面的按鈕幫我放在單字最上面和最下面 兩個都要
 
 在複習頁（背面）把「回到正面」按鈕在單字最上方與最下方各放一個（兩個都要，行為相同）。問題回報 #692 已標「給 Mac（inbox M145）」。
@@ -1844,12 +1844,12 @@ app/lib/widgets/database_word_detail.dart 的 addDatabaseWord（約 344–353 �
 - golden/QC：未執行（沒有資料變動）
 - 剩下：Mac 實作畫面後驗證。
 
-## M168（2026-10-26 19:29）狀態：待做（Windows 卡 #612 交給 Mac 的 App 畫面部分）
+## M168（2026-10-26 19:29）狀態：完成
 卡：問題回報 #635：[Mac] 2026-10-23 M87（iPhone 模擬器）：#564 存到相片冊對話框
 
 在 iPhone 模擬器再看一次對話框確認可選相片冊後關卡。
 
-## M169（2026-10-26 19:29）狀態：待做
+## M169（2026-10-26 19:29）狀態：完成
 commit `e3212885`（Windows：flutter analyze 無 error、01:55 +649 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #618：問題回報 #633：[Mac] 2026-10-23 M86（owner 的 iPhone 12 實機檢查）：相片冊主頁
   結果：結論：根因在 App 畫面（Dart），非詞庫資料；依分工（owner 10/23 #626）Windows 不改畫面，已定位、未改檔。
