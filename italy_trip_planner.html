@@ -1004,7 +1004,7 @@ function updateMap(){
  if(!window.L){box.innerHTML='<div class="alert" style="margin:8px">地圖元件載入失敗（需要連網）。仍可使用上方「Google 地圖導航」連結。</div>';return}
  if(!LM){
   LM=L.map(box,{zoomControl:true,preferCanvas:false});
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'}).addTo(LM);
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Tiles © Esri — Source: Esri, HERE, Garmin, OpenStreetMap contributors'}).addTo(LM);
   LG=L.layerGroup().addTo(LM);
   LM.on('popupopen',ev=>{const f=Object.keys(MK).find(k=>MK[k]===ev.popup._source);if(f){openId=f;selId=f}});
   LM.on('popupclose',()=>{openId=''});
