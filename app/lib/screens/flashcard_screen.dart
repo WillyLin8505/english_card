@@ -166,7 +166,9 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
           cardScope: cardScope,
           newLimit: scope.settings.dailyNewLimit,
           reviewLimit: scope.settings.dailyReviewLimit)
-        ..addListener(_changed);
+        ..addListener(_changed)
+        // 問題回報 #693: a swipe on the back loads the photos beside it.
+        ..photoSelection.addListener(_precacheBackPhoto);
       _wasBack = false;
     });
     scope.navigator.setReviewing(true);
@@ -189,19 +191,30 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     final dpr = MediaQuery.devicePixelRatioOf(context);
     final options = [for (final o in s.photoOptions) o.$1];
     final at = options.indexWhere((o) => o.id == s.photo?.id);
+    // 問題回報 #693: the photos on both sides of the one shown, so a swipe
+    // either way lands on a decoded photo.
     final photos = [
       if (s.photo case final p?) p,
-      ...options.skip(at + 1).take(2),
+      ...options.skip(at + 1).take(3),
+      if (at > 0) options[at - 1],
       ...s.upcomingPhotos(),
     ];
+    void warm(ImageProvider<Object>? provider) {
+      if (provider == null || !_warming.add(provider)) return;
+      precacheImage(provider, context, onError: (_, __) {})
+          .whenComplete(() => _warming.remove(provider));
+    }
+
     for (final photo in photos) {
       for (final height in {look.frontPhotoHeight, look.photoHeight}) {
-        final provider = photoProvider(
-            photo, scope.photoStore, Size(contentWidth, height), dpr);
-        if (provider == null || !_warming.add(provider)) continue;
-        precacheImage(provider, context, onError: (_, __) {})
-            .whenComplete(() => _warming.remove(provider));
+        warm(photoProvider(
+            photo, scope.photoStore, Size(contentWidth, height), dpr));
       }
+      // The drag question's photo-shaped frame (usually the same decode
+      // size as above, then nothing more is loaded).
+      warm(photoProvider(
+          photo, scope.photoStore, dragPhotoFrame(photo, contentWidth), dpr,
+          fit: BoxFit.contain));
     }
   }
 

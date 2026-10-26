@@ -1652,6 +1652,9 @@ class _PhotoPagerState extends State<_PhotoPager> {
               ? const SizedBox.expand()
               : PageView.builder(
                   controller: _controller,
+                  // 問題回報 #693: the pages beside the shown one are built
+                  // (photo, labels laid out) before the swipe reaches them.
+                  allowImplicitScrolling: true,
                   itemCount: photos.length,
                   onPageChanged: (i) {
                     setState(() => _index = i);

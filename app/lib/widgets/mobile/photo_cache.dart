@@ -187,9 +187,54 @@ class CachedNetworkPhoto extends ImageProvider<CachedNetworkPhoto> {
 
   static int _writes = 0;
 
-  /// The bytes of [url]: from disk when cached, else downloaded and kept.
+  /// Downloads under way, by URL (問題回報 #702): the review screen warms a
+  /// photo at two or three decode sizes at once, and each size used to
+  /// download the whole file again (a 1280 px picture is ~400 KB).
+  static final _inFlight = <String, Future<Uint8List>>{};
+
+  /// Waits before trying a failed download again (問題回報 #702: one
+  /// dropped connection left 「圖片暫時無法載入」 on the card for good).
   @visibleForTesting
-  static Future<Uint8List> bytesFor(String url) async {
+  static List<Duration> retryDelays = const [
+    Duration(milliseconds: 600),
+    Duration(milliseconds: 1800),
+  ];
+
+  /// A failure worth another try: the connection, a timeout, or the server
+  /// busy (429 / 5xx). A 404 stays a 404.
+  @visibleForTesting
+  static bool isTransient(Object error) =>
+      error is SocketException ||
+      error is HttpException ||
+      error is TimeoutException ||
+      error is HandshakeException ||
+      (error is NetworkImageLoadException &&
+          (error.statusCode == 429 || error.statusCode >= 500));
+
+  static Future<Uint8List> _fetchRetrying(Uri url) async {
+    for (var attempt = 0;; attempt++) {
+      try {
+        return await fetch(url);
+      } catch (e) {
+        if (attempt >= retryDelays.length || !isTransient(e)) rethrow;
+        await Future<void>.delayed(retryDelays[attempt]);
+      }
+    }
+  }
+
+  /// The bytes of [url]: from disk when cached, else downloaded and kept.
+  /// Asked again while it is downloading, the same download is shared.
+  @visibleForTesting
+  static Future<Uint8List> bytesFor(String url) {
+    final running = _inFlight[url];
+    if (running != null) return running;
+    final load = _bytesFor(url);
+    _inFlight[url] = load;
+    load.whenComplete(() => _inFlight.remove(url)).ignore();
+    return load;
+  }
+
+  static Future<Uint8List> _bytesFor(String url) async {
     File? file;
     try {
       final dir = await cacheDirectory();
@@ -202,7 +247,7 @@ class CachedNetworkPhoto extends ImageProvider<CachedNetworkPhoto> {
     } catch (_) {
       file = null; // No cache folder: still show the photo.
     }
-    final bytes = await fetch(Uri.parse(url));
+    final bytes = await _fetchRetrying(Uri.parse(url));
     if (file != null) unawaited(_keep(file, bytes));
     return bytes;
   }

@@ -35,8 +35,10 @@ class _InteractiveExerciseState extends State<_InteractiveExercise> {
   /// The exercise photo. With [mark], the word's spot is ringed (spec
   /// section 7: 正面「照片與目標區域」; 卡 #253) — a ring, and the tagger's
   /// box when it has one, but no word: the front must not give it away.
-  /// A photo without the word's coordinates shows no mark.
-  Widget _photo({bool mark = true}) {
+  /// A photo without the word's coordinates shows no mark. The drag
+  /// question passes its own [height], [fit] and [overlay] (its drop spots).
+  Widget _photo(
+      {bool mark = true, double? height, BoxFit? fit, Widget? overlay}) {
     final s = widget.session;
     final photo = s.photo;
     if (photo == null) return const SizedBox.shrink();
@@ -44,21 +46,24 @@ class _InteractiveExerciseState extends State<_InteractiveExercise> {
     final anchor = s.anchor;
     final look = CardLook.of(context);
     return SizedBox(
-      height: look.frontPhotoHeight,
+      height: height ?? look.frontPhotoHeight,
       child: Stack(fit: StackFit.expand, children: [
         PinnedPhoto(
           key: ValueKey(attempt),
           photo: photo,
           radius: look.frontPhotoRadius,
           pins: const [],
+          fit: fit ?? BoxFit.cover,
           // 問題回報 #651: the word's spot stays in the frame, even when
           // BoxFit.cover would crop it away (the ring then follows).
           focus: anchor,
-          overlay: mark && anchor != null && !s.photoFailed
-              ? Semantics(
-                  label: ui(context, '照片中標出的位置'),
-                  child: TargetRing(photo: photo, anchor: anchor, box: s.box))
-              : null,
+          overlay: overlay ??
+              (mark && anchor != null && !s.photoFailed
+                  ? Semantics(
+                      label: ui(context, '照片中標出的位置'),
+                      child:
+                          TargetRing(photo: photo, anchor: anchor, box: s.box))
+                  : null),
           onImageState: (ready) => s.reportPhotoState(attempt, ready),
           imageErrorBuilder: (_) => const Center(child: UiText('圖片暫時無法載入')),
         ),
@@ -132,7 +137,10 @@ class _InteractiveExerciseState extends State<_InteractiveExercise> {
             Text(firstLetterHint(x.answer), textAlign: TextAlign.center),
         ],
         if (x.type == ReviewExerciseType.photoChoice) ...[
-          _photo(),
+          // 問題回報 #697: 選單字題 shows the photo without the target ring —
+          // the ring sat on top of the tagger's box, two marks in one spot,
+          // and the question is about the whole photo.
+          _photo(mark: false),
           const SizedBox(height: 18),
           _title(x.prompt),
           for (final option in x.options)
@@ -269,53 +277,76 @@ class _InteractiveExerciseState extends State<_InteractiveExercise> {
     }
   }
 
-  Widget _dragPhoto(ReviewExercise x) => AspectRatio(
-        aspectRatio: 4 / 3,
-        child: LayoutBuilder(builder: (context, box) {
-          return Stack(children: [
-            Positioned.fill(child: _photo(mark: false)),
-            for (final target
-                in widget.session.canAnswer ? x.targets : <ExerciseTarget>[])
-              Positioned(
-                left: target.anchor.x * box.maxWidth - 28,
-                top: target.anchor.y * box.maxHeight - 28,
-                width: 56,
-                height: 56,
-                child: DragTarget<String>(
-                  onAcceptWithDetails: (details) {
-                    if (!widget.session.canAnswer) return;
-                    _attempts++;
-                    if (details.data == target.word) {
-                      setState(() => _placed.add(target.word));
-                      if (_placed.length == x.targets.length) {
-                        widget.session.completeInteraction(
-                            correct: _mistakes == 0, attempts: _attempts);
-                      }
-                    } else {
-                      setState(() => _mistakes++);
-                    }
-                  },
-                  builder: (_, candidate, __) => Container(
-                    decoration: BoxDecoration(
-                      color: _placed.contains(target.word)
-                          ? MColors.primary.withValues(alpha: .85)
-                          : MColors.surface.withValues(alpha: .75),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: MColors.primary, width: 2),
-                    ),
-                    child: Center(
-                        child: Text(_placed.contains(target.word) ? '✓' : '＋',
-                            style: MFont.manrope(
-                                20, FontWeight.w800, MColors.ink))),
-                  ),
-                ),
-              ),
-          ]);
-        }),
+  /// 問題回報 #696: the drop spots are mapped through the photo's own
+  /// geometry ([CoverGeometry]), as the labels are. Before, they were put
+  /// at anchor × frame size in a fixed 4:3 frame while the photo was
+  /// cropped (cover) and shifted (focus), so a spot drifted off its object
+  /// — and any label in the cropped strip was off the photo. Now the frame
+  /// takes the photo's shape and shows all of it.
+  Widget _dragPhoto(ReviewExercise x) => LayoutBuilder(builder: (context, c) {
+        final photo = widget.session.photo;
+        final frame = photo == null
+            ? Size(c.maxWidth, c.maxWidth * 3 / 4)
+            : dragPhotoFrame(photo, c.maxWidth);
+        return _photo(
+          mark: false,
+          height: frame.height,
+          fit: BoxFit.contain,
+          overlay: photo == null || !widget.session.canAnswer
+              ? null
+              : LayoutBuilder(builder: (context, box) {
+                  final geo = CoverGeometry.of(
+                      context, Size(box.maxWidth, box.maxHeight), photo);
+                  return Stack(children: [
+                    for (final target in x.targets)
+                      if (geo.toBox(target.anchor) case final at)
+                        Positioned(
+                          key: ValueKey('drop-${target.word}'),
+                          left: at.dx - 28,
+                          top: at.dy - 28,
+                          width: 56,
+                          height: 56,
+                          child: _dropSpot(x, target),
+                        ),
+                  ]);
+                }),
+        );
+      });
+
+  Widget _dropSpot(ReviewExercise x, ExerciseTarget target) =>
+      DragTarget<String>(
+        onAcceptWithDetails: (details) {
+          if (!widget.session.canAnswer) return;
+          _attempts++;
+          if (details.data == target.word) {
+            setState(() => _placed.add(target.word));
+            if (_placed.length == x.targets.length) {
+              widget.session.completeInteraction(
+                  correct: _mistakes == 0, attempts: _attempts);
+            }
+          } else {
+            setState(() => _mistakes++);
+          }
+        },
+        builder: (_, candidate, __) => Container(
+          decoration: BoxDecoration(
+            color: _placed.contains(target.word)
+                ? MColors.primary.withValues(alpha: .85)
+                : MColors.surface.withValues(alpha: .75),
+            shape: BoxShape.circle,
+            border: Border.all(color: MColors.primary, width: 2),
+          ),
+          child: Center(
+              child: Text(_placed.contains(target.word) ? '✓' : '＋',
+                  style: MFont.manrope(20, FontWeight.w800, MColors.ink))),
+        ),
       );
 }
 
-/// Back (spec sections 4 and 7): the answer, its pronunciation (played on
-/// flip), meaning, one of the word's photos, 3–5 examples, then the
-/// card template's other fields in its order; empty fields are left out.
-/// 所有資訊 opens the full word.
+/// The drag question's photo frame [width] wide: the photo's own shape
+/// (all of it shown), no taller than square; 4:3 for a photo of unknown
+/// size. The review screen preloads the photo at this size too.
+Size dragPhotoFrame(Photo photo, double width) => Size(
+    width,
+    PinnedPhoto.frameHeight(photo, width,
+        maxHeight: width, minHeight: 160, fallback: width * 3 / 4));
