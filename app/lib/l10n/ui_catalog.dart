@@ -2,6 +2,9 @@
 /// content. Missing keys/languages deliberately retain the original copy.
 const uiCatalog = <String, (String, String)>{
   '意見回饋': ('Feedback', 'Commentaires'),
+  // M180 (owner #732): the photo's 詞性 × CEFR table.
+  '詞性 × 等級表': ('Part of speech × level', 'Nature × niveau'),
+  '加入單字本': ('Add to My words', 'Ajouter à Mes mots'),
   // 卡 #496 (M156–M162, 問題回報 #494): copy a French learner on an English
   // or French phone still saw in Chinese.
   '重新掃描標籤': ('Rescan labels', 'Réanalyser les étiquettes'),
@@ -1373,4 +1376,6 @@ const _templateCopy = <String, (String, String)>{
   '備份失敗：{0}': ('Backup failed: {0}', 'Échec de la sauvegarde : {0}'),
   '還原失敗：{0}': ('Restore failed: {0}', 'Échec de la restauration : {0}'),
   '來源：{0}': ('Source: {0}', 'Source : {0}'),
+  // M180 (owner #732): the photo's 詞性 × CEFR table.
+  '已加入「{0}」': ('Added “{0}”', '« {0} » ajouté'),
 };
