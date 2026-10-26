@@ -1369,3 +1369,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | M199 一般補字（focus 無） | 不通過 | 回的 12 個跟重啟前完全一樣（architectural、prominent B1、congested、transportation…），看起來是快取舊結果，或一般補字沒套用新的等級過濾 |  | 中 |
 | M199 伺服器候選沒帶 cefr | 不通過 | tagger 回的候選沒帶等級，App 的 CEFR 表查不到時預設 B1（iridescent 顯示 B1）；照片詳情會再用詞庫校正，但詞庫沒有的字就停在 B1。建議 tagger 回 cefr |  | 低 |
 | M199 速度 | 不通過 | 一次補字 14–23 秒 |  | 低 |
+
+## 2026-10-26 M202（Mac）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M202 #625 翻卡第一次發音 | 通過 | 卡上 App 部分是「無」；App 端已在 04da8c9d（#724）改成先用任何真人錄音，iPhone 上 198 字中 188 字第一個是真人。剩下的 10 字要等 Windows 補錄音 |  | — |
