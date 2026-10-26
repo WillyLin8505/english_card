@@ -6,15 +6,11 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
 import '../app/app_scope.dart';
-import '../models/photo.dart';
-import '../services/lexicon_pack.dart';
 import '../theme/mobile_theme.dart';
 import '../widgets/mobile/common.dart';
 import '../widgets/mobile/dialogs.dart';
 import '../widgets/mobile/m_icon.dart';
-import '../services/photo_store.dart';
 import '../services/text_scan.dart';
-import '../widgets/mobile/photo_widgets.dart';
 import 'photo_picker_screen.dart';
 
 /// 圖辨單字 — Figma camera-view (11:6), the 拍照 tab: viewfinder, shutter,
@@ -26,8 +22,13 @@ import 'photo_picker_screen.dart';
 /// the badge says what the camera and tagger are actually doing.
 ///
 /// When no camera is available (desktop without a webcam, permission
-/// denied) the viewfinder shows the newest photo and its words instead,
-/// and says so.
+/// denied) the viewfinder says so and points to 選擇照片.
+///
+/// Owner (問題回報 #727): coming back to 拍照 shows a clean camera, never the
+/// last photo's words — no 「最近一張照片的單字」 pill and no last photo with
+/// its pins behind the viewfinder. The shutter saves the photo to an album
+/// before 照片詳情 opens, so nothing unsaved lives on this tab; the words are
+/// in 相片冊.
 ///
 /// The camera only runs while the 拍照 tab is showing ([ActiveTabScope]).
 class CameraScreen extends StatefulWidget {
@@ -202,13 +203,6 @@ class _CameraScreenState extends State<CameraScreen>
     }
   }
 
-  void _openLatest(Photo? latest) {
-    // No photo yet: the chip reads 「先選一張照片開始學習」, so open the
-    // picker instead of only telling the learner to take one.
-    if (latest == null) return _openPicker();
-    AppScope.of(context).navigator.openPhoto(latest.id);
-  }
-
   @override
   Widget build(BuildContext context) {
     final scope = AppScope.of(context);
@@ -216,7 +210,6 @@ class _CameraScreenState extends State<CameraScreen>
     return ListenableBuilder(
       listenable: Listenable.merge([repo, scope.settings, scope.queue]),
       builder: (context, _) {
-        final latest = repo.photos.where(PhotoStore.canShow).firstOrNull;
         final String badge;
         if (_busy) {
           badge =
@@ -241,211 +234,162 @@ class _CameraScreenState extends State<CameraScreen>
           backgroundColor: MColors.canvas,
           body: SafeArea(
             bottom: false,
-            child: GestureDetector(
-              onVerticalDragEnd: (d) {
-                if ((d.primaryVelocity ?? 0) < -300) _openLatest(latest);
-              },
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: MSpace.xl, vertical: MSpace.md),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              UiText('拍照學單字', style: MFont.display),
-                              const SizedBox(height: MSpace.xxs),
-                              UiText('拍照或選一張照片，找出生活中的{L}單字',
-                                  style: MFont.caption),
-                            ],
-                          ),
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: MSpace.xl, vertical: MSpace.md),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            UiText('拍照學單字', style: MFont.display),
+                            const SizedBox(height: MSpace.xxs),
+                            UiText('拍照或選一張照片，找出生活中的{L}單字',
+                                style: MFont.caption),
+                          ],
                         ),
-                        NavIconButton(
-                          label: '設定',
-                          background: MColors.surface,
-                          bordered: true,
-                          icon: const MSvg(MIcon.settings20, size: 20),
-                          onTap: () =>
-                              scope.navigator.selectTab(AppTab.settings),
-                        ),
-                      ],
-                    ),
+                      ),
+                      NavIconButton(
+                        label: '設定',
+                        background: MColors.surface,
+                        bordered: true,
+                        icon: const MSvg(MIcon.settings20, size: 20),
+                        onTap: () => scope.navigator.selectTab(AppTab.settings),
+                      ),
+                    ],
                   ),
-                  Expanded(
-                    child: Padding(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: MSpace.xl),
-                      child: Container(
-                        decoration: MDecor.heroPhotoFrame(),
-                        clipBehavior: Clip.hardEdge,
-                        child: _Viewfinder(
-                          controller: _controller,
-                          fallback: latest,
-                          cameraError: _cameraError,
-                          badge: badge,
-                          onBadgeTap: _controller != null &&
-                                  !_busy &&
-                                  !scope.settings.taggingConfigured
-                              ? () => scope.navigator.selectTab(AppTab.settings)
-                              : null,
-                          onOpenFallback: () => _openLatest(latest),
-                        ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: MSpace.xl),
+                    child: Container(
+                      decoration: MDecor.heroPhotoFrame(),
+                      clipBehavior: Clip.hardEdge,
+                      child: _Viewfinder(
+                        controller: _controller,
+                        cameraError: _cameraError,
+                        badge: badge,
+                        onBadgeTap: _controller != null &&
+                                !_busy &&
+                                !scope.settings.taggingConfigured
+                            ? () => scope.navigator.selectTab(AppTab.settings)
+                            : null,
                       ),
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: MSpace.xl, vertical: MSpace.lg),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: _controller == null
-                              ? MainAxisAlignment.center
-                              : MainAxisAlignment.spaceBetween,
-                          children: [
-                            // Without a camera the big middle button is the
-                            // one 選擇照片 entry; gallery and flash are hidden
-                            // (問題回報 #402).
-                            if (_controller != null)
-                              _RoundButton(
-                                label: '從相簿選擇',
-                                icon: MIcon.gallery20,
-                                onTap: _openPicker,
-                              ),
-                            Tap(
-                              onTap: _capture,
-                              label: _controller == null ? '選擇照片' : '拍照',
-                              child: Container(
-                                width: 76,
-                                height: 76,
-                                decoration: BoxDecoration(
-                                  color: MColors.primarySoft,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color:
-                                        MColors.primary.withValues(alpha: 0.25),
-                                    width: 2,
-                                  ),
-                                ),
-                                child: Center(
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 200),
-                                    width: 58,
-                                    height: 58,
-                                    decoration: BoxDecoration(
-                                      color: _busy
-                                          ? MColors.primary
-                                              .withValues(alpha: 0.6)
-                                          : MColors.primary,
-                                      shape: BoxShape.circle,
-                                      boxShadow: MShadows.primaryGlow,
-                                    ),
-                                    child: Center(
-                                      child: MSvg(
-                                        _controller == null
-                                            ? MIcon.gallery20
-                                            : MIcon.cameraWhite,
-                                        size: 24,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: MSpace.xl, vertical: MSpace.lg),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: _controller == null
+                            ? MainAxisAlignment.center
+                            : MainAxisAlignment.spaceBetween,
+                        children: [
+                          // Without a camera the big middle button is the
+                          // one 選擇照片 entry; gallery and flash are hidden
+                          // (問題回報 #402).
+                          if (_controller != null)
+                            _RoundButton(
+                              label: '從相簿選擇',
+                              icon: MIcon.gallery20,
+                              onTap: _openPicker,
                             ),
-                            if (_controller != null)
-                              _RoundButton(
-                                label: _torch ? '關閉閃光燈' : '開啟閃光燈',
-                                icon: MIcon.zap,
-                                highlighted: _torch,
-                                onTap: _toggleTorch,
-                              ),
-                          ],
-                        ),
-                        // With a camera, the badge and the top-right settings
-                        // button already lead to setup; this panel is only
-                        // the fallback when there is no camera (問題回報 #535).
-                        if (_controller == null) ...[
-                          const SizedBox(height: MSpace.sm),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: MSpace.sm, vertical: MSpace.xxs),
-                            decoration: MDecor.softPanel(),
-                            child: Wrap(
-                              alignment: WrapAlignment.center,
-                              spacing: MSpace.xs,
-                              runSpacing: MSpace.xxs,
-                              children: [
-                                if (_controller == null) ...[
-                                  TextButton.icon(
-                                    onPressed: _starting
-                                        ? null
-                                        : _permissionDenied
-                                            ? _showPermissionHelp
-                                            : _start,
-                                    icon: const MSvg(MIcon.pulseDot, size: 16),
-                                    label: UiText(
-                                        _permissionDenied ? '開啟權限說明' : '重試相機'),
-                                  ),
-                                ],
-                                if (!scope.settings.taggingConfigured) ...[
-                                  TextButton.icon(
-                                    onPressed: () => scope.navigator
-                                        .selectTab(AppTab.settings),
-                                    icon:
-                                        const MSvg(MIcon.settings20, size: 16),
-                                    label: const UiText('設定辨識'),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        ],
-                        // Owner: no 「先選一張照片開始學習」 chip before the first
-                        // photo (問題回報 #613); the picker button stays.
-                        if (latest != null) ...[
-                          const SizedBox(height: MSpace.md),
                           Tap(
-                            onTap: () => _openLatest(latest),
-                            label: '查看最近照片的單字',
+                            onTap: _capture,
+                            label: _controller == null ? '選擇照片' : '拍照',
                             child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: MSpace.md,
-                                  vertical: MSpace.xs + 2),
-                              constraints: const BoxConstraints(
-                                  minWidth: 48, minHeight: 48),
-                              decoration: MDecor.chipSurface(active: true),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const MSvg(MIcon.chevronUp, size: 16),
-                                  const SizedBox(width: MSpace.xs),
-                                  // Flexible: the English and French copy is
-                                  // longer than the Chinese (問題回報 #363).
-                                  Flexible(
-                                    child: UiText(
-                                        // With a live preview behind the button,
-                                        // 「這張」 reads as the viewfinder; it
-                                        // opens the last photo (問題回報 #583).
-                                        _controller?.value.isInitialized == true
-                                            ? '最近一張照片的單字'
-                                            : '查看這張照片的單字',
-                                        textAlign: TextAlign.center,
-                                        style: MFont.manrope(13,
-                                            FontWeight.w700, MColors.primary)),
+                              width: 76,
+                              height: 76,
+                              decoration: BoxDecoration(
+                                color: MColors.primarySoft,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color:
+                                      MColors.primary.withValues(alpha: 0.25),
+                                  width: 2,
+                                ),
+                              ),
+                              child: Center(
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  width: 58,
+                                  height: 58,
+                                  decoration: BoxDecoration(
+                                    color: _busy
+                                        ? MColors.primary.withValues(alpha: 0.6)
+                                        : MColors.primary,
+                                    shape: BoxShape.circle,
+                                    boxShadow: MShadows.primaryGlow,
                                   ),
-                                ],
+                                  child: Center(
+                                    child: MSvg(
+                                      _controller == null
+                                          ? MIcon.gallery20
+                                          : MIcon.cameraWhite,
+                                      size: 24,
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
                           ),
+                          if (_controller != null)
+                            _RoundButton(
+                              label: _torch ? '關閉閃光燈' : '開啟閃光燈',
+                              icon: MIcon.zap,
+                              highlighted: _torch,
+                              onTap: _toggleTorch,
+                            ),
                         ],
+                      ),
+                      // With a camera, the badge and the top-right settings
+                      // button already lead to setup; this panel is only
+                      // the fallback when there is no camera (問題回報 #535).
+                      if (_controller == null) ...[
+                        const SizedBox(height: MSpace.sm),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: MSpace.sm, vertical: MSpace.xxs),
+                          decoration: MDecor.softPanel(),
+                          child: Wrap(
+                            alignment: WrapAlignment.center,
+                            spacing: MSpace.xs,
+                            runSpacing: MSpace.xxs,
+                            children: [
+                              if (_controller == null) ...[
+                                TextButton.icon(
+                                  onPressed: _starting
+                                      ? null
+                                      : _permissionDenied
+                                          ? _showPermissionHelp
+                                          : _start,
+                                  icon: const MSvg(MIcon.pulseDot, size: 16),
+                                  label: UiText(
+                                      _permissionDenied ? '開啟權限說明' : '重試相機'),
+                                ),
+                              ],
+                              if (!scope.settings.taggingConfigured) ...[
+                                TextButton.icon(
+                                  onPressed: () => scope.navigator
+                                      .selectTab(AppTab.settings),
+                                  icon: const MSvg(MIcon.settings20, size: 16),
+                                  label: const UiText('設定辨識'),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
                       ],
-                    ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         );
@@ -496,21 +440,17 @@ class _RoundButton extends StatelessWidget {
 /// Figma viewfinder (11:18): 24px corners, the AI badge top-left.
 class _Viewfinder extends StatelessWidget {
   final CameraController? controller;
-  final Photo? fallback;
   final String? cameraError;
   final String badge;
 
   /// Recognition not set up: the badge opens 設定 → 照片辨識.
   final VoidCallback? onBadgeTap;
-  final VoidCallback onOpenFallback;
 
   const _Viewfinder({
     required this.controller,
-    required this.fallback,
     required this.cameraError,
     required this.badge,
     this.onBadgeTap,
-    required this.onOpenFallback,
   });
 
   @override
@@ -528,42 +468,10 @@ class _Viewfinder extends StatelessWidget {
           child: SizedBox(width: w, height: h, child: CameraPreview(c)),
         ),
       );
-    } else if (fallback != null) {
-      final repo = AppScope.of(context).repository;
-      content = Tap(
-        onTap: onOpenFallback,
-        label: '開啟最近的照片',
-        child: PinnedPhoto(
-          photo: fallback!,
-          radius: 0,
-          largePins: true,
-          // Clear of the status chip, and of the notice when there's no camera.
-          reserveTop: 52,
-          reserveBottom: c == null ? 84 : 0,
-          pins: [
-            for (final l in repo.visibleLabels(fallback!.id))
-              if (l.occ.placed)
-                PinData(
-                    id: l.occ.id,
-                    anchor: l.occ.anchor,
-                    word: shownWord(l.entry.word, repo.language, pos: l.entry.pos),
-                    zh: l.entry.meaning,
-                    entryType: l.entry.entryType,
-                    linked: l.entry.lexemeId != null ||
-                        LexiconPack.instance.isEmpty),
-          ],
-        ),
-      );
     } else {
-      content = ColoredBox(
-        color: MColors.surfaceSoft,
-        child: Center(
-          child: UiText(
-            '尚未有可用相機或照片',
-            style: MFont.manrope(14, FontWeight.w600, MColors.muted),
-          ),
-        ),
-      );
+      // Camera starting or unavailable: an empty frame, not the last photo
+      // (問題回報 #727); the badge and the notice below say what's going on.
+      content = const ColoredBox(color: MColors.surfaceSoft);
     }
 
     return ClipRRect(
@@ -621,9 +529,7 @@ class _Viewfinder extends StatelessWidget {
                   shadow: MShadows.card,
                 ),
                 child: UiText(
-                  fallback != null
-                      ? '${fallback!.assetPath != null ? '範例照片' : '最近的照片'}：點照片看單字，或按下方「選擇照片」。'
-                      : '你可以按下方「選擇照片」，開始學單字。',
+                  '你可以按下方「選擇照片」，開始學單字。',
                   style: MFont.manrope(12, FontWeight.w600, MColors.ink),
                 ),
               ),

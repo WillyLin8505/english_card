@@ -89,10 +89,26 @@ const uiCatalog = <String, (String, String)>{
     'See the feedback and card reports sent from this phone, and delete them.',
     'Voir les commentaires et signalements envoyés depuis ce téléphone, et les supprimer.'
   ),
-  '這支手機送過的意見回饋與卡片回報。刪除只會從這支手機移除；還沒送出的就不會送出。': (
-    'Feedback and card reports sent from this phone. Deleting removes them from this phone only; unsent ones won’t be sent.',
-    'Commentaires et signalements envoyés depuis ce téléphone. Supprimer les retire de ce téléphone seulement ; ceux non envoyés ne le seront pas.'
+  // 問題回報 #716 / #728: deleting a sent one deletes its 問題回報 too; each
+  // shows whether it is being handled or done.
+  '這支手機送過的意見回饋與卡片回報，以及處理進度。刪除已送出的會連問題回報一起刪除；還沒送出的就不會送出。': (
+    'Feedback and card reports sent from this phone, and their progress. Deleting a sent one also deletes the report; unsent ones won’t be sent.',
+    'Commentaires et signalements envoyés depuis ce téléphone, et leur suivi. Supprimer un envoi supprime aussi le signalement ; ceux non envoyés ne le seront pas.'
   ),
+  '會從這支手機和問題回報一起刪除。': (
+    'It will be deleted from this phone and from the reports.',
+    'Il sera supprimé de ce téléphone et des signalements.'
+  ),
+  '沒辦法從問題回報刪除': (
+    'Couldn’t delete the report',
+    'Impossible de supprimer le signalement'
+  ),
+  '伺服器沒有刪掉這筆回報，紀錄先留在這支手機。可以稍後再試。': (
+    'The server didn’t delete this report, so it stays on this phone. You can try again later.',
+    'Le serveur n’a pas supprimé ce signalement ; il reste sur ce téléphone. Vous pouvez réessayer plus tard.'
+  ),
+  '只從這支手機移除': ('Remove from this phone only', 'Retirer de ce téléphone seulement'),
+  '先留著': ('Keep it', 'Le garder'),
   '還沒有送過意見回饋': ('No feedback sent yet', 'Aucun commentaire envoyé'),
   '還在排隊，連上網路後會送出': (
     'Waiting; sent once you’re online',
@@ -1102,6 +1118,9 @@ class _UiTemplate {
 const _templateCopy = <String, (String, String)>{
   '發音錄音：{0}': ('Recording: {0}', 'Enregistrement : {0}'),
   '已送出 · #{0}': ('Sent · #{0}', 'Envoyé · #{0}'),
+  // 問題回報 #728.
+  '處理中 · #{0}': ('In progress · #{0}', 'En cours · #{0}'),
+  '已處理 · #{0}': ('Done · #{0}', 'Traité · #{0}'),
   // Before the generic 「{0} 張」 below (卡 #496).
   '每天最多 {0} 張新卡': ('Up to {0} new cards a day', 'Jusqu’à {0} nouvelles cartes par jour'),
   '每天最多複習 {0} 張': ('Up to {0} reviews a day', 'Jusqu’à {0} révisions par jour'),
