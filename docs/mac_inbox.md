@@ -2105,3 +2105,8 @@ tagger 已用 start_tagger.bat 重啟（21:03，8765／8790 都 200），可以�
 commit `6d95a706`（Windows：flutter analyze 無 error、01:05 +692 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #646：問題回報 #734：[owner] 後台照片頁加「詞性 × CEFR」標籤表格，讓 owner 先在後台測試（手機先不放
   結果：全部完成：後台照片頁已加「詞性 × CEFR」表格（點「詞性 × CEFR 表格」或上傳照片測試），後端新增 POST /photo-grid/tag-upload，QC 無退步。；後台網址：http://127.0.0.1:5173/ui/#/images（照片庫與審核）
+
+## M197（2026-10-26 21:09）狀態：待做（Windows 卡 #613 交給 Mac 的 App 畫面部分）
+卡：問題回報 #711：法語卡片導向錯義：sombre形容詞「dark」card=sombrer，A1複習變成B2動詞「to sink」
+
+無（Dart lookup 不需改，只改 card 欄位）。資料修復：card 是匯出時算的（app_pack.assign_cards），沒有存在 DB，所以沒有資料列被改、沒有備份。已發布的 app 快照要等下一次匯出才會生效。
