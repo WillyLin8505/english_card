@@ -107,6 +107,7 @@ def build_definition_index(csv_path=None, index_path=None) -> None:
     os.replace(tmp, index_path)
 
 
+_SHORT_FORM = re.compile(r"^(?:clipping|abbreviation|short form|shortening|contraction) of\s+([A-Za-z-]+)", re.I)
 _WN_POS = {"n": "noun", "v": "verb", "a": "adj", "s": "adj", "r": "adv"}
 _STOP = frozenset("a an the of or and to in on for with by as at from that which who is are be "
                   "being been it its one something someone especially usually often used use "
@@ -122,7 +123,7 @@ def _content_words(text: str) -> set[str]:
             if w.endswith(suf) and len(w) - len(suf) >= 3:
                 w = w[: -len(suf)]
                 break
-        out.add(w)
+        out.add(w[:5])
     return out
 
 
@@ -319,8 +320,7 @@ class ECDict(SourceAdapter):
         row = db.execute("SELECT definition FROM d WHERE lower = ? ORDER BY word = ? DESC",
                          (word.strip().lower(), word.strip())).fetchone()
         out = []
-        for line in (row[0] if row else "").split("
-"):
+        for line in (row[0] if row else "").replace("\\n", "\n").split("\n"):
             m = re.match(r"^\(?([nvasr])\)?\.?\s+(.+)$", line.strip())
             if m and _WN_POS.get(m.group(1)) == pos:
                 out.append(m.group(2))
@@ -342,19 +342,25 @@ class ECDict(SourceAdapter):
         if len({str(e.get("etymology_number") or "") for e in entries}) < 2:
             return False
         wn = {w for d in self.english_definitions(lemma, pos)[:3] for w in _content_words(d)}
-        wn.discard(lemma.lower())
+        wn.discard(lemma.lower()[:5])
         if not wn:
             return False
         own_ety = None
         best_other = 0
+        mine = self.meaning(lemma, pos)
         for e in entries:
             glosses = [((x.get("glosses") or [""])[0]).strip() for x in e.get("senses") or []][:4]
             score = max((len(wn & _content_words(g)) for g in glosses), default=0)
+            # ad 「Clipping of advertisement」: the long form shares ECDICT's meaning.
+            for g in glosses:
+                m = _SHORT_FORM.match(g)
+                if m and mine and self.meaning(m.group(1), pos) == mine:
+                    score = max(score, 99)
             if gloss.strip() in glosses:
                 own_ety = score
             else:
                 best_other = max(best_other, score)
-        return own_ety is not None and best_other >= 2 and best_other > own_ety
+        return own_ety is not None and best_other > own_ety and (best_other >= 2 or own_ety == 0)
 
     def meaning(self, word: str, pos=None, loose: bool = False) -> str | None:
         """The first meaning of [word] in [pos] (one or several parts of
