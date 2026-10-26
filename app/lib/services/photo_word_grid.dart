@@ -11,6 +11,17 @@ import '../models/word_entry.dart' show cefrLevels;
 /// one spot — has words from easy to hard (happy A1 → joyful B2 → elated
 /// C1); those come in as [GridWord]s sharing a [GridWord.tagId] and
 /// [GridWord.point], and go through the same [buildPhotoWordGrid].
+///
+/// M189 (owner, overrides M180/M187): not on the phone yet — the owner
+/// tries the table in the Windows back office first.
+/// `--dart-define=PHOTO_WORD_GRID=true` builds a version with it.
+const photoWordGridFlag =
+    bool.fromEnvironment('PHOTO_WORD_GRID', defaultValue: false);
+
+/// Whether 照片詳情 builds the table. Not const so tests can turn it on
+/// without a special build ([photoWordGridFlag]).
+bool showPhotoWordGrid = photoWordGridFlag;
+
 enum GridRow { verb, noun, adjective, adverb, phrase }
 
 /// The row's heading (UiText source key, already in the catalog).

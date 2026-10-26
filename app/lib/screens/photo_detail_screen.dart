@@ -627,11 +627,13 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                             ),
                           _buildList(photo, session, old),
                           // M180 (owner #732): 詞性 × CEFR, under everything
-                          // else so nothing above moves.
-                          _AfterFrames(
-                            frames: _after(6),
-                            child: _wordGrid(photo, session, old),
-                          ),
+                          // else so nothing above moves. Off on the phone
+                          // for now (M189): nothing of it is built.
+                          if (showPhotoWordGrid)
+                            _AfterFrames(
+                              frames: _after(6),
+                              child: _wordGrid(photo, session, old),
+                            ),
                         ],
                       ],
                     ),

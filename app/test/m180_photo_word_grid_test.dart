@@ -116,8 +116,25 @@ void main() {
     expect(tapped?.word, 'elated');
   });
 
+  testWidgets('M189: with the flag off (the default) 照片詳情 has no table',
+      (tester) async {
+    expect(photoWordGridFlag, isFalse);
+    expect(showPhotoWordGrid, isFalse);
+    final app = await pumpApp(tester,
+        initialTab: AppTab.album, size: const Size(375, 812));
+    app.navigator.openPhoto('photo-breakfast');
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.byKey(const ValueKey('add-word')), 300,
+        scrollable: find.byType(Scrollable).first);
+    await tester.pumpAndSettle();
+    expect(find.byType(PhotoWordGridTable), findsNothing);
+    expect(find.byKey(const ValueKey('photo-word-grid')), findsNothing);
+  });
+
   testWidgets('照片詳情: grid under the list; open a listed word, add another',
       (tester) async {
+    showPhotoWordGrid = true;
+    addTearDown(() => showPhotoWordGrid = photoWordGridFlag);
     final app = await pumpApp(tester,
         initialTab: AppTab.album, size: const Size(375, 812));
     app.navigator.openPhoto('photo-breakfast');
