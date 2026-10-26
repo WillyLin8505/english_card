@@ -974,6 +974,15 @@ const uiCatalog = <String, (String, String)>{
     'Which word fits this photo best?',
     'Quel mot correspond le mieux à cette photo ?'
   ),
+  // 法語模擬 A1: the other review prompts were still in Chinese.
+  '把單字拖到照片中的正確位置': (
+    'Drag the word to the right place in the photo',
+    'Fais glisser le mot au bon endroit sur la photo'
+  ),
+  '把三個意思和單字配對': (
+    'Match the three meanings with their words',
+    'Associe les trois sens à leurs mots'
+  ),
   '等級為詞頻估算': (
     'Level is estimated from word frequency',
     'Niveau estimé d’après la fréquence'
