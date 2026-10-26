@@ -820,7 +820,9 @@ class Tick:
                 continue
             cands = order_candidates(candidates(board, agent, self.caps, state=diff_state, now=self.now),
                                      agent, self.cfg, self.now, taken, self.night_tasks, full)
-            cands = [c for c in cands if not self.prior_busy(c.get("task_id"))]
+            cands = [c for c in cands if not self.prior_busy(c.get("task_id"))
+                     # 「[給 Mac]」 work is the Mac's (#626); 10/26 three such cards went to Windows AIs here
+                     and MAC_PREFIX not in str(c.get("title") or "") and "[待決定]" not in str(c.get("title") or "")[:12]]
             if not cands:
                 log(f"{agent}: nothing eligible → rest")
                 continue
