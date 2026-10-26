@@ -88,7 +88,7 @@ NO_WINDOW = 0x08000000
 BREAKAWAY = 0x01000000
 LOG_CAP = 1_000_000
 LOCK_STALE_S = 15 * 60
-NO_DECISION_RE = re.compile(r"^[：:\s]*(無|沒有|none|n/?a)\s*[。.]?\s*($|\n)", re.I)
+NO_DECISION_RE = re.compile(r"^[：:\s]*(無|沒有|none|n/?a)(?=[\s。.，,（(；;]|$)", re.I)
 
 
 def real_decision(text: str) -> bool:
@@ -704,6 +704,47 @@ class Tick:
         except Exception as e:  # noqa: BLE001
             log(f"ask_owner #{card_id}: {e}")
 
+    def prune_decisions(self) -> bool:
+        """owner 10/26: 「已經修好的，就不要出現在等待我決定那個地方了」. A waiting decision whose card
+        is finished (done／cancelled) or whose issues are all fixed, or that only says 「無」, is closed."""
+        if self.dry:
+            return False
+        try:
+            items = http("GET", "/issues").get("items", [])
+            tasks = {t["id"]: t for t in http("GET", "/tasks").get("items", [])}
+        except Exception as e:  # noqa: BLE001
+            log(f"prune_decisions: {e}")
+            return False
+        status = {i["id"]: i.get("status") for i in items}
+        changed = False
+        for i in items:
+            title = str(i.get("title") or "")
+            if (i.get("status") not in ("open", "needs_decision") or i.get("decision")
+                    or not (i.get("kind") == "decision" or "[待決定]" in title)):
+                continue
+            m = re.search(r"卡 #(\d+)", title)
+            card = tasks.get(int(m.group(1))) if m else None
+            linked = [status.get(n) for n in (card or {}).get("issue_ids") or []]
+            question = re.sub(r"^\[待決定\]\s*卡 #\d+[：:]", "", title)
+            why = None
+            if card and card.get("status") in ("done", "cancelled"):
+                why = f"卡 #{card['id']} 已結束"
+            elif linked and all(s in ("fixed", "wont_fix") for s in linked):
+                why = "相關問題都已修好"
+            elif NO_DECISION_RE.match(question):
+                why = "卡片寫「無」，不需決定"
+            if not why:
+                continue
+            self.write("PUT", f"/issues/{i['id']}", {"by": "Grokbot", "status": "wont_fix",
+                       "resolution": f"不用你決定了：{why}（派工程式 {hm(self.now)} 自動移除）"}, "stale decision")
+            if card and card.get("status") == "waiting":
+                self.write("PUT", f"/tasks/{card['id']}", {"by": "Grokbot", "status": "queued", "agent": None,
+                           "progress": f"不需 owner 決定（{why}），照原計畫做完"}, "decision not needed")
+            self.state.get("asks", {}).pop(str(i["id"]), None)
+            log(f"#{i['id']}: waiting decision removed — {why}")
+            changed = True
+        return changed
+
     def answered(self) -> bool:
         """A [待決定] issue the owner answered → its waiting card goes back to the queue with the answer."""
         asks = self.state.get("asks") or {}
@@ -1104,6 +1145,7 @@ class Tick:
         changed = self.check_running(board)
         changed |= self.unblock(board)
         changed |= self.answered()
+        changed |= self.prune_decisions()
         changed |= self.sweep_orphans()
         if changed and not self.dry:
             board = http("GET", "/schedule/board")
