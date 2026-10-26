@@ -46,14 +46,26 @@ button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
 .steps .leg{margin:0 0 0 34px;color:var(--accent-2);font-size:13px}
 .cdlist{display:flex;flex-wrap:wrap;gap:6px 14px;margin-bottom:10px;font-size:13px}.cd{white-space:nowrap}
 .tab-km{font-size:11px;opacity:.8;margin-left:4px}
+.attr.on{background:color-mix(in srgb,var(--accent) 12%,transparent);box-shadow:inset 3px 0 0 var(--accent)}
+kbd{background:var(--chip);border:1px solid var(--line);border-radius:4px;padding:0 5px;font-size:11px}
+#mpMap{isolation:isolate;z-index:0}
+.pin{width:28px;height:28px;border-radius:50%;border:2px solid var(--accent);background:#fff;color:var(--accent);font:700 13px/24px sans-serif;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.45);transition:transform .1s}
+.pin.sel{background:var(--accent);color:#fff;transform:scale(1.15)}
+.pin.other{border-color:var(--accent-2);color:var(--accent-2);font-size:10px;opacity:.9}
+.pin.hl{transform:scale(1.35)}
+.leaflet-tooltip.selname{font-weight:700}
+.mpop b{font-size:14px}.mpop img{width:100%;border-radius:6px;margin:4px 0;display:block}
+.mpop button{width:100%;margin-top:6px;background:var(--accent);color:#fff;border-color:var(--accent)}
+.mpop button.rm{background:#fff;color:var(--accent)}
+@media (prefers-color-scheme:dark){#mpMap .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.9) contrast(.9)}}
 .layout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px;align-items:start}
 @media (max-width:960px){.layout{grid-template-columns:1fr}}
 #mapcol{align-self:stretch}
 #mappanel{position:sticky;top:12px}
-#mpFrame{width:100%;height:calc(100vh - 215px);min-height:260px;border:1px solid var(--line);border-radius:10px;background:var(--chip)}
+#mpMap{width:100%;height:calc(100vh - 270px);min-height:260px;border:1px solid var(--line);border-radius:10px;background:var(--chip)}
 #mpHead h3{margin:0 0 4px}
 .sumgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:12px;margin-top:8px}
-@media (max-width:960px){#mapcol{position:sticky;top:0;z-index:5;order:-1}#mappanel{position:static;padding:8px}#mpFrame{height:26vh;min-height:150px}}
+@media (max-width:960px){#mapcol{position:sticky;top:0;z-index:5;order:-1}#mappanel{position:static;padding:8px}#mpMap{height:26vh;min-height:150px}}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:var(--shadow)}
 .panel h3{margin:0 0 8px;font-size:15px}
 .day{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:14px;box-shadow:var(--shadow);overflow:hidden}
@@ -113,6 +125,8 @@ svg.map{width:100%;height:auto;display:block}
   body{background:#fff}
 }
 </style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 </head>
 <body>
 <header>
@@ -150,7 +164,7 @@ svg.map{width:100%;height:auto;display:block}
   <section class="panel routebox" id="routeBox"></section>
   <div class="layout">
     <main id="days-list"></main>
-    <aside id="mapcol"><div class="panel" id="mappanel"><div id="mpHead"></div><iframe id="mpFrame" title="當日景點地圖" referrerpolicy="no-referrer-when-downgrade"></iframe></div></aside>
+    <aside id="mapcol"><div class="panel" id="mappanel"><div id="mpHead"></div><div id="mpMap"></div><div class="small" id="mpHint" style="margin-top:6px">點景點看資訊並加入／移出當天；<b>Shift＋點擊</b>或游標停在景點上按 <kbd>A</kbd> 可直接加入／移出；拖曳移動、滾輪縮放。</div></div></aside>
   </div>
   <section id="summary" class="sumgrid"></section>
   <p class="small">⚠ 景點縮圖由維基百科／維基共享資源自動帶入（免費、CC 授權，點圖可看來源與授權），偶爾會抓到相近但不完全相同的圖。景點門票、房價、車程與餐廳均為概估，實際價格與營業時間請於出發前確認（熱門景點務必提早預約）。飯店與餐廳名單為參考起點，請以 Google 地圖最新評價為準。機票、旅遊保險、城市稅（Tassa di soggiorno，每人每晚約 €2–7）未計入預算。</p>
@@ -548,6 +562,8 @@ sicily:{name:'西西里（巴勒摩）',lat:38.12,lon:13.36,ls:'r',rec:[3,5],
  ]}
 };
 const KEYS=Object.keys(CITIES);
+const RAD={naples:30,sorrento:22,cinqueterre:20,como:35,puglia:70,sicily:30};
+KEYS.forEach(k=>{CITIES[k].radius=RAD[k]||18});
 KEYS.forEach(k=>{const c=CITIES[k];c.key=k;
  c.attractions.forEach((a,i)=>a.id=k+'.a'+i);
  c.hotels.forEach((h,i)=>h.id='h'+i);
@@ -755,10 +771,11 @@ function dayHTML(i){
  const attrHTML=c.attractions.map(a=>{
   const on=d.picks.includes(a.id);
   const closed=dt&&a.x&&a.x.includes(dt.getDay());
-  return `<label class="attr"><input type="checkbox" data-a="pick" data-i="${i}" data-id="${a.id}"${on?' checked':''}>
-   <span class="main"><b>${a.n}</b><span class="badge">${TAG[a.t]}</span>${a.r?'<span class="badge r">需預約</span>':''}${closed&&on?'<span class="badge x">當天可能休館</span>':''}<br>
+  const od=S.plan.findIndex((x,j)=>j!==i&&x.city===d.city&&x.picks.includes(a.id)),far=isFar(a,c);
+  return `<label class="attr${on?' on':''}"><input type="checkbox" data-a="pick" data-i="${i}" data-id="${a.id}"${on?' checked':''}>
+   <span class="main"><b>${a.n}</b><span class="badge">${TAG[a.t]}</span>${a.r?'<span class="badge r">需預約</span>':''}${on?'<span class="badge" style="background:var(--accent);color:#fff">✓ 已選</span>':''}${od>=0?`<span class="badge" style="background:var(--ok-bg)">已排在 Day ${od+1}</span>`:''}${far?'<span class="badge">遠郊・勾選後才顯示在地圖</span>':''}${closed&&on?'<span class="badge x">當天可能休館</span>':''}<br>
    <span class="meta">⏱ ${dur(a.h)}　${a.c?'💶 €'+a.c:'免費'}${a.d?'　'+a.d:''}</span>
-   <a target="_blank" rel="noopener" href="${mapQ(a.n+' '+c.name)}" onclick="event.stopPropagation()">地圖 ↗</a></span><span class="thumbs" data-q="${a.n.replace(/（.*?）/g,'')} ${c.name.split('／')[0]}" data-w="${esc(ATTR_EN[a.n]||'')}"></span></label>`}).join('');
+   <a target="_blank" rel="noopener" href="${mapQ(a.n+' '+c.name)}" onclick="event.stopPropagation()">Google 地圖 ↗</a> <button type="button" class="mbtn" data-a="locate" data-i="${i}" data-id="${a.id}">📍 在地圖看</button></span><span class="thumbs" data-q="${a.n.replace(/（.*?）/g,'')} ${c.name.split('／')[0]}" data-w="${esc(ATTR_EN[a.n]||'')}"></span></label>`}).join('');
  const restHTML=c.rests.map(r=>{
   const L=d.lunch===r.id,D=d.dinner===r.id;
   return `<div class="rest"><div class="main"><b>${r.n}</b><span class="badge">€${r.p}/人</span><br><span class="meta">📍${r.area}　🍽 ${r.dish}${r.note?'　'+r.note:''}</span>
@@ -885,6 +902,7 @@ function summaryHTML(){
  <div class="panel noprint"><h3>輸出</h3><div style="display:flex;gap:8px;flex-wrap:wrap"><button id="copyBtn" class="primary">複製行程文字</button><button onclick="window.print()">列印／存成 PDF</button></div></div>`;
 }
 
+const COORD={"古羅馬競技場": [41.8902, 12.4922], "古羅馬廣場": [41.8925, 12.4853], "帕拉提諾山": [41.8893, 12.4876], "梵蒂岡博物館": [41.9065, 12.4536], "西斯汀禮拜堂": [41.9029, 12.4545], "聖彼得大教堂（可加登圓頂）": [41.9022, 12.4539], "萬神殿": [41.8986, 12.4769], "特雷維噴泉": [41.9009, 12.4833], "西班牙階梯": [41.906, 12.4828], "人民廣場": [41.9108, 12.4763], "納沃納廣場": [41.8992, 12.4731], "波各賽美術館": [41.9142, 12.4922], "特拉斯提弗列區漫步": [41.889, 12.469], "天使城堡": [41.9031, 12.4663], "卡比托利歐博物館": [41.8934, 12.4828], "阿庇亞古道": [41.8556, 12.5176], "聖卡利斯托地下墓穴": [41.8599, 12.5126], "佛羅倫斯大教堂（內部）": [43.7731, 11.256], "大教堂穹頂登頂": [43.7733, 11.2564], "喬托鐘樓": [43.7728, 11.2557], "洗禮堂": [43.7731, 11.2551], "烏菲茲美術館": [43.7678, 11.2553], "學院美術館（大衛像）": [43.7766, 11.2589], "老橋": [43.768, 11.2531], "阿諾河畔散步": [43.7686, 11.2495], "米開朗基羅廣場看夕陽": [43.7629, 11.265], "彼提宮": [43.7653, 11.25], "波波里花園": [43.7627, 11.249], "領主宮（舊宮）": [43.7693, 11.2563], "中央市場": [43.7768, 11.2536], "聖十字教堂": [43.7686, 11.2627], "Oltrarno 手工藝街區漫步": [43.7661, 11.2468], "聖馬可大教堂（金色祭壇屏）": [45.4345, 12.3397], "總督宮": [45.4337, 12.3402], "嘆息橋": [45.4341, 12.341], "里奧托橋": [45.438, 12.3359], "里奧托魚市場": [45.44, 12.335], "大運河水上巴士（1 號線）": [45.441, 12.321], "貢多拉遊船": [45.4346, 12.3338], "穆拉諾島（玻璃工坊）": [45.4586, 12.3528], "布拉諾島（彩色屋）": [45.4851, 12.417], "聖馬可鐘樓": [45.434, 12.3389], "學院美術館": [45.4313, 12.3281], "卡納雷吉歐區漫步": [45.4455, 12.329], "猶太區（Ghetto）": [45.4452, 12.326], "佩姬‧古根漢美術館": [45.4306, 12.3314], "米蘭大教堂（內部）": [45.4641, 9.1919], "大教堂頂樓露台": [45.4643, 9.1924], "埃馬努埃爾二世迴廊": [45.4655, 9.19], "達文西《最後的晚餐》": [45.4663, 9.171], "斯福爾扎城堡庭院": [45.4705, 9.1793], "斯福爾扎城堡博物館": [45.471, 9.1798], "森皮奧內公園": [45.4731, 9.1745], "布雷拉區漫步": [45.472, 9.188], "布雷拉畫廊": [45.4719, 9.1884], "納維利運河區傍晚散步": [45.45, 9.177], "垂直森林（遠觀）": [45.487, 9.19], "斯卡拉歌劇院博物館": [45.4674, 9.1895], "Fondazione Prada 當代藝術": [45.4452, 9.2036], "國家考古博物館（龐貝文物）": [40.8535, 14.2504], "龐貝古城": [40.7509, 14.4869], "赫庫蘭尼姆古城": [40.8061, 14.3478], "維蘇威火山口健行": [40.8213, 14.426], "卡布里島一日遊": [40.5532, 14.2428], "斯帕卡那不勒斯老城漫步": [40.848, 14.2549], "Sansevero 禮拜堂（蒙面基督）": [40.8489, 14.2544], "蛋堡（Castel dell'Ovo）海濱": [40.8283, 14.248], "那不勒斯地下城導覽": [40.8506, 14.2552], "索倫托舊城漫步": [40.6263, 14.3758], "波西塔諾（Positano）": [40.6281, 14.4849], "阿瑪菲鎮": [40.634, 14.6027], "阿瑪菲大教堂": [40.6343, 14.6031], "拉維洛 Villa Rufolo 花園": [40.649, 14.6119], "諸神之路（Path of the Gods）健行": [40.6327, 14.5466], "卡布里島一日遊（從索倫托搭船）": [40.5532, 14.2428], "檸檬莊園導覽（含 Limoncello 品嚐）": [40.62, 14.37], "Cinque Terre Card 火車＋步道通票（1 日）": [44.1085, 9.818], "蒙泰羅索 → 韋爾納扎步道（約 2 小時）": [44.1465, 9.657], "馬納羅拉日落觀景台": [44.1076, 9.728], "韋爾納扎港口": [44.1355, 9.684], "科尼利亞（山上村）": [44.119, 9.712], "里奧馬焦雷愛之路（部分路段）": [44.0997, 9.738], "波爾托韋內雷（Portovenere）": [44.0525, 9.8337], "斜塔（登頂）": [43.723, 10.3966], "奇蹟廣場": [43.7233, 10.3951], "比薩大教堂": [43.7228, 10.3955], "比薩洗禮堂": [43.7236, 10.3944], "比薩墓園（Camposanto）": [43.7243, 10.3948], "Borgo Stretto 市集街漫步": [43.7185, 10.4015], "阿諾河畔 Lungarno 散步": [43.7155, 10.401], "貝殼廣場（Piazza del Campo）": [43.3185, 11.3318], "曼加塔樓（Torre del Mangia）": [43.3184, 11.3323], "西恩納大教堂": [43.3231, 11.3289], "皮科洛米尼圖書館": [43.323, 11.3293], "聖母瑪利亞醫院博物館": [43.3226, 11.328], "Fortezza Medicea 公園": [43.3257, 11.32], "維洛納競技場": [45.439, 10.9943], "茱麗葉之家": [45.4419, 10.9987], "香草廣場": [45.4435, 10.9979], "Torre dei Lamberti 鐘塔": [45.4434, 10.9986], "Castelvecchio 古堡博物館": [45.4393, 10.9885], "斯卡拉橋（Ponte Scaligero）": [45.439, 10.987], "Ponte Pietra 石橋": [45.4476, 10.999], "維洛納羅馬劇場": [45.4488, 11.0002], "Giardino Giusti 花園": [45.4515, 11.004], "競技場歌劇（夏季）": [45.4388, 10.9947], "主廣場（Piazza Maggiore）": [44.4938, 11.343], "海神噴泉": [44.4943, 11.3434], "聖白托羅尼歐大教堂": [44.493, 11.3432], "阿西內利塔（登高）": [44.4943, 11.3466], "聖盧卡拱廊（世界最長拱廊，約 3.8 公里）": [44.4787, 11.2979], "Quadrilatero 美食街區": [44.495, 11.3443], "Archiginnasio 解剖劇場": [44.4929, 11.3425], "手工麵烹飪課（Tagliatelle／Tortellini）": [44.4965, 11.3405], "聖斯德望教堂群（七教堂）": [44.4918, 11.3475], "科莫市區漫步": [45.8099, 9.0845], "Brunate 纜車觀景": [45.8223, 9.098], "貝拉吉奧（Bellagio）小鎮": [45.9855, 9.26], "瓦倫納（Varenna）小鎮": [46.009, 9.2845], "Villa Monastero": [46.0097, 9.2842], "Villa del Balbianello 花園": [45.964, 9.206], "Villa Carlotta 植物園": [45.9858, 9.232], "湖上渡輪一日遊（多站）": [45.8112, 9.083], "Sassi di Matera 石頭城區": [40.667, 16.612], "岩洞教堂（Santa Maria de Idris）": [40.6634, 16.6118], "馬泰拉大教堂": [40.6667, 16.6094], "穴居之家（Casa Grotta）": [40.6676, 16.613], "Murgia 國家公園觀景台": [40.6655, 16.623], "阿爾貝羅貝洛（Trulli 石頭屋）": [40.784, 17.237], "波利尼亞諾阿馬雷（Polignano a Mare）": [40.997, 17.22], "奧斯圖尼（白色之城）": [40.729, 17.577], "萊切巴洛克古城": [40.3515, 18.172], "巴里老城（Bari Vecchia）": [41.128, 16.87], "蒙特城堡（Castel del Monte）": [41.0845, 16.27], "巴勒摩大教堂": [38.1141, 13.3566], "諾曼王宮": [38.1105, 13.3534], "帕拉提納禮拜堂": [38.1108, 13.353], "四首歌廣場": [38.1158, 13.3603], "Ballarò 市集": [38.11, 13.364], "馬西莫劇院": [38.1203, 13.3573], "蒙雷阿萊大教堂": [38.0803, 13.2905], "切法盧（海邊小鎮）": [38.0388, 14.0227], "阿格里真托神殿谷": [37.2905, 13.5865]};
 const ATTR_EN={"古羅馬競技場": "Colosseum", "古羅馬廣場": "Roman Forum", "帕拉提諾山": "Palatine Hill", "梵蒂岡博物館": "Vatican Museums", "西斯汀禮拜堂": "Sistine Chapel", "聖彼得大教堂（可加登圓頂）": "St. Peter's Basilica", "萬神殿": "Pantheon, Rome", "特雷維噴泉": "Trevi Fountain", "西班牙階梯": "Spanish Steps", "人民廣場": "Piazza del Popolo", "納沃納廣場": "Piazza Navona", "波各賽美術館": "Galleria Borghese", "特拉斯提弗列區漫步": "Trastevere", "天使城堡": "Castel Sant'Angelo", "卡比托利歐博物館": "Capitoline Museums", "阿庇亞古道": "Appian Way", "聖卡利斯托地下墓穴": "Catacombs of San Callixtus", "佛羅倫斯大教堂（內部）": "Florence Cathedral", "大教堂穹頂登頂": "Brunelleschi's Dome", "喬托鐘樓": "Giotto's Campanile", "洗禮堂": "Florence Baptistery", "烏菲茲美術館": "Uffizi", "學院美術館（大衛像）": "Galleria dell'Accademia, Florence", "老橋": "Ponte Vecchio", "阿諾河畔散步": "Lungarno Florence", "米開朗基羅廣場看夕陽": "Piazzale Michelangelo", "彼提宮": "Palazzo Pitti", "波波里花園": "Boboli Gardens", "領主宮（舊宮）": "Palazzo Vecchio", "中央市場": "Mercato Centrale Firenze", "聖十字教堂": "Basilica of Santa Croce, Florence", "Oltrarno 手工藝街區漫步": "Oltrarno", "聖馬可大教堂（金色祭壇屏）": "St Mark's Basilica", "總督宮": "Doge's Palace", "嘆息橋": "Bridge of Sighs", "里奧托橋": "Rialto Bridge", "里奧托魚市場": "Rialto Market", "大運河水上巴士（1 號線）": "Vaporetto Grand Canal Venice", "貢多拉遊船": "Gondola", "穆拉諾島（玻璃工坊）": "Murano", "布拉諾島（彩色屋）": "Burano", "聖馬可鐘樓": "St Mark's Campanile", "學院美術館": "Gallerie dell'Accademia", "卡納雷吉歐區漫步": "Cannaregio", "猶太區（Ghetto）": "Venetian Ghetto", "佩姬‧古根漢美術館": "Peggy Guggenheim Collection", "米蘭大教堂（內部）": "Milan Cathedral", "大教堂頂樓露台": "Duomo di Milano terrace", "埃馬努埃爾二世迴廊": "Galleria Vittorio Emanuele II", "達文西《最後的晚餐》": "The Last Supper (Leonardo)", "斯福爾扎城堡庭院": "Sforza Castle", "斯福爾扎城堡博物館": "Sforza Castle", "森皮奧內公園": "Parco Sempione", "布雷拉區漫步": "Brera, Milan", "布雷拉畫廊": "Pinacoteca di Brera", "納維利運河區傍晚散步": "Navigli", "垂直森林（遠觀）": "Bosco Verticale", "斯卡拉歌劇院博物館": "La Scala", "Fondazione Prada 當代藝術": "Fondazione Prada", "國家考古博物館（龐貝文物）": "National Archaeological Museum, Naples", "龐貝古城": "Pompeii", "赫庫蘭尼姆古城": "Herculaneum", "維蘇威火山口健行": "Mount Vesuvius", "斯帕卡那不勒斯老城漫步": "Spaccanapoli", "Sansevero 禮拜堂（蒙面基督）": "Sansevero Chapel", "蛋堡（Castel dell'Ovo）海濱": "Castel dell'Ovo", "那不勒斯地下城導覽": "Napoli Sotterranea", "索倫托舊城漫步": "Sorrento", "波西塔諾（Positano）": "Positano", "阿瑪菲鎮": "Amalfi", "阿瑪菲大教堂": "Amalfi Cathedral", "拉維洛 Villa Rufolo 花園": "Villa Rufolo", "諸神之路（Path of the Gods）健行": "Path of the Gods", "卡布里島一日遊（從索倫托搭船）": "Capri", "卡布里島一日遊": "Capri", "檸檬莊園導覽（含 Limoncello 品嚐）": "Limoncello", "Cinque Terre Card 火車＋步道通票（1 日）": "Cinque Terre", "蒙泰羅索 → 韋爾納扎步道（約 2 小時）": "Monterosso al Mare", "馬納羅拉日落觀景台": "Manarola", "韋爾納扎港口": "Vernazza", "科尼利亞（山上村）": "Corniglia", "里奧馬焦雷愛之路（部分路段）": "Riomaggiore", "波爾托韋內雷（Portovenere）": "Portovenere", "斜塔（登頂）": "Leaning Tower of Pisa", "奇蹟廣場": "Piazza dei Miracoli", "比薩大教堂": "Pisa Cathedral", "比薩洗禮堂": "Pisa Baptistery", "比薩墓園（Camposanto）": "Camposanto Monumentale", "Borgo Stretto 市集街漫步": "Borgo Stretto Pisa", "阿諾河畔 Lungarno 散步": "Lungarno Pisa", "貝殼廣場（Piazza del Campo）": "Piazza del Campo", "曼加塔樓（Torre del Mangia）": "Torre del Mangia", "西恩納大教堂": "Siena Cathedral", "皮科洛米尼圖書館": "Piccolomini Library", "聖母瑪利亞醫院博物館": "Santa Maria della Scala", "Fortezza Medicea 公園": "Fortezza Medicea Siena", "維洛納競技場": "Verona Arena", "茱麗葉之家": "Juliet's House", "香草廣場": "Piazza delle Erbe, Verona", "Torre dei Lamberti 鐘塔": "Torre dei Lamberti", "Castelvecchio 古堡博物館": "Castelvecchio Museum", "斯卡拉橋（Ponte Scaligero）": "Ponte Scaligero", "Ponte Pietra 石橋": "Ponte Pietra", "維洛納羅馬劇場": "Roman Theatre of Verona", "Giardino Giusti 花園": "Giardino Giusti", "競技場歌劇（夏季）": "Arena di Verona Opera Festival", "主廣場（Piazza Maggiore）": "Piazza Maggiore", "海神噴泉": "Fountain of Neptune, Bologna", "聖白托羅尼歐大教堂": "Basilica of San Petronio", "阿西內利塔（登高）": "Two Towers, Bologna", "聖盧卡拱廊（世界最長拱廊，約 3.8 公里）": "Portico of San Luca", "Quadrilatero 美食街區": "Quadrilatero Bologna", "Archiginnasio 解剖劇場": "Archiginnasio of Bologna", "手工麵烹飪課（Tagliatelle／Tortellini）": "Tortellini", "聖斯德望教堂群（七教堂）": "Santo Stefano, Bologna", "科莫市區漫步": "Como", "Brunate 纜車觀景": "Brunate", "貝拉吉奧（Bellagio）小鎮": "Bellagio", "瓦倫納（Varenna）小鎮": "Varenna", "Villa Monastero": "Villa Monastero", "Villa del Balbianello 花園": "Villa del Balbianello", "Villa Carlotta 植物園": "Villa Carlotta", "湖上渡輪一日遊（多站）": "Lake Como","巴勒摩大教堂": "Palermo Cathedral", "諾曼王宮": "Palazzo dei Normanni", "帕拉提納禮拜堂": "Cappella Palatina", "四首歌廣場": "Quattro Canti", "Ballarò 市集": "Ballarò", "馬西莫劇院": "Teatro Massimo", "蒙雷阿萊大教堂": "Monreale Cathedral", "切法盧（海邊小鎮）": "Cefalù", "阿格里真托神殿谷": "Valley of the Temples", "Sassi di Matera 石頭城區": "Sassi di Matera", "岩洞教堂（Santa Maria de Idris）": "Santa Maria de Idris", "馬泰拉大教堂": "Matera Cathedral", "穴居之家（Casa Grotta）": "Sassi di Matera", "Murgia 國家公園觀景台": "Parco della Murgia Materana", "阿爾貝羅貝洛（Trulli 石頭屋）": "Alberobello", "波利尼亞諾阿馬雷（Polignano a Mare）": "Polignano a Mare", "奧斯圖尼（白色之城）": "Ostuni", "萊切巴洛克古城": "Lecce", "巴里老城（Bari Vecchia）": "Bari", "蒙特城堡（Castel del Monte）": "Castel del Monte, Apulia"};
 /* 景點縮圖：維基百科＋維基共享資源（免費、CC 授權），惰性載入並快取 */
 const IMGK='italy-img-v2';let IMG={};
@@ -946,20 +964,84 @@ function loadThumbs(){
 }
 let activeDay=0;
 function pickActive(){let a=0;document.querySelectorAll('.day').forEach((e,i)=>{if(e.getBoundingClientRect().top<=170)a=i});return a}
+const llOf=a=>COORD[a.n]?{lat:COORD[a.n][0],lon:COORD[a.n][1]}:null;
+const isFar=(a,c)=>{const l=llOf(a);return !l||hav(c,l)>c.radius};
+const TAGEMO={his:'🏛',art:'🖼',view:'🌄',food:'🍴',walk:'🚶',trip:'⛵'};
+let LM=null,LG=null,LLine=null,LFit='',selId='',hoverId='',openId='';const MK={};
+function togglePick(i,id){
+ const d=S.plan[i],a=CITIES[d.city].attractions.find(x=>x.id===id);if(!a)return;
+ if(d.picks.includes(id)){d.picks=d.picks.filter(x=>x!==id);toast(`已從 Day ${i+1} 移除：${a.n}`)}
+ else{
+  const o=S.plan.findIndex((x,j)=>j!==i&&x.city===d.city&&x.picks.includes(id));
+  if(o>=0)S.plan[o].picks=S.plan[o].picks.filter(x=>x!==id);
+  d.picks.push(id);toast(o>=0?`已從 Day ${o+1} 移到 Day ${i+1}：${a.n}`:`已加入 Day ${i+1}：${a.n}`);
+ }
+ save();render();
+}
+function focusAttr(id){
+ const m=MK[id];
+ if(m&&LM){LM.setView(m.getLatLng(),Math.max(LM.getZoom(),15));m.openPopup()}
+ else toast('這個景點在遠郊，勾選後會顯示在地圖上');
+}
+function popupHTML(a,i,d){
+ const o=S.plan.findIndex((x,j)=>j!==i&&x.city===d.city&&x.picks.includes(a.id)),on=d.picks.includes(a.id);
+ const im=IMG[ATTR_EN[a.n]||''];
+ const btn=on?`<button class="rm" data-mp="${a.id}">✓ 已在 Day ${i+1}，點此移出</button>`:o>=0?`<button data-mp="${a.id}">移到 Day ${i+1}（目前在 Day ${o+1}）</button>`:`<button data-mp="${a.id}">＋ 加入 Day ${i+1}</button>`;
+ return `<div class="mpop"><b>${a.n}</b><br><span class="small">⏱ ${dur(a.h)}　${a.c?'💶 €'+a.c:'免費'}${a.r?'　⚠ 需預約':''}</span>${im&&im[0]?`<img src="${im[0].u}" alt="">`:''}${a.d?`<div class="small">${a.d}</div>`:''}${btn}</div>`;
+}
 function updateMap(){
  if(activeDay>=S.n)activeDay=S.n-1;
- const i=activeDay,d=S.plan[i],c=CITIES[d.city],st=stopsOf(i),e=encodeURIComponent,dt=dateOf(i);
- let src,link;
- if(st.length>1){
-  src=`https://maps.google.com/maps?saddr=${e(st[0])}&daddr=${e(st.slice(1).join(' to:'))}&dirflg=w&output=embed`;
-  link=`https://www.google.com/maps/dir/?api=1&travelmode=walking&origin=${e(st[0])}&destination=${e(st[st.length-1])}${st.length>2?'&waypoints='+e(st.slice(1,-1).join('|')):''}`;
- }else if(st.length===1){src=`https://maps.google.com/maps?q=${e(st[0])}&output=embed`;link=mapQ(st[0])}
- else{src=`https://maps.google.com/maps?q=${e(c.name+' Italy')}&output=embed`;link=mapQ(c.name+' Italy')}
- const nm=x=>x.replace(/ [^ ]+ Italy$/,'');
+ const i=activeDay,d=S.plan[i],c=CITIES[d.city],dt=dateOf(i),e=encodeURIComponent;
+ const items=c.attractions.filter(a=>d.picks.includes(a.id)&&llOf(a));
+ let km=0;for(let k=1;k<items.length;k++)km+=hav(llOf(items[k-1]),llOf(items[k]))*1.3;
+ const pt=a=>COORD[a.n].join(',');
+ const link=items.length>1?`https://www.google.com/maps/dir/?api=1&travelmode=walking&origin=${pt(items[0])}&destination=${pt(items[items.length-1])}${items.length>2?'&waypoints='+items.slice(1,-1).slice(0,9).map(pt).join('%7C'):''}`
+  :items.length?`https://www.google.com/maps/search/?api=1&query=${pt(items[0])}`:mapQ(c.name+' Italy');
  $('#mpHead').innerHTML=`<h3>Day ${i+1}　${c.name}${dt?`　<span class="small">${dt.getMonth()+1}/${dt.getDate()}（週${WD[dt.getDay()]}）</span>`:''}</h3>
-  <div class="small" style="margin-bottom:6px">${st.length?st.map((x,k)=>`<span class="badge">${k+1} ${nm(x)}</span>`).join(' '):'這天還沒勾選景點，顯示城市地圖'}　<a class="link" target="_blank" rel="noopener" href="${link}">在 Google 地圖開啟 ↗</a></div>`;
- const f=$('#mpFrame');if(f.dataset.src!==src){f.dataset.src=src;f.src=src}
+  <div class="small" style="margin-bottom:6px">${items.length?items.map((a,k)=>`<span class="badge">${k+1} ${a.n.replace(/（.*?）/g,'')}</span>`).join(' '):'這天還沒選景點：點地圖上的景點即可加入'}
+  ${items.length>1?`<br>直線串聯約 ${km.toFixed(1)} km（步行約 ${Math.round(km/4.5*60)} 分，不含參觀時間）`:''}　<a class="link" target="_blank" rel="noopener" href="${link}">用 Google 地圖導航 ↗</a>　<button class="mbtn" data-mp="fit">↺ 回到本區</button></div>`;
+ const box=$('#mpMap');
+ if(!window.L){box.innerHTML='<div class="alert" style="margin:8px">地圖元件載入失敗（需要連網）。仍可使用上方「Google 地圖導航」連結。</div>';return}
+ if(!LM){
+  LM=L.map(box,{zoomControl:true,preferCanvas:false});
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'}).addTo(LM);
+  LG=L.layerGroup().addTo(LM);
+  LM.on('popupopen',ev=>{const f=Object.keys(MK).find(k=>MK[k]===ev.popup._source);if(f){openId=f;selId=f}});
+  LM.on('popupclose',()=>{openId=''});
+  setTimeout(()=>LM.invalidateSize(),80);
+ }
+ const keep=openId;LG.clearLayers();if(LLine){LLine.remove();LLine=null}Object.keys(MK).forEach(k=>delete MK[k]);
+ const vis=c.attractions.filter(a=>llOf(a)&&(!isFar(a,c)||d.picks.includes(a.id)));
+ const bounds=[];
+ vis.forEach(a=>{
+  const ll=COORD[a.n],on=d.picks.includes(a.id),n=items.indexOf(a)+1,o=S.plan.findIndex((x,j)=>j!==i&&x.city===d.city&&x.picks.includes(a.id));
+  const cls=on?'sel':o>=0?'other':'',txt=on?n:o>=0?'D'+(o+1):(TAGEMO[a.t]||'•');
+  const m=L.marker(ll,{icon:L.divIcon({className:'',html:`<div class="pin ${cls}${hoverId===a.id?' hl':''}">${txt}</div>`,iconSize:[28,28],iconAnchor:[14,14]}),title:a.n,riseOnHover:true,zIndexOffset:on?1000:0});
+  m.bindTooltip(a.n.replace(/（.*?）/g,''),{direction:'top',offset:[0,-14],permanent:on,className:on?'selname':''});
+  m.bindPopup(()=>popupHTML(a,activeDay,S.plan[activeDay]),{maxWidth:230});
+  m.on('click',ev=>{selId=a.id;if(ev.originalEvent&&ev.originalEvent.shiftKey){m.closePopup();togglePick(activeDay,a.id)}});
+  m.on('mouseover',()=>{hoverId=a.id});m.on('mouseout',()=>{hoverId=''});
+  m.addTo(LG);MK[a.id]=m;bounds.push(ll);
+ });
+ if(items.length>1)LLine=L.polyline(items.map(a=>COORD[a.n]),{color:getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#b4432b',weight:3,dashArray:'6 6',opacity:.9}).addTo(LM);
+ if(LFit!==d.city&&bounds.length){
+  const b=L.latLngBounds(bounds);
+  if(bounds.length===1)LM.setView(bounds[0],15);else LM.fitBounds(b.pad(0.15),{maxZoom:16,animate:false});
+  LM.setMaxBounds(b.pad(1.5));LFit=d.city;
+ }
+ if(keep&&MK[keep])MK[keep].openPopup();
 }
+document.addEventListener('click',e=>{
+ const b=e.target.closest('[data-mp]');if(!b)return;
+ if(b.dataset.mp==='fit'){LFit='';updateMap();return}
+ togglePick(activeDay,b.dataset.mp);
+});
+document.addEventListener('keydown',e=>{
+ if(/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)||e.ctrlKey||e.metaKey||e.altKey)return;
+ const c=CITIES[S.plan[activeDay].city];
+ if(e.key==='Escape'&&LM){LM.closePopup();return}
+ if(e.key==='a'||e.key==='A'){const id=hoverId||selId;if(id&&c.attractions.some(a=>a.id===id)){e.preventDefault();togglePick(activeDay,id)}}
+});
 function render(){
  $('#days-list').innerHTML=S.plan.map((_,i)=>dayHTML(i)).join('');
  $('#summary').innerHTML=summaryHTML();
@@ -1031,7 +1113,8 @@ function init(){
  });
  list.addEventListener('click',e=>{
   const t=e.target.closest('[data-a]');if(!t)return;const a=t.dataset.a,i=+t.dataset.i;activeDay=i;
-  if(a==='autofill'){fillDay(+t.dataset.i);upd()}
+  if(a==='locate'){activeDay=i;updateMap();focusAttr(t.dataset.id)}
+  else if(a==='autofill'){fillDay(+t.dataset.i);upd()}
   else if(a==='clear'){S.plan[+t.dataset.i].picks=[];upd()}
   else if(a==='meal'){const d=S.plan[i],k=t.dataset.k,id=t.dataset.id;d[k]=d[k]===id?'':id;upd()}
   else if(a==='toggle'&&!e.target.closest('select')){S.plan[i].collapsed=!S.plan[i].collapsed;save();render()}
