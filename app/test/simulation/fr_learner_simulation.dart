@@ -125,16 +125,22 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(MaterialApp(
+        // An English speaker's phone (卡 #496: step 1 was read with the
+        // Chinese default, as no app on an English device shows it).
         home: OnboardingScreen(
-            lexicon: testLexicon(), onDone: (r) => result = r)));
+            lexicon: testLexicon(),
+            uiLanguage: 'en',
+            onDone: (r) => result = r)));
     await settleUp();
     onboarding['step1'] = screenTexts(tester);
-    final frOption = find.textContaining('法文（Français）');
+    var frOption = find.textContaining('法文（Français）');
+    if (frOption.evaluate().isEmpty) frOption = find.textContaining('(Français)');
     if (frOption.evaluate().isNotEmpty) {
       await tester.tap(frOption.first, warnIfMissed: false);
       await settleUp();
     }
-    final enOption = find.textContaining('英文（English）');
+    var enOption = find.textContaining('英文（English）');
+    if (enOption.evaluate().length < 2) enOption = find.textContaining('(English)');
     if (enOption.evaluate().length > 1) {
       await tester.tap(enOption.last, warnIfMissed: false);
       await settleUp();
