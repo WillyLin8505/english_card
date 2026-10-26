@@ -27,8 +27,10 @@ export default function Images() {
   // under fr→en, the English ones under en→zh-TW.
   const { target, native, langName } = useApp();
   const senses = useLoad<Sense[]>(`/images/senses?target=${target}&native=${native}`, [target, native]);
-  const library = useLoad<Asset[]>('/images', []);
   const [only, setOnly] = useState<'pending' | 'all'>('pending');
+  // Never the whole library at once (10/26: 24k+ pictures with their tags pushed the API to
+  // 9 GB and the page spun forever): pending ones, or the latest 300.
+  const library = useLoad<Asset[]>(only === 'pending' ? '/images?review_status=pending&limit=500' : '/images?limit=300', [only]);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
