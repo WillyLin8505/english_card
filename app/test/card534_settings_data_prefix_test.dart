@@ -9,6 +9,7 @@ import 'helpers.dart';
 void main() {
   testWidgets('one learning language: stats row without language prefix',
       (tester) async {
+    closeFrench();
     await pumpApp(tester,
         initialTab: AppTab.settings, size: const Size(402, 2400));
     expect(find.textContaining('英文（English）：'), findsNothing);
@@ -17,8 +18,10 @@ void main() {
 
   testWidgets('two learning languages: stats row names the language',
       (tester) async {
-    availableLearningLanguages.add('fr');
-    addTearDown(() => availableLearningLanguages.remove('fr'));
+    final added = availableLearningLanguages.add('fr');
+    addTearDown(() {
+      if (added) availableLearningLanguages.remove('fr');
+    });
     await pumpApp(tester,
         initialTab: AppTab.settings, size: const Size(402, 2400));
     expect(find.textContaining('英文（English）：'), findsOneWidget);

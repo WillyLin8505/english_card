@@ -2,6 +2,110 @@
 /// content. Missing keys/languages deliberately retain the original copy.
 const uiCatalog = <String, (String, String)>{
   '意見回饋': ('Feedback', 'Commentaires'),
+  // 卡 #496 (M156–M162, 問題回報 #494): copy a French learner on an English
+  // or French phone still saw in Chinese.
+  '重新掃描標籤': ('Rescan labels', 'Réanalyser les étiquettes'),
+  '自己加字': ('Add a word', 'Ajouter un mot'),
+  '放到照片上': ('Place on the photo', 'Placer sur la photo'),
+  '不放位置': ('No position', 'Sans position'),
+  '左滑單字表示已經會了；拖曳照片上的標籤可調整位置；點標籤可改字或刪除。': (
+    'Swipe a word left if you know it; drag a label on the photo to move it; tap a label to change or delete it.',
+    'Balayez un mot vers la gauche si vous le connaissez ; faites glisser une étiquette pour la déplacer ; touchez-la pour la modifier ou la supprimer.'
+  ),
+  '可查看意思、改成正確的字、刪除或標為已學會。': (
+    'See the meaning, correct the word, delete it or mark it as learned.',
+    'Voir le sens, corriger le mot, le supprimer ou le marquer comme appris.'
+  ),
+  '刪除（照片裡沒有這個）': (
+    'Delete (not in the photo)',
+    'Supprimer (absent de la photo)'
+  ),
+  '中文可以留空，會用詞庫的意思。': (
+    'The meaning can stay empty; the dictionary’s is used.',
+    'Le sens peut rester vide ; celui du dictionnaire est utilisé.'
+  ),
+  '改了英文、中文沒改，會改用詞庫的意思。': (
+    'If you change the word but not the meaning, the dictionary’s meaning is used.',
+    'Si vous changez le mot sans le sens, le sens du dictionnaire est utilisé.'
+  ),
+  '送出': ('Send', 'Envoyer'),
+  '回報此卡片': ('Report this card', 'Signaler cette carte'),
+  '會一併附上這張卡的單字、詞性、義項、照片與 App 版本。': (
+    'The card’s word, part of speech, sense, photo and app version are attached.',
+    'Le mot, la nature, le sens, la photo de la carte et la version de l’app sont joints.'
+  ),
+  '這張卡片會從複習移除，並加入「已學會」。之後可以在單字本裡復原。': (
+    'This card leaves your reviews and goes to “Learned”. You can restore it from My words.',
+    'Cette carte quitte vos révisions et passe dans « Appris ». Vous pouvez la restaurer depuis Mes mots.'
+  ),
+  '超過的新卡順延到明天。預設 20 張。': (
+    'Extra new cards move to tomorrow. Default: 20.',
+    'Les nouvelles cartes en trop passent à demain. Par défaut : 20.'
+  ),
+  '超過的複習順延到明天。預設 100 張。': (
+    'Extra reviews move to tomorrow. Default: 100.',
+    'Les révisions en trop passent à demain. Par défaut : 100.'
+  ),
+  '掃描 QR code': ('Scan QR code', 'Scanner le QR code'),
+  '掃描連線 QR code': ('Scan the connection QR code', 'Scanner le QR code de connexion'),
+  '還原會用備份檔取代目前所有的單字、照片、相片冊、複習紀錄與設定。': (
+    'Restoring replaces all your words, photos, albums, review history and settings with the backup.',
+    'La restauration remplace tous vos mots, photos, albums, historique de révision et réglages par la sauvegarde.'
+  ),
+  '下載相片冊': ('Download album', 'Télécharger l’album'),
+  '已在相片冊': ('Already in your albums', 'Déjà dans vos albums'),
+  '開啟相簿': ('Open album', 'Ouvrir l’album'),
+  '複習這本相簿': ('Review this album', 'Réviser cet album'),
+  '標籤': ('Labels', 'Étiquettes'),
+  '圖片來源': ('Picture sources', 'Sources des images'),
+  '圖片來源：維基共享資源': (
+    'Picture source: Wikimedia Commons',
+    'Source de l’image : Wikimedia Commons'
+  ),
+  '照片中標出的位置': ('The spot marked in the photo', 'L’endroit marqué sur la photo'),
+  '這個詞性顯示同拼法名詞的圖片。這個拼法沒有名詞。': (
+    'This part of speech shows pictures of the noun with the same spelling. This spelling has no noun.',
+    'Cette nature affiche les images du nom de même orthographe. Cette orthographe n’a pas de nom.'
+  ),
+  '新增相關字': ('Add a related word', 'Ajouter un mot associé'),
+  '刪除相關字': ('Delete related word', 'Supprimer le mot associé'),
+  '新增詞形變化': ('Add a form', 'Ajouter une forme'),
+  '刪除詞形變化': ('Delete form', 'Supprimer la forme'),
+  '可直接修改內容；清空構詞或詞源即可刪除。': (
+    'Edit directly; clear word parts or etymology to delete them.',
+    'Modifiez directement ; videz la formation ou l’étymologie pour les supprimer.'
+  ),
+  '授權條文': ('License texts', 'Textes des licences'),
+  '圖片在 App 內以縮小後的縮圖顯示，未做其他修改。': (
+    'Pictures appear in the app as reduced thumbnails, with no other changes.',
+    'Les images apparaissent dans l’app en miniatures réduites, sans autre modification.'
+  ),
+  // 設定 → 我的意見回饋 (問題回報 #701).
+  '我的意見回饋': ('My feedback', 'Mes commentaires'),
+  '看這支手機送過的意見回饋與卡片回報，也可以刪除。': (
+    'See the feedback and card reports sent from this phone, and delete them.',
+    'Voir les commentaires et signalements envoyés depuis ce téléphone, et les supprimer.'
+  ),
+  '這支手機送過的意見回饋與卡片回報。刪除只會從這支手機移除；還沒送出的就不會送出。': (
+    'Feedback and card reports sent from this phone. Deleting removes them from this phone only; unsent ones won’t be sent.',
+    'Commentaires et signalements envoyés depuis ce téléphone. Supprimer les retire de ce téléphone seulement ; ceux non envoyés ne le seront pas.'
+  ),
+  '還沒有送過意見回饋': ('No feedback sent yet', 'Aucun commentaire envoyé'),
+  '還在排隊，連上網路後會送出': (
+    'Waiting; sent once you’re online',
+    'En attente ; envoyé dès la connexion'
+  ),
+  '已送出': ('Sent', 'Envoyé'),
+  '刪除': ('Delete', 'Supprimer'),
+  '刪除這筆紀錄？': ('Delete this entry?', 'Supprimer cette entrée ?'),
+  '還沒送出的會取消，不會再送出。': (
+    'It hasn’t been sent yet and won’t be.',
+    'Il n’a pas encore été envoyé et ne le sera pas.'
+  ),
+  '只會從這支手機移除，已送到問題回報的不會刪除。': (
+    'Removed from this phone only; the report already sent stays.',
+    'Retiré de ce téléphone seulement ; le signalement déjà envoyé reste.'
+  ),
   '你的答案': ('Yours', 'Votre réponse'),
   '正確答案': ('Answer', 'Réponse'),
   '詞庫還沒有這個單字集的圖片': (
@@ -953,7 +1057,8 @@ String? _labelParts(String source, String language) {
   var changed = false;
   // ：joins a form's part of speech to its own meaning — dormant（現在分詞・
   // 形容詞：asleep） (卡 #516).
-  final out = source.splitMapJoin(RegExp(r'[（）；・：]'),
+  // 「入門（A1） · 剛好」: the photo difficulty bar joins with a spaced ·.
+  final out = source.splitMapJoin(RegExp(r'[（）；・：]| · '),
       onMatch: (m) => m[0] == '：' ? ': ' : m[0]!,
       onNonMatch: (piece) {
         final e = uiCatalog[piece.trim()];
@@ -983,6 +1088,11 @@ class _UiTemplate {
 
 const _templateCopy = <String, (String, String)>{
   '發音錄音：{0}': ('Recording: {0}', 'Enregistrement : {0}'),
+  '已送出 · #{0}': ('Sent · #{0}', 'Envoyé · #{0}'),
+  // Before the generic 「{0} 張」 below (卡 #496).
+  '每天最多 {0} 張新卡': ('Up to {0} new cards a day', 'Jusqu’à {0} nouvelles cartes par jour'),
+  '每天最多複習 {0} 張': ('Up to {0} reviews a day', 'Jusqu’à {0} révisions par jour'),
+  '辨識單字列表 ({0})': ('Recognised words ({0})', 'Mots reconnus ({0})'),
   'AI 在這張照片找到的字最難到 {0}，按「難一點」或「重新掃描標籤」請 AI 找更難的字': (
     'The hardest word the AI found here is {0}; tap “Harder” or “Rescan labels” for harder words',
     'Le mot le plus difficile trouvé ici est {0} ; touchez « Plus difficile » ou « Réanalyser » pour en trouver'
@@ -1224,4 +1334,33 @@ const _templateCopy = <String, (String, String)>{
     'Restored: {0} words, {1} photos, {2} reviews',
     'Restauré : {0} mots, {1} photos, {2} révisions'
   ),
+  // 卡 #496 (問題回報 #494): toasts and counts a French learner still saw in
+  // Chinese. Kept last so the longer 來源：… template above wins.
+  '已刪除「{0}」，這張照片不會再推薦它': (
+    'Deleted “{0}”; this photo won’t suggest it again',
+    '« {0} » supprimé ; cette photo ne le proposera plus'
+  ),
+  '已把「{0}」移到已學會': ('Moved “{0}” to Learned', '« {0} » déplacé dans Appris'),
+  '已復原「{0}」': ('Restored “{0}”', '« {0} » restauré'),
+  '在照片上點一下，放「{0}」的位置': (
+    'Tap the photo where “{0}” goes',
+    'Touchez la photo à l’endroit de « {0} »'
+  ),
+  '已移除「{0}」，可在單字本復原': (
+    'Removed “{0}”; restore it from My words',
+    '« {0} » retiré ; restaurez-le depuis Mes mots'
+  ),
+  '移除「{0}」？': ('Remove “{0}”?', 'Retirer « {0} » ?'),
+  '{0} 張辨識失敗，可在相片頁重試': (
+    '{0} photos failed; retry from the photo page',
+    '{0} photos ont échoué ; réessayez depuis la page photo'
+  ),
+  '第 {0} 張，共 {1} 張，左右滑動切換照片': (
+    'Photo {0} of {1}; swipe to change photo',
+    'Photo {0} sur {1} ; balayez pour changer de photo'
+  ),
+  '匯出失敗：{0}': ('Export failed: {0}', 'Échec de l’export : {0}'),
+  '備份失敗：{0}': ('Backup failed: {0}', 'Échec de la sauvegarde : {0}'),
+  '還原失敗：{0}': ('Restore failed: {0}', 'Échec de la restauration : {0}'),
+  '來源：{0}': ('Source: {0}', 'Source : {0}'),
 };

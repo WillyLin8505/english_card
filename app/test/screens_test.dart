@@ -581,18 +581,19 @@ void main() {
           findsNothing);
     });
 
-    testWidgets('unpublished learning languages stay disabled; native UI languages are available',
+    testWidgets('French is a learning language (#700); native UI languages are available',
         (tester) async {
       final app = await pumpApp(tester,
           initialTab: AppTab.settings, size: const Size(402, 1600));
-      // Unpublished learning languages are left out, with one note instead
-      // of disabled chips.
+      // Owner opened French (問題回報 #700): a learning chip and a native
+      // chip, both enabled, nothing marked 即將推出.
       expect(find.widgetWithText(ChoiceChip, '法文（Français） · 即將推出'),
           findsNothing);
-      expect(find.text('更多學習語言即將推出'), findsOneWidget);
-      final frenchNative = tester.widget<ChoiceChip>(
-          find.widgetWithText(ChoiceChip, '法文（Français）'));
-      expect(frenchNative.onSelected, isNotNull);
+      final french = find.widgetWithText(ChoiceChip, '法文（Français）');
+      expect(french, findsNWidgets(2));
+      for (final chip in tester.widgetList<ChoiceChip>(french)) {
+        expect(chip.onSelected, isNotNull);
+      }
       expect(app.settings.learningLanguage, 'en');
       expect(app.settings.nativeLanguage, 'zh-TW');
       // Store build without a server: no address / key fields (問題回報 #265).
@@ -614,6 +615,11 @@ void main() {
           settings: settings,
           size: const Size(402, 1600));
       await tester.scrollUntilVisible(find.text('進階設定'), 300);
+      // Clear the bottom bar: the second learning language (#700) adds a
+      // line above, so the row can stop right under it.
+      await tester.drag(
+          find.byType(Scrollable).first, const Offset(0, -200));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('進階設定'));
       await tester.pumpAndSettle();
       expect(find.byType(Slider), findsNWidgets(3)); // + 每日上限 x2 (#398)
@@ -736,7 +742,9 @@ void main() {
         home:
             OnboardingScreen(lexicon: testLexicon(), onDone: (r) => result = r),
       ));
-      expect(find.text('法文（Français） · 即將推出'), findsWidgets);
+      // French is open (問題回報 #700): offered without 即將推出.
+      expect(find.text('法文（Français） · 即將推出'), findsNothing);
+      expect(find.text('法文（Français）'), findsNWidgets(2));
       await tester.tap(find.text('下一步'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('會基礎單字'));

@@ -23,6 +23,15 @@ import 'package:photo_english_app/theme/mobile_theme.dart';
 
 final testNow = DateTime(2026, 9, 23, 10);
 
+/// French learning is on by default since 問題回報 #700; tests about a build
+/// with one learning language close it for the test and reopen it after.
+void closeFrench() {
+  final removed = availableLearningLanguages.remove('fr');
+  addTearDown(() {
+    if (removed) availableLearningLanguages.add('fr');
+  });
+}
+
 CefrLexicon? _lexicon;
 
 /// The real bundled word list (assets/cefr_en.json), read from disk.

@@ -1,6 +1,7 @@
 import '../l10n/ui_text.dart';
 import '../screens/connection_scan_screen.dart';
 import '../screens/data_sources_screen.dart';
+import '../screens/my_feedback_screen.dart';
 import '../screens/privacy_policy_screen.dart';
 import '../services/learning_content.dart';
 import '../services/learning_insights.dart';
@@ -459,6 +460,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                       builder: (_) =>
                                           const PrivacyPolicyScreen())),
                               child: const UiText('查看隱私權政策'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      // 問題回報 #701: what this phone sent, deletable.
+                      _Card(
+                        title: '意見回饋',
+                        children: [
+                          _note('看這支手機送過的意見回饋與卡片回報，也可以刪除。'),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton(
+                              key: const ValueKey('my-feedback-button'),
+                              onPressed: () => Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                      builder: (_) =>
+                                          const MyFeedbackScreen())),
+                              child: const UiText('我的意見回饋'),
                             ),
                           ),
                         ],

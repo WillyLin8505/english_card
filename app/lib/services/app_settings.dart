@@ -18,13 +18,14 @@ const supportedLanguages = {
   'zh-TW': '繁體中文'
 };
 
-/// French as a learning language (問題回報 #496): off until the owner opens it;
-/// `--dart-define=FRENCH_LEARNING=true` builds a version that offers it.
-const frenchLearning = bool.fromEnvironment('FRENCH_LEARNING');
+/// French as a learning language (問題回報 #496): the owner opened it
+/// (問題回報 #700), so it is on by default;
+/// `--dart-define=FRENCH_LEARNING=false` builds a version without it.
+const frenchLearning =
+    bool.fromEnvironment('FRENCH_LEARNING', defaultValue: true);
 
-/// The data model already supports multiple languages, but the first
-/// published bilingual pack is English → Traditional Chinese only. Not const
-/// so tests and the French simulation can add 'fr' without a special build.
+/// The learning languages this build offers. Not const so tests can close
+/// French ([frenchLearning]) without a special build.
 final availableLearningLanguages = {'en', if (frenchLearning) 'fr'};
 // Interface languages are available independently of published learning packs.
 const availableNativeLanguages = {'zh-TW', 'en', 'fr'};
