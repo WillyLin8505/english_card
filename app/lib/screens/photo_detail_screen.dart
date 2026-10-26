@@ -57,6 +57,12 @@ class PhotoDetailScreen extends StatefulWidget {
 
 class _PhotoDetailScreenState extends State<PhotoDetailScreen>
     with WidgetsBindingObserver {
+  /// A word in the learning language's spelling (French lowercase with its
+  /// article, 問題回報 #499); English stays capitalised.
+  String _shown(String word, String? pos) => shownWord(
+      word, AppScope.of(context).repository.language,
+      pos: pos);
+
   AppScope? _scope;
   PhotoWordSession? _session;
   bool _visible = false;
@@ -249,7 +255,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              title: Text('${displayWord(w.word)}　${w.candidate.meaning}',
+              title: Text('${_shown(w.word, w.candidate.pos)}　${w.candidate.meaning}',
                   style: MFont.manrope(16, FontWeight.w800, MColors.ink)),
               subtitle: const UiText('可查看意思、改成正確的字、刪除或標為已學會。'),
             ),
@@ -307,7 +313,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
       case 'delete':
         session.delete(w);
         if (_placing == w) setState(() => _placing = null);
-        showToast(context, '已刪除「${displayWord(w.word)}」，這張照片不會再推薦它');
+        showToast(context, '已刪除「${_shown(w.word, w.candidate.pos)}」，這張照片不會再推薦它');
       case 'known':
         session.swipe(w);
     }
@@ -440,7 +446,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
               for (final c in choices)
                 ListTile(
                   key: ValueKey('spot-${c.word}'),
-                  title: Text('${displayWord(c.word)}　${c.meaning}',
+                  title: Text('${_shown(c.word, c.pos)}　${c.meaning}',
                       style: MFont.manrope(15, FontWeight.w700, MColors.ink)),
                   subtitle: UiText(onPhoto.contains(c.word)
                       ? '已在照片上，選它會移到這裡'
@@ -470,7 +476,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
     if (picked == null || !mounted) return;
     if (picked is WordCandidate) {
       final w = session.addFound(picked, at);
-      showToast(context, '已在這個位置加上「${displayWord(w.word)}」');
+      showToast(context, '已在這個位置加上「${_shown(w.word, w.candidate.pos)}」');
       return;
     }
     final result = await showLabelDialog(
@@ -553,7 +559,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                     onTap: () => SharePlus.instance.share(ShareParams(
                       title: photo.title,
                       text: '${ui(context, '照片裡的{L}單字：')}'
-                          '${(_session?.words ?? const <SessionWord>[]).map((w) => '${displayWord(w.word)} ${w.candidate.meaning}').join('、')}',
+                          '${(_session?.words ?? const <SessionWord>[]).map((w) => '${_shown(w.word, w.candidate.pos)} ${w.candidate.meaning}').join('、')}',
                     )),
                   ),
                 ),
@@ -614,7 +620,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                           ),
                           if (_placing case final w?)
                             _PlacingBar(
-                              word: displayWord(w.word),
+                              word: _shown(w.word, w.candidate.pos),
                               onSkip: () => setState(() => _placing = null),
                             ),
                           _buildList(photo, session, old),
@@ -639,7 +645,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
           PinData(
             id: w.word,
             anchor: w.anchor,
-            word: displayWord(w.word),
+            word: _shown(w.word, w.candidate.pos),
             zh: _zh(w.word, w.candidate.pos, w.candidate.meaning),
             linked: w.candidate.inDatabase || LexiconPack.instance.isEmpty,
             // A word read off the photo is framed where it is printed,
@@ -652,7 +658,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
         PinData(
           id: 'old:${o.word}',
           anchor: o.anchor,
-          word: displayWord(o.word),
+          word: _shown(o.word, o.candidate.pos),
           zh: _zh(o.word, o.candidate.pos, o.candidate.meaning),
           muted: true,
         ),
@@ -802,7 +808,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                   ScaffoldMessenger.of(context)
                     ..hideCurrentSnackBar()
                     ..showSnackBar(SnackBar(
-                      content: UiText('已把「${displayWord(w.word)}」移到已學會'),
+                      content: UiText('已把「${_shown(w.word, w.candidate.pos)}」移到已學會'),
                       action: SnackBarAction(
                         label: ui(context, '復原'),
                         onPressed: () => session.restore(undo),
@@ -810,7 +816,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                     ));
                 },
                 child: _WordCard(
-                  word: displayWord(w.word),
+                  word: _shown(w.word, w.candidate.pos),
                   ipa: w.candidate.ipa ?? _ipa(scope.repository, w.word),
                   zh: _zh(w.word, w.candidate.pos, w.candidate.meaning),
                   level: w.candidate.level,
@@ -881,13 +887,13 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                   const SizedBox(height: 8),
                   for (final o in old) ...[
                     _OldWordRow(
-                      word: displayWord(o.word),
+                      word: _shown(o.word, o.candidate.pos),
                       zh: _zh(o.word, o.candidate.pos, o.candidate.meaning),
                       learned: o.learned,
                       onRestore: o.learned
                           ? () {
                               session.restore(o);
-                              showToast(context, '已復原「${displayWord(o.word)}」');
+                              showToast(context, '已復原「${_shown(o.word, o.candidate.pos)}」');
                             }
                           : null,
                     ),

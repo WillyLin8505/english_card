@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 
 import '../app/app_scope.dart';
 import '../models/photo.dart';
-import '../models/word_entry.dart';
 import '../services/lexicon_pack.dart';
 import '../theme/mobile_theme.dart';
 import '../widgets/mobile/common.dart';
@@ -547,7 +546,7 @@ class _Viewfinder extends StatelessWidget {
                 PinData(
                     id: l.occ.id,
                     anchor: l.occ.anchor,
-                    word: displayWord(l.entry.word),
+                    word: shownWord(l.entry.word, repo.language, pos: l.entry.pos),
                     zh: l.entry.meaning,
                     entryType: l.entry.entryType,
                     linked: l.entry.lexemeId != null ||

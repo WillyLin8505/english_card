@@ -1338,3 +1338,16 @@ LexiconPack _indexSqlite(
     rethrow;
   }
 }
+
+/// A word as the screens show it in the learning [language] (問題回報 #499,
+/// 卡 #496): English capitalised ("Cutting Board"); French in its lowercase
+/// spelling, a noun with its article ("la pomme") — the same headword the
+/// card back and 單字詳情 show.
+String shownWord(String word, String language, {String? pos}) {
+  if (language != 'fr') return displayWord(word);
+  final pack = LexiconPack.instance;
+  final hit = pack.lookup(word, pos: pos)?.entry;
+  return headword(word, language,
+      inflections: hit == null ? const [] : pack.detailFor(hit).inflections,
+      pos: pos ?? hit?.pos);
+}
