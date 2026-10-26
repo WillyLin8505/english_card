@@ -533,8 +533,8 @@ class ImageCandidate(Base):
 class SenseImage(Base):
     __tablename__ = "sense_images"
     id: Mapped[int] = mapped_column(primary_key=True)
-    sense_id: Mapped[int] = mapped_column(ForeignKey("senses.id", ondelete="CASCADE"))
-    image_asset_id: Mapped[int] = mapped_column(ForeignKey("image_assets.id", ondelete="CASCADE"))
+    sense_id: Mapped[int] = mapped_column(ForeignKey("senses.id", ondelete="CASCADE"), index=True)
+    image_asset_id: Mapped[int] = mapped_column(ForeignKey("image_assets.id", ondelete="CASCADE"), index=True)
     role: Mapped[str] = mapped_column(String(16))  # representative/context
     semantic_score: Mapped[float | None] = mapped_column(Float)
     review_status: Mapped[str] = mapped_column(String(16), default="pending")
@@ -545,7 +545,7 @@ class SenseImage(Base):
 class ImageReview(Base):
     __tablename__ = "image_reviews"
     id: Mapped[int] = mapped_column(primary_key=True)
-    sense_image_id: Mapped[int] = mapped_column(ForeignKey("sense_images.id", ondelete="CASCADE"))
+    sense_image_id: Mapped[int] = mapped_column(ForeignKey("sense_images.id", ondelete="CASCADE"), index=True)
     decision: Mapped[str] = mapped_column(String(16))
     note: Mapped[str] = mapped_column(Text, default="")
     created_at: Mapped[datetime] = _now()
