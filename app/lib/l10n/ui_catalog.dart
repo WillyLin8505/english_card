@@ -214,6 +214,7 @@ const uiCatalog = <String, (String, String)>{
   '詞頻估計': ('Frequency estimate', 'Estimation de fréquence'),
   '很簡單': ('Very easy', 'Très facile'),
   '簡單': ('Easy', 'Facile'),
+  '難': ('Hard', 'Difficile'),
   '剛好': ('At your level', 'À votre niveau'),
   '稍難': ('A little harder', 'Un peu plus difficile'),
   '挑戰': ('Challenging', 'Un défi'),
@@ -240,9 +241,9 @@ const uiCatalog = <String, (String, String)>{
     'No new words in this photo',
     'Aucun nouveau mot sur cette photo'
   ),
-  '可以用「難一點」或「更多動作」找找看其他的詞。': (
-    'Try a harder level or more actions to find other words.',
-    'Essayez un niveau plus difficile ou davantage d’actions pour trouver d’autres mots.'
+  '可以拖動難度條，或按「多看動詞」找找看其他的詞。': (
+    'Drag the difficulty bar or tap “More verbs” to find other words.',
+    'Faites glisser la barre de difficulté ou touchez « Plus de verbes » pour trouver d’autres mots.'
   ),
   'AI 先從照片找出候選詞，再由這台裝置依程度、未知機率、圖片關聯、實用性與詞性多樣性打分，最多選 5 個；名詞最多 3 個，同義詞只留一個。': (
     'AI proposes words from the photo. This device scores level, familiarity, relevance, usefulness and variety, choosing up to five words, at most three nouns, and one of each synonym group.',
@@ -1093,9 +1094,9 @@ const _templateCopy = <String, (String, String)>{
   '每天最多 {0} 張新卡': ('Up to {0} new cards a day', 'Jusqu’à {0} nouvelles cartes par jour'),
   '每天最多複習 {0} 張': ('Up to {0} reviews a day', 'Jusqu’à {0} révisions par jour'),
   '辨識單字列表 ({0})': ('Recognised words ({0})', 'Mots reconnus ({0})'),
-  'AI 在這張照片找到的字最難到 {0}，按「難一點」或「重新掃描標籤」請 AI 找更難的字': (
-    'The hardest word the AI found here is {0}; tap “Harder” or “Rescan labels” for harder words',
-    'Le mot le plus difficile trouvé ici est {0} ; touchez « Plus difficile » ou « Réanalyser » pour en trouver'
+  'AI 在這張照片找到的字最難到「{0}」，按「重新掃描標籤」請 AI 找更難的字': (
+    'The hardest word the AI found here is “{0}”; tap “Rescan labels” for harder words',
+    'Le mot le plus difficile trouvé ici est « {0} » ; touchez « Réanalyser » pour en trouver'
   ),
   '這 {0} 個字在詞庫裡還沒有圖片，可以先看單字': (
     'No lexicon pictures for these {0} words yet; here are the words',

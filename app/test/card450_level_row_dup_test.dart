@@ -169,6 +169,6 @@ void main() {
     app.navigator.openPhoto('p1');
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('level-short-hint')), findsOneWidget);
-    expect(find.textContaining('最難到 A1'), findsOneWidget);
+    expect(find.textContaining('最難到「入門」'), findsOneWidget);
   });
 }

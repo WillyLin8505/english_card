@@ -383,7 +383,13 @@ class LexiconPack extends ChangeNotifier {
     final hit = _lookup(word, pos: pos);
     final base = _byLemma[hit?.entry.card];
     if (hit == null || base == null || base.isEmpty) return hit;
-    return LexiconHit(_prefer(base, pos).first, 'family');
+    // A form sends the learner to its word's card, and to the word's common
+    // entry there (問題回報 #706: city lights are illuminated → illuminate
+    // 照亮, not the rare adjective illuminate 「（宗教）受啟蒙的」, C2).
+    final ordered = _prefer(base, pos);
+    return LexiconHit(
+        ordered.firstWhere((e) => !e.rareUsage, orElse: () => ordered.first),
+        'family');
   }
 
   static List<LexEntry> _prefer(List<LexEntry> list, String? pos) {

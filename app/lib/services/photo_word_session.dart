@@ -95,6 +95,15 @@ class PhotoWordSession extends ChangeNotifier {
               placed: l.occ.placed)
             ..edited = l.occ.userEdited && l.occ.aiLabel != l.entry.word,
       ];
+      // 問題回報 #691: a photo saved with fewer than five labels (its other
+      // candidates arrived later, or were learned elsewhere since) is
+      // filled up when it opens again; the saved labels all stay.
+      if (words.length < WordSelector.maxWords && photo.candidates.isNotEmpty) {
+        final before = words.length;
+        _reselect(
+            allowTopUp: true, keep: {for (final w in words) w.word});
+        if (words.length != before) _dirty = true;
+      }
     } else {
       _reselect(allowTopUp: true);
       _dirty = true;
@@ -207,7 +216,10 @@ class PhotoWordSession extends ChangeNotifier {
         .difference({for (final w in words) w.word});
   }
 
-  void _reselect({bool allowTopUp = false, Set<String> fresh = const {}}) {
+  void _reselect(
+      {bool allowTopUp = false,
+      Set<String> fresh = const {},
+      Set<String> keep = const {}}) {
     final sel = selector.select(
       pool: _pool,
       target: _target,
@@ -217,11 +229,13 @@ class PhotoWordSession extends ChangeNotifier {
       current: [for (final w in words) w.word],
       // The learner's own words stay whatever the dial says.
       locked: {
+        ...keep,
         for (final w in words)
           if (w.starred || w.added || w.edited) w.word,
       },
       bias: _bias,
       fresh: fresh,
+      relaxNounCap: _nounsAsked,
       now: repo.clock(),
     );
     final byWord = {for (final w in words) w.word: w};
@@ -230,6 +244,17 @@ class PhotoWordSession extends ChangeNotifier {
     ];
     _selection = sel;
     if (allowTopUp) _maybeTopUp(sel);
+  }
+
+  /// 問題回報 #691: whether the recognizer has had its chance to add
+  /// words other than nouns (or can't be asked): then the three-noun cap
+  /// gives way rather than leave the list short.
+  bool get _nounsAsked {
+    final q = queue;
+    final p = photo;
+    if (p == null) return false;
+    if (q == null || !q.canAskMore(p)) return true;
+    return !q.isToppingUp(photoId) && !q.canTopUp(p, 'actions');
   }
 
   void _maybeTopUp(Selection sel) {
@@ -244,9 +269,17 @@ class PhotoWordSession extends ChangeNotifier {
     Future<void>.microtask(() async {
       try {
         final added = await q.topUp(photoId, focus: focus, level: level);
-        if (added > 0 && !_disposed) {
+        // Even with nothing new, the list is picked again: the nouns held
+        // back for this request may now fill it (問題回報 #691).
+        if (!_disposed &&
+            (added > 0 || words.length < WordSelector.maxWords)) {
+          final before = [for (final w in words) w.word];
           _reselect();
-          notifyListeners();
+          if (added > 0 ||
+              !listEquals(before, [for (final w in words) w.word])) {
+            _dirty = true;
+            notifyListeners();
+          }
         }
       } catch (e) {
         debugPrint('Top-up for $photoId failed: $e');
