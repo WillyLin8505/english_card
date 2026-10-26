@@ -2097,3 +2097,6 @@ commit `0ee092c1`（Windows：flutter analyze 無 error、01:04 +691 ~2: All tes
 commit `4bb882ba`（Windows：flutter analyze 無 error、01:15 +691 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #617：問題回報 #601：ECDICT 詞級中文配到同形異源字的錯誤義項：tear「撕裂處」→淚滴、cop「紗管」→警官、ad
   結果：已完成程式防呆並清掉 98 字／101 個義項的錯配 ECDICT 中文（tear 淚滴、cop 警官、ad 廣告等）；QC 後測仍在跑（見下）。
+
+## M195（2026-10-26 21:05）狀態：待做（重驗 M190）
+tagger 已用 start_tagger.bat 重啟（21:03，8765／8790 都 200），可以重驗 photo-1792753703603088 的補字排除。#736 etch 還在 Windows 做，做好會另外通知。
