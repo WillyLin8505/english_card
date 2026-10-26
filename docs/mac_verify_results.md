@@ -1331,3 +1331,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | M194 #617 tear／ad 中文 | 通過 | 伺服器詞庫：tear noun 第一義「淚、眼淚」是眼淚的義；「撕裂處」義（A hole or break caused by tearing）已沒有錯配的淚滴；ad noun「廣告」。模擬器：tear noun 淚、眼淚／verb 撕、撕破；cop noun 條子；ad 廣告 |  | — |
 | M194 tear「撕裂處」中文 | 不通過 | 清掉錯配後這個義項沒有中文（native=null），學習者看不到它的中文 |  | 低 |
 | M196 #646 後台詞性 × CEFR 表格 | 通過 | 後台在 Windows 本機（127.0.0.1:5173），Mac 連不到，由 owner 在後台測；App 端表格依 M189 預設關閉（模擬器照片詳情沒有表格） |  | — |
+
+## 2026-10-26 M197、M198（Mac）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M197/M198 #711 sombre 卡片 | 通過 | 21:12 下載的法語詞庫：sombre adj A2「dark」card 欄位已空（用自己的卡），不再導向 sombrer verb B2「to sink」；其他 75 個分詞仍導向原形（uni→unir 等）。Mac 法語 A1 模擬：加入 40、複習 80、0 errors |  | — |
