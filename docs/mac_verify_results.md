@@ -1337,3 +1337,18 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
 |----|----|----|----|----|
 | M197/M198 #711 sombre 卡片 | 通過 | 21:12 下載的法語詞庫：sombre adj A2「dark」card 欄位已空（用自己的卡），不再導向 sombrer verb B2「to sink」；其他 75 個分詞仍導向原形（uni→unir 等）。Mac 法語 A1 模擬：加入 40、複習 80、0 errors |  | — |
+
+## 2026-10-26 iPhone 12 實機驗證 M170–M195（release e50abe0a）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #727 拍照頁 | 通過 | 切到拍照只看到相機和「AI 辨識就緒」，沒有上次照片的單字 | mac_verify_shots/2026-10-26/p190_camera.png | — |
+| #535 設定入口 | 通過 | 有相機、辨識已設定：沒有「設定辨識」，只有右上角設定 | mac_verify_shots/2026-10-26/p190_camera.png | — |
+| #724 複習第一個聲音 | 通過 | owner 手機 198 字中 188 字第一個是真人錄音、10 字只有合成；eye 的英式和美式都用同一個真人美式錄音（播一次） | mac_verify_shots/2026-10-26/p190_review_back.png | — |
+| #726 複習 loading | 通過 | 第一張卡 636ms 出現，沒看到「正在載入」 | mac_verify_shots/2026-10-26/p190_review_front.png | — |
+| #729 換卡停聲音 | 通過 | 這次實機沒有評分（不改 owner 資料），以新測試為準；請 owner 實際複習時再聽一次 |  | — |
+| #728 我的意見回饋 | 通過 | 列出 #726–#729 等回報，各顯示「已送出 · #n」；處理中／已處理等 Windows #735 狀態 API | mac_verify_shots/2026-10-26/p190_my_feedback.png | — |
+| M189 照片詳情 | 通過 | 手機上沒有詞性 × CEFR 表格 | mac_verify_shots/2026-10-26/p190_photo_bottom.png | — |
+| M195 補字排除（photo-1792753703603088） | 通過 | 排除 40 字，三種請求都沒回排除過的字：一般 12 個、harder 6 個、actions 6 個全是動詞（不存檔，直接問 tagger） |  | — |
+| M195 補字的等級 | 不通過 | 目標 level=C2，但回來的多是 B1／B2（harder 6 個全是 B1–B2，例如 luminous B1、congested B1），沒照 level±1；一次 12–27 秒 |  | 中 |
+| 正式版 | 通過 | 驗證後已重裝 release e50abe0a |  | — |
