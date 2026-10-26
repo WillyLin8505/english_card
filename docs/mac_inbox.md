@@ -1849,7 +1849,7 @@ app/lib/widgets/database_word_detail.dart 的 addDatabaseWord（約 344–353 �
 
 在 iPhone 模擬器再看一次對話框確認可選相片冊後關卡。
 
-## M169（2026-10-26 19:29）狀態：待做
+## M169（2026-10-26 19:29）狀態：完成
 commit `e3212885`（Windows：flutter analyze 無 error、01:55 +649 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #618：問題回報 #633：[Mac] 2026-10-23 M86（owner 的 iPhone 12 實機檢查）：相片冊主頁
   結果：結論：根因在 App 畫面（Dart），非詞庫資料；依分工（owner 10/23 #626）Windows 不改畫面，已定位、未改檔。
