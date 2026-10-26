@@ -208,3 +208,47 @@ def test_audio_supports_range_and_head_for_ios(monkeypatch, tmp_path):
         server.shutdown()
         server.server_close()
         thread.join()
+
+
+def test_issue_status_is_keyless_numeric_and_rate_limited(monkeypatch):
+    """問題回報 #735: GET /api/issues/status?ids=… answers id + status only."""
+    class Upstream:
+        def __init__(self, data): self.data = data
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+        def read(self): return self.data
+    items = {'items': [{'id': 1, 'status': 'fixed', 'detail': 'x'}, {'id': 2, 'status': 'open'}]}
+    seen = []
+    def fake_urlopen(request, timeout=None):
+        seen.append(request.full_url)
+        return Upstream(json.dumps(items).encode('utf-8'))
+    monkeypatch.setattr(server_module, 'urlopen', fake_urlopen)
+    monkeypatch.setitem(server_module.RATE_LIMITS, '/api/issues/status', 10)
+    server_module.RATE_HITS.clear()
+    server = ThreadingHTTPServer(('127.0.0.1', 0), server_module.Handler)
+    server.public_hosts = {'api.example.test'}
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        def get(query, ip='3.3.3.3', host='api.example.test'):
+            conn = HTTPConnection('127.0.0.1', server.server_port)
+            conn.request('GET', '/api/issues/status' + query, headers={'Host': host, 'CF-Connecting-IP': ip})
+            result = conn.getresponse()
+            status, data = result.status, result.read()
+            conn.close()
+            return status, data
+        status, data = get('?ids=1,2,3', ip='2.2.2.2')
+        assert status == 200
+        assert json.loads(data) == [{'id': 1, 'status': 'fixed'}, {'id': 2, 'status': 'open'}]
+        assert seen == ['http://127.0.0.1:5173/api/issues']
+        assert get('?ids=abc')[0] == 400
+        assert get('?ids=1,-2')[0] == 400
+        assert get('?ids=')[0] == 400
+        assert get('?ids=' + ','.join(['1'] * 101))[0] == 400
+        assert get('?ids=1', host='127.0.0.1:%d' % server.server_port)[0] == 200
+        assert [get('?ids=1', ip='4.4.4.4')[0] for _ in range(11)] == [200] * 10 + [429]
+        assert get('?ids=1', ip='5.5.5.5')[0] == 200
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join()

@@ -44,7 +44,7 @@ _cache = {}
 RATE_LIMITS = {'/api/lexicon': 30, '/api/image': 600, '/api/audio': 600,
                '/api/decks': 60,
                '/api/account': 30, '/api/shares': 60,
-               '/api/issues': 10}   # keyless App card reports (10/23)   # accounts + sharing (card #324)   # 卡片集: the list and one deck's content (card #323)
+               '/api/issues': 10, '/api/issues/status': 30}   # keyless App card reports (10/23), #735 fixed-status check   # accounts + sharing (card #324)   # 卡片集: the list and one deck's content (card #323)
 RATE_HITS: dict = {}
 RATE_LOCK = threading.Lock()
 
@@ -674,6 +674,33 @@ class Handler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
+    def issue_status(self, query: str):
+        """問題回報 #735: the App asks which of its reports are fixed. GET
+        /api/issues/status?ids=1,2,3 → [{"id": 1, "status": "fixed"}]. Keyless, only id and
+        status, at most 100 numeric ids, rate-limited on the public name (RATE_LIMITS).
+        Ids that aren't in 問題回報 are left out."""
+        if not self.within_rate('/api/issues/status'):
+            return
+        parts = [p for p in parse_qs(query).get('ids', [''])[0].split(',') if p]
+        if not parts or len(parts) > 100 or not all(re.fullmatch(r'[0-9]{1,12}', p) for p in parts):
+            self.send_error(400, 'ids: 1-100 numeric ids, comma separated')
+            return
+        try:
+            with urlopen(Request('http://127.0.0.1:5173/api/issues'), timeout=30) as upstream:
+                items = json.loads(upstream.read()).get('items', [])
+        except (OSError, ValueError):
+            self.send_error(502, 'Issue list unavailable')
+            return
+        status = {item['id']: item.get('status') for item in items if isinstance(item, dict) and 'id' in item}
+        found = [{'id': int(p), 'status': status[int(p)]} for p in parts if int(p) in status]
+        data = json.dumps(found, ensure_ascii=False).encode('utf-8')
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json; charset=utf-8')
+        self.send_header('Cache-Control', 'no-store')
+        self.send_header('Content-Length', str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
     @staticmethod
     def app_report(body):
         """A keyless /api/issues POST as the App's CardReport sends it, reduced to the fields
@@ -931,6 +958,9 @@ class Handler(SimpleHTTPRequestHandler):
         if not self.allowed_request():
             return
         url = urlsplit(self.path)
+        if url.path == '/api/issues/status':
+            self.issue_status(url.query)
+            return
         if self.ISSUES_PATH.match(url.path):
             self.proxy_issues('GET')
             return
