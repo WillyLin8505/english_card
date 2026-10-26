@@ -2092,3 +2092,8 @@ flutter test：682 過、2 skip、1 失敗：
 commit `0ee092c1`（Windows：flutter analyze 無 error、01:04 +691 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #624：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
   結果：需要 Mac：flutter test 剩 1 個測試失敗（螢幕複習），是畫面邏輯，Windows 規定不改畫面。
+
+## M194（2026-10-26 21:03）狀態：待做
+commit `4bb882ba`（Windows：flutter analyze 無 error、01:15 +691 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #617：問題回報 #601：ECDICT 詞級中文配到同形異源字的錯誤義項：tear「撕裂處」→淚滴、cop「紗管」→警官、ad
+  結果：已完成程式防呆並清掉 98 字／101 個義項的錯配 ECDICT 中文（tear 淚滴、cop 警官、ad 廣告等）；QC 後測仍在跑（見下）。
