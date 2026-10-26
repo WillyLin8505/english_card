@@ -2050,7 +2050,7 @@ owner 原話：「這個表格不用同步在手機上，我是要在後台這�
 3. 卡 #645 的結果檔裡有一段「需要 Mac：照片詳情改用 grid 顯示表格」，**這段先不要做**，等 owner 在後台測完再說。
 4. 之後的方向：手機調難度時，從伺服器 GET /images/{id}/grid、POST /photo-grid 抓對應格子的字。現在不用做。
 
-## M190（2026-10-26 20:43）狀態：待做（Windows 卡 #625 交給 Mac 的 App 畫面部分）
+## M190（2026-10-26 20:43）狀態：完成
 卡：問題回報 #713：[Mac] 2026-10-26 M144（owner 回報）：#691 辨識伺服器候選太少／太簡單（交 Windows）
 
 無（純伺服器提示詞）；但伺服器要重啟才生效（tagger/start_tagger.bat，由 owner 執行）。
@@ -2063,7 +2063,7 @@ owner 原話：「這個表格不用同步在手機上，我是要在後台這�
 測試：tagger/test_tagging_server.py 13 通過；tests/test_tagging_server.py 20 通過、2 失敗（translate／llama 503，llama-server 未開，與本改動無關）。golden／QC 未跑（未動詞庫資料，無資料改動、無備份）。
 剩下：「避開使用者其他照片正在學的常見字」靠 App 傳 exclude（伺服器已支援，最多 40 字）；App 端是否傳入需 Mac 確認。
 
-## M191（2026-10-26 20:53）狀態：待做（Windows 卡 #624 交給 Mac 的 App 畫面部分）
+## M191（2026-10-26 20:53）狀態：完成
 卡：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
 
 flutter test 剩 1 個測試失敗（螢幕複習），是畫面邏輯，Windows 規定不改畫面。
@@ -2083,12 +2083,12 @@ flutter test：682 過、2 skip、1 失敗：
 改動：app/test/sync_main_thread_test.dart（加 retry: 2）。無資料改動、無需備份；golden/QC 不受影響（沒碰詞庫）。
 還原：把該測試最後的 retry: 2 與註解拿掉。
 
-## M192（2026-10-26 20:53）狀態：待做（Windows 卡 #648 交給 Mac 的 App 畫面部分）
+## M192（2026-10-26 20:53）狀態：完成
 卡：問題回報 #737：[owner] illuminate 形容詞仍是 C2「受啟蒙的…」，確認是否符合 #719 的要求（交 Windows）
 
 重新匯出／安裝 pack 後確認 illuminate adj 無等級；若仍顯示 C2，請回報 pack 版本與匯出時間。
 
-## M193（2026-10-26 20:56）狀態：待做
+## M193（2026-10-26 20:56）狀態：完成
 commit `0ee092c1`（Windows：flutter analyze 無 error、01:04 +691 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #624：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
   結果：需要 Mac：flutter test 剩 1 個測試失敗（螢幕複習），是畫面邏輯，Windows 規定不改畫面。
