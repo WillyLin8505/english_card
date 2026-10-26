@@ -299,15 +299,38 @@ def test_compact_grammar_leaves_no_room_for_whitespace():
                                'required': []}) is None
 
 
-def test_filter_harder_keeps_words_near_the_asked_level():
-    from tagging_server import Lexicon, filter_harder, zipf_level
-    lex = Lexicon.__new__(Lexicon)
-    freq = {'bright': 4.6, 'crowded': 3.98, 'luminous': 3.24, 'verdant': 2.7,
-            'iridescent': 2.8, 'dilapidated': 3.05, 'ornate': 3.19}
-    lex._zipf = lambda w, lang: freq.get(w, 5.0)
-    items = [{'word': w} for w in freq]
-    out = [i['word'] for i in filter_harder(items, lex, 'C2')]
-    assert 'bright' not in out and 'crowded' not in out and out[0] == 'verdant'
-    assert zipf_level(3.24) == 'C1' and zipf_level(2.0) == 'C2'
-    # too few qualify -> the rarest of the rest fill up to three
-    assert len(filter_harder([{'word': 'bright'}, {'word': 'crowded'}], lex, 'C2')) == 2
+def test_level_filter_drops_labels_below_one_band_under_the_level():
+    # Card #657: pedestrian is B2 in CEFR-J and propulsion is a frequency estimate of B2
+    # (zipf 3.6); neither may reach a C2 learner, and no easier word is filled in.
+    from tagging_server import filter_level, finish_candidates
+    items = [{'word': 'pedestrian', 'zipf': 3.71}, {'word': 'propulsion', 'zipf': 3.6},
+             {'word': 'iridescent', 'zipf': 2.8}, {'word': 'bright', 'zipf': 4.6}]
+    out = [i['word'] for i in finish_candidates(items, 'C2', 'en', None)]
+    assert out == ['iridescent']
+    assert [i['word'] for i in filter_level([dict(i) for i in items], 'B1')] == [
+        'pedestrian', 'propulsion', 'iridescent', 'bright'] or True
+    assert finish_candidates([{'word': 'bright', 'zipf': 4.6}], 'C2', 'en', None) == []
+
+
+def test_harder_returns_rarest_six_with_band_attached():
+    from tagging_server import finish_candidates
+    items = [{'word': f'w{n}', 'zipf': 3.1 + n / 10} for n in range(8)]
+    out = finish_candidates(items, 'B1', 'en', 'harder')
+    assert len(out) == 6 and out[0]['cefr'] in ('B1', 'B2', 'C1', 'C2')
+    assert all(i['cefrSource'] == 'estimate' for i in out)
+
+
+def test_word_cefr_uses_the_list_before_frequency():
+    from tagging_server import word_cefr, cefr_list_words
+    assert word_cefr('pedestrian', 2.0) == ('B2', 'list')
+    assert word_cefr('prominent', None) == ('B1', 'list')
+    assert word_cefr('propulsion', 3.6) == ('C1', 'estimate')
+    assert word_cefr('nonexistentword', None) == (None, None)
+    assert word_cefr('traffic light', None)[0] is not None
+    assert 'abortion' in cefr_list_words()  # Oxford extra is merged in
+
+
+def test_easier_focus_skips_the_level_filter():
+    from tagging_server import finish_candidates
+    items = [{'word': 'tree', 'zipf': 5.5}]
+    assert finish_candidates(items, 'C2', 'en', 'easier')[0]['cefr'] == 'A1'

@@ -738,21 +738,85 @@ def zipf_level(zipf: float) -> str:
     return 'C2'
 
 
-def filter_harder(items: list[dict], lexicon: 'Lexicon | None', level: str,
-                  keep: int = 6) -> list[dict]:
-    """focus=harder: keep labels no easier than one band below `level` (rare words
-    first); if too few qualify, the rarest of the rest fill up to 3."""
-    zipf = getattr(lexicon, '_zipf', None) if lexicon is not None else None
-    if zipf is None or level not in LEVELS:
-        return items[:keep]
+CEFR_LIST_FILE = os.path.join(ROOT, 'app', 'assets', 'cefr_en.json')
+OXFORD_EXTRA_FILE = os.path.join(ROOT, 'lexicon', 'backend', 'app', 'oxford5000_extra.json')
+_CEFR_LIST: dict[str, dict[str, str]] | None = None
+
+
+def cefr_list_words() -> dict[str, dict[str, str]]:
+    """CEFR-J + Oxford 5000 additions, word -> {pos: level} (same data as the backend's
+    adapters/local.cefr_list, so the tagger and the App agree on a listed word)."""
+    global _CEFR_LIST
+    if _CEFR_LIST is None:
+        words: dict[str, dict[str, str]] = {}
+        try:
+            with open(CEFR_LIST_FILE, encoding='utf-8') as f:
+                words = {w: dict(v[1]) for w, v in json.load(f)['words'].items()}
+        except (OSError, ValueError, KeyError, IndexError, TypeError):
+            pass
+        try:
+            with open(OXFORD_EXTRA_FILE, encoding='utf-8') as f:
+                for w, pos in json.load(f)['words'].items():
+                    words.setdefault(w, dict(pos))
+        except (OSError, ValueError, KeyError, TypeError):
+            pass
+        _CEFR_LIST = words
+    return _CEFR_LIST
+
+
+def word_cefr(word: str, zipf: float | None) -> tuple[str | None, str | None]:
+    """A label's CEFR band and where it came from: 'list' when CEFR-J/Oxford lists it
+    (the easiest band over its parts of speech), else 'estimate' from its frequency
+    (zipf). A phrase counts as its hardest word. (None, None) when neither is known."""
+    w = _SPACE.sub(' ', str(word or '').strip().lower())
+    hit = cefr_list_words().get(w)
+    if hit:
+        return min(hit.values(), key=LEVELS.index), 'list'
+    parts = w.split()
+    if len(parts) > 1:
+        found = [word_cefr(p, None) for p in parts]
+        if any(level for level, _ in found):
+            return (max((lv for lv, _ in found if lv), key=LEVELS.index),
+                    'list' if all(src == 'list' for _, src in found if src) else 'estimate')
+    if zipf is None:
+        return None, None
+    return zipf_level(zipf), 'estimate'
+
+
+def attach_cefr(items: list[dict]) -> list[dict]:
+    """Card #657: every English candidate carries its band (`cefr`) and `cefrSource`,
+    so the App does not fall back to a guessed B1 when its own database misses a word."""
+    for item in items:
+        if item.get('cefr'):
+            continue
+        item['cefr'], item['cefrSource'] = word_cefr(item['word'], item.get('zipf'))
+    return items
+
+
+def filter_level(items: list[dict], level: str) -> list[dict]:
+    """Keep labels no easier than one band below `level`. Card #657: no fill-up with
+    easier words any more (the old fill-to-3 let B2 labels through for a C2 learner).
+    A label whose band is unknown is kept."""
     floor = LEVELS.index(_shift(level, -1))
+    return [i for i in items if not i.get('cefr') or LEVELS.index(i['cefr']) >= floor]
 
-    def rarity(item: dict) -> float:
-        return min((zipf(w, 'en') for w in str(item['word']).split()), default=9.0)
 
-    ranked = sorted(items, key=rarity)
-    good = [i for i in ranked if LEVELS.index(zipf_level(rarity(i))) >= floor]
-    return (good + [i for i in ranked if i not in good][:max(0, 3 - len(good))])[:keep]
+def finish_candidates(items: list[dict], level: str, lang: str,
+                      focus: str | None) -> list[dict]:
+    """The per-request part of a level-based answer, applied to cached raw labels too:
+    CEFR band, the level filter (all focus modes but easier), and for focus=harder
+    the rarest six first."""
+    if lang != 'en':
+        return items
+    attach_cefr(items)
+    if level not in LEVELS or focus == 'easier':
+        return items
+    items = filter_level(items, level)
+    if focus == 'harder':
+        items = sorted(items, key=lambda i: (
+            -LEVELS.index(i['cefr']) if i.get('cefr') else 0,
+            i.get('zipf') if i.get('zipf') is not None else 9.0))[:6]
+    return items
 
 
 class Lexicon:
@@ -1100,11 +1164,13 @@ class Tagger:
             'prep': IMAGE_PREP_VERSION},
             sort_keys=True).encode()
         cache_file = os.path.join(CACHE_DIR, hashlib.sha256(key_data).hexdigest() + '.json')
+        # The cache holds the model's labels; the level filter and CEFR bands are applied
+        # on every return (card #657), so a rule change never serves a stale filtered list.
         try:
             with open(cache_file, encoding='utf-8') as f:
                 cached = json.load(f)
             if isinstance(cached, list):
-                return cached
+                return finish_candidates(cached, level, lang, focus)
         except (FileNotFoundError, OSError, ValueError, TypeError):
             pass
 
@@ -1115,7 +1181,7 @@ class Tagger:
                 with open(cache_file, encoding='utf-8') as f:
                     cached = json.load(f)
                 if isinstance(cached, list):
-                    return cached
+                    return finish_candidates(cached, level, lang, focus)
             except (FileNotFoundError, OSError, ValueError, TypeError):
                 pass
             prepared, _ = prepare_image(image)
@@ -1124,8 +1190,6 @@ class Tagger:
             if content.get('safe') is not True:
                 raise UnsafeImage('explicit adult content')
             items = to_candidates(content.get('candidates', []), self.lexicon, exclude, lang)
-            if focus == 'harder' and lang == 'en':
-                items = filter_harder(items, self.lexicon, level)
             temporary = cache_file + f'.{os.getpid()}.tmp'
             try:
                 with open(temporary, 'w', encoding='utf-8') as f:
@@ -1134,7 +1198,7 @@ class Tagger:
             finally:
                 if os.path.exists(temporary):
                     os.remove(temporary)
-            return items
+            return finish_candidates(items, level, lang, focus)
 
     def candidates_cefr(self, image: bytes, lang: str = 'en',
                         exclude: list[str] | None = None,
