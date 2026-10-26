@@ -2110,3 +2110,8 @@ commit `6d95a706`（Windows：flutter analyze 無 error、01:05 +692 ~2: All tes
 卡：問題回報 #711：法語卡片導向錯義：sombre形容詞「dark」card=sombrer，A1複習變成B2動詞「to sink」
 
 無（Dart lookup 不需改，只改 card 欄位）。資料修復：card 是匯出時算的（app_pack.assign_cards），沒有存在 DB，所以沒有資料列被改、沒有備份。已發布的 app 快照要等下一次匯出才會生效。
+
+## M198（2026-10-26 21:11）狀態：待做
+commit `16a5d07b`（Windows：flutter analyze 無 error、01:12 +692 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #613：問題回報 #711：法語卡片導向錯義：sombre形容詞「dark」card=sombrer，A1複習變成B2動詞「to
+  結果：結論：cardbase 修正後，sombre 這類「有獨立形容詞／名詞義項、另有有限動詞形」的詞不再被導到動詞卡；全庫量測 fr 改變 17 字（都從原形卡改為自己的卡，沒有改導向別的原形）、en 改變 1 字（blossomest）。golden 與 live QC 未跑完（逾時），尚未驗證指標。
