@@ -30,6 +30,7 @@ INDEX = config.RAW_DATA / "ecdict.sqlite3"
 # on Windows fails (os.replace -> PermissionError); a new, never-open file
 # has nothing to conflict with.
 PHONETIC_INDEX = config.RAW_DATA / "ecdict_phonetic.sqlite3"
+DEFINITION_INDEX = config.RAW_DATA / "ecdict_definition.sqlite3"
 
 # ECDICT's part-of-speech prefixes → the lexicon's.
 POS = {"n": "noun", "v": "verb", "vt": "verb", "vi": "verb", "a": "adj", "adj": "adj",
@@ -87,6 +88,42 @@ def build_phonetic_index(csv_path=None, index_path=None) -> None:
     db.commit()
     db.close()
     os.replace(tmp, index_path)
+
+
+def build_definition_index(csv_path=None, index_path=None) -> None:
+    """word → English definition (WordNet lines), for matching a Chinese
+    meaning to a sense (問題回報 #601). A separate file: see PHONETIC_INDEX."""
+    csv_path, index_path = csv_path or CSV, index_path or DEFINITION_INDEX
+    tmp = f"{index_path}.{os.getpid()}.tmp"
+    db = sqlite3.connect(tmp)
+    db.execute("CREATE TABLE d (word TEXT, lower TEXT, definition TEXT)")
+    with open(csv_path, encoding="utf-8", newline="") as f:
+        rows = ((r["word"], r["word"].lower(), r["definition"]) for r in csv.DictReader(f)
+                if r.get("definition") and r.get("translation"))
+        db.executemany("INSERT INTO d VALUES (?, ?, ?)", rows)
+    db.execute("CREATE INDEX d_lower ON d (lower)")
+    db.commit()
+    db.close()
+    os.replace(tmp, index_path)
+
+
+_WN_POS = {"n": "noun", "v": "verb", "a": "adj", "s": "adj", "r": "adv"}
+_STOP = frozenset("a an the of or and to in on for with by as at from that which who is are be "
+                  "being been it its one something someone especially usually often used use "
+                  "act state quality person people thing things whose any some more most".split())
+
+
+def _content_words(text: str) -> set[str]:
+    out = set()
+    for w in re.findall(r"[a-z]+", (text or "").lower()):
+        if len(w) < 3 or w in _STOP:
+            continue
+        for suf in ("ing", "ed", "es", "s"):
+            if w.endswith(suf) and len(w) - len(suf) >= 3:
+                w = w[: -len(suf)]
+                break
+        out.add(w)
+    return out
 
 
 # ── ECDICT "phonetic" column → IPA (問題回報 #209) ──────────────────────
@@ -173,6 +210,7 @@ class ECDict(SourceAdapter):
     def __init__(self):
         self._db = None
         self._pdb = None
+        self._ddb = None
 
     def _conn(self):
         if self._db is None:
@@ -262,6 +300,62 @@ class ECDict(SourceAdapter):
             return None
         return agreed
 
+    def _dconn(self):
+        if self._ddb is None:
+            with _lock:
+                if self._ddb is None:
+                    if not DEFINITION_INDEX.exists():
+                        if not CSV.exists():
+                            return None
+                        build_definition_index(CSV, DEFINITION_INDEX)
+                    self._ddb = sqlite3.connect(str(DEFINITION_INDEX), check_same_thread=False)
+        return self._ddb
+
+    def english_definitions(self, word: str, pos: str) -> list[str]:
+        """ECDICT's English (WordNet) definitions of [word] in [pos]."""
+        db = self._dconn()
+        if db is None:
+            return []
+        row = db.execute("SELECT definition FROM d WHERE lower = ? ORDER BY word = ? DESC",
+                         (word.strip().lower(), word.strip())).fetchone()
+        out = []
+        for line in (row[0] if row else "").split("
+"):
+            m = re.match(r"^\(?([nvasr])\)?\.?\s+(.+)$", line.strip())
+            if m and _WN_POS.get(m.group(1)) == pos:
+                out.append(m.group(2))
+        return out
+
+    def homograph_conflict(self, lemma: str, pos: str | None, gloss: str | None) -> bool:
+        """ECDICT lists a spelling's meanings with no etymology (tear 淚 / 撕,
+        cop 警察 / 紗管, 問題回報 #601), and the first one is the common
+        word's. True when [lemma] has several Kaikki etymologies in [pos] and
+        ECDICT's own English definition fits another etymology's glosses
+        clearly better than this sense's: the Chinese then belongs to the
+        other word, and the sense is left to Kaikki or the AI."""
+        if not pos or not gloss:
+            return False
+        from .. import kaikki_index
+        from .kaikki import POS
+        entries = [e for e in kaikki_index.lookup("en", lemma) or []
+                   if str(e.get("word", "")) == lemma and POS.get(str(e.get("pos") or "")) == pos]
+        if len({str(e.get("etymology_number") or "") for e in entries}) < 2:
+            return False
+        wn = {w for d in self.english_definitions(lemma, pos)[:3] for w in _content_words(d)}
+        wn.discard(lemma.lower())
+        if not wn:
+            return False
+        own_ety = None
+        best_other = 0
+        for e in entries:
+            glosses = [((x.get("glosses") or [""])[0]).strip() for x in e.get("senses") or []][:4]
+            score = max((len(wn & _content_words(g)) for g in glosses), default=0)
+            if gloss.strip() in glosses:
+                own_ety = score
+            else:
+                best_other = max(best_other, score)
+        return own_ety is not None and best_other >= 2 and best_other > own_ety
+
     def meaning(self, word: str, pos=None, loose: bool = False) -> str | None:
         """The first meaning of [word] in [pos] (one or several parts of
         speech), with the second when the first is one character (跑、奔跑):
@@ -303,12 +397,14 @@ class ECDict(SourceAdapter):
             defs = ctx.items("definition")
             wanted = native_sense_keys(defs)
             firsts = {}
+            glosses = {}
             for d in defs:
                 if d.get("pos") and d.get("sense_key") and d["sense_key"] in wanted:
                     firsts.setdefault(d["pos"], d["sense_key"])
+                    glosses.setdefault(d["pos"], d.get("gloss"))
             for pos, key in firsts.items():
                 text = self.meaning(ctx.lemma, pos)
-                if text:
+                if text and not self.homograph_conflict(ctx.lemma, pos, glosses.get(pos)):
                     add({"sense_key": key, "text": text}, key, key, 0.7)
             # A later sense that only names another word (「A nappy (UK), a
             # diaper (American).」) takes that word's meaning when the
