@@ -1803,7 +1803,7 @@ commit `81d59547`（Windows：flutter analyze 無 error、01:21 +647 ~2: All tes
 - 卡 #496：模擬使用者・法語（英語母語者學法語）
   結果：法語模擬第23輪：3/4通過；A1因合法合併40→39觸發斷言；新回報#710、#711，6153詞仍有7878句缺英譯。
 
-## M164（2026-10-26 19:27）狀態：待做（Windows 卡 #618 交給 Mac 的 App 畫面部分）
+## M164（2026-10-26 19:27）狀態：完成
 卡：問題回報 #633：[Mac] 2026-10-23 M86（owner 的 iPhone 12 實機檢查）：相片冊主頁卡片集標籤
 
 app/lib/screens/album_screen.dart 約第 252–272 行，卡片集標籤 `卡片集 · ${album.author}` 放在 ConstrainedBox(maxWidth: 140)、字 11pt，沒設 maxLines／overflow。iPhone 12 上「卡片集 · English Card 編輯部」超過 140 寬，換成兩行，高度長高後壓到封面照片上的字。
