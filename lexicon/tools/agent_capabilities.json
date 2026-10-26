@@ -120,9 +120,7 @@
       "dispatchable": false
     }
   },
-  "night_only_tasks": [
-    167
-  ],
+  "night_only_tasks": [],
   "_night_166_note": "owner 10/18 晚：Qwen 暫停期間 #166 改由 Claude 直接寫例句，不再限夜間。",
   "night_window": {
     "start": "01:00",
