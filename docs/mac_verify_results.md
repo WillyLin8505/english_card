@@ -1352,3 +1352,10 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | M195 補字排除（photo-1792753703603088） | 通過 | 排除 40 字，三種請求都沒回排除過的字：一般 12 個、harder 6 個、actions 6 個全是動詞（不存檔，直接問 tagger） |  | — |
 | M195 補字的等級 | 不通過 | 目標 level=C2，但回來的多是 B1／B2（harder 6 個全是 B1–B2，例如 luminous B1、congested B1），沒照 level±1；一次 12–27 秒 |  | 中 |
 | 正式版 | 通過 | 驗證後已重裝 release e50abe0a |  | — |
+
+## 2026-10-26 iPhone 12 #735 回報處理狀態
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #735 GET /api/issues/status | 通過 | 公開網址不用金鑰：ids=724,726–729,735 都回 fixed |  | — |
+| #728 我的意見回饋顯示處理進度 | 通過 | owner 的 iPhone：#726–#729 都顯示「已處理 · #n」 | mac_verify_shots/2026-10-26/p735_my_feedback.png | — |
