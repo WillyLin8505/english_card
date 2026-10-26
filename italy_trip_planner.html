@@ -19,10 +19,10 @@
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,"Segoe UI","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif}
-header{padding:20px 16px 8px;max-width:1280px;margin:0 auto}
+header{padding:14px 12px 4px;max-width:none;margin:0}
 h1{margin:0 0 2px;font-size:24px}
 .sub{color:var(--muted);font-size:13px}
-.wrap{max-width:1280px;margin:0 auto;padding:0 16px 40px}
+.wrap{max-width:none;margin:0;padding:0 12px 40px}
 .controls{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin:12px 0 16px;display:grid;gap:12px 16px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));box-shadow:var(--shadow)}
 .controls label{display:flex;flex-direction:column;font-size:12px;color:var(--muted);gap:4px}
 input,select,textarea,button{font:inherit;color:inherit}
@@ -38,7 +38,15 @@ button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
 .preset span{font-size:12px;color:var(--muted)}
 .tabs{display:flex;flex-wrap:wrap;gap:6px}.tabs button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 .thumbs{display:flex;gap:4px;flex:none}.thumbs img{width:76px;height:56px;object-fit:cover;border-radius:6px;background:var(--chip);display:block}
-.layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start}
+.routebox{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px;margin-bottom:16px}
+@media (max-width:960px){.routebox{grid-template-columns:1fr}}
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:6px;font-size:14px}
+.steps li{display:flex;gap:10px;align-items:flex-start}
+.steps .no{background:var(--accent);color:#fff;border-radius:99px;min-width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex:none}
+.steps .leg{margin:0 0 0 34px;color:var(--accent-2);font-size:13px}
+.cdlist{display:flex;flex-wrap:wrap;gap:6px 14px;margin-bottom:10px;font-size:13px}.cd{white-space:nowrap}
+.tab-km{font-size:11px;opacity:.8;margin-left:4px}
+.layout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px;align-items:start}
 @media (max-width:960px){.layout{grid-template-columns:1fr}}
 #mapcol{align-self:stretch}
 #mappanel{position:sticky;top:12px}
@@ -134,17 +142,18 @@ svg.map{width:100%;height:auto;display:block}
     </div>
     <div class="preset">
       <span id="presetDesc" class="small"></span>
-      <button id="regenBtn">依目前步調重新自動排這個方案</button>
+      <button id="regenBtn">依目前天數與步調重新自動排</button>
       <button id="resetBtn">全部重設</button>
     </div>
   </section>
 
+  <section class="panel routebox" id="routeBox"></section>
   <div class="layout">
     <main id="days-list"></main>
     <aside id="mapcol"><div class="panel" id="mappanel"><div id="mpHead"></div><iframe id="mpFrame" title="當日景點地圖" referrerpolicy="no-referrer-when-downgrade"></iframe></div></aside>
   </div>
   <section id="summary" class="sumgrid"></section>
-  <p class="small">⚠ 景點縮圖由維基百科搜尋自動帶入（免費、CC 授權，點圖可看來源與授權），偶爾會抓到相近但不完全相同的圖。景點門票、房價、車程與餐廳均為概估，實際價格與營業時間請於出發前確認（熱門景點務必提早預約）。飯店與餐廳名單為參考起點，請以 Google 地圖最新評價為準。機票、旅遊保險、城市稅（Tassa di soggiorno，每人每晚約 €2–7）未計入預算。</p>
+  <p class="small">⚠ 景點縮圖由維基百科／維基共享資源自動帶入（免費、CC 授權，點圖可看來源與授權），偶爾會抓到相近但不完全相同的圖。景點門票、房價、車程與餐廳均為概估，實際價格與營業時間請於出發前確認（熱門景點務必提早預約）。飯店與餐廳名單為參考起點，請以 Google 地圖最新評價為準。機票、旅遊保險、城市稅（Tassa di soggiorno，每人每晚約 €2–7）未計入預算。</p>
 </div>
 <div class="toast" id="toast"></div>
 
@@ -472,6 +481,71 @@ como:{name:'科莫湖',lat:45.81,lon:9.09,ls:'l',rec:[1,2],
   R('湖畔小餐館（Varenna／Bellagio）','湖邊','Missoltino 乾湖魚、鱸魚燉飯',38,'LD','選有露台的店，晚餐看夕陽'),
   R('Bellagio 冰淇淋店','湖邊步道','手工冰淇淋',4,'LD','邊走邊吃'),
  ]},
+matera:{name:'馬泰拉',lat:40.67,lon:16.60,ls:'r',rec:[1,2],
+ tip:'南義洞穴古城（Sassi），石板路多、爬坡多；清晨與傍晚最美，建議住在 Sassi 裡。',
+ airport:'最近機場是 Bari（BRI），再搭巴士／火車約 1.5 小時。',
+ attractions:[
+  A('Sassi di Matera 石頭城區',3,0,'walk','世界遺產，建議傍晚與清晨各逛一次'),
+  A('岩洞教堂（Santa Maria de Idris）',0.8,3,'his'),
+  A('馬泰拉大教堂',0.6,0,'his'),
+  A('穴居之家（Casa Grotta）',0.5,3,'his','參觀傳統洞穴居所'),
+  A('Murgia 國家公園觀景台',1.2,0,'view','隔山谷看 Sassi 全景，日出日落最美'),
+ ],
+ hotels:[
+  H('Sassi 區洞穴民宿','Sassi',1,80,'便宜，住進洞穴的體驗'),
+  H('Sassi 區精品洞穴旅館','Sassi',2,150,'改建洞穴客房，氣氛佳'),
+  H('Sextantio Le Grotte della Civita','Sasso Barisano',3,260,'知名洞穴酒店'),
+ ],
+ rests:[
+  R('Ristorante Baccanti','Sasso Barisano','馬泰拉傳統菜、手工麵',35,'D','需訂位'),
+  R('Le Botteghe','Sassi 附近','Lucania 料理',32,'LD','建議訂位'),
+  R('Pane di Matera 麵包店','舊城','馬泰拉麵包 Pane di Matera',5,'L','當地名產'),
+ ]},
+puglia:{name:'普利亞（阿爾貝羅貝洛）',lat:40.78,lon:17.24,ls:'r',rec:[2,4],
+ tip:'南義「腳跟」：白色小鎮、橄欖樹與海岸線，景點分散，租車最方便；以 Alberobello 或 Ostuni 為基地。',
+ airport:'最近機場是 Bari（BRI），到 Alberobello 約 1 小時（火車／巴士）。',
+ attractions:[
+  A('阿爾貝羅貝洛（Trulli 石頭屋）',2.5,0,'walk','Rione Monti 區最典型'),
+  A('波利尼亞諾阿馬雷（Polignano a Mare）',2.5,0,'view','懸崖海灘與海蝕洞'),
+  A('奧斯圖尼（白色之城）',2,0,'walk'),
+  A('萊切巴洛克古城',3,0,'art','「南方佛羅倫斯」，石灰岩巴洛克建築'),
+  A('巴里老城（Bari Vecchia）',2,0,'walk','聖尼古拉聖殿與手工 Orecchiette 街'),
+  A('蒙特城堡（Castel del Monte）',1.5,10,'his','八角形城堡，世界遺產'),
+ ],
+ hotels:[
+  H('Bari 市區平價旅館','Bari 火車站周邊',1,75,'交通方便'),
+  H('Alberobello Trullo 石頭屋民宿','Alberobello',2,130,'住進圓錐屋頂石屋'),
+  H('Masseria 莊園旅館','鄉間',3,300,'橄欖園莊園，附泳池與早餐'),
+ ],
+ rests:[
+  R('Il Poeta Contadino','Alberobello','Apulia 傳統菜',55,'D','需訂位'),
+  R('Sgaramella 炸餃店','Bari','Panzerotti 炸餃',5,'L','當地小吃'),
+  R('Bari Vecchia 手工 Orecchiette 街','Arco Basso','現做貓耳朵麵',10,'L','看奶奶們現場做麵'),
+ ]},
+sicily:{name:'西西里（巴勒摩）',lat:38.12,lon:13.36,ls:'r',rec:[3,5],
+ tip:'島嶼，交通以巴士與包車為主；氣溫高、行程不宜過滿。以巴勒摩為基地，可當日往返蒙雷阿萊與切法盧。',
+ airport:'PMO 巴勒摩機場 → 市區：Prestia e Comandè 巴士約 50 分、€6.5；火車約 1 小時。',
+ attractions:[
+  A('巴勒摩大教堂',0.8,0,'his','屋頂登頂約 €5–7'),
+  A('諾曼王宮',1,15,'his','與帕拉提納禮拜堂聯票',true),
+  A('帕拉提納禮拜堂',0.7,0,'art','在諾曼王宮內，含在聯票',true),
+  A('四首歌廣場',0.3,0,'walk'),
+  A('Ballarò 市集',1.2,0,'food','街頭小吃：Arancine 炸飯球、Panelle'),
+  A('馬西莫劇院',0.8,10,'art','導覽制'),
+  A('蒙雷阿萊大教堂',1.5,4,'his','金色鑲嵌畫，巴士約 40 分'),
+  A('切法盧（海邊小鎮）',5,0,'trip','火車約 1 小時，海灘與老城'),
+  A('阿格里真托神殿谷',6.5,15,'his','含往返車程（約 2 小時單程），建議早出發'),
+ ],
+ hotels:[
+  H('Palermo 舊城 B&B','舊城',1,75,'便宜，步行到景點'),
+  H('Hotel Politeama Palace','Politeama',2,130,'4★，近歌劇院與購物街'),
+  H('Grand Hotel et des Palmes','市中心',3,250,'歷史悠久的豪華酒店'),
+ ],
+ rests:[
+  R('Antica Focacceria San Francesco','舊城','Pani ca meusa 牛脾三明治、Arancine',20,'L','老字號'),
+  R('Trattoria Ai Cascinari','舊城','西西里家常菜（沙丁魚麵）',28,'D','需訂位'),
+  R('Pasticceria Cappello','Politeama 附近','Cannoli、Cassata 甜點',6,'L','必吃甜點'),
+ ]}
 };
 const KEYS=Object.keys(CITIES);
 KEYS.forEach(k=>{const c=CITIES[k];c.key=k;
@@ -509,6 +583,16 @@ const PAIRS={
  'florence|sorrento':[3.4,'🚄＋🚆 經那不勒斯',50,90,''],
  'naples|florence':[2.6,'🚄 高速鐵路',35,70,'Napoli → Firenze'],
  'milan|pisa':[3.5,'🚆 火車（需轉車）',25,45,''],
+ 'matera|naples':[3.7,'🚌 長途巴士（FlixBus 等）',15,30,'Napoli → Matera 班次不多，需提早查'],
+ 'matera|rome':[6,'🚌 長途巴士',25,55,'或高鐵到 Bari 再轉巴士／火車'],
+ 'matera|puglia':[2,'🚌／🚆 巴士或火車（經 Bari）',8,20,'Matera ↔ Bari 約 1.5 小時，再到 Alberobello'],
+ 'naples|puglia':[3.8,'🚆 Intercity／巴士到 Bari 再轉',25,50,''],
+ 'puglia|rome':[4.5,'🚄 高鐵到 Bari 再轉',40,85,''],
+ 'naples|sicily':[3.5,'✈ 飛機（Napoli→Palermo，約 1 小時）＋接駁',40,110,'或夜間渡輪約 11 小時'],
+ 'rome|sicily':[4,'✈ 飛機（Roma→Palermo，約 1.5 小時）＋接駁',45,120,'含往返機場時間'],
+ 'puglia|sicily':[4,'✈ 飛機（Bari→Palermo）＋接駁',40,120,'班次少，需查航班'],
+ 'matera|sicily':[5,'✈／🚌 經 Bari 轉機',60,140,''],
+ 'sicily|sorrento':[4,'✈ 飛機（Napoli→Palermo）＋接駁',45,115,''],
 };
 function hav(a,b){const R=6371,r=x=>x*Math.PI/180;const dLa=r(b.lat-a.lat),dLo=r(b.lon-a.lon);
  const h=Math.sin(dLa/2)**2+Math.cos(r(a.lat))*Math.cos(r(b.lat))*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.sqrt(h));}
@@ -521,26 +605,29 @@ function transfer(a,b){
 }
 
 const PRESETS={
- classic:{name:'經典北進',desc:'羅馬 → 佛羅倫斯 → 威尼斯 → 米蘭，第一次去義大利的標準路線',w:{rome:3,florence:2,venice:2,milan:1},n:8,prefer:[]},
- grand:{name:'義大利精華',desc:'威尼斯 → 佛羅倫斯 → 羅馬 → 那不勒斯 → 索倫托，南北一次看完（威尼斯進、南義出）',w:{venice:2,florence:2,rome:3,naples:1,sorrento:2},n:10,prefer:['his']},
- south:{name:'羅馬＋南義',desc:'羅馬 → 那不勒斯 → 索倫托，古蹟、披薩、海岸線',w:{rome:3,naples:2,sorrento:2},n:7,prefer:['his','view']},
- north:{name:'北義美食湖區',desc:'米蘭 → 科莫湖 → 維洛納 → 威尼斯 → 波隆那，慢遊、美食、小鎮',w:{milan:2,como:1,verona:1,venice:2,bologna:2},n:9,prefer:['food','walk']},
- tuscany:{name:'托斯卡尼＋五漁村',desc:'佛羅倫斯 → 西恩納 → 比薩 → 五漁村，田園與海岸步道',w:{florence:3,siena:1,pisa:1,cinqueterre:2},n:7,prefer:['view','walk']},
- custom:{name:'自訂（空白）',desc:'從空白開始，自己選城市與景點',w:{rome:3,florence:2,venice:2,milan:1},n:7,prefer:[],blank:true},
+ classic:{name:'經典北進',desc:'羅馬 → 佛羅倫斯 → 威尼斯 → 米蘭（天數多時加入西恩納、維洛納、那不勒斯）',r:[['naples',2,13],['rome',4,0],['siena',1,11],['florence',3,0],['venice',3,0],['verona',1,12],['milan',2,0]],n:12,prefer:[]},
+ grand:{name:'義大利精華',desc:'威尼斯 → 佛羅倫斯 → 羅馬 → 那不勒斯 → 索倫托，南北一次看完（威尼斯進、南義出）',r:[['milan',2,14],['venice',3,0],['bologna',1,12],['florence',3,0],['rome',4,0],['naples',2,0],['sorrento',2,0]],n:12,prefer:['his']},
+ south:{name:'羅馬＋南義',desc:'羅馬 → 那不勒斯 → 索倫托，天數多時延伸到馬泰拉、普利亞、西西里',r:[['rome',3,0],['naples',3,0],['sorrento',3,0],['matera',2,11],['puglia',2,12],['sicily',3,14]],n:12,prefer:['his','view']},
+ north:{name:'北義美食湖區',desc:'米蘭 → 科莫湖 → 維洛納 → 威尼斯 → 波隆那，慢遊、美食、小鎮（天數多時加佛羅倫斯、西恩納）',r:[['milan',2,0],['como',2,0],['verona',1,0],['venice',3,0],['bologna',2,0],['florence',2,13],['siena',1,15]],n:11,prefer:['food','walk']},
+ tuscany:{name:'托斯卡尼＋五漁村',desc:'佛羅倫斯 → 西恩納 → 比薩 → 五漁村，田園與海岸步道（天數多時加波隆那、米蘭）',r:[['bologna',2,12],['florence',4,0],['siena',2,0],['pisa',1,0],['cinqueterre',3,0],['milan',2,14]],n:10,prefer:['view','walk']},
+ custom:{name:'自訂（空白）',desc:'從空白開始，自己選城市與景點',r:[['rome',3,0],['florence',2,0],['venice',2,0],['milan',1,0]],n:7,prefer:[],blank:true},
 };
 
 /* ============ 狀態 ============ */
-const SK='italy-trip-planner-v3';
+const SK='italy-trip-planner-v4';
 const PACE={relaxed:17.5,normal:19,packed:21};
 const newDay=c=>({city:c,picks:[],hotel:'',lunch:'',dinner:'',note:'',collapsed:false});
 let S;
 function save(){try{S.store[S.cur]={n:S.n,plan:S.plan};localStorage.setItem(SK,JSON.stringify(S))}catch(e){}}
-function allocate(w,n){
- let ks=Object.keys(w).slice(0,n);const tot=ks.reduce((a,k)=>a+w[k],0);
- const al={};ks.forEach(k=>al[k]=Math.max(1,Math.floor(n*w[k]/tot)));
+function allocate(r,n){
+ let inc=r.filter(x=>n>=x[2]);
+ if(inc.length>n){const keep=[...inc].sort((a,b)=>b[1]-a[1]).slice(0,n);inc=inc.filter(x=>keep.includes(x))}
+ const ks=inc.map(x=>x[0]),w={};inc.forEach(x=>w[x[0]]=x[1]);
+ const tot=ks.reduce((a,k)=>a+w[k],0),al={};
+ ks.forEach(k=>al[k]=Math.max(1,Math.floor(n*w[k]/tot)));
  const sum=()=>ks.reduce((a,k)=>a+al[k],0);
  while(sum()<n){const k=ks.reduce((b,k)=>(n*w[k]/tot-al[k])>(n*w[b]/tot-al[b])?k:b);al[k]++}
- while(sum()>n){const k=ks.filter(k=>al[k]>1).reduce((b,k)=>(n*w[k]/tot-al[k])<(n*w[b]/tot-al[b])?k:b,ks.find(k=>al[k]>1));if(!k)break;al[k]--}
+ while(sum()>n){const c=ks.filter(k=>al[k]>1);if(!c.length)break;const k=c.reduce((b,k)=>(n*w[k]/tot-al[k])<(n*w[b]/tot-al[b])?k:b);al[k]--}
  return ks.flatMap(k=>Array(al[k]).fill(k));
 }
 /* 自動勾選：依步調填滿一天，同城市前幾天已選過的不重複；偏好標籤優先 */
@@ -564,8 +651,15 @@ function fillDay(i){
  if(d.lunch&&d.lunch===d.dinner)d.dinner='';
 }
 const autoFillAll=()=>S.plan.forEach((_,i)=>fillDay(i));
+function reflow(){const p=PRESETS[S.cur];S.plan=allocate(p.r,S.n).map(newDay);if(!p.blank)autoFillAll();S.manual[S.cur]=false}
+function cityDays(k,delta){
+ const idx=S.plan.map((d,i)=>d.city===k?i:-1).filter(i=>i>=0);
+ if(delta>0){if(S.n>=30)return;const at=idx[idx.length-1]+1;S.plan.splice(at,0,newDay(k));S.n++;if(!PRESETS[S.cur].blank)fillDay(at)}
+ else{if(idx.length<=1||S.n<=1)return;S.plan.splice(idx[idx.length-1],1);S.n--}
+ S.manual[S.cur]=true;
+}
 function genItin(key){
- const p=PRESETS[key];S.n=p.n;S.plan=allocate(p.w,p.n).map(newDay);
+ const p=PRESETS[key];S.n=p.n;S.plan=allocate(p.r,p.n).map(newDay);
  if(!p.blank)autoFillAll();
 }
 function switchTo(key){
@@ -573,11 +667,11 @@ function switchTo(key){
  if(S.store[key]){S.n=S.store[key].n;S.plan=S.store[key].plan}else genItin(key);
 }
 function defaultState(){
- S={start:'',pax:2,pace:'normal',tier:2,season:1,twd:35,cur:'classic',store:{},n:0,plan:[]};
+ S={start:'',pax:2,pace:'normal',tier:2,season:1,twd:35,cur:'classic',store:{},manual:{},n:0,plan:[]};
  genItin('classic');return S;
 }
 function load(){try{const j=JSON.parse(localStorage.getItem(SK));
- if(j&&j.store&&PRESETS[j.cur]&&Array.isArray(j.plan)&&j.plan.every(d=>CITIES[d.city]))return j}catch(e){}return null}
+ if(j&&j.store&&PRESETS[j.cur]&&Array.isArray(j.plan)&&j.plan.every(d=>CITIES[d.city])){j.manual=j.manual||{};return j}}catch(e){}return null}
 
 /* ============ 計算 ============ */
 const $=s=>document.querySelector(s);
@@ -664,7 +758,7 @@ function dayHTML(i){
   return `<label class="attr"><input type="checkbox" data-a="pick" data-i="${i}" data-id="${a.id}"${on?' checked':''}>
    <span class="main"><b>${a.n}</b><span class="badge">${TAG[a.t]}</span>${a.r?'<span class="badge r">需預約</span>':''}${closed&&on?'<span class="badge x">當天可能休館</span>':''}<br>
    <span class="meta">⏱ ${dur(a.h)}　${a.c?'💶 €'+a.c:'免費'}${a.d?'　'+a.d:''}</span>
-   <a target="_blank" rel="noopener" href="${mapQ(a.n+' '+c.name)}" onclick="event.stopPropagation()">地圖 ↗</a></span><span class="thumbs" data-q="${a.n.replace(/（.*?）/g,'')} ${c.name.split('／')[0]}"></span></label>`}).join('');
+   <a target="_blank" rel="noopener" href="${mapQ(a.n+' '+c.name)}" onclick="event.stopPropagation()">地圖 ↗</a></span><span class="thumbs" data-q="${a.n.replace(/（.*?）/g,'')} ${c.name.split('／')[0]}" data-w="${esc(ATTR_EN[a.n]||'')}"></span></label>`}).join('');
  const restHTML=c.rests.map(r=>{
   const L=d.lunch===r.id,D=d.dinner===r.id;
   return `<div class="rest"><div class="main"><b>${r.n}</b><span class="badge">€${r.p}/人</span><br><span class="meta">📍${r.area}　🍽 ${r.dish}${r.note?'　'+r.note:''}</span>
@@ -694,6 +788,79 @@ function dayHTML(i){
   </div></section>`;
 }
 
+/* 路線示意圖（簡化的義大利輪廓，非精確比例） */
+const OUT=[[7.0,44.1],[7.1,45.1],[7.0,45.9],[8.5,46.4],[9.0,46.0],[10.0,46.5],[10.5,46.9],[11.5,47.0],[12.2,47.0],[13.7,46.5],[13.6,45.8],[12.4,45.4],[12.3,44.9],[12.4,44.2],[13.6,43.6],[14.2,42.5],[15.9,41.9],[16.2,41.3],[18.0,40.6],[18.5,40.1],[17.2,40.4],[16.6,39.8],[17.1,39.0],[16.5,38.4],[15.7,37.9],[15.6,38.2],[16.0,39.0],[15.7,40.0],[14.9,40.2],[14.3,40.8],[13.5,41.2],[12.5,41.7],[11.2,42.4],[10.5,43.0],[10.2,43.9],[9.0,44.4],[8.0,43.9],[7.5,43.8]];
+const SICILY=[[12.4,38.0],[13.4,38.2],[15.6,38.3],[15.1,37.3],[15.0,36.7],[14.3,37.0],[12.5,37.6]];
+const SARD=[[8.2,41.0],[9.7,41.0],[9.6,39.2],[8.5,39.0],[8.4,40.3]];
+const px=(lon,lat)=>[((lon-6.5)*22),((47.3-lat)*28)];
+const poly=a=>a.map(p=>px(...p).map(v=>v.toFixed(1)).join(',')).join(' ');
+const legKm=(a,b)=>Math.round(hav(CITIES[a],CITIES[b])*1.2/10)*10;
+const routeOf=cs=>cs.filter((c,i)=>i===0||c!==cs[i-1]);
+const routeKm=cs=>{const r=routeOf(cs);let t=0;for(let i=1;i<r.length;i++)t+=legKm(r[i-1],r[i]);return t};
+function routeMapHTML(){
+ const cs=S.plan.map(d=>d.city),order=routeOf(cs),first=[...new Set(order)];
+ const rng=k=>{const ix=cs.map((c,i)=>c===k?i+1:0).filter(Boolean),out=[];
+  ix.forEach(n=>{const l=out[out.length-1];if(l&&l[1]===n-1)l[1]=n;else out.push([n,n])});
+  return out.map(([a,b])=>a===b?'D'+a:`D${a}–${b}`).join(',')};
+ const pos=k=>{const p=px(CITIES[k].lon,CITIES[k].lat);return k==='sorrento'?[p[0]+4,p[1]+9]:k==='naples'?[p[0],p[1]-3]:p};
+ const pts=order.map(pos);
+ let x0=Math.min(...pts.map(p=>p[0]))-55,x1=Math.max(...pts.map(p=>p[0]))+55,y0=Math.min(...pts.map(p=>p[1]))-45,y1=Math.max(...pts.map(p=>p[1]))+45;
+ let w=x1-x0,h=y1-y0;const ar=1.35;
+ if(w/h<ar){const nw=h*ar;x0-=(nw-w)/2;w=nw}else{const nh=w/ar;y0-=(nh-h)/2;h=nh}
+ const sc=w/290,vh=w/ar,sw=sc;
+ const line=pts.map(p=>p.map(v=>v.toFixed(1)).join(',')).join(' ');
+ const boxes=[],hit=b=>boxes.some(o=>b[0]<o[2]&&b[2]>o[0]&&b[1]<o[3]&&b[3]>o[1]);
+ const tw=(t,fs)=>[...t].reduce((a,ch)=>a+(ch.charCodeAt(0)>255?fs:fs*.58),0);
+ const dotR=7*sc,allPos=KEYS.map(k=>({k,p:pos(k)}));
+ allPos.forEach(({k,p})=>{if(p[0]>=x0&&p[0]<=x0+w&&p[1]>=y0&&p[1]<=y0+vh)boxes.push([p[0]-dotR,p[1]-dotR,p[0]+dotR,p[1]+dotR])});
+ /* 在圓點四周依序嘗試 8 個位置，挑第一個不與其他文字重疊者 */
+ const place=(x,y,t,fs,r,force)=>{
+  const wd=tw(t,fs),g=3*sc,cand=[
+   ['start',x+r+g,y+fs*.35,x+r+g,y-fs*.65,x+r+g+wd,y+fs*.35],
+   ['end',x-r-g,y+fs*.35,x-r-g-wd,y-fs*.65,x-r-g,y+fs*.35],
+   ['middle',x,y-r-g,x-wd/2,y-r-g-fs,x+wd/2,y-r-g],
+   ['middle',x,y+r+g+fs,x-wd/2,y+r+g,x+wd/2,y+r+g+fs],
+   ['start',x+r*.7,y-r-g,x+r*.7,y-r-g-fs,x+r*.7+wd,y-r-g],
+   ['end',x-r*.7,y-r-g,x-r*.7-wd,y-r-g-fs,x-r*.7,y-r-g],
+   ['start',x+r*.7,y+r+g+fs,x+r*.7,y+r+g,x+r*.7+wd,y+r+g+fs],
+   ['end',x-r*.7,y+r+g+fs,x-r*.7-wd,y+r+g,x-r*.7,y+r+g+fs]];
+  for(const c of cand){const b=[c[3],c[4],c[5],c[6]];if(!hit(b)){boxes.push(b);return{a:c[0],x:c[1],y:c[2]}}}
+  if(!force)return null;
+  const c=cand[0];boxes.push([c[3],c[4],c[5],c[6]]);return{a:c[0],x:c[1],y:c[2]};
+ };
+ const FS=9.5*sc,halo=`stroke="var(--card)" stroke-width="${2.5*sc}" paint-order="stroke"`;
+ let dots='';
+ const labelOf={};
+ first.forEach(k=>{const [x,y]=pos(k),nm=CITIES[k].name.split('／')[0].replace(/（.*?）/g,''),t=`${nm} ${rng(k)}`;
+  labelOf[k]=place(x,y,t,FS,dotR,true);labelOf[k].t=t});
+ first.forEach(k=>{const [x,y]=pos(k),L=labelOf[k],n=order.indexOf(k)+1;
+  dots+=`<circle cx="${x}" cy="${y}" r="${dotR}" fill="var(--accent)"/><text x="${x}" y="${y+3.2*sc}" font-size="${8.5*sc}" fill="#fff" text-anchor="middle" font-weight="700">${n}</text>
+  <text x="${L.x}" y="${L.y}" font-size="${FS}" text-anchor="${L.a}" fill="var(--ink)" font-weight="700" ${halo}>${L.t}</text>`});
+ let legs='';
+ for(let i=1;i<order.length;i++){const a=pts[i-1],b=pts[i],mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2,t=legKm(order[i-1],order[i])+' km',fs=8*sc;
+  const L=place(mx,my,t,fs,2*sc,false);
+  if(L)legs+=`<text x="${L.x}" y="${L.y}" font-size="${fs}" text-anchor="${L.a}" fill="var(--accent-2)" font-weight="700" ${halo}>${t}</text>`}
+ KEYS.filter(k=>!first.includes(k)).forEach(k=>{const [x,y]=pos(k);if(x<x0||x>x0+w||y<y0||y>y0+vh)return;
+  const nm=CITIES[k].name.split('／')[0].replace(/（.*?）/g,''),L=place(x,y,nm,7.5*sc,3*sc,false);
+  dots+=`<circle cx="${x}" cy="${y}" r="${2.5*sc}" fill="var(--muted)" opacity=".55"/>${L?`<text x="${L.x}" y="${L.y}" font-size="${7.5*sc}" text-anchor="${L.a}" fill="var(--muted)">${nm}</text>`:''}`});
+ const svg=`<svg viewBox="${x0.toFixed(1)} ${y0.toFixed(1)} ${w.toFixed(1)} ${vh.toFixed(1)}" style="width:100%;height:auto;max-height:440px;display:block" role="img" aria-label="路線示意圖">
+  <rect x="${x0}" y="${y0}" width="${w}" height="${vh}" fill="var(--chip)" opacity=".5"/>
+  ${[OUT,SICILY,SARD].map(a=>`<polygon points="${poly(a)}" fill="var(--land)" stroke="var(--muted)" stroke-width="${sw*.7}" stroke-linejoin="round"/>`).join('')}
+  ${order.length>1?`<polyline points="${line}" fill="none" stroke="var(--accent)" stroke-width="${2*sc}" stroke-dasharray="${5*sc} ${3*sc}" stroke-linecap="round"/>`:''}${legs}${dots}</svg>`;
+ let tot=0,hrs=0;
+ const steps=order.map((k,i)=>{
+  let leg='';
+  if(i<order.length-1){const t=transfer(k,order[i+1]),km=legKm(k,order[i+1]);tot+=km;hrs+=t.h;
+   leg=`<div class="leg">↓ 約 ${km} km　${t.mode}　約 ${dur(t.h)}　€${t.lo}${t.hi>t.lo?'–'+t.hi:''}／人</div>`}
+  return `<li><span class="no">${i+1}</span><div><b>${CITIES[k].name}</b> <span class="small">${rng(k)}（${cs.filter(c=>c===k).length} 天）</span></div></li>${leg?`<li style="display:block">${leg}</li>`:''}`}).join('');
+ const cdays=order.filter((k,i)=>order.indexOf(k)===i).map(k=>{const n=cs.filter(c=>c===k).length,[mn,mx]=CITIES[k].rec,ok=n>=mn&&n<=mx;
+  return `<span class="cd"><b>${CITIES[k].name.split('／')[0]}</b> <button class="mbtn" data-a="cd" data-k="${k}" data-d="-1">−</button> ${n} 天 <button class="mbtn" data-a="cd" data-k="${k}" data-d="1">＋</button> <span class="small" style="color:var(${ok?'--accent-2':'--warn'})">${ok?'✓ 合適':n<mn?'偏少':'偏多'}（建議 ${mn===mx?mn:mn+'–'+mx}）</span></span>`}).join('');
+ return `<div>${svg}<div class="small">示意圖，非精確比例；距離為直線距離×1.2 的鐵公路概估。</div></div>
+  <div><h3 style="margin:0 0 6px">怎麼走：${PRESETS[S.cur].name}（${S.n} 天）</h3>
+   <div class="small" style="margin-bottom:8px">城市間移動共 <b>${order.length-1}</b> 段，約 <b>${tot.toLocaleString()} km</b>、純車程約 <b>${dur(hrs)}</b>。第 1 天抵達 ${CITIES[order[0]].name}，最後在 ${CITIES[order[order.length-1]].name} 離開。</div>
+   <h4>🗓 每個點待幾天（調總天數會自動重新取捨；手動調整後不再自動重排）</h4><div class="cdlist">${cdays}</div>
+   <ol class="steps" style="list-style:none">${steps}</ol></div>`;
+}
 function summaryHTML(){
  const B=budgetCalc(),pax=S.pax;
  const picks=S.plan.reduce((a,d)=>a+d.picks.length,0);
@@ -718,29 +885,64 @@ function summaryHTML(){
  <div class="panel noprint"><h3>輸出</h3><div style="display:flex;gap:8px;flex-wrap:wrap"><button id="copyBtn" class="primary">複製行程文字</button><button onclick="window.print()">列印／存成 PDF</button></div></div>`;
 }
 
-/* 景點縮圖：維基百科（免費、CC 授權）搜尋 API，惰性載入並快取 */
-const IMGK='italy-img-v1';let IMG={};
+const ATTR_EN={"古羅馬競技場": "Colosseum", "古羅馬廣場": "Roman Forum", "帕拉提諾山": "Palatine Hill", "梵蒂岡博物館": "Vatican Museums", "西斯汀禮拜堂": "Sistine Chapel", "聖彼得大教堂（可加登圓頂）": "St. Peter's Basilica", "萬神殿": "Pantheon, Rome", "特雷維噴泉": "Trevi Fountain", "西班牙階梯": "Spanish Steps", "人民廣場": "Piazza del Popolo", "納沃納廣場": "Piazza Navona", "波各賽美術館": "Galleria Borghese", "特拉斯提弗列區漫步": "Trastevere", "天使城堡": "Castel Sant'Angelo", "卡比托利歐博物館": "Capitoline Museums", "阿庇亞古道": "Appian Way", "聖卡利斯托地下墓穴": "Catacombs of San Callixtus", "佛羅倫斯大教堂（內部）": "Florence Cathedral", "大教堂穹頂登頂": "Brunelleschi's Dome", "喬托鐘樓": "Giotto's Campanile", "洗禮堂": "Florence Baptistery", "烏菲茲美術館": "Uffizi", "學院美術館（大衛像）": "Galleria dell'Accademia, Florence", "老橋": "Ponte Vecchio", "阿諾河畔散步": "Lungarno Florence", "米開朗基羅廣場看夕陽": "Piazzale Michelangelo", "彼提宮": "Palazzo Pitti", "波波里花園": "Boboli Gardens", "領主宮（舊宮）": "Palazzo Vecchio", "中央市場": "Mercato Centrale Firenze", "聖十字教堂": "Basilica of Santa Croce, Florence", "Oltrarno 手工藝街區漫步": "Oltrarno", "聖馬可大教堂（金色祭壇屏）": "St Mark's Basilica", "總督宮": "Doge's Palace", "嘆息橋": "Bridge of Sighs", "里奧托橋": "Rialto Bridge", "里奧托魚市場": "Rialto Market", "大運河水上巴士（1 號線）": "Vaporetto Grand Canal Venice", "貢多拉遊船": "Gondola", "穆拉諾島（玻璃工坊）": "Murano", "布拉諾島（彩色屋）": "Burano", "聖馬可鐘樓": "St Mark's Campanile", "學院美術館": "Gallerie dell'Accademia", "卡納雷吉歐區漫步": "Cannaregio", "猶太區（Ghetto）": "Venetian Ghetto", "佩姬‧古根漢美術館": "Peggy Guggenheim Collection", "米蘭大教堂（內部）": "Milan Cathedral", "大教堂頂樓露台": "Duomo di Milano terrace", "埃馬努埃爾二世迴廊": "Galleria Vittorio Emanuele II", "達文西《最後的晚餐》": "The Last Supper (Leonardo)", "斯福爾扎城堡庭院": "Sforza Castle", "斯福爾扎城堡博物館": "Sforza Castle", "森皮奧內公園": "Parco Sempione", "布雷拉區漫步": "Brera, Milan", "布雷拉畫廊": "Pinacoteca di Brera", "納維利運河區傍晚散步": "Navigli", "垂直森林（遠觀）": "Bosco Verticale", "斯卡拉歌劇院博物館": "La Scala", "Fondazione Prada 當代藝術": "Fondazione Prada", "國家考古博物館（龐貝文物）": "National Archaeological Museum, Naples", "龐貝古城": "Pompeii", "赫庫蘭尼姆古城": "Herculaneum", "維蘇威火山口健行": "Mount Vesuvius", "斯帕卡那不勒斯老城漫步": "Spaccanapoli", "Sansevero 禮拜堂（蒙面基督）": "Sansevero Chapel", "蛋堡（Castel dell'Ovo）海濱": "Castel dell'Ovo", "那不勒斯地下城導覽": "Napoli Sotterranea", "索倫托舊城漫步": "Sorrento", "波西塔諾（Positano）": "Positano", "阿瑪菲鎮": "Amalfi", "阿瑪菲大教堂": "Amalfi Cathedral", "拉維洛 Villa Rufolo 花園": "Villa Rufolo", "諸神之路（Path of the Gods）健行": "Path of the Gods", "卡布里島一日遊（從索倫托搭船）": "Capri", "卡布里島一日遊": "Capri", "檸檬莊園導覽（含 Limoncello 品嚐）": "Limoncello", "Cinque Terre Card 火車＋步道通票（1 日）": "Cinque Terre", "蒙泰羅索 → 韋爾納扎步道（約 2 小時）": "Monterosso al Mare", "馬納羅拉日落觀景台": "Manarola", "韋爾納扎港口": "Vernazza", "科尼利亞（山上村）": "Corniglia", "里奧馬焦雷愛之路（部分路段）": "Riomaggiore", "波爾托韋內雷（Portovenere）": "Portovenere", "斜塔（登頂）": "Leaning Tower of Pisa", "奇蹟廣場": "Piazza dei Miracoli", "比薩大教堂": "Pisa Cathedral", "比薩洗禮堂": "Pisa Baptistery", "比薩墓園（Camposanto）": "Camposanto Monumentale", "Borgo Stretto 市集街漫步": "Borgo Stretto Pisa", "阿諾河畔 Lungarno 散步": "Lungarno Pisa", "貝殼廣場（Piazza del Campo）": "Piazza del Campo", "曼加塔樓（Torre del Mangia）": "Torre del Mangia", "西恩納大教堂": "Siena Cathedral", "皮科洛米尼圖書館": "Piccolomini Library", "聖母瑪利亞醫院博物館": "Santa Maria della Scala", "Fortezza Medicea 公園": "Fortezza Medicea Siena", "維洛納競技場": "Verona Arena", "茱麗葉之家": "Juliet's House", "香草廣場": "Piazza delle Erbe, Verona", "Torre dei Lamberti 鐘塔": "Torre dei Lamberti", "Castelvecchio 古堡博物館": "Castelvecchio Museum", "斯卡拉橋（Ponte Scaligero）": "Ponte Scaligero", "Ponte Pietra 石橋": "Ponte Pietra", "維洛納羅馬劇場": "Roman Theatre of Verona", "Giardino Giusti 花園": "Giardino Giusti", "競技場歌劇（夏季）": "Arena di Verona Opera Festival", "主廣場（Piazza Maggiore）": "Piazza Maggiore", "海神噴泉": "Fountain of Neptune, Bologna", "聖白托羅尼歐大教堂": "Basilica of San Petronio", "阿西內利塔（登高）": "Two Towers, Bologna", "聖盧卡拱廊（世界最長拱廊，約 3.8 公里）": "Portico of San Luca", "Quadrilatero 美食街區": "Quadrilatero Bologna", "Archiginnasio 解剖劇場": "Archiginnasio of Bologna", "手工麵烹飪課（Tagliatelle／Tortellini）": "Tortellini", "聖斯德望教堂群（七教堂）": "Santo Stefano, Bologna", "科莫市區漫步": "Como", "Brunate 纜車觀景": "Brunate", "貝拉吉奧（Bellagio）小鎮": "Bellagio", "瓦倫納（Varenna）小鎮": "Varenna", "Villa Monastero": "Villa Monastero", "Villa del Balbianello 花園": "Villa del Balbianello", "Villa Carlotta 植物園": "Villa Carlotta", "湖上渡輪一日遊（多站）": "Lake Como","巴勒摩大教堂": "Palermo Cathedral", "諾曼王宮": "Palazzo dei Normanni", "帕拉提納禮拜堂": "Cappella Palatina", "四首歌廣場": "Quattro Canti", "Ballarò 市集": "Ballarò", "馬西莫劇院": "Teatro Massimo", "蒙雷阿萊大教堂": "Monreale Cathedral", "切法盧（海邊小鎮）": "Cefalù", "阿格里真托神殿谷": "Valley of the Temples", "Sassi di Matera 石頭城區": "Sassi di Matera", "岩洞教堂（Santa Maria de Idris）": "Santa Maria de Idris", "馬泰拉大教堂": "Matera Cathedral", "穴居之家（Casa Grotta）": "Sassi di Matera", "Murgia 國家公園觀景台": "Parco della Murgia Materana", "阿爾貝羅貝洛（Trulli 石頭屋）": "Alberobello", "波利尼亞諾阿馬雷（Polignano a Mare）": "Polignano a Mare", "奧斯圖尼（白色之城）": "Ostuni", "萊切巴洛克古城": "Lecce", "巴里老城（Bari Vecchia）": "Bari", "蒙特城堡（Castel del Monte）": "Castel del Monte, Apulia"};
+/* 景點縮圖：維基百科＋維基共享資源（免費、CC 授權），惰性載入並快取 */
+const IMGK='italy-img-v2';let IMG={};
 try{IMG=JSON.parse(localStorage.getItem(IMGK))||{}}catch(e){}
-const imgQueue=[];let imgBusy=0;
+const imgQueue=[];let imgRunning=false,imgPause=0;
+const esc=x=>String(x).replace(/"/g,'&quot;');
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function paintThumbs(el,list){
- el.innerHTML=list.map(x=>`<a href="https://zh.wikipedia.org/?curid=${x.id}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="${x.t.replace(/"/g,'')}（維基百科）"><img loading="lazy" referrerpolicy="no-referrer" alt="${x.t.replace(/"/g,'')}" src="${x.u}"></a>`).join('');
+ el.innerHTML=list.map(x=>`<a href="${x.l}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="${esc(x.t)}（點擊看來源與授權）"><img loading="lazy" referrerpolicy="no-referrer" alt="${esc(x.t)}" src="${x.u}"></a>`).join('');
 }
-async function fetchThumbs(q){
- const url='https://zh.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrlimit=5&prop=pageimages&piprop=thumbnail&pithumbsize=240&pilimit=5&gsrsearch='+encodeURIComponent(q);
- const r=await fetch(url);const j=await r.json();
- const pg=Object.values((j.query&&j.query.pages)||{}).filter(p=>p.thumbnail).sort((a,b)=>a.index-b.index).slice(0,2);
- return pg.map(p=>({id:p.pageid,t:p.title,u:p.thumbnail.source}));
+async function api(host,q){
+ const r=await fetch(`https://${host}/w/api.php?format=json&origin=*&action=query&`+q);
+ if(r.status===429){imgPause=Date.now()+60000;throw new Error('429')}
+ return r.json();
 }
-function pumpImgs(){
- while(imgBusy<3&&imgQueue.length){
-  const el=imgQueue.shift(),q=el.dataset.q;imgBusy++;
-  fetchThumbs(q).then(list=>{IMG[q]=list;try{localStorage.setItem(IMGK,JSON.stringify(IMG))}catch(e){}if(el.isConnected)paintThumbs(el,list)},()=>{}).finally(()=>{imgBusy--;pumpImgs()});
- }
+/* 一次查多個條目的代表圖（減少請求數） */
+async function wikiBatch(terms){
+ const j=await api('en.wikipedia.org','redirects=1&prop=pageimages&piprop=thumbnail%7Cname&pithumbsize=260&titles='+encodeURIComponent(terms.join('|')));
+ const q=j.query||{},back={};terms.forEach(t=>back[t]=t);
+ [...(q.normalized||[]),...(q.redirects||[])].forEach(n=>{for(const t in back)if(back[t]===n.from)back[t]=n.to});
+ const by={};Object.values(q.pages||{}).forEach(p=>by[p.title]=p);
+ const out={};
+ terms.forEach(t=>{const p=by[back[t]];if(p&&p.thumbnail)out[t]={u:p.thumbnail.source,t:p.title,l:'https://en.wikipedia.org/wiki/'+encodeURIComponent(p.title.replace(/ /g,'_')),file:p.pageimage||''}});
+ return out;
+}
+async function commonsOne(term,skipFile,want){
+ const j=await api('commons.wikimedia.org','generator=search&gsrnamespace=6&gsrlimit=6&prop=imageinfo&iiprop=url&iiurlwidth=260&gsrsearch='+encodeURIComponent(term));
+ const out=[];
+ Object.values((j.query&&j.query.pages)||{}).sort((a,b)=>a.index-b.index).forEach(p=>{
+  const ii=p.imageinfo&&p.imageinfo[0];if(out.length>=want||!ii||!ii.thumburl||!/\.(jpe?g|png)$/i.test(ii.thumburl.split('?')[0]))return;
+  if(p.title.replace(/^File:/,'').replace(/ /g,'_')===skipFile)return;
+  out.push({u:ii.thumburl,t:p.title.replace(/^File:/,'').replace(/\.\w+$/,''),l:ii.descriptionurl});
+ });
+ return out;
+}
+async function runImgs(){
+ if(imgRunning)return;imgRunning=true;
+ try{
+  while(imgQueue.length){
+   if(Date.now()<imgPause){await sleep(imgPause-Date.now());}
+   const batch=imgQueue.splice(0,12),keys=[...new Set(batch.map(el=>el.dataset.w||el.dataset.q))];
+   let prim={};
+   try{prim=await wikiBatch(keys)}catch(e){if(Date.now()<imgPause)imgQueue.unshift(...batch);continue}
+   for(const k of keys){
+    const els=batch.filter(el=>(el.dataset.w||el.dataset.q)===k),main=prim[k];
+    let list=main?[{u:main.u,t:main.t,l:main.l}]:[];
+    try{list=list.concat(await commonsOne(k,main?main.file:'',main?1:2))}catch(e){if(Date.now()<imgPause){imgQueue.unshift(...els);continue}}
+    if(list.length){IMG[k]=list;try{localStorage.setItem(IMGK,JSON.stringify(IMG))}catch(e){}}
+    els.forEach(el=>{if(el.isConnected)paintThumbs(el,list)});
+    await sleep(250);
+   }
+  }
+ }finally{imgRunning=false}
 }
 let imgObs;
 function loadThumbs(){
- if(!imgObs)imgObs=new IntersectionObserver(es=>es.forEach(en=>{if(!en.isIntersecting)return;imgObs.unobserve(en.target);imgQueue.push(en.target);pumpImgs()}),{rootMargin:'300px'});
- document.querySelectorAll('.thumbs').forEach(el=>{const q=el.dataset.q;if(IMG[q])paintThumbs(el,IMG[q]);else imgObs.observe(el)});
+ if(!imgObs)imgObs=new IntersectionObserver(es=>es.forEach(en=>{if(!en.isIntersecting)return;imgObs.unobserve(en.target);imgQueue.push(en.target);setTimeout(runImgs,150)}),{rootMargin:'300px'});
+ document.querySelectorAll('.thumbs').forEach(el=>{const q=el.dataset.w||el.dataset.q;if(IMG[q])paintThumbs(el,IMG[q]);else imgObs.observe(el)});
 }
 let activeDay=0;
 function pickActive(){let a=0;document.querySelectorAll('.day').forEach((e,i)=>{if(e.getBoundingClientRect().top<=170)a=i});return a}
@@ -763,7 +965,11 @@ function render(){
  $('#summary').innerHTML=summaryHTML();
  $('#days').value=S.n;
  updateMap();loadThumbs();
- $('#tabs').innerHTML=Object.entries(PRESETS).map(([k,p])=>`<button data-k="${k}" class="${k===S.cur?'on':''}">${p.name}</button>`).join('');
+ $('#routeBox').innerHTML=routeMapHTML();
+ $('#tabs').innerHTML=Object.entries(PRESETS).map(([k,p])=>{
+  const cs=k===S.cur?S.plan.map(d=>d.city):(S.store[k]?S.store[k].plan.map(d=>d.city):allocate(p.r,p.n));
+  const days=k===S.cur?S.n:(S.store[k]?S.store[k].n:p.n);
+  return `<button data-k="${k}" class="${k===S.cur?'on':''}">${p.name}<span class="tab-km">${days} 天 · ${routeKm(cs).toLocaleString()} km</span></button>`}).join('');
  $('#presetDesc').textContent=PRESETS[S.cur].desc;
 }
 function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),1800)}
@@ -785,7 +991,9 @@ function exportText(){
 /* ============ 事件 ============ */
 function setDays(n){
  n=Math.max(1,Math.min(30,Math.round(n)||1));
- while(S.plan.length<n){S.plan.push(newDay(S.plan.length?S.plan[S.plan.length-1].city:'rome'));if(!PRESETS[S.cur].blank)fillDay(S.plan.length-1)}
+ const pr=PRESETS[S.cur];
+ if(!pr.blank&&!S.manual[S.cur]){S.n=n;reflow();return}
+ while(S.plan.length<n){S.plan.push(newDay(S.plan.length?S.plan[S.plan.length-1].city:'rome'));if(!pr.blank)fillDay(S.plan.length-1)}
  S.plan.length=n;S.n=n;
 }
 function syncControls(){
@@ -807,14 +1015,15 @@ function init(){
  $('#tier').onchange=e=>{S.tier=+e.target.value;upd()};
  $('#season').onchange=e=>{S.season=+e.target.value;upd()};
  $('#twd').onchange=e=>{S.twd=+e.target.value||35;upd()};
- $('#regenBtn').onclick=()=>{if(S.plan.some(d=>d.picks.length)&&!confirm('會依目前步調重新勾選這個方案的景點與餐廳，確定嗎？'))return;autoFillAll();upd();toast('已重新自動排')};
+ $('#regenBtn').onclick=()=>{if(S.plan.some(d=>d.picks.length)&&!confirm('會依目前步調重新勾選這個方案的景點與餐廳，確定嗎？'))return;S.manual[S.cur]||PRESETS[S.cur].blank?autoFillAll():reflow();upd();toast('已重新自動排')};
  $('#resetBtn').onclick=()=>{if(confirm('清除所有方案並回到預設？')){defaultState();syncControls();upd()}};
  let tick=false;
  window.addEventListener('scroll',()=>{if(tick)return;tick=true;requestAnimationFrame(()=>{tick=false;const a=pickActive();if(a!==activeDay){activeDay=a;updateMap()}})},{passive:true});
+ $('#routeBox').addEventListener('click',e=>{const b=e.target.closest('[data-a=cd]');if(!b)return;cityDays(b.dataset.k,+b.dataset.d);upd()});
  const list=$('#days-list');
  list.addEventListener('change',e=>{
   const t=e.target,a=t.dataset.a,i=+t.dataset.i;if(!a)return;activeDay=i;const d=S.plan[i];
-  if(a==='city'){d.city=t.value;d.picks=[];d.hotel='';d.lunch='';d.dinner='';if(!PRESETS[S.cur].blank)fillDay(i)}
+  if(a==='city'){S.manual[S.cur]=true;d.city=t.value;d.picks=[];d.hotel='';d.lunch='';d.dinner='';if(!PRESETS[S.cur].blank)fillDay(i)}
   else if(a==='pick'){const id=t.dataset.id;d.picks=t.checked?[...d.picks,id]:d.picks.filter(x=>x!==id)}
   else if(a==='hotel'){d.hotel=t.value}
   else if(a==='note'){d.note=t.value;save();return}
