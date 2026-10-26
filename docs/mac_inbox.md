@@ -2184,3 +2184,8 @@ commit `160bea67`（Windows：flutter analyze 無 error、01:18 +692 ~2: All tes
 commit `c13adf83`（Windows：flutter analyze 無 error、02:30 +693 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #659：問題回報 #756：抓圖任務 23 筆因空資料的 image_asset_id 例外失敗
   結果：全部完成：根因已修（抓圖流程把「文字過多被拒」的圖當成已匯入而讀到空資料），23 筆失敗任務已備份並重排；245 筆 queued 是設計上不抓（非 worker 故障）。
+
+## M209（2026-10-27 07:53）狀態：待做
+commit `806d1dfc`（Windows：flutter analyze 無 error、02:08 +693 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #228：模擬使用者・設定
+  結果：第 13 輪：設定 1/1 通過、findings 1→0（8 秒）；新問題 #757 已修；UX 建議 #474 補充 1 項。
