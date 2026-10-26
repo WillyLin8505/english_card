@@ -227,8 +227,11 @@ def main(argv=None) -> int:
         upto = max([c["t"] for c in cards if c["t"]] or [state.get("since") or ""])
         ok, line = checks()
         if not ok:
-            log("checks failed → not pushing; reported as an issue")
+            log("checks failed → not pushing app/; reported as an issue")
             report_failure(line, cards)
+            # the Mac's inbox and screenshots don't wait for app tests (10/26: #726–#729 shots stuck)
+            LOCK.unlink(missing_ok=True)
+            push_non_app()
             return 1
         sh("git", "add", "-A")
         # GitHub refuses files over 100 MB and then every later push fails too (10/22: a 327 MB
