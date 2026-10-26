@@ -1061,7 +1061,7 @@ async function loadNear(){
  if(!LN)LN=L.layerGroup().addTo(LM);
  LN.clearLayers();
  if(!nearOn){setNearMsg('');return}
- if(LM.getZoom()<12){setNearMsg('放大一點（縮放 ≥ 12）才會顯示附近大景點');return}
+ if(LM.getZoom()<11){setNearMsg('放大一點才會顯示附近大景點');return}
  if(Date.now()<nearPause){setNearMsg('稍後再試（維基百科限流中）');return}
  const ctr=LM.getCenter(),b=LM.getBounds();
  const rad=Math.max(300,Math.min(10000,Math.round(ctr.distanceTo(b.getNorthEast())*0.8)));
