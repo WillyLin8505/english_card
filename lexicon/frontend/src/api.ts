@@ -90,6 +90,27 @@ export const api = {
     request<T>("POST", path, body ?? {}, headers),
   put: <T>(path: string, body: unknown) => request<T>("PUT", path, body),
   del: <T>(path: string) => request<T>("DELETE", path),
+  /** POST a picture file as the raw body (card #646: the photo-grid upload test). */
+  async upload<T>(path: string, file: Blob): Promise<T> {
+    const key = memoryKey ?? storedKey();
+    const res = await fetch(`/api${path}`, {
+      method: "POST",
+      headers: { "Content-Type": file.type || "image/jpeg", ...(key ? { "X-API-Key": key } : {}) },
+      body: file,
+    });
+    if (res.status === 401) keyListeners.forEach((f) => f());
+    if (!res.ok) {
+      let msg = `${res.status} ${res.statusText}`;
+      try {
+        const j = await res.json();
+        msg = typeof j.detail === "string" ? j.detail : JSON.stringify(j.detail ?? j);
+      } catch {
+        /* not JSON */
+      }
+      throw new ApiError(res.status, msg);
+    }
+    return res.json() as Promise<T>;
+  },
   async download(path: string, filename: string) {
     const key = memoryKey ?? storedKey();
     const res = await fetch(`/api${path}`, { headers: key ? { "X-API-Key": key } : {} });

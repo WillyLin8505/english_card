@@ -2049,3 +2049,16 @@ owner 原話：「這個表格不用同步在手機上，我是要在後台這�
 2. 表格改由 Windows 做在後台（#734）。#732 已關。
 3. 卡 #645 的結果檔裡有一段「需要 Mac：照片詳情改用 grid 顯示表格」，**這段先不要做**，等 owner 在後台測完再說。
 4. 之後的方向：手機調難度時，從伺服器 GET /images/{id}/grid、POST /photo-grid 抓對應格子的字。現在不用做。
+
+## M190（2026-10-26 20:43）狀態：待做（Windows 卡 #625 交給 Mac 的 App 畫面部分）
+卡：問題回報 #713：[Mac] 2026-10-26 M144（owner 回報）：#691 辨識伺服器候選太少／太簡單（交 Windows）
+
+無（純伺服器提示詞）；但伺服器要重啟才生效（tagger/start_tagger.bat，由 owner 執行）。
+
+# 卡 #625 / 問題回報 #713 結果
+結論：辨識伺服器 /tag 候選改為依 level 取字（level±1）、一般每次 10–12 個且至少 2 個動詞或形容詞；focus=harder／actions／descriptions 回 4–6 個真正的新字（actions 只回動詞）。未在真實模型上量測（尚未重啟 tagger），需 Mac 重驗 photo-1792753703603088。
+
+根因：(1) level 參數沒進快取鍵，換程度拿到同一份舊結果；(2) 預設只要 6–8 個，且 harder／easier 時完全不提 level；(3) harder 寫死「進階字」不隨 level，actions 只寫 prefer verbs 模型仍給名詞。
+改動：tagger/tagging_server.py（PROMPT_VERSION → v10-level-target，快取鍵加 level，FOCUS 文字、build_prompt 數量與 level 段）；tests/test_tagging_server.py、tagger/test_tagging_server.py 同步斷言。
+測試：tagger/test_tagging_server.py 13 通過；tests/test_tagging_server.py 20 通過、2 失敗（translate／llama 503，llama-server 未開，與本改動無關）。golden／QC 未跑（未動詞庫資料，無資料改動、無備份）。
+剩下：「避開使用者其他照片正在學的常見字」靠 App 傳 exclude（伺服器已支援，最多 40 字）；App 端是否傳入需 Mac 確認。

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { api } from '../api';
+import { PhotoUploadTest, StoredPhotoGrid } from '../photoGrid';
 import { cefrSummary, ErrorBox, Link, Loading, TagScores, useApp, useLoad } from '../ui';
 
 type Sense = { id: number; lemma: string; pos: string; translation: string | null };
@@ -31,6 +32,7 @@ export default function Images() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [shown, setShown] = useState<Asset | null>(null); // picture whose 詞性 × CEFR table is open (card #646)
   const run = async (fn: () => Promise<string>) => {
     setBusy(true); setError(''); setMessage('');
     try { setMessage(await fn()); library.reload(true); } catch (e) { setError((e as Error).message); } finally { setBusy(false); }
@@ -64,6 +66,8 @@ export default function Images() {
         return `已核准 ${r.approved} 張 AI 認出該字的圖片。`;
       })}>核准 AI 認出該字的圖片（{top} 張）</button>}
     </div>
+    <PhotoUploadTest target={target} native={native} />
+    {shown && <StoredPhotoGrid assetId={shown.asset_id} src={`/api/images/${shown.asset_id}/file`} target={target} native={native} onClose={() => setShown(null)} />}
     {!library.data ? <Loading /> : words.length === 0 ? <p className="muted">{only === 'pending' ? '沒有待審核的圖片。' : '尚未儲存圖片。'}</p> : words.map(([lemma, bySense]) => (
       <section key={lemma} className="card">
         <div className="toolbar" style={{ justifyContent: 'space-between' }}>
@@ -92,6 +96,7 @@ export default function Images() {
                   </details>}
                   <p className="muted" style={{ overflowWrap: 'anywhere' }}>{a.width} × {a.height} · {a.license_code} · {a.author?.slice(0, 80)} · <a href={a.page_url} target="_blank" rel="noreferrer">來源頁 ↗</a></p>
                   <div className="toolbar">
+                    <button className="btn btn-small" onClick={() => setShown(a)}>詞性 × CEFR 表格</button>
                     <button className="btn btn-small" disabled={busy || a.review_status === 'approved'} onClick={() => run(async () => { await api.post(`/images/${a.id}/approve`, {}); return '已核准。'; })}>核准</button>
                     <button className="btn btn-small" disabled={busy || a.review_status === 'rejected'} onClick={() => run(async () => { await api.post(`/images/${a.id}/reject`, {}); return '已拒絕。'; })}>拒絕</button>
                     <button className="btn btn-small" disabled={busy || a.role === 'representative'} onClick={() => run(async () => { await api.post(`/images/${a.id}/representative`); return '已設為代表圖。'; })}>設為代表圖</button>

@@ -1,6 +1,7 @@
 """Sense-bound image acquisition (Wikidata／Commons → Open Images →
 Smithsonian CC0 → Openverse, the spec's order) and review. No automatic
 approval."""
+import asyncio
 import csv
 import hashlib
 import html
@@ -23,7 +24,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Literal
 
-from fastapi import Depends, HTTPException, Query
+from fastapi import Depends, HTTPException, Query, Request
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from PIL import Image
@@ -1896,6 +1897,32 @@ def _write_tag_timing(asset_id, stages: list, seconds: float, outcome: str) -> N
 TAG_MAX_ATTEMPTS = 3
 
 
+def _tag_uploaded_photo(s, data: bytes, mime: str) -> list[dict]:
+    """Labels for an uploaded picture (card #646): the tagger's first candidates, graded
+    by the same rule as stored labels. Nothing is written to the database."""
+    doing = urllib.parse.quote('後台上傳照片測試（照片表格）')
+    request = urllib.request.Request(
+        config.AI_URL.rstrip('/') + '/tag?level=B1&lang=en&native=zh-TW', data=data,
+        method='POST', headers={'X-API-Key': config.AI_KEY, 'X-Activity': doing,
+                                'X-Inference-Priority': 'background',
+                                'X-Activity-Ref': 'photo-grid-upload',
+                                'Content-Type': mime})
+    try:
+        with urllib.request.urlopen(request, timeout=300) as response:
+            payload = _tag_response(json.loads(response.read()))
+    except urllib.error.HTTPError as error:
+        raise _tag_http_failure(error) from error
+    tags = []
+    for c in payload['candidates']:
+        word = str(c.get('word', '')).strip()
+        if not word:
+            continue
+        tag = {'word': word, 'pos': c.get('pos') or 'noun', 'point': c.get('point'),
+               'box': c.get('box'), 'score': c.get('visualConfidence') or 0}
+        tags.append(classify_tag_cefr(s, tag))
+    return tags
+
+
 def _tag_response(payload):
     if not isinstance(payload, dict) or not isinstance(payload.get('candidates'), list):
         raise ValueError('Invalid tag response: candidates must be a list')
@@ -3433,6 +3460,20 @@ def register(app, auth):
         tags = [t if tag_level(t) else classify_tag_cefr(s, t)
                 for t in body.get('tags') or [] if isinstance(t, dict)]
         return {'grid': photo_grid.build_grid(s, tags)}
+
+    @app.post('/photo-grid/tag-upload', dependencies=[auth])
+    async def photo_grid_tag_upload(request: Request, s=Depends(db.get_session)):
+        # 後台「上傳照片測試」（問題回報 #734）: the tagger labels an uploaded picture; nothing is
+        # stored. The UI then sends these labels to POST /photo-grid for the table.
+        data = await request.body()
+        mime = request.headers.get('content-type', '').split(';')[0].strip()
+        if not data or len(data) > 20 * 1024 * 1024 or not mime.startswith('image/'):
+            raise HTTPException(400, '請上傳一張圖片（20 MB 以內）')
+        try:
+            tags = await asyncio.to_thread(_tag_uploaded_photo, s, data, mime)
+        except (ValueError, OSError) as e:
+            raise HTTPException(400, str(e))
+        return {'tags': tags, 'grid': photo_grid.build_grid(s, tags)}
 
     @app.post('/images/{asset_id}/retag-short', dependencies=[auth])
     def retag_short_endpoint(asset_id: int, s=Depends(db.get_session)):
