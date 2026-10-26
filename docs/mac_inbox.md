@@ -2163,3 +2163,9 @@ tagger 已在 23:12 用 start_tagger.bat 重啟，8765、8790 都回 200，裡�
 commit `b7dd7409`（Windows：flutter analyze 無 error、00:57 +692 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #657：問題回報 #748：[owner] [Mac] 2026-10-26 iPhone 12 重驗 M199–M201（ta
   結果：card657 完成：tagger 等級過濾、cefr 回傳、快取與 compact JSON 已改並重啟；QC regressions=[]，需要 Mac：重驗（iPhone 12，M199–M201）
+
+## M205（2026-10-27 03:03）狀態：待做（Windows 卡 #496 交給 Mac 的 App 畫面部分）
+卡：模擬使用者・法語（英語母語者學法語）
+
+英文裝置引導中文殘留、正式旗標、實機音訊/相機驗收。
+變更：僅本輪測試產物；未改App/伺服器/詞庫，未commit/push。無資料修改，無需備份還原；golden/QC未跑（純檢查）。
