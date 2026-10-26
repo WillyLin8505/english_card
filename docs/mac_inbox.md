@@ -1878,3 +1878,12 @@ commit `e3212885`（Windows：flutter analyze 無 error、01:55 +649 ~2: All tes
 
 如需實機畫面驗收，由 Mac 確認上述三種情境；本輪未執行視覺或相機互動驗證。
 剩餘：派工程式收取結果並處理 #535 結案；本輪未更動卡片 agent／status。
+
+## M173（2026-10-26 19:49）狀態：待做
+commit `33f50223`（Windows：flutter analyze 無 error、02:48 +662 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #612：問題回報 #635：[Mac] 2026-10-23 M87（iPhone 模擬器）：#564 存到相片冊對話框
+  結果：已確認 #635 已修：存到相片冊對話框的封面改用固定大小 Image（dialogs.dart SaveToAlbumDialog），不再用 LayoutBuilder，dry layout 例外不會發生。
+- 卡 #616：問題回報 #710：法語模擬 A1：linkLexicon 合併 assis→asseoir 後只有39字，固定40字斷
+  結果：問題回報 #710 已修：測試的固定 40 字斷言改為連結後補足再斷言；A1 模擬現在 40/40 通過（原本 39）。
+- 卡 #226：模擬使用者・複習
+  結果：第 171 輪：2/2 通過（learner 252 秒、restart 51 秒）；無新問題；UX 建議＝沿用 #515／#485，未重複開單。
