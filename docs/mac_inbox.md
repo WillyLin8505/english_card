@@ -1812,7 +1812,7 @@ app/lib/screens/album_screen.dart 約第 252–272 行，卡片集標籤 `卡片
 
 未動資料／程式；無備份、golden/QC 不受影響。
 
-## M165（2026-10-26 19:27）狀態：待做（Windows 卡 #619 交給 Mac 的 App 畫面部分）
+## M165（2026-10-26 19:27）狀態：完成
 卡：問題回報 #634：[Mac] 2026-10-23 M86（owner 的 iPhone 12 實機檢查）：database_simulation：等待提示與
 
 app/lib/widgets/database_word_detail.dart 的 addDatabaseWord（約 344–353 行）：
