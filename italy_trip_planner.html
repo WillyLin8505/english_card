@@ -45,7 +45,7 @@ button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
 .steps .no{background:var(--accent);color:#fff;border-radius:99px;min-width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex:none}
 .steps .leg{margin:0 0 0 34px;color:var(--accent-2);font-size:13px}
 .cdlist{display:flex;flex-wrap:wrap;gap:6px 14px;margin-bottom:10px;font-size:13px}.cd{white-space:nowrap}
-.tab-km{font-size:11px;opacity:.8;margin-left:4px}
+.tab-km{font-size:11px;opacity:.85;margin-left:4px;color:inherit}.tabs button.on .tab-km{color:#fff}
 .attr.on{background:color-mix(in srgb,var(--accent) 12%,transparent);box-shadow:inset 3px 0 0 var(--accent)}
 kbd{background:var(--chip);border:1px solid var(--line);border-radius:4px;padding:0 5px;font-size:11px}
 #mpMap{isolation:isolate;z-index:0}
@@ -1008,7 +1008,7 @@ function updateMap(){
   LG=L.layerGroup().addTo(LM);
   LM.on('popupopen',ev=>{const f=Object.keys(MK).find(k=>MK[k]===ev.popup._source);if(f){openId=f;selId=f}});
   LM.on('popupclose',()=>{openId=''});
-  setTimeout(()=>LM.invalidateSize(),80);
+  setTimeout(()=>{LM.invalidateSize();LFit='';updateMap()},120);
  }
  const keep=openId;LG.clearLayers();if(LLine){LLine.remove();LLine=null}Object.keys(MK).forEach(k=>delete MK[k]);
  const vis=c.attractions.filter(a=>llOf(a)&&(!isFar(a,c)||d.picks.includes(a.id)));
@@ -1017,7 +1017,7 @@ function updateMap(){
   const ll=COORD[a.n],on=d.picks.includes(a.id),n=items.indexOf(a)+1,o=S.plan.findIndex((x,j)=>j!==i&&x.city===d.city&&x.picks.includes(a.id));
   const cls=on?'sel':o>=0?'other':'',txt=on?n:o>=0?'D'+(o+1):(TAGEMO[a.t]||'•');
   const m=L.marker(ll,{icon:L.divIcon({className:'',html:`<div class="pin ${cls}${hoverId===a.id?' hl':''}">${txt}</div>`,iconSize:[28,28],iconAnchor:[14,14]}),title:a.n,riseOnHover:true,zIndexOffset:on?1000:0});
-  m.bindTooltip(a.n.replace(/（.*?）/g,''),{direction:'top',offset:[0,-14],permanent:on,className:on?'selname':''});
+  m.bindTooltip(a.n.replace(/（.*?）/g,''),{direction:'top',offset:[0,-14],permanent:false,className:on?'selname':''});
   m.bindPopup(()=>popupHTML(a,activeDay,S.plan[activeDay]),{maxWidth:230});
   m.on('click',ev=>{selId=a.id;if(ev.originalEvent&&ev.originalEvent.shiftKey){m.closePopup();togglePick(activeDay,a.id)}});
   m.on('mouseover',()=>{hoverId=a.id});m.on('mouseout',()=>{hoverId=''});
