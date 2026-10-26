@@ -382,9 +382,11 @@ bool addDatabaseWord(BuildContext context, LexiconPack pack, LexEntry word,
     // linkLexicon (問題回報 #634): it gives the card another part of
     // speech's meaning when this one has none (frightening, hanging), and a
     // form folded into an existing card (問題回報 #51) is found by spelling.
+    final before = (repo.entry(added.id)?.meaning ?? '').trim().isEmpty;
     repo.linkLexicon(pack);
     final fin = repo.entry(added.id) ?? repo.entryByWord(word.lemma);
-    final waiting = (fin?.meaning ?? '').trim().isEmpty;
+    // Folded away and not found by its own spelling: judge as before.
+    final waiting = fin == null ? before : fin.meaning.trim().isEmpty;
     if (!quiet) {
       messenger.showSnackBar(SnackBar(
           content: UiText(waiting
