@@ -1168,3 +1168,10 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 |----|----|----|----|----|
 | #704 每個字都能點到詳情 | 通過 | Mac 0744d24b：單字詳情的近義詞、反義詞、同音詞、近音詞、拼寫相似詞、衍生詞、相關詞、詞形變化，資料庫有的字都能點開該字詳情 | — | — |
 | #705 不要重複兩個分級 | 通過 | Mac 0744d24b：標題下「名詞 · 中階（B1）」拿掉等級文字，只留等級標章 | — | — |
+
+## 2026-10-26 M152（owner 回報）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #706 illuminate 說明錯（App） | 通過 | Mac 5c64fb1c：導向詞卡時略過罕用條目，illuminated 改導到 illuminate（動詞）「照亮、照明」；lexicon_pack_test | — | — |
+| #706 illuminate 詞庫資料（交 Windows） | 不通過 | illuminate（adj，48818）rare_usage、C2，義項全是 etymology-2／obsolete／archaic，建議降級或移除；illuminated（adj，17587）有正確義項卻因 card=illuminate 被導走，請確認歸併 | — | 中 |
