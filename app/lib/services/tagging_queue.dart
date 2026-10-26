@@ -435,7 +435,7 @@ class TaggingQueue extends ChangeNotifier {
     final fresh = <String>[];
     await _run(photoId, null, () async {
       final found = await _request(photo,
-          level: level, exclude: [for (final c in photo.candidates) c.word]);
+          level: level, exclude: _topUpExclude(repo, photo, level));
       final latest = repo.photo(photo.id);
       if (latest == null) return 0;
       final merged = _merge(latest.candidates, found);
@@ -451,6 +451,32 @@ class TaggingQueue extends ChangeNotifier {
       return fresh.length;
     });
     return fresh;
+  }
+
+  /// What a top-up asks the recognizer to skip (問題回報 #691, Windows 卡
+  /// #625): this photo's words first, then words the learner already has
+  /// in the word book at or below [level] — the everyday words their other
+  /// photos taught — so 更多 brings new words. The server takes 40.
+  static List<String> _topUpExclude(
+      WordDatabaseRepository repo, Photo photo, String level) {
+    final out = <String>[];
+    final seen = <String>{};
+    void add(String word) {
+      final key = word.trim().toLowerCase();
+      if (key.isEmpty || !seen.add(key) || out.length >= 40) return;
+      out.add(word.trim());
+    }
+
+    for (final c in photo.candidates) {
+      add(c.word);
+    }
+    final top = cefrLevels.indexOf(level);
+    for (final e in repo.entries.reversed) {
+      if (out.length >= 40) break;
+      final at = e.level == null ? -1 : cefrLevels.indexOf(e.level!);
+      if (at >= 0 && at <= top && !e.word.contains(' ')) add(e.word);
+    }
+    return out;
   }
 
   Future<int> _run(
@@ -473,7 +499,7 @@ class TaggingQueue extends ChangeNotifier {
     final found = await _request(photo,
         level: level,
         focus: focus,
-        exclude: [for (final c in photo.candidates) c.word]);
+        exclude: _topUpExclude(repo, photo, level));
     final latest = repo.photo(photo.id);
     if (latest == null) return 0;
     final merged = _merge(latest.candidates, found);
