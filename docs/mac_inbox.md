@@ -2133,3 +2133,28 @@ tagger 已在 23:12 用 start_tagger.bat 重啟，8765、8790 都回 200，裡�
 卡：問題回報 #625：[Mac] 2026-10-23 owner 要求：翻卡第一次發音是機器人聲：owner 要求：補更多真人發音（交 Windows）
 
 無。
+
+## M203（2026-10-26 23:37）狀態：待做（Windows 卡 #657 交給 Mac 的 App 畫面部分）
+卡：問題回報 #748：[owner] [Mac] 2026-10-26 iPhone 12 重驗 M199–M201（tagger：M199 harder 補字的
+
+重驗（iPhone 12，M199–M201）
+
+需要 Mac：重驗 M199–M201（photo-1792753703603088，level=C2）。
+- 改了什麼（tagger/tagging_server.py）：
+  1. 等級過濾：低於「等級減一級」的標籤全部丟掉，不再用 fill-to-3 補低等字（C2 不再放 B2）。focus=easier 不過濾。
+     適用 無 focus / harder / actions / descriptions。
+  2. 一般補字也套用同一過濾。快取鍵本來就含 PROMPT_VERSION，相同 12 字是快取命中且 prompt 沒變，真正缺的是過濾。
+     現在快取存模型原始標籤，過濾與 cefr 每次回傳前套用，規則改了不會吐舊結果。
+  3. 候選帶 cefr 與 cefrSource（list=CEFR-J+Oxford；estimate=frequency 估算）。查不到的字不給 cefr。
+  4. 候選改 compact JSON（與 CEFR 路徑相同開關）：合成圖單張 13–14 s → 7–9 s（單張粗估）。
+- 測試：tagger 測試 21 項通過（舊的 filter_harder 測試改為新規則測試）。
+- 數字：pedestrian=B2(list)、propulsion=B2(estimate)，C2 學習者下皆被濾掉；iridescent=C2(estimate) 保留。
+- 重啟：停掉舊 tagging_server（PID 52992），以 tagger/start_tagger.bat 啟動；/health ok；新 PID 38504 聽 8765。llama-server 8790 未動。
+- 備份：tagger/card657_tagging_server.py.bak、tagger/card657_test_tagging_server.py.bak。還原：把備份複製回原檔名後重啟 tagger。
+- golden/QC：qc.py check --live（輸出 C:/Users/USER/AppData/Local/Temp/card657/qc_after.json）regressions=[]，golden 指標
+  photo.expected_sense 0.9286、其餘 photo.* 與 word.* 皆 1.0。未另跑 50 張照片的模型重標（需逐張推論）。
+- 未做／限制：
+  - 無法用 M199 原圖實測（圖不在 repo；直接打 8765 需要 API key，依規則不讀）。
+  - mode=cefr 路徑仍回 cefr=null（其帶間上限邏輯依賴該欄位為空，屬另一決策）。
+  - 可能不一致（未確認）：App 的 word_level 有派生字上限，tagger 的 cefr 沒有，派生字的帶可能不同。未開問題回報。
+  - 延遲 7–9 s 為合成圖單次量測，Mac 實機數字需重驗。
