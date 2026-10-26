@@ -1802,3 +1802,49 @@ commit `4f0e3fff`（Windows：flutter analyze 無 error、01:47 +646 ~2: All tes
 commit `81d59547`（Windows：flutter analyze 無 error、01:21 +647 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #496：模擬使用者・法語（英語母語者學法語）
   結果：法語模擬第23輪：3/4通過；A1因合法合併40→39觸發斷言；新回報#710、#711，6153詞仍有7878句缺英譯。
+
+## M164（2026-10-26 19:27）狀態：待做（Windows 卡 #618 交給 Mac 的 App 畫面部分）
+卡：問題回報 #633：[Mac] 2026-10-23 M86（owner 的 iPhone 12 實機檢查）：相片冊主頁卡片集標籤
+
+app/lib/screens/album_screen.dart 約第 252–272 行，卡片集標籤 `卡片集 · ${album.author}` 放在 ConstrainedBox(maxWidth: 140)、字 11pt，沒設 maxLines／overflow。iPhone 12 上「卡片集 · English Card 編輯部」超過 140 寬，換成兩行，高度長高後壓到封面照片上的字。
+修法：UiText 加 maxLines: 1、overflow: TextOverflow.ellipsis（可再把 maxWidth 放寬為封面寬的 ~70%，或超長時只顯示「卡片集」）。測試 app/test/card446_album_review_grid_test.dart:69 只比對「卡片集 · 編輯部」，修後仍通過。
+注意：標籤字串用的是 album.author，資料端（作者為 English Card 編輯部）正確，不需改詞庫。
+
+未動資料／程式；無備份、golden/QC 不受影響。
+
+## M165（2026-10-26 19:27）狀態：待做（Windows 卡 #619 交給 Mac 的 App 畫面部分）
+卡：問題回報 #634：[Mac] 2026-10-23 M86（owner 的 iPhone 12 實機檢查）：database_simulation：等待提示與
+
+app/lib/widgets/database_word_detail.dart 的 addDatabaseWord（約 344–353 行）：
+- 現況：`waiting` 在 `repo.linkLexicon(pack)` 之前算（entry.meaning 為空）。但 linkLexicon 會替同拼字、其他詞性有中文的卡補上中文並排進複習，所以提示「中文補齊後會自動排進複習」與實際不符（frightening 名詞、hanging 形容詞）。
+- 修法：先 linkLexicon，再用 `repo.entry(added.id)` 判斷；若 linkLexicon 把該 id 併入既有卡（問題回報 #51 的 drop id）而回傳 null，改用 `repo.entryByWord(word.lemma)` 取最終那張卡。waiting = 最終卡的 meaning 為空。
+  程式形狀：repo.linkLexicon(pack); final fin = repo.entry(added.id) ?? repo.entryByWord(word.lemma); final waiting = (fin?.meaning ?? '').trim().isEmpty;
+- 測試：加一個 widget／repo 測試：同拼字 A 詞性無中文、B 詞性有中文，加入 A 後 snackbar 應為「已加入我的單字本與複習」。
+- 範圍：database_tag_sections.dart 的批次加入（quiet）不顯示提示，不受影響；全庫「無中文但同拼字別詞性有中文」的數量要在 Mac 以 pack 查（Windows 未動資料，無前後數字）。
+
+未改任何檔案／資料；golden/QC 未跑（無變更）。
+
+## M166（2026-10-26 19:27）狀態：待做（Windows 卡 #620 交給 Mac 的 App 畫面部分）
+卡：問題回報 #636：[Mac] 2026-10-23 M87（iPhone 模擬器）：#564 卡片集標籤壓到封面文字
+
+相片冊卡片左上「卡片集 · 作者」標籤（maxWidth 140、字 11px，未限行數）在作者名長（如「English Card 編輯部」）時換成兩行，標籤變高、往下蓋到封面上的文字。修法：在 UiText 加 maxLines: 1、overflow: TextOverflow.ellipsis（必要時 softWrap: false），或把 maxWidth 放寬為 約 (卡寬 - 16 - 右上沙漏徽章寬)；也可只顯示「卡片集」、作者移到詳情頁。非 iOS 專屬，各平台都會發生（字寬不同只是門檻不同）。
+
+細節：
+- 全庫影響：album.deckSlug != null 且作者較長的圖片集卡片都會中；詞庫資料不需改。
+- 未改資料，無備份；golden/QC 未跑（無資料變動）。
+- 剩下：Mac 改畫面並驗證，之後關 #636。
+
+## M167（2026-10-26 19:27）狀態：待做（Windows 卡 #621 交給 Mac 的 App 畫面部分）
+卡：問題回報 #692：[給 Mac] [意見回饋] 複習：會到正面的按鈕幫我放在單字最上面和最下面 兩個都要
+
+在複習頁（背面）把「回到正面」按鈕在單字最上方與最下方各放一個（兩個都要，行為相同）。問題回報 #692 已標「給 Mac（inbox M145）」。
+
+- 改動程式／資料：無
+- 備份：不需要
+- golden/QC：未執行（沒有資料變動）
+- 剩下：Mac 實作畫面後驗證。
+
+## M168（2026-10-26 19:29）狀態：待做（Windows 卡 #612 交給 Mac 的 App 畫面部分）
+卡：問題回報 #635：[Mac] 2026-10-23 M87（iPhone 模擬器）：#564 存到相片冊對話框
+
+在 iPhone 模擬器再看一次對話框確認可選相片冊後關卡。

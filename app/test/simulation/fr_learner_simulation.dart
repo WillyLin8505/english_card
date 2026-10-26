@@ -187,20 +187,32 @@ void main() {
         clock: () => testNow,
         profile: UserVocabularyProfile.start(level, now: testNow));
     final posOf = <String, String>{};
-    for (final w in near) {
-      if (repo.entries.length >= want) break;
-      try {
-        repo.addWord(
-            word: w.lemma,
-            pos: shortPos(w.pos),
-            meaning: w.learnerMeaning ?? '',
-            level: w.cefr);
-        posOf[w.lemma] = w.pos;
-      } on DuplicateWordException {
-        continue;
+    void fill() {
+      for (final w in near) {
+        if (repo.entries.length >= want) break;
+        if (posOf.containsKey(w.lemma)) continue;
+        try {
+          repo.addWord(
+              word: w.lemma,
+              pos: shortPos(w.pos),
+              meaning: w.learnerMeaning ?? '',
+              level: w.cefr);
+          posOf[w.lemma] = w.pos;
+        } on DuplicateWordException {
+          continue;
+        }
       }
     }
+
+    fill();
     repo.linkLexicon(pack);
+    // linkLexicon merges a learner word into its canonical headword when both
+    // are saved (assis→asseoir, 問題回報 #710): the collection shrinks, so top
+    // it up with words not yet tried and link again. The count check stays exact.
+    for (var round = 0; round < 3 && repo.entries.length < want; round++) {
+      fill();
+      repo.linkLexicon(pack);
+    }
     final settings =
         AppSettings.inMemory(learningLanguage: 'fr', nativeLanguage: 'en');
     final speaker = _RecordingSpeaker();
