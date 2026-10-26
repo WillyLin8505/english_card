@@ -527,6 +527,10 @@ def to_candidates(raw: list[dict], lexicon: 'Lexicon | None' = None,
             'usefulness': 0.5,
             'inferred': False,
         }
+        # Card #631: the model answers (500,500) / (500,400) when it cannot place a scene word
+        # (night, city); with no box that is a guess, not a location. Flag it for re-grounding.
+        if not item['box'] and (round(float(point[0])), round(float(point[1]))) in ((500, 500), (500, 400)):
+            item['pointUngrounded'] = True
         if lexicon is not None:
             item.update(lexicon.describe(word))
         out.append(item)

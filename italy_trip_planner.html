@@ -1,0 +1,838 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>義大利行程規劃器</title>
+<style>
+:root{
+  --bg:#f6f3ee; --card:#ffffff; --ink:#1f2328; --muted:#6b7280; --line:#e4ded3;
+  --accent:#b4432b; --accent-2:#2f6f5e; --warn:#b45309; --warn-bg:#fef3c7; --bad:#b91c1c; --bad-bg:#fee2e2;
+  --ok-bg:#dcf0e8; --land:#e9e3d6; --chip:#efe9dc; --shadow:0 1px 3px rgba(60,40,20,.08);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#16181b; --card:#1f2327; --ink:#e8e6e1; --muted:#9aa0a6; --line:#323840;
+    --accent:#ef8a6d; --accent-2:#6fc3a9; --warn:#fbbf24; --warn-bg:#3b2f10; --bad:#f87171; --bad-bg:#3d1c1c;
+    --ok-bg:#183328; --land:#2a2f35; --chip:#2b3036; --shadow:none;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,"Segoe UI","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif}
+header{padding:20px 16px 8px;max-width:1280px;margin:0 auto}
+h1{margin:0 0 2px;font-size:24px}
+.sub{color:var(--muted);font-size:13px}
+.wrap{max-width:1280px;margin:0 auto;padding:0 16px 40px}
+.controls{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin:12px 0 16px;display:grid;gap:12px 16px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));box-shadow:var(--shadow)}
+.controls label{display:flex;flex-direction:column;font-size:12px;color:var(--muted);gap:4px}
+input,select,textarea,button{font:inherit;color:inherit}
+input,select,textarea{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 9px;min-width:0;width:100%}
+textarea{resize:vertical;min-height:38px}
+.stepper{display:flex;gap:4px}
+.stepper input{text-align:center}
+.stepper button{width:38px;flex:none}
+button{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.preset{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.preset span{font-size:12px;color:var(--muted)}
+.tabs{display:flex;flex-wrap:wrap;gap:6px}.tabs button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.thumbs{display:flex;gap:4px;flex:none}.thumbs img{width:76px;height:56px;object-fit:cover;border-radius:6px;background:var(--chip);display:block}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start}
+@media (max-width:960px){.layout{grid-template-columns:1fr}}
+#mapcol{align-self:stretch}
+#mappanel{position:sticky;top:12px}
+#mpFrame{width:100%;height:calc(100vh - 215px);min-height:260px;border:1px solid var(--line);border-radius:10px;background:var(--chip)}
+#mpHead h3{margin:0 0 4px}
+.sumgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:12px;margin-top:8px}
+@media (max-width:960px){#mapcol{position:sticky;top:0;z-index:5;order:-1}#mappanel{position:static;padding:8px}#mpFrame{height:26vh;min-height:150px}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:var(--shadow)}
+.panel h3{margin:0 0 8px;font-size:15px}
+.day{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:14px;box-shadow:var(--shadow);overflow:hidden}
+.day-h{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line);cursor:pointer}
+.day-h .dn{background:var(--accent);color:#fff;border-radius:8px;padding:2px 10px;font-weight:700}
+.day-h .date{color:var(--muted);font-size:13px}
+.day-h select{width:auto;font-weight:600}
+.day-h .sp{flex:1}
+.day-h .brief{font-size:12px;color:var(--muted)}
+.day-b{padding:12px 14px;display:grid;gap:12px}
+.collapsed .day-b{display:none}
+.transfer{background:var(--ok-bg);border-radius:10px;padding:9px 12px;font-size:13px}
+.note-line{font-size:13px;color:var(--muted)}
+.badge{display:inline-block;font-size:11px;padding:1px 7px;border-radius:99px;background:var(--chip);margin-left:4px;white-space:nowrap}
+.badge.r{background:var(--warn-bg);color:var(--warn)}
+.badge.x{background:var(--bad-bg);color:var(--bad)}
+h4{margin:0 0 6px;font-size:13px;color:var(--muted);font-weight:600;letter-spacing:.04em}
+.attr{display:flex;gap:9px;align-items:flex-start;padding:7px 8px;border-radius:8px;cursor:pointer}
+.attr:hover{background:var(--chip)}
+.attr input{width:18px;height:18px;margin-top:3px;flex:none;accent-color:var(--accent)}
+.attr .main{flex:1;min-width:0}
+.attr .meta{font-size:12px;color:var(--muted)}
+.attr a,.link{color:var(--accent-2);font-size:12px;text-decoration:none}
+.attr a:hover,.link:hover{text-decoration:underline}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:760px){.cols{grid-template-columns:1fr}}
+.hotel-card{border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-size:13px;margin-top:6px}
+.rest{display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--line);font-size:13px}
+.rest:last-child{border:0}
+.rest .main{flex:1;min-width:0}
+.rest .meta{color:var(--muted);font-size:12px}
+.mbtn{padding:2px 8px;font-size:12px;border-radius:99px}
+.mbtn.on{background:var(--accent-2);color:#fff;border-color:var(--accent-2)}
+.timeline{font-size:13px;display:grid;gap:2px}
+.slot{display:flex;gap:10px}
+.slot .t{width:96px;flex:none;color:var(--muted);font-variant-numeric:tabular-nums}
+.slot.move .l{color:var(--accent-2)}
+.slot.meal .l{color:var(--warn)}
+.bar{height:8px;background:var(--chip);border-radius:99px;overflow:hidden;margin:6px 0 2px}
+.bar i{display:block;height:100%;background:var(--accent-2)}
+.bar.over i{background:var(--bad)}
+.alert{background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:6px 10px;font-size:13px}
+.alert.bad{background:var(--bad-bg);color:var(--bad)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+td{padding:3px 0}
+td:last-child{text-align:right;font-variant-numeric:tabular-nums}
+tr.total td{border-top:1px solid var(--line);font-weight:700;padding-top:6px}
+.small{font-size:12px;color:var(--muted)}
+.resv li{margin:2px 0;font-size:13px}
+svg.map{width:100%;height:auto;display:block}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:99px;font-size:13px;opacity:0;pointer-events:none;transition:.2s}
+.toast.show{opacity:1}
+@media print{
+  .controls,aside .noprint,.mbtn,button{display:none!important}
+  .layout{grid-template-columns:1fr} #mappanel{position:static}
+  .collapsed .day-b{display:grid}
+  body{background:#fff}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>🇮🇹 義大利行程規劃器</h1>
+  <div class="sub">調整天數 → 為每天選城市 → 勾選景點 → 挑飯店與餐廳。右側即時估算時間與預算。所有設定會自動存在這個瀏覽器。</div>
+</header>
+<div class="wrap">
+  <section class="controls" id="controls">
+    <label>旅行天數
+      <div class="stepper"><button id="dMinus" aria-label="減少一天">−</button><input id="days" type="number" min="1" max="30"><button id="dPlus" aria-label="增加一天">＋</button></div>
+    </label>
+    <label>出發日期（可不填）<input id="start" type="date"></label>
+    <label>人數<input id="pax" type="number" min="1" max="12"></label>
+    <label>步調
+      <select id="pace"><option value="relaxed">悠閒（約 17:30 收工）</option><option value="normal">標準（約 19:00 收工）</option><option value="packed">緊湊（約 21:00 收工）</option></select>
+    </label>
+    <label>住宿偏好
+      <select id="tier"><option value="1">經濟</option><option value="2">中等</option><option value="3">高級</option></select>
+    </label>
+    <label>旅遊季節（影響房價）
+      <select id="season"><option value="0.8">淡季 11–2 月</option><option value="1">平季 3–4、10 月</option><option value="1.3">旺季 5–9 月</option></select>
+    </label>
+    <label>1 歐元 ≈ 台幣<input id="twd" type="number" step="0.1" min="1"></label>
+    <div class="preset">
+      <span>行程方案（各自獨立保存，切換不會互相覆蓋）：</span>
+      <div id="tabs" class="tabs"></div>
+    </div>
+    <div class="preset">
+      <span id="presetDesc" class="small"></span>
+      <button id="regenBtn">依目前步調重新自動排這個方案</button>
+      <button id="resetBtn">全部重設</button>
+    </div>
+  </section>
+
+  <div class="layout">
+    <main id="days-list"></main>
+    <aside id="mapcol"><div class="panel" id="mappanel"><div id="mpHead"></div><iframe id="mpFrame" title="當日景點地圖" referrerpolicy="no-referrer-when-downgrade"></iframe></div></aside>
+  </div>
+  <section id="summary" class="sumgrid"></section>
+  <p class="small">⚠ 景點縮圖由維基百科搜尋自動帶入（免費、CC 授權，點圖可看來源與授權），偶爾會抓到相近但不完全相同的圖。景點門票、房價、車程與餐廳均為概估，實際價格與營業時間請於出發前確認（熱門景點務必提早預約）。飯店與餐廳名單為參考起點，請以 Google 地圖最新評價為準。機票、旅遊保險、城市稅（Tassa di soggiorno，每人每晚約 €2–7）未計入預算。</p>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ 資料 ============ */
+const A=(n,h,c,t,d='',r=false,x=null)=>({n,h,c,t,d,r,x});
+const H=(n,area,t,p,note)=>({n,area,t,p,note});
+const R=(n,area,dish,p,meal,note='')=>({n,area,dish,p,meal,note});
+const TAG={his:'歷史',art:'藝術',view:'景觀',food:'美食',walk:'漫步',trip:'出遊'};
+
+const CITIES={
+rome:{name:'羅馬',lat:41.90,lon:12.50,ls:'r',rec:[3,4],
+ tip:'景點分散在古羅馬、梵蒂岡、市中心三塊，建議分天走；夏天中午很熱，室內景點排中午。',
+ airport:'FCO 機場 → 市區：Leonardo Express 直達 Termini 約 32 分、€14；計程車定額 €55。',
+ attractions:[
+  A('古羅馬競技場',1.5,18,'his','整合票（含廣場與帕拉提諾山），務必網路預約時段',true),
+  A('古羅馬廣場',1.2,0,'his','門票含在競技場整合票內（同一張票）'),
+  A('帕拉提諾山',1,0,'his','門票含在競技場整合票內（同一張票），可看廣場全景'),
+  A('梵蒂岡博物館',2,25,'art','週日休館（每月最後一個週日免費但人極多）',true,[0]),
+  A('西斯汀禮拜堂',0.8,0,'art','在梵蒂岡博物館參觀動線的最後，含在同一張門票',true,[0]),
+  A('聖彼得大教堂（可加登圓頂）',1.5,0,'his','登圓頂約 €10–15；注意服裝規定（遮肩遮膝）'),
+  A('萬神殿',0.5,5,'his','每週有預約制，查最新規定'),
+  A('特雷維噴泉',0.3,0,'walk','清晨或深夜人最少'),
+  A('西班牙階梯',0.4,0,'walk'),
+  A('人民廣場',0.4,0,'walk'),
+  A('納沃納廣場',0.5,0,'walk'),
+  A('波各賽美術館',2,15,'art','只能預約時段入場（每梯次 2 小時）',true,[1]),
+  A('特拉斯提弗列區漫步',1.5,0,'walk','傍晚逛、直接在區內吃晚餐'),
+  A('天使城堡',1.5,15,'his','',false,[1]),
+  A('卡比托利歐博物館',2,16,'art'),
+  A('阿庇亞古道',2.5,0,'his','租腳踏車最適合；週日較安靜'),
+  A('聖卡利斯托地下墓穴',1.2,10,'his','導覽制，需預約',true),
+ ],
+ hotels:[
+  H('The Beehive','Termini 車站附近',1,95,'設計旅舍／小旅館，交通方便但周邊較雜'),
+  H('Hotel Artemide','Via Nazionale，近 Termini',2,230,'4★，步行可達特雷維噴泉，有地鐵'),
+  H('Hotel Campo de\' Fiori','花之廣場旁',2,260,'步行到萬神殿、納沃納；治安與氣氛佳'),
+  H('Hotel Raphael','納沃納廣場附近',3,560,'5★ 老牌精品酒店'),
+ ],
+ rests:[
+  R('Roscioli Salumeria con Cucina','花之廣場','卡邦那拉、乳酪火腿盤',45,'D','熱門，需訂位'),
+  R('Da Enzo al 29','特拉斯提弗列','Cacio e pepe、炸朝鮮薊',32,'LD','常排隊，開門前到'),
+  R('Armando al Pantheon','萬神殿旁','Amatriciana、Gricia',45,'LD','幾乎必須先訂位'),
+  R('Pizzarium Bonci','梵蒂岡附近','切塊披薩',10,'L','逛完梵蒂岡的午餐首選'),
+  R('Supplizio','Via dei Banchi Vecchi','炸飯糰 Supplì',8,'L','快速小吃'),
+  R('Giolitti','萬神殿附近','百年老店冰淇淋',5,'LD','甜點'),
+ ]},
+florence:{name:'佛羅倫斯',lat:43.77,lon:11.25,ls:'r',rec:[2,3],
+ tip:'市區可全程步行；烏菲茲、學院美術館週一休，熱門館請預約。',
+ airport:'FLR 機場 → 市區：T2 電車約 20 分、€1.7；計程車約 €25。',
+ attractions:[
+  A('佛羅倫斯大教堂（內部）',0.5,0,'his','內部免費，需排隊'),
+  A('大教堂穹頂登頂',1.2,30,'view','Brunelleschi Pass 套票（也含鐘樓、洗禮堂），需預約時段',true),
+  A('喬托鐘樓',0.7,0,'view','含在 Brunelleschi Pass 套票內'),
+  A('洗禮堂',0.4,0,'his','含在 Brunelleschi Pass 套票內'),
+  A('烏菲茲美術館',2.5,25,'art','文藝復興寶庫，網路預約',true,[1]),
+  A('學院美術館（大衛像）',1,16,'art','',true,[1]),
+  A('老橋',0.3,0,'walk'),
+  A('阿諾河畔散步',0.5,0,'walk'),
+  A('米開朗基羅廣場看夕陽',1.2,0,'view','日落前 40 分鐘到；可搭 12/13 號公車'),
+  A('彼提宮',1.5,16,'art','套票（含波波里花園）約 €22',false,[1]),
+  A('波波里花園',1.2,10,'view','整合票價格見彼提宮',false,[1]),
+  A('領主宮（舊宮）',1.5,13,'his'),
+  A('中央市場',1,0,'food','一樓生鮮、二樓美食廣場'),
+  A('聖十字教堂',1,8,'his','米開朗基羅、伽利略長眠處'),
+  A('Oltrarno 手工藝街區漫步',1.5,0,'walk'),
+ ],
+ hotels:[
+  H('Plus Florence','聖母瑪利亞車站附近',1,95,'旅舍＋飯店，有泳池，離車站近'),
+  H('Hotel Cestelli','聖母瑪利亞新教堂區',1,130,'3★ 家庭經營，步行到主教堂 10 分'),
+  H('Hotel Davanzati','Via Porta Rossa，近領主廣場',2,220,'位置極佳，步行到所有主要景點'),
+  H('Hotel Savoy','共和廣場',3,600,'5★ 地標級酒店'),
+ ],
+ rests:[
+  R('All\'Antico Vinaio','Via dei Neri','Schiacciata 三明治',9,'L','排隊長，旁邊分店可繞開'),
+  R('Trattoria Mario','中央市場旁','佛羅倫斯 T 骨牛排、燉牛肚',25,'L','只開午餐、週日休，現金為主'),
+  R('Trattoria Sostanza','聖母瑪利亞新教堂北','奶油雞、T 骨牛排',50,'D','需訂位'),
+  R('Mercato Centrale','San Lorenzo','牛肚包、松露麵、披薩',18,'LD','選擇多，適合各吃各的'),
+  R('Osteria Santo Spirito','Oltrarno','托斯卡尼家常菜',35,'D','廣場外座位氣氛好'),
+  R('Gelateria della Passera','Oltrarno','手工冰淇淋',4,'LD','甜點'),
+ ]},
+venice:{name:'威尼斯',lat:45.44,lon:12.32,ls:'r',rec:[2,2],
+ tip:'本島沒有車，行李越少越好；日歸客多，住一晚才看得到清晨與夜晚的安靜威尼斯。進入本島日間可能需繳入城費（旺季日期請查官網）。',
+ airport:'VCE 機場 → 本島：ATVO/ACTV 巴士到 Piazzale Roma 約 25 分、€10；水上巴士 Alilaguna 約 75 分、€15；水上計程車約 €120。',
+ attractions:[
+  A('聖馬可大教堂（金色祭壇屏）',1,3,'his','預約入場；大教堂內不能帶大包',true),
+  A('總督宮',1.5,30,'his','聖馬可廣場博物館通票',true),
+  A('嘆息橋',0.3,0,'his','從外面看免費；走進橋內需總督宮門票'),
+  A('里奧托橋',0.4,0,'walk'),
+  A('里奧托魚市場',0.8,0,'walk','早上 8–11 點最有氣氛'),
+  A('大運河水上巴士（1 號線）',1,9.5,'view','單程 €9.5，或一日票 €25；坐窗邊'),
+  A('貢多拉遊船',0.5,90,'trip','每船 €90（約 30 分，最多 5–6 人，夜間更貴）；可共享分攤'),
+  A('穆拉諾島（玻璃工坊）',2,9.5,'trip','從 Fondamente Nove 搭船，€9.5 單程'),
+  A('布拉諾島（彩色屋）',2,9.5,'trip','從穆拉諾搭船過去，€9.5 單程'),
+  A('聖馬可鐘樓',0.7,10,'view'),
+  A('學院美術館',1.5,15,'art','',false,null),
+  A('卡納雷吉歐區漫步',1,0,'walk','遊客少，適合傍晚'),
+  A('猶太區（Ghetto）',0.8,0,'walk'),
+  A('佩姬‧古根漢美術館',1.5,16,'art','',false,[2]),
+ ],
+ hotels:[
+  H('梅斯特雷 Mestre 區連鎖飯店','Mestre 火車站周邊',1,100,'省錢首選，火車 10 分鐘到本島（末班車注意）'),
+  H('Hotel Antiche Figure','Santa Lucia 車站旁',2,240,'4★，出火車站最方便，行李好推'),
+  H('Hotel Flora','近聖馬可廣場',2,290,'4★ 有私人花園，位置安靜'),
+  H('Hotel Danieli','Riva degli Schiavoni',3,800,'威尼斯地標級老飯店'),
+ ],
+ rests:[
+  R('Cantina Do Mori','里奧托附近','Cicchetti 小點＋葡萄酒',15,'L','站著吃的古早 bacaro'),
+  R('Trattoria alla Madonna','San Polo','海鮮義大利麵、炸海鮮',40,'LD','老字號，需訂位'),
+  R('Osteria alle Testiere','Castello','當日海鮮',65,'D','座位少，需提早訂位'),
+  R('Dal Moro\'s Fresh Pasta To Go','Frari 教堂附近','現做義大利麵外帶',9,'L','省錢午餐'),
+  R('Pasticceria Tonolo','Dorsoduro','威尼斯甜點',5,'L','Fritelle 炸球（嘉年華期間）'),
+ ]},
+milan:{name:'米蘭',lat:45.46,lon:9.19,ls:'l',rec:[1,2],
+ tip:'最後的晚餐需提早數週訂票；適合逛街、設計與歌劇。',
+ airport:'MXP 機場 → 市區：Malpensa Express 約 52 分、€13（到 Cadorna 或 Centrale）。',
+ attractions:[
+  A('米蘭大教堂（內部）',1,10,'his','門票約 €10–15，視通票類型',true),
+  A('大教堂頂樓露台',1,5,'view','加購，電梯或步行；傍晚光線最美',true),
+  A('埃馬努埃爾二世迴廊',0.5,0,'walk','看地板馬賽克，傳說踩公牛生殖器轉圈'),
+  A('達文西《最後的晚餐》',1,15,'art','每梯次 15 分鐘，通常提早 1–2 個月開票',true,[1]),
+  A('斯福爾扎城堡庭院',0.5,0,'his','庭院免費'),
+  A('斯福爾扎城堡博物館',1.2,5,'art','',false,[1]),
+  A('森皮奧內公園',0.7,0,'walk'),
+  A('布雷拉區漫步',1,0,'walk'),
+  A('布雷拉畫廊',1.2,15,'art','',false,[1]),
+  A('納維利運河區傍晚散步',2,0,'walk','晚上酒吧開胃餐 aperitivo'),
+  A('垂直森林（遠觀）',0.3,0,'view'),
+  A('斯卡拉歌劇院博物館',1,12,'art'),
+  A('Fondazione Prada 當代藝術',2,15,'art'),
+ ],
+ hotels:[
+  H('Hotel Berna','Centrale 中央車站附近',1,140,'4★，往返機場與各城火車方便'),
+  H('Hotel Spadari al Duomo','大教堂旁',2,270,'設計旅館，位置極佳'),
+  H('Park Hyatt Milano','迴廊旁',3,800,'頂級位置，近 Galleria'),
+ ],
+ rests:[
+  R('Luini','大教堂旁','炸餃 Panzerotti',4,'L','現炸，排隊但很快'),
+  R('Trattoria Milanese','Via Santa Marta','米蘭燉飯、炸小牛排 Cotoletta',38,'LD','傳統米蘭菜'),
+  R('Ratanà','Isola 區','現代米蘭菜',55,'D','需訂位'),
+  R('Princi','多家分店','烘焙早餐、披薩切片',8,'L','早餐好選擇'),
+  R('Pasticceria Marchesi 1824','迴廊內','咖啡＋甜點',6,'LD','小憩'),
+ ]},
+naples:{name:'那不勒斯',lat:40.85,lon:14.27,ls:'r',rec:[2,3],
+ tip:'披薩與考古的聖地；市中心較亂，注意扒手。龐貝與維蘇威可從這裡當日往返。',
+ airport:'NAP 機場 → 市區：Alibus 約 20 分、€5；計程車定額約 €25。',
+ attractions:[
+  A('國家考古博物館（龐貝文物）',2.5,22,'his','',false,[2]),
+  A('龐貝古城',4,18,'his','需整天太陽，帶水與帽子；Circumvesuviana 到 Pompei Scavi',true),
+  A('赫庫蘭尼姆古城',2.5,16,'his','比龐貝小、保存更好'),
+  A('維蘇威火山口健行',3.5,10,'view','要預約時段；從 Ercolano 搭接駁'),
+  A('卡布里島一日遊',8,60,'trip','來回船票約 €40–60（不含島上交通），天氣不好會停航'),
+  A('斯帕卡那不勒斯老城漫步',2,0,'walk','聖喬治路兩旁的小店與街頭藝術'),
+  A('Sansevero 禮拜堂（蒙面基督）',1,10,'art','預約制，週二休',true,[2]),
+  A('蛋堡（Castel dell\'Ovo）海濱',1,0,'view','日落很漂亮'),
+  A('那不勒斯地下城導覽',1.5,10,'his'),
+ ],
+ hotels:[
+  H('Spaccanapoli 區 B&B／民宿','歷史中心',1,75,'便宜、氣氛好；晚上較吵'),
+  H('Hotel Piazza Bellini','歷史中心',2,150,'設計旅館，步行到博物館與老城'),
+  H('Grand Hotel Vesuvio','蛋堡海濱',3,460,'5★ 面海，景觀頂級'),
+ ],
+ rests:[
+  R('L\'Antica Pizzeria da Michele','Forcella','瑪格麗特披薩',7,'LD','只有兩種口味，排隊快'),
+  R('Sorbillo','Via dei Tribunali','披薩、炸披薩',9,'LD','熱門，建議避開尖峰'),
+  R('Pizzeria Starita','Materdei','炸披薩 Montanara',10,'LD','在地人愛'),
+  R('Gran Caffè Gambrinus','Piazza Plebiscito','咖啡＋Sfogliatella 貝殼酥',8,'L','百年咖啡館'),
+  R('Sfogliatella Mary','Galleria Umberto I','貝殼酥甜點',3,'L','外帶即食'),
+ ]},
+sorrento:{name:'索倫托／阿瑪菲海岸',lat:40.63,lon:14.37,ls:'r',rec:[2,3],
+ tip:'以索倫托為基地走阿瑪菲海岸；夏季海岸公路塞車，建議搭渡輪／SITA 巴士，不建議自駕。',
+ airport:'從那不勒斯搭 Circumvesuviana 約 1 小時 10 分、€4.5；或渡輪（約 40 分）。',
+ attractions:[
+  A('索倫托舊城漫步',2,0,'walk','Piazza Tasso、Via San Cesareo'),
+  A('波西塔諾（Positano）',3.5,0,'view','渡輪 40–60 分；午餐吃海鮮'),
+  A('阿瑪菲鎮',1,0,'walk'),
+  A('阿瑪菲大教堂',0.7,3,'his'),
+  A('拉維洛 Villa Rufolo 花園',1.5,8,'view','山上景觀絕佳；從阿瑪菲搭巴士約 30 分'),
+  A('諸神之路（Path of the Gods）健行',4,0,'view','Bomerano → Nocelle，約 7.5 公里，穿好鞋'),
+  A('卡布里島一日遊（從索倫托搭船）',8,45,'trip','來回船票約 €35–50，天氣不好會停航'),
+  A('檸檬莊園導覽（含 Limoncello 品嚐）',1.5,15,'food'),
+ ],
+ hotels:[
+  H('索倫托市中心 B&B／小旅館','舊城',1,110,'便宜，步行到火車站與港口'),
+  H('Hotel Mediterraneo','近海邊、Marina Piccola',2,210,'4★ 有泳池'),
+  H('Grand Hotel Excelsior Vittoria','海濱懸崖',3,720,'老牌 5★ 家族酒店'),
+ ],
+ rests:[
+  R('Da Emilia','Marina Grande','海鮮、家常麵',35,'LD','港邊老店，看夕陽'),
+  R('Il Buco','舊城','現代義式／海鮮',70,'D','米其林推薦，需訂位'),
+  R('Pasticceria Pansa','阿瑪菲鎮','檸檬甜點 Delizia al limone',6,'L','老字號'),
+ ]},
+cinqueterre:{name:'五漁村',lat:44.13,lon:9.70,ls:'l',rec:[1,2],
+ tip:'五個彩色漁村以火車連接；步道偶爾因落石封閉，請看國家公園官網。建議住拉斯佩齊亞（住宿便宜）或蒙泰羅索。',
+ airport:'最近機場：比薩 PSA（火車到拉斯佩齊亞約 1 小時 30 分）；或從佛羅倫斯／米蘭轉乘。',
+ attractions:[
+  A('Cinque Terre Card 火車＋步道通票（1 日）',0.5,18,'trip','含五村間火車與藍色步道',false),
+  A('蒙泰羅索 → 韋爾納扎步道（約 2 小時）',2,0,'view','最熱門路段，建議早點出發'),
+  A('馬納羅拉日落觀景台',1,0,'view','搭配「Nessun Dorma」拍照點'),
+  A('韋爾納扎港口',1,0,'walk'),
+  A('科尼利亞（山上村）',1,0,'walk','377 階樓梯'),
+  A('里奧馬焦雷愛之路（部分路段）',1,0,'walk','開放狀態請現場查'),
+  A('波爾托韋內雷（Portovenere）',3,0,'trip','從拉斯佩齊亞搭巴士或船'),
+ ],
+ hotels:[
+  H('拉斯佩齊亞站前飯店（如 Hotel Firenze e Continentale）','La Spezia 火車站',1,110,'住宿便宜，火車 10–25 分到各村'),
+  H('Hotel Pasquale','蒙泰羅索海濱',2,260,'海景，步道起點'),
+  H('馬納羅拉／里奧馬焦雷 民宿','村內',2,200,'房間少、旺季需提早訂'),
+ ],
+ rests:[
+  R('Trattoria dal Billy','馬納羅拉','醃鯷魚、海鮮',38,'LD','山腰景觀，需訂位'),
+  R('Ristorante Miky','蒙泰羅索','炸海鮮、貽貝',45,'LD','海鮮名店'),
+  R('Focacceria（各村皆有）','各村','熱 focaccia、炸海鮮紙筒',8,'L','步道午餐'),
+ ]},
+pisa:{name:'比薩',lat:43.72,lon:10.40,ls:'l',rec:[1,1],
+ tip:'多數人半天就夠，常從佛羅倫斯當日往返。',
+ airport:'PSA 機場 → 市區：PisaMover 約 5 分到 Pisa Centrale。',
+ attractions:[
+  A('斜塔（登頂）',1.2,20,'view','登塔需預約時段，禁帶大包',true),
+  A('奇蹟廣場',0.5,0,'walk'),
+  A('比薩大教堂',0.5,10,'his','教堂聯票，斜塔另購'),
+  A('比薩洗禮堂',0.4,5,'his'),
+  A('比薩墓園（Camposanto）',0.5,5,'his'),
+  A('Borgo Stretto 市集街漫步',1,0,'walk'),
+  A('阿諾河畔 Lungarno 散步',0.5,0,'walk'),
+ ],
+ hotels:[
+  H('Pisa 車站前小旅館','Pisa Centrale',1,85,'平價，步行到斜塔約 20 分'),
+  H('Hotel Duomo','近斜塔',2,140,'步行 5 分到奇蹟廣場'),
+  H('Relais dell\'Orologio','舊城',3,300,'歷史建築 5★'),
+ ],
+ rests:[
+  R('Il Montino','舊城','Cecina 鷹嘴豆餅三明治',8,'L','比薩特色小吃'),
+  R('Osteria dei Cavalieri','舊城','托斯卡尼家常菜',32,'D','建議訂位'),
+ ]},
+siena:{name:'西恩納',lat:43.32,lon:11.33,ls:'r',rec:[1,2],
+ tip:'中世紀古城，可當日從佛羅倫斯往返，也適合住一晚避開人潮。',
+ airport:'無機場；佛羅倫斯搭巴士約 1.5 小時、€9–10。',
+ attractions:[
+  A('貝殼廣場（Piazza del Campo）',1,0,'walk','坐在廣場上喝咖啡'),
+  A('曼加塔樓（Torre del Mangia）',0.8,10,'view','需爬 400 階'),
+  A('西恩納大教堂',1,13,'his','OPA 套票（含圖書館與洗禮堂）'),
+  A('皮科洛米尼圖書館',0.4,0,'art','含在 OPA 套票內'),
+  A('聖母瑪利亞醫院博物館',1.5,10,'art'),
+  A('Fortezza Medicea 公園',0.5,0,'view'),
+ ],
+ hotels:[
+  H('西恩納古城 B&B','舊城',1,90,'步行即達廣場'),
+  H('Hotel Duomo','大教堂旁',2,190,'3★，位置佳'),
+  H('Palazzo Ravizza','舊城',3,290,'歷史宮殿改建，附花園'),
+ ],
+ rests:[
+  R('Osteria Le Logge','Via del Porrione','Pici 手捏麵、托斯卡尼菜',45,'D','需訂位'),
+  R('Nannini 老字號甜點店','Piazza Salimbeni','Panforte、Ricciarelli',5,'L','買伴手禮'),
+ ]},
+verona:{name:'維洛納',lat:45.44,lon:10.99,ls:'r',rec:[1,2],
+ tip:'羅密歐與茱麗葉之城；夏季競技場有歌劇節（約 6–9 月，需另購票）。',
+ airport:'VRN 機場有航班；市區火車站 Porta Nuova 步行 20 分到舊城。',
+ attractions:[
+  A('維洛納競技場',1.5,12,'his','保存極完整的古羅馬競技場'),
+  A('茱麗葉之家',0.8,6,'walk','陽台需門票；牆上寫許願可免費'),
+  A('香草廣場',0.5,0,'walk'),
+  A('Torre dei Lamberti 鐘塔',0.8,8,'view'),
+  A('Castelvecchio 古堡博物館',1.2,9,'art','',false,[1]),
+  A('斯卡拉橋（Ponte Scaligero）',0.3,0,'walk'),
+  A('Ponte Pietra 石橋',0.3,0,'walk'),
+  A('維洛納羅馬劇場',1,6,'his'),
+  A('Giardino Giusti 花園',1,10,'view'),
+  A('競技場歌劇（夏季）',3,35,'art','夏季夜間，票價 €30 起',true),
+ ],
+ hotels:[
+  H('Hotel Giulietta e Romeo','近競技場',1,130,'位置好，價格親民'),
+  H('Hotel Accademia','近香草廣場',2,190,'老牌 4★'),
+  H('Due Torri Hotel','Piazza Sant\'Anastasia',3,330,'歷史悠久豪華旅館'),
+ ],
+ rests:[
+  R('Antica Bottega del Vino','舊城','Amarone 紅酒＋驢肉燉飯',40,'D','酒單很厚'),
+  R('Ristorante Greppia','舊城','傳統維洛納菜',35,'LD','建議訂位'),
+ ]},
+bologna:{name:'波隆那',lat:44.49,lon:11.34,ls:'r',rec:[1,2],
+ tip:'美食之都（Bolognese 肉醬、Tortellini、Mortadella）。全城拱廊，雨天也好逛。',
+ airport:'BLQ 機場 → 市區：Marconi Express 約 7 分到火車站、€12。',
+ attractions:[
+  A('主廣場（Piazza Maggiore）',0.4,0,'walk'),
+  A('海神噴泉',0.2,0,'walk'),
+  A('聖白托羅尼歐大教堂',0.5,0,'his'),
+  A('阿西內利塔（登高）',1,5,'view','需預約，約 500 階',true),
+  A('聖盧卡拱廊（世界最長拱廊，約 3.8 公里）',2.5,0,'walk','可從城內步行上山，坡度和緩'),
+  A('Quadrilatero 美食街區',1.5,0,'food','乳酪、火腿、手工麵'),
+  A('Archiginnasio 解剖劇場',0.8,3,'his'),
+  A('手工麵烹飪課（Tagliatelle／Tortellini）',3,65,'food','需預約',true),
+  A('聖斯德望教堂群（七教堂）',0.7,0,'his'),
+ ],
+ hotels:[
+  H('火車站周邊平價旅館','Stazione Centrale',1,85,'離火車站近，步行 15 分到主廣場'),
+  H('Hotel Touring','舊城',2,150,'位置佳、屋頂露台'),
+  H('Hotel Corona d\'Oro','舊城',3,260,'歷史建築 4★'),
+ ],
+ rests:[
+  R('Trattoria Anna Maria','Via Belle Arti','手工 Tagliatelle al ragù',32,'LD','需訂位'),
+  R('Osteria dell\'Orsa','Via Mentana','平價 Tagliatelle、Tortellini 湯',20,'LD','學生區，常排隊'),
+  R('Tamburini','Quadrilatero','火腿乳酪拼盤',22,'L','熟食店兼餐廳'),
+  R('Salumeria Simoni','Via Drapperie','三明治、熟食外帶',12,'L','省錢午餐'),
+ ]},
+como:{name:'科莫湖',lat:45.81,lon:9.09,ls:'l',rec:[1,2],
+ tip:'湖區景點靠渡輪串聯，建議住在 Como 或 Varenna；夏季渡輪班次多，冬季少。',
+ airport:'從米蘭 Centrale 搭火車到 Como S. Giovanni 約 40 分、€5；到 Varenna 約 1 小時 10 分。',
+ attractions:[
+  A('科莫市區漫步',1,0,'walk'),
+  A('Brunate 纜車觀景',1.5,8,'view','纜車上山約 7 分鐘'),
+  A('貝拉吉奧（Bellagio）小鎮',2.5,0,'walk','湖上渡輪從 Como/Varenna 出發'),
+  A('瓦倫納（Varenna）小鎮',1.2,0,'walk'),
+  A('Villa Monastero',1.2,10,'view'),
+  A('Villa del Balbianello 花園',2.5,25,'view','電影取景地，需搭船或步行，建議預約',true,[1]),
+  A('Villa Carlotta 植物園',1.5,15,'view','春季杜鵑最美'),
+  A('湖上渡輪一日遊（多站）',4,25,'trip','建議買一日票'),
+ ],
+ hotels:[
+  H('Como 火車站旁小旅館','Como S. Giovanni',1,100,'離米蘭近，轉乘方便'),
+  H('Hotel Metropole Suisse','Como 湖畔',2,190,'近渡輪碼頭與纜車'),
+  H('Grand Hotel Tremezzo','Tremezzo',3,700,'湖畔 5★'),
+ ],
+ rests:[
+  R('Osteria del Gallo','Como 舊城','湖魚料理、鱸魚燉飯',35,'D','建議訂位'),
+  R('湖畔小餐館（Varenna／Bellagio）','湖邊','Missoltino 乾湖魚、鱸魚燉飯',38,'LD','選有露台的店，晚餐看夕陽'),
+  R('Bellagio 冰淇淋店','湖邊步道','手工冰淇淋',4,'LD','邊走邊吃'),
+ ]},
+};
+const KEYS=Object.keys(CITIES);
+KEYS.forEach(k=>{const c=CITIES[k];c.key=k;
+ c.attractions.forEach((a,i)=>a.id=k+'.a'+i);
+ c.hotels.forEach((h,i)=>h.id='h'+i);
+ c.rests.forEach((r,i)=>r.id='r'+i);});
+
+/* [時數, 交通方式, 最低價, 最高價, 備註]  key 為字母排序的 "a|b" */
+const PAIRS={
+ 'florence|rome':[1.6,'🚄 高速鐵路 Frecciarossa/Italo',25,55,'Roma Termini ↔ Firenze S.M.N.，約每 15–30 分一班'],
+ 'naples|rome':[1.2,'🚄 高速鐵路',20,45,'Roma Termini ↔ Napoli Centrale，快車約 1 小時 10 分'],
+ 'rome|venice':[3.8,'🚄 高速鐵路',40,90,'直達約 3 小時 45 分'],
+ 'milan|rome':[3.0,'🚄 高速鐵路',45,100,'直達約 3 小時'],
+ 'florence|venice':[2.2,'🚄 高速鐵路',30,60,'直達約 2 小時 10 分'],
+ 'florence|milan':[1.9,'🚄 高速鐵路',30,65,'直達約 1 小時 50 分'],
+ 'bologna|florence':[0.6,'🚄 高速鐵路',10,25,'僅 35 分鐘，順路最佳'],
+ 'florence|pisa':[1.0,'🚆 區域火車',9,9,'每半小時一班，不需訂位'],
+ 'florence|siena':[1.5,'🚌 巴士／區域火車',9,12,'巴士較快較直達'],
+ 'milan|venice':[2.5,'🚄 高速鐵路',25,60,'直達約 2 小時 30 分'],
+ 'milan|verona':[1.4,'🚄 高速／區域',15,30,'約 1 小時 20 分'],
+ 'como|milan':[0.7,'🚆 區域火車',5,6,'Milano Centrale → Como S. Giovanni'],
+ 'venice|verona':[1.2,'🚄 高速鐵路',15,30,'約 1 小時 10–30 分'],
+ 'bologna|venice':[1.6,'🚄 高速鐵路',20,45,'約 1 小時 25–45 分'],
+ 'naples|sorrento':[1.2,'🚆 Circumvesuviana 環維蘇威鐵路',4.5,4.5,'或渡輪約 40 分（€13 起）'],
+ 'rome|sorrento':[2.7,'🚄＋🚆 高鐵到那不勒斯再轉',25,50,'Roma → Napoli → Sorrento'],
+ 'cinqueterre|florence':[2.7,'🚆 經比薩轉區域火車',15,22,'到 La Spezia 或 Monterosso'],
+ 'cinqueterre|milan':[3.0,'🚆 火車（可能轉車）',20,35,'Milano Centrale → La Spezia'],
+ 'cinqueterre|pisa':[1.5,'🚆 區域火車',10,10,'Pisa Centrale → La Spezia'],
+ 'bologna|milan':[1.0,'🚄 高速鐵路',20,40,'約 1 小時'],
+ 'bologna|verona':[1.0,'🚄 區域／高速',15,25,'約 1 小時'],
+ 'bologna|rome':[2.0,'🚄 高速鐵路',35,80,'約 2 小時'],
+ 'rome|siena':[2.8,'🚌／🚆 巴士或火車（可能轉車）',15,25,'巴士約 3 小時'],
+ 'florence|verona':[2.0,'🚄 高速鐵路',25,50,'約 2 小時（可能轉乘）'],
+ 'rome|verona':[3.1,'🚄 高速鐵路',45,90,'約 3 小時'],
+ 'florence|sorrento':[3.4,'🚄＋🚆 經那不勒斯',50,90,''],
+ 'naples|florence':[2.6,'🚄 高速鐵路',35,70,'Napoli → Firenze'],
+ 'milan|pisa':[3.5,'🚆 火車（需轉車）',25,45,''],
+};
+function hav(a,b){const R=6371,r=x=>x*Math.PI/180;const dLa=r(b.lat-a.lat),dLo=r(b.lon-a.lon);
+ const h=Math.sin(dLa/2)**2+Math.cos(r(a.lat))*Math.cos(r(b.lat))*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.sqrt(h));}
+function transfer(a,b){
+ if(a===b)return null;
+ const p=PAIRS[[a,b].sort().join('|')];
+ if(p)return{h:p[0],mode:p[1],lo:p[2],hi:p[3],tip:p[4],est:false};
+ const d=hav(CITIES[a],CITIES[b]);
+ return{h:Math.round((d*1.3/90+0.6)*10)/10,mode:'🚆 火車／巴士（概估，請查時刻表）',lo:Math.round(d*.08),hi:Math.round(d*.16),tip:'',est:true};
+}
+
+const PRESETS={
+ classic:{name:'經典北進',desc:'羅馬 → 佛羅倫斯 → 威尼斯 → 米蘭，第一次去義大利的標準路線',w:{rome:3,florence:2,venice:2,milan:1},n:8,prefer:[]},
+ grand:{name:'義大利精華',desc:'威尼斯 → 佛羅倫斯 → 羅馬 → 那不勒斯 → 索倫托，南北一次看完（威尼斯進、南義出）',w:{venice:2,florence:2,rome:3,naples:1,sorrento:2},n:10,prefer:['his']},
+ south:{name:'羅馬＋南義',desc:'羅馬 → 那不勒斯 → 索倫托，古蹟、披薩、海岸線',w:{rome:3,naples:2,sorrento:2},n:7,prefer:['his','view']},
+ north:{name:'北義美食湖區',desc:'米蘭 → 科莫湖 → 維洛納 → 威尼斯 → 波隆那，慢遊、美食、小鎮',w:{milan:2,como:1,verona:1,venice:2,bologna:2},n:9,prefer:['food','walk']},
+ tuscany:{name:'托斯卡尼＋五漁村',desc:'佛羅倫斯 → 西恩納 → 比薩 → 五漁村，田園與海岸步道',w:{florence:3,siena:1,pisa:1,cinqueterre:2},n:7,prefer:['view','walk']},
+ custom:{name:'自訂（空白）',desc:'從空白開始，自己選城市與景點',w:{rome:3,florence:2,venice:2,milan:1},n:7,prefer:[],blank:true},
+};
+
+/* ============ 狀態 ============ */
+const SK='italy-trip-planner-v3';
+const PACE={relaxed:17.5,normal:19,packed:21};
+const newDay=c=>({city:c,picks:[],hotel:'',lunch:'',dinner:'',note:'',collapsed:false});
+let S;
+function save(){try{S.store[S.cur]={n:S.n,plan:S.plan};localStorage.setItem(SK,JSON.stringify(S))}catch(e){}}
+function allocate(w,n){
+ let ks=Object.keys(w).slice(0,n);const tot=ks.reduce((a,k)=>a+w[k],0);
+ const al={};ks.forEach(k=>al[k]=Math.max(1,Math.floor(n*w[k]/tot)));
+ const sum=()=>ks.reduce((a,k)=>a+al[k],0);
+ while(sum()<n){const k=ks.reduce((b,k)=>(n*w[k]/tot-al[k])>(n*w[b]/tot-al[b])?k:b);al[k]++}
+ while(sum()>n){const k=ks.filter(k=>al[k]>1).reduce((b,k)=>(n*w[k]/tot-al[k])<(n*w[b]/tot-al[b])?k:b,ks.find(k=>al[k]>1));if(!k)break;al[k]--}
+ return ks.flatMap(k=>Array(al[k]).fill(k));
+}
+/* 自動勾選：依步調填滿一天，同城市前幾天已選過的不重複；偏好標籤優先 */
+function fillDay(i){
+ const d=S.plan[i],c=CITIES[d.city],pref=(PRESETS[S.cur]||{}).prefer||[],dt=dateOf(i);
+ const used=new Set(S.plan.slice(0,i).filter(x=>x.city===d.city).flatMap(x=>x.picks));
+ const rank=a=>(pref.includes(a.t)?0:1)+(a.h>=6?10:0);
+ const cands=c.attractions.filter(a=>!used.has(a.id)&&!(dt&&a.x&&a.x.includes(dt.getDay())))
+   .map((a,idx)=>({a,idx})).sort((p,q)=>rank(p.a)-rank(q.a)||p.idx-q.idx).map(o=>o.a);
+ d.picks=[];
+ for(const a of cands){
+  if(d.picks.length>=7)break;
+  if(a.h>=6&&d.picks.length)continue;
+  d.picks.push(a.id);
+  if(dayCalc(i).end>PACE[S.pace]){d.picks.pop();continue}
+  if(a.h>=6)break;
+ }
+ const prior=S.plan.slice(0,i).filter(x=>x.city===d.city);
+ const pick=(m,key)=>{const r=c.rests.find(r=>r.meal.includes(m)&&!prior.some(x=>x[key]===r.id));return r?r.id:''};
+ d.lunch=pick('L','lunch');d.dinner=pick('D','dinner');
+ if(d.lunch&&d.lunch===d.dinner)d.dinner='';
+}
+const autoFillAll=()=>S.plan.forEach((_,i)=>fillDay(i));
+function genItin(key){
+ const p=PRESETS[key];S.n=p.n;S.plan=allocate(p.w,p.n).map(newDay);
+ if(!p.blank)autoFillAll();
+}
+function switchTo(key){
+ S.store[S.cur]={n:S.n,plan:S.plan};S.cur=key;
+ if(S.store[key]){S.n=S.store[key].n;S.plan=S.store[key].plan}else genItin(key);
+}
+function defaultState(){
+ S={start:'',pax:2,pace:'normal',tier:2,season:1,twd:35,cur:'classic',store:{},n:0,plan:[]};
+ genItin('classic');return S;
+}
+function load(){try{const j=JSON.parse(localStorage.getItem(SK));
+ if(j&&j.store&&PRESETS[j.cur]&&Array.isArray(j.plan)&&j.plan.every(d=>CITIES[d.city]))return j}catch(e){}return null}
+
+/* ============ 計算 ============ */
+const $=s=>document.querySelector(s);
+const fm=h=>{h=Math.round(h*12)/12;let H=Math.floor(h),M=Math.round((h-H)*60);if(M>=60){H++;M=0}return String(H%24).padStart(2,'0')+':'+String(M).padStart(2,'0')};
+const dur=h=>h<1?Math.round(h*60)+' 分':(Math.round(h*10)/10)+' 小時';
+const eur=v=>'€'+Math.round(v).toLocaleString();
+const mapQ=q=>'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(q);
+function hotelOf(i){
+ const d=S.plan[i],hs=CITIES[d.city].hotels;
+ if(d.hotel){const h=hs.find(h=>h.id===d.hotel);if(h)return h}
+ if(i>0&&S.plan[i-1].city===d.city)return hotelOf(i-1);
+ return hs.find(h=>h.t===+S.tier)||hs[0];
+}
+const restOf=(c,id)=>CITIES[c].rests.find(r=>r.id===id);
+const dateOf=i=>{if(!S.start)return null;const [y,m,d]=S.start.split('-').map(Number);return new Date(y,m-1,d+i)};
+const WD=['日','一','二','三','四','五','六'];
+function dayCalc(i){
+ const d=S.plan[i],c=CITIES[d.city];
+ const prev=i>0?S.plan[i-1].city:null;
+ const tr=prev&&prev!==d.city?transfer(prev,d.city):null;
+ const slots=[];let t=i===0?14:9;
+ if(tr){slots.push({s:t,e:t+tr.h,l:`移動：${CITIES[prev].name} → ${c.name}`,k:'move'});t+=tr.h;
+  slots.push({s:t,e:t+0.75,l:'抵達、寄放行李／辦理入住',k:'move'});t+=0.75;}
+ const items=c.attractions.filter(a=>d.picks.includes(a.id));
+ let lunch=false,first=true;
+ for(const a of items){
+  if(!first)t+=0.4;
+  if(!lunch&&t>=12){slots.push({s:t,e:t+1,l:'午餐',k:'meal'});t+=1;lunch=true}
+  slots.push({s:t,e:t+a.h,l:a.n,k:'a'});t+=a.h;first=false;
+ }
+ if(!lunch&&items.length){t=Math.max(t,12);slots.push({s:t,e:t+1,l:'午餐',k:'meal'});t+=1}
+ const end=t;
+ const ds=Math.max(t+0.3,19.5);
+ const limit=PACE[S.pace];
+ const startT=i===0?14:9;
+ const attrH=items.reduce((a,x)=>a+x.h,0);
+ const tickets=items.reduce((a,x)=>a+x.c,0);
+ return{tr,slots,items,end,dinner:{s:ds,e:ds+1.5},limit,startT,attrH,tickets,over:items.length&&end>limit,
+  pct:Math.min(100,(end-startT)/(limit-startT)*100)};
+}
+function budgetCalc(){
+ const rooms=Math.ceil(S.pax/2),defL=[12,18,30][S.tier-1],defD=[20,32,65][S.tier-1];
+ const B={hotel:0,transport:0,tickets:0,meals:0,local:0,days:[]};
+ S.plan.forEach((d,i)=>{
+  const k=dayCalc(i),h=hotelOf(i);
+  const hotel=i<S.n-1?h.p*S.season*rooms:0;
+  const tr=k.tr?(k.tr.lo+k.tr.hi)/2*S.pax:0;
+  const tickets=k.tickets*S.pax;
+  const l=restOf(d.city,d.lunch),dn=restOf(d.city,d.dinner);
+  const meals=((l?l.p:defL)+(dn?dn.p:defD))*S.pax;
+  const local=6*S.pax;
+  B.hotel+=hotel;B.transport+=tr;B.tickets+=tickets;B.meals+=meals;B.local+=local;
+  B.days.push({hotel,tr,tickets,meals,local,all:hotel+tr+tickets+meals+local});
+ });
+ B.total=B.hotel+B.transport+B.tickets+B.meals+B.local;
+ return B;
+}
+const cityCount=c=>S.plan.filter(d=>d.city===c).length;
+
+/* ============ 繪製 ============ */
+function cityOptions(sel){return KEYS.map(k=>`<option value="${k}"${k===sel?' selected':''}>${CITIES[k].name}</option>`).join('')}
+const stopsOf=i=>{const d=S.plan[i],c=CITIES[d.city];return c.attractions.filter(a=>d.picks.includes(a.id)).map(a=>a.n.replace(/（.*?）/g,'')+' '+c.name+' Italy')};
+function dayHTML(i){
+ const d=S.plan[i],c=CITIES[d.city],k=dayCalc(i),dt=dateOf(i);
+ const dtxt=dt?`${dt.getMonth()+1}/${dt.getDate()}（週${WD[dt.getDay()]}）`:'';
+ const cnt=cityCount(d.city),[mn,mx]=c.rec;
+ let cityNote='';
+ if(cnt<mn)cityNote=`<div class="alert">${c.name}建議至少停留 ${mn} 天，你目前共排 ${cnt} 天。</div>`;
+ else if(cnt>mx+1)cityNote=`<div class="alert">${c.name}建議 ${mn}–${mx} 天，你目前排 ${cnt} 天，可考慮分給其他城市。</div>`;
+ let transferHTML='';
+ if(k.tr)transferHTML=`<div class="transfer"><b>${k.tr.mode}</b>　${CITIES[S.plan[i-1].city].name} → ${c.name}<br>
+   約 <b>${dur(k.tr.h)}</b>　票價約 €${k.tr.lo}${k.tr.hi>k.tr.lo?'–'+k.tr.hi:''}／人${k.tr.est?'（概估）':''}${k.tr.tip?'<br><span class="small">'+k.tr.tip+'</span>':''}</div>`;
+ else if(i===0)transferHTML=`<div class="transfer">✈ 抵達：${c.airport}<br><span class="small">第 1 天預設午後 14:00 開始活動。</span></div>`;
+ const h=hotelOf(i);
+ const hOpts=`<option value="">（自動）${hotelOf(i).n}</option>`+c.hotels.map(x=>`<option value="${x.id}"${d.hotel===x.id?' selected':''}>${'★'.repeat(x.t)}　${x.n}　€${Math.round(x.p*S.season)}/晚</option>`).join('');
+ const hotelHTML=i<S.n-1?`<select data-a="hotel" data-i="${i}">${hOpts}</select>
+   <div class="hotel-card"><b>${h.n}</b>　<span class="badge">${['經濟','中等','高級'][h.t-1]}</span><br>
+   📍 ${h.area}　·　約 €${Math.round(h.p*S.season)}／房／晚<br><span class="small">${h.note}</span><br>
+   <a class="link" target="_blank" rel="noopener" href="${mapQ(h.n+' '+c.name+' Italy')}">在地圖開啟位置 ↗</a></div>`
+  :`<div class="note-line">最後一天不需住宿（機場／離境交通請自行安排）。</div>`;
+ const attrHTML=c.attractions.map(a=>{
+  const on=d.picks.includes(a.id);
+  const closed=dt&&a.x&&a.x.includes(dt.getDay());
+  return `<label class="attr"><input type="checkbox" data-a="pick" data-i="${i}" data-id="${a.id}"${on?' checked':''}>
+   <span class="main"><b>${a.n}</b><span class="badge">${TAG[a.t]}</span>${a.r?'<span class="badge r">需預約</span>':''}${closed&&on?'<span class="badge x">當天可能休館</span>':''}<br>
+   <span class="meta">⏱ ${dur(a.h)}　${a.c?'💶 €'+a.c:'免費'}${a.d?'　'+a.d:''}</span>
+   <a target="_blank" rel="noopener" href="${mapQ(a.n+' '+c.name)}" onclick="event.stopPropagation()">地圖 ↗</a></span><span class="thumbs" data-q="${a.n.replace(/（.*?）/g,'')} ${c.name.split('／')[0]}"></span></label>`}).join('');
+ const restHTML=c.rests.map(r=>{
+  const L=d.lunch===r.id,D=d.dinner===r.id;
+  return `<div class="rest"><div class="main"><b>${r.n}</b><span class="badge">€${r.p}/人</span><br><span class="meta">📍${r.area}　🍽 ${r.dish}${r.note?'　'+r.note:''}</span>
+   <a class="link" target="_blank" rel="noopener" href="${mapQ(r.n+' '+c.name)}">地圖 ↗</a></div>
+   ${r.meal.includes('L')?`<button class="mbtn${L?' on':''}" data-a="meal" data-k="lunch" data-i="${i}" data-id="${r.id}">午餐</button>`:''}
+   ${r.meal.includes('D')?`<button class="mbtn${D?' on':''}" data-a="meal" data-k="dinner" data-i="${i}" data-id="${r.id}">晚餐</button>`:''}</div>`}).join('');
+ const tl=k.items.length||k.tr?k.slots.map(s=>`<div class="slot ${s.k==='move'?'move':s.k==='meal'?'meal':''}"><span class="t">${fm(s.s)}–${fm(s.e)}</span><span class="l">${s.l}</span></div>`).join('')
+  +`<div class="slot meal"><span class="t">${fm(k.dinner.s)}–${fm(k.dinner.e)}</span><span class="l">晚餐${restOf(d.city,d.dinner)?'：'+restOf(d.city,d.dinner).n:''}</span></div>`
+  :'<div class="note-line">尚未勾選景點。</div>';
+ const warn=k.over?`<div class="alert bad">行程預計 ${fm(k.end)} 才結束，超過「${{relaxed:'悠閒',normal:'標準',packed:'緊湊'}[S.pace]}」步調的收工時間（${fm(k.limit)}）。建議取消一個景點或移到別天。</div>`:'';
+ const attrSum=k.items.length?`${k.items.length} 景點 · ${dur(k.attrH)}${k.tickets?' · 門票 €'+k.tickets:''}`:'未選景點';
+ return `<section class="day${d.collapsed?' collapsed':''}" id="day${i}">
+  <div class="day-h" data-a="toggle" data-i="${i}"><span class="dn">Day ${i+1}</span><span class="date">${dtxt}</span>
+   <select data-a="city" data-i="${i}" onclick="event.stopPropagation()">${cityOptions(d.city)}</select>
+   <span class="sp"></span><span class="brief">${attrSum}</span><span>${d.collapsed?'▸':'▾'}</span></div>
+  <div class="day-b">
+   ${cityNote}${transferHTML}
+   <div class="note-line">💡 ${c.tip}</div>
+   <div class="cols">
+    <div><h4>🏨 住宿</h4>${hotelHTML}</div>
+    <div><h4>🕒 當日時間預估</h4><div class="timeline">${tl}</div>
+     ${k.items.length?`<div class="bar${k.over?' over':''}"><i style="width:${k.pct}%"></i></div><div class="small">預計 ${fm(k.end)} 結束景點（含景點間移動 25 分、午餐 1 小時）</div>`:''}${warn}</div>
+   </div>
+   <div><h4>📍 景點（已依步調自動勾選，可自行增減） <button class="mbtn" data-a="autofill" data-i="${i}">自動排這天</button> <button class="mbtn" data-a="clear" data-i="${i}">清空</button></h4>${attrHTML}</div>
+   <div><h4>🍝 餐廳／落腳處（按「午餐／晚餐」指定）</h4>${restHTML}</div>
+   <div><h4>📝 備註</h4><textarea data-a="note" data-i="${i}" placeholder="預約時間、訂位資訊、提醒…">${d.note||''}</textarea></div>
+  </div></section>`;
+}
+
+function summaryHTML(){
+ const B=budgetCalc(),pax=S.pax;
+ const picks=S.plan.reduce((a,d)=>a+d.picks.length,0);
+ const hrs=S.plan.reduce((a,_,i)=>a+dayCalc(i).attrH,0);
+ const route=[];S.plan.forEach(d=>{const n=CITIES[d.city].name;if(route[route.length-1]!==n)route.push(n)});
+ const resv=[];S.plan.forEach((d,i)=>{CITIES[d.city].attractions.filter(a=>a.r&&d.picks.includes(a.id)).forEach(a=>resv.push(`Day ${i+1}　${a.n}`))});
+ const nights=Object.entries(S.plan.slice(0,-1).reduce((m,d)=>(m[d.city]=(m[d.city]||0)+1,m),{}));
+ const row=(l,v)=>`<tr><td>${l}</td><td>${eur(v)}</td></tr>`;
+ const overDays=S.plan.map((_,i)=>dayCalc(i)).filter(k=>k.over).length;
+ return `<div class="panel"><h3>路線</h3><div>${route.join(' → ')}</div></div>
+ <div class="panel"><h3>統計</h3>
+  <div>共 <b>${S.n}</b> 天、${picks} 個景點，景點總時數約 <b>${Math.round(hrs*10)/10}</b> 小時</div>
+  <div class="small">住宿晚數：${nights.map(([k,n])=>CITIES[k].name+' '+n+' 晚').join('、')||'—'}</div>
+  ${overDays?`<div class="alert bad" style="margin-top:6px">有 ${overDays} 天行程過滿</div>`:''}</div>
+ <div class="panel"><h3>預算估算（${pax} 人，${Math.ceil(pax/2)} 間房）</h3>
+  <table>${row('住宿',B.hotel)}${row('城際交通',B.transport)}${row('景點門票',B.tickets)}${row('餐飲（未選用預設均價）',B.meals)}${row('市區交通（每人每日 €6）',B.local)}
+  <tr class="total"><td>合計</td><td>${eur(B.total)}</td></tr>
+  <tr><td>約台幣</td><td>NT$ ${Math.round(B.total*S.twd).toLocaleString()}</td></tr>
+  <tr><td>每人</td><td>${eur(B.total/pax)}（NT$ ${Math.round(B.total/pax*S.twd).toLocaleString()}）</td></tr></table>
+  <div class="small" style="margin-top:6px">不含機票、保險、城市稅、購物。</div></div>
+ <div class="panel"><h3>⚠ 需要預約的景點</h3>${resv.length?`<ul class="resv" style="padding-left:18px;margin:0">${resv.map(r=>`<li>${r}</li>`).join('')}</ul>`:'<div class="small">目前沒有需預約的已勾選景點。</div>'}</div>
+ <div class="panel noprint"><h3>輸出</h3><div style="display:flex;gap:8px;flex-wrap:wrap"><button id="copyBtn" class="primary">複製行程文字</button><button onclick="window.print()">列印／存成 PDF</button></div></div>`;
+}
+
+/* 景點縮圖：維基百科（免費、CC 授權）搜尋 API，惰性載入並快取 */
+const IMGK='italy-img-v1';let IMG={};
+try{IMG=JSON.parse(localStorage.getItem(IMGK))||{}}catch(e){}
+const imgQueue=[];let imgBusy=0;
+function paintThumbs(el,list){
+ el.innerHTML=list.map(x=>`<a href="https://zh.wikipedia.org/?curid=${x.id}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="${x.t.replace(/"/g,'')}（維基百科）"><img loading="lazy" referrerpolicy="no-referrer" alt="${x.t.replace(/"/g,'')}" src="${x.u}"></a>`).join('');
+}
+async function fetchThumbs(q){
+ const url='https://zh.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrlimit=5&prop=pageimages&piprop=thumbnail&pithumbsize=240&pilimit=5&gsrsearch='+encodeURIComponent(q);
+ const r=await fetch(url);const j=await r.json();
+ const pg=Object.values((j.query&&j.query.pages)||{}).filter(p=>p.thumbnail).sort((a,b)=>a.index-b.index).slice(0,2);
+ return pg.map(p=>({id:p.pageid,t:p.title,u:p.thumbnail.source}));
+}
+function pumpImgs(){
+ while(imgBusy<3&&imgQueue.length){
+  const el=imgQueue.shift(),q=el.dataset.q;imgBusy++;
+  fetchThumbs(q).then(list=>{IMG[q]=list;try{localStorage.setItem(IMGK,JSON.stringify(IMG))}catch(e){}if(el.isConnected)paintThumbs(el,list)},()=>{}).finally(()=>{imgBusy--;pumpImgs()});
+ }
+}
+let imgObs;
+function loadThumbs(){
+ if(!imgObs)imgObs=new IntersectionObserver(es=>es.forEach(en=>{if(!en.isIntersecting)return;imgObs.unobserve(en.target);imgQueue.push(en.target);pumpImgs()}),{rootMargin:'300px'});
+ document.querySelectorAll('.thumbs').forEach(el=>{const q=el.dataset.q;if(IMG[q])paintThumbs(el,IMG[q]);else imgObs.observe(el)});
+}
+let activeDay=0;
+function pickActive(){let a=0;document.querySelectorAll('.day').forEach((e,i)=>{if(e.getBoundingClientRect().top<=170)a=i});return a}
+function updateMap(){
+ if(activeDay>=S.n)activeDay=S.n-1;
+ const i=activeDay,d=S.plan[i],c=CITIES[d.city],st=stopsOf(i),e=encodeURIComponent,dt=dateOf(i);
+ let src,link;
+ if(st.length>1){
+  src=`https://maps.google.com/maps?saddr=${e(st[0])}&daddr=${e(st.slice(1).join(' to:'))}&dirflg=w&output=embed`;
+  link=`https://www.google.com/maps/dir/?api=1&travelmode=walking&origin=${e(st[0])}&destination=${e(st[st.length-1])}${st.length>2?'&waypoints='+e(st.slice(1,-1).join('|')):''}`;
+ }else if(st.length===1){src=`https://maps.google.com/maps?q=${e(st[0])}&output=embed`;link=mapQ(st[0])}
+ else{src=`https://maps.google.com/maps?q=${e(c.name+' Italy')}&output=embed`;link=mapQ(c.name+' Italy')}
+ const nm=x=>x.replace(/ [^ ]+ Italy$/,'');
+ $('#mpHead').innerHTML=`<h3>Day ${i+1}　${c.name}${dt?`　<span class="small">${dt.getMonth()+1}/${dt.getDate()}（週${WD[dt.getDay()]}）</span>`:''}</h3>
+  <div class="small" style="margin-bottom:6px">${st.length?st.map((x,k)=>`<span class="badge">${k+1} ${nm(x)}</span>`).join(' '):'這天還沒勾選景點，顯示城市地圖'}　<a class="link" target="_blank" rel="noopener" href="${link}">在 Google 地圖開啟 ↗</a></div>`;
+ const f=$('#mpFrame');if(f.dataset.src!==src){f.dataset.src=src;f.src=src}
+}
+function render(){
+ $('#days-list').innerHTML=S.plan.map((_,i)=>dayHTML(i)).join('');
+ $('#summary').innerHTML=summaryHTML();
+ $('#days').value=S.n;
+ updateMap();loadThumbs();
+ $('#tabs').innerHTML=Object.entries(PRESETS).map(([k,p])=>`<button data-k="${k}" class="${k===S.cur?'on':''}">${p.name}</button>`).join('');
+ $('#presetDesc').textContent=PRESETS[S.cur].desc;
+}
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),1800)}
+
+function exportText(){
+ const B=budgetCalc();const L=[`義大利行程 ${S.n} 天（${S.pax} 人）`,''];
+ S.plan.forEach((d,i)=>{const c=CITIES[d.city],k=dayCalc(i),dt=dateOf(i);
+  L.push(`Day ${i+1}${dt?` ${dt.getMonth()+1}/${dt.getDate()}（週${WD[dt.getDay()]}）`:''}　${c.name}`);
+  if(k.tr)L.push(`  交通：${CITIES[S.plan[i-1].city].name} → ${c.name}，${k.tr.mode.replace(/[^一-龥A-Za-z／ ]/g,'')}約 ${dur(k.tr.h)}，約 €${k.tr.lo}–${k.tr.hi}／人`);
+  if(i<S.n-1)L.push(`  住宿：${hotelOf(i).n}（${hotelOf(i).area}）`);
+  k.slots.forEach(s=>L.push(`  ${fm(s.s)}–${fm(s.e)} ${s.l}`));
+  const l=restOf(d.city,d.lunch),dn=restOf(d.city,d.dinner);
+  if(l)L.push(`  午餐：${l.n}`);if(dn)L.push(`  晚餐：${dn.n}`);
+  if(d.note)L.push(`  備註：${d.note}`);L.push('')});
+ L.push(`預算合計約 €${Math.round(B.total)}（約 NT$ ${Math.round(B.total*S.twd).toLocaleString()}）`);
+ return L.join('\n');
+}
+
+/* ============ 事件 ============ */
+function setDays(n){
+ n=Math.max(1,Math.min(30,Math.round(n)||1));
+ while(S.plan.length<n){S.plan.push(newDay(S.plan.length?S.plan[S.plan.length-1].city:'rome'));if(!PRESETS[S.cur].blank)fillDay(S.plan.length-1)}
+ S.plan.length=n;S.n=n;
+}
+function syncControls(){
+ $('#days').value=S.n;$('#start').value=S.start;$('#pax').value=S.pax;$('#pace').value=S.pace;
+ $('#tier').value=S.tier;$('#season').value=S.season;$('#twd').value=S.twd;
+}
+function init(){
+ S=load()||defaultState();
+
+ $('#tabs').onclick=e=>{const b=e.target.closest('[data-k]');if(!b||b.dataset.k===S.cur)return;switchTo(b.dataset.k);syncControls();save();render();window.scrollTo({top:0})};
+ syncControls();render();
+ const upd=()=>{save();render()};
+ $('#dMinus').onclick=()=>{setDays(S.n-1);upd()};
+ $('#dPlus').onclick=()=>{setDays(S.n+1);upd()};
+ $('#days').onchange=e=>{setDays(+e.target.value);upd()};
+ $('#start').onchange=e=>{S.start=e.target.value;upd()};
+ $('#pax').onchange=e=>{S.pax=Math.max(1,Math.min(12,+e.target.value||1));syncControls();upd()};
+ $('#pace').onchange=e=>{S.pace=e.target.value;upd()};
+ $('#tier').onchange=e=>{S.tier=+e.target.value;upd()};
+ $('#season').onchange=e=>{S.season=+e.target.value;upd()};
+ $('#twd').onchange=e=>{S.twd=+e.target.value||35;upd()};
+ $('#regenBtn').onclick=()=>{if(S.plan.some(d=>d.picks.length)&&!confirm('會依目前步調重新勾選這個方案的景點與餐廳，確定嗎？'))return;autoFillAll();upd();toast('已重新自動排')};
+ $('#resetBtn').onclick=()=>{if(confirm('清除所有方案並回到預設？')){defaultState();syncControls();upd()}};
+ let tick=false;
+ window.addEventListener('scroll',()=>{if(tick)return;tick=true;requestAnimationFrame(()=>{tick=false;const a=pickActive();if(a!==activeDay){activeDay=a;updateMap()}})},{passive:true});
+ const list=$('#days-list');
+ list.addEventListener('change',e=>{
+  const t=e.target,a=t.dataset.a,i=+t.dataset.i;if(!a)return;activeDay=i;const d=S.plan[i];
+  if(a==='city'){d.city=t.value;d.picks=[];d.hotel='';d.lunch='';d.dinner='';if(!PRESETS[S.cur].blank)fillDay(i)}
+  else if(a==='pick'){const id=t.dataset.id;d.picks=t.checked?[...d.picks,id]:d.picks.filter(x=>x!==id)}
+  else if(a==='hotel'){d.hotel=t.value}
+  else if(a==='note'){d.note=t.value;save();return}
+  upd();
+ });
+ list.addEventListener('click',e=>{
+  const t=e.target.closest('[data-a]');if(!t)return;const a=t.dataset.a,i=+t.dataset.i;activeDay=i;
+  if(a==='autofill'){fillDay(+t.dataset.i);upd()}
+  else if(a==='clear'){S.plan[+t.dataset.i].picks=[];upd()}
+  else if(a==='meal'){const d=S.plan[i],k=t.dataset.k,id=t.dataset.id;d[k]=d[k]===id?'':id;upd()}
+  else if(a==='toggle'&&!e.target.closest('select')){S.plan[i].collapsed=!S.plan[i].collapsed;save();render()}
+ });
+ $('#summary').addEventListener('click',e=>{
+  if(e.target.id==='copyBtn'){const txt=exportText();
+   (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(()=>toast('已複製'),()=>{prompt('請手動複製：',txt)})}
+ });
+}
+init();
+</script>
+</body>
+</html>

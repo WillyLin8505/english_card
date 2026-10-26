@@ -543,8 +543,8 @@ class Handler(SimpleHTTPRequestHandler):
         if origin:
             self.send_header('Access-Control-Allow-Origin', origin)
             self.send_header('Vary', 'Origin')
-            self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-            self.send_header('Access-Control-Allow-Headers', 'Content-Type, If-None-Match, Authorization')
+            self.send_header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+            self.send_header('Access-Control-Allow-Headers', 'Content-Type, If-None-Match, Authorization, X-API-Key')
             self.send_header('Access-Control-Expose-Headers', 'ETag')
             self.send_header('Access-Control-Allow-Private-Network', 'true')
 
@@ -628,7 +628,7 @@ class Handler(SimpleHTTPRequestHandler):
     ISSUES_PATH = re.compile(r'^/api/issues(/\d+)?$')
 
     def proxy_issues(self, method: str):
-        """問題回報 for the Mac / iPhone session (owner, 2026-10-18): GET/POST/PUT
+        """問題回報 for the Mac / iPhone session (owner, 2026-10-18): GET/POST/PUT/DELETE
         /api/issues[/id] go to the admin API through the board proxy (5173,
         which adds the admin key). From the internet the tagger's X-API-Key
         is required, like tagging."""
@@ -694,6 +694,16 @@ class Handler(SimpleHTTPRequestHandler):
             keep['screenshot'] = shot
         keep.update(kind='bug', severity='medium', area='app', reporter='App 使用者')
         return json.dumps(keep, ensure_ascii=False).encode('utf-8')
+
+    def do_DELETE(self):
+        # card #627 / 問題回報 #716: the App deletes its own copy of a report on the server;
+        # key-only (proxy_issues answers 401 without X-API-Key), single /api/issues/<id> only.
+        if not self.allowed_request():
+            return
+        if not re.match(r'^/api/issues/\d+$', urlsplit(self.path).path):
+            self.send_error(404)
+            return
+        self.proxy_issues('DELETE')
 
     def do_PUT(self):
         if not self.allowed_request():
@@ -892,6 +902,31 @@ class Handler(SimpleHTTPRequestHandler):
         else:
             super().do_HEAD()
 
+    @staticmethod
+    def thumbnail_path(asset_id, source, width):
+        """Cached downscaled copy (longest side <= width) under media/thumbs; None = serve the original."""
+        if source.suffix.lower() not in {'.jpg', '.jpeg', '.png', '.webp'}:
+            return None
+        ext = '.png' if source.suffix.lower() == '.png' else '.jpg'
+        target = config.MEDIA / 'thumbs' / f'{asset_id}_{width}{ext}'
+        if target.is_file():
+            return target
+        try:
+            from PIL import Image
+            with Image.open(source) as img:
+                if max(img.size) <= width:
+                    return None
+                img.thumbnail((width, width), Image.LANCZOS)
+                if ext == '.jpg':
+                    img = img.convert('RGB')
+                target.parent.mkdir(parents=True, exist_ok=True)
+                tmp = target.with_suffix(target.suffix + f'.{threading.get_ident()}.tmp')
+                img.save(tmp, 'PNG' if ext == '.png' else 'JPEG', **({} if ext == '.png' else {'quality': 85}))
+            os.replace(tmp, target)
+            return target
+        except Exception:
+            return None
+
     def do_GET(self, head_only=False):
         if not self.allowed_request():
             return
@@ -917,6 +952,16 @@ class Handler(SimpleHTTPRequestHandler):
                         or path.suffix.lower() not in {'.jpg', '.jpeg', '.png', '.webp', '.gif', '.avif'}):
                     self.send_error(404)
                     return
+                query = parse_qs(url.query)
+                width = 0
+                for key in ('w', 'max', 'size'):
+                    try:
+                        width = int(query.get(key, [''])[0])
+                        break
+                    except ValueError:
+                        continue
+                if width > 0:
+                    path = self.thumbnail_path(asset_id, path, max(64, min(width, 2048))) or path
                 self.send_response(200)
                 self.send_header('Content-Type', mimetypes.guess_type(path)[0] or 'application/octet-stream')
                 self.send_header('Content-Length', str(path.stat().st_size))

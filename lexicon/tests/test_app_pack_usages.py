@@ -76,3 +76,16 @@ def test_compound_synonyms_move_to_related():
         rel("orchard apple tree"), rel("pome"), rel("apple pie", "antonyms"), rel("apple tree", h=True)]}
     assert move_compound_synonyms({"lexemes": [lx]}) == 2
     assert [r["relation"] for r in lx["relations"]] == ["related", "synonyms", "related", "synonyms"]
+
+
+def test_a_usage_of_only_archaic_other_etymology_senses_gets_no_level():
+    """Card #632 (問題回報 #719): illuminate the adjective."""
+    def l(i, pos, senses):
+        return {"id": i, "normalized": "illuminate", "lemma": "illuminate", "pos": pos, "status": "full",
+                "cefr": "B1", "zipf": 3.3, "senses": senses, "examples": []}
+    verb = l(1, "verb", [{"labels": ["transitive"]}] * 8)
+    adj = l(2, "adj", [{"labels": ["figuratively", "etymology-2"]}, {"labels": ["obsolete", "etymology-2"]},
+                       {"labels": ["archaic", "etymology-2"]}])
+    rank_usages([adj, verb], {})
+    assert verb["cefr"] == "B1" and adj["rare_usage"]
+    assert adj["cefr"] is None and adj["cefr_source"] == "quality_excluded"

@@ -312,6 +312,22 @@ def is_form_sense(sense: dict) -> bool:
                         or _BOUND_GLOSS_RE.match(g) is not None)
 
 
+FINITE_FORM_TAGS = {"indicative", "subjunctive", "imperative", "conditional", "historic",
+                    "imperfect", "first-person", "second-person", "third-person"}
+
+
+def is_finite_verb_form(sense: dict) -> bool:
+    """A finite verb form (問題回報 #711: sombre = 1st person present of sombrer,
+    célèbre, quitte, dépose alike). Not a participle: tethered, armé, assis
+    keep their base's card. Number and gender forms (prés, bassette) are not
+    finite either, so they still share the card."""
+    tags = set(sense.get("tags") or [])
+    gloss = _first_gloss(sense).lower()
+    if "participle" in tags or "participle" in gloss:
+        return False
+    return bool(FINITE_FORM_TAGS & tags)
+
+
 def form_bases(sense: dict) -> list[str]:
     """The words a sense says it is an inflection of: Kaikki's `form_of`
     links, else the base read from the gloss (never a spelling variant's
@@ -406,7 +422,10 @@ def card_base(word: str, language: str) -> str | None:
             if e.get("pos") not in ("adj", "adv") and not (
                     e.get("pos") == "noun" and ACT_NOUN.match(_first_gloss(s))):
                 return None  # a thing of its own (building, glasses)
-    bases = [b for e in same for s in e.get("senses") or [] for b in form_bases(s)]
+    # A finite verb form beside a word of its own is no base: sombre (dark) is
+    # not sombrer's form (#711). Participles and number/gender forms still are.
+    bases = [b for e in same for s in e.get("senses") or []
+             if not is_finite_verb_form(s) for b in form_bases(s)]
     bases = [b for b in dict.fromkeys(bases)
              if b and b == b.lower() and b != w and zipf(b, language) >= 2.5]
     if not bases:

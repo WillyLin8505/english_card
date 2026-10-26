@@ -112,6 +112,25 @@ FAMILY = {
 }
 
 
+def test_finite_verb_form_does_not_take_an_adjectives_card(monkeypatch):
+    """問題回報 #711: sombre is an adjective (dark) and also 1st-person present of sombrer."""
+    from app.adapters import base
+    base.card_base.cache_clear()
+    inflection_bases.cache_clear()
+    sombre = [
+        {"word": "sombre", "pos": "adj", "senses": [{"glosses": ["dark"]}]},
+        {"word": "sombre", "pos": "verb", "senses": [{
+            "glosses": ["inflection of sombrer: first-person singular present indicative"],
+            "tags": ["form-of", "first-person", "indicative", "present"],
+            "form_of": [{"word": "sombrer"}]}]},
+    ]
+    monkeypatch.setattr(kaikki_index, "lookup",
+                        lambda language, word, path=None: sombre if word.lower() == "sombre" else [])
+    assert base.card_base("sombre", "fr") is None  # keeps its own card
+    base.card_base.cache_clear()
+    inflection_bases.cache_clear()
+
+
 def test_forms_that_share_their_words_card(monkeypatch):
     from app.adapters import base
     base.card_base.cache_clear()

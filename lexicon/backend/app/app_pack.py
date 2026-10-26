@@ -499,6 +499,12 @@ def rank_usages(lexemes: list[dict], cefr_by_pos: dict | None = None,
                 continue
             lx["rare_usage"] = True
             lx["headword_cefr"] = lx.get("cefr")
+            if quality.lexeme_is_dead(lx.get("senses") or []):
+                # Card #632 (#719): illuminate the adjective -- only obsolete /
+                # archaic senses of another etymology next to the real verb:
+                # not a learner entry, so no level (like a stripped fragment).
+                lx["cefr"], lx["cefr_source"] = None, "quality_excluded"
+                continue
             if lx.get("zipf") is None:
                 continue
             share = share_of[id(lx)] / total

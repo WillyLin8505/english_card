@@ -91,5 +91,49 @@ def test_stress_suffix_ipa_card551():
     got = {v["ipa"] for v in stress_suffix_ipa("chaotically")}
     assert "/keɪˈɒtɪkli/" in got
     assert any(v.endswith("aɪˈzeɪʃən/") for v in (x["ipa"] for x in stress_suffix_ipa("neutralisation")))
-    assert stress_suffix_ipa("anticlimactically") == []
+    assert stress_suffix_ipa("anticlimactically")[0]["from_phonemes"]
     assert stress_suffix_ipa("table") == []
+
+
+def test_suffix_ipa_normalizes_syllable_dots_without_losing_stress(monkeypatch):
+    from app.adapters import local
+    monkeypatch.setattr(local, "_base_phonemic", lambda base: [
+        {"ipa": "/ˌfɪl.ənˈθɹɒp.ɪk/", "accent": ["UK"]},
+        {"ipa": "/fɪl.ən.θɹɒp.ɪk/", "accent": ["UK"]},
+    ])
+    monkeypatch.setattr(local, "_cmudict_ipa", lambda base: None)
+    got = local.stress_suffix_ipa("philanthropically")
+    assert [(r["ipa"], r["accent"]) for r in got] == [
+        ("/ˌfɪlənˈθɹɒpɪkli/", ["UK"])]
+    assert got[0]["estimate"] is True
+
+
+def test_suffix_ipa_uses_cmu_only_when_dictionary_base_unusable(monkeypatch):
+    from app.adapters import local
+    dictionary = {
+        "anticlimactic": [{"ipa": "/ˌantɪjklɑjˈmaktɪk/", "accent": ["UK"]}],
+        "generalize": [{"ipa": "/ˈd͡ʒen.(ə.)ɹə.laɪz/", "accent": []}],
+    }
+    cmu = {"anticlimactic": "/ˌæntiklaɪˈmæktɪk/",
+           "generalize": "/ˈdʒɛnɚəˌlaɪz/"}
+    monkeypatch.setattr(local, "_base_phonemic", lambda b: dictionary.get(b, []))
+    monkeypatch.setattr(local, "_cmudict_ipa", cmu.get)
+    got = local.stress_suffix_ipa("anticlimactically")
+    assert got[0]["ipa"] == "/ˌæntiklaɪˈmæktɪkli/"
+    assert got[0]["accent"] == ["US"]
+    assert got[0]["from_phonemes"] and got[0]["estimate"]
+    nominal = local.stress_suffix_ipa("generalisation")
+    assert nominal[0]["ipa"] == "/ˌdʒɛnɚəˌlaɪˈzeɪʃən/"
+    assert nominal[0]["base"] == "generalize + -ation"
+    assert local.stress_suffix_ipa("genomically") == []
+    assert local.stress_suffix_ipa("table") == []
+
+
+def test_suffix_ipa_does_not_guess_optional_sounds_or_stress(monkeypatch):
+    from app.adapters import local
+    monkeypatch.setattr(local, "_base_phonemic", lambda base: [
+        {"ipa": "/ˈd͡ʒen.(ə.)ɹə.laɪz/", "accent": []},
+        {"ipa": "/dʒenəɹəlaɪz/", "accent": []},
+    ])
+    monkeypatch.setattr(local, "_cmudict_ipa", lambda base: None)
+    assert local.stress_suffix_ipa("generalisation") == []

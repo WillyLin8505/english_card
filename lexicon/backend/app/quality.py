@@ -276,6 +276,28 @@ def _has_zh(s: dict) -> bool:
     return bool((s.get("native") or "").strip())
 
 
+# Card #632 (問題回報 #719): illuminate the adjective has three senses, all
+# etymology-2 and two of them obsolete / archaic -- a part of speech nobody
+# learns, listed next to the real verb. Time / rarity labels only: register
+# labels (slang, informal) are current meanings.
+DEAD_SENSE_LABELS = {"obsolete", "archaic", "dated", "rare", "historical"}
+
+
+def lexeme_is_dead(senses: list[dict]) -> bool:
+    """Every sense is another etymology's or archaic/obsolete, and most carry
+    such a label (a lone etymology-2 sense like lake the verb stays)."""
+    if not senses:
+        return False
+    dead = 0
+    for s in senses:
+        labels = {str(x).lower() for x in s.get("labels") or []}
+        if labels & DEAD_SENSE_LABELS:
+            dead += 1
+        elif not any(x.startswith("etymology-") for x in labels):
+            return False
+    return dead * 3 >= len(senses) * 2
+
+
 def rank_senses(senses: list[dict], low_keys: set[str] | None = None) -> list[dict]:
     """Main senses first (original order kept), low ones marked and after.
 
@@ -663,7 +685,7 @@ def apply_decisions(pack: dict, decisions: dict | None = None) -> dict:
     redirects = pack.setdefault("redirects", {})
     for lid, level in set_cefr.items():
         lx = by_id.get(lid)
-        if lx and lid not in redirect and lid not in strip:
+        if lx and lid not in redirect and lid not in strip and lx.get("cefr_source") != "quality_excluded":
             cur = lx.get("cefr")
             if (lx.get("rare_usage") and cur in LEVELS and level in LEVELS
                     and LEVELS.index(level) < LEVELS.index(cur)):

@@ -769,35 +769,52 @@ def derived_affix_ipa(word: str) -> list[dict]:
     return out[:3]
 
 
-# Respelled or syllable-dotted base IPA (ˌantɪjklɑj, ˌæn.θɹoʊ) is not copied into a derivative.
-_ODD_IPA = re.compile(r"[.()]|[aɪ]j")
+# Keep respelled and optional sounds out of this conservative fallback.
+_ODD_IPA = re.compile(r"[()]|[aɪ]j")
+
+
+def _stress_suffix_bases(base: str, ending: str) -> list[dict]:
+    """Use a dictionary's phonemic form, then CMUdict if none is usable.
+
+    Syllable dots are IPA separators, not missing or invalid sounds. Removing
+    them preserves the phonemes and stress. Require explicit stress for these
+    polysyllabic bases; never guess it from an unmarked transcription.
+    """
+    out = []
+    for row in _base_phonemic(base):
+        body = row["ipa"].strip("/").replace(".", "")
+        if (body.endswith(ending) and "ˈ" in body and not _ODD_IPA.search(body)
+                and not re.search(r"[\s,]", body)):
+            out.append({**row, "ipa": f"/{body}/"})
+    if not out:
+        ipa = _cmudict_ipa(base)
+        if ipa and ipa.strip("/").endswith(ending) and "ˈ" in ipa:
+            out.append({"ipa": ipa, "accent": ["US"], "from_phonemes": True})
+    return out
 
 
 def stress_suffix_ipa(word: str) -> list[dict]:
-    """Two suffixes whose stress effect is regular (問題回報 #209, card 551):
-    -ically = base-ic + ally (chaotic → chaotically, same stress, ends -ɪkli) and
-    -isation/-ization = base-ise/-ize + ation (main stress moves to the
-    -ation syllable, the base's own main stress becomes secondary).
-    The base must already have phonemic IPA; the value is an estimate."""
+    """Two regular suffixes, using dictionary bases only (card 551).
+
+    -ically keeps the -ic base's stress; -isation/-ization moves main stress
+    to -ation. Every derived value remains explicitly marked as an estimate.
+    """
     w = word.lower()
     out: list[dict] = []
     if w.endswith("ically") and len(w) > 9:
         base = w[:-4]
-        for row in _base_phonemic(base):
+        for row in _stress_suffix_bases(base, "ɪk"):
             body = row["ipa"].strip("/")
-            if body.endswith("ɪk") and not _ODD_IPA.search(body):
-                out.append({"ipa": f"/{body}li/", "accent": row.get("accent") or [],
-                            "composed": True, "estimate": True, "base": f"{base} + -ally",
-                            "derived": "spelling"})
+            out.append({**row, "ipa": f"/{body}li/",
+                        "composed": True, "estimate": True, "base": f"{base} + -ally",
+                        "derived": "spelling"})
     m_ = re.fullmatch(r"([a-z]{4,})(is|iz)ation", w)
     if m_:
         for verb in (m_.group(1) + "ise", m_.group(1) + "ize"):
-            for row in _base_phonemic(verb):
+            for row in _stress_suffix_bases(verb, "aɪz"):
                 body = row["ipa"].strip("/")
-                if not body.endswith("aɪz") or "ˈ" not in body or _ODD_IPA.search(body):
-                    continue
                 body = body.replace("ˈ", "ˌ")[:-1] + "ˈzeɪʃən"
-                out.append({"ipa": f"/{body}/", "accent": row.get("accent") or [],
+                out.append({**row, "ipa": f"/{body}/",
                             "composed": True, "estimate": True, "base": f"{verb} + -ation",
                             "derived": "spelling"})
     seen, uniq = set(), []
