@@ -422,10 +422,13 @@ def card_base(word: str, language: str) -> str | None:
             if e.get("pos") not in ("adj", "adv") and not (
                     e.get("pos") == "noun" and ACT_NOUN.match(_first_gloss(s))):
                 return None  # a thing of its own (building, glasses)
-    # A finite verb form beside a word of its own is no base: sombre (dark) is
-    # not sombrer's form (#711). Participles and number/gender forms still are.
+    # A finite verb form beside an adjective or noun of its own is no base:
+    # sombre (dark) is not sombrer's form (#711). Participles and number/gender
+    # forms still are, and an adverb of its own (onwards → onward) still is.
+    own_pos = {e.get("pos") for e in same for _ in own(e)}
+    finite_is_other = bool(own_pos & {"adj", "noun"})
     bases = [b for e in same for s in e.get("senses") or []
-             if not is_finite_verb_form(s) for b in form_bases(s)]
+             if not (finite_is_other and is_finite_verb_form(s)) for b in form_bases(s)]
     bases = [b for b in dict.fromkeys(bases)
              if b and b == b.lower() and b != w and zipf(b, language) >= 2.5]
     if not bases:

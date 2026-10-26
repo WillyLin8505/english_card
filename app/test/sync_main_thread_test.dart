@@ -182,7 +182,11 @@ void main() {
       expect(stall * 3, lessThan(old.elapsed),
           reason: 'the longest stall is a small part of the old block');
       oldPack.clear();
-    }, timeout: const Timeout(Duration(minutes: 3)));
+    },
+        timeout: const Timeout(Duration(minutes: 3)),
+        // Timing test: a busy machine (other agents' CLIs) can stall the loop
+        // for a second; a real regression fails every attempt.
+        retry: 2);
   }
 
   test('linkLexiconInBatches 中途有新的 linkLexicon 會先做完，結果一樣', () async {

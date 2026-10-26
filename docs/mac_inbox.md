@@ -1940,3 +1940,88 @@ owner 在 iPhone 送出的回報（#626：App 畫面與互動由 Mac 修）。�
 - 同一個標籤（同一個概念、同一個位置）可以有由淺到深的字，例如 happy（A1）→ joyful（B2）→ elated／jubilant（C1–C2）。標籤共用，單字難度往上。
 - Mac 做 App 畫面：照片詳情標籤下方加表格，每格的字可以點進單字詳情或加入單字本。同一概念的字在照片上共用一個點。手機太窄時表格可以左右滑。
 - 伺服器的 grid 回傳由 Windows #731 做，完成後會在 inbox 附格式範例。在那之前可以先用現有標籤，依詞性和等級排進表格。
+
+## M181（2026-10-26 20:23）狀態：待做（Windows 卡 #640 交給 Mac 的 App 畫面部分）
+卡：問題回報 #724：[給 Mac] [意見回饋] 複習：這個語音不對啊，而且第一個也是機器人合成的，你應該開個永久卡
+
+複習卡（flashcard_back.dart 的 accentAudioUrl 沒帶 orDefault）要「有該腔調的錄音就用、否則用任何真人錄音、最後才 TTS」。
+
+結論：詞庫資料本身沒有「默認 TTS 卻有真人錄音」的矛盾（0 個）；複習頁第一個是機器人，主因是 App 端腔調嚴格比對（Mac 修），其次是 6,347 個英文字根本沒有真人錄音。
+
+| 全庫英文詞 17,709 | 數量 |
+|---|---|
+| 只有 TTS（無任何真人錄音，資料面無解，需補錄音來源） | 6,347 |
+| 有真人錄音 | 11,362 |
+| 其中沒有 US 標記（美式設定→複習落到 TTS） | 5,390 |
+| 其中沒有 UK 標記（英式設定→複習落到 TTS） | 10,199 |
+| 檔名不含本字的錄音（多為同音字 due/dew 屬正常，真錯的如 clause→pause、effectively→effectivity、trip→tip） | 102 |
+
+根因：Lingualibre／部分 kaikki 錄音（約 3,850 筆）沒有腔調標記，App 複習頁用 accent 嚴格比對、沒帶 orDefault，所以落到 TTS。word_detail 頁有帶 orDefault 所以正常。
+資料：未改任何資料（無備份需求）；golden/QC 未動。
+新增永久審計工具：python lexicon/tools/card640_audio_audit.py（唯讀，列出上表數字與可疑錄音）。建議把它設為常態卡，每輪回報 TTS 比例。
+剩下：(1) Mac 修複習頁 fallback；(2) 6,347 字補真人錄音（Commons/Lingualibre 重試）；(3) 約 3 個明顯錯字錄音可清理。未看截圖，卡上的單字不明。
+
+## M182（2026-10-26 20:25）狀態：待做（Windows 卡 #641 交給 Mac 的 App 畫面部分）
+卡：問題回報 #726：[給 Mac] [意見回饋] 複習：單字常常要loading的原因是什
+
+複習頁換字時常出現 loading 的原因與修正（預載下一張、本機快取圖片/音檔、避免每張都等網路）。
+此事已由 Mac inbox M178 接手（docs/mac_inbox.md，截圖 docs/mac_handover/726.png）。
+
+Windows 側我沒做的事：
+- 未量測全庫資料、未改資料，無備份、無需還原。
+- golden / QC 未跑（沒有改動）。
+- 若 Mac 查出 loading 是伺服器回應慢或資料缺值（例如缺圖、缺音檔需即時抓取），請在 mac_verify_results 的「不通過」列交回 Windows，再開資料卡。
+
+## M183（2026-10-26 20:25）狀態：待做（Windows 卡 #642 交給 Mac 的 App 畫面部分）
+卡：問題回報 #727：[給 Mac] [意見回饋] 拍照：我切換到這個頁面就會呈現我上次打標籤的樣子，這個這個幫我修掉
+
+拍照頁每次切換進來，都要清掉上次的標籤結果，回到初始狀態。
+- 現象：owner 回報切到「拍照」頁，畫面還留著上次打標籤的樣子（見問題回報 #727 截圖）。
+- 推測根因（未改 code）：拍照頁的標籤結果／選取狀態存在跨頁常駐的 state（provider 或 tab 保活），離開頁面時沒重置。
+- 建議修法：進入頁面（或離開時）重置拍照 state；若要保留「上次結果」須是使用者主動開歷史才顯示。
+- 問題回報 #727 已標「給 Mac（inbox M178）」，由 Mac 修畫面。
+
+備份：無（未動資料）。golden／QC：未動資料，不受影響，未重跑。
+
+## M184（2026-10-26 20:25）狀態：待做（Windows 卡 #643 交給 Mac 的 App 畫面部分）
+卡：問題回報 #728：[給 Mac] [意見回饋] 設定：正在處理或是已處理完也都回報這個頁面上
+
+在設定頁的意見回饋/問題回報清單,除了「未處理」也顯示「處理中」與「已處理」的回報(含狀態標示)。後端 GET /api/issues 已有 status 欄位(open / in_progress / fixed 等),App 端只需取消只列 open 的篩選、加狀態標籤。問題回報 #728 的 resolution 已是「給 Mac(inbox M178)」。
+
+改動:無。備份:無。golden/QC:未動資料,無需比對。
+剩下:Mac 修畫面後把 #728 標已處理。
+
+## M185（2026-10-26 20:27）狀態：待做（Windows 卡 #644 交給 Mac 的 App 畫面部分）
+卡：問題回報 #729：[給 Mac] [意見回饋] 複習：當我已經切換到第二張卡卡片的時候，那我那個聲音就不要再上一張
+
+#729 是 App 畫面／互動（複習切到下一張卡後，上一張的聲音要停），依 10/23 分工由 Mac 修；Windows 這張卡沒有詞庫資料、伺服器或工具要改，未動任何檔案。
+
+- 此問題已在 docs/mac_inbox.md 的 M179 交給 Mac。
+- 給 Mac 的線索：app/lib/services/speaker.dart 的 DeviceSpeaker 已有 stop()（約第 187 行）與「say() 下載中被後來的 say/stop 取代就不播」的 token 機制（約第 84 行）；請檢查複習頁換卡（滑到下一張、答題後換卡）時是否呼叫 speaker.stop()，以及自動播放（例句／單字）延遲呼叫是否在換卡後仍會觸發。
+- 未改資料、無需備份；golden/QC 未跑（無變更）。
+
+## M186（2026-10-26 20:29）狀態：待做（Windows 卡 #632 交給 Mac 的 App 畫面部分）
+卡：問題回報 #719：[Mac] 2026-10-26 M152（owner 回報）：#706 illuminate 詞庫資料（交 Windows）
+
+重新匯出 pack 後確認 illuminate 的 adj 無等級／不顯示 C2，illuminated 在 illuminate 卡上有形容詞義項。
+
+## M187（2026-10-26 20:35）狀態：待做（Windows 卡 #645 交給 Mac 的 App 畫面部分）
+卡：問題回報 #731：[owner] 照片標籤改版（伺服器／資料）：打標結果改成「詞性 × CEFR」表格，同一標籤附由淺到深的同義字
+
+照片詳情改用 grid 顯示表格（列＝動詞/名詞/形容詞/副詞/片語，欄＝A1–C2，格內字用 concept_id 串同一概念，點擊用 anchor 的位置）。
+取得方式（皆走後端 API，需重啟 serve_app 才生效，派工程式會自動重啟）：
+- GET /images/{asset_id}/grid → {"grid": ...}（用已存標籤）
+- POST /photo-grid  body {"tags":[{word,pos,point,box,cefr?}]} → 同上（給使用者自己拍的照片、tagger 候選字；沒 cefr 會自動分級）
+- POST /images/{id}/tag（新照片、重新掃描）回傳多一個 grid 欄位
+格式範例：
+{"grid":{"version":1,"rows":["verb","noun","adjective","adverb","phrase"],"levels":["A1","A2","B1","B2","C1","C2"],
+ "cells":[{"pos":"adjective","cefr":"A1","words":[{"word":"happy","concept_id":"c1","anchor":{"point":[0.2,0.3],"box":null},"source":"photo"}]},
+  {"pos":"adjective","cefr":"B2","words":[{"word":"joyful","concept_id":"c1","anchor":{"point":[0.2,0.3],"box":null},"source":"lexicon"}]},
+  ... 共 30 格（5 列 × 6 欄），沒有字的格 words 為 []]}}
+source=photo 是照片裡看到的字；lexicon 是詞庫同義字（沿用同一 anchor）。
+
+做法：看圖仍是 Qwen 既有標籤（word/pos/point/box）；grid 在後端 lexicon/backend/app/photo_grid.py 組：每個看到的字＝一個概念，詞庫 synonyms 關係（oewn/kaikki、強度≥0.8、同詞性、有 CEFR、有 zh-TW 中文、status full）依詞庫 CEFR 放進對應格；每格最多 3 字，每概念每格最多 1 字，沒有的組合留空；介系詞等 5 列以外的詞性不放。
+改了：lexicon/backend/app/photo_grid.py（新）、images.py（兩個端點＋tag 回傳 grid）、tests/test_card645_photo_grid.py（2 個測試：格式、同概念共用 anchor、無中文不收、格上限、空格）、tools/card645_measure.py。
+沒有改資料，所以不需備份／還原；golden／QC 數字不變（QC 沒動資料）。
+測試：新測試 2 過；test_images/test_tag_binding/test_tag_retries 73 過、2 個失敗（test_old_labels_are_leveled…、test_two_labelling_workers…）是因為 Qwen 目前被暫停（paused_agents.json），tag_pending 回 0，與本卡無關。
+剩下：Mac 做畫面；Mac 看過後再決定舊照片要不要重掃。

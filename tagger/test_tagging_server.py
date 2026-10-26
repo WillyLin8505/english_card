@@ -51,7 +51,7 @@ def test_prompt_explicitly_excludes_names_and_invalidates_old_cache():
     assert "not company, product, model or person names" in prompt
     assert "Ignore words" in prompt and "logos" in prompt
     assert "safe=false" in prompt and "explicit adult nudity" in prompt
-    assert PROMPT_VERSION == "photo-tags-context-v9-levelmix"
+    assert PROMPT_VERSION == "photo-tags-context-v10-level-target"
 
 
 def test_cefr_prompt_lists_visible_objects_level_from_lexicon():

@@ -72,7 +72,7 @@ KEY_FILE = os.path.join(HERE, '.api_key')
 CMUDICT = os.path.join(ROOT, 'data', 'raw', 'cmudict.dict')
 DEFAULT_MODEL = 'qwen3.5:4b'
 MAX_BODY = 20 * 1024 * 1024
-PROMPT_VERSION = 'photo-tags-context-v9-levelmix'
+PROMPT_VERSION = 'photo-tags-context-v10-level-target'
 CACHE_DIR = os.path.join(HERE, 'cache')
 MODEL_CONTEXT = int(os.environ.get('TAGGER_NUM_CTX', '4096'))
 MODEL_MAX_TOKENS = int(os.environ.get('TAGGER_NUM_PREDICT', '1200'))
@@ -103,11 +103,13 @@ LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 POS = ['noun', 'verb', 'adjective', 'adverb', 'phrase']
 FOCUS = {
     'harder': 'This time prefer specific, precise labels instead of broad category names. '
-              'Every label must be an advanced word (upper-intermediate to proficient, e.g. '
-              '"ergonomic", "cluttered", "luminous", "peripheral"), not a synonym of a basic word.',
+              'Every label must be a more advanced word than the usual everyday ones '
+              '(e.g. "ergonomic", "cluttered", "luminous", "peripheral"), not a synonym of a '
+              'basic word. Include verbs and adjectives, not only nouns.',
     'easier': 'This time prefer common, broad everyday labels.',
-    'actions': 'This time prefer verbs and action phrases.',
-    'descriptions': 'This time prefer adjectives and adverbs describing what is seen.',
+    'actions': 'This time every label must be a verb or action phrase for something visibly '
+               'happening or implied (e.g. "stroll", "queue up", "gaze"); no nouns.',
+    'descriptions': 'This time every label must be an adjective or adverb describing what is seen.',
 }
 
 # Learning and native languages (spec section 7: 英文、法文、繁體中文).
@@ -180,8 +182,9 @@ def build_prompt(level: str, lang: str = 'en', native: str = 'zh-TW',
     translations and full word data are resolved from the offline database.
     """
     lang_name = LANGS[lang]
+    count = '4 to 6' if focus in ('harder', 'actions', 'descriptions') else '10 to 12'
     lines = [
-        f'Inspect this photo and return 6 to 8 useful {lang_name} labels.',
+        f'Inspect this photo and return {count} useful {lang_name} labels.',
         'First check content safety. Set safe=false and return no candidates for pornography, '
         'sexual activity, exposed genitals, or explicit adult nudity. Otherwise set safe=true. '
         'Ordinary family photos, swimwear, breastfeeding, art and medical contexts are safe '
@@ -195,12 +198,13 @@ def build_prompt(level: str, lang: str = 'en', native: str = 'zh-TW',
         'Use ordinary vocabulary, not company, product, model or person names. Ignore words '
         'that are only read from logos, packaging, watermarks or signs.',
     ]
-    if lang == 'en' and level in LEVELS and focus not in ('easier', 'harder'):
+    if lang == 'en' and level in LEVELS and focus != 'easier':
         lines.append(
-            f'The learner is at level {level}. Make sure the labels cover a range of difficulty: '
-            'besides common words, include at least 2 less common, more precise or more advanced '
-            f'labels (above {level}, for example upper-intermediate or advanced vocabulary) '
-            'whenever the photo supports them.')
+            f'The learner is at CEFR level {level}. Aim most labels at words a {level} learner '
+            f'is about to learn, i.e. from {_shift(level, -1)} to {_shift(level, 1)}; do not '
+            'fill the list with A1 words such as "man", "tree", "car", "building" unless they '
+            'are all the photo offers. Include at least 2 verbs or adjectives and at least 2 '
+            f'labels above {level} whenever the photo supports them.')
     if focus in FOCUS:
         lines.append(FOCUS[focus])
     lines += [
@@ -1048,14 +1052,15 @@ class Tagger:
 
     def candidates(self, image: bytes, level: str, lang: str = 'en', native: str = 'zh-TW',
                    focus: str | None = None, exclude: list[str] | None = None) -> list[dict]:
-        # Difficulty and native language do not alter visual recognition. They are
-        # applied later from the learner profile and downloaded word database.
+        # Native language does not alter recognition; level steers the prompt (card #625),
+        # so it is part of the cache key.
         key_data = json.dumps({
             'image': hashlib.sha256(image).hexdigest(),
             'model': self.model,
             'prompt': PROMPT_VERSION,
             'output_policy': 'dictionary-level-visible-v1',
             'lang': lang,
+            'level': level if level in LEVELS else None,
             'focus': focus,
             'exclude': sorted(w.strip().lower() for w in (exclude or []) if w.strip()),
             'prep': IMAGE_PREP_VERSION},

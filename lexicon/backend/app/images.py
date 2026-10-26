@@ -30,7 +30,7 @@ from PIL import Image
 from sqlalchemy import case, func, or_, select, text
 
 from . import config
-from . import agent_pause, db, models as m, openverse_auth, rate_gate, wikimedia_gate
+from . import agent_pause, db, models as m, openverse_auth, photo_grid, rate_gate, wikimedia_gate
 
 HOSTS = {'www.wikidata.org', 'commons.wikimedia.org', 'upload.wikimedia.org', 'thumb.wikimedia.org'}
 # Our own API endpoints for the two other live sources: an exact host match,
@@ -751,6 +751,8 @@ def _finalize_image(s, c, *, source_key, raw, license_code, license_url, author,
                              path=str(path.relative_to(config.MEDIA)), thumbnail_path=str(thumbnail.relative_to(config.MEDIA)), status='ready', safety_status='unchecked')
         s.add(asset); s.flush()
     c.image_asset_id = asset.id
+    if text_heavy_asset(asset.id):
+        return {'id': None, 'status': 'rejected'}
     binding = s.scalars(select(m.SenseImage).where(m.SenseImage.sense_id == c.sense_id, m.SenseImage.image_asset_id == asset.id)).first()
     if binding is None:
         binding = m.SenseImage(sense_id=c.sense_id, image_asset_id=asset.id, role='representative', review_status='pending', alt_native={})
@@ -2284,6 +2286,23 @@ def tag_box_area(tag) -> float | None:
     return area
 
 
+_TEXT_HEAVY = {'mtime': None, 'ids': frozenset()}
+
+
+def text_heavy_asset(asset_id: int) -> bool:
+    """#614: pictures that are mostly text (slides, scans, posters; OCR rule of
+    card #582) never get a new sense binding. The id list is written by
+    tools/card614_reject_text.py (--apply) to state/text_heavy_assets.json."""
+    f = config.MEDIA.parent / 'state' / 'text_heavy_assets.json'
+    try:
+        mt = f.stat().st_mtime
+        if _TEXT_HEAVY['mtime'] != mt:
+            _TEXT_HEAVY.update(mtime=mt, ids=frozenset(json.loads(f.read_text(encoding='utf-8'))))
+    except (OSError, ValueError):
+        return False
+    return asset_id in _TEXT_HEAVY['ids']
+
+
 def representative_tag_ok(tag, lemma: str) -> bool:
     """The representative picture has to name the word, with a subject-sized
     box and a visual confidence at or above the tagger's stored scale."""
@@ -2472,6 +2491,8 @@ def share(s, asset, only_lemma=None, require_publishable: bool = False) -> int:
     Labels that cannot be bound record why (no entry, stub, generic, synonym,
     adjective cap). An inflection is bound to its full base form (#197)."""
     if not labelled(asset) or asset.status != 'ready' or asset.safety_status != 'safe':
+        return 0
+    if text_heavy_asset(asset.id):
         return 0
     reviewed = s.scalar(select(func.count()).select_from(m.SenseImage).where(
         m.SenseImage.image_asset_id == asset.id, m.SenseImage.review_status == 'approved')) > 0
@@ -2772,7 +2793,7 @@ def share_by_meaning(s, target, lemma, per_sense=3) -> int:
         for asset in assets:
             if have >= per_sense:
                 break
-            if asset.id in used:
+            if asset.id in used or text_heavy_asset(asset.id):
                 continue
             # #368: the target pack shows a picture's target words only (its
             # bindings and meaning labels); one naming fewer than 3 even with
@@ -3391,10 +3412,27 @@ def register(app, auth):
     @app.post('/images/{asset_id}/tag', dependencies=[auth])
     def tag_endpoint(asset_id: int, s=Depends(db.get_session)):
         try:
-            return {'tags': tag_asset(s, asset_id)}
+            tags = tag_asset(s, asset_id)
+            return {'tags': tags, 'grid': photo_grid.build_grid(s, tags)}
         except (ValueError, OSError) as e:
             s.commit()  # preserve failure diagnostics before the HTTP error rolls back
             raise HTTPException(400, str(e))
+
+    @app.get('/images/{asset_id}/grid', dependencies=[auth])
+    def grid_endpoint(asset_id: int, s=Depends(db.get_session)):
+        # 詞性 x CEFR table of a photo's labels (card #645); built from the stored labels.
+        asset = s.get(m.ImageAsset, asset_id)
+        if asset is None:
+            raise HTTPException(404, '圖片不存在')
+        return {'grid': photo_grid.build_grid(s, asset.tags)}
+
+    @app.post('/photo-grid', dependencies=[auth])
+    def photo_grid_endpoint(body: dict, s=Depends(db.get_session)):
+        # Same grid for labels the caller already has (e.g. the tagger's candidates for a
+        # user's own photo); labels without a level are graded like stored ones.
+        tags = [t if tag_level(t) else classify_tag_cefr(s, t)
+                for t in body.get('tags') or [] if isinstance(t, dict)]
+        return {'grid': photo_grid.build_grid(s, tags)}
 
     @app.post('/images/{asset_id}/retag-short', dependencies=[auth])
     def retag_short_endpoint(asset_id: int, s=Depends(db.get_session)):

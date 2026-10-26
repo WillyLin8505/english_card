@@ -48,7 +48,7 @@ def test_to_candidates_cleans_clamps_and_dedups():
 
 def test_prompt_levels_focus_languages_and_exclude():
     p = ts.build_prompt('B1')
-    assert '6 to 8' in p and 'Do not translate' in p
+    assert '10 to 12' in p and 'Do not translate' in p
     assert 'CEFR B1' not in p and 'Traditional Chinese' not in p
     assert 'specific, precise labels' in ts.build_prompt('B2', focus='harder')
     assert 'verbs' in ts.build_prompt('A1', focus='actions')
