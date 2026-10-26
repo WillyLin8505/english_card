@@ -298,4 +298,26 @@ void main() {
     expect(find.textContaining('新增了 1 個單字'), findsOneWidget);
     expect(find.textContaining('AI 正在重新掃描'), findsNothing);
   });
+
+  // 問題回報 #691 (Windows 卡 #625): a top-up also skips the everyday words
+  // the learner already has from other photos, not only this photo's.
+  testWidgets('top-up exclude adds word-book words at or below the level',
+      (tester) async {
+    repo.addWord(word: 'cup', pos: 'noun', meaning: '杯子', level: 'A1');
+    repo.addWord(word: 'ponder', pos: 'verb', meaning: '沉思', level: 'C1');
+    final intake = intakeFor();
+    final queue = queueFor(intake);
+    final id = await deckPicture(tester, intake);
+    final s = PhotoWordSession(repo: repo, photoId: id, queue: queue);
+    replies = [
+      [('peel', 'verb'), ('wash', 'verb')],
+    ];
+    s.setBias(PosBias.actions);
+    await idle(tester, s);
+    final exclude = seen.single.url.queryParameters['exclude']!.split(',');
+    expect(exclude.take(_fruits.length), _fruits);
+    expect(exclude, contains('cup'));
+    expect(exclude, isNot(contains('ponder')));
+    s.dispose();
+  });
 }
