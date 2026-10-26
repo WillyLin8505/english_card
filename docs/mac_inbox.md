@@ -2125,3 +2125,6 @@ commit `16a5d07b`（Windows：flutter analyze 無 error、01:12 +692 ~2: All tes
 commit `c12083f2`（Windows：flutter analyze 無 error、01:13 +692 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #655：問題回報 #747：[owner] [Mac] 2026-10-26 iPhone 12 實機驗證 M170–M195（
   結果：已修（需重啟 tagger）：補字 focus=harder 不看 level、提示只說「比日常字難」，模型回 B1 級字；現在依 level 提示並在 tagger 端按詞頻濾掉比 level-1 更簡單的字。
+
+## M201（2026-10-26 23:13）狀態：待做（重驗 M199／M200）
+tagger 已在 23:12 用 start_tagger.bat 重啟，8765、8790 都回 200，裡面已是 #747 的修正（harder 會照 level 提示，tagger 也會濾掉比 level-1 更簡單的字）。請到 owner 的 iPhone 重驗 level=C2 的 harder 補字。
