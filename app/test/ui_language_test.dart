@@ -19,7 +19,9 @@ void main() {
     final app = await pumpApp(tester,
         initialTab: AppTab.settings, size: const Size(360, 800));
     expect(find.text('設定'), findsWidgets);
-    await tester.tap(find.widgetWithText(ChoiceChip, '法文（Français）'));
+    // French is also a learning language now (#700): the native chip is
+    // the second one.
+    await tester.tap(find.widgetWithText(ChoiceChip, '法文（Français）').last);
     await tester.pumpAndSettle();
     expect(app.settings.nativeLanguage, 'fr');
     expect(find.text('Langue maternelle'), findsOneWidget);
@@ -130,7 +132,8 @@ void main() {
     addTearDown(tester.view.reset);
     await tester.pumpWidget(MaterialApp(
         home: OnboardingScreen(lexicon: testLexicon(), onDone: (_) {})));
-    await tester.tap(find.text('法文（Français）'));
+    // The second 法文 option is the native-language one (#700).
+    await tester.tap(find.text('法文（Français）').last);
     await tester.pumpAndSettle();
     expect(find.text('Suivant'), findsOneWidget);
     await tester.tap(find.text('Suivant'));

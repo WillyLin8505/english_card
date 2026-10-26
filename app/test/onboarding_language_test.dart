@@ -50,6 +50,7 @@ void main() {
 
   testWidgets('an English phone sees English before choosing (French closed)',
       (tester) async {
+    closeFrench();
     final result = await pump(tester, uiLanguage: 'en');
     expect(find.text('Welcome to photo vocabulary'), findsOneWidget);
     expect(find.text('歡迎使用拍照學單字'), findsNothing);
