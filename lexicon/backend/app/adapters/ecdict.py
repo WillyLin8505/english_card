@@ -360,7 +360,19 @@ class ECDict(SourceAdapter):
                 own_ety = score
             else:
                 best_other = max(best_other, score)
-        return own_ety is not None and best_other > own_ety and (best_other >= 2 or own_ety == 0)
+        if own_ety is None or best_other <= own_ety or (best_other < 2 and own_ety):
+            return False
+        # Wiktionary's own Chinese translation of this sense settles it.
+        from .kaikki import _native_word
+        items = self.meaning_items(lemma, pos)[:2]
+        for e in entries:
+            for x in e.get("senses") or []:
+                if ((x.get("glosses") or [""])[0]).strip() == gloss.strip():
+                    zh = [_native_word(t, "zh-TW") for t in (x.get("translations") or [])
+                          + (e.get("translations") or [])]
+                    if any(w and i and (i in w or w in i) for w in zh for i in items):
+                        return False
+        return True
 
     def meaning(self, word: str, pos=None, loose: bool = False) -> str | None:
         """The first meaning of [word] in [pos] (one or several parts of
