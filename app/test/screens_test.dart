@@ -115,15 +115,16 @@ void main() {
       final app = await openBreakfast(tester);
       expect(find.text('辨識單字列表 (5)'), findsOneWidget);
       expect(find.text('Coffee'), findsNWidgets(2)); // pin + card
-      expect(find.text('入門（A1） · 剛好'), findsOneWidget);
+      expect(find.text('入門 · 剛好'), findsOneWidget);
 
       // ☆ Apple, then turn the dial to B2.
       await tester.tap(find.bySemanticsLabel('鎖定（調整難度時保留）').at(1));
       await tester.pump();
-      // The difficulty bar under the photo (問題回報 #442): tap the B2 tick.
-      await tester.tap(find.text('B2'));
+      // The difficulty bar under the photo (問題回報 #442): tap where B2 is
+      // (問題回報 #708: the bar no longer shows the A1…C2 ticks).
+      await tester.tapAt(_barLevel(tester, 3));
       await tester.pumpAndSettle();
-      expect(find.text('中高階（B2） · 挑戰'), findsOneWidget);
+      expect(find.text('中高階 · 挑戰'), findsOneWidget);
       expect(find.text('Apple'), findsNWidgets(2), reason: 'starred');
       expect(find.text('Coffee'), findsNothing,
           reason: 'A1 is too far from B2');
@@ -182,7 +183,7 @@ void main() {
 
     testWidgets('為什麼是這些字？ explains the picks', (tester) async {
       await openBreakfast(tester);
-      await tester.tap(find.text('難一點'));
+      await tester.tapAt(_barLevel(tester, 1));
       await tester.pumpAndSettle();
       await tester.tap(find.text('為什麼是這些字？'));
       await tester.pumpAndSettle();
@@ -759,4 +760,12 @@ void main() {
     expect(jsonDecode(utf8.decode(jsonResponse({'a': '中'}).bodyBytes)),
         {'a': '中'});
   });
+}
+
+/// Where level [i] (0 = A1 … 5 = C2) is on the photo's difficulty bar.
+Offset _barLevel(WidgetTester tester, int i) {
+  final bar = tester.getRect(find.byKey(const ValueKey('difficulty-bar')));
+  const pad = 26.0;
+  final step = (bar.width - 2 * pad) / 5;
+  return Offset(bar.left + pad + i * step, bar.center.dy);
 }

@@ -390,4 +390,54 @@ void main() {
     expect(apple.examples.single.translation, '我的翻譯');
     expect(apple.userEdited, contains(WordField.examples));
   });
+
+  // 問題回報 #706: city lights at night were labelled Illuminate
+  // 「（宗教）受啟蒙的…」 — the rare adjective, picked for its part of speech.
+  test('a form goes to its word\'s common entry, not a rare one',
+      () {
+    final p = LexiconPack()
+      ..loadJson({
+        'target_language': 'en',
+        'native_language': 'zh-TW',
+        'lexemes': [
+          {
+            'id': 1,
+            'lemma': 'illuminate',
+            'normalized': 'illuminate',
+            'pos': 'verb',
+            'status': 'full',
+            'cefr': 'B1',
+            'senses': [
+              {'id': 10, 'definition': 'To shine light on.', 'native': '照亮、照明'}
+            ],
+          },
+          {
+            'id': 2,
+            'lemma': 'illuminate',
+            'normalized': 'illuminate',
+            'pos': 'adj',
+            'status': 'full',
+            'cefr': 'C2',
+            'rare_usage': true,
+            'usage_rank': 1,
+            'senses': [
+              {'id': 20, 'definition': 'Enlightened spiritually.', 'native': '（宗教）受啟蒙的'}
+            ],
+          },
+          {
+            'id': 3,
+            'lemma': 'illuminated',
+            'normalized': 'illuminated',
+            'pos': 'adj',
+            'status': 'full',
+            'card': 'illuminate',
+            'senses': [
+              {'id': 30, 'definition': 'Lit.', 'native': '被光照射，發光'}
+            ],
+          },
+        ],
+      });
+    expect(p.lookup('illuminated', pos: 'adj.')!.entry.id, 1);
+    expect(p.link(_cand('illuminated', pos: 'adj.')).meaning, '照亮、照明');
+  });
 }

@@ -383,7 +383,13 @@ class LexiconPack extends ChangeNotifier {
     final hit = _lookup(word, pos: pos);
     final base = _byLemma[hit?.entry.card];
     if (hit == null || base == null || base.isEmpty) return hit;
-    return LexiconHit(_prefer(base, pos).first, 'family');
+    // A form sends the learner to its word's card, and to the word's common
+    // entry there (問題回報 #706: city lights are illuminated → illuminate
+    // 照亮, not the rare adjective illuminate 「（宗教）受啟蒙的」, C2).
+    final ordered = _prefer(base, pos);
+    return LexiconHit(
+        ordered.firstWhere((e) => !e.rareUsage, orElse: () => ordered.first),
+        'family');
   }
 
   static List<LexEntry> _prefer(List<LexEntry> list, String? pos) {
@@ -1331,4 +1337,17 @@ LexiconPack _indexSqlite(
     }
     rethrow;
   }
+}
+
+/// A word as the screens show it in the learning [language] (問題回報 #499,
+/// 卡 #496): English capitalised ("Cutting Board"); French in its lowercase
+/// spelling, a noun with its article ("la pomme") — the same headword the
+/// card back and 單字詳情 show.
+String shownWord(String word, String language, {String? pos}) {
+  if (language != 'fr') return displayWord(word);
+  final pack = LexiconPack.instance;
+  final hit = pack.lookup(word, pos: pos)?.entry;
+  return headword(word, language,
+      inflections: hit == null ? const [] : pack.detailFor(hit).inflections,
+      pos: pos ?? hit?.pos);
 }

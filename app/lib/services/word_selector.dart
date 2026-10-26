@@ -155,6 +155,7 @@ class WordSelector {
     Set<String> locked = const {},
     PosBias bias = PosBias.none,
     Set<String> fresh = const {},
+    bool relaxNounCap = false,
     required DateTime now,
   }) {
     final learned = profile.learned;
@@ -282,6 +283,16 @@ class WordSelector {
       if (s.rejected != null || !allowed(s)) continue;
       slots.add(s);
     }
+    // 問題回報 #691: a photo of nothing but things (a street, a shelf) kept
+    // three labels when the recognizer had no verb or adjective to add.
+    // Once it has been asked ([relaxNounCap]), more nouns fill the list.
+    if (relaxNounCap) {
+      for (final s in nearest) {
+        if (picked().length >= maxWords) break;
+        if (s.rejected != null || !allowed(s, nounCap: false)) continue;
+        slots.add(s);
+      }
+    }
 
     bool isLocked(ScoredCandidate s) => locked.contains(s.word);
     ScoredCandidate? weakest(bool Function(ScoredCandidate) where) {
@@ -382,9 +393,9 @@ class WordSelector {
     String? topUp;
     final spare =
         scored.where((s) => s.rejected == null && s.levelFit >= 0.6).length;
+    final levels = [for (final c in pool) levelIndex(c.level)]..sort();
+    final median = levels.isEmpty ? target : levels[levels.length ~/ 2];
     if (words.length < 3 || spare <= words.length) {
-      final levels = [for (final c in pool) levelIndex(c.level)]..sort();
-      final median = levels.isEmpty ? target : levels[levels.length ~/ 2];
       topUp = switch (bias) {
         PosBias.actions => 'actions',
         PosBias.descriptions => 'descriptions',
@@ -405,6 +416,11 @@ class WordSelector {
     // The whole pool is short of five labels: all of them show, and the
     // model is asked for more in the background (問題回報 #442).
     if (topUp == null && pool.length < maxWords) topUp = 'harder';
+    // 問題回報 #691: still short of five — the pool's other words are
+    // learned, studied from other photos or removed — ask for more anyway.
+    if (topUp == null && words.length < maxWords) {
+      topUp = target >= median ? 'harder' : 'easier';
+    }
     return Selection(words, scored, topUp);
   }
 }

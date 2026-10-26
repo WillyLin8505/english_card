@@ -126,7 +126,18 @@ void main() {
 
     expect(find.bySemanticsLabel(RegExp('單字難度')), findsOneWidget);
     expect(find.textContaining('剛好'), findsOneWidget);
-    expect(find.text('C2'), findsOneWidget);
+    // 問題回報 #708: a thick bar without the A1…C2 ticks; the level's name
+    // and 簡單／難 at the ends tell where the thumb is.
+    expect(find.text('入門 · 剛好'), findsOneWidget);
+    for (final l in cefrLevels) {
+      expect(find.text(l), findsNothing);
+    }
+    expect(find.text('簡單'), findsOneWidget);
+    expect(find.text('難'), findsOneWidget);
+    expect(tester.getSize(find.byKey(const ValueKey('difficulty-track'))).height,
+        greaterThanOrEqualTo(12));
+    expect(tester.getSize(find.byKey(const ValueKey('difficulty-thumb'))).width,
+        greaterThanOrEqualTo(32));
 
     // Tap the C2 end of the bar.
     final bar = tester.getRect(find.byType(PhotoDifficultyBar));

@@ -57,6 +57,12 @@ class PhotoDetailScreen extends StatefulWidget {
 
 class _PhotoDetailScreenState extends State<PhotoDetailScreen>
     with WidgetsBindingObserver {
+  /// A word in the learning language's spelling (French lowercase with its
+  /// article, 問題回報 #499); English stays capitalised.
+  String _shown(String word, String? pos) => shownWord(
+      word, AppScope.of(context).repository.language,
+      pos: pos);
+
   AppScope? _scope;
   PhotoWordSession? _session;
   bool _visible = false;
@@ -67,8 +73,17 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
   /// An added word waiting for a tap on the photo to get its pin.
   SessionWord? _placing;
 
-  /// 長按辨識 (問題回報 #616): the spot the AI is looking at.
-  LabelPoint? _scanning;
+  /// 長按辨識 (問題回報 #616, #690): spots long-pressed one after another.
+  /// [_toScan] wait for the AI — sent one at a time, [_scanningNow] is on
+  /// its way — and [_answered] wait, in order, for the learner to pick a
+  /// word; one sheet at a time ([_choosing]), the next opens when it closes.
+  final List<LabelPoint> _toScan = [];
+  LabelPoint? _scanningNow;
+  final List<(LabelPoint, List<WordCandidate>)> _answered = [];
+  bool _choosing = false;
+
+  /// 問題回報 #709: a tap on the photo hides the labels; another shows them.
+  bool _pinsHidden = false;
   final _photoKey = GlobalKey();
 
   /// 問題回報：Mac 實機量測照片詳情開啟 114ms（M-PERF）: the whole page in its
@@ -240,7 +255,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              title: Text('${displayWord(w.word)}　${w.candidate.meaning}',
+              title: Text('${_shown(w.word, w.candidate.pos)}　${w.candidate.meaning}',
                   style: MFont.manrope(16, FontWeight.w800, MColors.ink)),
               subtitle: const UiText('可查看意思、改成正確的字、刪除或標為已學會。'),
             ),
@@ -298,7 +313,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
       case 'delete':
         session.delete(w);
         if (_placing == w) setState(() => _placing = null);
-        showToast(context, '已刪除「${displayWord(w.word)}」，這張照片不會再推薦它');
+        showToast(context, '已刪除「${_shown(w.word, w.candidate.pos)}」，這張照片不會再推薦它');
       case 'known':
         session.swipe(w);
     }
@@ -336,30 +351,81 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
   /// 長按辨識 (問題回報 #616): long-press anywhere on the photo → that part
   /// of the picture goes to the AI → the learner picks the word → it is
   /// pinned at that spot (and saved like 自己加字).
-  Future<void> _recognizeAt(Photo photo, LabelPoint at) async {
-    if (_scanning != null) return;
-    final scope = AppScope.of(context);
-    setState(() => _scanning = at);
-    List<WordCandidate> found;
-    try {
-      found = await scope.queue.recognizeSpot(photo, at);
-    } on TaggingNotConfigured {
-      if (mounted) {
-        showToast(context, '還沒設定照片辨識：到 設定 → 進階設定 → 照片辨識連線');
-      }
+  ///
+  /// 問題回報 #690: several spots can be long-pressed in a row. Each shows a
+  /// ring at once and joins a queue; the AI is asked about them one at a
+  /// time. Answered spots turn into numbered markers and their choices
+  /// open one after another, in the order they were pressed.
+  void _recognizeAt(Photo photo, LabelPoint at) {
+    // The same spot twice (a finger resting) is one spot.
+    bool near(LabelPoint p) =>
+        (p.x - at.x).abs() < 0.03 && (p.y - at.y).abs() < 0.03;
+    if ([
+      ..._toScan,
+      if (_scanningNow case final now?) now,
+      for (final a in _answered) a.$1,
+    ]
+        .any(near)) {
       return;
-    } catch (e) {
-      debugPrint('長按辨識失敗: $e');
-      if (mounted) showToast(context, '辨識失敗，請檢查網路後再試');
-      return;
-    } finally {
-      if (mounted) setState(() => _scanning = null);
     }
-    if (!mounted) return;
+    setState(() => _toScan.add(at));
+    if (_scanningNow == null) unawaited(_scanNext(photo));
+  }
+
+  Future<void> _scanNext(Photo photo) async {
+    while (mounted && _toScan.isNotEmpty) {
+      final at = _toScan.first;
+      setState(() {
+        _toScan.removeAt(0);
+        _scanningNow = at;
+      });
+      try {
+        final found = await AppScope.of(context).queue.recognizeSpot(photo, at);
+        if (!mounted) return;
+        setState(() {
+          _scanningNow = null;
+          _answered.add((at, found));
+        });
+        unawaited(_chooseNext());
+      } on TaggingNotConfigured {
+        if (!mounted) return;
+        // No recognizer: none of the waiting spots can be answered.
+        setState(_toScan.clear);
+        showToast(context, '還沒設定照片辨識：到 設定 → 進階設定 → 照片辨識連線');
+      } catch (e) {
+        debugPrint('長按辨識失敗: $e');
+        if (mounted) showToast(context, '辨識失敗，請檢查網路後再試');
+      } finally {
+        if (mounted) setState(() => _scanningNow = null);
+      }
+    }
+  }
+
+  /// Opens the choices of the first answered spot, then the next one.
+  Future<void> _chooseNext() async {
+    if (_choosing) return;
+    _choosing = true;
+    try {
+      while (mounted && _answered.isNotEmpty) {
+        final (at, found) = _answered.first;
+        await _chooseFor(at, found);
+        if (!mounted) return;
+        setState(() => _answered.removeAt(0));
+      }
+    } finally {
+      _choosing = false;
+    }
+  }
+
+  Future<void> _chooseFor(LabelPoint at, List<WordCandidate> found) async {
+    final scope = AppScope.of(context);
     final session = _session;
     if (session == null) return;
     final onPhoto = {for (final w in session.words) w.word};
     final choices = found.take(6).toList();
+    // Other spots still waiting after this one.
+    final more = _answered.length - 1 + _toScan.length +
+        (_scanningNow == null ? 0 : 1);
     final picked = await showModalBottomSheet<Object>(
       context: context,
       isScrollControlled: true,
@@ -370,16 +436,17 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               ListTile(
+                leading: const _SpotNumber(1),
                 title: UiText(choices.isEmpty ? 'AI 在這裡沒有認出東西' : 'AI 在這裡看到',
                     style: MFont.manrope(16, FontWeight.w800, MColors.ink)),
                 subtitle: UiText(choices.isEmpty
                     ? '可以換個位置再長按，或自己輸入。'
-                    : '選一個字，就會在你長按的位置加上標籤。'),
+                    : '選一個字，就會在照片上標 1 的位置加上標籤。'),
               ),
               for (final c in choices)
                 ListTile(
                   key: ValueKey('spot-${c.word}'),
-                  title: Text('${displayWord(c.word)}　${c.meaning}',
+                  title: Text('${_shown(c.word, c.pos)}　${c.meaning}',
                       style: MFont.manrope(15, FontWeight.w700, MColors.ink)),
                   subtitle: UiText(onPhoto.contains(c.word)
                       ? '已在照片上，選它會移到這裡'
@@ -394,6 +461,13 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                 title: const UiText('都不是，自己輸入'),
                 onTap: () => Navigator.pop(context, 'manual'),
               ),
+              if (more > 0)
+                ListTile(
+                  key: const ValueKey('spot-skip'),
+                  leading: const Icon(Icons.skip_next_outlined),
+                  title: UiText('略過，看下一個位置（還有 $more 個）'),
+                  onTap: () => Navigator.pop(context),
+                ),
             ],
           ),
         ),
@@ -402,7 +476,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
     if (picked == null || !mounted) return;
     if (picked is WordCandidate) {
       final w = session.addFound(picked, at);
-      showToast(context, '已在這個位置加上「${displayWord(w.word)}」');
+      showToast(context, '已在這個位置加上「${_shown(w.word, w.candidate.pos)}」');
       return;
     }
     final result = await showLabelDialog(
@@ -485,7 +559,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                     onTap: () => SharePlus.instance.share(ShareParams(
                       title: photo.title,
                       text: '${ui(context, '照片裡的{L}單字：')}'
-                          '${(_session?.words ?? const <SessionWord>[]).map((w) => '${displayWord(w.word)} ${w.candidate.meaning}').join('、')}',
+                          '${(_session?.words ?? const <SessionWord>[]).map((w) => '${_shown(w.word, w.candidate.pos)} ${w.candidate.meaning}').join('、')}',
                     )),
                   ),
                 ),
@@ -518,7 +592,15 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                                             fit: PinnedPhoto.fitFor(
                                                 photo, BoxFit.contain))),
                                   )
-                                : _pinnedPhoto(photo, session, old),
+                                : Stack(
+                                    children: [
+                                      Positioned.fill(
+                                          child: _pinnedPhoto(
+                                              photo, session, old)),
+                                      if (_pinsHidden && _placing == null)
+                                        const _PinsHiddenChip(),
+                                    ],
+                                  ),
                           ),
                         ),
                         if (session != null) ...[
@@ -538,7 +620,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                           ),
                           if (_placing case final w?)
                             _PlacingBar(
-                              word: displayWord(w.word),
+                              word: _shown(w.word, w.candidate.pos),
                               onSkip: () => setState(() => _placing = null),
                             ),
                           _buildList(photo, session, old),
@@ -563,7 +645,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
           PinData(
             id: w.word,
             anchor: w.anchor,
-            word: displayWord(w.word),
+            word: _shown(w.word, w.candidate.pos),
             zh: _zh(w.word, w.candidate.pos, w.candidate.meaning),
             linked: w.candidate.inDatabase || LexiconPack.instance.isEmpty,
             // A word read off the photo is framed where it is printed,
@@ -576,7 +658,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
         PinData(
           id: 'old:${o.word}',
           anchor: o.anchor,
-          word: displayWord(o.word),
+          word: _shown(o.word, o.candidate.pos),
           zh: _zh(o.word, o.candidate.pos, o.candidate.meaning),
           muted: true,
         ),
@@ -594,9 +676,18 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
         final w = wordOf(p);
         if (w != null) session.move(w, to);
       },
-      onPhotoTap: _placing == null ? null : _placeAt,
+      // 放位置 comes first; otherwise a tap hides or shows the labels
+      // (問題回報 #709).
+      onPhotoTap: _placing == null
+          ? (_) => setState(() => _pinsHidden = !_pinsHidden)
+          : _placeAt,
       onPhotoLongPressAt: (at) => _recognizeAt(photo, at),
-      scanning: _scanning,
+      scanningSpots: [
+        if (_scanningNow case final now?) now,
+        ..._toScan,
+      ],
+      waitingSpots: [for (final a in _answered) a.$1],
+      hidePins: _pinsHidden && _placing == null,
       overlay: _overlayFor(photo, session),
       revealNew: true,
       fit: BoxFit.contain,
@@ -649,7 +740,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
             Padding(
               padding: const EdgeInsets.only(bottom: 4),
               child: UiText(
-                  'AI 在這張照片找到的字最難到 ${cefrLevels[hardest]}，按「難一點」或「重新掃描標籤」請 AI 找更難的字',
+                  'AI 在這張照片找到的字最難到「${levelName(cefrLevels[hardest])}」，按「重新掃描標籤」請 AI 找更難的字',
                   key: const ValueKey('level-short-hint'),
                   style: MFont.manrope(12, FontWeight.w600, MColors.muted)),
             ),
@@ -664,12 +755,6 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                   ? null
                   : 'AI 正在找更多${PhotoWordSession.focusLabel(session.fetchingMore!)}…',
           onBias: session.setBias,
-          onEasier: session.target > 0
-              ? () => session.setTarget(session.target - 1)
-              : null,
-          onHarder: session.target < cefrLevels.length - 1
-              ? () => session.setTarget(session.target + 1)
-              : null,
           // 問題回報 #670: read the whole photo again.
           onRescan: session.rescanning ? null : session.rescan,
         ),
@@ -723,7 +808,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                   ScaffoldMessenger.of(context)
                     ..hideCurrentSnackBar()
                     ..showSnackBar(SnackBar(
-                      content: UiText('已把「${displayWord(w.word)}」移到已學會'),
+                      content: UiText('已把「${_shown(w.word, w.candidate.pos)}」移到已學會'),
                       action: SnackBarAction(
                         label: ui(context, '復原'),
                         onPressed: () => session.restore(undo),
@@ -731,7 +816,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                     ));
                 },
                 child: _WordCard(
-                  word: displayWord(w.word),
+                  word: _shown(w.word, w.candidate.pos),
                   ipa: w.candidate.ipa ?? _ipa(scope.repository, w.word),
                   zh: _zh(w.word, w.candidate.pos, w.candidate.meaning),
                   level: w.candidate.level,
@@ -802,13 +887,13 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                   const SizedBox(height: 8),
                   for (final o in old) ...[
                     _OldWordRow(
-                      word: displayWord(o.word),
+                      word: _shown(o.word, o.candidate.pos),
                       zh: _zh(o.word, o.candidate.pos, o.candidate.meaning),
                       learned: o.learned,
                       onRestore: o.learned
                           ? () {
                               session.restore(o);
-                              showToast(context, '已復原「${displayWord(o.word)}」');
+                              showToast(context, '已復原「${_shown(o.word, o.candidate.pos)}」');
                             }
                           : null,
                     ),
@@ -871,7 +956,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
       default:
         title = '這張照片沒有新的單字';
         body = session.oldWords.isEmpty
-            ? '可以用「難一點」或「更多動作」找找看其他的詞。'
+            ? '可以拖動難度條，或按「多看動詞」找找看其他的詞。'
             : '打開「顯示已學會單字」可以看到照片裡已經學過的詞。';
     }
     return Container(
@@ -920,6 +1005,50 @@ class _PlacingBar extends StatelessWidget {
             TextButton(onPressed: onSkip, child: const UiText('不放位置')),
           ],
         ),
+      );
+}
+
+/// 問題回報 #709: over the photo while its labels are hidden.
+class _PinsHiddenChip extends StatelessWidget {
+  const _PinsHiddenChip();
+
+  @override
+  Widget build(BuildContext context) => Positioned(
+        left: 0,
+        right: 0,
+        bottom: 12,
+        child: IgnorePointer(
+          child: Center(
+            child: Container(
+              key: const ValueKey('pins-hidden'),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.55),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: UiText('標籤已收起，點照片展開',
+                  style: MFont.manrope(12, FontWeight.w700, Colors.white)),
+            ),
+          ),
+        ),
+      );
+}
+
+/// The number on a long-pressed spot waiting for its word (問題回報 #690).
+class _SpotNumber extends StatelessWidget {
+  final int number;
+
+  const _SpotNumber(this.number);
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: 28,
+        height: 28,
+        alignment: Alignment.center,
+        decoration: const BoxDecoration(
+            color: MColors.primary, shape: BoxShape.circle),
+        child: Text('$number',
+            style: MFont.manrope(13, FontWeight.w800, Colors.white)),
       );
 }
 

@@ -263,10 +263,15 @@ class _AlbumCard extends StatelessWidget {
                         color: MColors.frost,
                         radius: 10,
                       ),
+                      // 問題回報 #633 #636: one line — a long author wrapped
+                      // to two and covered the cover's own text.
                       child: UiText(
                           album.author == null
                               ? '卡片集'
                               : '卡片集 · ${album.author}',
+                          maxLines: 1,
+                          softWrap: false,
+                          overflow: TextOverflow.ellipsis,
                           style:
                               MFont.inter(11, FontWeight.w600, Colors.white)),
                     ),

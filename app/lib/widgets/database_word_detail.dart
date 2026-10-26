@@ -378,11 +378,15 @@ bool addDatabaseWord(BuildContext context, LexiconPack pack, LexEntry word,
         pos: shortPos(word.pos),
         meaning: word.learnerMeaning ?? '',
         level: word.cefr);
-    // No Chinese yet: the card waits (問題回報 #44, #100). Checked before
-    // linkLexicon: a form folded into an existing card (問題回報 #51) drops
-    // this id, which would read back as "no meaning yet".
-    final waiting = (repo.entry(added.id)?.meaning ?? '').trim().isEmpty;
+    // No Chinese yet: the card waits (問題回報 #44, #100). Checked after
+    // linkLexicon (問題回報 #634): it gives the card another part of
+    // speech's meaning when this one has none (frightening, hanging), and a
+    // form folded into an existing card (問題回報 #51) is found by spelling.
+    final before = (repo.entry(added.id)?.meaning ?? '').trim().isEmpty;
     repo.linkLexicon(pack);
+    final fin = repo.entry(added.id) ?? repo.entryByWord(word.lemma);
+    // Folded away and not found by its own spelling: judge as before.
+    final waiting = fin == null ? before : fin.meaning.trim().isEmpty;
     if (!quiet) {
       messenger.showSnackBar(SnackBar(
           content: UiText(waiting

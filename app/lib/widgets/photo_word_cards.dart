@@ -1,7 +1,8 @@
 part of '../screens/photo_detail_screen.dart';
 
-/// The shortcuts under the word list: 「多看動詞」「多看形容詞」「簡單一點」
-/// 「難一點」「重新掃描標籤」, and a note while more candidates load. The level itself is on
+/// The shortcuts under the difficulty bar: 「多看動詞」「多看形容詞」
+/// 「重新掃描標籤」 (問題回報 #707: 簡單一點／難一點 removed), and a note while
+/// more candidates load. The level itself is on
 /// the difficulty bar under the photo (問題回報 #444: it used to be repeated here).
 class _LevelRow extends StatelessWidget {
   final PosBias bias;
@@ -10,8 +11,6 @@ class _LevelRow extends StatelessWidget {
   /// What the busy note says (問題回報 #666: 「AI 正在找更多動詞…」).
   final String? busyLabel;
   final ValueChanged<PosBias> onBias;
-  final VoidCallback? onEasier;
-  final VoidCallback? onHarder;
 
   /// 重新掃描標籤 (問題回報 #670); null while a scan runs.
   final VoidCallback? onRescan;
@@ -21,8 +20,6 @@ class _LevelRow extends StatelessWidget {
     required this.busy,
     this.busyLabel,
     required this.onBias,
-    required this.onEasier,
-    required this.onHarder,
     this.onRescan,
   });
 
@@ -57,8 +54,8 @@ class _LevelRow extends StatelessWidget {
                 active: bias == PosBias.descriptions,
                 onTap: () => onBias(PosBias.descriptions),
               ),
-              FilterPill(label: '簡單一點', onTap: onEasier),
-              FilterPill(label: '難一點', onTap: onHarder),
+              // 問題回報 #707: 簡單一點／難一點 are gone — the difficulty bar
+              // above does the same.
               FilterPill(
                 key: const ValueKey('rescan-tags'),
                 label: '重新掃描標籤',

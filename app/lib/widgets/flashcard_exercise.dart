@@ -150,7 +150,7 @@ class _InteractiveExerciseState extends State<_InteractiveExercise> {
                   onPressed: widget.session.canAnswer
                       ? () => widget.session.submitAnswer(option)
                       : null,
-                  child: Text(displayWord(option))),
+                  child: Text(shownWord(option, AppScope.of(context).repository.language))),
             ),
         ],
         if (x.type == ReviewExerciseType.similarMatch) ...[
@@ -179,8 +179,8 @@ class _InteractiveExerciseState extends State<_InteractiveExercise> {
                     ? null
                     : () => _match(pair),
                 child: Text(_matched.contains(pair.word)
-                    ? '✓ ${displayWord(pair.word)}'
-                    : displayWord(pair.word)),
+                    ? '✓ ${shownWord(pair.word, AppScope.of(context).repository.language)}'
+                    : shownWord(pair.word, AppScope.of(context).repository.language)),
               ),
             ),
           if (_mistakes > 0)
@@ -234,12 +234,12 @@ class _InteractiveExerciseState extends State<_InteractiveExercise> {
                     feedback: Material(
                         color: Colors.transparent,
                         child:
-                            TagChip(displayWord(target.word), localize: false)),
+                            TagChip(shownWord(target.word, AppScope.of(context).repository.language), localize: false)),
                     childWhenDragging: Opacity(
                         opacity: .25,
                         child:
-                            TagChip(displayWord(target.word), localize: false)),
-                    child: TagChip(displayWord(target.word), localize: false),
+                            TagChip(shownWord(target.word, AppScope.of(context).repository.language), localize: false)),
+                    child: TagChip(shownWord(target.word, AppScope.of(context).repository.language), localize: false),
                   ),
             ],
           ),
