@@ -2062,3 +2062,28 @@ owner 原話：「這個表格不用同步在手機上，我是要在後台這�
 改動：tagger/tagging_server.py（PROMPT_VERSION → v10-level-target，快取鍵加 level，FOCUS 文字、build_prompt 數量與 level 段）；tests/test_tagging_server.py、tagger/test_tagging_server.py 同步斷言。
 測試：tagger/test_tagging_server.py 13 通過；tests/test_tagging_server.py 20 通過、2 失敗（translate／llama 503，llama-server 未開，與本改動無關）。golden／QC 未跑（未動詞庫資料，無資料改動、無備份）。
 剩下：「避開使用者其他照片正在學的常見字」靠 App 傳 exclude（伺服器已支援，最多 40 字）；App 端是否傳入需 Mac 確認。
+
+## M191（2026-10-26 20:53）狀態：待做（Windows 卡 #624 交給 Mac 的 App 畫面部分）
+卡：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
+
+flutter test 剩 1 個測試失敗（螢幕複習），是畫面邏輯，Windows 規定不改畫面。
+
+原問題 #571 的兩個症狀：
+- path_provider MissingPluginException：只是測試印出的 log，不會讓測試失敗（不是根因）。
+- 真正失敗的是 app/test/sync_main_thread_test.dart「整個 SQLite 檔」計時測試：單獨跑 3/3 全過（卡頓 49 ms vs 舊的 497 ms），
+  mac_sync 跑時多個 CLI 同時吃 CPU，卡頓 1306 ms 超過門檻。已改成 retry: 2（真正退步會每次都失敗；沒刪測試、沒放寬門檻）。
+
+現況（flutter analyze）：0 error（3 個 warning/info，其他卡的檔案：screens_test 未使用 import、card496_probe print）。
+flutter test：682 過、2 skip、1 失敗：
+  app/test/screens_test.dart「複習 (Flashcard) front without photo; flip plays the word; Again comes back」(第 453 行)
+  實測 speaker.said = [coffee, coffee, railing, railing]：按「忘記」coffee 後，railing 答完，coffee 回來再「顯示答案」
+  時沒有再唸 coffee（預期最後一個唸的是 coffee）。可能是 Mac 20d0f277（#727/#728）或 #649 改了翻面唸詞（同詞不重唸？）。
+  已確認是穩定失敗（單獨跑也失敗），不是計時問題。需要 Mac 判斷：是行為改了要更新測試，還是翻面唸詞的 bug。
+
+改動：app/test/sync_main_thread_test.dart（加 retry: 2）。無資料改動、無需備份；golden/QC 不受影響（沒碰詞庫）。
+還原：把該測試最後的 retry: 2 與註解拿掉。
+
+## M192（2026-10-26 20:53）狀態：待做（Windows 卡 #648 交給 Mac 的 App 畫面部分）
+卡：問題回報 #737：[owner] illuminate 形容詞仍是 C2「受啟蒙的…」，確認是否符合 #719 的要求（交 Windows）
+
+重新匯出／安裝 pack 後確認 illuminate adj 無等級；若仍顯示 C2，請回報 pack 版本與匯出時間。
