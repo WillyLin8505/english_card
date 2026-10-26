@@ -2158,3 +2158,8 @@ tagger 已在 23:12 用 start_tagger.bat 重啟，8765、8790 都回 200，裡�
   - mode=cefr 路徑仍回 cefr=null（其帶間上限邏輯依賴該欄位為空，屬另一決策）。
   - 可能不一致（未確認）：App 的 word_level 有派生字上限，tagger 的 cefr 沒有，派生字的帶可能不同。未開問題回報。
   - 延遲 7–9 s 為合成圖單次量測，Mac 實機數字需重驗。
+
+## M204（2026-10-26 23:39）狀態：待做
+commit `b7dd7409`（Windows：flutter analyze 無 error、00:57 +692 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #657：問題回報 #748：[owner] [Mac] 2026-10-26 iPhone 12 重驗 M199–M201（ta
+  結果：card657 完成：tagger 等級過濾、cefr 回傳、快取與 compact JSON 已改並重啟；QC regressions=[]，需要 Mac：重驗（iPhone 12，M199–M201）
