@@ -1824,7 +1824,7 @@ app/lib/widgets/database_word_detail.dart 的 addDatabaseWord（約 344–353 �
 
 未改任何檔案／資料；golden/QC 未跑（無變更）。
 
-## M166（2026-10-26 19:27）狀態：待做（Windows 卡 #620 交給 Mac 的 App 畫面部分）
+## M166（2026-10-26 19:27）狀態：完成
 卡：問題回報 #636：[Mac] 2026-10-23 M87（iPhone 模擬器）：#564 卡片集標籤壓到封面文字
 
 相片冊卡片左上「卡片集 · 作者」標籤（maxWidth 140、字 11px，未限行數）在作者名長（如「English Card 編輯部」）時換成兩行，標籤變高、往下蓋到封面上的文字。修法：在 UiText 加 maxLines: 1、overflow: TextOverflow.ellipsis（必要時 softWrap: false），或把 maxWidth 放寬為 約 (卡寬 - 16 - 右上沙漏徽章寬)；也可只顯示「卡片集」、作者移到詳情頁。非 iOS 專屬，各平台都會發生（字寬不同只是門檻不同）。
