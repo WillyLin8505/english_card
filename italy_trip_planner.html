@@ -52,6 +52,7 @@ kbd{background:var(--chip);border:1px solid var(--line);border-radius:4px;paddin
 .pin{width:28px;height:28px;border-radius:50%;border:2px solid var(--accent);background:#fff;color:var(--accent);font:700 13px/24px sans-serif;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.45);transition:transform .1s}
 .pin.sel{background:var(--accent);color:#fff;transform:scale(1.15)}
 .pin.other{border-color:var(--accent-2);color:var(--accent-2);font-size:10px;opacity:.9}
+.pin.near{width:22px;height:22px;font-size:12px;line-height:18px;border-color:#2563eb;color:#2563eb;background:#fff}
 .pin.hl{transform:scale(1.35)}
 .leaflet-tooltip.selname{font-weight:700}
 .mpop b{font-size:14px}.mpop img{width:100%;border-radius:6px;margin:4px 0;display:block}
@@ -674,6 +675,16 @@ function cityDays(k,delta){
  else{if(idx.length<=1||S.n<=1)return;S.plan.splice(idx[idx.length-1],1);S.n--}
  S.manual[S.cur]=true;
 }
+function rebuildCustom(){
+ Object.entries(S.custom||{}).forEach(([k,arr])=>arr.forEach(a=>{if(CITIES[k]&&!CITIES[k].attractions.some(x=>x.id===a.id))CITIES[k].attractions.push(a)}));
+}
+function purgeCustom(){KEYS.forEach(k=>{CITIES[k].attractions=CITIES[k].attractions.filter(a=>!a.custom)})}
+function delCustom(id){
+ KEYS.forEach(k=>{CITIES[k].attractions=CITIES[k].attractions.filter(a=>a.id!==id)});
+ Object.keys(S.custom).forEach(k=>{S.custom[k]=S.custom[k].filter(a=>a.id!==id)});
+ S.plan.forEach(d=>{d.picks=d.picks.filter(x=>x!==id)});
+ Object.values(S.store).forEach(v=>v.plan.forEach(d=>{d.picks=d.picks.filter(x=>x!==id)}));
+}
 function genItin(key){
  const p=PRESETS[key];S.n=p.n;S.plan=allocate(p.r,p.n).map(newDay);
  if(!p.blank)autoFillAll();
@@ -683,11 +694,11 @@ function switchTo(key){
  if(S.store[key]){S.n=S.store[key].n;S.plan=S.store[key].plan}else genItin(key);
 }
 function defaultState(){
- S={start:'',pax:2,pace:'normal',tier:2,season:1,twd:35,cur:'classic',store:{},manual:{},n:0,plan:[]};
+ S={start:'',pax:2,pace:'normal',tier:2,season:1,twd:35,cur:'classic',store:{},manual:{},custom:{},n:0,plan:[]};
  genItin('classic');return S;
 }
 function load(){try{const j=JSON.parse(localStorage.getItem(SK));
- if(j&&j.store&&PRESETS[j.cur]&&Array.isArray(j.plan)&&j.plan.every(d=>CITIES[d.city])){j.manual=j.manual||{};return j}}catch(e){}return null}
+ if(j&&j.store&&PRESETS[j.cur]&&Array.isArray(j.plan)&&j.plan.every(d=>CITIES[d.city])){j.manual=j.manual||{};j.custom=j.custom||{};return j}}catch(e){}return null}
 
 /* ============ 計算 ============ */
 const $=s=>document.querySelector(s);
@@ -773,9 +784,9 @@ function dayHTML(i){
   const closed=dt&&a.x&&a.x.includes(dt.getDay());
   const od=S.plan.findIndex((x,j)=>j!==i&&x.city===d.city&&x.picks.includes(a.id)),far=isFar(a,c);
   return `<label class="attr${on?' on':''}"><input type="checkbox" data-a="pick" data-i="${i}" data-id="${a.id}"${on?' checked':''}>
-   <span class="main"><b>${a.n}</b><span class="badge">${TAG[a.t]}</span>${a.r?'<span class="badge r">需預約</span>':''}${on?'<span class="badge" style="background:var(--accent);color:#fff">✓ 已選</span>':''}${od>=0?`<span class="badge" style="background:var(--ok-bg)">已排在 Day ${od+1}</span>`:''}${far?'<span class="badge">遠郊・勾選後才顯示在地圖</span>':''}${closed&&on?'<span class="badge x">當天可能休館</span>':''}<br>
+   <span class="main"><b>${a.n}</b><span class="badge">${TAG[a.t]}</span>${a.r?'<span class="badge r">需預約</span>':''}${a.custom?'<span class="badge">地圖新增</span>':''}${on?'<span class="badge" style="background:var(--accent);color:#fff">✓ 已選</span>':''}${od>=0?`<span class="badge" style="background:var(--ok-bg)">已排在 Day ${od+1}</span>`:''}${far?'<span class="badge">遠郊・勾選後才顯示在地圖</span>':''}${closed&&on?'<span class="badge x">當天可能休館</span>':''}<br>
    <span class="meta">⏱ ${dur(a.h)}　${a.c?'💶 €'+a.c:'免費'}${a.d?'　'+a.d:''}</span>
-   <a target="_blank" rel="noopener" href="${mapQ(a.n+' '+c.name)}" onclick="event.stopPropagation()">Google 地圖 ↗</a> <button type="button" class="mbtn" data-a="locate" data-i="${i}" data-id="${a.id}">📍 在地圖看</button></span><span class="thumbs" data-q="${a.n.replace(/（.*?）/g,'')} ${c.name.split('／')[0]}" data-w="${esc(ATTR_EN[a.n]||'')}"></span></label>`}).join('');
+   <a target="_blank" rel="noopener" href="${mapQ(a.n+' '+c.name)}" onclick="event.stopPropagation()">Google 地圖 ↗</a> <button type="button" class="mbtn" data-a="locate" data-i="${i}" data-id="${a.id}">📍 在地圖看</button>${a.custom?` <button type="button" class="mbtn" data-a="delcustom" data-i="${i}" data-id="${a.id}">🗑 刪除</button>`:''}</span><span class="thumbs" data-q="${a.n.replace(/（.*?）/g,'')} ${c.name.split('／')[0]}" data-w="${esc(ATTR_EN[a.n]||a.w||'')}"></span></label>`}).join('');
  const restHTML=c.rests.map(r=>{
   const L=d.lunch===r.id,D=d.dinner===r.id;
   return `<div class="rest"><div class="main"><b>${r.n}</b><span class="badge">€${r.p}/人</span><br><span class="meta">📍${r.area}　🍽 ${r.dish}${r.note?'　'+r.note:''}</span>
@@ -964,7 +975,8 @@ function loadThumbs(){
 }
 let activeDay=0;
 function pickActive(){let a=0;document.querySelectorAll('.day').forEach((e,i)=>{if(e.getBoundingClientRect().top<=170)a=i});return a}
-const llOf=a=>COORD[a.n]?{lat:COORD[a.n][0],lon:COORD[a.n][1]}:null;
+const cc=a=>a.ll||COORD[a.n];
+const llOf=a=>cc(a)?{lat:cc(a)[0],lon:cc(a)[1]}:null;
 const isFar=(a,c)=>{const l=llOf(a);return !l||hav(c,l)>c.radius};
 const TAGEMO={his:'🏛',art:'🖼',view:'🌄',food:'🍴',walk:'🚶',trip:'⛵'};
 let LM=null,LG=null,LLine=null,LFit='',selId='',hoverId='',openId='';const MK={};
@@ -985,21 +997,21 @@ function focusAttr(id){
 }
 function popupHTML(a,i,d){
  const o=S.plan.findIndex((x,j)=>j!==i&&x.city===d.city&&x.picks.includes(a.id)),on=d.picks.includes(a.id);
- const im=IMG[ATTR_EN[a.n]||''];
+ const im=a.thumb?[{u:a.thumb}]:IMG[ATTR_EN[a.n]||a.w||''];
  const btn=on?`<button class="rm" data-mp="${a.id}">✓ 已在 Day ${i+1}，點此移出</button>`:o>=0?`<button data-mp="${a.id}">移到 Day ${i+1}（目前在 Day ${o+1}）</button>`:`<button data-mp="${a.id}">＋ 加入 Day ${i+1}</button>`;
- return `<div class="mpop"><b>${a.n}</b><br><span class="small">⏱ ${dur(a.h)}　${a.c?'💶 €'+a.c:'免費'}${a.r?'　⚠ 需預約':''}</span>${im&&im[0]?`<img src="${im[0].u}" alt="">`:''}${a.d?`<div class="small">${a.d}</div>`:''}${btn}</div>`;
+ return `<div class="mpop"><b>${a.n}</b><br><span class="small">⏱ ${dur(a.h)}　${a.c?'💶 €'+a.c:'免費'}${a.r?'　⚠ 需預約':''}</span>${im&&im[0]?`<img src="${im[0].u}" alt="">`:''}${a.d?`<div class="small">${a.d}</div>`:''}${a.link?`<a class="link" target="_blank" rel="noopener" href="${a.link}">維基百科 ↗</a>`:''}${btn}</div>`;
 }
 function updateMap(){
  if(activeDay>=S.n)activeDay=S.n-1;
  const i=activeDay,d=S.plan[i],c=CITIES[d.city],dt=dateOf(i),e=encodeURIComponent;
  const items=c.attractions.filter(a=>d.picks.includes(a.id)&&llOf(a));
  let km=0;for(let k=1;k<items.length;k++)km+=hav(llOf(items[k-1]),llOf(items[k]))*1.3;
- const pt=a=>COORD[a.n].join(',');
+ const pt=a=>cc(a).join(',');
  const link=items.length>1?`https://www.google.com/maps/dir/?api=1&travelmode=walking&origin=${pt(items[0])}&destination=${pt(items[items.length-1])}${items.length>2?'&waypoints='+items.slice(1,-1).slice(0,9).map(pt).join('%7C'):''}`
   :items.length?`https://www.google.com/maps/search/?api=1&query=${pt(items[0])}`:mapQ(c.name+' Italy');
  $('#mpHead').innerHTML=`<h3>Day ${i+1}　${c.name}${dt?`　<span class="small">${dt.getMonth()+1}/${dt.getDate()}（週${WD[dt.getDay()]}）</span>`:''}</h3>
   <div class="small" style="margin-bottom:6px">${items.length?items.map((a,k)=>`<span class="badge">${k+1} ${a.n.replace(/（.*?）/g,'')}</span>`).join(' '):'這天還沒選景點：點地圖上的景點即可加入'}
-  ${items.length>1?`<br>直線串聯約 ${km.toFixed(1)} km（步行約 ${Math.round(km/4.5*60)} 分，不含參觀時間）`:''}　<a class="link" target="_blank" rel="noopener" href="${link}">用 Google 地圖導航 ↗</a>　<button class="mbtn" data-mp="fit">↺ 回到本區</button></div>`;
+  ${items.length>1?`<br>直線串聯約 ${km.toFixed(1)} km（步行約 ${Math.round(km/4.5*60)} 分，不含參觀時間）`:''}　<a class="link" target="_blank" rel="noopener" href="${link}">用 Google 地圖導航 ↗</a>　<button class="mbtn" data-mp="fit">↺ 回到本區</button><br><label><input type="checkbox" id="nearOn"${nearOn?' checked':''}> 顯示附近大景點（維基百科）</label> <span id="nearMsg" class="small">${nearMsg}</span></div>`;
  const box=$('#mpMap');
  if(!window.L){box.innerHTML='<div class="alert" style="margin:8px">地圖元件載入失敗（需要連網）。仍可使用上方「Google 地圖導航」連結。</div>';return}
  if(!LM){
@@ -1008,13 +1020,14 @@ function updateMap(){
   LG=L.layerGroup().addTo(LM);
   LM.on('popupopen',ev=>{const f=Object.keys(MK).find(k=>MK[k]===ev.popup._source);if(f){openId=f;selId=f}});
   LM.on('popupclose',()=>{openId=''});
+  LM.on('moveend',()=>{clearTimeout(nearTimer);nearTimer=setTimeout(loadNear,700)});
   setTimeout(()=>{LM.invalidateSize();LFit='';updateMap()},120);
  }
  const keep=openId;LG.clearLayers();if(LLine){LLine.remove();LLine=null}Object.keys(MK).forEach(k=>delete MK[k]);
  const vis=c.attractions.filter(a=>llOf(a)&&(!isFar(a,c)||d.picks.includes(a.id)));
  const bounds=[];
  vis.forEach(a=>{
-  const ll=COORD[a.n],on=d.picks.includes(a.id),n=items.indexOf(a)+1,o=S.plan.findIndex((x,j)=>j!==i&&x.city===d.city&&x.picks.includes(a.id));
+  const ll=cc(a),on=d.picks.includes(a.id),n=items.indexOf(a)+1,o=S.plan.findIndex((x,j)=>j!==i&&x.city===d.city&&x.picks.includes(a.id));
   const cls=on?'sel':o>=0?'other':'',txt=on?n:o>=0?'D'+(o+1):(TAGEMO[a.t]||'•');
   const m=L.marker(ll,{icon:L.divIcon({className:'',html:`<div class="pin ${cls}${hoverId===a.id?' hl':''}">${txt}</div>`,iconSize:[28,28],iconAnchor:[14,14]}),title:a.n,riseOnHover:true,zIndexOffset:on?1000:0});
   m.bindTooltip(a.n.replace(/（.*?）/g,''),{direction:'top',offset:[0,-14],permanent:false,className:on?'selname':''});
@@ -1023,15 +1036,78 @@ function updateMap(){
   m.on('mouseover',()=>{hoverId=a.id});m.on('mouseout',()=>{hoverId=''});
   m.addTo(LG);MK[a.id]=m;bounds.push(ll);
  });
- if(items.length>1)LLine=L.polyline(items.map(a=>COORD[a.n]),{color:getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#b4432b',weight:3,dashArray:'6 6',opacity:.9}).addTo(LM);
+ if(items.length>1)LLine=L.polyline(items.map(a=>cc(a)),{color:getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#b4432b',weight:3,dashArray:'6 6',opacity:.9}).addTo(LM);
  if(LFit!==d.city&&bounds.length){
   const b=L.latLngBounds(bounds);
   if(bounds.length===1)LM.setView(bounds[0],15);else LM.fitBounds(b.pad(0.15),{maxZoom:16,animate:false});
   LM.setMaxBounds(b.pad(1.5));LFit=d.city;
  }
  if(keep&&MK[keep])MK[keep].openPopup();
+ loadNear();
 }
+let nearOn=true,nearMsg='',nearTimer=0,nearPause=0,LN=null;const NEAR={},nearCache={};
+function setNearMsg(m){nearMsg=m;const e=$('#nearMsg');if(e)e.textContent=m}
+const NEAR_OK=/museum|gallery|church|basilica|cathedral|chapel|palace|castle|fort|square|piazza|fountain|monument|ruins|archaeolog|theat|villa|garden|park|tower|tomb|arch\b|column|obelisk|temple|amphitheat|bridge|gate|market|catacomb|abbey|monastery|synagogue|mausoleum|library|opera|hill|lake|island|beach|viewpoint|baptister|mosque|aqueduct|walls|stairs|steps|promenade|canal|waterfall|grotto|cave/i;
+const NEAR_BAD=/railway station|metro station|footballer|politician|company|school|university|hospital|hotel|football|cyclist|singer/i;
+function nearType(desc){
+ if(/museum|gallery/i.test(desc))return{t:'art',h:1.5};
+ if(/tower|hill|viewpoint|terrace/i.test(desc))return{t:'view',h:0.8};
+ if(/island|beach|lake|waterfall|cave|grotto/i.test(desc))return{t:'trip',h:3};
+ if(/square|piazza|garden|park|bridge|fountain|market|stairs|steps|promenade|canal/i.test(desc))return{t:'walk',h:0.6};
+ return{t:'his',h:1};
+}
+async function loadNear(){
+ if(!LM)return;
+ if(!LN)LN=L.layerGroup().addTo(LM);
+ LN.clearLayers();
+ if(!nearOn){setNearMsg('');return}
+ if(LM.getZoom()<12){setNearMsg('放大一點（縮放 ≥ 12）才會顯示附近大景點');return}
+ if(Date.now()<nearPause){setNearMsg('稍後再試（維基百科限流中）');return}
+ const ctr=LM.getCenter(),b=LM.getBounds();
+ const rad=Math.max(300,Math.min(10000,Math.round(ctr.distanceTo(b.getNorthEast())*0.8)));
+ const key=ctr.lat.toFixed(3)+','+ctr.lng.toFixed(3)+','+rad;
+ let data=nearCache[key];
+ if(!data){
+  setNearMsg('載入附近景點…');
+  try{
+   const u=`https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=geosearch&ggscoord=${ctr.lat}%7C${ctr.lng}&ggsradius=${rad}&ggslimit=60&prop=pageimages%7Cdescription%7Ccoordinates%7Clanglinks&piprop=thumbnail&pithumbsize=220&pilimit=60&colimit=60&lllang=zh&lllimit=60`;
+   const r=await fetch(u);if(r.status===429){nearPause=Date.now()+60000;setNearMsg('維基百科限流中，稍後再試');return}
+   const j=await r.json();data=Object.values((j.query&&j.query.pages)||{});nearCache[key]=data;
+  }catch(e){setNearMsg('附近景點載入失敗（需連網，可稍後移動地圖重試）');return}
+ }
+ setNearMsg('');
+ const c=CITIES[S.plan[activeDay].city],have=c.attractions.filter(a=>cc(a)),seen=new Set(),items=[];
+ data.forEach(pg=>{
+  const co=pg.coordinates&&pg.coordinates[0];if(!co||!pg.thumbnail)return;
+  const desc=pg.description||'',tx=desc+' '+pg.title;
+  if(!NEAR_OK.test(tx)||NEAR_BAD.test(desc))return;
+  const id='xw'+pg.pageid;if(c.attractions.some(a=>a.id===id))return;
+  const ll={lat:co.lat,lon:co.lon};
+  if(have.some(a=>hav(ll,llOf(a))<0.15))return;
+  const zh=pg.langlinks&&pg.langlinks[0]&&(pg.langlinks[0]['*']||pg.langlinks[0].title);
+  const name=zh||pg.title;if(seen.has(name))return;seen.add(name);
+  items.push({id,name,en:pg.title,lat:co.lat,lon:co.lon,desc,thumb:pg.thumbnail.source,pid:pg.pageid,pri:zh?0:1,dist:hav({lat:ctr.lat,lon:ctr.lng},ll)});
+ });
+ items.sort((a,b)=>a.pri-b.pri||a.dist-b.dist).slice(0,40).forEach(it=>{
+  NEAR[it.id]=it;
+  const m=L.marker([it.lat,it.lon],{icon:L.divIcon({className:'',html:'<div class="pin near">★</div>',iconSize:[22,22],iconAnchor:[11,11]}),title:it.name});
+  m.bindTooltip(it.name,{direction:'top',offset:[0,-10]});
+  m.bindPopup(`<div class="mpop"><b>${it.name}</b><br><span class="small">${it.desc||''}</span><img src="${it.thumb}" alt=""><a class="link" target="_blank" rel="noopener" href="https://en.wikipedia.org/?curid=${it.pid}">維基百科 ↗</a><button data-near="${it.id}">＋ 加入 Day ${activeDay+1}</button></div>`,{maxWidth:230});
+  m.on('click',ev=>{selId=it.id;if(ev.originalEvent&&ev.originalEvent.shiftKey){m.closePopup();addNear(it.id)}});
+  m.on('mouseover',()=>{hoverId=it.id});m.on('mouseout',()=>{hoverId=''});
+  m.addTo(LN);
+ });
+}
+function addNear(id){
+ const it=NEAR[id];if(!it)return;
+ const d=S.plan[activeDay],k=d.city,ty=nearType(it.desc);
+ const a={id,n:it.name,h:ty.h,c:0,t:ty.t,d:`${it.desc||'景點'}（地圖新增，時數為預設值）`,r:false,x:null,ll:[it.lat,it.lon],w:it.en,thumb:it.thumb,link:'https://en.wikipedia.org/?curid='+it.pid,custom:true};
+ CITIES[k].attractions.push(a);(S.custom[k]=S.custom[k]||[]).push(a);delete NEAR[id];
+ togglePick(activeDay,id);
+}
+document.addEventListener('change',e=>{if(e.target.id==='nearOn'){nearOn=e.target.checked;loadNear()}});
 document.addEventListener('click',e=>{
+ const nb=e.target.closest('[data-near]');if(nb){addNear(nb.dataset.near);return}
  const b=e.target.closest('[data-mp]');if(!b)return;
  if(b.dataset.mp==='fit'){LFit='';updateMap();return}
  togglePick(activeDay,b.dataset.mp);
@@ -1040,7 +1116,9 @@ document.addEventListener('keydown',e=>{
  if(/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)||e.ctrlKey||e.metaKey||e.altKey)return;
  const c=CITIES[S.plan[activeDay].city];
  if(e.key==='Escape'&&LM){LM.closePopup();return}
- if(e.key==='a'||e.key==='A'){const id=hoverId||selId;if(id&&c.attractions.some(a=>a.id===id)){e.preventDefault();togglePick(activeDay,id)}}
+ if(e.key==='a'||e.key==='A'){const id=hoverId||selId;
+  if(id&&NEAR[id]&&!c.attractions.some(a=>a.id===id)){e.preventDefault();addNear(id)}
+  else if(id&&c.attractions.some(a=>a.id===id)){e.preventDefault();togglePick(activeDay,id)}}
 });
 function render(){
  $('#days-list').innerHTML=S.plan.map((_,i)=>dayHTML(i)).join('');
@@ -1083,7 +1161,7 @@ function syncControls(){
  $('#tier').value=S.tier;$('#season').value=S.season;$('#twd').value=S.twd;
 }
 function init(){
- S=load()||defaultState();
+ S=load()||defaultState();rebuildCustom();
 
  $('#tabs').onclick=e=>{const b=e.target.closest('[data-k]');if(!b||b.dataset.k===S.cur)return;switchTo(b.dataset.k);syncControls();save();render();window.scrollTo({top:0})};
  syncControls();render();
@@ -1098,7 +1176,7 @@ function init(){
  $('#season').onchange=e=>{S.season=+e.target.value;upd()};
  $('#twd').onchange=e=>{S.twd=+e.target.value||35;upd()};
  $('#regenBtn').onclick=()=>{if(S.plan.some(d=>d.picks.length)&&!confirm('會依目前步調重新勾選這個方案的景點與餐廳，確定嗎？'))return;S.manual[S.cur]||PRESETS[S.cur].blank?autoFillAll():reflow();upd();toast('已重新自動排')};
- $('#resetBtn').onclick=()=>{if(confirm('清除所有方案並回到預設？')){defaultState();syncControls();upd()}};
+ $('#resetBtn').onclick=()=>{if(confirm('清除所有方案並回到預設？')){purgeCustom();defaultState();syncControls();upd()}};
  let tick=false;
  window.addEventListener('scroll',()=>{if(tick)return;tick=true;requestAnimationFrame(()=>{tick=false;const a=pickActive();if(a!==activeDay){activeDay=a;updateMap()}})},{passive:true});
  $('#routeBox').addEventListener('click',e=>{const b=e.target.closest('[data-a=cd]');if(!b)return;cityDays(b.dataset.k,+b.dataset.d);upd()});
@@ -1114,6 +1192,7 @@ function init(){
  list.addEventListener('click',e=>{
   const t=e.target.closest('[data-a]');if(!t)return;const a=t.dataset.a,i=+t.dataset.i;activeDay=i;
   if(a==='locate'){activeDay=i;updateMap();focusAttr(t.dataset.id)}
+  else if(a==='delcustom'){delCustom(t.dataset.id);upd()}
   else if(a==='autofill'){fillDay(+t.dataset.i);upd()}
   else if(a==='clear'){S.plan[+t.dataset.i].picks=[];upd()}
   else if(a==='meal'){const d=S.plan[i],k=t.dataset.k,id=t.dataset.id;d[k]=d[k]===id?'':id;upd()}
