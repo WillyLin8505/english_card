@@ -1844,7 +1844,7 @@ app/lib/widgets/database_word_detail.dart 的 addDatabaseWord（約 344–353 �
 - golden/QC：未執行（沒有資料變動）
 - 剩下：Mac 實作畫面後驗證。
 
-## M168（2026-10-26 19:29）狀態：待做（Windows 卡 #612 交給 Mac 的 App 畫面部分）
+## M168（2026-10-26 19:29）狀態：完成
 卡：問題回報 #635：[Mac] 2026-10-23 M87（iPhone 模擬器）：#564 存到相片冊對話框
 
 在 iPhone 模擬器再看一次對話框確認可選相片冊後關卡。
