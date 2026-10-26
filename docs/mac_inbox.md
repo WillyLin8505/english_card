@@ -1652,7 +1652,7 @@ commit `d65b0031`（Windows：flutter analyze 無 error、01:28 +646 ~2: All tes
 - 卡 #496：模擬使用者・法語（英語母語者學法語）
   結果：法語模擬第 11 輪：程式 4/4 全通過（frlearnera1 28s、frlearnerb1 30s、carddraw 53s、frmedia 12s）；pack 6153 詞；沒改程式與資料、沒開新問題回報。
 
-## M143（2026-10-24 09:13）狀態：待做（owner 回報，給 Mac）
+## M143（2026-10-24 09:13）狀態：完成
 owner 在 iPhone 送出的回報（#626：App 畫面與互動由 Mac 修）。資料或伺服器的部分請寫「不通過」列交回 Windows。
 
 | # | 回報 | 內容 |
