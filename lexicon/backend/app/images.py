@@ -1367,7 +1367,11 @@ def auto_fetch(s, target, native, lemma, *, senses_per_lexeme=None, per_sense=3,
                     _note_fetch_error(out, e)
                     out['errors'].append(f"{source_key} #{c['id']}：{e}")
                     continue
+                if bound.get('id') is None:
+                    continue  # text-heavy picture rejected by _finalize_image (#756)
                 binding = s.get(m.SenseImage, bound['id'])
+                if binding is None:
+                    continue
                 if binding.image_asset_id in used_assets:
                     s.delete(binding)  # the same file under another sense of this word
                     continue
