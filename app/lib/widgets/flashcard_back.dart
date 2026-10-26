@@ -1,5 +1,26 @@
 part of '../screens/flashcard_screen.dart';
 
+/// Bumped whenever the review card changes (問題回報 #729: 切換到下一張卡
+/// 片後，上一張卡片的聲音不要再出來): a [playBothAccents] run for the old
+/// card stops before its next accent, even when its first one was still
+/// downloading.
+int _cardAudioRun = 0;
+
+/// Stops the review card's pronunciation (問題回報 #729): what is playing,
+/// a recording still downloading, and the second accent queued after it.
+void stopCardAudio(Speaker speaker) {
+  _cardAudioRun++;
+  unawaited(speaker.stop());
+}
+
+/// The recording the review card plays for [entry] in [accent]
+/// (問題回報 #724, owner rule 「有該腔調的錄音就用、否則用任何真人錄音、最後才
+/// TTS」): about 3,850 pack recordings have no accent label, and those words
+/// used to be heard only in the TTS voice. Null only when the word has no
+/// recording at all.
+String? cardAccentAudioUrl(WordEntry entry, String accent) =>
+    accentAudioUrl(entry, accent, orDefault: true);
+
 /// Plays [entry] in one accent; tells the learner when nothing was heard.
 Future<bool> playAccent(
     BuildContext context, WordEntry entry, String accent) async {
@@ -7,7 +28,7 @@ Future<bool> playAccent(
   final ok = await speaker.say(entry.word,
       language: entry.language,
       accent: accent,
-      audioUrl: accentAudioUrl(entry, accent));
+      audioUrl: cardAccentAudioUrl(entry, accent));
   if (!ok && context.mounted) {
     showToast(context, '播放發音失敗，請檢查音量或稍後再試');
   }
@@ -17,21 +38,28 @@ Future<bool> playAccent(
 /// Card #251: when the card turns, the word is heard in both accents.
 /// Real recordings go first (問題回報 #607 #649: the TTS voice before an
 /// American recording sounded robotic — 67% of A1 words have no British
-/// clip), then the accent without one in the TTS voice, so both are always
-/// heard and the first is a person whenever there is a recording.
+/// clip). 問題回報 #724: an accent without its own recording uses the
+/// word's other recording, and one recording standing for both accents is
+/// heard once — the TTS voice is used only for a word with no recording.
+///
+/// 問題回報 #729: a newer run, or [stopCardAudio] (the card changed), ends
+/// this one before its next accent.
 Future<void> playBothAccents(BuildContext context, WordEntry entry) async {
+  final run = ++_cardAudioRun;
   const both = ['en-GB', 'en-US'];
-  final recorded = [
+  final own = [
     for (final accent in both)
       if (accentAudioUrl(entry, accent) != null) accent,
   ];
-  final accents = [
-    ...recorded,
-    for (final accent in both)
-      if (!recorded.contains(accent)) accent,
-  ];
+  final accents = <String>[];
+  final urls = <String>{};
+  for (final accent in [...own, ...both.where((a) => !own.contains(a))]) {
+    final url = cardAccentAudioUrl(entry, accent);
+    // One recording standing for both accents is heard once.
+    if (url == null || urls.add(url)) accents.add(accent);
+  }
   for (final accent in accents) {
-    if (!context.mounted) return;
+    if (!context.mounted || run != _cardAudioRun) return;
     if (!await playAccent(context, entry, accent)) return;
   }
 }
@@ -989,12 +1017,25 @@ class FlashcardBack extends StatelessWidget {
                       for (final accent in const ['en-GB', 'en-US'])
                         IconButton(
                           tooltip: accent == 'en-GB' ? '播放英式發音' : '播放美式發音',
-                          onPressed: () => playAccent(context, entry, accent),
+                          onPressed: () {
+                            // 問題回報 #729: a tap replaces the flip's two
+                            // accents rather than being followed by them.
+                            _cardAudioRun++;
+                            playAccent(context, entry, accent);
+                          },
                           icon:
                               Column(mainAxisSize: MainAxisSize.min, children: [
                             const Icon(Icons.volume_up_outlined),
                             UiText(accent == 'en-GB' ? '英式' : '美式',
                                 style: MFont.caption),
+                            // 問題回報 #724: a word with no recording at all
+                            // is the TTS voice — say so, so it is not taken
+                            // for a person's pronunciation.
+                            if (cardAccentAudioUrl(entry, accent) == null)
+                              UiText('合成',
+                                  key: ValueKey('accent-tts-$accent'),
+                                  style: MFont.caption
+                                      .copyWith(color: MColors.muted)),
                           ]),
                         ),
                   ],
@@ -1074,7 +1115,7 @@ class FlashcardBack extends StatelessWidget {
     AppScope.of(context).prefetchAudio([
       if (entry.language == 'en')
         for (final accent in const ['en-GB', 'en-US'])
-          accentAudioUrl(entry, accent)
+          cardAccentAudioUrl(entry, accent)
       else
         entry.audioUrl,
     ]);

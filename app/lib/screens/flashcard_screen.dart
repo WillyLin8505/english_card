@@ -1,4 +1,5 @@
 import '../l10n/ui_text.dart';
+import 'dart:async';
 import 'dart:math' as math;
 
 import '../services/learning_content.dart';
@@ -15,6 +16,7 @@ import '../models/learning_card.dart';
 import '../models/photo.dart';
 import '../models/word_entry.dart';
 import '../services/flashcard_session.dart';
+import '../services/speaker.dart';
 import '../services/fsrs_scheduler.dart';
 import '../services/word_database_repository.dart';
 import '../theme/card_style.dart';
@@ -96,6 +98,11 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
   WordDatabaseRepository? _repo;
   bool _wasBack = false;
 
+  // 問題回報 #729: the card on screen (its id, the run's step, and how far
+  // back 上一張 is looking), so a change of card stops the old one's sound.
+  Object? _audioCard;
+  Speaker? _speaker;
+
   /// Cards graded in the run the learner just left, shown once on the
   /// gentle end screen (spec §7's deferred 測驗結束畫面; card #217). Null
   /// when there is nothing to show.
@@ -104,6 +111,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _speaker = AppScope.of(context).speaker;
     final repo = AppScope.of(context).repository;
     if (repo != _repo) {
       // Another learning language: start over.
@@ -134,6 +142,8 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
   @override
   void dispose() {
     widget.reviewRequest?.removeListener(_takeReviewRequest);
+    // 問題回報 #729: leaving the review screen silences its card.
+    if (_session != null) _stopAudio();
     _session?.dispose();
     super.dispose();
   }
@@ -144,6 +154,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     if (request == null || ids == null || !mounted || _repo == null) return;
     // Clear before starting so the notification doesn't come back here.
     request.value = null;
+    if (_session != null) _stopAudio();
     _session?.removeListener(_changed);
     _session?.dispose();
     _session = null;
@@ -191,36 +202,78 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     final dpr = MediaQuery.devicePixelRatioOf(context);
     final options = [for (final o in s.photoOptions) o.$1];
     final at = options.indexWhere((o) => o.id == s.photo?.id);
-    // 問題回報 #693: the photos on both sides of the one shown, so a swipe
-    // either way lands on a decoded photo.
-    final photos = [
-      if (s.photo case final p?) p,
-      ...options.skip(at + 1).take(3),
-      if (at > 0) options[at - 1],
-      ...s.upcomingPhotos(),
-    ];
     void warm(ImageProvider<Object>? provider) {
       if (provider == null || !_warming.add(provider)) return;
       precacheImage(provider, context, onError: (_, __) {})
           .whenComplete(() => _warming.remove(provider));
     }
 
-    for (final photo in photos) {
-      for (final height in {look.frontPhotoHeight, look.photoHeight}) {
-        warm(photoProvider(
-            photo, scope.photoStore, Size(contentWidth, height), dpr));
-      }
+    void warmFront(Photo photo) {
+      warm(photoProvider(photo, scope.photoStore,
+          Size(contentWidth, look.frontPhotoHeight), dpr));
       // The drag question's photo-shaped frame (usually the same decode
       // size as above, then nothing more is loaded).
       warm(photoProvider(
           photo, scope.photoStore, dragPhotoFrame(photo, contentWidth), dpr,
           fit: BoxFit.contain));
     }
+
+    void warmBack(Photo photo) => warm(photoProvider(
+        photo, scope.photoStore, Size(contentWidth, look.photoHeight), dpr));
+
+    // 問題回報 #726 (單字常常要 loading): every photo used to be decoded at
+    // all three sizes — current, swipe neighbours and three cards ahead
+    // with two photos each, about 110 MB of pixels on an iPhone — more
+    // than the 100 MB image cache, so the next card's photo was often
+    // pushed out again before it came up and its front waited 「正在載入
+    // 圖片…」. Now only what can show next is decoded, and only at the
+    // size it shows at; the cards after that are downloaded, not decoded.
+    if (s.photo case final p?) {
+      warmFront(p);
+      warmBack(p);
+    }
+    // 問題回報 #693: the photos on both sides of the one shown, so a swipe
+    // either way lands on a decoded photo.
+    for (final p in [
+      ...options.skip(at + 1).take(3),
+      if (at > 0) options[at - 1],
+    ]) {
+      warmBack(p);
+    }
+    final upcoming = s.upcomingCards(cards: 5);
+    for (final (i, card) in upcoming.indexed) {
+      final photos = s.plannedPhotos(card.wordEntryId);
+      if (i < 2 && photos.isNotEmpty) {
+        // The next cards' fronts, and their backs once answered.
+        warmFront(photos.first);
+        warmBack(photos.first);
+      }
+      for (final p in photos.take(i < 2 ? 3 : 1)) {
+        if (p.networkUrl case final url?) CachedNetworkPhoto.prefetch(url);
+      }
+    }
+    // 問題回報 #726: the next cards' recordings are downloaded now too, so
+    // turning them over does not wait for the server.
+    if (_audioPrefetched != s.card?.id) {
+      _audioPrefetched = s.card?.id;
+      scope.prefetchAudio([
+        for (final card in upcoming.take(2))
+          if (scope.repository.entry(card.wordEntryId) case final e?)
+            if (e.language == 'en')
+              for (final accent in const ['en-GB', 'en-US'])
+                cardAccentAudioUrl(e, accent)
+            else
+              e.audioUrl,
+      ]);
+    }
   }
+
+  String? _audioPrefetched;
 
   /// Ends the run. With [summary], a run in which at least one card was
   /// graded ends on the end screen instead of straight back at the intro.
   void _end({bool summary = false}) {
+    if (_session != null) _stopAudio();
     final reviewed = _session?.reviewed ?? 0;
     _session?.removeListener(_changed);
     _session?.dispose();
@@ -284,9 +337,21 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
         SnackBar(content: UiText(sent ? '已送出回報，謝謝你' : '已存在這支手機，連上網路後會再送出')));
   }
 
+  void _stopAudio() {
+    _audioCard = null;
+    if (_speaker case final speaker?) stopCardAudio(speaker);
+  }
+
   void _changed() {
     final s = _session;
     if (s == null || !mounted) return;
+    // 問題回報 #729: 切換到下一張（評分、上一張、回到目前這張）時，上一張卡片
+    // 的聲音停下，還在下載的錄音和排在後面的另一個腔調也不再播放.
+    final card = (s.card?.id, s.reviewed, s.stepsBack);
+    if (card != _audioCard) {
+      if (_audioCard != null) _stopAudio();
+      _audioCard = card;
+    }
     // 翻到背面時自動播放單字發音.
     if (s.showingBack && !_wasBack) {
       ScaffoldMessenger.maybeOf(context)?.removeCurrentSnackBar();

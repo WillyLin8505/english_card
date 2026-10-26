@@ -234,6 +234,20 @@ class CachedNetworkPhoto extends ImageProvider<CachedNetworkPhoto> {
     return load;
   }
 
+  /// Downloads [url] to the cache folder without decoding it (問題回報
+  /// #726): the cards further ahead in a review get their photos onto the
+  /// phone early, without holding decoded pixels in memory. Never throws.
+  static void prefetch(String url) {
+    if (kIsWeb || !_prefetched.add(url)) return;
+    bytesFor(url).then<void>((_) {}, onError: (_) {
+      _prefetched.remove(url);
+    });
+  }
+
+  // URLs already fetched by [prefetch], so each review card does not read
+  // them from disk again.
+  static final _prefetched = <String>{};
+
   static Future<Uint8List> _bytesFor(String url) async {
     File? file;
     try {
