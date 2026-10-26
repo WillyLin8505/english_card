@@ -12,6 +12,7 @@ import 'fsrs_scheduler.dart';
 import 'word_database_repository.dart';
 import 'lexicon_pack.dart';
 import 'dictionary_sync.dart';
+import 'pack_media.dart' show packMediaIsAsset;
 import 'photo_store.dart';
 
 /// One photo the card back can show: the photo, where the word is on it
@@ -183,6 +184,7 @@ class FlashcardSession extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    photoSelection.dispose();
     repo.removeListener(_repositoryChanged);
     _watch.stop();
     super.dispose();
@@ -804,9 +806,16 @@ class FlashcardSession extends ChangeNotifier {
   List<CardPhoto> get photoOptions => _photoOptions;
   List<CardPhoto> _photoOptions = const [];
 
+  /// The photo the learner swiped to on the back (its id), for loading
+  /// its neighbours ahead. A swipe tells only this, not the session's
+  /// listeners (問題回報 #693): the pager already shows the photo, and
+  /// rebuilding the whole review screen mid-swipe (the back's sections
+  /// too: their cache key holds the photo) made the swipe stutter.
+  final photoSelection = ValueNotifier<String?>(null);
+
   /// The learner swiped to another of the word's photos on the back.
   void selectPhoto(int index) {
-    if (index < 0 || index >= _photoOptions.length) return;
+    if (_disposed || index < 0 || index >= _photoOptions.length) return;
     final chosen = _photoOptions[index];
     if (chosen.$1.id == _photo?.id) return;
     _photo = chosen.$1;
@@ -814,7 +823,7 @@ class FlashcardSession extends ChangeNotifier {
     _box = _boxes[chosen.$1.id];
     _photoCredit = chosen.$3;
     _lastPhoto = chosen.$1.id;
-    notifyListeners();
+    photoSelection.value = chosen.$1.id;
   }
 
   /// Every picture a card of [wordEntryId] can show, learner's own first.
@@ -1065,13 +1074,19 @@ class FlashcardSession extends ChangeNotifier {
         for (final l in links)
           if (l is String && l.trim().isNotEmpty) l.trim(),
       ].join('\n');
+      // 問題回報 #702: a picture bundled with the app's pack
+      // (`assets/lexicon/media/…`) is read from the app itself, as the
+      // dictionary pages do (databasePhoto). Resolved against the server it
+      // was a 404: 「圖片暫時無法載入」 on every bundled-pack card.
+      final asset = packMediaIsAsset(url);
       found.add((
         Photo(
             id: id,
             title: '',
             takenAt: DateTime(2000),
             createdAt: DateTime(2000),
-            networkUrl: base.resolve(url).toString(),
+            assetPath: asset ? url : null,
+            networkUrl: asset ? null : base.resolve(url).toString(),
             width: (image['width'] as num?)?.toInt(),
             height: (image['height'] as num?)?.toInt()),
         anchor,
