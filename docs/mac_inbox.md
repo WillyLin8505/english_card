@@ -2128,3 +2128,8 @@ commit `c12083f2`（Windows：flutter analyze 無 error、01:13 +692 ~2: All tes
 
 ## M201（2026-10-26 23:13）狀態：待做（重驗 M199／M200）
 tagger 已在 23:12 用 start_tagger.bat 重啟，8765、8790 都回 200，裡面已是 #747 的修正（harder 會照 level 提示，tagger 也會濾掉比 level-1 更簡單的字）。請到 owner 的 iPhone 重驗 level=C2 的 harder 補字。
+
+## M202（2026-10-26 23:25）狀態：待做（Windows 卡 #584 交給 Mac 的 App 畫面部分）
+卡：問題回報 #625：[Mac] 2026-10-23 owner 要求：翻卡第一次發音是機器人聲：owner 要求：補更多真人發音（交 Windows）
+
+無。
