@@ -1185,8 +1185,10 @@ class Tagger:
             except (FileNotFoundError, OSError, ValueError, TypeError):
                 pass
             prepared, _ = prepare_image(image)
+            # Card #657: compact JSON (no pretty-printing whitespace) cuts the decode time,
+            # as it did for the CEFR path (A/B 2026-10-14).
             content = self._chat(build_prompt(level, lang, native, focus, exclude),
-                                 CANDIDATE_SCHEMA, prepared)
+                                 CANDIDATE_SCHEMA, prepared, compact=COMPACT_JSON)
             if content.get('safe') is not True:
                 raise UnsafeImage('explicit adult content')
             items = to_candidates(content.get('candidates', []), self.lexicon, exclude, lang)

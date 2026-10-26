@@ -302,13 +302,13 @@ def test_compact_grammar_leaves_no_room_for_whitespace():
 def test_level_filter_drops_labels_below_one_band_under_the_level():
     # Card #657: pedestrian is B2 in CEFR-J and propulsion is a frequency estimate of B2
     # (zipf 3.6); neither may reach a C2 learner, and no easier word is filled in.
-    from tagging_server import filter_level, finish_candidates
+    from tagging_server import finish_candidates
     items = [{'word': 'pedestrian', 'zipf': 3.71}, {'word': 'propulsion', 'zipf': 3.6},
              {'word': 'iridescent', 'zipf': 2.8}, {'word': 'bright', 'zipf': 4.6}]
     out = [i['word'] for i in finish_candidates(items, 'C2', 'en', None)]
     assert out == ['iridescent']
-    assert [i['word'] for i in filter_level([dict(i) for i in items], 'B1')] == [
-        'pedestrian', 'propulsion', 'iridescent', 'bright'] or True
+    out = [i['word'] for i in finish_candidates([dict(i) for i in items], 'B1', 'en', None)]
+    assert 'pedestrian' in out and 'iridescent' in out and 'bright' not in out
     assert finish_candidates([{'word': 'bright', 'zipf': 4.6}], 'C2', 'en', None) == []
 
 
@@ -324,7 +324,7 @@ def test_word_cefr_uses_the_list_before_frequency():
     from tagging_server import word_cefr, cefr_list_words
     assert word_cefr('pedestrian', 2.0) == ('B2', 'list')
     assert word_cefr('prominent', None) == ('B1', 'list')
-    assert word_cefr('propulsion', 3.6) == ('C1', 'estimate')
+    assert word_cefr('propulsion', 3.6) == ('B2', 'estimate')
     assert word_cefr('nonexistentword', None) == (None, None)
     assert word_cefr('traffic light', None)[0] is not None
     assert 'abortion' in cefr_list_words()  # Oxford extra is merged in
