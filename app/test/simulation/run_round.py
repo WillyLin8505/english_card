@@ -45,7 +45,9 @@ from pathlib import Path
 APP = Path(__file__).resolve().parents[2]
 ROUNDS = APP / "build" / "rounds"
 POSTHOG_FILE = APP / "posthog.local.json"
-PACK_URL = "http://127.0.0.1:8123/api/lexicon?target={target}&native={native}"
+# Through the 5173 proxy (read-only /app-pack entry, lexicon/frontend/vite.config.ts):
+# dispatched agents may not call the app server's port directly (問題回報 #758).
+PACK_URL = "http://127.0.0.1:5173/app-pack/lexicon?target={target}&native={native}"
 LANGS = {"en": ("en", "zh-TW"), "fr": ("fr", "en")}
 # name: (file, extra environment). Timing probes are left out: they measure,
 # they don't check behaviour.
@@ -207,7 +209,7 @@ def main():
             # The app asks with its languages (問題回報 #501), so the replay must too;
             # the bare list is every deck of every language.
             target, native = LANGS[a.lang]
-            with urllib.request.urlopen(f"http://127.0.0.1:8123/api/decks?target={target}&native={native}",
+            with urllib.request.urlopen(f"http://127.0.0.1:5173/app-pack/decks?target={target}&native={native}",
                                         timeout=60) as response:
                 deck_file.write_bytes(response.read())
     previous = out / "summary.json"

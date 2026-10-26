@@ -66,7 +66,13 @@ void main() {
 
     // --- 語言：切母語為法文（介面語言，不受已發布詞庫限制）生效 ---
     current = '切母語為法文';
-    final frChip = find.widgetWithText(ChoiceChip, '法文（Français）');
+    // French is available in both groups; scope to the native-language row.
+    final nativeOptions = find.ancestor(
+        of: find.widgetWithText(ChoiceChip, '繁體中文'),
+        matching: find.byType(Wrap));
+    final frChip = find.descendant(
+        of: nativeOptions,
+        matching: find.widgetWithText(ChoiceChip, '法文（Français）'));
     if (frChip.evaluate().isEmpty) {
       f.add('找不到法文母語選項', current);
     } else {
@@ -404,5 +410,6 @@ void main() {
       ..writeAsStringSync(const JsonEncoder.withIndent(' ').convert(report));
     // ignore: avoid_print
     print(const JsonEncoder.withIndent(' ').convert({...report, 'screenText': screenText.length, 'findings': f.counts}));
+    expect(f.counts, isEmpty, reason: 'Settings simulation findings must be resolved');
   }, timeout: const Timeout(Duration(minutes: 10)));
 }

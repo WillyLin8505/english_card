@@ -18,6 +18,14 @@ export default defineConfig(({ mode }) => {
           rewrite: (p) => p.replace(/^\/api/, ""),
           headers: env.LEXICON_API_KEY ? { "X-API-Key": env.LEXICON_API_KEY } : {},
         },
+        // Read-only pack entry for the learner-app simulator (問題回報 #758):
+        // only the two GET endpoints the simulator downloads from the app
+        // server on 8123, so agents can reach the live pack through 5173.
+        "^/app-pack/(lexicon|decks)(\\?|$)": {
+          target: "http://127.0.0.1:8123",
+          changeOrigin: true,
+          rewrite: (p) => p.replace(/^\/app-pack/, "/api"),
+        },
       },
     },
   };
