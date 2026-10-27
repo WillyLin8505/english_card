@@ -2798,3 +2798,10 @@ Windows 端：未改程式、未改資料，無備份、無 golden/QC 變動。
 
 備份／還原：無（沒改檔）。golden／QC：未動資料，無退步。
 剩下：Mac 處理 M294（檢查 database_image_views.dart 的 Image.network、預載下一張）；若 Mac 確認用該伺服器端點，再回報給 Windows 加 Cache-Control。
+
+## M299（2026-10-27 23:49）狀態：待做
+commit `025d344f`（Windows：flutter analyze 無 error、00:56 +762 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/27：用 Mac 模擬器，要實機時用 owner 的 iPad；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #718：問題回報 #858：[給 Mac] [意見回饋] 複習：滑動圖片存在卡頓
+  結果：需要你決定：無（此卡屬 App 畫面互動，依分工由 Mac 處理，Windows 未改任何東西）。
+- 卡 #719：問題回報 #859：[給 Mac] [意見回饋] 複習：載入圖片需要時間？ 可以用快取的方式減低圖片讀取嗎
+  結果：需要 Mac：複習頁圖片載入慢屬 App 畫面／載入行為，已在 Mac inbox M294，Windows 這張卡未改任何程式或資料。
