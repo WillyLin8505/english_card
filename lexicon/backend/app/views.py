@@ -477,6 +477,14 @@ def french_label_words(s: Session, target: str, tags: list) -> dict:
     return out
 
 
+def _anchor_fields(tg: dict) -> dict:
+    """point/box of a tag; an ungrounded default point goes out as null +
+    point_ungrounded (card #631) so the app shows no dot."""
+    if tg.get("pointUngrounded") and not tg.get("box"):
+        return {"point": None, "box": None, "point_ungrounded": True}
+    return {"point": tg.get("point"), "box": tg.get("box")}
+
+
 def french_labels(row, tags: list, dropped: list, target: str = "fr", others: dict | None = None) -> dict:
     """A non-English word's picture labels (問題回報 #362). The picture's labels
     are English words; those naming this sense's English meaning are the
@@ -494,14 +502,14 @@ def french_labels(row, tags: list, dropped: list, target: str = "fr", others: di
     base = {"word": row["lemma"], "pos": row["pos"], "cefr": band if band in CEFR_BANDS else None,
             "native": (row["english"] or "").split("、")[0] or None}
     others = others or {}
-    shown = [{**base, "point": best.get("point"), "box": best.get("box"),
+    shown = [{**base, **_anchor_fields(best),
               "score": best.get("score"), "modelLevel": best.get("modelLevel")}] if named else []
     seen = {row["lemma"]}
     for tg in tags:  # the picture's other labels that name another French word (card #429)
         w, o = tag_word(tg), others.get(tag_word(tg))
         if o and w not in terms and o["word"] not in seen:
             seen.add(o["word"])
-            shown.append({**o, "point": tg.get("point"), "box": tg.get("box"),
+            shown.append({**o, **_anchor_fields(tg),
                           "score": tg.get("score"), "modelLevel": tg.get("modelLevel")})
     return {
         "tags": shown,

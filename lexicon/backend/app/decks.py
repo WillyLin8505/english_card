@@ -82,9 +82,14 @@ def clean_labels(tags: list | None, limit: int = LABEL_LIMIT) -> list[dict]:
     for t in sorted(tags or [], key=lambda t: -(t.get("score") or 0)):
         word = (t.get("word") or "").strip().lower()
         point = t.get("point")
-        if not word or word in seen or not point or len(point) != 2:
+        ungrounded = bool(t.get("pointUngrounded")) and not t.get("box")
+        if not word or word in seen or (not ungrounded and (not point or len(point) != 2)):
             continue
         seen.add(word)
+        if ungrounded:  # no real place in the picture (card #631): listed, no dot
+            out.append({"word": word, "pos": t.get("pos") or "", "cefr": t.get("cefr"),
+                        "point": None, "point_ungrounded": True})
+            continue
         out.append({"word": word, "pos": t.get("pos") or "", "cefr": t.get("cefr"),
                     "point": [round(float(point[0]), 3), round(float(point[1]), 3)]})
         if len(out) >= limit:
