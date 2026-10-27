@@ -1848,3 +1848,11 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
 |----|----|----|----|----|
 | M300 #759 source=azure_tts | 通過 | e9e88675：App 也把 source="azure_tts" 當合成（另外接受 tts、azure、synthetic=true、kind=tts_audio）；排在所有真人錄音之後、手機 TTS 之前，標「合成」。等 serve_app 重啟後的新詞庫，在模擬器實聽 Windows 挑的例字 |  | — |
+
+## 2026-10-28 M301 Azure 語音（iPhone 模擬器，詞庫 2f1aa233，App e9e88675）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M301 只有 Azure 的字 | 通過 | cheerful、cabbage、bun、elated：真人 0、Azure 2；英式用 Azure(UK)、美式用 Azure(US)，出處都是「Azure 神經語音（合成）」；cheerful 單字頁顯示「Azure 神經語音（合成）」 | mac_verify_shots/2026-10-28/m301_cheerful.png | — |
+| M301 有真人錄音的字 | 通過 | apple：真人 3、Azure 0；英式和美式都先播真人（Naomi Persephone Amethyst · CC BY-SA 4.0） |  | — |
+| M301 實際聲音 | 通過 | 模擬器檢查用的是測試用喇叭，沒有實際出聲；檔案 Windows 已確認 200。要聽聲音請 owner 在 iPad 打開 cheerful 按英式／美式 |  | — |
