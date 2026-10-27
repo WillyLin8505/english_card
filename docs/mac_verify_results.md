@@ -1666,3 +1666,14 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | M214 複習時間範圍 | 通過 | 模擬器複習格子顯示「約 2–3 分鐘」 | mac_verify_shots/2026-10-27/sim815_review.png | — |
 | M255 #224 模擬使用者・拍照 | 通過 | Windows 第 187 輪 2/2 通過（標籤遮點 1，同 #61） |  | — |
 | iPhone 實機 | 不通過 | 20:35 iPhone 拒絕開啟測試版：開發者憑證沒被信任（invalid code signature／profile not trusted），等 owner 在 iPhone 設定裡信任開發者 App 後再驗 M203 和裝最新正式版 |  | 中 |
+
+## 2026-10-27 iPhone 12 實機驗證（release 022a00ef）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M203／M204 #748 補字排除與速度 | 通過 | photo-1792753703603088、level=C2、排除 40：三種請求都沒回排除過的字；一次約 3–3.6 秒（上次 14–23 秒） |  | — |
+| M203 #748 補字等級 | 不通過 | 仍有低於 C1 的字：一般 congested B1、occupancy B1、pedestrian B2；actions stroll、dwell、conspire B1。harder 有 congregation、architectural C1。每次只回 5 個（原本 10–12） |  | 中 |
+| M214 複習時間 | 通過 | owner 手機複習格子：綜合「今天 39 張・約 7 分鐘」 | mac_verify_shots/2026-10-27/p250_review.png | — |
+| #815 設定頁 | 通過 | 語言區沒有「更多學習語言即將推出」；辨識正常所以頁首沒有紅色提示 | mac_verify_shots/2026-10-27/p250_settings.png | — |
+| iPhone 信任 | 通過 | owner 在 VPN 與裝置管理按了「驗證 App」後可開啟（今天 20:34 簽署描述檔更新） |  | — |
+| 正式版 | 通過 | 已裝最新 release 022a00ef 並開啟 |  | — |
