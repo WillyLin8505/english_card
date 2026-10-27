@@ -2304,3 +2304,8 @@ commit `0f0f510f`（Windows：flutter analyze 無 error、01:30 +711 ~2: All tes
 commit `2d6faa96`（Windows：flutter analyze 無 error、01:20 +711 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #666：問題回報 #766：[owner] [Mac] 2026-10-27 M224（iPhone 模擬器，App 自己下載的
   結果：全部完成：卡 #607 的 150 字覆寫表也套到詞條等級——44 個詞條（含 noodle noun/verb C1→B1）改成 B1，進階單字 C1 集已重新產生（400 字，內含的 18 個降級字已換掉）。
+
+## M229（2026-10-27 09:51）狀態：待做（Windows 卡 #631 交給 Mac 的 App 畫面部分）
+卡：問題回報 #718：[owner] [Mac] 2026-10-26 M150（owner 回報）：#703 標籤位置錯誤
+
+重驗圖 9564（night 現為 [0,0,1,0.45] 天空框、city 為 [0,0.45,1,0.87] 天際線框，已不在人頭上）；重驗 point_ungrounded 標籤在 App 顯示「整張圖」、不畫點（待 serve_app 重啟後的 pack）。
