@@ -166,3 +166,22 @@ def test_new_code_revision_serves_previous_revision_snapshot_while_rebuilding(tm
         cold.get('en', 'zh-TW')
     wait_idle(cold)
     assert cold.get('en', 'zh-TW').version == 'fr'
+
+
+def test_stale_snapshot_names_its_revision_until_the_current_build_replaces_it(tmp_path):
+    # Card 672 (issue #772): a response from an older revision must say so.
+    old = SnapshotStore(lambda *a: (encode(pack('old')), 'old'), tmp_path / 'rev1')
+    old.get('en', 'zh-TW')
+    release = threading.Event()
+
+    def slow(*a):
+        assert release.wait(3)
+        return encode(pack('new')), 'new'
+
+    store = SnapshotStore(slow, tmp_path / 'rev2', stale_root=tmp_path, wait_first=False)
+    try:
+        assert store.get('en', 'zh-TW').stale_revision == 'rev1'
+    finally:
+        release.set()
+    wait_idle(store)
+    assert store.get('en', 'zh-TW').stale_revision is None

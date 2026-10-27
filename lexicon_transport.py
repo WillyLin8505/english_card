@@ -67,6 +67,9 @@ class Snapshot:
         self.languages = (pack.get('target_language'), pack.get('native_language'))
         del pack
         self.etag = 'W/"' + self.version + '"'
+        # Card 672 (issue #772): set to the older code revision's directory name
+        # while this snapshot stands in for the current revision's first build.
+        self.stale_revision = None
         self.gzip = compressed if compressed is not None else gzip.compress(body, compresslevel=6, mtime=0)
         self.delta_from = None
         self.delta_body = None
@@ -205,6 +208,7 @@ class SnapshotStore:
         for path in sorted(paths, key=lambda p: p.stat().st_mtime, reverse=True):
             snapshot = self._load(pair, path)
             if snapshot is not None:
+                snapshot.stale_revision = path.parent.name
                 logging.info('Serving stale dictionary snapshot %s until the rebuild finishes', path)
                 return snapshot
         return None
@@ -212,6 +216,7 @@ class SnapshotStore:
     def _build(self, pair, previous):
         body, _ = self.builder(*pair)
         if previous and previous.body == body:
+            previous.stale_revision = None  # same data as the current code builds
             return previous
         snapshot = Snapshot(body)
         if snapshot.languages != pair:

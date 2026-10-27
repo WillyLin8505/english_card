@@ -1094,6 +1094,9 @@ class Handler(SimpleHTTPRequestHandler):
                 return
         self.send_response(status)
         self.send_header('ETag', snapshot.etag)
+        if snapshot.stale_revision:
+            # Card 672 (issue #772): an older code revision's pack, answered until this one's build ends.
+            self.send_header('X-Lexicon-Stale-Revision', snapshot.stale_revision)
         self.send_header('Cache-Control', 'private, no-cache')
         self.send_header('Vary', 'Accept-Encoding')
         self.send_header('Content-Type', ctype)
