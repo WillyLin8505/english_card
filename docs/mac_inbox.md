@@ -2206,3 +2206,8 @@ commit `64f022f1`（Windows：flutter analyze 無 error、03:01 +693 ~2: All tes
 commit `05485f43`（Windows：flutter analyze 無 error、02:39 +693 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #226：模擬使用者・複習
   結果：第 180 輪：2/2 通過（learner 208 秒、restart 146 秒）；無新問題；UX 建議＝沿用 #485／#515，未重複開單。
+
+## M213（2026-10-27 08:24）狀態：待做
+commit `e0da8d44`（Windows：flutter analyze 無 error、01:07 +693 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #224：模擬使用者・拍照
+  結果：第 181 輪（photoui）＋ pins：2/2 通過，14,767 張照片、44,301 個版面，標籤遮點 1（同 #61，無新錯誤）；沒有新的 UX 建議（#583、#584 仍待決定）。
