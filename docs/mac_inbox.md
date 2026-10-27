@@ -2320,7 +2320,7 @@ commit `2eef0826`（Windows：flutter analyze 無 error、01:05 +711 ~2: All tes
 
 重驗圖 9564（night [0.5,0.4]、city [0.5,0.5]；已重定位為天空框／天際線框，或標 point_ungrounded 顯示「整張圖」、不畫點），需 serve_app 重啟後的 pack。
 
-## M232（2026-10-27 10:35）狀態：待做（Windows 卡 #668 交給 Mac 的 App 畫面部分）
+## M232（2026-10-27 10:35）狀態：完成
 卡：問題回報 #768：[owner] App 下載的 sqlite 詞庫沒帶「整張圖」標記：catalog_images 標籤的 pointUngrounded 
 
 用新版 sqlite 重驗『整張圖』（重啟後的 pack；目前 8123 提供的是修前 pack，ETag dd276a33…）。預期「整張圖」出現在 413 個已發布標籤上。
@@ -2333,7 +2333,7 @@ QC：lexicon/logs/agents/card668_qc_before.json／after.json；golden 300 詞＋
 
 重驗圖 9564（night [0.5,0.4]、city [0.5,0.5]；已重定位為框，或標 point_ungrounded 顯示「整張圖」、不畫點），需 serve_app 重啟後的 pack。
 
-## M234（2026-10-27 10:53）狀態：待做（Windows 卡 #670 交給 Mac 的 App 畫面部分）
+## M234（2026-10-27 10:53）狀態：完成
 卡：問題回報 #768：[owner] App 下載的 sqlite 詞庫沒帶「整張圖」標記：catalog_images 標籤的 pointUngrounded 
 
 用新版 sqlite（pack e2348cfd0fd9）重驗「整張圖」；App 應對 473 個 point=null 顯示整張圖，429 個有旗標的與 44 個無位置的一併看。

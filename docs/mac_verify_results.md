@@ -1532,3 +1532,11 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
 |----|----|----|----|----|
 | M233 #718 圖 9564 | 通過 | M225 已用 App 自己更新的詞庫 f6d6cc77 驗過，869e6471、8b1fa014 也一樣：night 在夜空 [0.5,0.225]、city 在天際線 [0.5,0.66]，不再是預設點。其餘未定位標籤等 Windows 修好 sqlite 匯出（point 設成 null）後的新 M 項 | mac_verify_shots/2026-10-27/m225_image9564.png | — |
+
+## 2026-10-27 M232、M234（iPhone 模擬器，App 自己更新的詞庫 b2f5bfed）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M232/M234 #768 sqlite 帶整張圖標記 | 通過 | 11:00 App 自己更新到的詞庫 b2f5bfed：catalog_images labels 有 492 個 point=null、448 個帶 pointUngrounded（比預期的 473／429 多，卡 #631 還在跑） |  | — |
+| M234 App 顯示整張圖 | 通過 | 圖 43 的 ink 帶旗標：照片上沒有 ink 的點，清單標「整張圖」；其他字照常有點 | mac_verify_shots/2026-10-27/m234_image43.png | — |
+| M234 圖 43 標籤中文 | 不通過 | 同一張圖的標籤義項選錯：open「可通行」（書打開應是「打開的」）、text「簡訊」（應是「文字、正文」）、binding 中文是一整段長定義（應是「裝訂」） | mac_verify_shots/2026-10-27/m234_image43.png | 低 |
