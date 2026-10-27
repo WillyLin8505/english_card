@@ -2580,7 +2580,7 @@ commit `ef356f8f`（Windows：flutter analyze 無 error、01:30 +712 ~2: All tes
 - 卡 #687：問題回報 #561：[owner] 單字詳情「相關詞」98% 沒連到義項，俚語義項的字和錯義中文直接露出：can → b
   結果：尚未全部完成：關聯詞義項連結（決定 A）已寫好工具、pack 隱藏規則已擴充，試跑 406 列；Qwen 暫停中，全庫約 29,000 次呼叫要等 Qwen 開放後分輪續跑。
 
-## M271（2026-10-27 22:00）狀態：待做
+## M271（2026-10-27 22:00）狀態：完成
 commit `baee7620`（Windows：flutter analyze 無 error、01:19 +712 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #673：問題回報 #782：[Mac] 2026-10-27 M238（iPhone 模擬器，App 自己更新的詞庫 7：M23
   結果：已套用 owner 決定 A：exporter 改用 sensetranslations 的明確覆寫，圖 43 的 open／text 修正會進下次匯出；35 項匯出測試通過。
