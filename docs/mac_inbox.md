@@ -2608,3 +2608,9 @@ etch／etched（圖 168，#736）還沒修好，這次不用驗。
 commit `5ac27226`（Windows：flutter analyze 無 error、01:09 +736 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/27：只用 Mac 模擬器，不裝到 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #698：問題回報 #214：CEFR 分級疑似錯誤：scarecrow (noun) 現在 C1(估) → 建議 A2/B1（具
   結果：全部完成：scarecrow 等 125 個字表外、zipf 2.5–3.3 的常見具體名詞（#607 沒涵蓋的詞條層）加入人工覆寫表，封頂 B1，scarecrow C1→B1。
+
+## M276（2026-10-27 22:55）狀態：待做
+卡：問題回報 #771（M274 圖 43 照片標籤點的義項）
+serve_app 22:47 重啟後的新詞庫 ETag `f74e5a2562dadd357e582e835676aebfa1c974b1b5adb0123b56078ea5043a72`（Windows ae21c16b：labels 帶 sense_id）。Windows 已查 sqlite pack：
+圖 43 labels：open→1910「打開的」、binding→5011「裝訂」、text→7648「文字、正文」，其餘 11 個 label 也都有 sense_id。
+請在 Mac 模擬器（App 含 4c7b8b15）更新詞庫到 f74e5a25 或更新版，打開圖 43，點 open、binding、text 三個標籤點，截圖寫進 results。
