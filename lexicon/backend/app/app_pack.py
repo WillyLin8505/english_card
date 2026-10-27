@@ -193,19 +193,22 @@ def drop_unlisted_confusables(pack: dict) -> int:
 
 
 MAIN_SENSES = 3
+# card 687 (問題回報 #561): the same rule for the word lists that hang off a meaning too.
+SENSE_RELATIONS = ("synonyms", "related", "hyponyms", "hypernyms")
 
 
 def hide_minor_sense_synonyms(pack: dict) -> int:
     """A synonym belongs to one meaning of the headword (問題回報 #466, option A): shown only
     when that meaning is among the first MAIN_SENSES, or when the meaning is not known yet.
-    possession→enthusiasm (the 著魔 sense) and inert→soggy are hidden, not deleted."""
+    possession→enthusiasm (the 著魔 sense) and inert→soggy are hidden, not deleted.
+    Same for related / hyponyms / hypernyms once they are linked (問題回報 #561: can → butt)."""
     hidden = 0
     for lx in pack.get("lexemes", []):
         if lx.get("status") != "full":
             continue
         rank = {sn["id"]: n for n, sn in enumerate(lx.get("senses") or [])}
         for r in lx.get("relations") or []:
-            if r["relation"] != "synonyms" or r.get("hide_by_default"):
+            if r["relation"] not in SENSE_RELATIONS or r.get("hide_by_default"):
                 continue
             sense_id = r.get("sense_id")
             if (r.get("detail") or {}).get("sense_match") == "none":

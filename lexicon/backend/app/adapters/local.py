@@ -13,7 +13,7 @@ from sqlalchemy import func, select
 
 from .. import catalog, config
 from ..text import example_key, fold, tokens
-from .base import Candidate, Context, SourceAdapter, form_bases
+from .base import Candidate, Context, SourceAdapter, form_bases, inflection_bases
 
 CEFR_FILE = config.REPO / "app" / "assets" / "cefr_en.json"
 OXFORD_EXTRA = Path(__file__).resolve().parents[1] / "oxford5000_extra.json"
@@ -187,6 +187,20 @@ def derivation(base: str, derived: str) -> dict | None:
     return {"type": "derived", "label": "衍生詞"}
 
 
+@lru_cache(maxsize=50_000)
+def _unlisted_level(word: str) -> str | None:
+    """CEFR for a word the CEFR list does not name (問題回報 #485): an inflected
+    form takes its base's level (went → go, ironed → iron), anything else its
+    frequency estimate (desuetude → C2). None for a string no word list knows
+    (a typo or a name outside wordfreq), which says nothing about difficulty."""
+    bases = inflection_bases(word, "en")
+    if bases:
+        return min((word_level(b, "en") for b in bases), key=LEVELS.index)
+    if _zipf(word, "en") <= 0:
+        return None
+    return word_level(word, "en")
+
+
 def sentence_level(text: str, ignore: frozenset[str] | set[str] = frozenset()) -> str:
     """Estimate sentence CEFR from vocabulary and sentence length.
 
@@ -203,9 +217,12 @@ def sentence_level(text: str, ignore: frozenset[str] | set[str] = frozenset()) -
         if t in ignore:
             continue
         hit = levels.get(t)
-        if not hit:
-            continue
-        lv = min(hit[1].values(), key=LEVELS.index)
+        if hit:
+            lv = min(hit[1].values(), key=LEVELS.index)
+        else:
+            lv = _unlisted_level(t)  # 問題回報 #485: a word the list lacks still counts
+            if lv is None:
+                continue
         worst = max(worst, LEVELS.index(lv))
     n = len(terms)
     length_floor = 0 if n <= 6 else 1 if n <= 10 else 2 if n <= 15 else 3 if n <= 22 else 4 \
