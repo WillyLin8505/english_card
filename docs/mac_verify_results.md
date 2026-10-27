@@ -1485,3 +1485,10 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | M225 #765 圖 9564 night／city | 通過 | 重新匯出後 night@[0.5,0.225] 在夜空、city@[0.5,0.66] 在背景城市燈光，不再是預設點 | mac_verify_shots/2026-10-27/m225_image9564.png | — |
 | M226 #743 tear「撕裂處」 | 通過 | tear noun 第二義「A hole or break caused by tearing」＝撕裂處；第一義淚、眼淚 |  | — |
 | M224 noodle 詞條等級（重驗） | 通過 | 同一份詞庫 noodle noun 已是 B1 |  | — |
+
+## 2026-10-27 M227（Mac）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M227 #665 圖 9564 重新匯出後 | 通過 | 已在 M225 用重新匯出的詞庫（f6d6cc77）驗過：night 在夜空、city 在城市燈光 | mac_verify_shots/2026-10-27/m225_image9564.png | — |
+| M227 其餘預設點標籤 | 通過 | 全庫還有 4,326 個預設點標籤由 Windows 卡 #631 續跑；App 已會把帶 point_ungrounded 或 point=null 的標籤當整張圖（03119aa5），跑完匯出後不用改 App |  | — |
