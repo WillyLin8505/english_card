@@ -688,7 +688,16 @@ class RecordingCredit {
   final String text;
   final String? sourcePage;
 
-  const RecordingCredit(this.text, {this.sourcePage});
+  /// A synthetic (Azure neural-voice) clip: shown as is, without the
+  /// 「發音錄音：」 speaker/license prefix.
+  final bool isSynthetic;
+
+  const RecordingCredit(this.text, {this.sourcePage, this.isSynthetic = false});
+
+  /// The credit of an Azure synthetic clip (卡 #695), instead of a speaker
+  /// and license.
+  static const synthetic =
+      RecordingCredit('Azure 神經語音（合成）', isSynthetic: true);
 
   /// One name from Wikimedia's speaker text (M139: "Speaker: X\nRecorder: Y"
   /// showed both lines): the name after `Speaker:`, else the first line
@@ -743,6 +752,28 @@ class RecordingCredit {
   }
 }
 
+/// One pack recording: its path (relative to the media base), accent
+/// label, and whether it is a synthetic voice (Windows 卡 #584/#695/#759:
+/// Azure neural-voice files are written into the pack as pronunciations,
+/// and play only after every real recording).
+typedef LexRecording = ({String path, String? accent, bool synthetic});
+
+/// Whether a pronunciation row is a synthesized (TTS) clip rather than a
+/// person's recording. Lenient on purpose, since the Windows pack format
+/// may name it any of these ways — accepted:
+///   * `"source": "tts"` or `"source": "azure"` (any case),
+///   * `"synthetic": true`,
+///   * `"kind": "tts_audio"`.
+/// A row with none of these (every pack before Azure) is a real recording.
+bool isSyntheticPronunciation(Map<String, dynamic> p) {
+  final source = p['source'];
+  if (source is String &&
+      const {'tts', 'azure'}.contains(source.trim().toLowerCase())) {
+    return true;
+  }
+  return p['synthetic'] == true || p['kind'] == 'tts_audio';
+}
+
 class LexDetail {
   final String? ipa;
 
@@ -750,7 +781,7 @@ class LexDetail {
   /// show the one in 設定's accent rather than always the first ([ipa]).
   final List<({String value, String? accent})> ipas;
   final String? audio; // relative to assets/lexicon/media/
-  final List<({String path, String? accent})> recordings;
+  final List<LexRecording> recordings;
   final String? audioCredit;
 
   /// Who recorded each recording and under what license, by its path
@@ -787,10 +818,17 @@ class LexDetail {
     final prons = list('pronunciations');
     final ipa = prons.where((p) => p['kind'] == 'ipa').firstOrNull;
     final audio = prons
-        .where((p) => p['kind'] == 'audio' && p['audio'] != null)
+        .where((p) =>
+            (p['kind'] == 'audio' || p['kind'] == 'tts_audio') &&
+            p['audio'] != null)
         .toList()
-      ..sort((a, b) =>
-          (b['default'] == true ? 1 : 0) - (a['default'] == true ? 1 : 0));
+      // Real recordings before synthetic ones, then the default one first.
+      ..sort((a, b) {
+        final real = (isSyntheticPronunciation(a) ? 1 : 0) -
+            (isSyntheticPronunciation(b) ? 1 : 0);
+        if (real != 0) return real;
+        return (b['default'] == true ? 1 : 0) - (a['default'] == true ? 1 : 0);
+      });
     final ety = j['etymology'] as Map<String, dynamic>?;
     final etyText = (ety?['text'] as String? ?? '').trim();
     final etyNative = (ety?['native'] as String? ?? '').trim();
@@ -805,15 +843,26 @@ class LexDetail {
       recordings: [
         for (final p in audio)
           if ((p['audio'] as String).isNotEmpty)
-            (path: p['audio'] as String, accent: p['accent'] as String?),
+            (
+              path: p['audio'] as String,
+              accent: p['accent'] as String?,
+              synthetic: isSyntheticPronunciation(p),
+            ),
       ],
       recordingCredits: {
         for (final p in audio)
           if ((p['audio'] as String).isNotEmpty)
-            if (RecordingCredit.fromJson(p) case final c?) p['audio'] as String: c,
+            if (isSyntheticPronunciation(p)
+                    ? RecordingCredit.synthetic
+                    : RecordingCredit.fromJson(p)
+                case final c?)
+              p['audio'] as String: c,
       },
       audioCredit: () {
         final first = audio.firstOrNull;
+        if (first != null && isSyntheticPronunciation(first)) {
+          return RecordingCredit.synthetic.text;
+        }
         final parts = [
           for (final k in ['license', 'attribution'])
             if ((first?[k] as String? ?? '').trim().isNotEmpty)
@@ -880,7 +929,7 @@ class LexEntry {
   final LexSource? _source;
   final String? _ipa;
   final String? _audio;
-  final List<({String path, String? accent})> _recordings;
+  final List<LexRecording> _recordings;
   final String? _audioCredit;
   final List<LexExample> _examples;
   final List<LexRelation> _relations;
@@ -906,7 +955,7 @@ class LexEntry {
   String? get ipa => detail.ipa;
   List<({String value, String? accent})> get ipas => detail.ipas;
   String? get audio => detail.audio; // relative to assets/lexicon/media/
-  List<({String path, String? accent})> get recordings => detail.recordings;
+  List<LexRecording> get recordings => detail.recordings;
 
   /// License and attribution of [audio] ("CC BY-SA 4.0 · Own work"), for
   /// credits outside the app (匯出到 Anki, 問題回報 #325).
@@ -958,7 +1007,7 @@ class LexEntry {
     // Detail fields given one by one (tests, hand-made entries).
     String? ipa,
     String? audio,
-    List<({String path, String? accent})> recordings = const [],
+    List<LexRecording> recordings = const [],
     String? audioCredit,
     List<LexExample> examples = const [],
     List<LexRelation> relations = const [],
