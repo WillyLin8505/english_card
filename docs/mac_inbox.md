@@ -2262,3 +2262,8 @@ commit `67e0490c`（Windows：flutter analyze 無 error、02:14 +693 ~2: All tes
 
 App 播放時顯示 speaker／授權（CC BY-SA 4.0）標示，資料在 audio_assets.speaker／license／source_page。
 - 尚未做成正式 adapter，新字不會自動取得 LL 錄音。
+
+## M221（2026-10-27 09:01）狀態：待做
+commit `f0f9459b`（Windows：flutter analyze 無 error、01:05 +701 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #555：問題回報 #593：卡 #448 後續：照片留在 App 的背景重打佇列、總數不足 5 的補標入口、QC ≥5 閘門切換
+  結果：進行中：後端已上線（serveapp 08:09 重啟，程式為最新），照片背景重打佇列待重打 10,009 張（r1 量到約 10,135），等 Qwen 慢慢跑；QC 閘門依 owner 決定要等跑完才切到 5，目前不切。
