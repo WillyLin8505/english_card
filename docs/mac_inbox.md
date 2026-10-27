@@ -2806,7 +2806,7 @@ commit `025d344f`（Windows：flutter analyze 無 error、00:56 +762 ~2: All tes
 - 卡 #719：問題回報 #859：[給 Mac] [意見回饋] 複習：載入圖片需要時間？ 可以用快取的方式減低圖片讀取嗎
   結果：需要 Mac：複習頁圖片載入慢屬 App 畫面／載入行為，已在 Mac inbox M294，Windows 這張卡未改任何程式或資料。
 
-## M300（2026-10-28 00:21）狀態：待做（Windows 卡 #695 交給 Mac 的 App 畫面部分）
+## M300（2026-10-28 00:21）狀態：完成
 卡：問題回報 #759：[owner] 卡 #584：要合成 1,824 個字的神經語音，但這台電腦沒有 Azure／Google 語音金鑰，我也不能讀 .env。
 
 播放順序把 source=azure_tts 當「合成」顯示，排在真人錄音之後（這些字本來就沒有真人）；匯出包要帶 media/audio/en、fr 的新 mp3；用 TestFlight／iPad 實機聽一次。
