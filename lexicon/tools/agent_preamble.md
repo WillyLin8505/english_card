@@ -36,7 +36,8 @@ Follow them even if the card prompt below is silent on the topic.
 - 【manager 10/20】你是派工程式開的 CLI：**不要用 task.py（hello/start/next/progress/done）**，也不要 PUT 卡片的 agent／status——那會把卡改到別的名字（例如「Claude · card385」），派工程式就收不到你的結果。進度只用 `PUT /api/tasks/<id>` 的 `progress`，結束時寫 result.md 就好。
 
 ## 分工（owner 10/23 #626）與暫時凍結
-App 畫面與互動由 Mac 修；Windows 的卡只做詞庫資料、伺服器、工具。卡片需要改 App 畫面時，資料部分做完，畫面部分寫進 result.md「需要 Mac：…」並停下。
+owner 在哪台下的指令就在哪台做（owner 10/28）：owner 在 Windows 交代的需求（卡片／問題回報標 [owner]、沒有 [給 Mac]），App 程式（app/lib）也由 Windows 卡自己改，改完跑 flutter analyze 與 flutter test，Mac 只在模擬器驗證；不要寫「需要 Mac：改畫面」。
+App 使用者回報、Mac 退回的問題（[給 Mac]、[意見回饋]、[卡片回報] 由 Mac 處理的）照舊：App 畫面由 Mac 修，Windows 只做詞庫資料、伺服器、工具，畫面部分寫進 result.md「需要 Mac：…」並停下。
 Mac 用 iPhone 模擬器驗證，要實機時用 owner 的 iPad（owner 10/27），模擬器沒有辨識金鑰：tagger 的修正（補字、等級、辨識）由 Windows 卡自己經 5173 打 tagger 量測、把數字寫進 result.md，不要寫「需要 Mac 重驗」。
 
 ## 要 owner 決定的問題（owner 10/23、10/26）
