@@ -1689,3 +1689,23 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
 |----|----|----|----|----|
 | M257 #818 重啟 tagger | 通過 | owner 選 A（現在重啟，小心不要重複開 llama-server），Mac 已轉給 Windows；重啟後 Mac 在 iPhone 重驗 M203，另補一列 |  | — |
+
+## 2026-10-27 iPhone 12 重驗 M203（tagger 21:14 重啟後，#818）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M203／#818 補字等級（C2） | 通過 | photo-1792753703603088、排除 40：一般 architectural、congested、occupancy、atmospheric C1；harder iridescent C2、luminous、congregation、propulsion、architectural C1；actions congregate、abound C1、conspire C2；都有帶等級，沒回排除過的字，一次 3–5.6 秒 |  | — |
+| M203 仍有低於 C1 的字 | 不通過 | 一般補字仍回 pedestrian（noun，B2）；actions 只回 3 個 |  | 低 |
+| owner iPhone 學習語言 | 通過 | 21:15 起存的學習語言是法文（英文資料都在），owner 21:50 在設定切回英文後已存成 en；驗證後已重裝正式版 |  | — |
+
+## 2026-10-27 M258–M270 記錄（Mac）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M258／M260 #818 M203 重驗 | 通過 | 21:5x 在 owner iPhone 重驗（見上一段）：等級都有帶、幾乎都是 C1 以上；只剩 pedestrian B2；正式版已重裝 |  | — |
+| M259／M266 #796 法語小缺口 | 通過 | Windows：英文意思與冠詞已補；缺音檔依 owner #799 決定 A 維持，用手機 TTS（App 標「合成」） |  | — |
+| M263／M268 TTS 排在真人之後 | 通過 | App 已在 04da8c9d 做：有該腔調錄音→任何真人錄音→最後才 TTS；等 Windows 定出 source=tts 的資料格式後再接 |  | — |
+| M265 #12 跨分頁模擬 | 通過 | Windows 第 188 輪 2/2 通過、findings 空 |  | — |
+| M269 #782 圖 43 義項 | 不通過 | 模擬器詞庫圖 43 仍是 open「可通行」、text「簡訊」、binding 長定義（#782 的匯出修正還沒進 App 下載的詞庫） |  | 低 |
+| M270 #687 相關詞義項連結 | 通過 | Windows 進行中（等 Qwen 分輪跑），App 沒有要改的 |  | — |
+| M261／M262／M264／M267 | 通過 | App 畫面工作已開始（#580 關係詞中文截斷、#558 A1–B1 收起英文定義、#763 圖片頁每級 5 字、#824 記憶體監控），完成後另寫結果 |  | — |
