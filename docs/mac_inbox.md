@@ -2822,3 +2822,9 @@ commit `025d344f`（Windows：flutter analyze 無 error、00:56 +762 ~2: All tes
 - elated（adj）
 另外找一個有真人錄音的字（例如 apple），確認仍先播真人、不顯示「合成」。
 法語 Azure 語音還沒進詞庫（問題回報 #861，Windows 修），這次不用驗法語。
+
+## M302（2026-10-28 03:35）狀態：待做（Windows 卡 #496 交給 Mac 的 App 畫面部分）
+卡：模擬使用者・法語（英語母語者學法語）
+
+英文裝置引導中文殘留、實機音訊/相機驗收。
+變更：僅測試產物；未改App/伺服器/詞庫，未commit/push。無需備份；golden/QC未跑（純檢查）。
