@@ -122,6 +122,30 @@ def test_catalog_only_publishes_approved_formal_labels(session, fakes):
     assert image['labels'] == [expected_label]
 
 
+def test_ungrounded_tag_flag_reaches_catalog_label(session, fakes):
+    """Card #669 (問題回報 #769): a tag the tagger could not place (card #631)
+    is published with point null and pointUngrounded, unless it has a box."""
+    apple_data(fakes)
+    pipeline.process_word(session, 'en', 'zh-TW', 'apple', None, 'fill_missing')
+    session.flush()
+    sense = session.scalars(select(m.Sense)).first()
+    asset = m.ImageAsset(
+        source='test', source_image_id='ungrounded', status='ready', path='images/test.jpg',
+        tags=[{'word': 'apple', 'pos': 'noun', 'point': [0.5, 0.5], 'pointUngrounded': True}])
+    session.add(asset)
+    session.flush()
+    session.add(m.SenseImage(sense_id=sense.id, image_asset_id=asset.id,
+                             role='representative', review_status='approved'))
+    session.flush()
+    label = serve_app.catalog_snapshot(session, 'en')[1][0]['labels'][0]
+    assert label['point'] is None and label['pointUngrounded'] is True
+    asset.tags = [{'word': 'apple', 'pos': 'noun', 'point': [0.5, 0.5], 'box': [0.1, 0.1, 0.9, 0.9],
+                   'pointUngrounded': True}]
+    session.flush()
+    label = serve_app.catalog_snapshot(session, 'en')[1][0]['labels'][0]
+    assert label['point'] == [0.5, 0.5] and 'pointUngrounded' not in label
+
+
 def test_label_takes_position_from_inflected_tag(session, fakes):
     """#510 (問題回報 #524): the tagger wrote the word as it saw it (apples)
     with a position; the approved binding hangs on the entry (apple). The

@@ -242,6 +242,11 @@ def catalog_snapshot(session, target):
             if band in levels:
                 label['cefr'] = band
                 label['cefr_source'] = tag_out['cefr_source']
+            if item.get('pointUngrounded') and not item.get('box'):
+                # Card #669 (問題回報 #769): the tagger's default centre is no
+                # real place (card #631); the app shows 「整張圖」, no pin.
+                label['point'] = None
+                label['pointUngrounded'] = True
             labels.append(label)
         images.append({'id': asset.id, 'url': f'/api/image?id={asset.id}',
                        'width': asset.width, 'height': asset.height,
