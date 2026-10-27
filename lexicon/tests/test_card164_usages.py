@@ -119,7 +119,7 @@ def test_fix_catalog_senses_moves_a_tag_to_the_sister_part_of_speech():
     brick = im["tags"][1]
     assert brick["lexeme_id"] == 20 and brick["lexeme_id_before"] == 21
     assert brick["sense_id"] == 200 and brick["sense_id_before"] == 210 and brick["sense_fallback"]
-    assert im["labels"][1] == {"word": "brick", "pos": "noun", "lexeme_id": 20}
+    assert im["labels"][1] == {"word": "brick", "pos": "noun", "lexeme_id": 20, "sense_id": 200}
     assert q.fix_catalog_senses(pack) == 0  # idempotent
 
 

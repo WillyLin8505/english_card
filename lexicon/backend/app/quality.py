@@ -967,6 +967,15 @@ def fix_catalog_senses(pack: dict) -> int:
                 seen[key] = t
             else:
                 tags.remove(t)
+        # M274 (問題回報 #771): the App names a label by its sense; without one it
+        # showed the lexeme's first sense (open 「可通行」, not the photo's 「打開的」).
+        sense_by_lexeme: dict = {}
+        for t in tags:
+            if t.get("sense_id") is not None:
+                sense_by_lexeme.setdefault(t.get("lexeme_id"), t["sense_id"])
+        for lb in im.get("labels") or []:
+            if lb.get("lexeme_id") in sense_by_lexeme:
+                lb["sense_id"] = sense_by_lexeme[lb["lexeme_id"]]
         # P2: a photo tag's level is the card's level (after the pack's
         # CEFR decisions), never a separate value.
         for coll in (im.get("tags") or [], im.get("labels") or []):
