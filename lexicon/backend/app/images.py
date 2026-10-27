@@ -1937,6 +1937,8 @@ def _tag_uploaded_photo(s, data: bytes, mime: str) -> list[dict]:
             continue
         tag = {'word': word, 'pos': c.get('pos') or 'noun', 'point': c.get('point'),
                'box': c.get('box'), 'score': c.get('visualConfidence') or 0}
+        if c.get('pointUngrounded'):
+            tag['pointUngrounded'] = True
         tags.append(classify_tag_cefr(s, tag))
     return tags
 
@@ -2091,6 +2093,8 @@ def _tag_asset(s, asset_id):
                         known.add(word.lower())
                         tag = {'word': word, 'pos': c.get('pos') or 'noun',
                                'point': c.get('point'), 'box': c.get('box')}
+                        if c.get('pointUngrounded'):
+                            tag['pointUngrounded'] = True
                         # Recognition supplies no CEFR. Classification below
                         # comes exclusively from the dictionary pipeline.
                         if c.get('visualConfidence') is not None:
