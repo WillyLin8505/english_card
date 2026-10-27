@@ -2693,7 +2693,7 @@ commit `4cf6ee71`（Windows：flutter analyze 無 error、01:21 +739 ~2: All tes
 - 資料／備份／golden／QC：未動，無變化。
 - 剩下：Mac 實作畫面並用模擬器驗證。
 
-## M286（2026-10-27 23:14）狀態：待做
+## M286（2026-10-27 23:14）狀態：進行中：TestFlight 等 owner 加入 Apple Developer Program；Azure 順序開發中
 卡：排程 #715（owner 指定）
 owner 2026-10-27 原話：「幫我改為用TestFlight 測試並且用zaure 抓語音」。
 1. 改用 TestFlight：請設定 App 上傳到 App Store Connect → TestFlight 的流程（Release 版、版本號自動遞增、上傳後加到內部測試群組），之後每次 App 改好就上傳一版，owner 的 iPhone／iPad 從 TestFlight 自動更新，不再需要插線或手動信任描述檔。
