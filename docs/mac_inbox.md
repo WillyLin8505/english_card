@@ -2359,7 +2359,7 @@ QC：lexicon/logs/agents/card668_qc_before.json／after.json；golden 300 詞＋
 
 無（修好後 mac_sync 會請 Mac 重驗圖 43）。
 
-## M238（2026-10-27 12:29）狀態：待做（Windows 卡 #670 交給 Mac 的 App 畫面部分）
+## M238（2026-10-27 12:29）狀態：完成
 卡：問題回報 #768：[owner] App 下載的 sqlite 詞庫沒帶「整張圖」標記：catalog_images 標籤的 pointUngrounded 
 
 用新版 sqlite 重驗「整張圖」，pack ETag 7b3dce04（12:16 下載）。
