@@ -12,6 +12,8 @@ class RecordingCreditLine extends StatelessWidget {
   const RecordingCreditLine(this.credit, {super.key});
 
   static String label(RecordingCredit credit) {
+    // 卡 #695: an Azure clip is credited as a synthetic voice, as is.
+    if (credit.isSynthetic) return credit.text;
     final host = credit.sourcePage == null
         ? null
         : Uri.tryParse(credit.sourcePage!)?.host;

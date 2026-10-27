@@ -15,9 +15,9 @@ void stopCardAudio(Speaker speaker) {
 
 /// The recording the review card plays for [entry] in [accent]
 /// (問題回報 #724, owner rule 「有該腔調的錄音就用、否則用任何真人錄音、最後才
-/// TTS」): about 3,850 pack recordings have no accent label, and those words
-/// used to be heard only in the TTS voice. Null only when the word has no
-/// recording at all.
+/// TTS」; Windows 卡 #695/#759: an Azure synthetic file comes after every
+/// real recording and before TTS — see [packAccentRecording]). Null only
+/// when the word has no file at all (the phone's TTS).
 String? cardAccentAudioUrl(WordEntry entry, String accent) =>
     accentAudioUrl(entry, accent, orDefault: true);
 
@@ -47,13 +47,13 @@ Future<bool> playAccent(
 Future<void> playBothAccents(BuildContext context, WordEntry entry) async {
   final run = ++_cardAudioRun;
   const both = ['en-GB', 'en-US'];
-  final own = [
-    for (final accent in both)
-      if (accentAudioUrl(entry, accent) != null) accent,
-  ];
+  // Real voices first (own accent, then another accent's), then Azure
+  // synthetic files, then TTS (卡 #695/#759); British first within a rank.
+  final rank = {for (final a in both) a: accentAudioRank(entry, a)};
+  final ordered = [...both]..sort((a, b) => rank[a]!.compareTo(rank[b]!));
   final accents = <String>[];
   final urls = <String>{};
-  for (final accent in [...own, ...both.where((a) => !own.contains(a))]) {
+  for (final accent in ordered) {
     final url = cardAccentAudioUrl(entry, accent);
     // One recording standing for both accents is heard once.
     if (url == null || urls.add(url)) accents.add(accent);
@@ -1041,10 +1041,10 @@ class FlashcardBack extends StatelessWidget {
                             const Icon(Icons.volume_up_outlined),
                             UiText(accent == 'en-GB' ? '英式' : '美式',
                                 style: MFont.caption),
-                            // 問題回報 #724: a word with no recording at all
-                            // is the TTS voice — say so, so it is not taken
-                            // for a person's pronunciation.
-                            if (cardAccentAudioUrl(entry, accent) == null)
+                            // 問題回報 #724: the TTS voice, or (卡 #695) an
+                            // Azure synthetic file, says so, so it is not
+                            // taken for a person's pronunciation.
+                            if (accentAudioIsSynthetic(entry, accent))
                               UiText('合成',
                                   key: ValueKey('accent-tts-$accent'),
                                   style: MFont.caption

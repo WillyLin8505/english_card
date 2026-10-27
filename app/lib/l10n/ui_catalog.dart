@@ -999,6 +999,11 @@ const uiCatalog = <String, (String, String)>{
   '美式': ('American', 'Américain'),
   // 問題回報 #724: an accent with no recording is a synthesized voice.
   '合成': ('Synthetic', 'Synthèse'),
+  // 卡 #695: the credit of an Azure neural-voice clip.
+  'Azure 神經語音（合成）': (
+    'Azure neural voice (synthetic)',
+    'Voix neuronale Azure (synthèse)'
+  ),
   '收起': ('Show less', 'Réduire'),
   '哪個單字最適合這張照片？': (
     'Which word fits this photo best?',
