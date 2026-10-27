@@ -1746,3 +1746,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 |----|----|----|----|----|
 | M274 圖 43 text | 通過 | text 顯示「文字」（第一個義＝文字、正文） | mac_verify_shots/2026-10-27/m274_image43.png | — |
 | M274 圖 43 open／binding | 不通過 | open 仍是「可通行」、binding 仍是長定義。原因：圖 43 的標籤沒有 sense_id，App 顯示詞條第一個義項的中文；open adj 詞條 11623 第一義＝可通行，binding noun 詞條 25014 第一義＝「用於將兩件或多件物品綁在一起的物件…」。Windows 改的「打開的」「裝訂」不在這兩個第一義上（或在別的義項）；請把標籤帶上正確 sense_id，或改這兩個第一義的中文 | mac_verify_shots/2026-10-27/m274_image43.png | 低 |
+
+## 2026-10-27 M275（iPhone 模擬器，App 自己更新的詞庫 ff5a60a5）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M275 #698 scarecrow 等級 | 通過 | App 自己更新到的詞庫 ff5a60a5：scarecrow noun B1（原本 C1 估）；noodle noun／verb B1、kettle noun B1 |  | — |
