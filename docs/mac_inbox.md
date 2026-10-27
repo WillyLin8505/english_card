@@ -2421,12 +2421,12 @@ commit `201f0cf1`（Windows：flutter analyze 無 error、01:26 +711 ~2: All tes
 - 卡 #679：問題回報 #801：[Mac] 2026-10-27 M244（Windows 代跑法語模擬，main ab67：M24
   結果：全部完成：#801 的 5 個字（fleur、ouvertement、juif、parallèle、incroyable）在資料庫與 15:29 之後重建的 App 資料包都已有英文意思，是 Mac 驗到舊資料包；本卡不需再改資料。
 
-## M250（2026-10-27 19:57）狀態：待做（Windows 卡 #228 交給 Mac 的 App 畫面部分）
+## M250（2026-10-27 19:57）狀態：完成
 卡：模擬使用者・設定
 
 評估 #474 文字刪除與辨識設定錯誤提示的位置；Windows 未改 App 畫面。
 
-## M251（2026-10-27 19:59）狀態：待做
+## M251（2026-10-27 19:59）狀態：完成
 commit `df8d84d4`（Windows：flutter analyze 無 error、00:57 +711 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #228：模擬使用者・設定
   結果：第 14 輪（模擬輪 183）：設定 1/1 通過、findings 0；新問題無、UX 建議沿用 #474（未重複開）。
