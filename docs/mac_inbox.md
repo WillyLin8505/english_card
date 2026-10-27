@@ -2480,3 +2480,18 @@ App 又把沒有等級的字預設成 B1，就是 Mac 看到的 B1。清單內�
 備份：tagger/card685_tagging_server.py.bak、tagger/card685_test_tagging_server.py.bak；還原＝複製回原檔名後重啟。
 golden/QC：只動 tagger 候選等級，未動詞庫資料，未另跑（無資料變更）。
 剩下：重啟 tagger；Mac 重驗 M203。
+
+## M258（2026-10-27 21:29）狀態：待做（Windows 卡 #685 交給 Mac 的 App 畫面部分）
+卡：問題回報 #818：[Mac] 2026-10-27 iPhone 12 實機驗證（release 022a00：M203 #748 補字等級
+
+重驗 M203。
+
+根因與修法（r1 已做）：等級過濾對「查不到等級」的字一律保留，App 把沒等級的字預設成 B1。word_cefr 無 zipf 時改用 wordfreq，所有候選都有等級。
+驗證（現行 tagger 程式）：stroll B2、dwell B2、pedestrian B2（會被 C1 下限濾掉）；congested C1、occupancy C1、conspire C2（保留）。
+tagger 測試 18 過；/health 正常（backend llamacpp、llama-server 8790 ok）。
+注意：tagger 目前 paused=true（Qwen 暫停設定），我沒有動它。
+harder 的 congregation、architectural 本來就是 C1，不是錯。
+「只回 5 個」是 C2 學習者下限 C1 過濾後的結果（card657 設計）；若要固定 10 個以上需 owner 另行決定（未做）。
+改動：tagger/tagging_server.py、tagger/test_tagging_server.py。備份：tagger/card685_*.bak（複製回原檔名後重啟 start_tagger.bat 即還原）。
+golden/QC：未動詞庫資料，未跑。
+剩下：Mac 重驗 M203。

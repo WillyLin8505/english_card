@@ -513,6 +513,23 @@ def test_unfit_example_sentences_are_not_exported():
     assert not unfit_example("He wears glasses and plays the bass.")
 
 
+def test_proper_noun_examples_are_not_exported():
+    # 問題回報 #484: the headword only appears as a name (Brown, Miss Smith, Harry Potter, Polish).
+    from app.exporter import proper_noun_example
+    assert proper_noun_example("She was a Brown before she got married.", "brown")
+    assert proper_noun_example("Miss Smith is my teacher.", "miss")
+    assert proper_noun_example("What's your favourite Harry Potter book?", "potter")
+    assert proper_noun_example("Marie Curie was Polish, not French.", "polish")
+    assert proper_noun_example("Mark Zuckerberg stole my idea!", "mark")
+    assert proper_noun_example("Mr. Hawk is a kind gentleman.", "hawk")
+    # Place names keep the example; a common word keeps it too.
+    assert not proper_noun_example("I visited the Pacific Ocean last year.", "pacific")
+    assert not proper_noun_example("The ship sailed through the Suez Canal.", "canal")
+    assert not proper_noun_example("Crater Lake is the deepest lake in the USA.", "lake")
+    assert not proper_noun_example("I like brown bread.", "brown")
+    assert not proper_noun_example("Sure, I will come.", "sure")
+
+
 
 def test_near_repeat_examples_take_no_place():
     from app.adapters import Candidate, Context

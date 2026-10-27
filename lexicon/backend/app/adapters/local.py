@@ -187,13 +187,36 @@ def derivation(base: str, derived: str) -> dict | None:
     return {"type": "derived", "label": "衍生詞"}
 
 
+@lru_cache(maxsize=1)
+def _listed() -> frozenset[str]:
+    return frozenset(cefr_list())
+
+
+@lru_cache(maxsize=50_000)
+def _inflection_bases(word: str) -> tuple[str, ...]:
+    """The base word(s) of an inflected form: the dictionary's (went → go), else a
+    regular ending whose stem the CEFR list names (crystals → crystal, walked → walk)."""
+    bases = inflection_bases(word, "en")
+    if bases or word in _listed():
+        return bases
+    stems = []
+    if word.endswith("ies"):
+        stems.append(word[:-3] + "y")
+    if word.endswith(("es", "ed", "ing")):
+        stems += [word[:-2], word[:-3], word[:-3] + "e"] if word.endswith("ing") \
+            else [word[:-2], word[:-1]]
+    if word.endswith("s"):
+        stems += [word[:-1]]
+    return tuple(s for s in stems if s in _listed())
+
+
 @lru_cache(maxsize=50_000)
 def _unlisted_level(word: str) -> str | None:
     """CEFR for a word the CEFR list does not name (問題回報 #485): an inflected
     form takes its base's level (went → go, ironed → iron), anything else its
     frequency estimate (desuetude → C2). None for a string no word list knows
     (a typo or a name outside wordfreq), which says nothing about difficulty."""
-    bases = inflection_bases(word, "en")
+    bases = _inflection_bases(word)
     if bases:
         return min((word_level(b, "en") for b in bases), key=LEVELS.index)
     if _zipf(word, "en") <= 0:
@@ -212,6 +235,9 @@ def sentence_level(text: str, ignore: frozenset[str] | set[str] = frozenset()) -
     """
     levels = cefr_list()
     terms = tokens(text)
+    # A capitalised word that is not the first is a name (Gabor, Kabylie): wordfreq
+    # rates it rare, but it says nothing about the sentence's difficulty.
+    names = {w.lower() for w in re.findall(r"\w[\w']*", text)[1:] if w[0].isupper()}
     worst = 0
     for t in terms:
         if t in ignore:
@@ -220,7 +246,12 @@ def sentence_level(text: str, ignore: frozenset[str] | set[str] = frozenset()) -
         if hit:
             lv = min(hit[1].values(), key=LEVELS.index)
         else:
-            lv = _unlisted_level(t)  # 問題回報 #485: a word the list lacks still counts
+            # 問題回報 #485: a word the list lacks still counts, at its own or its
+            # base's level; a form of the word being taught (darted for dart) does not.
+            bases = _inflection_bases(t)
+            if t in names or (bases and all(b in ignore for b in bases)):
+                continue
+            lv = _unlisted_level(t)
             if lv is None:
                 continue
         worst = max(worst, LEVELS.index(lv))
@@ -899,20 +930,29 @@ def is_concrete_noun(word: str) -> bool:
     return lexfile in _CONCRETE_LEXNAMES
 
 
+FAMILY_GAP = 2  # 問題回報 #556: the family ceiling holds only this close to the frequency estimate
+
+
+def family_limited(freq_level: str, cap: int | None) -> str:
+    """[freq_level] capped at [cap] (a word-family ceiling). An estimate more than [FAMILY_GAP]
+    levels above the ceiling is kept: the spelling is a coincidence (dogged is not dog A1), so
+    the word's own frequency decides (問題回報 #556, owner 10/27)."""
+    if cap is None or LEVELS.index(freq_level) - cap > FAMILY_GAP:
+        return freq_level
+    return LEVELS[min(LEVELS.index(freq_level), cap)]
+
+
 def capped_frequency_level(word: str, zipf_value: float, language: str = "en") -> str:
     """frequency_profile's CEFR estimate, capped by the word-family rule
     above so a derived word never estimates far above its base (問題回報
-    #214/#218). [is_concrete_noun] is deliberately not applied here: a
+    #214/#218, within [FAMILY_GAP] levels -- #556). [is_concrete_noun] is deliberately not applied here: a
     photographable noun's rarity in text is not always wrong (chalice is a
     genuinely C1/C2 word despite being a WordNet noun.artifact) -- the
     owner's decision for #163 is to recompute+flag concrete-noun candidates
     for manual review, not auto-correct them."""
     from .base import frequency_profile
-    idx = LEVELS.index(frequency_profile(round(zipf_value, 1))["cefr"])
-    cap = derivation_cap(word, language)
-    if cap is not None:
-        idx = min(idx, cap)
-    return LEVELS[idx]
+    freq = frequency_profile(round(zipf_value, 1))["cefr"]
+    return family_limited(freq, derivation_cap(word, language))
 
 
 FR_REVIEWED = Path(__file__).resolve().parents[1] / "fr_cefr_reviewed.json"

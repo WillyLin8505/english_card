@@ -428,7 +428,8 @@ def rank_usages(lexemes: list[dict], cefr_by_pos: dict | None = None,
     (known, {pos: votes}[, {pos: weight}])`` is injectable for tests;
     default :func:`dictionary_pos`."""
     from . import quality
-    from .adapters.local import _family_cap, capped_frequency_level, fr_cefr_source
+    from .adapters.base import frequency_profile
+    from .adapters.local import FAMILY_GAP, _family_cap, capped_frequency_level, fr_cefr_source
 
     if cefr_by_pos is None and language != "en":
         # The CEFR-J list is English: a French "chat" / "grand" must not take
@@ -514,7 +515,14 @@ def rank_usages(lexemes: list[dict], cefr_by_pos: dict | None = None,
                     # 標「估算」; #132 noodle).
                     cap = _family_cap(word, language)
                     if cap is not None:
-                        lx["cefr"] = _LEVELS[min(_LEVELS.index(lx["cefr"]), cap)]
+                        # #556: a frequency estimate more than FAMILY_GAP levels above the
+                        # ceiling is the word's own level (dogged is not dog A1).
+                        freq = (frequency_profile(round(lx["zipf"], 1))["cefr"]
+                                if lx.get("zipf") is not None else None)
+                        if freq in _LEVELS and _LEVELS.index(freq) - cap > FAMILY_GAP:
+                            lx["cefr"] = freq
+                        else:
+                            lx["cefr"] = _LEVELS[min(_LEVELS.index(lx["cefr"]), cap)]
                     lx["cefr_source"] = (fr_cefr_source(word) if language == "fr"
                                          else "frequency_estimate")
                     lx["cefr"] = _reviewed_cap(word, language, lx["cefr"])

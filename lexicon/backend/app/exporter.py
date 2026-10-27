@@ -200,6 +200,62 @@ def unfit_example(text: str, lemma: str = "") -> bool:
     return False
 
 
+# 問題回報 #484: a headword that only ever appears as a name ("Brown" the surname,
+# "Miss Smith", "Harry Potter", "Polish exams" = Polish, not polish). Place names keep
+# the example (Pacific Ocean, Crater Lake, Western Europe).
+_PLACE_WORDS = {
+    "ocean", "sea", "river", "island", "islands", "lake", "mount", "mountain", "mountains",
+    "bay", "gulf", "canal", "strait", "valley", "desert", "peninsula", "county", "province",
+    "state", "states", "street", "road", "avenue", "square", "park", "falls", "city",
+    "europe", "asia", "africa", "america", "australia", "antarctica", "pacific", "atlantic", "pole",
+    "indian", "arctic", "japan", "china", "korea", "taiwan", "england", "france", "germany",
+}
+_NAME_TITLES = {"mr", "mrs", "ms", "miss", "dr", "professor", "prof", "sir", "madam", "uncle",
+                "aunt", "captain", "president", "saint", "st", "queen", "king", "prince", "princess"}
+
+
+def _run_gap(gap: str, prev_word: str) -> bool:
+    """Words in one capitalised run are separated by spaces; 「Mr. Gravity」 keeps its dot."""
+    return bool(re.fullmatch(r"\s*", gap)) or (
+        bool(re.fullmatch(r"\.\s*", gap)) and prev_word.lower() in _NAME_TITLES)
+
+
+def proper_noun_example(text: str, lemma: str = "") -> bool:
+    """True when every use of the headword in the sentence is a capitalised name
+    (問題回報 #484): a capital mid-sentence, a title before it, or a sentence-initial
+    capital that is followed by another capital. A capitalised run with a place word
+    is a place (地名保留). A sentence-initial capital alone is not evidence (Happy, Sure)."""
+    forms = _headword_forms(lemma)
+    if not forms or not text:
+        return False
+    toks = list(re.finditer(r"[A-Za-z]+", text))
+    names = 0
+    for i, m in enumerate(toks):
+        if m.group().lower() not in forms:
+            continue
+        w = m.group()
+        if not w[0].isupper() or (w.isupper() and len(w) > 1):
+            return False  # used as an ordinary word somewhere in the sentence
+        lo, hi = i, i  # the capitalised run around the headword: 「Crater Lake」, 「Mr. Gravity」
+        while lo > 0 and toks[lo - 1].group()[0].isupper() and _run_gap(text[toks[lo - 1].end():toks[lo].start()], toks[lo - 1].group()):
+            lo -= 1
+        while hi + 1 < len(toks) and toks[hi + 1].group()[0].isupper() and re.fullmatch(r"\s*", text[toks[hi].end():toks[hi + 1].start()]):
+            hi += 1
+        run = [t.group() for t in toks[lo:hi + 1]]
+        if any(t.lower() in _PLACE_WORDS for t in run):
+            return False
+        before = text[:toks[lo].start()].rstrip()
+        if any(t.lower() in _NAME_TITLES for t in run[:i - lo]):
+            names += 1
+        elif before and before[-1] not in ".!?\"“:":
+            names += 1  # a capital in the middle of a sentence
+        elif len(run) > 1:
+            names += 1  # sentence-initial 「Mark Zuckerberg」, 「Chuck Norris」
+        else:
+            return False  # a sentence-initial capital alone is not evidence of a name
+    return names > 0
+
+
 def unfit_relation(field: str, word: str, lemma: str) -> bool:
     """Relation words a learner should not see (問題回報 #89): offensive
     words, and sound/spelling neighbours that are not real look-alikes —
@@ -611,7 +667,8 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_saf
             if not (ex_tr.get(k) or {}).get("text") and ex.id in table_ex_tr:
                 row = table_ex_tr[ex.id]
                 ex_tr[k] = {"text": row.text, "source": row.source or "", "ai": row.is_ai}
-            if is_column_word_list(it.get("text", ""), lemma) or unfit_example(it.get("text", ""), lemma) or offensive_native(
+            if is_column_word_list(it.get("text", ""), lemma) or unfit_example(it.get("text", ""), lemma) or (
+                    proper_noun_example(it.get("text", ""), lemma)) or offensive_native(
                     (ex_tr.get(k) or {}).get("text")):
                 continue
             if target != "en" and (fr_unfit_text(it.get("text", ""), lemma)
