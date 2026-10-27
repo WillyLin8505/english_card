@@ -2772,3 +2772,8 @@ owner 在 iPhone 送出的回報（#626：App 畫面與互動由 Mac 修）。�
 - 搜尋在詞庫未就緒時顯示「詞庫還在下載，搜尋會在下載完成後可用」，不顯示「找不到」。
 - 相片冊在圖片未下載時顯示占位，並說明圖片隨詞庫下載。
 - 確認「筆數 null」是哪一行印出來的（上面的 database_library_screen.dart:212 只是候選）。
+
+## M296（2026-10-27 23:40）狀態：待做
+commit `58f4681f`（Windows：flutter analyze 無 error、01:04 +754 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/27：用 Mac 模擬器，要實機時用 owner 的 iPad；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #717：問題回報 #856：[Mac] 2026-10-27 M288 #849 與 iPad 首次實機驗證：iPad 完整檢查
+  結果：結論：伺服器詞庫正常（sqlite 62 MB、18,288 個詞條含 ought／peak、10,720 張圖片可下載）；iPad「筆數 null、搜不到、相片冊沒圖」發生在 App 本機還沒裝好詞庫的那段時間，是 App 畫面的問題，要 Mac 改，Windows 這邊沒有資料要修。
