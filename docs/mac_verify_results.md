@@ -1602,3 +1602,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | M244 沒有英文意思 | 不通過 | 跟 M242 一樣還沒補：A1 fleur；B1 ouvertement、juif、parallèle、incroyable |  | 低 |
 | M244 名詞沒有冠詞／性別 | 不通過 | B1 parallèle、incroyable：多半是形容詞被當成名詞卡；請看這兩字的名詞詞條是否該有性別，或卡片該用形容詞詞條 |  | 低 |
 | M244 沒有音檔 | 不通過 | A1 5 個（abattre、pardonner、couler、débarquer、clef）；B1 23 個（raisonnement、fumée、ouvertement、présentement、ornement、brevet、accrocher、tabouret、mature、pouce、loger、spectaculaire、colonisation、bourg、slogan、pêcheur、artificiel、tragique、réparation、valider、boston、signification、adolescent），App 會用合成語音並標「合成」 |  | 低 |
+
+## 2026-10-27 M245（Mac）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M245 #797 法語例句缺英譯 | 通過 | 卡上 App 部分是「無」；例句英譯是資料，Windows 補好匯出後，法語模擬的 no_english_meaning 和例句數字會反映 |  | — |
