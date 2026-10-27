@@ -230,7 +230,8 @@ class _WordBody extends StatelessWidget {
             wrap: true,
             children: [
               for (final w in words)
-                TagChip('${w.word}　${w.meaning}'.trim(), localize: false)
+                // 問題回報 #580: the short meaning; a tap shows it all.
+                RelationChip(w.word, meaning: w.meaning)
             ],
           ));
     }

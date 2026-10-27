@@ -2,6 +2,9 @@
 /// content. Missing keys/languages deliberately retain the original copy.
 const uiCatalog = <String, (String, String)>{
   '意見回饋': ('Feedback', 'Commentaires'),
+  // 問題回報 #558: the card back's folded definition (A1–B1).
+  '顯示定義': ('Show definition', 'Afficher la définition'),
+  '收起定義': ('Hide definition', 'Masquer la définition'),
   // M180 (owner #732): the photo's 詞性 × CEFR table.
   '詞性 × 等級表': ('Part of speech × level', 'Nature × niveau'),
   '加入單字本': ('Add to My words', 'Ajouter à Mes mots'),

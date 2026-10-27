@@ -319,13 +319,16 @@ class MenuPill<T> extends StatelessWidget {
 class TagChip extends StatelessWidget {
   final String label;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
   final bool localize;
 
-  const TagChip(this.label, {super.key, this.onTap, this.localize = true});
+  const TagChip(this.label,
+      {super.key, this.onTap, this.onLongPress, this.localize = true});
 
   @override
   Widget build(BuildContext context) => Tap(
         onTap: onTap,
+        onLongPress: onLongPress,
         child: Container(
           padding:
               const EdgeInsets.symmetric(horizontal: MSpace.sm, vertical: 6),
@@ -334,6 +337,49 @@ class TagChip extends StatelessWidget {
               style: MFont.manrope(12, FontWeight.w700, MColors.primary)),
         ),
       );
+}
+
+/// 問題回報 #580 (owner decision): a related word's native meaning is often
+/// a whole translated definition (dwarf「小人：…」); the relation rows show
+/// only the text before the first 「；」/「：」 (or ";" ":"), at most 10
+/// characters, with 「…」 when cut. The data is unchanged.
+String shortRelationMeaning(String meaning) {
+  final text = meaning.trim();
+  final head = text.split(RegExp('[；：;:]')).first.trim();
+  final first = head.isEmpty ? text : head;
+  final chars = first.runes.toList();
+  if (chars.length <= 10) return first;
+  return '${String.fromCharCodes(chars.take(10))}…';
+}
+
+/// A relation row's chip (近義詞／相關詞…): the word and its short meaning
+/// (問題回報 #580). When the meaning was cut, a long press — or a tap, when
+/// the chip opens nothing else — shows the full text, and again folds it.
+class RelationChip extends StatefulWidget {
+  final String word;
+  final String meaning;
+  final VoidCallback? onTap;
+
+  const RelationChip(this.word, {super.key, required this.meaning, this.onTap});
+
+  @override
+  State<RelationChip> createState() => _RelationChipState();
+}
+
+class _RelationChipState extends State<RelationChip> {
+  bool _full = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final full = widget.meaning.trim();
+    final short = shortRelationMeaning(full);
+    final cut = short != full;
+    void toggle() => setState(() => _full = !_full);
+    return TagChip('${widget.word}　${_full ? full : short}'.trim(),
+        localize: false,
+        onTap: widget.onTap ?? (cut ? toggle : null),
+        onLongPress: cut ? toggle : null);
+  }
 }
 
 /// 我的相片冊 category pills.

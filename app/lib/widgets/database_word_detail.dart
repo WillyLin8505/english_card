@@ -100,9 +100,10 @@ class DatabaseWordScreen extends StatelessWidget {
               runSpacing: MSpace.xs,
               children: [
                 for (final relation in items)
-                  TagChip('${relation.word}　${relation.native}',
+                  // 問題回報 #580: the short meaning; long press for all.
+                  RelationChip(relation.word,
                       key: ValueKey('relation-${relation.word}'),
-                      localize: false,
+                      meaning: relation.native ?? '',
                       onTap:
                           openWord(relation.word, lexemeId: relation.lexemeId)),
               ],
