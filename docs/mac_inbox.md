@@ -2579,3 +2579,10 @@ App 播放順序要把 source=tts 排在真人之後。
 commit `ef356f8f`（Windows：flutter analyze 無 error、01:30 +712 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #687：問題回報 #561：[owner] 單字詳情「相關詞」98% 沒連到義項，俚語義項的字和錯義中文直接露出：can → b
   結果：尚未全部完成：關聯詞義項連結（決定 A）已寫好工具、pack 隱藏規則已擴充，試跑 406 列；Qwen 暫停中，全庫約 29,000 次呼叫要等 Qwen 開放後分輪續跑。
+
+## M271（2026-10-27 22:00）狀態：待做
+commit `baee7620`（Windows：flutter analyze 無 error、01:19 +712 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #673：問題回報 #782：[Mac] 2026-10-27 M238（iPhone 模擬器，App 自己更新的詞庫 7：M23
+  結果：已套用 owner 決定 A：exporter 改用 sensetranslations 的明確覆寫，圖 43 的 open／text 修正會進下次匯出；35 項匯出測試通過。
+- 卡 #688：問題回報 #484：[owner] 例句裡的主字其實是專有名詞：brown 考「She was a ＿＿ before
+  結果：全部完成：主字是人名或專有名詞的例句，改在匯出時用規則擋掉（exporter.py propernounexample）；全庫 166,749 句中隱藏 788 句、466 個詞條；QC 與 golden 前後無變化。
