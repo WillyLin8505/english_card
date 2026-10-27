@@ -2750,3 +2750,10 @@ commit `e5da0efc`（Windows：flutter analyze 無 error、01:38 +743 ~2: All tes
 
 owner 完成後由 Mac 跑 testflight.sh 驗證上傳。
 - 沒有資料變動，無備份；golden/QC 未跑（無改動）。
+
+## M293（2026-10-27 23:33）狀態：待做（owner 回報，給 Mac）
+owner 在 iPhone 送出的回報（#626：App 畫面與互動由 Mac 修）。資料或伺服器的部分請寫「不通過」列交回 Windows。
+
+| # | 回報 | 內容 |
+|---|---|---|
+| 858 | [意見回饋] 複習：滑動圖片存在卡頓 | 意見：滑動圖片存在卡頓 / 頁面：複習 / App 版本：1.0.0+1 / 學習語言：en / 截圖：有（screenshot 欄位）（截圖：`docs/mac_handover/858.png`） |
