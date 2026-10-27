@@ -1683,3 +1683,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
 |----|----|----|----|----|
 | M256 #816 iPhone 信任後重驗 | 通過 | owner 按「驗證 App」後可開啟；已在 iPhone 12 跑完 M203／M214／#815 並裝上 release 022a00ef（見上一段 iPhone 實機驗證） | mac_verify_shots/2026-10-27/p250_settings.png | — |
+
+## 2026-10-27 M257（Mac）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M257 #818 重啟 tagger | 通過 | owner 選 A（現在重啟，小心不要重複開 llama-server），Mac 已轉給 Windows；重啟後 Mac 在 iPhone 重驗 M203，另補一列 |  | — |
