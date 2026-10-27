@@ -14,6 +14,7 @@ import '../services/pack_media.dart';
 import '../services/word_database_repository.dart';
 import '../services/word_selector.dart';
 import '../theme/mobile_theme.dart';
+import '../widgets/lexicon_download_status.dart';
 import '../widgets/mobile/common.dart';
 import '../widgets/mobile/photo_cache.dart' show networkPhoto;
 import '../widgets/mobile/photo_widgets.dart';
@@ -48,6 +49,60 @@ class _DatabaseLibraryScreenState extends State<DatabaseLibraryScreen> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  /// The page while the pack downloads (問題回報 #856): the title and the
+  /// search box stay, the body is the progress card, the picture
+  /// placeholders or, for a search, 「詞庫還在下載…」 instead of 「找不到」.
+  /// A failed download shows the retry card.
+  Widget _pendingView(BuildContext context) {
+    final failed = lexiconDownloadFailed();
+    final card = failed || (!widget.photos && _search.trim().isEmpty);
+    final Widget body;
+    if (card) {
+      body = const Center(
+          child: Padding(
+              padding: EdgeInsets.all(MSpace.xl),
+              child: LexiconDownloadCard()));
+    } else if (_search.trim().isNotEmpty) {
+      body = Center(
+          child: Container(
+        margin: const EdgeInsets.all(MSpace.lg),
+        padding: const EdgeInsets.all(MSpace.xl),
+        decoration: MDecor.emptyStateCard(),
+        child: UiText('詞庫還在下載，下載完成後就能搜尋',
+            textAlign: TextAlign.center, style: MFont.bodyMuted),
+      ));
+    } else {
+      body = const LexiconPicturePlaceholders();
+    }
+    final progress = lexiconProgressText();
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Padding(
+          padding:
+              const EdgeInsets.fromLTRB(MSpace.md, 4, MSpace.md, MSpace.sm),
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            UiText(widget.photos ? '資料庫相片冊' : '資料庫單字本', style: MFont.display),
+            // The card says it itself; above placeholders or a search
+            // the line does.
+            if (!card) ...[
+              const SizedBox(height: 4),
+              UiText('詞庫下載中（約 62 MB）', style: MFont.bodyMuted),
+              if (progress != null) UiText(progress, style: MFont.caption),
+            ],
+            const SizedBox(height: MSpace.sm),
+            TextField(
+                controller: _searchController,
+                onChanged: (value) => setState(() => _search = value),
+                decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.search, color: MColors.muted),
+                    hintText: ui(context,
+                        widget.photos ? '搜尋圖片上的{L}或{N}標籤' : '搜尋{L}或{N}'),
+                    hintStyle: MFont.bodyMuted)),
+          ])),
+      Expanded(child: body),
+    ]);
   }
 
   @override
@@ -85,35 +140,12 @@ class _DatabaseLibraryScreenState extends State<DatabaseLibraryScreen> {
                               [LexiconPack.instance, DictionarySync.instance]),
                           builder: (context, _) {
                             final pack = LexiconPack.instance;
-                            if (!pack.hasCatalog) {
-                              return Center(
-                                  child: Padding(
-                                      padding: const EdgeInsets.all(MSpace.xl),
-                                      child: Container(
-                                        padding:
-                                            const EdgeInsets.all(MSpace.lg),
-                                        decoration: MDecor.emptyStateCard(),
-                                        child: Column(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              const CircularProgressIndicator(
-                                                  color: MColors.primary),
-                                              const SizedBox(height: MSpace.md),
-                                              UiText('正在取得資料庫內容',
-                                                  style: MFont.titleSm),
-                                              const SizedBox(height: MSpace.xs),
-                                              Text(
-                                                  DictionarySync
-                                                      .instance.status,
-                                                  textAlign: TextAlign.center,
-                                                  style: MFont.bodyMuted),
-                                              const SizedBox(height: MSpace.md),
-                                              ElevatedButton(
-                                                  onPressed: DictionarySync
-                                                      .instance.refresh,
-                                                  child: const UiText('重新連線')),
-                                            ]),
-                                      )));
+                            // 問題回報 #856: until the first pack is in,
+                            // say it is downloading (with progress) rather
+                            // than a count or 「沒有符合」; this builder
+                            // listens to both, so the list replaces it.
+                            if (lexiconPending(pack)) {
+                              return _pendingView(context);
                             }
                             final allWords = pack.catalogWords;
                             // The word itself first, then words that start
@@ -233,9 +265,11 @@ class _DatabaseLibraryScreenState extends State<DatabaseLibraryScreen> {
                                                     prefixIcon: const Icon(
                                                         Icons.search,
                                                         color: MColors.muted),
-                                                    hintText: ui(context, widget.photos
-                                                        ? '搜尋圖片上的{L}或{N}標籤'
-                                                        : '搜尋{L}或{N}'),
+                                                    hintText: ui(
+                                                        context,
+                                                        widget.photos
+                                                            ? '搜尋圖片上的{L}或{N}標籤'
+                                                            : '搜尋{L}或{N}'),
                                                     hintStyle:
                                                         MFont.bodyMuted)),
                                             if (sharedHint != null) ...[
@@ -308,18 +342,14 @@ class _DatabaseLibraryScreenState extends State<DatabaseLibraryScreen> {
                                                               MSpace.sm,
                                                           crossAxisSpacing:
                                                               MSpace.sm),
-                                                  itemBuilder: (context,
-                                                          index) =>
-                                                      DatabaseImageTile(
-                                                          image: images[index],
-                                                          level: _level,
-                                                          search: _search,
-                                                          showSearchHint:
-                                                              sharedHint ==
-                                                                  null,
-                                                          onLevelChanged: (l) =>
-                                                              setState(() =>
-                                                                  _level = l)))
+                                                  itemBuilder: (context, index) => DatabaseImageTile(
+                                                      image: images[index],
+                                                      level: _level,
+                                                      search: _search,
+                                                      showSearchHint:
+                                                          sharedHint == null,
+                                                      onLevelChanged: (l) => setState(
+                                                          () => _level = l)))
                                           : words.isEmpty
                                               ? Center(
                                                   child: Container(
@@ -343,8 +373,7 @@ class _DatabaseLibraryScreenState extends State<DatabaseLibraryScreen> {
                                                   itemCount: words.length,
                                                   separatorBuilder: (context,
                                                           index) =>
-                                                      const SizedBox(
-                                                          height: MSpace.xxs),
+                                                      const SizedBox(height: MSpace.xxs),
                                                   itemBuilder: (context, index) {
                                                     final word = words[index];
                                                     return Container(

@@ -606,6 +606,19 @@ const uiCatalog = <String, (String, String)>{
   '資料庫相片冊': ('Database photos', 'Photos du dictionnaire'),
   '正在取得資料庫內容': ('Loading database content', 'Chargement du dictionnaire'),
   '重新連線': ('Reconnect', 'Reconnecter'),
+  // 問題回報 #856: the 資料庫 pages while a fresh install fetches the pack.
+  '詞庫下載中（約 62 MB）': (
+    'Downloading the dictionary (about 62 MB)',
+    'Téléchargement du dictionnaire (environ 62 Mo)'
+  ),
+  '詞庫還在下載，下載完成後就能搜尋': (
+    'The dictionary is still downloading; you can search once it is done',
+    'Le dictionnaire se télécharge encore ; la recherche sera possible ensuite'
+  ),
+  '圖片會隨詞庫一起下載': (
+    'Pictures download with the dictionary',
+    'Les images arrivent avec le dictionnaire'
+  ),
   '搜尋{L}或{N}': ('Search {L} or {N}', 'Rechercher en {L} ou en {N}'),
   '搜尋圖片上的{L}或{N}標籤': (
     'Search photo labels in {L} or {N}',
@@ -1132,6 +1145,12 @@ class _UiTemplate {
 }
 
 const _templateCopy = <String, (String, String)>{
+  // 問題回報 #856: pack download progress.
+  '已下載 {0} / {1} MB（{2}%）': (
+    '{0} / {1} MB downloaded ({2}%)',
+    '{0} / {1} Mo téléchargés ({2} %)'
+  ),
+  '已下載 {0} MB': ('{0} MB downloaded', '{0} Mo téléchargés'),
   '發音錄音：{0}': ('Recording: {0}', 'Enregistrement : {0}'),
   '已送出 · #{0}': ('Sent · #{0}', 'Envoyé · #{0}'),
   // 問題回報 #728.
