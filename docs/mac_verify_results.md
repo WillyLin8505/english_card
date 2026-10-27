@@ -1864,3 +1864,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | M303 #496 法語資料 | 通過 | Windows 第 26–28 輪 4/4：缺英譯例句 7,878→1、英文義 6,153/6,153、音檔 6,153/6,153 |  | — |
 | M302 英文裝置引導中文殘留 | 通過 | Mac 的法語模擬（英文手機開始）全程中文 0 個畫面；iPad（英文系統）第一次開啟的歡迎頁是英文「Welcome to photo vocabulary」。要在 iPad 重拍完整引導截圖時，iPad 的開發者信任因重裝被清掉，等 owner 再按一次信任 |  | — |
 | M302 實機法語音訊／相機 | 通過 | 法語 Azure 音檔還在 Windows #861；相機與真人錄音已在 iPad／iPhone 實機驗過 |  | — |
+
+## 2026-10-28 M302 補記：英文 iPad 的新手引導（實機）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M302 英文裝置引導中文殘留（iPad 實機） | 通過 | iPad（英文系統）全新安裝：引導第 1 頁「Welcome to photo vocabulary／I want to learn／My native language」、第 2 頁「How well do you know French?」等全是英文，中文 0 句。卡 #496 的這句可以拿掉 | mac_verify_shots/2026-10-28/ipad_onboarding_en_1.png | — |
