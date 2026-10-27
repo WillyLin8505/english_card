@@ -2700,3 +2700,14 @@ owner 2026-10-27 原話：「幫我改為用TestFlight 測試並且用zaure 抓�
    需要 owner 自己做的（Mac 不代填、不代付）：加入 Apple Developer Program（每年 US$99）、登入 App Store Connect、建立 App 記錄、同意條款。如果還沒有付費開發者帳號，請先寫 results「等 owner 加入 Apple Developer Program」並列出 owner 要做的步驟，Windows 會轉給 owner。
    驗證方式不變：日常用 Mac 模擬器，要實機時用 owner 的 iPad；TestFlight 是讓 owner 自己試用。
 2. Azure 語音（Windows 卡 #695，owner 已決定 A）：Windows 會把 Azure 合成的單字音檔寫進詞庫（source=tts，標「合成」）。App 播放順序請改成：該腔調的真人錄音 → 其他腔調的真人錄音 → Azure 合成音檔（source=tts）→ 手機內建 TTS；合成檔要顯示「合成」。
+
+## M287（2026-10-27 23:15）狀態：待做（Windows 卡 #711 交給 Mac 的 App 畫面部分）
+卡：問題回報 #850：[給 Mac] [意見回饋] 照片詳情：給我一個儲存的按鈕 讓我存現在的這些標籤 然後給我一個動畫是
+
+照片詳情頁加「儲存」按鈕，儲存目前標籤；儲存後播放動畫——單字逐一跳進單字庫、圖片跳進相簿，最後切到拍照頁。
+
+細節：
+- #850 decision 欄位為空，沒有 owner 決定。
+- 資料／伺服器面：標籤儲存使用既有 API，未發現需要 Windows 端改動；未動任何資料，無需備份。
+- golden / QC：未改動，無前後差異。
+- 剩下：Mac 實作畫面並驗證。
