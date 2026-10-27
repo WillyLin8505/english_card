@@ -2591,3 +2591,15 @@ commit `baee7620`（Windows：flutter analyze 無 error、01:19 +712 ~2: All tes
 卡：問題回報 #830：[Mac] 2026-10-27 M258–M270 記錄（Mac）：M269 #782 圖 43 義項
 
 更新詞庫後重驗 M269 圖 43。
+
+## M273（2026-10-27 22:13）狀態：待做（Windows 卡 #701 交給 Mac 的 App 畫面部分）
+卡：問題回報 #833：[Mac] 2026-10-27 owner iPhone 學習語言被換成法文：owner iPhone 學習語言變法文
+
+若 owner 選 A 或 C，在 settings_screen.dart 的 _switchLanguage 於 scope.switchLanguage 前加確認對話框（文案「切到<語言>？<原語言>的資料會保留」）。我沒有改畫面。
+
+## M274（2026-10-27 22:13）狀態：待做
+卡：問題回報 #771／#782（M269、M272 圖 43 義項）
+serve_app 22:07 重啟後的新詞庫 ETag `ff5a60a54462528154cfe2ee6007f0ce6feb4db464b0315fe6e9b490823a5823`，Windows 已直接查過 sqlite pack：
+open（sense 1910）＝「打開的」、text（sense 7648）＝「文字、正文」、binding（sense 5011）＝「裝訂」。
+請在 Mac 模擬器讓 App 更新詞庫（確認拿到 ff5a60a5 或更新版），打開圖 43 看這三個標籤的中文，截圖寫進 results。
+etch／etched（圖 168，#736）還沒修好，這次不用驗。
