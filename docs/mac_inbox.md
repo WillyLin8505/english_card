@@ -2777,3 +2777,11 @@ owner 在 iPhone 送出的回報（#626：App 畫面與互動由 Mac 修）。�
 commit `58f4681f`（Windows：flutter analyze 無 error、01:04 +754 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/27：用 Mac 模擬器，要實機時用 owner 的 iPad；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #717：問題回報 #856：[Mac] 2026-10-27 M288 #849 與 iPad 首次實機驗證：iPad 完整檢查
   結果：結論：伺服器詞庫正常（sqlite 62 MB、18,288 個詞條含 ought／peak、10,720 張圖片可下載）；iPad「筆數 null、搜不到、相片冊沒圖」發生在 App 本機還沒裝好詞庫的那段時間，是 App 畫面的問題，要 Mac 改，Windows 這邊沒有資料要修。
+
+## M297（2026-10-27 23:45）狀態：待做（Windows 卡 #718 交給 Mac 的 App 畫面部分）
+卡：問題回報 #858：[給 Mac] [意見回饋] 複習：滑動圖片存在卡頓
+
+複習頁滑動圖片卡頓（建議查圖片解碼尺寸 cacheWidth、預載 precacheImage、滑動時是否重建）。
+若 Mac 量到是伺服器圖檔過大或回應慢，請寫「不通過」列交回 Windows，再由 Windows 量全庫圖檔大小。
+
+Windows 端：未改程式、未改資料，無備份、無 golden/QC 變動。
