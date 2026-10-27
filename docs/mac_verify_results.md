@@ -1621,3 +1621,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 |----|----|----|----|----|
 | M247 #801 法語沒有英文意思 | 通過 | App 沒有要改的；Mac 不抓 JSON 大檔，請 Windows 在 serve_app 重啟後經 5173 代跑法語 A1／B1 模擬（seed 9），回報 no_english_meaning，Mac 再補一列 |  | — |
 | M248 #802 名詞沒有冠詞／性別 | 通過 | 等 owner 決定；若選 B（畫面加「也是名詞」提示），owner 決定後請開 M 項，Mac 再做畫面 |  | — |
+
+## 2026-10-27 M249（Mac）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M249 #801 5 個字的英文意思 | 通過 | Windows 說 15:29 之後的資料包已有英文意思；但 M244 那輪（Windows 經 5173 抓的 59 MB pack）仍算到 fleur 等沒有英文意思，兩者矛盾。以 serve_app 重啟後 Windows 代跑的法語模擬 no_english_meaning 數字為準，Mac 收到再補一列 |  | — |
