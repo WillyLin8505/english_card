@@ -162,3 +162,15 @@ def test_review_is_bound_to_image_tags_and_exact_proposal():
     p["items"][0]["box"][0] = 100
     with pytest.raises(ValueError, match="Visual review"):
         r.reviewed_items(p, 845, tags, b"image")
+
+
+def test_card675_collapsed_strip_and_shared_box_stay_pending():
+    # #784: pitch/midfield/dots given one full-width centre strip must not be written.
+    strip = [{"word": w, "visible": True, "box": [35, 478, 963, 520]} for w in ("pitch", "midfield", "dots")]
+    with pytest.raises(ValueError):
+        r.grounding_problem(strip)
+    shared = [{"word": w, "visible": True, "box": [300, 300, 500, 500]} for w in ("cookie", "flower")]
+    with pytest.raises(ValueError):
+        r.grounding_problem(shared)
+    r.grounding_problem([{"word": "pitch", "visible": True, "box": [10, 300, 990, 800]},
+                         {"word": "dots", "visible": True, "box": [400, 500, 450, 550]}])
