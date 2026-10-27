@@ -739,6 +739,12 @@ const uiCatalog = <String, (String, String)>{
   '有你修改過的欄位': ('Contains your edits', 'Contient vos modifications'),
   '刪除此卡片': ('Remove this card', 'Retirer cette carte'),
   '想複習哪一本？': ('Which one to review?', 'Quel paquet réviser ?'),
+  // 問題回報 #534 (M214).
+  '這次忘記的字': ('Forgotten this time', 'Oubliés cette fois'),
+  '今天的份量已完成。想多練習可以繼續，想休息時按左上角結束。': (
+    'Today’s share is done. Keep practising if you like; tap the top-left button to stop.',
+    'La part du jour est faite. Continuez si vous voulez ; touchez en haut à gauche pour arrêter.'
+  ),
   '點一格就開始；做完還可以繼續練習，想休息時按左上角結束。': (
     'Tap a tile to start. Keep practising after you finish, or stop with the top-left button.',
     'Touchez une tuile pour commencer. Continuez après la séance, ou arrêtez avec le bouton en haut à gauche.'
@@ -1164,6 +1170,18 @@ const _templateCopy = <String, (String, String)>{
   '單字難度 {0} · {1}': ('Difficulty: {0} · {1}', 'Difficulté : {0} · {1}'),
   '圖片來源：{0}': ('Photo source: {0}', 'Source de la photo : {0}'),
   '這次複習了 {0} 張卡': ('You reviewed {0} cards', 'Vous avez révisé {0} cartes'),
+  // 問題回報 #533 #534 (M214).
+  '今天 {0} 張，約 {1} 分鐘。做完還可以繼續練習，想休息時按左上角結束。': (
+    '{0} cards today, about {1} min. You can keep practising after; tap the top-left button to stop.',
+    '{0} cartes aujourd’hui, env. {1} min. Vous pouvez continuer ensuite ; touchez en haut à gauche pour arrêter.'
+  ),
+  '約 {0} 分鐘': ('About {0} min', 'Env. {0} min'),
+  '已完成 {0} / {1} 張': ('{0} of {1} cards done', '{0} cartes sur {1} faites'),
+  '記得 {0} 張・再練 {1} 次': (
+    'Remembered {0} · {1} retries',
+    'Retenues : {0} · {1} reprises'
+  ),
+  '查看「{0}」': ('Open “{0}”', 'Ouvrir « {0} »'),
   '穩定度 {0} 天 · 已複習 {1} 次 · 忘記 {2} 次': (
     'Stability: {0} days · {1} reviews · {2} lapses',
     'Stabilité : {0} jours · {1} révisions · {2} oublis'

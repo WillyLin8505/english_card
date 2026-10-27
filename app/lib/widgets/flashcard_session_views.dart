@@ -82,6 +82,45 @@ String reviewScopeLabel(WordDatabaseRepository repo, String scope) {
   return '全部';
 }
 
+/// 問題回報 #533: 「19–27」 (minutes) for [cards] cards at the learner's
+/// pace, the forgotten cards that come back included; one number when the
+/// two ends meet.
+String reviewMinutesRange(WordDatabaseRepository repo, int cards) {
+  final pace = reviewPace(repo);
+  final m = reviewMinutes(cards,
+      secondsPerCard: pace.secondsPerCard, againRate: pace.againRate);
+  return m.low == m.high ? '${m.low}' : '${m.low}–${m.high}';
+}
+
+/// 問題回報 #533: a thin bar over the top of the card — today's cards graded
+/// of today's cards in this run, forgotten ones that come back counted.
+class ReviewProgressBar extends StatelessWidget {
+  final int done;
+  final int total;
+
+  const ReviewProgressBar({super.key, required this.done, required this.total});
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+        label: ui(context, '已完成 $done / $total 張'),
+        child: SizedBox(
+          key: const ValueKey('review-progress'),
+          height: 3,
+          child: ColoredBox(
+            color: MColors.blue100,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: FractionallySizedBox(
+                widthFactor: total == 0 ? 0 : (done / total).clamp(0.0, 1.0),
+                heightFactor: 1,
+                child: const ColoredBox(color: MColors.primary),
+              ),
+            ),
+          ),
+        ),
+      );
+}
+
 class _Intro extends StatelessWidget {
   final VoidCallback onStart;
   final String? fixedAlbumId;
@@ -123,7 +162,7 @@ class _Intro extends StatelessWidget {
                 (albumCards?.contains(c.id) ?? true) &&
                 (cardScope?.contains(c.id) ?? true))
             .length;
-        final minutes = math.max(1, (today * 25 / 60).round());
+        final minutes = reviewMinutesRange(repo, today);
         final waiting = repo.hasCardsWaitingForMeaning;
         return Padding(
           padding: const EdgeInsets.all(MSpace.xl),
@@ -388,6 +427,15 @@ class _ScopeGrid extends StatelessWidget {
                               UiText(count > 0 ? '今天 $count 張' : '今天沒有到期',
                                   style: MFont.inter(
                                       12, FontWeight.w600, MColors.muted)),
+                              // 問題回報 #533: forgotten cards that come
+                              // back are in the estimate.
+                              if (count > 0)
+                                UiText(
+                                    '約 ${reviewMinutesRange(repo, count)} 分鐘',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: MFont.inter(
+                                        12, FontWeight.w600, MColors.muted)),
                             ],
                           ),
                         ),
@@ -444,49 +492,109 @@ class _TileBadge extends StatelessWidget {
 /// The end of a run (spec §7's deferred 測驗結束畫面, card #217): how many
 /// cards were graded this time, and nothing that nags — no streak, no due
 /// or overdue count, no score (spec section 1: 不做連勝、欠卡壓力或罪惡感設計).
+/// 問題回報 #534: 「記得 35 張・再練 30 次」 and the words forgotten this
+/// time (up to [maxForgotten]), each opening its 單字詳情.
 /// With nothing graded it only says the run is over.
 class _Finished extends StatelessWidget {
-  final int reviewed;
+  static const maxForgotten = 10;
+
+  final ReviewRunSummary run;
   final VoidCallback onDone;
 
-  const _Finished({required this.reviewed, required this.onDone});
+  const _Finished({required this.run, required this.onDone});
 
   @override
-  Widget build(BuildContext context) => Padding(
+  Widget build(BuildContext context) {
+    final scope = AppScope.of(context);
+    final reviewed = run.reviewed;
+    final forgotten = [
+      for (final id in run.forgottenWordIds.take(maxForgotten))
+        if (scope.repository.entry(id) case final e?) e,
+    ];
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
         padding: const EdgeInsets.all(MSpace.xl),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (reviewed > 0)
-              Container(
-                width: 88,
-                height: 88,
-                margin: const EdgeInsets.only(bottom: 20),
-                decoration: BoxDecoration(
-                    color: MColors.primarySoft,
-                    shape: BoxShape.circle,
-                    boxShadow: MShadows.soft,
-                    border: Border.all(
-                        color: MColors.primary.withValues(alpha: 0.12))),
-                child: const Center(
-                    child: Icon(Icons.check_rounded,
-                        size: 40, color: MColors.primary)),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+              minHeight: math.max(0, constraints.maxHeight - 2 * MSpace.xl)),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (reviewed > 0)
+                Container(
+                  width: 88,
+                  height: 88,
+                  margin: const EdgeInsets.only(bottom: 20),
+                  decoration: BoxDecoration(
+                      color: MColors.primarySoft,
+                      shape: BoxShape.circle,
+                      boxShadow: MShadows.soft,
+                      border: Border.all(
+                          color: MColors.primary.withValues(alpha: 0.12))),
+                  child: const Center(
+                      child: Icon(Icons.check_rounded,
+                          size: 40, color: MColors.primary)),
+                ),
+              UiText(reviewed > 0 ? '這次複習了 $reviewed 張卡' : '目前沒有可作答的卡片',
+                  textAlign: TextAlign.center,
+                  style: MFont.manrope(22, FontWeight.w800, MColors.ink)),
+              if (reviewed > 0) ...[
+                const SizedBox(height: 6),
+                UiText('記得 ${run.remembered} 張・再練 ${run.repractised} 次',
+                    key: const ValueKey('run-counts'),
+                    textAlign: TextAlign.center,
+                    style: MFont.manrope(
+                        15, FontWeight.w700, MColors.primaryDeep)),
+              ],
+              const SizedBox(height: 8),
+              UiText(
+                reviewed > 0
+                    ? '辛苦了。每張卡下次出現的時間已經排好，\n想複習時，再回來就好。'
+                    : '這次的練習先到這裡。\n想複習時，再回來就好。',
+                textAlign: TextAlign.center,
+                style: MFont.manrope(14, FontWeight.w600, MColors.muted),
               ),
-            UiText(reviewed > 0 ? '這次複習了 $reviewed 張卡' : '目前沒有可作答的卡片',
-                style: MFont.manrope(22, FontWeight.w800, MColors.ink)),
-            const SizedBox(height: 8),
-            UiText(
-              reviewed > 0
-                  ? '辛苦了。每張卡下次出現的時間已經排好，\n想複習時，再回來就好。'
-                  : '這次的練習先到這裡。\n想複習時，再回來就好。',
-              textAlign: TextAlign.center,
-              style: MFont.manrope(14, FontWeight.w600, MColors.muted),
-            ),
-            const SizedBox(height: 28),
-            PrimaryButton(label: '完成', onTap: onDone),
-          ],
+              if (forgotten.isNotEmpty) ...[
+                const SizedBox(height: 20),
+                UiText('這次忘記的字',
+                    style: MFont.manrope(14, FontWeight.w700, MColors.ink)),
+                const SizedBox(height: 8),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final e in forgotten)
+                      Tap(
+                        key: ValueKey('forgotten:${e.id}'),
+                        label: '查看「${e.word}」',
+                        labelOnly: true,
+                        onTap: () => scope.navigator.openWord(e.id),
+                        child: Container(
+                          constraints: const BoxConstraints(minHeight: 36),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: MColors.surface,
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(color: MColors.border),
+                          ),
+                          child: Text(e.word,
+                              style: MFont.inter(
+                                  14, FontWeight.w700, MColors.primaryDeep)),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+              const SizedBox(height: 28),
+              PrimaryButton(label: '完成', onTap: onDone),
+            ],
+          ),
         ),
-      );
+      ),
+    );
+  }
 }
 
 /// The card under review (front or back) and the fixed bottom bar.

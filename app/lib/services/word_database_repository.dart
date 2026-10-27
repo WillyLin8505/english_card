@@ -524,6 +524,11 @@ class WordDatabaseRepository extends ChangeNotifier {
     );
   }
 
+  /// The last [n] grades, oldest first (問題回報 #533: the review time
+  /// estimate goes by the learner's own pace).
+  List<ReviewLog> recentReviewLogs(int n) => List.unmodifiable(
+      _reviewLogs.sublist(_reviewLogs.length > n ? _reviewLogs.length - n : 0));
+
   List<ReviewLog> logsOf(String cardId) => [
         for (final l in _reviewLogs)
           if (l.cardId == cardId) l,
