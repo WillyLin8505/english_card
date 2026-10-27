@@ -1520,3 +1520,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 |----|----|----|----|----|
 | M230 #767 詞庫帶 pointUngrounded | 不通過 | 10:10 App 自己更新到的英文詞庫 869e6471：catalog_images 的 labels／tags 欄位只有 word,pos,point,box,lexeme_id,cefr,cefr_source,sense_id,review_status,origin,sense_id_before,sense_fallback,lexeme_id_before，沒有 pointUngrounded／point_ungrounded（0 個）。Windows 說的快照 f227a317 的 5,898 處可能在別的路徑（例如詞條義項圖片 tags）或還沒成為 App 下載的版本 |  | 低 |
 | M230 App 顯示 | 通過 | App 對 point=null 或帶旗標的標籤都顯示「整張圖」、不畫點（03119aa5 測試） |  | — |
+
+## 2026-10-27 M231（Mac）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M231 #718 圖 9564 | 通過 | M225 已用 App 自己更新的詞庫 f6d6cc77 驗過，869e6471 也一樣：night 在夜空 [0.5,0.225]、city 在天際線 [0.5,0.66]，不再是預設點。其餘未定位標籤等 Windows 修好 sqlite 匯出（point 設成 null）後的新 M 項 | mac_verify_shots/2026-10-27/m225_image9564.png | — |
