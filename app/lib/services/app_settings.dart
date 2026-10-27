@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' show Locale;
 
 import 'package:flutter/foundation.dart';
@@ -255,11 +256,23 @@ class AppSettings extends ChangeNotifier {
   set learningLanguage(String v) {
     assert(supportedLanguages.containsKey(v));
     _save('learningLanguage', _learningLanguage = v);
+    _flush();
   }
 
   set nativeLanguage(String v) {
     assert(supportedLanguages.containsKey(v));
     _save('nativeLanguage', _nativeLanguage = v);
+    _flush();
+  }
+
+  /// The languages pick which data opens at launch: written to disk at once,
+  /// so an app closed right after the switch does not come back in the
+  /// other language (owner's iPhone 10/27: 切回英文 was lost, the app
+  /// reopened in an empty French).
+  void _flush() {
+    try {
+      unawaited(_box?.flush());
+    } catch (_) {}
   }
 
   set englishAccent(String v) {
