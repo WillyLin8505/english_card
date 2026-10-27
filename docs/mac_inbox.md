@@ -2375,7 +2375,7 @@ QC：lexicon/logs/agents/card668_qc_before.json／after.json；golden 300 詞＋
 
 owner 決定、重新套用方案並由既有排程重載服務後，更新詞庫再驗圖 43；本卡沒有自行重啟服務。
 
-## M241（2026-10-27 13:14）狀態：待做
+## M241（2026-10-27 13:14）狀態：完成
 commit `6e167a43`（Windows：flutter analyze 無 error、01:21 +711 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #674：問題回報 #783：[卡631] 重定位回覆長度不足，JSON 截斷導致同一批圖片反覆失敗
   結果：全部完成：#783 截斷／重試流程已修正；4 張／54 標籤驗證成功、18 項測試通過、golden/QC 零退步；試寫 2 張已還原，定位品質另追 #784。
