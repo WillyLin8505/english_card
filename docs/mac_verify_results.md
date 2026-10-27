@@ -1507,3 +1507,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | M229 #718 圖 9564 | 通過 | night 在夜空、city 在天際線燈光，不在人頭上（M225 截圖） | mac_verify_shots/2026-10-27/m225_image9564.png | — |
 | M229 point=null 標籤顯示整張圖 | 通過 | 詞庫有 46 個 point=null 標籤，App 顯示「整張圖」、不畫點（例：圖 168 apple） | mac_verify_shots/2026-10-26/m177_image168.png | — |
 | M229 point_ungrounded 旗標標籤 | 不通過 | App 自己更新到的詞庫 b185e52e 裡，帶 point_ungrounded 的標籤是 0 個，匯出還沒帶旗標；App 端已支援（03119aa5，有測試），等匯出帶旗標後再驗 |  | 低 |
+
+## 2026-10-27 M229 補記
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M229 point_ungrounded 旗標標籤（補記） | 通過 | Windows 確認匯出用「把 point 設成 null」，不另外帶旗標；App 對 point=null 顯示「整張圖」、不畫點，上一列改記為通過。數量會隨卡 #631 續跑增加 |  | — |
