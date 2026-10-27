@@ -2217,3 +2217,37 @@ commit `e0da8d44`（Windows：flutter analyze 無 error、01:07 +693 ~2: All tes
 - **#533 複習開始畫面**：1. 時間估計把會忘記重來的卡算進去（寫成「約 19–27 分鐘」），複習中上方加一條細進度條（建議）
 - **#534 複習結束畫面**：1. 加一行「記得 35 張・再練 30 次」，下面列出這次忘記的字（最多 10 個，點了看詳情）（建議）
 - **#712 詞庫更新清單**（看完第一個字，其他更新的字就找不到）：保留到明確點知道了或關閉提示（建議）
+
+## M215（2026-10-27 08:47）狀態：待做（Windows 卡 #627 交給 Mac 的 App 畫面部分）
+卡：問題回報 #716：[Mac] 2026-10-26 M149（owner 回報）：#701 從伺服器刪除回報（交 Windows）
+
+App 呼叫 DELETE /api/issues/{id} 並帶 X-API-Key，再驗證 #701。
+還原：移除 do_DELETE 並把 CORS 方法字串改回。
+
+## M216（2026-10-27 08:47）狀態：待做（Windows 卡 #645 交給 Mac 的 App 畫面部分）
+卡：問題回報 #731：[owner] 照片標籤改版（伺服器／資料）：打標結果改成「詞性 × CEFR」表格，同一標籤附由淺到深的同義字
+
+照片詳情改用 grid 顯示表格（列＝動詞/名詞/形容詞/副詞/片語，欄＝A1–C2，格內字用 concept_id 串同一概念，點擊用 anchor 的位置）。
+取得方式：
+- GET /images/{asset_id}/grid → {"grid": ...}（用已存標籤）
+- POST /photo-grid body {"tags":[{word,pos,point,box,cefr?}]} → 同上
+- POST /images/{id}/tag（新照片、重新掃描）回傳多一個 grid 欄位
+格式範例：
+{"grid":{"version":1,"rows":["verb","noun","adjective","adverb","phrase"],"levels":["A1","A2","B1","B2","C1","C2"],
+ "cells":[{"pos":"adjective","cefr":"A1","words":[{"word":"happy","concept_id":"c1","anchor":{"point":[0.2,0.3],"box":null},"source":"photo"}]},
+  {"pos":"adjective","cefr":"B2","words":[{"word":"joyful","concept_id":"c1","anchor":{"point":[0.2,0.3],"box":null},"source":"lexicon"}]},
+  ... 共 30 格，沒有字的格 words 為 []]}}
+source=photo 是照片裡看到的字；lexicon 是詞庫同義字（沿用同一 anchor）。
+
+剩下：Mac 做畫面；Mac 看過後若覺得空格太多，再開新決定要不要選 B 重掃部分舊照片。
+
+## M217（2026-10-27 08:49）狀態：待做（Windows 卡 #584 交給 Mac 的 App 畫面部分）
+卡：問題回報 #625：[Mac] 2026-10-23 owner 要求：翻卡第一次發音是機器人聲：owner 要求：補更多真人發音（交 Windows）
+
+App 播放時若 source=tts 要優先序在真人之後（資料格式敲定後再通知）。
+- 備份／還原：本輪未改資料。golden/QC：本輪未改資料，不需跑。
+
+## M218（2026-10-27 08:51）狀態：待做（Windows 卡 #555 交給 Mac 的 App 畫面部分）
+卡：問題回報 #593：卡 #448 後續：照片留在 App 的背景重打佇列、總數不足 5 的補標入口、QC ≥5 閘門切換
+
+拍照辨識結果、相片冊、下載相片冊三處要套用「每級維持 5 個、不足由上下級補」的顯示規則（Flutter 畫面，Windows 不改；owner 已同意照建議，先確認以「已存選字」或「依等級重算」為準）。
