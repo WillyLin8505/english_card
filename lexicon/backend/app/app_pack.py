@@ -278,6 +278,24 @@ _POS_ORDER = {"noun": 0, "verb": 1, "adj": 2, "adv": 3}
 _LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"]
 
 
+@lru_cache(maxsize=1)
+def _reviewed_words() -> dict:
+    path = Path(__file__).with_name("cefr_photo_overrides.json")
+    try:
+        return json.loads(path.read_text(encoding="utf-8")).get("words", {})
+    except (OSError, ValueError):
+        return {}
+
+
+def _reviewed_cap(word: str, language: str, level: str) -> str:
+    """Card #666 (問題回報 #766): the Qwen-reviewed common-noun table (card #607)
+    caps a frequency estimate for the entry too, not only for photo labels."""
+    cap = _reviewed_words().get(word) if language == "en" else None
+    if cap in _LEVELS and level in _LEVELS and _LEVELS.index(cap) < _LEVELS.index(level):
+        return cap
+    return level
+
+
 def share_forms(by_lex: dict[int, dict]) -> None:
     # Each part of speech shows its own forms (問題回報 #85: happy the
     # adjective is not happied/happying, coffee the noun not coffee'd, mug
@@ -496,6 +514,7 @@ def rank_usages(lexemes: list[dict], cefr_by_pos: dict | None = None,
                         lx["cefr"] = _LEVELS[min(_LEVELS.index(lx["cefr"]), cap)]
                     lx["cefr_source"] = (fr_cefr_source(word) if language == "fr"
                                          else "frequency_estimate")
+                    lx["cefr"] = _reviewed_cap(word, language, lx["cefr"])
                 continue
             lx["rare_usage"] = True
             lx["headword_cefr"] = lx.get("cefr")
@@ -521,7 +540,7 @@ def rank_usages(lexemes: list[dict], cefr_by_pos: dict | None = None,
                 # standing」 is listed C2, 問題回報 #218).
                 cap = _family_cap(word, language)
                 estimate = floor if cap is None or _LEVELS.index(floor) <= cap else _LEVELS[cap]
-            lx["cefr"], lx["cefr_source"] = estimate, "frequency_estimate"
+            lx["cefr"], lx["cefr_source"] = _reviewed_cap(word, language, estimate), "frequency_estimate"
 
 
 def install(release_dir: Path, target: str, native: str, app_assets: Path = APP_ASSETS) -> dict:
