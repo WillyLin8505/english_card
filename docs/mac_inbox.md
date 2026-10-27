@@ -2363,3 +2363,9 @@ QC：lexicon/logs/agents/card668_qc_before.json／after.json；golden 300 詞＋
 卡：問題回報 #768：[owner] App 下載的 sqlite 詞庫沒帶「整張圖」標記：catalog_images 標籤的 pointUngrounded 
 
 用新版 sqlite 重驗「整張圖」，pack ETag 7b3dce04（12:16 下載）。
+
+## M239（2026-10-27 12:41）狀態：待做（Windows 卡 #670 交給 Mac 的 App 畫面部分）
+卡：問題回報 #768：[owner] App 下載的 sqlite 詞庫沒帶「整張圖」標記：catalog_images 標籤的 pointUngrounded 
+
+用新版 sqlite 重驗「整張圖」，pack 7462d91e（先前版本已有 Mac 通過紀錄）。
+完整 ETag：7462d91e1a330ef121acd778606b9fac2bad348907f08da6dd1fb16eb61a49d9。
