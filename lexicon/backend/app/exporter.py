@@ -226,8 +226,8 @@ def proper_noun_example(text: str, lemma: str = "") -> bool:
     capital that is followed by another capital. A capitalised run with a place word
     is a place (地名保留). A sentence-initial capital alone is not evidence (Happy, Sure)."""
     forms = _headword_forms(lemma)
-    if not forms or not text:
-        return False
+    if not forms or not text or lemma[:1].isupper():
+        return False  # a proper-noun headword (Polish the nationality) keeps its capitals
     toks = list(re.finditer(r"[A-Za-z]+", text))
     names = 0
     for i, m in enumerate(toks):
