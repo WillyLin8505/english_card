@@ -2684,3 +2684,19 @@ owner 在 iPhone 送出的回報（#626：App 畫面與互動由 Mac 修）。�
 commit `4cf6ee71`（Windows：flutter analyze 無 error、01:21 +739 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/27：用 Mac 模擬器，要實機時用 owner 的 iPad；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #707：問題回報 #845：[給 Mac] [意見回饋] 照片詳情：旁邊的字都截到了 簡單跟困難
   結果：需要 Mac：#845 照片詳情「簡單／困難」文字截斷，已有 inbox M277；Windows 程式與資料變更 0 筆。
+
+## M285（2026-10-27 23:11）狀態：待做（Windows 卡 #710 交給 Mac 的 App 畫面部分）
+卡：問題回報 #849：[給 Mac] [意見回饋] 複習：正面也要呈現藍點
+
+複習卡片正面也要呈現藍點（見 #849 截圖與 inbox M279）。
+
+- 資料／備份／golden／QC：未動，無變化。
+- 剩下：Mac 實作畫面並用模擬器驗證。
+
+## M286（2026-10-27 23:14）狀態：待做
+卡：排程 #715（owner 指定）
+owner 2026-10-27 原話：「幫我改為用TestFlight 測試並且用zaure 抓語音」。
+1. 改用 TestFlight：請設定 App 上傳到 App Store Connect → TestFlight 的流程（Release 版、版本號自動遞增、上傳後加到內部測試群組），之後每次 App 改好就上傳一版，owner 的 iPhone／iPad 從 TestFlight 自動更新，不再需要插線或手動信任描述檔。
+   需要 owner 自己做的（Mac 不代填、不代付）：加入 Apple Developer Program（每年 US$99）、登入 App Store Connect、建立 App 記錄、同意條款。如果還沒有付費開發者帳號，請先寫 results「等 owner 加入 Apple Developer Program」並列出 owner 要做的步驟，Windows 會轉給 owner。
+   驗證方式不變：日常用 Mac 模擬器，要實機時用 owner 的 iPad；TestFlight 是讓 owner 自己試用。
+2. Azure 語音（Windows 卡 #695，owner 已決定 A）：Windows 會把 Azure 合成的單字音檔寫進詞庫（source=tts，標「合成」）。App 播放順序請改成：該腔調的真人錄音 → 其他腔調的真人錄音 → Azure 合成音檔（source=tts）→ 手機內建 TTS；合成檔要顯示「合成」。
