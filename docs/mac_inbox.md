@@ -2785,3 +2785,16 @@ commit `58f4681f`（Windows：flutter analyze 無 error、01:04 +754 ~2: All tes
 若 Mac 量到是伺服器圖檔過大或回應慢，請寫「不通過」列交回 Windows，再由 Windows 量全庫圖檔大小。
 
 Windows 端：未改程式、未改資料，無備份、無 golden/QC 變動。
+
+## M298（2026-10-27 23:47）狀態：待做（Windows 卡 #719 交給 Mac 的 App 畫面部分）
+卡：問題回報 #859：[給 Mac] [意見回饋] 複習：載入圖片需要時間？ 可以用快取的方式減低圖片讀取嗎
+
+複習頁圖片載入慢屬 App 畫面／載入行為，已在 Mac inbox M294，Windows 這張卡未改任何程式或資料。
+
+現況（只讀查看）：
+- App 已有圖片快取：app/lib/widgets/mobile/photo_cache.dart（#252）——依顯示尺寸解碼、網路圖片位元組存磁碟（CachedNetworkPhoto）；web 用瀏覽器 HTTP 快取。
+- 複習頁第一次看到某張圖仍須下載，快取只幫第二次之後。可由 Mac 評估：複習開始時對下幾張卡預載（precachePhoto 已存在）、確認複習頁的圖片全走 photoSource／CachedNetworkPhoto（database_image_views.dart:134 仍是 Image.network，可能繞過磁碟快取）。
+- 伺服器端：lexicon/backend/app/images.py:3515 FileResponse 沒設 Cache-Control（只有 Starlette 預設 ETag/Last-Modified）。若 App 圖片來自這個端點，可加 max-age 讓 HTTP 層也快取；未做，因為尚未確認 App 實際用哪個網址，且 serve_app 要重啟才生效。
+
+備份／還原：無（沒改檔）。golden／QC：未動資料，無退步。
+剩下：Mac 處理 M294（檢查 database_image_views.dart 的 Image.network、預載下一張）；若 Mac 確認用該伺服器端點，再回報給 Windows 加 Cache-Control。
