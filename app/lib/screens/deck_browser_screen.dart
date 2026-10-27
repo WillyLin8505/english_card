@@ -5,8 +5,10 @@ import 'package:flutter/material.dart';
 import '../app/app_scope.dart';
 import '../l10n/ui_text.dart';
 import '../services/deck_library.dart';
+import '../services/pack_media.dart' show sizedServerImage;
 import '../theme/mobile_theme.dart';
 import '../widgets/mobile/common.dart';
+import '../widgets/mobile/photo_cache.dart' show networkPhoto;
 import 'photo_grid_screen.dart';
 
 /// 卡片集 (card #323, 問題回報 #320). Layout choice: a full-screen list
@@ -226,8 +228,11 @@ class _DeckCard extends StatelessWidget {
           if (cover != null)
             AspectRatio(
               aspectRatio: 16 / 9,
-              child: Image.network(
-                library.imageUri(cover).toString(),
+              // 問題回報 #859: kept on disk, the server's smaller copy.
+              child: Image(
+                image: networkPhoto(sizedServerImage(
+                    library.imageUri(cover).toString(),
+                    side: 1024)),
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) =>
                     const ColoredBox(color: MColors.primarySoft),

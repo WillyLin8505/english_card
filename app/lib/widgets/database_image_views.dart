@@ -131,8 +131,9 @@ class DatabaseImage extends StatelessWidget {
         errorBuilder: (context, error, stack) => missing,
       );
     }
-    return Image.network(
-      resolved,
+    // 問題回報 #859: from the disk cache, at the size the review asks for.
+    return Image(
+      image: networkPhoto(sizedServerImage(resolved)),
       fit: BoxFit.contain,
       semanticLabel: label,
       loadingBuilder: (_, child, progress) => progress == null

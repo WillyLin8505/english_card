@@ -1665,13 +1665,28 @@ class _PhotoPager extends StatefulWidget {
   State<_PhotoPager> createState() => _PhotoPagerState();
 }
 
+/// The box page [index] of [count] fills in the card back's photo pager
+/// (a [frame] wide): pages are inset 4 pt beside their neighbours. The
+/// review screen warms photos at this size, so the page finds them decoded.
+Size photoPagerPageBox(Size frame, int index, int count) => Size(
+    math.max(
+        1.0, frame.width - (index <= 0 ? 0 : 4) - (index >= count - 1 ? 0 : 4)),
+    frame.height);
+
 class _PhotoPagerState extends State<_PhotoPager> {
   /// Above this many photos the page dots switch to a "第 N / M 張" counter.
   static const _maxDotPhotos = 12;
 
   late final PageController _controller =
       PageController(initialPage: widget.initialIndex);
-  late int _index = widget.initialIndex;
+
+  /// 問題回報 #858: the page shown, for the dots only. A setState here
+  /// rebuilt the PageView and every page built (photo, labels measured)
+  /// halfway through each swipe.
+  late final ValueNotifier<int> _index = ValueNotifier(widget.initialIndex);
+
+  /// The pager's width, for decoding the pages beside it ahead.
+  double? _width;
 
   /// 問題回報：Mac 實機量測第二輪 照片詳情 64ms／翻卡 87ms（M-PERF2）: the
   /// frames that turn the card hold the photo's place (the back is still
@@ -1692,13 +1707,45 @@ class _PhotoPagerState extends State<_PhotoPager> {
           WidgetsBinding.instance.scheduleFrame();
         } else {
           setState(() => _ready = true);
+          WidgetsBinding.instance
+              .addPostFrameCallback((_) => _precacheAround(_index.value));
         }
       });
 
   @override
+  void didUpdateWidget(_PhotoPager old) {
+    super.didUpdateWidget(old);
+    if (_index.value >= widget.photos.length) {
+      _index.value = math.max(0, widget.photos.length - 1);
+    }
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
+    _index.dispose();
     super.dispose();
+  }
+
+  /// 問題回報 #858: once a page settles, the photos up to two pages either
+  /// side are decoded at their page's size (not the original's), so the
+  /// next swipe lands on a ready image instead of decoding mid-swipe.
+  void _precacheAround(int index) {
+    final width = _width;
+    final photos = widget.photos;
+    if (!mounted || width == null || photos.length < 2) return;
+    final store = context.getInheritedWidgetOfExactType<AppScope>()?.photoStore;
+    final dpr = MediaQuery.maybeDevicePixelRatioOf(context) ?? 1;
+    final frame = Size(width, widget.height);
+    for (final i in [index + 1, index - 1, index + 2, index - 2]) {
+      if (i < 0 || i >= photos.length) continue;
+      final photo = photos[i].$1;
+      final provider = photoProvider(
+          photo, store, photoPagerPageBox(frame, i, photos.length), dpr,
+          fit: PinnedPhoto.fitFor(photo, BoxFit.cover));
+      if (provider == null) continue;
+      precacheImage(provider, context, onError: (_, __) {});
+    }
   }
 
   Widget _photo(BuildContext context, CardPhoto o) {
@@ -1767,54 +1814,73 @@ class _PhotoPagerState extends State<_PhotoPager> {
         framed(
           !_ready
               ? const SizedBox.expand()
-              : PageView.builder(
-                  controller: _controller,
-                  // 問題回報 #693: the pages beside the shown one are built
-                  // (photo, labels laid out) before the swipe reaches them.
-                  allowImplicitScrolling: true,
-                  itemCount: photos.length,
-                  onPageChanged: (i) {
-                    setState(() => _index = i);
-                    widget.onSelected?.call(i);
-                  },
-                  itemBuilder: (context, i) => Padding(
-                    padding: EdgeInsets.only(
-                        left: i == 0 ? 0 : 4,
-                        right: i == photos.length - 1 ? 0 : 4),
-                    child: _photo(context, photos[i]),
-                  ),
-                ),
+              : LayoutBuilder(builder: (context, c) {
+                  _width = c.maxWidth.isFinite ? c.maxWidth : null;
+                  return NotificationListener<ScrollEndNotification>(
+                    onNotification: (_) {
+                      _precacheAround(_index.value);
+                      return false;
+                    },
+                    child: PageView.builder(
+                      controller: _controller,
+                      // 問題回報 #693: the pages beside the shown one are
+                      // built (photo, labels laid out) before the swipe
+                      // reaches them.
+                      allowImplicitScrolling: true,
+                      itemCount: photos.length,
+                      onPageChanged: (i) {
+                        _index.value = i;
+                        widget.onSelected?.call(i);
+                      },
+                      itemBuilder: (context, i) => Padding(
+                        padding: EdgeInsets.only(
+                            left: i == 0 ? 0 : 4,
+                            right: i == photos.length - 1 ? 0 : 4),
+                        child: _photo(context, photos[i]),
+                      ),
+                    ),
+                  );
+                }),
         ),
         const SizedBox(height: 8),
-        Semantics(
-          label: '第 ${_index + 1} 張，共 ${photos.length} 張，左右滑動切換照片',
-          child: photos.length > _maxDotPhotos
-              // Too many dots overflow a 350px phone row (card #308), so
-              // a counter replaces them.
-              ? Center(
-                  child: UiText(
-                    '第 ${_index + 1} / ${photos.length} 張　·　左右滑動換照片',
-                    style: MFont.manrope(13, FontWeight.w600, MColors.muted),
-                  ),
-                )
-              : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    for (var i = 0; i < photos.length; i++)
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 150),
-                        margin: const EdgeInsets.symmetric(horizontal: 3),
-                        width: i == _index ? 16 : 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: i == _index ? MColors.primary : MColors.border,
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                      ),
-                  ],
-                ),
+        ValueListenableBuilder<int>(
+          valueListenable: _index,
+          builder: (context, index, _) => _dots(photos.length, index),
         ),
       ],
+    );
+  }
+
+  /// The page dots (or the 第 N / M 張 counter): the only part of the pager
+  /// a swipe rebuilds (問題回報 #858).
+  Widget _dots(int count, int index) {
+    return Semantics(
+      label: '第 ${index + 1} 張，共 $count 張，左右滑動切換照片',
+      child: count > _maxDotPhotos
+          // Too many dots overflow a 350px phone row (card #308), so
+          // a counter replaces them.
+          ? Center(
+              child: UiText(
+                '第 ${index + 1} / $count 張　·　左右滑動換照片',
+                style: MFont.manrope(13, FontWeight.w600, MColors.muted),
+              ),
+            )
+          : Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                for (var i = 0; i < count; i++)
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                    width: i == index ? 16 : 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: i == index ? MColors.primary : MColors.border,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+              ],
+            ),
     );
   }
 }

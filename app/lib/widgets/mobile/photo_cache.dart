@@ -61,6 +61,14 @@ ImageProvider<Object>? photoSource(Photo photo, PhotoStore? store) {
   return null;
 }
 
+/// A network picture outside a [Photo] (dictionary pictures, deck covers):
+/// from the disk cache on phones (問題回報 #859: these used Image.network,
+/// which keeps nothing across launches), the browser's cache on the web.
+ImageProvider<Object> networkPhoto(String url) {
+  if (kIsWeb) return NetworkImage(url);
+  return CachedNetworkPhoto(url);
+}
+
 /// [photo] decoded for a [box] of that size (see [photoDecodeWidth]).
 ImageProvider<Object>? photoProvider(
     Photo photo, PhotoStore? store, Size box, double dpr,
@@ -142,8 +150,11 @@ class CachedNetworkPhoto extends ImageProvider<CachedNetworkPhoto> {
 
   const CachedNetworkPhoto(this.url);
 
-  /// Most files kept; the oldest go first.
+  /// Most files kept; the least recently used go first.
   static int maxFiles = 400;
+
+  /// Most bytes kept (問題回報 #859: size-limited, not only counted).
+  static int maxBytes = 200 * 1024 * 1024;
 
   @visibleForTesting
   static Future<Directory?> Function() cacheDirectory = _defaultDirectory;
@@ -260,14 +271,35 @@ class CachedNetworkPhoto extends ImageProvider<CachedNetworkPhoto> {
       file = File('${dir.path}${Platform.pathSeparator}${fileName(url)}');
       if (await file.exists()) {
         final bytes = await file.readAsBytes();
-        if (bytes.isNotEmpty) return bytes;
+        if (bytes.isNotEmpty) {
+          // 問題回報 #859: a file read is marked used, so pruning drops
+          // the least recently used pictures, not the oldest downloads.
+          unawaited(_touch(file));
+          return bytes;
+        }
       }
     } catch (_) {
       file = null; // No cache folder: still show the photo.
     }
     final bytes = await _fetchRetrying(Uri.parse(url));
-    if (file != null) unawaited(_keep(file, bytes));
+    if (file != null) {
+      final write = _keep(file, bytes);
+      _writing.add(write);
+      unawaited(write.whenComplete(() => _writing.remove(write)));
+    }
     return bytes;
+  }
+
+  static final _writing = <Future<void>>{};
+
+  /// Waits for the downloads being written to the cache folder.
+  @visibleForTesting
+  static Future<void> flushWrites() => Future.wait([..._writing]);
+
+  static Future<void> _touch(File file) async {
+    try {
+      await file.setLastModified(DateTime.now());
+    } catch (_) {}
   }
 
   static Future<void> _keep(File file, Uint8List bytes) async {
@@ -277,20 +309,29 @@ class CachedNetworkPhoto extends ImageProvider<CachedNetworkPhoto> {
       final part = File('${file.path}.part');
       await part.writeAsBytes(bytes, flush: true);
       await part.rename(file.path);
-      if (++_writes % 50 == 1) await _prune(file.parent);
+      if (++_writes % 50 == 1) await prune(file.parent);
     } catch (_) {}
   }
 
-  static Future<void> _prune(Directory dir) async {
+  /// Drops the least recently used files past [maxFiles] or [maxBytes].
+  @visibleForTesting
+  static Future<void> prune(Directory dir) async {
     final files = [
       await for (final f in dir.list())
         if (f is File && f.path.endsWith('.img')) f,
     ];
-    if (files.length <= maxFiles) return;
-    final dated = [for (final f in files) (f, await f.lastModified())]
-      ..sort((x, y) => x.$2.compareTo(y.$2));
-    for (final (f, _) in dated.take(files.length - maxFiles)) {
-      await f.delete();
+    final dated = [
+      for (final f in files) (f, (await f.stat()).modified, await f.length()),
+    ]..sort((x, y) => x.$2.compareTo(y.$2));
+    var count = dated.length;
+    var bytes = dated.fold<int>(0, (sum, d) => sum + d.$3);
+    for (final (f, _, size) in dated) {
+      if (count <= maxFiles && bytes <= maxBytes) break;
+      try {
+        await f.delete();
+      } catch (_) {}
+      count--;
+      bytes -= size;
     }
   }
 

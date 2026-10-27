@@ -240,7 +240,9 @@ Photo databasePhoto(Map<String, dynamic> image) {
       takenAt: DateTime(2000),
       createdAt: DateTime(2000),
       assetPath: asset ? resolved : null,
-      networkUrl: asset ? null : resolved,
+      // 問題回報 #859: the same downscaled copy the review asks for, so
+      // both share one download and one cached file.
+      networkUrl: asset ? null : sizedServerImage(resolved),
       width: (image['width'] as num?)?.toInt(),
       height: (image['height'] as num?)?.toInt(),
     );
