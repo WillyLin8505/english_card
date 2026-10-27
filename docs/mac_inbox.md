@@ -2597,14 +2597,14 @@ commit `baee7620`（Windows：flutter analyze 無 error、01:19 +712 ~2: All tes
 
 若 owner 選 A 或 C，在 settings_screen.dart 的 _switchLanguage 於 scope.switchLanguage 前加確認對話框（文案「切到<語言>？<原語言>的資料會保留」）。我沒有改畫面。
 
-## M274（2026-10-27 22:13）狀態：待做
+## M274（2026-10-27 22:13）狀態：完成
 卡：問題回報 #771／#782（M269、M272 圖 43 義項）
 serve_app 22:07 重啟後的新詞庫 ETag `ff5a60a54462528154cfe2ee6007f0ce6feb4db464b0315fe6e9b490823a5823`，Windows 已直接查過 sqlite pack：
 open（sense 1910）＝「打開的」、text（sense 7648）＝「文字、正文」、binding（sense 5011）＝「裝訂」。
 請在 Mac 模擬器讓 App 更新詞庫（確認拿到 ff5a60a5 或更新版），打開圖 43 看這三個標籤的中文，截圖寫進 results。
 etch／etched（圖 168，#736）還沒修好，這次不用驗。
 
-## M275（2026-10-27 22:13）狀態：待做
+## M275（2026-10-27 22:13）狀態：完成
 commit `5ac27226`（Windows：flutter analyze 無 error、01:09 +736 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/27：只用 Mac 模擬器，不裝到 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #698：問題回報 #214：CEFR 分級疑似錯誤：scarecrow (noun) 現在 C1(估) → 建議 A2/B1（具
   結果：全部完成：scarecrow 等 125 個字表外、zipf 2.5–3.3 的常見具體名詞（#607 沒涵蓋的詞條層）加入人工覆寫表，封頂 B1，scarecrow C1→B1。

@@ -285,13 +285,32 @@ List<PinData> databasePins(Map<String, dynamic> image, LexiconPack pack,
         id: id == null ? '${l['word']}' : '${l['word']}#$id',
         anchor: LabelPoint(x, y),
         word: '${l['word']}',
-        zh: entry?.nativeMeaning?.split('、').first ?? '',
+        zh: _pinMeaning(entry, l, tags)?.split('、').first ?? '',
         entryType: entry?.entryType ?? 'word',
         linked: entry != null,
         lexemeId: entry?.id));
     if (max != null && pins.length >= max) break;
   }
   return pins;
+}
+
+/// The meaning a pin shows (圖 43: open 可通行 instead of 打開的): the
+/// label's sense, else the sense of the same word's approved tag, else
+/// the word's first meaning.
+String? _pinMeaning(
+    LexEntry? entry, Map<String, dynamic> label, Iterable<Map> tags) {
+  if (entry == null) return null;
+  final id = label['sense_id'] ??
+      tags
+          .where((t) =>
+              (t['lexeme_id'] as num?)?.toInt() == entry.id &&
+              t['sense_id'] != null)
+          .firstOrNull?['sense_id'];
+  final sense = id == null
+      ? null
+      : entry.senses.where((s) => s.id == id).firstOrNull;
+  final native = sense?.native?.trim();
+  return native == null || native.isEmpty ? entry.nativeMeaning : native;
 }
 
 void openDatabaseWord(BuildContext context, int id) =>
