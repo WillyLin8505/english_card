@@ -886,9 +886,27 @@ def _rebind_form_tags(im: dict, by_id: dict, sisters: dict) -> int:
     return moved
 
 
-def fix_catalog_senses(pack: dict) -> int:
+def approved_photo_senses(session, native: str) -> dict[int, int]:
+    """Card #705: {lexeme_id: sense_id} of the approved (user-override) sense per
+    lexeme, lowest sense id first. :func:`fix_catalog_senses` moves a photo tag from
+    the lexeme's first main sense onto it."""
+    from sqlalchemy import text
+    rows = session.execute(text(
+        """SELECT se.lexeme_id, se.id FROM sense_translations t
+           JOIN senses se ON se.id = t.sense_id
+           WHERE t.is_override = true AND t.native_language = :native
+           ORDER BY se.id"""), {"native": native}).all()
+    out: dict[int, int] = {}
+    for lexeme_id, sense_id in rows:
+        out.setdefault(lexeme_id, sense_id)
+    return out
+
+
+def fix_catalog_senses(pack: dict, approved: dict[int, int] | None = None) -> int:
     """Pack-time guard (#195): a photo tag never shows a low-priority or
     Chinese-less sense. Tags on a redirected lexeme follow the redirect.
+    ``approved`` (card #705, :func:`approved_photo_senses`) prefers the approved
+    sense over the first main sense.
 
     Card #164: the replacement is chosen the way a fresh tag is — by the
     other words on the same photo, concreteness and the dictionary order
@@ -918,6 +936,14 @@ def fix_catalog_senses(pack: dict) -> int:
         for t in tags:
             lx = by_id.get(t.get("lexeme_id")) or {}
             senses = lx.get("senses") or []
+            # Card #705 (問題回報 #841): a tag on another main sense moves to the lexeme's
+            # approved (override) sense, e.g. open 可通行 → 打開的.
+            want = (approved or {}).get(t.get("lexeme_id"))
+            on_main = any(s.get("id") == t.get("sense_id") and s.get("priority") == "main" for s in senses)
+            if (want is not None and on_main and t.get("sense_id") != want
+                    and any(s.get("id") == want for s in senses)):
+                t.setdefault("sense_id_before", t.get("sense_id"))
+                t["sense_id"] = want
             cur = next((s for s in senses if s.get("id") == t.get("sense_id")), None)
             if cur and (cur.get("native") or "").strip() and cur.get("priority") != "low":
                 continue

@@ -328,6 +328,9 @@ def live_pack(target: str, native: str):
                 from app.card_templates import published
                 card_template = published(session)
                 catalog_words, catalog_images = catalog_snapshot(session, target)
+                # Card #705: photo tags prefer the approved (override) sense.
+                from app import quality as photo_quality
+                approved_senses = photo_quality.approved_photo_senses(session, native)
                 word_metadata = [dict(id=w.id, lemma=w.lemma, normalized=w.normalized,
                                       pos=w.pos, status=w.status, cefr=w.cefr) for w in catalog_words]
             pack = app_pack.build(path)
@@ -343,7 +346,7 @@ def live_pack(target: str, native: str):
             quality.apply_decisions(pack)
             pack['catalog_images'] = catalog_images
             # #195: a photo tag shows a main sense with Chinese.
-            quality.fix_catalog_senses(pack)
+            quality.fix_catalog_senses(pack, approved_senses)
             # Decision 1 / P2: stubs leave the pack; pointers stay only when
             # they resolve to a full entry.
             from app import qc as pack_qc

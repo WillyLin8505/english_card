@@ -93,3 +93,16 @@ def test_fix_catalog_senses_never_follows_redirect_to_stub():
 
 def test_etymology_sense_is_low():
     assert q.sense_is_low({"labels": ["etymology-2"], "native": "語音", "native_ai": False}, False)
+
+def test_photo_tag_moves_from_first_main_sense_to_approved_sense():
+    # Card #705 (問題回報 #841): open 可通行 (first main) → approved 打開的; the label follows.
+    pack = {"lexemes": [{"id": 10, "senses": [{"id": 100, "native": "可通行", "priority": "main"},
+                                              {"id": 101, "native": "打開的", "priority": "main"}]}],
+            "redirects": {},
+            "catalog_images": [{"tags": [{"lexeme_id": 10, "sense_id": 100}],
+                                "labels": [{"lexeme_id": 10}]}]}
+    q.fix_catalog_senses(pack, {10: 101})
+    im = pack["catalog_images"][0]
+    assert im["tags"][0]["sense_id"] == 101 and im["tags"][0]["sense_id_before"] == 100
+    assert im["labels"][0]["sense_id"] == 101
+    assert q.fix_catalog_senses(pack, {10: 101}) == 0  # idempotent
