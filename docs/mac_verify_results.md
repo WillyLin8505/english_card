@@ -1856,3 +1856,11 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | M301 只有 Azure 的字 | 通過 | cheerful、cabbage、bun、elated：真人 0、Azure 2；英式用 Azure(UK)、美式用 Azure(US)，出處都是「Azure 神經語音（合成）」；cheerful 單字頁顯示「Azure 神經語音（合成）」 | mac_verify_shots/2026-10-28/m301_cheerful.png | — |
 | M301 有真人錄音的字 | 通過 | apple：真人 3、Azure 0；英式和美式都先播真人（Naomi Persephone Amethyst · CC BY-SA 4.0） |  | — |
 | M301 實際聲音 | 通過 | 模擬器檢查用的是測試用喇叭，沒有實際出聲；檔案 Windows 已確認 200。要聽聲音請 owner 在 iPad 打開 cheerful 按英式／美式 |  | — |
+
+## 2026-10-28 M302、M303 法語模擬（Mac）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M303 #496 法語資料 | 通過 | Windows 第 26–28 輪 4/4：缺英譯例句 7,878→1、英文義 6,153/6,153、音檔 6,153/6,153 |  | — |
+| M302 英文裝置引導中文殘留 | 通過 | Mac 的法語模擬（英文手機開始）全程中文 0 個畫面；iPad（英文系統）第一次開啟的歡迎頁是英文「Welcome to photo vocabulary」。要在 iPad 重拍完整引導截圖時，iPad 的開發者信任因重裝被清掉，等 owner 再按一次信任 |  | — |
+| M302 實機法語音訊／相機 | 通過 | 法語 Azure 音檔還在 Windows #861；相機與真人錄音已在 iPad／iPhone 實機驗過 |  | — |
