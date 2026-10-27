@@ -2597,7 +2597,7 @@ commit `baee7620`（Windows：flutter analyze 無 error、01:19 +712 ~2: All tes
 
 若 owner 選 A 或 C，在 settings_screen.dart 的 _switchLanguage 於 scope.switchLanguage 前加確認對話框（文案「切到<語言>？<原語言>的資料會保留」）。我沒有改畫面。
 
-## M274（2026-10-27 22:13）狀態：待做
+## M274（2026-10-27 22:13）狀態：完成
 卡：問題回報 #771／#782（M269、M272 圖 43 義項）
 serve_app 22:07 重啟後的新詞庫 ETag `ff5a60a54462528154cfe2ee6007f0ce6feb4db464b0315fe6e9b490823a5823`，Windows 已直接查過 sqlite pack：
 open（sense 1910）＝「打開的」、text（sense 7648）＝「文字、正文」、binding（sense 5011）＝「裝訂」。

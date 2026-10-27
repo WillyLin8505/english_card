@@ -1752,3 +1752,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
 |----|----|----|----|----|
 | M275 #698 scarecrow 等級 | 通過 | App 自己更新到的詞庫 ff5a60a5：scarecrow noun B1（原本 C1 估）；noodle noun／verb B1、kettle noun B1 |  | — |
+
+## 2026-10-27 M274 補記（App 4c7b8b15，詞庫 ff5a60a5）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M274 圖 43 open／binding（重驗） | 通過 | App 4c7b8b15 的照片標籤點改用 label 的 sense_id，沒有就用同詞條 tag 的 sense_id：模擬器圖 43 顯示 open 打開的、binding 裝訂、text 文字（上一列改記為通過） | mac_verify_shots/2026-10-27/m274b_image43.png | — |
