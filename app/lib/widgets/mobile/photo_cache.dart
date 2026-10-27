@@ -244,6 +244,10 @@ class CachedNetworkPhoto extends ImageProvider<CachedNetworkPhoto> {
     });
   }
 
+  /// Forgets which photos [prefetch] already fetched (問題回報 #824: memory
+  /// warning); the files stay on disk and downloads under way go on.
+  static void releaseMemory() => _prefetched.clear();
+
   // URLs already fetched by [prefetch], so each review card does not read
   // them from disk again.
   static final _prefetched = <String>{};

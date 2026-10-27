@@ -2,6 +2,7 @@ import Flutter
 import UIKit
 import Vision
 import ImageIO
+import os
 
 /// Vision decodes the whole file it is given: a 12 MP camera photo costs
 /// ~48 MB, and the accurate text reader several times that, which pushed the
@@ -44,6 +45,7 @@ func visionHandler(_ data: Data) -> VNImageRequestHandler {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
     LocalVisionChannel.register(with: engineBridge.pluginRegistry)
     TextRecognitionChannel.register(with: engineBridge.pluginRegistry)
+    MemoryChannel.register(with: engineBridge.pluginRegistry)
   }
 }
 
@@ -182,5 +184,61 @@ enum TextRecognitionChannel {
       ])
     }
     return out
+  }
+}
+
+/// Memory numbers for `lib/services/memory_monitor.dart` (問題回報 #824):
+/// a 4 GB iPhone closes the app near ~2 GB, and the simulator has no limit,
+/// so the app watches how close it is and reports before it is closed.
+///
+/// Channel `photo_english/memory`:
+///   snapshot → {available: Int, footprint: Int} in bytes. `available` is
+///              os_proc_available_memory() (0 where there is no limit, as on
+///              the simulator); `footprint` is task_vm_info.phys_footprint,
+///              the number Jetsam compares with the limit (-1 if unknown).
+///   device   → {model: String, system: String} ("iPhone13,2", "18.1").
+enum MemoryChannel {
+  static let name = "photo_english/memory"
+
+  static func register(with registry: FlutterPluginRegistry) {
+    guard let registrar = registry.registrar(forPlugin: "MemoryChannel") else { return }
+    let channel = FlutterMethodChannel(name: name, binaryMessenger: registrar.messenger())
+    channel.setMethodCallHandler { call, result in
+      switch call.method {
+      case "snapshot":
+        result([
+          "available": Int(os_proc_available_memory()),
+          "footprint": footprint() ?? -1,
+        ])
+      case "device":
+        result(["model": model(), "system": UIDevice.current.systemVersion])
+      default:
+        result(FlutterMethodNotImplemented)
+      }
+    }
+  }
+
+  static func footprint() -> Int? {
+    var info = task_vm_info_data_t()
+    var count = mach_msg_type_number_t(
+      MemoryLayout<task_vm_info_data_t>.size / MemoryLayout<integer_t>.size)
+    let kr = withUnsafeMutablePointer(to: &info) {
+      $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
+        task_info(mach_task_self_, task_flavor_t(TASK_VM_INFO), $0, &count)
+      }
+    }
+    return kr == KERN_SUCCESS ? Int(info.phys_footprint) : nil
+  }
+
+  /// The hardware id ("iPhone13,2"); the simulated one on the simulator.
+  static func model() -> String {
+    if let simulated = ProcessInfo.processInfo.environment["SIMULATOR_MODEL_IDENTIFIER"] {
+      return "\(simulated) (Simulator)"
+    }
+    var info = utsname()
+    uname(&info)
+    return withUnsafeBytes(of: &info.machine) { raw in
+      String(decoding: raw.prefix { $0 != 0 }, as: UTF8.self)
+    }
   }
 }

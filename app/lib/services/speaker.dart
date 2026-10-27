@@ -78,6 +78,10 @@ class DeviceSpeaker implements Speaker, AudioPrefetcher {
         _play = play;
 
   final AudioFileCache _cache;
+
+  /// Lets go of what is kept in memory only (問題回報 #824); recordings on
+  /// disk stay.
+  void releaseMemory() => _cache.releaseMemory();
   final Future<void> Function(Source)? _play;
   FlutterTts? _tts;
   AudioPlayer? _player;

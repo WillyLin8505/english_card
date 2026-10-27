@@ -33,6 +33,7 @@ import 'widgets/tagging_progress.dart';
 import 'services/analytics.dart';
 import 'services/card_report.dart';
 import 'services/feedback_context.dart';
+import 'services/memory_monitor.dart';
 import 'widgets/feedback_button.dart';
 
 /// MaterialApp can call its builder with no child during route/bootstrap
@@ -165,7 +166,15 @@ class _PhotoEnglishAppState extends State<PhotoEnglishApp>
       unawaited(
           DictionarySync.instance.start(widget.settings, () => _repository));
       _enricher.start();
+      // 問題回報 #824: report when iOS memory runs low; iOS only.
+      MemoryMonitor.instance.addReleaser(_releaseSpeakerMemory);
+      unawaited(
+          MemoryMonitor.instance.start(apiKey: () => widget.settings.apiKey));
     }
+  }
+
+  void _releaseSpeakerMemory() {
+    if (_speaker case final DeviceSpeaker s) s.releaseMemory();
   }
 
   @override
@@ -182,6 +191,11 @@ class _PhotoEnglishAppState extends State<PhotoEnglishApp>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     widget.settings.removeListener(_applyRetention);
+    if (widget.runWorkers) {
+      MemoryMonitor.instance
+        ..removeReleaser(_releaseSpeakerMemory)
+        ..stop();
+    }
     _queue.dispose();
     _enricher.dispose();
     super.dispose();
