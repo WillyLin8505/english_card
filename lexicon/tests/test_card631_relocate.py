@@ -111,3 +111,26 @@ def test_paused_qwen_never_submits_request(monkeypatch):
     monkeypatch.setattr(r.urllib.request, "urlopen", lambda *args, **kwargs: pytest.fail("submitted while paused"))
     with pytest.raises(RuntimeError, match="paused"):
         r.ask(b"image", ["tree"], 1024)
+
+
+def test_review_hold_survives_cooldown():
+    tags = [{"word": "pitch", "point": [0.5, 0.5]}]
+    state = {"845": {"fingerprint": r.fingerprint(tags), "review_issue": 784}}
+    assert not r.eligible(state, 845, tags, 10 * r.COOLDOWN)
+    assert r.eligible(state, 845, tags, 10 * r.COOLDOWN, retry_failed=True)
+
+
+def test_picture_deadline_prevents_another_request(monkeypatch):
+    times = iter([0, 151])
+    monkeypatch.setattr(r.time, "monotonic", lambda: next(times))
+    monkeypatch.setattr(r, "ask", lambda *args: pytest.fail("request exceeded picture deadline"))
+    with pytest.raises(r.IncompleteReply, match="time budget"):
+        r.locate(b"image", ["tree"])
+
+
+def test_case_variants_share_one_model_label(monkeypatch):
+    def ask(img, words, budget):
+        assert words == ["Tree"]
+        return r.validate_reply(reply(words), words)
+    monkeypatch.setattr(r, "ask", ask)
+    assert len(r.locate(b"image", ["Tree", "tree"])) == 1
