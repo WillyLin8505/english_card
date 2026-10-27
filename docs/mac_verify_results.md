@@ -1677,3 +1677,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #815 設定頁 | 通過 | 語言區沒有「更多學習語言即將推出」；辨識正常所以頁首沒有紅色提示 | mac_verify_shots/2026-10-27/p250_settings.png | — |
 | iPhone 信任 | 通過 | owner 在 VPN 與裝置管理按了「驗證 App」後可開啟（今天 20:34 簽署描述檔更新） |  | — |
 | 正式版 | 通過 | 已裝最新 release 022a00ef 並開啟 |  | — |
+
+## 2026-10-27 M256（Mac）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M256 #816 iPhone 信任後重驗 | 通過 | owner 按「驗證 App」後可開啟；已在 iPhone 12 跑完 M203／M214／#815 並裝上 release 022a00ef（見上一段 iPhone 實機驗證） | mac_verify_shots/2026-10-27/p250_settings.png | — |
