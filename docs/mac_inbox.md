@@ -2257,13 +2257,13 @@ commit `67e0490c`（Windows：flutter analyze 無 error、02:14 +693 ~2: All tes
 - 卡 #645：問題回報 #731：[owner] 照片標籤改版（伺服器／資料）：打標結果改成「詞性 × CEFR」表格，同一標籤附由淺
   結果：全部完成：照片「詞性 × CEFR」grid 後端已完成並照 owner 決定（#733 選 A）收尾：舊照片不重跑 Qwen（0 Qwen 時間），24,214 張舊照片用現有標籤＋詞庫同義字即時產生 grid。
 
-## M220（2026-10-27 09:01）狀態：待做（Windows 卡 #585 交給 Mac 的 App 畫面部分）
+## M220（2026-10-27 09:01）狀態：完成
 卡：問題回報 #657：[owner] 補真人發音第一步：用 Wikimedia 補約 757 個字，並查 Forvo／Free Dictionary 等音檔來源的
 
 App 播放時顯示 speaker／授權（CC BY-SA 4.0）標示，資料在 audio_assets.speaker／license／source_page。
 - 尚未做成正式 adapter，新字不會自動取得 LL 錄音。
 
-## M221（2026-10-27 09:01）狀態：待做
+## M221（2026-10-27 09:01）狀態：完成
 commit `f0f9459b`（Windows：flutter analyze 無 error、01:05 +701 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #555：問題回報 #593：卡 #448 後續：照片留在 App 的背景重打佇列、總數不足 5 的補標入口、QC ≥5 閘門切換
   結果：進行中：後端已上線（serveapp 08:09 重啟，程式為最新），照片背景重打佇列待重打 10,009 張（r1 量到約 10,135），等 Qwen 慢慢跑；QC 閘門依 owner 決定要等跑完才切到 5，目前不切。

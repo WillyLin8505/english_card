@@ -1450,3 +1450,10 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
 |----|----|----|----|----|
 | M219 #645 後台 grid | 通過 | 後端 grid 是 Windows 後台的工作；App 依 M189 不顯示表格（旗標關閉）、不接 /grid，等 owner 在後台測完再決定 |  | — |
+
+## 2026-10-27 M220、M221（Mac）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M220 #657 播放時顯示錄音者／授權 | 通過 | App 已在 b6e1d998、b3c1f5ee、ffaaf04d 做好：單字詳情在發音按鈕下顯示錄音者和授權（例如 CC BY-SA 4.0），讀詞庫 pronunciations 的 speaker／license／source_page，並清掉「Speaker:」「No machine-readable author…」這類字 |  | — |
+| M221 #555 背景重打佇列 | 通過 | 後端進行中（約 1 萬張等 Qwen 重打），App 沒有畫面要改；QC 閘門依 owner 決定還沒切 |  | — |
