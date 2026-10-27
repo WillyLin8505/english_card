@@ -2294,3 +2294,8 @@ commit `e87adeaa`（Windows：flutter analyze 無 error、01:22 +701 ~2: All tes
 commit `d812b523`（Windows：flutter analyze 無 error、01:13 +711 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #653：問題回報 #743：[Mac] 2026-10-26 M194、M196（Mac）：M194 tear「撕裂處」中文
   結果：全部完成：Qwen 補譯的 92 個義項（tear「撕裂處」等）已寫回資料庫與 fieldvalues，空白義項 37,606→37,514；3 個（字母 Q/X/P 含拉丁字母）被擋，維持空白。
+
+## M227（2026-10-27 09:33）狀態：待做
+commit `0f0f510f`（Windows：flutter analyze 無 error、01:30 +711 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #665：問題回報 #765：[Mac] 2026-10-27 M222 #703 pointUngrounded（Mac：M22
+  結果：9564 已在資料庫重新定位（night→天空框、city→天際線框）；Mac 驗到的是舊詞庫，需重新匯出後再驗。全庫仍有 4,326 個預設點無框標籤待跑（卡 #631 負責續跑，約 2,060 張）。
