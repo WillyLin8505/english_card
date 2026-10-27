@@ -2537,3 +2537,8 @@ App 播放順序要把 source=tts 排在真人之後（資料格式定案後通�
 - 做法：圖片頁每個等級要顯示 5 個字；不足時從最接近的等級補（與 photo_detail 的 WordSelector 規則一致，WordSelector.maxWords = 5）。
 - 標題的「5 張圖片有這個程度的標籤」與 hint 文字也要跟著改。
 - 這是 App 畫面，Windows 不動；請 Mac 接手。問題回報 #763 保持 in_progress，等 Mac 完成再由 Mac 關閉。
+
+## M265（2026-10-27 21:37）狀態：待做
+commit `f983c8c7`（Windows：flutter analyze 無 error、02:09 +712 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #12：模擬使用者・跨分頁（亂點、詞庫更新）
+  結果：第 188 輪：2/2 通過（fuzz 800 步 269 秒、packupdate 199 秒，18263 詞，findings 皆空），新問題 0；UX 建議：本輪未新增（沒跑 learnerview）。
