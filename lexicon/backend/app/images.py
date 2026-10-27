@@ -3,6 +3,7 @@ Smithsonian CC0 → Openverse, the spec's order) and review. No automatic
 approval."""
 import asyncio
 import csv
+import functools
 import hashlib
 import html
 import io
@@ -1668,7 +1669,20 @@ def classify_tag_cefr(s, tag: dict, *, include_exact: bool = True) -> dict:
             return tag
     tag['cefr'] = frequency_profile(zipf(word, 'en'))['cefr']
     tag['cefrSource'] = 'estimate'  # shown as 「估算」
+    # card #607 / 問題回報 #687 C: Qwen-reviewed common concrete nouns (noodle) never estimate above B1.
+    reviewed = _photo_cefr_overrides().get(word)
+    if reviewed and CEFR_RANK[reviewed] < CEFR_RANK[tag['cefr']]:
+        tag['cefr'] = reviewed
     return tag
+
+
+@functools.lru_cache(maxsize=1)
+def _photo_cefr_overrides() -> dict:
+    path = Path(__file__).with_name('cefr_photo_overrides.json')
+    try:
+        return json.loads(path.read_text(encoding='utf-8')).get('words', {})
+    except (OSError, ValueError):
+        return {}
 
 
 def _old_classify_tag_cefr(s, tag: dict, *, include_exact: bool = True) -> dict:
