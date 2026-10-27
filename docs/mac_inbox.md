@@ -2327,3 +2327,8 @@ commit `2eef0826`（Windows：flutter analyze 無 error、01:05 +711 ~2: All tes
 
 QC：lexicon/logs/agents/card668_qc_before.json／after.json；golden 300 詞＋50 照片：全部通過；photo.expected_sense 13/14 修前後相同。
 剩下：重啟後用 format=sqlite 數 point=null 的標籤（預期 ≈ 457，其中 413 帶旗標）；JSON 大檔不驗。
+
+## M233（2026-10-27 10:51）狀態：待做（Windows 卡 #631 交給 Mac 的 App 畫面部分）
+卡：問題回報 #718：[owner] [Mac] 2026-10-26 M150（owner 回報）：#703 標籤位置錯誤
+
+重驗圖 9564（night [0.5,0.4]、city [0.5,0.5]；已重定位為框，或標 point_ungrounded 顯示「整張圖」、不畫點），需 serve_app 重啟後的 pack。
