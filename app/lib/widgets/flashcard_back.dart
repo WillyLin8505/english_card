@@ -645,6 +645,33 @@ class FlashcardBack extends StatelessWidget {
                       [for (final sense in meanings) Text(sense.native!)],
                       look));
         }
+        final senses = meaningParts(meaning);
+        final Widget meaningText = senses.length > 1
+            ? _numbered(field,
+                [for (final p in senses) Text(p, style: look.meaning)], look)
+            : Text(meaning, style: look.meaning);
+        // 問題回報 #694: the English definition numbered 1 2 3 too.
+        Widget definitionText(String definition) {
+          final parts = meaningParts(definition);
+          return parts.length > 1
+              ? _numbered(
+                  field,
+                  [
+                    for (final p in parts)
+                      LinkedText(p,
+                          style:
+                              MFont.manrope(14, FontWeight.w600, MColors.muted),
+                          links: links,
+                          onOpenWord: onOpenWord),
+                  ],
+                  look,
+                  name: 'definition')
+              : LinkedText(definition,
+                  style: MFont.manrope(14, FontWeight.w600, MColors.muted),
+                  links: links,
+                  onOpenWord: onOpenWord);
+        }
+
         // Card #251 item 2: the part of speech only — no CEFR level chip.
         // 問題回報 #469: same title as the word detail's meaning section.
         return _Block(
@@ -656,32 +683,18 @@ class FlashcardBack extends StatelessWidget {
                 Row(children: [TagChip(posLabel(pos))]),
                 const SizedBox(height: 6),
               ],
-              if (meaningParts(meaning) case final parts when parts.length > 1)
-                _numbered(field,
-                    [for (final p in parts) Text(p, style: look.meaning)], look)
-              else
-                Text(meaning, style: look.meaning),
-              // 問題回報 #694: the English definition numbered 1 2 3 too.
-              if (definition != null)
-                if (meaningParts(definition) case final parts
-                    when parts.length > 1)
-                  _numbered(
-                      field,
-                      [
-                        for (final p in parts)
-                          LinkedText(p,
-                              style: MFont.manrope(
-                                  14, FontWeight.w600, MColors.muted),
-                              links: links,
-                              onOpenWord: onOpenWord),
-                      ],
-                      look,
-                      name: 'definition')
-                else
-                  LinkedText(definition,
-                      style: MFont.manrope(14, FontWeight.w600, MColors.muted),
-                      links: links,
-                      onOpenWord: onOpenWord),
+              if (definition != null &&
+                  levelIndex(learnerLevel) <= levelIndex('B1'))
+                // 問題回報 #558 (owner decision): A1–B1 learners see the
+                // definition (English, or French for French) folded away;
+                // tapping the meaning opens and closes it. B2 and up as before.
+                _FoldedDefinition(
+                    meaning: meaningText,
+                    definition: definitionText(definition))
+              else ...[
+                meaningText,
+                if (definition != null) definitionText(definition),
+              ],
             ],
           ),
         );
@@ -1370,7 +1383,7 @@ class _FormCell extends StatelessWidget {
 
 /// A word with its meaning in one chip (forms, related words); tapping a
 /// word that is in the learner's database opens it (item 9).
-class _WordChip extends StatelessWidget {
+class _WordChip extends StatefulWidget {
   final String word;
   final String meaning;
   final WordLinks links;
@@ -1380,12 +1393,31 @@ class _WordChip extends StatelessWidget {
       {required this.meaning, required this.links, this.onOpenWord});
 
   @override
+  State<_WordChip> createState() => _WordChipState();
+}
+
+class _WordChipState extends State<_WordChip> {
+  bool _full = false;
+
+  @override
   Widget build(BuildContext context) {
+    final word = widget.word;
+    final links = widget.links;
     final id = links.idFor(word);
     final look = CardLook.of(context);
+    // 問題回報 #580: the short meaning, as on the word detail page; a long
+    // press (or a tap, when the word opens nothing) shows the full text.
+    final full = widget.meaning.trim();
+    final short = shortRelationMeaning(full);
+    final cut = short != full;
+    final meaning = _full ? full : short;
+    void toggle() => setState(() => _full = !_full);
     return Tap(
       label: id == null ? null : '$word，查看單字',
-      onTap: id == null ? null : () => openWordLink(context, id, onOpenWord),
+      onTap: id == null
+          ? (cut ? toggle : null)
+          : () => openWordLink(context, id, widget.onOpenWord),
+      onLongPress: cut ? toggle : null,
       child: Container(
         constraints: BoxConstraints(minHeight: look.chipMinHeight),
         padding: look.chipPadding,
@@ -1403,6 +1435,43 @@ class _WordChip extends StatelessWidget {
       ),
     );
   }
+}
+
+/// 問題回報 #558: the meaning with the definition folded under it; a tap on
+/// the meaning shows the definition, another folds it again.
+class _FoldedDefinition extends StatefulWidget {
+  final Widget meaning;
+  final Widget definition;
+
+  const _FoldedDefinition({required this.meaning, required this.definition});
+
+  @override
+  State<_FoldedDefinition> createState() => _FoldedDefinitionState();
+}
+
+class _FoldedDefinitionState extends State<_FoldedDefinition> {
+  bool _open = false;
+
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Tap(
+            key: const ValueKey('toggle-definition'),
+            label: _open ? '收起定義' : '顯示定義',
+            onTap: () => setState(() => _open = !_open),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: widget.meaning),
+                Icon(_open ? Icons.expand_less : Icons.expand_more,
+                    size: 20, color: MColors.muted),
+              ],
+            ),
+          ),
+          if (_open) widget.definition,
+        ],
+      );
 }
 
 /// 構詞拆解 as in the admin's word page: a rounded box per morpheme (the

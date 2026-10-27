@@ -12,6 +12,7 @@ import '../services/license_links.dart';
 import '../services/lexicon_pack.dart';
 import '../services/pack_media.dart';
 import '../services/word_database_repository.dart';
+import '../services/word_selector.dart';
 import '../theme/mobile_theme.dart';
 import '../widgets/mobile/common.dart';
 import '../widgets/mobile/photo_widgets.dart';
@@ -135,7 +136,10 @@ class _DatabaseLibraryScreenState extends State<DatabaseLibraryScreen> {
                             // A chosen level shows only pictures with at least
                             // one drawable pin at that level. An approved word
                             // without model coordinates is metadata, not a
-                            // visible photo label (問題回報 #143).
+                            // visible photo label (問題回報 #143). Only the
+                            // level's own tags count: the words borrowed from
+                            // nearby levels fill a picture's list, they don't
+                            // bring it in (問題回報 #763).
                             // Whole-word hits first, then words that start
                             // with the search; letters inside a word don't
                             // match (問題回報 #396: cat ≠ category).
@@ -147,7 +151,9 @@ class _DatabaseLibraryScreenState extends State<DatabaseLibraryScreen> {
                               if (match == null ||
                                   (_level != null &&
                                       databasePins(image, pack,
-                                              max: 1, level: _level)
+                                              max: 1,
+                                              level: _level,
+                                              borrow: false)
                                           .isEmpty)) {
                                 continue;
                               }
@@ -198,7 +204,10 @@ class _DatabaseLibraryScreenState extends State<DatabaseLibraryScreen> {
                                                 widget.photos
                                                     ? _level == null
                                                         ? '共 ${pack.catalogImages.length} 張圖片 · 每張都有單字標籤'
-                                                        : '${levelLabel(_level!)}：${images.length} 張圖片有這個程度的標籤'
+                                                        // 問題回報 #763: each picture lists at
+                                                        // least five words, filled from the
+                                                        // nearest levels like 照片詳情.
+                                                        : '${levelLabel(_level!)}：${images.length} 張圖片有這個程度的標籤 · 不到 ${WordSelector.maxWords} 個字的從相近程度補'
                                                             '${elsewhere == 0 || sharedHint != null ? '' : ' · $elsewhere 張的搜尋字在其他程度'}'
                                                     : '${allWords.where((w) => w.full).length} 筆正式單字 · 與資料庫同步',
                                                 style: MFont.bodyMuted),

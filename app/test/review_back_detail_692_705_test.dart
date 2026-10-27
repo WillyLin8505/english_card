@@ -111,7 +111,8 @@ void main() {
               id: 'card-id', wordEntryId: 'yellow-id', templateId: 'test'),
           photo: null,
           anchor: null,
-          learnerLevel: 'A1',
+          // B2: the definition shows open (A1–B1 fold it, 問題回報 #558).
+          learnerLevel: 'B2',
           onPlay: () {},
           onOpen: () {},
           template: CardTemplate(id: 'test', name: 'test', backFields: const [
@@ -157,8 +158,9 @@ void main() {
     expect(find.textContaining('中階（B1）'), findsOneWidget);
 
     // #704: a word the pack has opens its own detail; one it lacks does not.
-    final missing =
-        tester.widget<TagChip>(find.byKey(const ValueKey('relation-nowhere')));
+    final missing = tester.widget<TagChip>(find.descendant(
+        of: find.byKey(const ValueKey('relation-nowhere')),
+        matching: find.byType(TagChip)));
     expect(missing.onTap, isNull);
     final form =
         tester.widget<TagChip>(find.byKey(const ValueKey('form-flows')));

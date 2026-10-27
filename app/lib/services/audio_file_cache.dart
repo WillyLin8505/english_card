@@ -94,6 +94,10 @@ class AudioFileCache {
     });
   }
 
+  /// Forgets which clips are on disk (問題回報 #824: memory warning); the
+  /// files stay and are found again when played. Downloads under way go on.
+  void releaseMemory() => _ready.clear();
+
   /// Starts downloading [url] in the background (opening a word's details,
   /// a review card's front) so playing it later does not wait.
   void prefetch(String? url) {

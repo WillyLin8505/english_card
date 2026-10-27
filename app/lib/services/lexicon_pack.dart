@@ -233,6 +233,10 @@ class LexiconPack extends ChangeNotifier {
     }
   }
 
+  /// Drops the per-word senses and bodies read from the SQLite pack; they
+  /// are read again when asked for (問題回報 #824: memory warning).
+  void releaseCaches() => _source?.invalidate();
+
   void clear() {
     _closeDb();
     _byId.clear();
