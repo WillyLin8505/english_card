@@ -409,6 +409,11 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_saf
     for lxid, form in s.execute(select(m.Form.lexeme_id, m.Form.form).where(m.Form.lexeme_id.in_(full_ids))):
         forms_by_lexeme.setdefault(lxid, set()).add(form)
     audio_by_url = {row.source_url: row for row in s.scalars(select(m.AudioAsset))}
+    # 問題回報 #797 / card #677: ai_translate and the Qwen fill write example
+    # translations only to example_translations (field_values has none), so the
+    # export falls back to that table when the field value is missing.
+    table_ex_tr = {row.example_id: row for row in s.scalars(select(m.ExampleTranslation).where(
+        m.ExampleTranslation.native_language == native))}
 
     def first_for_ids(index, ids, key):
         matches = [index[(lxid, key)] for lxid in ids if (lxid, key) in index]
@@ -593,6 +598,9 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_saf
             ex = first_for_ids(examples_index, ids, text_hash(it.get('text', '')))
             if ex is None:
                 continue
+            if not (ex_tr.get(k) or {}).get("text") and ex.id in table_ex_tr:
+                row = table_ex_tr[ex.id]
+                ex_tr[k] = {"text": row.text, "source": row.source or "", "ai": row.is_ai}
             if is_column_word_list(it.get("text", ""), lemma) or unfit_example(it.get("text", ""), lemma) or offensive_native(
                     (ex_tr.get(k) or {}).get("text")):
                 continue
