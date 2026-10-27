@@ -396,6 +396,10 @@ class WordPin extends StatelessWidget {
 
 /// The light bar that sweeps down a photo while it is being read (問題回報
 /// #409). Only the bar repaints; the photo under it is not rebuilt.
+///
+/// 問題回報 #851: 「還在打標籤的動畫再清楚一點」 — a taller, brighter band
+/// with a blue scan line through it, and a little faster, so it reads as
+/// "still working" over any photo, light or dark.
 class PhotoScanSweep extends StatefulWidget {
   const PhotoScanSweep({super.key});
 
@@ -405,10 +409,9 @@ class PhotoScanSweep extends StatefulWidget {
 
 class _PhotoScanSweepState extends State<PhotoScanSweep>
     with SingleTickerProviderStateMixin {
-  static const _band = 40.0;
   late final AnimationController _sweep = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 1800),
+    duration: const Duration(milliseconds: 1500),
   )..repeat();
 
   @override
@@ -421,32 +424,39 @@ class _PhotoScanSweepState extends State<PhotoScanSweep>
   Widget build(BuildContext context) => IgnorePointer(
         child: RepaintBoundary(
           child: LayoutBuilder(
-            builder: (context, c) => AnimatedBuilder(
-              animation: _sweep,
-              builder: (context, _) => Stack(
-                children: [
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    height: _band,
-                    top: (c.maxHeight + _band) * _sweep.value - _band,
-                    child: const DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Color(0x00FFFFFF),
-                            Color(0x66FFFFFF),
-                            Color(0x00FFFFFF),
-                          ],
+            builder: (context, c) {
+              // A fifth of the photo, at least 72 pt (it was a 40 pt haze).
+              final band = math.max(72.0, c.maxHeight / 5);
+              return AnimatedBuilder(
+                animation: _sweep,
+                builder: (context, _) => Stack(
+                  children: [
+                    Positioned(
+                      key: const ValueKey('photo-scan-band'),
+                      left: 0,
+                      right: 0,
+                      height: band,
+                      top: (c.maxHeight + band) * _sweep.value - band,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            stops: const [0, 0.7, 0.97, 1],
+                            colors: [
+                              MColors.primary.withValues(alpha: 0),
+                              MColors.primary.withValues(alpha: 0.28),
+                              Colors.white.withValues(alpha: 0.85),
+                              MColors.primary.withValues(alpha: 0.9),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
+                  ],
+                ),
+              );
+            },
           ),
         ),
       );

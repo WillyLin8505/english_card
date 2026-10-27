@@ -378,7 +378,10 @@ class WordSelector {
     }
     // One challenge word (挑戰詞) above the target level.
     if (!picked().any((s) => levelIndex(s.candidate.level) > target)) {
-      bool harder(ScoredCandidate s) => levelIndex(s.candidate.level) > target;
+      // 問題回報 #852: one or two levels up — a C1 word is no challenge
+      // word at the easiest position.
+      bool harder(ScoredCandidate s) =>
+          levelIndex(s.candidate.level) > target && s.levelFit > 0;
       if (picked().length < maxWords) {
         final c = best(where: harder);
         if (c != null) slots.add(c);

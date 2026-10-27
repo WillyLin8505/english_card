@@ -45,91 +45,100 @@ class PhotoDifficultyBar extends StatelessWidget {
       slider: true,
       label: '單字難度 ${levelName(level)}，左右拖曳調整',
       value: _barText(level, offset),
-      child: LayoutBuilder(
-        builder: (context, c) {
-          final step = (c.maxWidth - 2 * _pad) / (cefrLevels.length - 1);
-          double xOf(int i) => _pad + i * step;
-          int levelAt(double dx) =>
-              ((dx - _pad) / step).round().clamp(0, cefrLevels.length - 1);
-          return GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTapUp: (d) => onSelect(levelAt(d.localPosition.dx)),
-            onHorizontalDragUpdate: (d) => onMove(levelAt(d.localPosition.dx)),
-            onHorizontalDragEnd: (_) => onSelect(target),
-            child: SizedBox(
-              height: _barHeight,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    top: 0,
-                    height: 20,
-                    child: Center(
-                      child: UiText(_barText(level, offset),
-                          key: const ValueKey('difficulty-text'),
-                          style: MFont.manrope(
-                              14, FontWeight.w800, MColors.dialBlue)),
-                    ),
-                  ),
-                  Positioned(
-                    left: _pad - _track / 2,
-                    right: _pad - _track / 2,
-                    top: _trackTop,
-                    child: Container(
-                      key: const ValueKey('difficulty-track'),
-                      height: _track,
-                      decoration: BoxDecoration(
-                        color: MColors.border,
-                        borderRadius: BorderRadius.circular(_track / 2),
+      // 問題回報 #845: the bar sits in the page's margin like the photo
+      // above it, so 簡單／難 are never cut by the screen edges.
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: MSpace.md),
+        child: LayoutBuilder(
+          builder: (context, c) {
+            final step = (c.maxWidth - 2 * _pad) / (cefrLevels.length - 1);
+            double xOf(int i) => _pad + i * step;
+            int levelAt(double dx) =>
+                ((dx - _pad) / step).round().clamp(0, cefrLevels.length - 1);
+            return GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTapUp: (d) => onSelect(levelAt(d.localPosition.dx)),
+              onHorizontalDragUpdate: (d) =>
+                  onMove(levelAt(d.localPosition.dx)),
+              onHorizontalDragEnd: (_) => onSelect(target),
+              child: SizedBox(
+                height: _barHeight,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      top: 0,
+                      height: 20,
+                      child: Center(
+                        child: UiText(_barText(level, offset),
+                            key: const ValueKey('difficulty-text'),
+                            style: MFont.manrope(
+                                14, FontWeight.w800, MColors.dialBlue)),
                       ),
                     ),
-                  ),
-                  Positioned(
-                    left: _pad - _track / 2,
-                    top: _trackTop,
-                    child: AnimatedContainer(
+                    Positioned(
+                      left: _pad - _track / 2,
+                      right: _pad - _track / 2,
+                      top: _trackTop,
+                      child: Container(
+                        key: const ValueKey('difficulty-track'),
+                        height: _track,
+                        decoration: BoxDecoration(
+                          color: MColors.border,
+                          borderRadius: BorderRadius.circular(_track / 2),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      left: _pad - _track / 2,
+                      top: _trackTop,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        width: xOf(target) - _pad + _track,
+                        height: _track,
+                        decoration: BoxDecoration(
+                          color: MColors.primary,
+                          borderRadius: BorderRadius.circular(_track / 2),
+                        ),
+                      ),
+                    ),
+                    AnimatedPositioned(
                       duration: const Duration(milliseconds: 150),
-                      width: xOf(target) - _pad + _track,
-                      height: _track,
-                      decoration: BoxDecoration(
-                        color: MColors.primary,
-                        borderRadius: BorderRadius.circular(_track / 2),
+                      left: xOf(target) - _thumb / 2,
+                      top: _trackTop + _track / 2 - _thumb / 2,
+                      child: Container(
+                        key: const ValueKey('difficulty-thumb'),
+                        width: _thumb,
+                        height: _thumb,
+                        decoration: BoxDecoration(
+                          color: MColors.surface,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: MColors.primary, width: 4),
+                          boxShadow: MShadows.card,
+                        ),
                       ),
                     ),
-                  ),
-                  AnimatedPositioned(
-                    duration: const Duration(milliseconds: 150),
-                    left: xOf(target) - _thumb / 2,
-                    top: _trackTop + _track / 2 - _thumb / 2,
-                    child: Container(
-                      key: const ValueKey('difficulty-thumb'),
-                      width: _thumb,
-                      height: _thumb,
-                      decoration: BoxDecoration(
-                        color: MColors.surface,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: MColors.primary, width: 4),
-                        boxShadow: MShadows.card,
-                      ),
+                    // 問題回報 #845: under the track's ends, inside the bar.
+                    Positioned(
+                      left: _pad - _track / 2,
+                      top: _trackTop + _track + 12,
+                      child: UiText('簡單',
+                          key: const ValueKey('difficulty-easy'), style: ends),
                     ),
-                  ),
-                  Positioned(
-                    left: 0,
-                    top: _trackTop + _track + 12,
-                    child: UiText('簡單', style: ends),
-                  ),
-                  Positioned(
-                    right: 0,
-                    top: _trackTop + _track + 12,
-                    child: UiText('難', style: ends),
-                  ),
-                ],
+                    Positioned(
+                      right: _pad - _track / 2,
+                      top: _trackTop + _track + 12,
+                      child: UiText('難',
+                          key: const ValueKey('difficulty-hard'), style: ends),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }

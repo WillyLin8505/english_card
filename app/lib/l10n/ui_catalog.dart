@@ -1448,4 +1448,11 @@ const _templateCopy = <String, (String, String)>{
   '來源：{0}': ('Source: {0}', 'Source : {0}'),
   // M180 (owner #732): the photo's 詞性 × CEFR table.
   '已加入「{0}」': ('Added “{0}”', '« {0} » ajouté'),
+  // 問題回報 #850: 照片詳情's 儲存 with reduced motion.
+  '已儲存到單字本和相片冊': (
+    'Saved to My words and the album',
+    'Enregistré dans Mes mots et l’album'
+  ),
+  // 問題回報 #851: the note on a photo the AI is still tagging.
+  'AI 正在找單字…': ('AI is finding words…', 'L’IA cherche des mots…'),
 };

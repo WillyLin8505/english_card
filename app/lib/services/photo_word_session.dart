@@ -108,15 +108,29 @@ class PhotoWordSession extends ChangeNotifier {
             allowTopUp: true, keep: {for (final w in words) w.word});
         if (words.length != before) _dirty = true;
       }
+      _shownAt[_target] = [for (final w in words) w.word];
     } else {
       _reselect(allowTopUp: true);
       _dirty = true;
     }
+    _home = [for (final w in words) w.word];
     repo.addListener(_onRepo);
   }
 
   late int _target;
   int _poolSize = 0;
+
+  /// 問題回報 #852: the words each dial position has shown, so sliding away
+  /// and back shows the same labels. A position's words depend only on the
+  /// photo's candidates and the position (plus the learner's own words);
+  /// candidates that arrive later only fill a position's empty places.
+  /// Cleared when the learner asks for a different list (多看動詞、重新掃描).
+  final Map<int, List<String>> _shownAt = {};
+  final Map<String, SessionWord> _seen = {};
+
+  /// The words the photo opened with (or the last list the learner asked
+  /// for): a position not shown yet keeps those that fit it.
+  List<String> _home = const [];
   List<SessionWord> words = [];
   final Set<String> _removed = {};
 
@@ -224,26 +238,74 @@ class PhotoWordSession extends ChangeNotifier {
   void _reselect(
       {bool allowTopUp = false,
       Set<String> fresh = const {},
-      Set<String> keep = const {}}) {
+      Set<String> keep = const {},
+      bool repick = false}) {
+    // The learner's own words stay whatever the dial says.
+    final own = {
+      ...keep,
+      for (final w in words)
+        if (w.starred || w.added || w.edited) w.word,
+    };
+    final removed = {..._removed, ..._rejected};
+    final studying = _studyingElsewhere;
+    final learned = repo.profile.learned;
+    bool gone(String w) =>
+        !own.contains(w) &&
+        (removed.contains(w) || studying.contains(w) || learned.contains(w));
+    // 問題回報 #852: what a dial position shows depends only on the photo's
+    // candidates and the position — never on the position shown just
+    // before. Three cases:
+    // - the learner asked for a new list (重新掃描、多看動詞): picked again
+    //   from the words shown now, and every position starts over;
+    // - a position shown before: its words stay where they were (a word
+    //   swiped away, deleted or learned since gives way), later candidates
+    //   only fill empty places;
+    // - a position not shown yet: picked from the pool, keeping the words
+    //   the photo opened with where they still fit (保留跨級詞).
+    final List<String> shown;
+    final Set<String> locked;
+    final cached = _shownAt[_target];
+    if (repick || fresh.isNotEmpty) {
+      _shownAt.clear();
+      shown = [for (final w in words) w.word];
+      locked = own;
+    } else {
+      final base = [
+        for (final w in cached ?? _home)
+          if (!gone(w)) w,
+      ];
+      shown = [
+        ...base,
+        for (final w in own)
+          if (!base.contains(w)) w,
+      ];
+      // At most five: earlier words that aren't the learner's give way.
+      while (shown.length > WordSelector.maxWords) {
+        final i = shown.lastIndexWhere((w) => !own.contains(w));
+        if (i < 0) break;
+        shown.removeAt(i);
+      }
+      locked = cached == null ? own : {...own, ...shown};
+    }
     final sel = selector.select(
       pool: _pool,
       target: _target,
       profile: repo.profile,
-      studying: _studyingElsewhere,
-      removed: {..._removed, ..._rejected},
-      current: [for (final w in words) w.word],
-      // The learner's own words stay whatever the dial says.
-      locked: {
-        ...keep,
-        for (final w in words)
-          if (w.starred || w.added || w.edited) w.word,
-      },
+      studying: studying,
+      removed: removed,
+      current: shown,
+      locked: locked,
       bias: _bias,
       fresh: fresh,
       relaxNounCap: _nounsAsked,
       now: repo.clock(),
     );
-    final byWord = {for (final w in words) w.word: w};
+    // 問題回報 #852: a word coming back to the list is the same entry (its
+    // pin where it was), not a new one.
+    for (final w in words) {
+      _seen[w.word] = w;
+    }
+    final byWord = {..._seen};
     words = [
       for (final c in sel.words)
         byWord[c.word] ??
@@ -252,6 +314,8 @@ class PhotoWordSession extends ChangeNotifier {
             SessionWord(c, c.point, placed: c.grounded)
     ];
     _selection = sel;
+    _shownAt[_target] = [for (final w in words) w.word];
+    if (repick || fresh.isNotEmpty) _home = _shownAt[_target]!;
     if (allowTopUp) _maybeTopUp(sel);
   }
 
@@ -336,10 +400,12 @@ class PhotoWordSession extends ChangeNotifier {
     } else {
       _reselect();
       final focus = t > from ? 'harder' : 'easier';
+      // 問題回報 #852: what this finds only fills empty places — the
+      // positions already shown keep their labels.
       _askForMore(focus, () {
         final now = [for (final w in words) w.word];
         return !listEquals(before, now);
-      }, stillWanted: () => _target == t);
+      }, stillWanted: () => _target == t, swapIn: false);
     }
     notifyListeners();
   }
@@ -351,11 +417,13 @@ class PhotoWordSession extends ChangeNotifier {
   void setBias(PosBias b) {
     _bias = _bias == b ? PosBias.none : b;
     _dirty = true;
+    // 問題回報 #852: another kind of word asked for — every position is
+    // picked again (once) with it.
     if (_bias == PosBias.none) {
-      _reselect(allowTopUp: true);
+      _reselect(allowTopUp: true, repick: true);
     } else {
       final before = _shownOfBias();
-      _reselect();
+      _reselect(repick: true);
       final asked = _bias;
       _askForMore(
           asked == PosBias.actions ? 'actions' : 'descriptions',
@@ -380,7 +448,7 @@ class PhotoWordSession extends ChangeNotifier {
   /// learner hasn't turned it off or moved on). A tap while the same kind
   /// is being fetched joins that request.
   void _askForMore(String focus, bool Function() improved,
-      {required bool Function() stillWanted}) {
+      {required bool Function() stillWanted, bool swapIn = true}) {
     final what = focusLabel(focus);
     final q = queue;
     final p = photo;
@@ -404,7 +472,7 @@ class PhotoWordSession extends ChangeNotifier {
           for (final c in photo?.candidates ?? const <WordCandidate>[])
             if (!pool.contains(c.word)) c.word,
         };
-        if (fresh.isNotEmpty && stillWanted()) {
+        if (swapIn && fresh.isNotEmpty && stillWanted()) {
           _reselect(fresh: fresh);
           _dirty = true;
         } else if (added > 0) {

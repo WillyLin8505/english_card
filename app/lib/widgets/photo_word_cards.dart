@@ -87,6 +87,16 @@ class _KnownBackground extends StatelessWidget {
       );
 }
 
+/// 問題回報 #848: the short meaning a word row shows — the first sense
+/// (before 「；」 or 「：」), and of a list of synonyms joined by 、 only the
+/// first two: 「不清楚、陰暗的、模糊的；難懂」 → 「不清楚、陰暗的」.
+String briefMeaning(String meaning) {
+  var s = meaning.split(RegExp('[；;:：]')).first.trim();
+  final items = s.split('、');
+  if (items.length > 2) s = items.take(2).join('、');
+  return s.isEmpty ? meaning.trim() : s;
+}
+
 /// Figma word-card-Coffee (24:59).
 class _WordCard extends StatelessWidget {
   final String word;
@@ -128,6 +138,11 @@ class _WordCard extends StatelessWidget {
           ),
         );
 
+    final wordText = Text(word,
+        key: ValueKey('word-card-word-$word'),
+        softWrap: true,
+        style: MFont.manrope(18, FontWeight.w800, MColors.ink));
+
     return Tap(
       onTap: onTap,
       label: '$word $zh',
@@ -145,43 +160,48 @@ class _WordCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
+                  // 問題回報 #848: the whole word, never 「Conspi…」 — it
+                  // wraps instead, and the IPA moves under it when the two
+                  // do not fit on one line.
+                  Wrap(
+                    spacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.end,
                     children: [
-                      Flexible(
-                        child: Text(word,
-                            overflow: TextOverflow.ellipsis,
-                            style: MFont.manrope(
-                                18, FontWeight.w800, MColors.ink)),
-                      ),
-                      if (ipa != null) ...[
-                        const SizedBox(width: 8),
-                        Flexible(
+                      // One long word is scaled down a little rather than
+                      // broken mid-way; a phrase wraps at its spaces.
+                      if (word.contains(' '))
+                        wordText
+                      else
+                        FittedBox(fit: BoxFit.scaleDown, child: wordText),
+                      if (ipa != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 2),
                           child: Text(ipa!,
-                              overflow: TextOverflow.ellipsis,
+                              softWrap: true,
                               style: MFont.manrope(
                                   13, FontWeight.w500, MColors.label)),
                         ),
-                      ],
                     ],
                   ),
                   const SizedBox(height: 4),
-                  Row(
+                  // 問題回報 #848: a short meaning in full (up to two
+                  // lines) instead of 「不清楚、陰…」.
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 2,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       if (zh.isNotEmpty)
-                        Flexible(
-                          child: Text(zh,
-                              overflow: TextOverflow.ellipsis,
-                              style: MFont.manrope(
-                                  15, FontWeight.w700, MColors.primary)),
-                        ),
-                      const SizedBox(width: 8),
+                        Text(briefMeaning(zh),
+                            key: ValueKey('word-card-zh-$word'),
+                            maxLines: 2,
+                            softWrap: true,
+                            style: MFont.manrope(
+                                15, FontWeight.w700, MColors.primary)),
                       UiText(levelLabel(level),
                           style: MFont.manrope(
                               11, FontWeight.w800, MColors.label)),
                       if (wholePicture) ...[
-                        const SizedBox(width: MSpace.xs),
                         // Same chip as the catalog pictures' (card #510).
                         Container(
                           key: ValueKey('whole-picture-$word'),
@@ -316,4 +336,173 @@ class _PhotoBadgeOverlay extends StatelessWidget {
           ),
         ),
       );
+}
+
+/// 問題回報 #851: the note on the photo while the AI is still tagging it
+/// (a rescan or a top-up), over the labels without a scrim.
+class _PhotoScanningChip extends StatelessWidget {
+  const _PhotoScanningChip();
+
+  @override
+  Widget build(BuildContext context) => Container(
+        key: const ValueKey('photo-scanning-label'),
+        padding: const EdgeInsets.symmetric(
+            horizontal: MSpace.md, vertical: MSpace.sm - 2),
+        decoration: MDecor.overlayPill(radius: MRadii.xl),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox.square(
+              dimension: 14,
+              child: CircularProgressIndicator(
+                  strokeWidth: 2, color: Colors.white),
+            ),
+            const SizedBox(width: MSpace.xs),
+            UiText('AI 正在找單字…',
+                style: MFont.manrope(13, FontWeight.w700, Colors.white)),
+          ],
+        ),
+      );
+}
+
+/// 問題回報 #850: after 儲存, the listed words fly one by one to the 單字本
+/// tab and then the photo shrinks into the 相片冊 tab (about 1.8 s; a tap
+/// anywhere skips to the end). Drawn over everything on the root overlay.
+class _SaveFlight extends StatefulWidget {
+  final List<String> words;
+  final Photo photo;
+
+  /// Where the photo is on screen when 儲存 is pressed.
+  final Rect from;
+  final VoidCallback onDone;
+
+  const _SaveFlight({
+    required this.words,
+    required this.photo,
+    required this.from,
+    required this.onDone,
+  });
+
+  static const duration = Duration(milliseconds: 1800);
+
+  /// The centre of a tab's icon in [MobileTabBar] (five equal tabs inside a
+  /// 16 pt margin, the icon above its label).
+  static Offset tabIcon(BuildContext context, AppTab tab) {
+    final size = MediaQuery.sizeOf(context);
+    final bottom = math.max(24.0, MediaQuery.paddingOf(context).bottom);
+    final n = AppTab.values.length;
+    return Offset(16 + (size.width - 32) * (tab.index + 0.5) / n,
+        size.height - bottom - 36);
+  }
+
+  @override
+  State<_SaveFlight> createState() => _SaveFlightState();
+}
+
+class _SaveFlightState extends State<_SaveFlight>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _t =
+      AnimationController(vsync: this, duration: _SaveFlight.duration)
+        ..addStatusListener((s) {
+          if (s == AnimationStatus.completed) _finish();
+        })
+        ..forward();
+  bool _done = false;
+
+  void _finish() {
+    if (_done) return;
+    _done = true;
+    widget.onDone();
+  }
+
+  @override
+  void dispose() {
+    _t.dispose();
+    super.dispose();
+  }
+
+  /// Word [i]'s part of the run: they leave 0.1 apart, each flying 0.35.
+  double _wordT(int i) =>
+      ((_t.value - i * 0.1) / 0.35).clamp(0.0, 1.0).toDouble();
+
+  /// The photo goes once the words have left.
+  double get _photoT => ((_t.value - 0.55) / 0.4).clamp(0.0, 1.0).toDouble();
+
+  @override
+  Widget build(BuildContext context) {
+    final words = widget.words.take(WordSelector.maxWords).toList();
+    final book = _SaveFlight.tabIcon(context, AppTab.words);
+    final album = _SaveFlight.tabIcon(context, AppTab.album);
+    final from = widget.from;
+    return GestureDetector(
+      key: const ValueKey('save-flight'),
+      behavior: HitTestBehavior.opaque,
+      // A tap ends it at once.
+      onTap: () {
+        _t.stop();
+        _finish();
+      },
+      child: AnimatedBuilder(
+        animation: _t,
+        builder: (context, _) {
+          final p = Curves.easeInOutCubic.transform(_photoT);
+          final photoRect = Rect.lerp(
+              from, Rect.fromCenter(center: album, width: 28, height: 28), p)!;
+          return Stack(
+            children: [
+              if (_photoT < 1)
+                Positioned.fromRect(
+                  rect: photoRect,
+                  child: Opacity(
+                    opacity: 1 - 0.6 * p,
+                    child: ClipRRect(
+                      borderRadius:
+                          BorderRadius.circular(MRadii.xxl * (1 - p) + 6 * p),
+                      child: PhotoImage(widget.photo, fit: BoxFit.cover),
+                    ),
+                  ),
+                ),
+              for (var i = 0; i < words.length; i++)
+                if (_wordT(i) > 0 && _wordT(i) < 1)
+                  _flyingWord(
+                    words[i],
+                    Offset(
+                        from.left + from.width * (i + 1) / (words.length + 1),
+                        from.center.dy),
+                    book,
+                    _wordT(i),
+                  ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _flyingWord(String word, Offset start, Offset end, double t) {
+    final e = Curves.easeInCubic.transform(t);
+    // A small arc up before it drops into the tab.
+    final at =
+        Offset.lerp(start, end, e)! - Offset(0, 60 * math.sin(math.pi * t));
+    return Positioned(
+      left: at.dx,
+      top: at.dy,
+      child: FractionalTranslation(
+        translation: const Offset(-0.5, -0.5),
+        child: Transform.scale(
+          scale: 1 - 0.6 * e,
+          child: Opacity(
+            opacity: t > 0.8 ? (1 - t) / 0.2 : 1,
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: MSpace.sm, vertical: 6),
+              decoration: MDecor.primaryPill(radius: MRadii.xl),
+              child: Text(word,
+                  style: MFont.manrope(14, FontWeight.w800, Colors.white)),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

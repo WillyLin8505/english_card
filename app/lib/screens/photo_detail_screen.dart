@@ -47,7 +47,8 @@ String relativeDifficulty(int offset) => switch (offset) {
 /// the dial moves; drag a pin to put it on the right spot; tap a pin to
 /// correct it or delete a wrong one; 自己加字 adds a word the AI missed,
 /// placed with a tap on the photo (問題回報 #323). There is no 建立 button
-/// — leaving the page saves the list and creates the cards.
+/// — leaving the page saves the list and creates the cards; a photo just
+/// taken also has 儲存, which saves and goes back to 拍照 (問題回報 #850).
 class PhotoDetailScreen extends StatefulWidget {
   final String photoId;
 
@@ -148,6 +149,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
   void _startSession() {
     final scope = _scope;
     if (scope == null || _session != null) return;
+    _fresh = scope.repository.photo(widget.photoId)?.wordsSavedAt == null;
     _session = PhotoWordSession(
       repo: scope.repository,
       photoId: widget.photoId,
@@ -218,9 +220,10 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
     final scope = _scope;
     if (session != null) {
       session.removeListener(_changed);
+      final saved = _savedByButton;
       // Not while the tree is being torn down: other screens rebuild.
       scheduleMicrotask(() {
-        _saveWith(session, scope);
+        if (!saved) _saveWith(session, scope);
         session.dispose();
       });
     }
@@ -231,7 +234,60 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
     if (mounted) setState(() {});
   }
 
-  void _save() => _saveWith(_session, _scope);
+  /// Saved with 儲存 (問題回報 #850): leaving afterwards saves nothing more.
+  void _save() {
+    if (!_savedByButton) _saveWith(_session, _scope);
+  }
+
+  /// 問題回報 #850: a photo still waiting for its first save (just taken)
+  /// shows 儲存; fixed when the page opens so it stays while it animates.
+  bool _fresh = false;
+  bool _savedByButton = false;
+
+  /// 問題回報 #850 「給我一個儲存的按鈕…單字一個個跳到單字庫裡面，圖片跳到相片冊，
+  /// 然後畫面會到拍照的地方」: saves the labels, flies the words to 單字本
+  /// and the photo to 相片冊 (a tap skips it; with reduced motion only a
+  /// toast), then opens 拍照.
+  void _saveAndLeave(Photo photo, PhotoWordSession session) {
+    final scope = _scope;
+    if (scope == null || _savedByButton) return;
+    _saveWith(session, scope);
+    setState(() => _savedByButton = true);
+    final nav = Navigator.of(context);
+    void done() {
+      scope.navigator.selectTab(AppTab.camera);
+      // The album tab shows the album (with this photo) next time.
+      if (nav.mounted && nav.canPop()) nav.pop();
+    }
+
+    if (MediaQuery.disableAnimationsOf(context)) {
+      showToast(context, '已儲存到單字本和相片冊');
+      done();
+      return;
+    }
+    final box = _photoKey.currentContext?.findRenderObject() as RenderBox?;
+    final from = box == null || !box.hasSize
+        ? null
+        : box.localToGlobal(Offset.zero) & box.size;
+    final overlay = Overlay.maybeOf(context, rootOverlay: true);
+    if (from == null || overlay == null) {
+      done();
+      return;
+    }
+    late final OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (_) => _SaveFlight(
+        words: [for (final w in session.words) _shown(w.word, w.candidate.pos)],
+        photo: photo,
+        from: from.deflate(MSpace.md),
+        onDone: () {
+          entry.remove();
+          done();
+        },
+      ),
+    );
+    overlay.insert(entry);
+  }
 
   static void _saveWith(PhotoWordSession? session, AppScope? scope) {
     if (session == null || scope == null) return;
@@ -712,11 +768,32 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
         (photo.taggingStatus == TaggingStatus.tagging &&
             photo.candidates.isEmpty)) {
       // 問題回報 #409: a light bar sweeps the photo while it is read.
+      // 問題回報 #851: says what is happening — 「AI 正在找單字…」.
       return const Stack(
         children: [
-          _PhotoBadgeOverlay(icon: null, text: 'AI 辨識中…'),
+          _PhotoBadgeOverlay(icon: null, text: 'AI 正在找單字…'),
           Positioned.fill(child: PhotoScanSweep()),
         ],
+      );
+    }
+    // 問題回報 #851: a rescan or a top-up (多看動詞…) is tagging too — the
+    // labels stay usable, with the sweep and the same note on top until
+    // the AI answers.
+    if (session.rescanning ||
+        session.fetchingMore != null ||
+        scope.queue.isToppingUp(photo.id)) {
+      return const IgnorePointer(
+        child: Stack(
+          children: [
+            Positioned.fill(child: PhotoScanSweep()),
+            Positioned(
+              top: MSpace.sm,
+              left: 0,
+              right: 0,
+              child: Center(child: _PhotoScanningChip()),
+            ),
+          ],
+        ),
       );
     }
     if (photo.taggingStatus == TaggingStatus.pending &&
@@ -882,6 +959,18 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // 問題回報 #850: a photo just taken gets a 儲存 button — it
+                // saves these labels and shows where they went.
+                if (_fresh) ...[
+                  const SizedBox(height: 8),
+                  PrimaryButton(
+                    key: const ValueKey('photo-save'),
+                    label: '儲存',
+                    onTap: session.words.isEmpty || _savedByButton
+                        ? null
+                        : () => _saveAndLeave(photo, session),
+                  ),
+                ],
                 // 問題回報 #276: the "no 建立 button, leaving saves" rule used to sit
                 // under all five words; #451 (owner 10/21) moved it below the list too.
                 const SizedBox(height: 8),

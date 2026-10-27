@@ -184,6 +184,9 @@ void main() {
       await openBreakfast(tester);
       await tester.tapAt(_barLevel(tester, 1));
       await tester.pumpAndSettle();
+      // 問題回報 #848: rows show the whole word and IPA, so they are taller.
+      await tester.ensureVisible(find.text('為什麼是這些字？'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('為什麼是這些字？'));
       await tester.pumpAndSettle();
       expect(find.textContaining('程度適配'), findsWidgets);
