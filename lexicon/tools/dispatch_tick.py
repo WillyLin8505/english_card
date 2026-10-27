@@ -717,8 +717,18 @@ class Tick:
             return False
         status = {i["id"]: i.get("status") for i in items}
         changed = False
+        asks = self.state.get("asks") or {}
         for i in items:
             title = str(i.get("title") or "")
+            # 10/27: an answered decision with no waiting card kept its 「[待決定]」 title, so the
+            # swarm skipped it for good (#485 #484 #556 #561 #558 #580). It becomes owner work.
+            if (i.get("decision") and title.startswith("[待決定]") and str(i["id"]) not in asks
+                    and i.get("status") in ("open", "needs_decision")):
+                self.write("PUT", f"/issues/{i['id']}", {"by": "Grokbot", "status": "open",
+                           "title": re.sub(r"^\[待決定\]\s*", "[owner] ", title)}, "answered decision → owner work")
+                log(f"#{i['id']}: answered decision → [owner] issue")
+                changed = True
+                continue
             if (i.get("status") not in ("open", "needs_decision") or i.get("decision")
                     or not (i.get("kind") == "decision" or "[待決定]" in title)):
                 continue

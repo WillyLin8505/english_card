@@ -402,6 +402,12 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_saf
         return index
 
     senses_index = index_rows(m.Sense, lambda row: row.sense_key)
+    # Explicit reviewed translations must survive export even when the resolved
+    # field still contains the original dictionary text (card #673).
+    translation_overrides = {row.sense_id: row for row in s.scalars(
+        select(m.SenseTranslation).where(
+            m.SenseTranslation.native_language == native,
+            m.SenseTranslation.is_override.is_(True)))}
     examples_index = index_rows(m.Example, lambda row: row.text_hash)
     relations_index = index_rows(m.LexemeRelation,
                                 lambda row: (row.relation, row.target_word.lower()))
@@ -486,6 +492,10 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_saf
             ord_by_lx[sense.lexeme_id] = n + 1
             reg = registers.get(sk) or {}
             tr = native_def.get(sk)
+            override = translation_overrides.get(sense.id)
+            if override is not None and (want is None or "native_definition" in want):
+                tr = {"text": override.text, "source": override.source,
+                      "ai": override.is_ai}
             labels = list(it.get("labels") or [])
             # 卡 #524: a sexual/excretory definition without a dictionary label counts as vulgar.
             if target != "en" and not (set(labels) & STORE_UNSAFE_LABELS) and unsafe_gloss(it.get("gloss")):
@@ -518,7 +528,7 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_saf
                 con.execute("INSERT INTO sense_translations VALUES (?,?,?,?,?)",
                             (sense.id, native_text, tr.get("source", ""),
                              int(bool(tr.get("ai"))),
-                             int(tr.get("source") == "user")))
+                             int(override is not None or tr.get("source") == "user")))
                 used(tr.get("source"))
                 counts["sense_translations"] += 1
         # forms
