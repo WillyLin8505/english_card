@@ -8,7 +8,6 @@ import 'package:share_plus/share_plus.dart';
 import '../app/app_scope.dart';
 import '../models/word_entry.dart';
 import '../services/word_database_query.dart';
-import '../services/word_database_repository.dart';
 import '../theme/mobile_theme.dart';
 import '../widgets/mobile/common.dart';
 import '../widgets/mobile/dialogs.dart';
@@ -41,13 +40,14 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
   bool _onlyLearning = false;
   final Set<String> _selected = {};
 
-  /// Set when the update notice was on screen: leaving the 單字本 ends it,
-  /// so it shows once (問題回報 #300).
-  WordDatabaseRepository? _noticeShownIn;
+  /// 問題回報 #712: the update notice and its list of words stay until the
+  /// learner taps 知道了 or closes the notice — leaving the 單字本 or opening
+  /// one of the words no longer ends it (it used to, 問題回報 #300, and the
+  /// other updated words could not be found again).
+  static const _gotIt = '';
 
   @override
   void dispose() {
-    _noticeShownIn?.dismissPackUpdateNotice(notify: false);
     _search.dispose();
     super.dispose();
   }
@@ -73,8 +73,9 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
     showToast(context, '已新增「${entry.word}」，例句與翻譯會在背景補上。');
   }
 
-  /// Which words the dictionary update filled in (問題回報 #300); seeing
-  /// the list ends the one-time notice, and a word opens its detail.
+  /// Which words the dictionary update filled in (問題回報 #300); a word
+  /// opens its detail and the list stays for the others; only 知道了 ends
+  /// the notice (問題回報 #712).
   Future<void> _showFilled(Map<String, Set<String>> filled) async {
     final scope = AppScope.of(context);
     final repo = scope.repository;
@@ -107,14 +108,17 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
         ),
         actions: [
           FilledButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => Navigator.of(context).pop(_gotIt),
               child: const UiText('知道了')),
         ],
       ),
     );
-    if (!mounted) return;
-    repo.dismissPackUpdateNotice();
-    if (open != null) scope.navigator.openWord(open);
+    if (!mounted || open == null) return;
+    if (open == _gotIt) {
+      repo.dismissPackUpdateNotice();
+    } else {
+      scope.navigator.openWord(open);
+    }
   }
 
   void _share(List<DatabaseRow> rows) {
@@ -149,7 +153,6 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
         final slice = PageSlice.of(rows, _page, _pageSize);
         _selected.removeWhere((id) => !rows.any((r) => r.id == id));
         final notice = packUpdateSummary(repo.filledByUpdate);
-        if (notice != null) _noticeShownIn = repo;
 
         return Scaffold(
           backgroundColor: MColors.canvas,
@@ -205,11 +208,15 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
                                       const Icon(Icons.add_rounded,
                                           color: Colors.white, size: 18),
                                       const SizedBox(width: MSpace.xxs),
-                                      Flexible(child: UiText('新增單字',
-                                          textAlign: TextAlign.center,
-                                          maxLines: 2, overflow: TextOverflow.ellipsis,
-                                          style: MFont.manrope(
-                                              14, FontWeight.w700, Colors.white))),
+                                      Flexible(
+                                          child: UiText('新增單字',
+                                              textAlign: TextAlign.center,
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: MFont.manrope(
+                                                  14,
+                                                  FontWeight.w700,
+                                                  Colors.white))),
                                     ],
                                   ),
                                 ),
@@ -237,11 +244,15 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
                                       const Icon(Icons.school_rounded,
                                           color: MColors.primary, size: 18),
                                       const SizedBox(width: MSpace.xxs),
-                                      Flexible(child: UiText('開始複習',
-                                          textAlign: TextAlign.center,
-                                          maxLines: 2, overflow: TextOverflow.ellipsis,
-                                          style: MFont.manrope(
-                                              14, FontWeight.w700, MColors.primary))),
+                                      Flexible(
+                                          child: UiText('開始複習',
+                                              textAlign: TextAlign.center,
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: MFont.manrope(
+                                                  14,
+                                                  FontWeight.w700,
+                                                  MColors.primary))),
                                     ],
                                   ),
                                 ),
@@ -426,9 +437,7 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
                       style: MFont.titleSm.copyWith(color: MColors.ink)),
                   const SizedBox(height: MSpace.xxs),
                   UiText(
-                      owned
-                          ? '請嘗試調整搜尋關鍵字或進階篩選條件'
-                          : '去拍照，或到卡片集下載卡片集，單字就會出現在這裡',
+                      owned ? '請嘗試調整搜尋關鍵字或進階篩選條件' : '去拍照，或到卡片集下載卡片集，單字就會出現在這裡',
                       textAlign: TextAlign.center,
                       style: MFont.bodyMuted),
                 ],
@@ -439,7 +448,11 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
               key: ValueKey(row.id),
               word: row.entry.word,
               meaning: row.entry.meaning,
-              usageBadge: {if (row.entry.entryType != 'word') entryTypeLabel(row.entry.entryType), ...row.entry.partsOfSpeech.map(posLabel)}.join('・'),
+              usageBadge: {
+                if (row.entry.entryType != 'word')
+                  entryTypeLabel(row.entry.entryType),
+                ...row.entry.partsOfSpeech.map(posLabel)
+              }.join('・'),
               level: row.entry.level,
               learned: row.status == StudyStatus.learned,
               dataFailed: row.entry.dataStatus == WordDataStatus.failed,
@@ -476,8 +489,8 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
               '第 $range 個，共 ${formatCount(slice.total)} 個',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: MFont.inter(12, FontWeight.w500, MColors.muted,
-                  height: 1.4),
+              style:
+                  MFont.inter(12, FontWeight.w500, MColors.muted, height: 1.4),
             ),
           ),
           FilterPill(
@@ -624,8 +637,8 @@ class _WordRow extends StatelessWidget {
                           missing.isEmpty
                               ? '部分內容待補齊'
                               : '待補：${missing.join('、')}',
-                          style: MFont.manrope(
-                              12, FontWeight.w600, MColors.label),
+                          style:
+                              MFont.manrope(12, FontWeight.w600, MColors.label),
                         ),
                       ),
                     ),
@@ -635,8 +648,8 @@ class _WordRow extends StatelessWidget {
             if (learned)
               const Padding(
                 padding: EdgeInsets.only(right: MSpace.xs),
-                child: Icon(Icons.check_circle,
-                    color: MColors.success, size: 18),
+                child:
+                    Icon(Icons.check_circle, color: MColors.success, size: 18),
               ),
             if (level != null) ...[
               // Flexible: "Upper intermediate (B2)" in English is wider

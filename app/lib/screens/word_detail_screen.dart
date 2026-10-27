@@ -213,8 +213,10 @@ class _WordBody extends StatelessWidget {
     // Same as the review back (issue #399): a word shown in an earlier
     // section (近義詞) is not repeated in a later one (衍生詞、相關詞).
     final shown = <String>{};
-    Widget relatedSection(String label, List<String> kinds,
-        ) {
+    Widget relatedSection(
+      String label,
+      List<String> kinds,
+    ) {
       final words = [
         for (final kind in kinds)
           for (final w in relatedWords(kind))
@@ -291,7 +293,8 @@ class _WordBody extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                    headword(entry.word, entry.language, pos: entry.pos,
+                    headword(entry.word, entry.language,
+                        pos: entry.pos,
                         inflections: [
                           for (final u in entry.effectiveUsages)
                             if (pack.lookup(entry.word, pos: u.pos)?.entry
@@ -421,8 +424,8 @@ class _WordBody extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(bottom: MSpace.xxs),
                       child: Text(meaning,
-                          style: MFont.manrope(
-                              17, FontWeight.w700, MColors.ink)),
+                          style:
+                              MFont.manrope(17, FontWeight.w700, MColors.ink)),
                     ),
                 ],
               ),
@@ -579,8 +582,8 @@ String mergeFormLabels(Iterable<String> labels) {
     }
     final dot = label.lastIndexOf('・', colon);
     if (dot > 0) grammar.add(label.substring(0, dot));
-    meanings.addAll(
-        label.substring(dot + 1).split('；').where((m) => m.isNotEmpty));
+    meanings
+        .addAll(label.substring(dot + 1).split('；').where((m) => m.isNotEmpty));
   }
   return [
     if (grammar.isNotEmpty) grammar.join('；'),
@@ -792,10 +795,17 @@ class _ArchiveButton extends StatelessWidget {
               Icon(archived ? Icons.undo_rounded : Icons.check_rounded,
                   size: 20, color: archived ? Colors.white : MColors.success),
               const SizedBox(width: MSpace.xs),
-              UiText(
-                archived ? '復原學習' : '標為已學會',
-                style: MFont.manrope(16, FontWeight.w800,
-                    archived ? Colors.white : MColors.success),
+              // 問題回報 #534: the French label overflowed at 375 pt (the
+              // end screen's forgotten words open this page).
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: UiText(
+                    archived ? '復原學習' : '標為已學會',
+                    style: MFont.manrope(16, FontWeight.w800,
+                        archived ? Colors.white : MColors.success),
+                  ),
+                ),
               ),
             ],
           ),

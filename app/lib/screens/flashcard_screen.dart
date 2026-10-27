@@ -73,8 +73,9 @@ String intervalLabel(int days) {
 /// The 複習 tab — one continuous run using the five exercise types in the
 /// learning-template spec. A successful answer reveals the shared card back,
 /// then Again / Hard / Good / Easy updates the single FSRS card.
-/// There is no card count, due count or score anywhere (spec section 1:
-/// 不做連勝、欠卡壓力或罪惡感設計); the run stops when no card is up.
+/// There is no due count or score anywhere (spec section 1:
+/// 不做連勝、欠卡壓力或罪惡感設計); a thin bar at the top shows how far
+/// today's share is (問題回報 #533); the run stops when no card is up.
 ///
 /// Keyboard: Space / Enter shows the answer, 1–4 grade.
 class FlashcardScreen extends StatefulWidget {
@@ -103,10 +104,10 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
   Object? _audioCard;
   Speaker? _speaker;
 
-  /// Cards graded in the run the learner just left, shown once on the
-  /// gentle end screen (spec §7's deferred 測驗結束畫面; card #217). Null
-  /// when there is nothing to show.
-  int? _lastRunReviewed;
+  /// The run the learner just left, shown once on the gentle end screen
+  /// (spec §7's deferred 測驗結束畫面; card #217; 問題回報 #534). Null when
+  /// nothing was graded.
+  ReviewRunSummary? _lastRun;
 
   @override
   void didChangeDependencies() {
@@ -158,7 +159,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     _session?.removeListener(_changed);
     _session?.dispose();
     _session = null;
-    _lastRunReviewed = null;
+    _lastRun = null;
     _start(focus: ids);
   }
 
@@ -274,18 +275,18 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
   /// graded ends on the end screen instead of straight back at the intro.
   void _end({bool summary = false}) {
     if (_session != null) _stopAudio();
-    final reviewed = _session?.reviewed ?? 0;
+    final run = _session?.summary;
     _session?.removeListener(_changed);
     _session?.dispose();
     _session = null;
-    _lastRunReviewed = summary && reviewed > 0 ? reviewed : null;
+    _lastRun = summary && run != null && run.reviewed > 0 ? run : null;
     if (mounted) {
       AppScope.of(context).navigator.setReviewing(false);
       setState(() {});
     }
   }
 
-  void _dismissSummary() => setState(() => _lastRunReviewed = null);
+  void _dismissSummary() => setState(() => _lastRun = null);
 
   /// Ends the run and leaves an album run's route (back to the album).
   void _leave() {
@@ -417,31 +418,36 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
               MNavBar(
                 title: '複習',
                 sideWidth: s == null || s.finished ? 48 : 104,
-                leading: s == null
-                    ? BackNavButton(
-                        onTap: _lastRunReviewed != null
-                            ? _dismissSummary
-                            : widget.albumId != null
-                                ? () => Navigator.of(context).pop()
-                                : () =>
-                                    scope.navigator.selectTab(AppTab.camera))
-                    : s.finished
-                        ? BackNavButton(onTap: () => _end(summary: true))
-                        : Row(mainAxisSize: MainAxisSize.min, children: [
-                            BackNavButton(onTap: () => _end(summary: true)),
-                            const SizedBox(width: 8),
-                            // 問題回報 #641: the card just graded, shown again.
-                            Opacity(
-                              opacity: s.canGoPrevious ? 1 : 0.35,
-                              child: NavIconButton(
-                                key: const ValueKey('previous-card'),
-                                label: '上一張卡片',
-                                icon: const Icon(Icons.undo_rounded,
-                                    size: 20, color: MColors.label),
-                                onTap: s.canGoPrevious ? s.goPrevious : null,
+                // 問題回報 #534: its own node, so 返回 is not merged into the
+                // screen once the end screen scrolls.
+                leading: Semantics(
+                  container: s == null || s.finished,
+                  child: s == null
+                      ? BackNavButton(
+                          onTap: _lastRun != null
+                              ? _dismissSummary
+                              : widget.albumId != null
+                                  ? () => Navigator.of(context).pop()
+                                  : () =>
+                                      scope.navigator.selectTab(AppTab.camera))
+                      : s.finished
+                          ? BackNavButton(onTap: () => _end(summary: true))
+                          : Row(mainAxisSize: MainAxisSize.min, children: [
+                              BackNavButton(onTap: () => _end(summary: true)),
+                              const SizedBox(width: 8),
+                              // 問題回報 #641: the card just graded, shown again.
+                              Opacity(
+                                opacity: s.canGoPrevious ? 1 : 0.35,
+                                child: NavIconButton(
+                                  key: const ValueKey('previous-card'),
+                                  label: '上一張卡片',
+                                  icon: const Icon(Icons.undo_rounded,
+                                      size: 20, color: MColors.label),
+                                  onTap: s.canGoPrevious ? s.goPrevious : null,
+                                ),
                               ),
-                            ),
-                          ]),
+                            ]),
+                ),
                 trailing: s == null || s.finished
                     ? null
                     : Row(mainAxisSize: MainAxisSize.min, children: [
@@ -466,23 +472,35 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
               ),
               Expanded(
                 child: s == null
-                    ? _lastRunReviewed != null
-                        ? _Finished(
-                            reviewed: _lastRunReviewed!,
-                            onDone: _dismissSummary)
+                    ? _lastRun != null
+                        ? _Finished(run: _lastRun!, onDone: _dismissSummary)
                         : _Intro(onStart: _start, fixedAlbumId: widget.albumId)
                     : s.finished
                         ? _Finished(
-                            reviewed: s.reviewed,
+                            run: s.summary,
                             onDone: widget.albumId != null ? _leave : _end)
-                        : CardLookScope(
-                            look: look,
-                            child:
-                                LayoutBuilder(builder: (context, constraints) {
-                              _reviewWidth = constraints.maxWidth;
-                              _precacheBackPhoto();
-                              return FlashcardCardView(session: s);
-                            })),
+                        // 問題回報 #533: the progress bar lies over the top
+                        // edge, so nothing below it moves.
+                        : Stack(children: [
+                            Positioned.fill(
+                              child: CardLookScope(
+                                  look: look,
+                                  child: LayoutBuilder(
+                                      builder: (context, constraints) {
+                                    _reviewWidth = constraints.maxWidth;
+                                    _precacheBackPhoto();
+                                    return FlashcardCardView(session: s);
+                                  })),
+                            ),
+                            if (s.progressTotal > 0)
+                              Positioned(
+                                  top: 0,
+                                  left: 0,
+                                  right: 0,
+                                  child: ReviewProgressBar(
+                                      done: s.progressDone,
+                                      total: s.progressTotal)),
+                          ]),
               ),
             ],
           ),

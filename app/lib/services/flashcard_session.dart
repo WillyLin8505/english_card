@@ -118,9 +118,54 @@ class FlashcardSession extends ChangeNotifier {
             ? null
             : {for (final p in repo.photosInAlbum(albumId)) p.id},
         _lexicon = lexicon ?? LexiconPack.instance {
+    // 問題回報 #533: the cards this run is for (today's share in its scope),
+    // for the progress bar at the top of the review screen.
+    _runCards = {
+      for (final c
+          in repo.eligibleCards(newLimit: newLimit, reviewLimit: reviewLimit))
+        if (_inRun(c.id)) c.id,
+    };
     repo.addListener(_repositoryChanged);
     _advance();
   }
+
+  // 問題回報 #533 #534: what the progress bar and the end screen count.
+  late final Set<String> _runCards;
+  int _runDone = 0;
+  int _runReturned = 0;
+  bool _countsForProgress = false;
+  bool _isReturn = false;
+  int _repractised = 0;
+  final _forgotten = <String>{};
+  final _gradedCards = <String>{};
+
+  /// 問題回報 #533: cards graded so far of [progressTotal].
+  int get progressDone => math.min(_runDone, progressTotal);
+
+  /// 問題回報 #533: today's cards in this run (a deleted card that never came
+  /// up drops out) plus every time a forgotten one comes back or will.
+  int get progressTotal {
+    var n = _runReturned;
+    for (final id in _runCards) {
+      final c = repo.card(id);
+      if (_shownAt.containsKey(id) || (c != null && !c.archived)) n++;
+    }
+    for (final id in _again.keys) {
+      if (_runCards.contains(id)) n++;
+    }
+    return n;
+  }
+
+  /// 問題回報 #534: the end screen's numbers for this run.
+  ReviewRunSummary get summary => ReviewRunSummary(
+        reviewed: _reviewed,
+        remembered: _gradedCards.difference(_forgotten).length,
+        repractised: _repractised,
+        forgottenWordIds: [
+          for (final id in _forgotten)
+            if (repo.card(id) case final c?) c.wordEntryId,
+        ],
+      );
 
   bool get _limited => newLimit != null || reviewLimit != null;
 
@@ -409,6 +454,11 @@ class FlashcardSession extends ChangeNotifier {
       _rating = false;
     }
     _reviewed++;
+    // 問題回報 #533 #534.
+    if (_countsForProgress) _runDone++;
+    if (_isReturn) _repractised++;
+    _gradedCards.add(id);
+    if (rating == Rating.again) _forgotten.add(id);
     _history.add(_snap());
     if (_history.length > _historyLimit) _history.removeAt(0);
     if (rating == Rating.again) {
@@ -438,7 +488,13 @@ class FlashcardSession extends ChangeNotifier {
     _exercise = null;
     _usageId = null;
     _senseId = null;
+    _isReturn = false;
     _cardId = _pick();
+    // 問題回報 #533: a run card's first time up, or a forgotten one back.
+    _countsForProgress = _cardId != null &&
+        _runCards.contains(_cardId) &&
+        (_isReturn || !_shownAt.containsKey(_cardId));
+    if (_isReturn && _runCards.contains(_cardId)) _runReturned++;
     if (_cardId != null) {
       _practice = continuous &&
           (_scheduledThisRun.contains(_cardId) ||
@@ -729,6 +785,7 @@ class FlashcardSession extends ChangeNotifier {
 
   String? _takeAgain(String id) {
     _again.remove(id);
+    _isReturn = true;
     _lastAgainReturn = _step;
     return id;
   }
@@ -904,7 +961,10 @@ class FlashcardSession extends ChangeNotifier {
             .eligibleCards(newLimit: newLimit, reviewLimit: reviewLimit)
             .where((c) => _inRun(c.id))
             .isEmpty) {
-      return _practiceQueue().where((c) => c.id != _cardId).take(cards).toList();
+      return _practiceQueue()
+          .where((c) => c.id != _cardId)
+          .take(cards)
+          .toList();
     }
     final eligible = [
       for (final c
@@ -1100,6 +1160,69 @@ class FlashcardSession extends ChangeNotifier {
     }
     return found;
   }
+}
+
+/// 問題回報 #534: what the end screen shows about one run.
+class ReviewRunSummary {
+  /// Every grade given, repeats and extra practice included.
+  final int reviewed;
+
+  /// Cards graded this run and never forgotten (Again) in it.
+  final int remembered;
+
+  /// Grades given to forgotten cards that came back (再練).
+  final int repractised;
+
+  /// Words forgotten this run, in the order they were forgotten.
+  final List<String> forgottenWordIds;
+
+  const ReviewRunSummary(
+      {required this.reviewed,
+      required this.remembered,
+      required this.repractised,
+      required this.forgottenWordIds});
+}
+
+/// 問題回報 #533: how a learner usually reviews — seconds per card and how
+/// often a card is forgotten (Again) — from their last [window] grades.
+/// With fewer than [minLogs] grades the defaults stand.
+({double secondsPerCard, double againRate}) reviewPace(
+    WordDatabaseRepository repo,
+    {int window = 200,
+    int minLogs = 20}) {
+  const defaultSeconds = 25.0, defaultAgainRate = 0.3;
+  final logs = repo.recentReviewLogs(window);
+  if (logs.length < minLogs) {
+    return (secondsPerCard: defaultSeconds, againRate: defaultAgainRate);
+  }
+  final again =
+      logs.where((l) => (l.requestedRating ?? l.rating) == Rating.again).length;
+  final durations = [
+    for (final l in logs)
+      if (l.durationMs case final ms? when ms > 0) ms / 1000
+  ]..sort();
+  final seconds = durations.length < minLogs
+      ? defaultSeconds
+      : durations[durations.length ~/ 2].clamp(10.0, 60.0).toDouble();
+  return (secondsPerCard: seconds, againRate: again / logs.length);
+}
+
+/// 問題回報 #533: minutes for [cards] cards, as a range. The low end is every
+/// card once; the high end adds the cards that are forgotten and come back:
+/// a forgotten card returns up to [FlashcardSession.maxAgainRepeats] times,
+/// each time forgotten again at the same rate, so a card is expected to
+/// come back p + p² + … times (p = [againRate]).
+({int low, int high}) reviewMinutes(int cards,
+    {required double secondsPerCard, required double againRate}) {
+  final p = againRate.clamp(0.0, 1.0);
+  var repeats = 0.0;
+  for (var k = 1; k <= FlashcardSession.maxAgainRepeats; k++) {
+    repeats += math.pow(p, k);
+  }
+  final low = math.max(1, (cards * secondsPerCard / 60).round());
+  final high =
+      math.max(low, (cards * secondsPerCard * (1 + repeats) / 60).round());
+  return (low: low, high: high);
 }
 
 /// The blank of a 句子填空: `_ _ _ _ _` for "apple", one per letter.
