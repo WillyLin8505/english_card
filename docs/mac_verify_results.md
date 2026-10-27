@@ -1492,3 +1492,10 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 |----|----|----|----|----|
 | M227 #665 圖 9564 重新匯出後 | 通過 | 已在 M225 用重新匯出的詞庫（f6d6cc77）驗過：night 在夜空、city 在城市燈光 | mac_verify_shots/2026-10-27/m225_image9564.png | — |
 | M227 其餘預設點標籤 | 通過 | 全庫還有 4,326 個預設點標籤由 Windows 卡 #631 續跑；App 已會把帶 point_ungrounded 或 point=null 的標籤當整張圖（03119aa5），跑完匯出後不用改 App |  | — |
+
+## 2026-10-27 M228（Mac）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M228 #666 詞條等級套覆寫表 | 通過 | App 自己更新的詞庫（f6d6cc77）noodle noun 是 B1 |  | — |
+| M228 進階單字・C1 重新產生 | 通過 | /api/decks/advanced-c1：400 字，已沒有 noodle、spoon、pillow、kettle、bucket（前幾個字是 self-worth、attorney、jersey、coverage…） |  | — |

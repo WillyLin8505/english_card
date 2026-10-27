@@ -2300,7 +2300,7 @@ commit `0f0f510f`（Windows：flutter analyze 無 error、01:30 +711 ~2: All tes
 - 卡 #665：問題回報 #765：[Mac] 2026-10-27 M222 #703 pointUngrounded（Mac：M22
   結果：9564 已在資料庫重新定位（night→天空框、city→天際線框）；Mac 驗到的是舊詞庫，需重新匯出後再驗。全庫仍有 4,326 個預設點無框標籤待跑（卡 #631 負責續跑，約 2,060 張）。
 
-## M228（2026-10-27 09:39）狀態：待做
+## M228（2026-10-27 09:39）狀態：完成
 commit `2d6faa96`（Windows：flutter analyze 無 error、01:20 +711 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #666：問題回報 #766：[owner] [Mac] 2026-10-27 M224（iPhone 模擬器，App 自己下載的
   結果：全部完成：卡 #607 的 150 字覆寫表也套到詞條等級——44 個詞條（含 noodle noun/verb C1→B1）改成 B1，進階單字 C1 集已重新產生（400 字，內含的 18 個降級字已換掉）。
