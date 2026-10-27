@@ -134,3 +134,31 @@ def test_case_variants_share_one_model_label(monkeypatch):
         return r.validate_reply(reply(words), words)
     monkeypatch.setattr(r, "ask", ask)
     assert len(r.locate(b"image", ["Tree", "tree"])) == 1
+
+
+@pytest.mark.parametrize("box", [[-10, 0, 400, 400], [400, 200, 100, 400], [0, 0, 1000, 1000], [0, 0, 20, 100]])
+def test_unreliable_boxes_never_become_whole_picture(box):
+    tags = [{"word": "pitch", "point": [0.5, 0.5]}]
+    with pytest.raises(ValueError):
+        r.relocated_tags(tags, tags, [{"word": "pitch", "visible": True, "box": box}])
+    assert tags == [{"word": "pitch", "point": [0.5, 0.5]}]
+
+
+def test_review_is_bound_to_image_tags_and_exact_proposal():
+    tags = [{"word": "pitch", "point": [0.5, 0.5]}]
+    p = {"id": 845, "fingerprint": r.fingerprint(tags),
+         "image_sha256": r.hashlib.sha256(b"image").hexdigest(),
+         "items": [{"word": "pitch", "visible": True, "box": [35, 478, 963, 520]}],
+         "reviewer": "", "approved_digest": ""}
+    with pytest.raises(ValueError, match="Visual review"):
+        r.reviewed_items(p, 845, tags, b"image")
+    p["reviewer"] = "test reviewer"
+    p["approved_digest"] = r.review_digest(p)
+    assert r.reviewed_items(p, 845, tags, b"image") == p["items"]
+    with pytest.raises(ValueError, match="stale"):
+        r.reviewed_items(p, 845, tags, b"changed image")
+    with pytest.raises(ValueError, match="stale"):
+        r.reviewed_items(p, 845, tags + [{"word": "new"}], b"image")
+    p["items"][0]["box"][0] = 100
+    with pytest.raises(ValueError, match="Visual review"):
+        r.reviewed_items(p, 845, tags, b"image")
