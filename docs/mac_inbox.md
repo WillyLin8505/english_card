@@ -2744,3 +2744,9 @@ commit `e5da0efc`（Windows：flutter analyze 無 error、01:38 +743 ~2: All tes
   結果：已轉給 Mac：#851 是照片詳情畫面「還在打標籤」動畫要更清楚，屬 App 畫面，Windows 卡不改（資料 0 筆變動）。
 - 卡 #713：問題回報 #852：[給 Mac] [意見回饋] 照片詳情：我來回滑動bar的時候 我的標籤應該都是固定呈現的 但我發現
   結果：此卡是 App 畫面／互動問題（照片詳情滑桿來回拉時標籤亂跳），依分工（#626）屬 Mac，本卡未改任何資料或程式。
+
+## M292（2026-10-27 23:29）狀態：待做（Windows 卡 #716 交給 Mac 的 App 畫面部分）
+卡：問題回報 #855：[Mac] 2026-10-27 M286 TestFlight＋Azure 播放順序（Ma：M286 TestFlight
+
+owner 完成後由 Mac 跑 testflight.sh 驗證上傳。
+- 沒有資料變動，無備份；golden/QC 未跑（無改動）。
