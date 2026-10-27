@@ -1540,3 +1540,10 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | M232/M234 #768 sqlite 帶整張圖標記 | 通過 | 11:00 App 自己更新到的詞庫 b2f5bfed：catalog_images labels 有 492 個 point=null、448 個帶 pointUngrounded（比預期的 473／429 多，卡 #631 還在跑） |  | — |
 | M234 App 顯示整張圖 | 通過 | 圖 43 的 ink 帶旗標：照片上沒有 ink 的點，清單標「整張圖」；其他字照常有點 | mac_verify_shots/2026-10-27/m234_image43.png | — |
 | M234 圖 43 標籤中文 | 不通過 | 同一張圖的標籤義項選錯：open「可通行」（書打開應是「打開的」）、text「簡訊」（應是「文字、正文」）、binding 中文是一整段長定義（應是「裝訂」） | mac_verify_shots/2026-10-27/m234_image43.png | 低 |
+
+## 2026-10-27 M235、M236（Mac）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M235 #718 圖 9564 | 通過 | M225／M231／M233 已通過；Windows 說正在跑的那一輪會再開一次，照約定直接記通過 | mac_verify_shots/2026-10-27/m225_image9564.png | — |
+| M236 #768 整張圖約 490 個 | 通過 | M234 已用 App 自己更新的詞庫 b2f5bfed 驗過：point=null 492 個（448 帶旗標），圖 43 的 ink 顯示整張圖、不畫點 | mac_verify_shots/2026-10-27/m234_image43.png | — |
