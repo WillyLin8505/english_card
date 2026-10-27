@@ -1477,3 +1477,11 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 |----|----|----|----|----|
 | M224 #607 圖片標籤降到 B1 | 通過 | 模擬器 App 自己更新詞庫（版本 01f91fa3→4e7f1646），Windows 說 5,140 個圖片標籤已降為 B1；App 照片詳情的等級跟著標籤走 |  | — |
 | M224 noodle 詞條等級 | 不通過 | 新詞庫裡 noodle noun 的詞條等級仍是 C1（verb C2），只有圖片標籤改了；單字詳情、單字集（進階 C1）仍會把 noodle 當 C1。請把 150 字覆寫表也套到詞條 cefr（spoon A2、pillow B1、kettle B1 正常） |  | 中 |
+
+## 2026-10-27 M225、M226（iPhone 模擬器，App 自己更新的詞庫 f6d6cc77）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M225 #765 圖 9564 night／city | 通過 | 重新匯出後 night@[0.5,0.225] 在夜空、city@[0.5,0.66] 在背景城市燈光，不再是預設點 | mac_verify_shots/2026-10-27/m225_image9564.png | — |
+| M226 #743 tear「撕裂處」 | 通過 | tear noun 第二義「A hole or break caused by tearing」＝撕裂處；第一義淚、眼淚 |  | — |
+| M224 noodle 詞條等級（重驗） | 通過 | 同一份詞庫 noodle noun 已是 B1 |  | — |
