@@ -10,7 +10,7 @@ added unless it is a database synonym of one that is shown.
 
 grid = {"version": 1, "rows": [...], "levels": [...],
         "cells": [{"pos", "cefr", "words": [{"word", "concept_id", "anchor",
-                                              "source": "photo" | "lexicon"}]}]}
+                                              "source": "photo" | "lexicon" | "related"}], "empty_reason"?}]}
 """
 from __future__ import annotations
 
@@ -26,6 +26,16 @@ SYNONYMS_PER_CONCEPT = 3
 # WordNet / Wiktionary links of strength >= 0.8 only: Datamuse and AI-guessed ones are loose.
 MIN_STRENGTH = 0.8
 SYNONYM_SOURCES = ("oewn", "kaikki")
+# Card #722 (問題回報 #863): every cell should hold a word. Cells still empty after the
+# synonyms are filled from the database's own word web around the shown words
+# (hypernym / hyponym / related / derived / synonym links, up to FILL_HOPS steps away).
+# Meaning links first; "related" and "derived_terms" are looser and only break ties last.
+FILL_RELATIONS = {"synonyms": 0, "hypernyms": 1, "hyponyms": 1, "related": 2, "derived_terms": 3}
+FILL_HOPS = 2
+# hops + link kind above; looser chains (a related word of a related word) are not offered.
+FILL_MAX_COST = 3
+FILL_FANOUT = 400
+EMPTY_REASON = "這張照片沒有合適的字"
 _DB_POS = {"verb": "verb", "noun": "noun", "adjective": "adj", "adverb": "adv"}
 _TAG_POS = {"n": "noun", "v": "verb", "a": "adjective", "adj": "adjective", "adv": "adverb",
             "d": "adverb", "p": "phrase"}
@@ -92,6 +102,74 @@ def _synonyms(s, lexeme_ids: list[int], pos: str) -> list[tuple[str, str]]:
     return [(w, c) for w, (_, c) in sorted(found.items(), key=lambda kv: (-kv[1][0], kv[0]))]
 
 
+def _cell_row(lex) -> str | None:
+    """The grid row a database entry belongs in (multi-word entries are phrases)."""
+    if " " in lex.normalized:
+        return "phrase"
+    return next((r for r, p in _DB_POS.items() if p == lex.pos), None)
+
+
+def _fill_gaps(s, cells, taken, concepts) -> None:
+    """Put one word of the right part of speech and level into each empty cell: the
+    nearest database entry (fewest link steps, then strongest link) around a word the
+    photo shows. The word keeps that concept's anchor; source is "related"."""
+    empty = {k for k, v in cells.items() if not v}
+    if not empty or not concepts:
+        return
+    seen: dict[int, tuple[int, float, tuple]] = {}  # lexeme id -> (hops, -strength, concept)
+    for concept in concepts:
+        _, row, word, _, _ = concept
+        for lid in _lexeme_ids(s, word, row):
+            seen[lid] = (0, 0.0, concept)
+    best: dict[tuple[str, str], tuple[tuple, str, tuple]] = {}
+    frontier = list(seen)
+    for hop in range(1, FILL_HOPS + 1):
+        if not frontier or not empty:
+            break
+        links = []
+        for col, other in ((m.LexemeRelation.lexeme_id, m.LexemeRelation.target_lexeme_id),
+                           (m.LexemeRelation.target_lexeme_id, m.LexemeRelation.lexeme_id)):
+            links += s.execute(select(col, other, m.LexemeRelation.strength,
+                                      m.LexemeRelation.relation).where(
+                col.in_(frontier), m.LexemeRelation.relation.in_(list(FILL_RELATIONS))).limit(
+                FILL_FANOUT * len(frontier))).all()
+        found: dict[int, tuple[int, float, tuple]] = {}
+        for src, dst, strength, relation in links:
+            if dst in seen:
+                continue
+            cand = (hop + FILL_RELATIONS[relation], -float(strength or 0), seen[src][2])
+            if cand[0] > FILL_MAX_COST:
+                continue
+            if dst not in found or cand[:2] < found[dst][:2]:
+                found[dst] = cand
+        if not found:
+            break
+        lexes = {l.id: l for l in s.scalars(select(m.Lexeme).where(
+            m.Lexeme.id.in_(list(found)), m.Lexeme.language == "en", m.Lexeme.status == "full"))}
+        with_zh = set(s.scalars(select(m.Sense.lexeme_id).join(
+            m.SenseTranslation, m.SenseTranslation.sense_id == m.Sense.id).where(
+            m.Sense.lexeme_id.in_(list(lexes)), m.SenseTranslation.native_language == "zh-TW",
+            m.SenseTranslation.text != "")))
+        for lid, cand in found.items():
+            seen[lid] = cand
+            lex = lexes.get(lid)
+            if lex is None or lid not in with_zh or lex.cefr not in LEVELS:
+                continue
+            row = _cell_row(lex)
+            key = (row, lex.cefr)
+            if row is None or key not in empty or (row, lex.normalized) in taken:
+                continue
+            rank = (cand[0], cand[1], lex.normalized)
+            if key not in best or rank < best[key][0]:
+                best[key] = (rank, lex.normalized, cand[2])
+        frontier = list(found)
+        empty -= set(best)
+    for (row, level), (_, word, concept) in best.items():
+        cells[(row, level)].append({"word": word, "concept_id": concept[0], "anchor": concept[4],
+                                    "source": "related"})
+        taken.add((row, word))
+
+
 def build_grid(s, tags: list[dict] | None) -> dict:
     """The grid of a photo's labels (``tags`` need word, pos, cefr, point/box)."""
     cells = {(r, c): [] for r in ROWS for c in LEVELS}
@@ -125,5 +203,8 @@ def build_grid(s, tags: list[dict] | None) -> dict:
             added += 1
             if added >= SYNONYMS_PER_CONCEPT:
                 break
+    _fill_gaps(s, cells, taken, concepts)
     return {"version": GRID_VERSION, "rows": ROWS, "levels": LEVELS,
-            "cells": [{"pos": r, "cefr": c, "words": cells[(r, c)]} for r in ROWS for c in LEVELS]}
+            "cells": [{"pos": r, "cefr": c, "words": cells[(r, c)],
+                       **({} if cells[(r, c)] else {"empty_reason": EMPTY_REASON})}
+                      for r in ROWS for c in LEVELS]}
