@@ -1689,3 +1689,11 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
 |----|----|----|----|----|
 | M257 #818 重啟 tagger | 通過 | owner 選 A（現在重啟，小心不要重複開 llama-server），Mac 已轉給 Windows；重啟後 Mac 在 iPhone 重驗 M203，另補一列 |  | — |
+
+## 2026-10-27 iPhone 12 重驗 M203（tagger 21:14 重啟後，#818）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M203／#818 補字等級（C2） | 通過 | photo-1792753703603088、排除 40：一般 architectural、congested、occupancy、atmospheric C1；harder iridescent C2、luminous、congregation、propulsion、architectural C1；actions congregate、abound C1、conspire C2；都有帶等級，沒回排除過的字，一次 3–5.6 秒 |  | — |
+| M203 仍有低於 C1 的字 | 不通過 | 一般補字仍回 pedestrian（noun，B2）；actions 只回 3 個 |  | 低 |
+| owner iPhone 學習語言 | 通過 | 21:15 起存的學習語言是法文（英文資料都在），owner 21:50 在設定切回英文後已存成 en；驗證後已重裝正式版 |  | — |
