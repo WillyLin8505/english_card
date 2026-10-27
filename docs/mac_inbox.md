@@ -2370,7 +2370,7 @@ QC：lexicon/logs/agents/card668_qc_before.json／after.json；golden 300 詞＋
 用新版 sqlite 重驗「整張圖」，pack 7462d91e（先前版本已有 Mac 通過紀錄）。
 完整 ETag：7462d91e1a330ef121acd778606b9fac2bad348907f08da6dd1fb16eb61a49d9。
 
-## M240（2026-10-27 12:57）狀態：待做（Windows 卡 #673 交給 Mac 的 App 畫面部分）
+## M240（2026-10-27 12:57）狀態：完成
 卡：問題回報 #782：[Mac] 2026-10-27 M238（iPhone 模擬器，App 自己更新的詞庫 7：M238 圖 43 義項
 
 owner 決定、重新套用方案並由既有排程重載服務後，更新詞庫再驗圖 43；本卡沒有自行重啟服務。
