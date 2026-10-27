@@ -2332,3 +2332,10 @@ QC：lexicon/logs/agents/card668_qc_before.json／after.json；golden 300 詞＋
 卡：問題回報 #718：[owner] [Mac] 2026-10-26 M150（owner 回報）：#703 標籤位置錯誤
 
 重驗圖 9564（night [0.5,0.4]、city [0.5,0.5]；已重定位為框，或標 point_ungrounded 顯示「整張圖」、不畫點），需 serve_app 重啟後的 pack。
+
+## M234（2026-10-27 10:53）狀態：待做（Windows 卡 #670 交給 Mac 的 App 畫面部分）
+卡：問題回報 #768：[owner] App 下載的 sqlite 詞庫沒帶「整張圖」標記：catalog_images 標籤的 pointUngrounded 
+
+用新版 sqlite（pack e2348cfd0fd9）重驗「整張圖」；App 應對 473 個 point=null 顯示整張圖，429 個有旗標的與 44 個無位置的一併看。
+- 問題回報 #768 的狀態沒有改，等 manager 結案。
+- 之後重啟 serve_app 時，要等 .runtime 裡目前 revision 目錄出現（或 ETag 變成新的）才驗證，否則讀到舊 pack。
