@@ -112,6 +112,10 @@ def expected_slots(field_key: str, ctx: Context) -> set[str] | None:
         # not required (they may stay without Chinese rather than a forced
         # translation). See text.native_sense_keys.
         from .text import native_sense_keys
+        if ctx.target != "en" and ctx.native == "en":
+            # French / Chinese -> English: the meaning is the English Wiktionary gloss, free, so
+            # every sense gets one (a part of speech of only informal senses, salut intj, had none; #676).
+            return {i["sense_key"] for i in ctx.items("definition") if i.get("sense_key")}
         return native_sense_keys(ctx.items("definition"))
     if field_key == "register":
         return {i["sense_key"] for i in ctx.items("definition") if i.get("sense_key")}
