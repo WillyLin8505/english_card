@@ -104,3 +104,6 @@ Line counts as of 2026-10-17. **Big files: search first, then read a range** (se
 | #5 標籤分級 | metric `label_levels` | `lexicon/tools/_card97_cefr_audit.py`, `recompute_photo_tag_cefr.py` |
 | #12 模擬使用者 | `python app/test/simulation/run_round.py` | `lexicon/docs/agents/simulation_usability.md` |
 | #38 相似詞只從已有字 | live audit | `lexicon/logs/agents/card38_cursor_audit.py`, `card38_live_audit.py` |
+
+## 下載完整詞庫（#742，owner 10/27 決定 A）
+`https://api.willylinai.com/api/lexicon` 完整 JSON 未壓縮約 600 MB，經 Cloudflare tunnel 要 90 秒以上，中途斷線會得到「HTTP 200 但 JSON 不完整」。伺服器有送 Content-Length（客戶端請比對收到的 bytes）。請帶 `Accept-Encoding: gzip`（約 81 MB，`curl --compressed`）或用 `format=sqlite`（約 57 MB，App 使用）。
