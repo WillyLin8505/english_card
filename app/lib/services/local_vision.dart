@@ -123,7 +123,9 @@ List<WordCandidate> candidatesFromLabels(
   final kept = known.take(maxCandidates).toList();
   return [
     for (final (i, c) in kept.indexed)
-      c.copyWith(point: spreadPoint(i, kept.length)),
+      // Fanned out on purpose (no positions from the classifier), so these
+      // keep their pins rather than count as whole-picture words (#703).
+      c.copyWith(point: spreadPoint(i, kept.length), grounded: true),
   ];
 }
 

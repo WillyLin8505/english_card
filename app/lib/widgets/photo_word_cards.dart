@@ -93,6 +93,9 @@ class _WordCard extends StatelessWidget {
   final String? ipa;
   final String zh;
   final String level;
+
+  /// A word about the whole picture, with no pin (問題回報 #703).
+  final bool wholePicture;
   final bool starred;
   final VoidCallback onTap;
   final VoidCallback onAudio;
@@ -104,6 +107,7 @@ class _WordCard extends StatelessWidget {
     required this.ipa,
     required this.zh,
     required this.level,
+    this.wholePicture = false,
     required this.starred,
     required this.onTap,
     required this.onAudio,
@@ -176,6 +180,20 @@ class _WordCard extends StatelessWidget {
                       UiText(levelLabel(level),
                           style: MFont.manrope(
                               11, FontWeight.w800, MColors.label)),
+                      if (wholePicture) ...[
+                        const SizedBox(width: MSpace.xs),
+                        // Same chip as the catalog pictures' (card #510).
+                        Container(
+                          key: ValueKey('whole-picture-$word'),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 1),
+                          decoration: BoxDecoration(
+                              color: MColors.surfaceSoft,
+                              borderRadius:
+                                  BorderRadius.circular(MRadii.sm)),
+                          child: UiText('整張圖', style: MFont.caption),
+                        ),
+                      ],
                     ],
                   ),
                 ],

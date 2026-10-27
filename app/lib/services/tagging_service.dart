@@ -199,12 +199,18 @@ List<WordCandidate> parseCandidates(
     if (!seen.add(word)) continue;
     final p = item['point'];
     final LabelPoint point;
+    // 問題回報 #703 / Windows 卡 #631: a word the model could not place
+    // (`pointUngrounded`, or no point at all) gets no invented (0.5, 0.5)
+    // pin — it is a whole-picture word.
+    var grounded = item['pointUngrounded'] != true &&
+        item['point_ungrounded'] != true;
     if (p is List && p.length >= 2) {
       point = LabelPoint(unit(p[0]), unit(p[1]));
     } else if (item['x'] is num && item['y'] is num) {
       point = LabelPoint(unit(item['x']), unit(item['y']));
     } else {
       point = const LabelPoint(0.5, 0.5);
+      grounded = false;
     }
     final pos = shortPos((item['pos'] as String?)?.trim().toLowerCase() ??
         (word.contains(' ') ? 'phrase' : 'noun'));
@@ -224,6 +230,7 @@ List<WordCandidate> parseCandidates(
       ipa: item['ipa'] as String? ?? resolved.ipa,
       evidence: (item['evidence'] as String? ?? '').trim(),
       point: point,
+      grounded: grounded,
       visualConfidence:
           num01(item['visualConfidence'] ?? item['visual_confidence']) ?? 0.7,
       usefulness: num01(item['usefulness']) ?? 0.5,

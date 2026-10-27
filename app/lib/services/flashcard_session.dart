@@ -754,6 +754,7 @@ class FlashcardSession extends ChangeNotifier {
           final point = label is Map ? label['point'] : null;
           final lex = id is num ? _lexicon.byId(id.toInt()) : null;
           if (lex == null ||
+              labelPointUngrounded(label as Map) ||
               point is! List ||
               point.length != 2 ||
               !point.every((p) => p is num && p.isFinite && p >= 0 && p <= 1)) {
@@ -1076,6 +1077,8 @@ class FlashcardSession extends ChangeNotifier {
       LabelPoint? anchor;
       for (final label in (image['labels'] as List? ?? [])) {
         if (label is! Map || label['lexeme_id'] != lexemeId) continue;
+        // 問題回報 #703: a whole-picture label gives the card no dot.
+        if (labelPointUngrounded(label)) continue;
         final point = label['point'];
         if (point is List &&
             point.length == 2 &&

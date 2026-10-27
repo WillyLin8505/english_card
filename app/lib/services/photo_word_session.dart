@@ -50,7 +50,11 @@ class OldWord {
   /// Swiped away as known (已學會) — gets a small 復原 button.
   final bool learned;
 
-  const OldWord(this.candidate, this.anchor, {required this.learned});
+  /// False for a whole-picture word (問題回報 #703): no muted pin either.
+  final bool placed;
+
+  const OldWord(this.candidate, this.anchor,
+      {required this.learned, this.placed = true});
 
   String get word => candidate.word;
 }
@@ -180,6 +184,7 @@ class PhotoWordSession extends ChangeNotifier {
       ipa: e.ipa,
       evidence: o.evidence ?? fromPool?.evidence ?? '',
       point: o.anchor,
+      grounded: o.placed || (fromPool?.grounded ?? true),
       visualConfidence: o.confidence ?? fromPool?.visualConfidence ?? 0.8,
       usefulness: fromPool?.usefulness ?? 0.6,
       inferred: fromPool?.inferred ?? false,
@@ -240,7 +245,11 @@ class PhotoWordSession extends ChangeNotifier {
     );
     final byWord = {for (final w in words) w.word: w};
     words = [
-      for (final c in sel.words) byWord[c.word] ?? SessionWord(c, c.point)
+      for (final c in sel.words)
+        byWord[c.word] ??
+            // 問題回報 #703 / Windows 卡 #631: a word the recognizer could
+            // not place is listed with no pin (saved unplaced).
+            SessionWord(c, c.point, placed: c.grounded)
     ];
     _selection = sel;
     if (allowTopUp) _maybeTopUp(sel);
@@ -483,7 +492,7 @@ class PhotoWordSession extends ChangeNotifier {
         point: c.point,
         evidence: c.evidence,
         visualConfidence: c.visualConfidence,
-      );
+      ).copyWith(grounded: c.grounded);
       if (words.any((o) => o != w && o.word == relinked.word)) {
         // Already on the list: the wrong label just goes.
         delete(w);
@@ -583,17 +592,20 @@ class PhotoWordSession extends ChangeNotifier {
   /// 長按辨識 (問題回報 #616): a word the AI found at [at], pinned there.
   /// The learner chose it (like 自己加字), but its meaning stays the
   /// pack's / AI's, not one the learner typed. A word already on the
-  /// photo moves to [at].
-  SessionWord addFound(WordCandidate found, LabelPoint at) {
+  /// photo moves to [at]. With no [at] (a whole-picture word picked from
+  /// the 詞性 × CEFR grid, 問題回報 #703) it is listed without a pin.
+  SessionWord addFound(WordCandidate found, LabelPoint? at) {
     final existing = words.where((w) => w.word == found.word).firstOrNull;
     if (existing != null) {
-      move(existing, at);
+      if (at != null) move(existing, at);
       return existing;
     }
-    final c = (pack.isEmpty ? found : pack.link(found)).copyWith(point: at);
+    // A real spot: grounded there whatever the crop's reply said (#703).
+    final linked = pack.isEmpty ? found : pack.link(found);
+    final c = at == null ? linked : linked.copyWith(point: at, grounded: true);
     _rejected.remove(c.word);
     _removed.remove(c.word);
-    final w = SessionWord(c, at, added: true, placed: true);
+    final w = SessionWord(c, c.point, added: true, placed: at != null);
     words.add(w);
     _dirty = true;
     notifyListeners();
@@ -638,7 +650,8 @@ class PhotoWordSession extends ChangeNotifier {
     for (final o in repo.occurrencesInPhoto(photoId)) {
       final e = repo.entry(o.wordEntryId);
       if (e == null || !repo.isArchived(e.id) || !seen.add(e.word)) continue;
-      out.add(OldWord(_candidateFor(e, o), o.anchor, learned: true));
+      out.add(OldWord(_candidateFor(e, o), o.anchor,
+          learned: true, placed: o.placed));
     }
     final learned = repo.profile.learned;
     final studying = _studyingElsewhere;
@@ -646,10 +659,10 @@ class PhotoWordSession extends ChangeNotifier {
       if (seen.contains(c.word) || words.any((w) => w.word == c.word)) continue;
       if (learned.contains(c.word)) {
         seen.add(c.word);
-        out.add(OldWord(c, c.point, learned: true));
+        out.add(OldWord(c, c.point, learned: true, placed: c.grounded));
       } else if (studying.contains(c.word)) {
         seen.add(c.word);
-        out.add(OldWord(c, c.point, learned: false));
+        out.add(OldWord(c, c.point, learned: false, placed: c.grounded));
       }
     }
     return out;
@@ -666,7 +679,7 @@ class PhotoWordSession extends ChangeNotifier {
             words.lastWhere((w) => !w.starred, orElse: () => words.last);
         words.remove(drop);
       }
-      words.add(SessionWord(o.candidate, o.anchor));
+      words.add(SessionWord(o.candidate, o.anchor, placed: o.placed));
     }
     _rejected.remove(o.word);
     _dirty = true;
@@ -712,7 +725,7 @@ class PhotoWordSession extends ChangeNotifier {
         if (studying.contains(c.word) &&
             c.visualConfidence >= 0.6 &&
             !c.inferred)
-          ListedWord(c, c.point),
+          ListedWord(c, c.point, placed: c.grounded),
     ];
     if (offset != p.difficultyOffset && offset != 0) {
       repo.recordSignal(DialSignal(offset));

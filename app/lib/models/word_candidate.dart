@@ -36,6 +36,14 @@ class WordCandidate {
   final String evidence;
   final LabelPoint point;
 
+  /// False when the recognizer could not place the word on the photo (問題
+  /// 回報 #703, Windows 卡 #631): the server marks `pointUngrounded` when
+  /// the model answered its default centre with no box for a scene word
+  /// (night, city, sky…), and a candidate with no point at all is the same.
+  /// Such a word is about the whole picture: listed, but no pin, and its
+  /// occurrence is saved unplaced. [point] is then only a placeholder.
+  final bool grounded;
+
   /// Where the word is printed, for words read from text in the photo
   /// (問題回報 #324); null for things recognized in the picture.
   final LabelBox? box;
@@ -70,6 +78,7 @@ class WordCandidate {
     this.ipa,
     this.evidence = '',
     required this.point,
+    this.grounded = true,
     this.box,
     this.visualConfidence = 0.5,
     this.usefulness = 0.5,
@@ -101,6 +110,7 @@ class WordCandidate {
     String? pos,
     String? meaning,
     LabelPoint? point,
+    bool? grounded,
     String? level,
     String? levelSource,
     int? Function()? lexemeId,
@@ -117,6 +127,7 @@ class WordCandidate {
         ipa: ipa,
         evidence: evidence,
         point: point ?? this.point,
+        grounded: grounded ?? this.grounded,
         box: box,
         visualConfidence: visualConfidence,
         usefulness: usefulness,
@@ -136,7 +147,11 @@ class WordCandidate {
         zipf: (j['zipf'] as num?)?.toDouble(),
         ipa: j['ipa'] as String?,
         evidence: j['evidence'] as String? ?? '',
-        point: LabelPoint.fromJson(j['point'] as Map<String, dynamic>),
+        point: j['point'] is Map
+            ? LabelPoint.fromJson(j['point'] as Map<String, dynamic>)
+            : const LabelPoint(0.5, 0.5),
+        // Saved before 問題回報 #703: every candidate had a real point.
+        grounded: j['point'] is Map && j['grounded'] != false,
         box: j['box'] == null
             ? null
             : LabelBox.fromJson(j['box'] as Map<String, dynamic>),
@@ -159,6 +174,7 @@ class WordCandidate {
         'ipa': ipa,
         'evidence': evidence,
         'point': point.toJson(),
+        if (!grounded) 'grounded': false,
         if (box != null) 'box': box!.toJson(),
         'visualConfidence': visualConfidence,
         'usefulness': usefulness,

@@ -1351,3 +1351,12 @@ String shownWord(String word, String language, {String? pos}) {
       inflections: hit == null ? const [] : pack.detailFor(hit).inflections,
       pos: pos ?? hit?.pos);
 }
+
+/// Whether a catalog picture's label (or a tagger candidate) was marked by
+/// the tagger as not really placed on the picture (問題回報 #703, Windows
+/// 卡 #631): the model answered its default centre with no box for a scene
+/// word (night, city, sky…). Such a label is treated like one with no
+/// point — no pin, 「整張圖」, skipped by the drag exercise. Both
+/// spellings are accepted (`pointUngrounded`, `point_ungrounded`).
+bool labelPointUngrounded(Map label) =>
+    label['pointUngrounded'] == true || label['point_ungrounded'] == true;
