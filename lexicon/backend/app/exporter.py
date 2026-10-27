@@ -59,7 +59,7 @@ CREATE INDEX ix_forms_normalized ON forms(normalized);
 CREATE TABLE audio (
   id INTEGER PRIMARY KEY, path TEXT NOT NULL, sha256 TEXT NOT NULL, mime TEXT,
   accent TEXT, speaker TEXT, license TEXT, attribution TEXT, source_url TEXT,
-  duration_s REAL, source_page TEXT);
+  duration_s REAL, source_page TEXT, source TEXT);
 CREATE TABLE pronunciations (
   lexeme_id INTEGER NOT NULL REFERENCES lexemes(id), kind TEXT NOT NULL, value TEXT,
   accent TEXT, audio_id INTEGER REFERENCES audio(id), is_default INTEGER NOT NULL DEFAULT 0,
@@ -618,10 +618,11 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_saf
                 if asset.id not in audio_ids:
                     audio_ids[asset.id] = {"path": asset.path, "sha256": asset.sha256,
                                            "bytes": asset.size_bytes, "mime": asset.mime}
-                    con.execute("INSERT INTO audio VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                    con.execute("INSERT INTO audio VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
                                 (asset.id, asset.path, asset.sha256, asset.mime, asset.accent,
                                  asset.speaker, asset.license, asset.attribution,
-                                 asset.source_url, asset.duration_s, asset.source_page))
+                                 asset.source_url, asset.duration_s, asset.source_page,
+                                 asset.source))
                     counts["audio"] += 1
                     if include_audio:
                         src = config.MEDIA / asset.path

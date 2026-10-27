@@ -53,7 +53,9 @@ def build(db_path: Path) -> dict:
             "license": a["license"] if a else None, "attribution": a["attribution"] if a else None,
             # 問題回報 #688: the App shows who recorded it and where from (#657).
             "speaker": a.get("speaker") if a else None,
-            "source_page": a.get("source_page") if a else None})
+            "source_page": a.get("source_page") if a else None,
+            # Card #695: azure_tts recordings are synthetic; the App labels them 「合成」.
+            "source": a.get("source") if a else None})
     for r in q("SELECT e.*, t.text AS translation, t.is_ai FROM examples e LEFT JOIN"
                " example_translations t ON t.example_id = e.id ORDER BY e.lexeme_id, e.ordinal"):
         by_lex[r["lexeme_id"]]["examples"].append({
