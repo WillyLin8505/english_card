@@ -2405,3 +2405,13 @@ commit `b73cc722`（Windows：flutter analyze 無 error、01:37 +711 ~2: All tes
 commit `635eed9c`（Windows：flutter analyze 無 error、01:29 +711 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #677：問題回報 #797：[Mac] 2026-10-27 M243（Mac）：M243 法語例句缺英譯
   結果：已修好匯出（等 serveapp 自動重啟後 pack 才會變）：法語 pack 缺英譯例句 7,878 → 預期 1 句。
+
+## M247（2026-10-27 15:55）狀態：待做（Windows 卡 #679 交給 Mac 的 App 畫面部分）
+卡：問題回報 #801：[Mac] 2026-10-27 M244（Windows 代跑法語模擬，main ab67：M244 沒有英文意思
+
+重新抓最新資料包驗證，無畫面改動。
+
+## M248（2026-10-27 15:55）狀態：待做（Windows 卡 #680 交給 Mac 的 App 畫面部分）
+卡：問題回報 #802：[Mac] 2026-10-27 M244（Windows 代跑法語模擬，main ab67：M244 名詞沒有冠詞／性別
+
+若選 B，畫面上加「也是名詞」提示由 Mac 實作。
