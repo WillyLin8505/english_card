@@ -2309,3 +2309,8 @@ commit `2d6faa96`（Windows：flutter analyze 無 error、01:20 +711 ~2: All tes
 卡：問題回報 #718：[owner] [Mac] 2026-10-26 M150（owner 回報）：#703 標籤位置錯誤
 
 重驗圖 9564（night 現為 [0,0,1,0.45] 天空框、city 為 [0,0.45,1,0.87] 天際線框，已不在人頭上）；重驗 point_ungrounded 標籤在 App 顯示「整張圖」、不畫點（待 serve_app 重啟後的 pack）。
+
+## M230（2026-10-27 10:07）狀態：待做
+commit `2eef0826`（Windows：flutter analyze 無 error、01:05 +711 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #667：問題回報 #767：[Mac] 2026-10-27 M229（iPhone 模擬器，詞庫 b185e52e）：M229
+  結果：不需改程式：匯出現在已帶旗標（最新快照 f227a317 有 5,898 處 pointUngrounded:true；DB 共 316 張圖／729 個標籤），Mac 驗的 b185e52e 是舊詞庫。
