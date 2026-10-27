@@ -95,6 +95,13 @@ class WordSelector {
 
   const WordSelector();
 
+  /// How far [level] is from [target] when a list short of [maxWords] is
+  /// filled from the nearest levels (問題回報 #442): the next level easier
+  /// first, then the next harder, and so on. Shared with the database
+  /// picture pages (問題回報 #763) so both fill the same way.
+  static int nearestLevelOrder(int level, int target) =>
+      (level - target).abs() * 2 + (level > target ? 1 : 0);
+
   static double levelFit(int candidateLevel, int target) =>
       switch (candidateLevel - target) {
         0 => 1.0,
@@ -269,10 +276,8 @@ class WordSelector {
     // 問題回報 #442: every position shows five labels when the photo has
     // them. Short of five, take the nearest levels whatever their fit score:
     // the next level easier first, then the next harder, and so on.
-    int distance(ScoredCandidate s) {
-      final lv = levelIndex(s.candidate.level);
-      return (lv - target).abs() * 2 + (lv > target ? 1 : 0);
-    }
+    int distance(ScoredCandidate s) =>
+        nearestLevelOrder(levelIndex(s.candidate.level), target);
 
     final nearest = [...scored]..sort((a, b) {
         final d = distance(a).compareTo(distance(b));

@@ -1228,13 +1228,17 @@ const _templateCopy = <String, (String, String)>{
     '{0} published words · synced with database',
     '{0} mots publiés · synchronisés avec le dictionnaire'
   ),
-  '{0}：{1} 張圖片有這個程度的標籤': (
-    '{0}: {1} photos with labels at this level',
-    '{0} : {1} photos avec étiquettes de ce niveau'
+  '{0}：{1} 張圖片有這個程度的標籤 · 不到 {2} 個字的從相近程度補': (
+    '{0}: {1} photos with labels at this level · under {2} words filled from nearby levels',
+    '{0} : {1} photos avec étiquettes de ce niveau · moins de {2} mots complétés par les niveaux voisins'
   ),
-  '{0}：{1} 張圖片有這個程度的標籤 · {2} 張的搜尋字在其他程度': (
-    '{0}: {1} photos with labels at this level · {2} match at another level',
-    '{0} : {1} photos avec étiquettes de ce niveau · {2} correspondent à un autre niveau'
+  '{0}：{1} 張圖片有這個程度的標籤 · 不到 {2} 個字的從相近程度補 · {3} 張的搜尋字在其他程度': (
+    '{0}: {1} photos with labels at this level · under {2} words filled from nearby levels · {3} match at another level',
+    '{0} : {1} photos avec étiquettes de ce niveau · moins de {2} mots complétés par les niveaux voisins · {3} correspondent à un autre niveau'
+  ),
+  '這個程度不到 {0} 個字，已從相近程度補上': (
+    'Fewer than {0} words at this level; filled from nearby levels',
+    'Moins de {0} mots à ce niveau ; complété par les niveaux voisins'
   ),
   '搜尋的字 {0} 在 {1}': (
     'Searched word {0} is at {1}',

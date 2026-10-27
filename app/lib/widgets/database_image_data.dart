@@ -102,12 +102,21 @@ List<(String word, String? level)> databaseSearchHits(
 }
 
 /// The level to switch to so the searched word shows, or null when it
-/// already shows at [level]. `('全部', null)` means the word has no level.
+/// already shows at [level] — its own tags or the ones borrowed from nearby
+/// levels (問題回報 #763). `('全部', null)` means the word has no level.
 ({String word, String? level})? databaseSearchElsewhere(
     Map<String, dynamic> image, LexiconPack pack, String query, String? level) {
   if (level == null) return null;
   final hits = databaseSearchHits(image, pack, query);
-  if (hits.isEmpty || hits.any((h) => h.$2 == level)) return null;
+  if (hits.isEmpty) return null;
+  final shown = {
+    for (final tag in databaseLevelTags(image, pack, level))
+      (
+        pack.byId((tag['lexeme_id'] as num).toInt())?.lemma ?? query.trim(),
+        databaseTagLevel(tag, pack)
+      )
+  };
+  if (hits.any(shown.contains)) return null;
   return (word: hits.first.$1, level: hits.first.$2);
 }
 
@@ -188,6 +197,39 @@ List<MapEntry<String?, List<Map<String, dynamic>>>> groupedDatabaseImageTags(
   ];
 }
 
+/// The tags a picture lists at [level] (問題回報 #763, owner chose A): its own
+/// tags at that level, and when they are fewer than [WordSelector.maxWords],
+/// tags from the nearest levels — easier first, then harder, the same order
+/// as 照片詳情 (WordSelector.nearestLevelOrder). A level with five or more
+/// tags of its own keeps them all. Unleveled tags are not borrowed; they
+/// show under 全部.
+List<Map<String, dynamic>> databaseLevelTags(
+    Map<String, dynamic> image, LexiconPack pack, String level) {
+  final target = levelIndex(level);
+  final own = <Map<String, dynamic>>[];
+  final nearby = <(int, int, Map<String, dynamic>)>[];
+  for (final tag in databaseImageTags(image)) {
+    final l = databaseTagLevel(tag, pack);
+    if (l == null) continue;
+    if (l == level) {
+      own.add(tag);
+    } else {
+      nearby.add((
+        WordSelector.nearestLevelOrder(levelIndex(l), target),
+        nearby.length,
+        tag
+      ));
+    }
+  }
+  if (own.length >= WordSelector.maxWords) return own;
+  nearby.sort((a, b) =>
+      a.$1 != b.$1 ? a.$1.compareTo(b.$1) : a.$2.compareTo(b.$2));
+  return [
+    ...own,
+    for (final t in nearby.take(WordSelector.maxWords - own.length)) t.$3
+  ];
+}
+
 /// A database picture as a photo the pinned view can show.
 Photo databasePhoto(Map<String, dynamic> image) {
   final resolved = resolvePackMedia(image['url'] as String);
@@ -206,11 +248,18 @@ Photo databasePhoto(Map<String, dynamic> image) {
 
 /// The vision model's labels on a database picture, as photo pins where it
 /// saw them: words in the lexicon first, with their Chinese. With [level],
-/// only labels whose approved tag is at that CEFR level (問題回報 #113).
+/// only labels whose approved tag is listed at that level (問題回報 #113):
+/// with [borrow] that includes the words filled in from nearby levels, so
+/// the pins match the list (問題回報 #763); without it, only the level's own.
 List<PinData> databasePins(Map<String, dynamic> image, LexiconPack pack,
-    {int? max, String? level}) {
-  final approvedIds = databaseImageTags(image)
-      .where((tag) => level == null || databaseTagLevel(tag, pack) == level)
+    {int? max, String? level, bool borrow = true}) {
+  final tags = level == null
+      ? databaseImageTags(image)
+      : borrow
+          ? databaseLevelTags(image, pack, level)
+          : databaseImageTags(image)
+              .where((tag) => databaseTagLevel(tag, pack) == level);
+  final approvedIds = tags
       .map((tag) => (tag['lexeme_id'] as num?)?.toInt())
       .whereType<int>()
       .toSet();

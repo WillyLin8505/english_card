@@ -82,6 +82,36 @@ Map<String, dynamic> leveledCatalog() => {
       ],
     };
 
+/// Picture 9 with four more A1 words, so A1 has five of its own and borrows
+/// nothing: a B1 search hit then stays at another level (問題回報 #763).
+Map<String, dynamic> fullA1Catalog() {
+  final catalog = leveledCatalog();
+  catalog['lexemes'] = [
+    ...catalog['lexemes'] as List,
+    for (var i = 20; i < 24; i++)
+      {
+        'id': i,
+        'lemma': 'word$i',
+        'normalized': 'word$i',
+        'pos': 'noun',
+        'status': 'full',
+        'cefr': 'A1',
+        'senses': [
+          {'id': i * 10, 'native': '字$i'}
+        ]
+      }
+  ];
+  final image = (catalog['catalog_images'] as List).first as Map;
+  image['tags'] = [
+    ...image['tags'] as List,
+    for (var i = 20; i < 24; i++)
+      {'lexeme_id': i, 'sense_id': i * 10, 'review_status': 'approved'}
+  ];
+  return catalog;
+}
+
+const fill = ' · 不到 5 個字的從相近程度補';
+
 void main() {
   testWidgets('我的相片冊：切換程度只換顯示的標籤，不改照片的單字與轉盤', (tester) async {
     final app = await pumpApp(tester, initialTab: AppTab.album);
@@ -128,15 +158,20 @@ void main() {
     setUp(() => LexiconPack.instance.loadJson(leveledCatalog()));
     tearDown(() => LexiconPack.instance.clear());
 
-    test('pins keep only the chosen level', () {
+    test('pins follow the listed words of the chosen level', () {
       final image = (leveledCatalog()['catalog_images'] as List).first
           as Map<String, dynamic>;
       final pack = LexiconPack.instance;
       expect(
           databasePins(image, pack).map((p) => p.word), ['apple', 'cluster']);
+      // 問題回報 #763: B1 has one word; apple (A1) fills the list and its pin.
       expect(databasePins(image, pack, level: 'B1').map((p) => p.word),
+          ['apple', 'cluster']);
+      expect(
+          databasePins(image, pack, level: 'B1', borrow: false)
+              .map((p) => p.word),
           ['cluster']);
-      expect(databasePins(image, pack, level: 'C1'), isEmpty);
+      expect(databasePins(image, pack, level: 'C1', borrow: false), isEmpty);
     });
 
     testWidgets('the picker filters tiles and the opened picture',
@@ -152,9 +187,10 @@ void main() {
 
       await tester.tap(level('B1'));
       await tester.pumpAndSettle();
-      expect(find.text('中階（B1）：cluster · 串'), findsOneWidget);
+      // 問題回報 #763: apple fills B1's list, marked with its own level.
+      expect(find.text('中階（B1）：cluster · 串、apple · 蘋果（A1）'), findsOneWidget);
 
-      expect(find.text('中階（B1）：1 張圖片有這個程度的標籤'), findsOneWidget);
+      expect(find.text('中階（B1）：1 張圖片有這個程度的標籤$fill'), findsOneWidget);
 
       // A level no picture has: the album lists nothing.
       await tester.tap(level('C1'));
@@ -167,13 +203,6 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byType(DatabaseImageTile));
       await tester.pumpAndSettle();
-      expect(find.text('cluster · 串'), findsOneWidget);
-      expect(find.text('apple · 蘋果'), findsNothing);
-      await tester.tap(level('C1'));
-      await tester.pumpAndSettle();
-      expect(find.text('這張圖片沒有 進階（C1） 的標籤，換個程度看看。'), findsOneWidget);
-      await tester.tap(level('A1'));
-      await tester.pumpAndSettle();
       // The tag list sits below a tall picture: scroll to its end.
       Future<void> toEnd() async {
         await tester.drag(find.byType(ListView).last, const Offset(0, -2000));
@@ -181,8 +210,28 @@ void main() {
       }
 
       await toEnd();
+      expect(find.text('cluster · 串'), findsOneWidget);
       expect(find.text('apple · 蘋果'), findsOneWidget);
-      expect(find.text('cluster · 串'), findsNothing);
+      expect(find.byKey(const ValueKey('borrowed-1')), findsOneWidget);
+      expect(find.byKey(const ValueKey('borrowed-3')), findsNothing);
+      expect(find.byKey(const ValueKey('borrowed-hint')), findsOneWidget);
+      await tester.drag(find.byType(ListView).last, const Offset(0, 2000));
+      await tester.pumpAndSettle();
+      // C1 has none of its own: the nearest levels fill it (B1, then A1).
+      await tester.tap(level('C1'));
+      await tester.pumpAndSettle();
+      await toEnd();
+      expect(find.text('這張圖片沒有 進階（C1） 的標籤，換個程度看看。'), findsNothing);
+      expect(find.byKey(const ValueKey('borrowed-3')), findsOneWidget);
+      expect(find.byKey(const ValueKey('borrowed-1')), findsOneWidget);
+      await tester.drag(find.byType(ListView).last, const Offset(0, 2000));
+      await tester.pumpAndSettle();
+      await tester.tap(level('A1'));
+      await tester.pumpAndSettle();
+      await toEnd();
+      expect(find.text('apple · 蘋果'), findsOneWidget);
+      expect(find.text('cluster · 串'), findsOneWidget);
+      expect(find.byKey(const ValueKey('borrowed-3')), findsOneWidget);
       await tester.drag(find.byType(ListView).last, const Offset(0, 2000));
       await tester.pumpAndSettle();
       await tester.tap(level('全部'));
@@ -199,6 +248,7 @@ void main() {
     // each tile; the detail keeps its own hint.
     testWidgets('a search hit at another level says where it is',
         (tester) async {
+      LexiconPack.instance.loadJson(fullA1Catalog());
       await pumpApp(tester,
           initialTab: AppTab.album,
           databaseLibrary: true,
@@ -208,7 +258,7 @@ void main() {
       await tester.enterText(find.byType(TextField), 'cluster');
       await tester.pumpAndSettle();
       expect(find.byType(DatabaseImageTile), findsOneWidget);
-      expect(find.text('入門（A1）：1 張圖片有這個程度的標籤'), findsOneWidget);
+      expect(find.text('入門（A1）：1 張圖片有這個程度的標籤$fill'), findsOneWidget);
       expect(find.textContaining('張的搜尋字在其他程度'), findsNothing);
       expect(find.text('搜尋的字 cluster 在 中階（B1）'), findsOneWidget);
       expect(find.byType(DatabaseSearchHint), findsOneWidget);
@@ -235,7 +285,7 @@ void main() {
       // no hint.
       await tester.tap(find.text('切到 B1'));
       await tester.pumpAndSettle();
-      expect(find.text('中階（B1）：1 張圖片有這個程度的標籤'), findsOneWidget);
+      expect(find.text('中階（B1）：1 張圖片有這個程度的標籤$fill'), findsOneWidget);
       expect(find.text('搜尋的字 cluster 在 中階（B1）'), findsNothing);
       await tester.tap(level('全部'));
       await tester.pumpAndSettle();
@@ -246,7 +296,7 @@ void main() {
     // 問題回報 #397: results at mixed levels keep the hint on each affected
     // tile, with the count in the summary and nothing under the search box.
     testWidgets('mixed-level results keep their own hints', (tester) async {
-      final catalog = leveledCatalog();
+      final catalog = fullA1Catalog();
       // A third picture shows cluster at A1 itself: no hint for it.
       (catalog['catalog_images'] as List).add({
         'id': 12,
@@ -260,7 +310,11 @@ void main() {
           },
         ],
         'labels': [
-          {'word': 'cluster', 'point': [0.5, 0.5], 'lexeme_id': 3},
+          {
+            'word': 'cluster',
+            'point': [0.5, 0.5],
+            'lexeme_id': 3
+          },
         ],
       });
       LexiconPack.instance.loadJson(catalog);
@@ -273,7 +327,7 @@ void main() {
       await tester.enterText(find.byType(TextField), 'cluster');
       await tester.pumpAndSettle();
       expect(find.byType(DatabaseImageTile), findsNWidgets(2));
-      expect(find.text('入門（A1）：2 張圖片有這個程度的標籤 · 1 張的搜尋字在其他程度'),
+      expect(find.text('入門（A1）：2 張圖片有這個程度的標籤$fill · 1 張的搜尋字在其他程度'),
           findsOneWidget);
       expect(find.byType(DatabaseSearchHint), findsOneWidget);
       expect(

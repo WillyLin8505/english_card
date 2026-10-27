@@ -21,9 +21,15 @@ class DatabaseTagSections extends StatelessWidget {
       );
 
   List<Widget> _sections(BuildContext context) {
-    final groups = groupedDatabaseImageTags(image, pack)
-        .where((g) => level == null || g.key == level)
-        .toList();
+    // 問題回報 #763: a chosen level lists at least five words, filled from
+    // the nearest levels like 照片詳情; 全部 keeps every level's group.
+    final groups = level == null
+        ? groupedDatabaseImageTags(image, pack)
+        : [
+            if (databaseLevelTags(image, pack, level!) case final tags
+                when tags.isNotEmpty)
+              MapEntry<String?, List<Map<String, dynamic>>>(level, tags)
+          ];
     if (groups.isEmpty) {
       return [
         Container(
@@ -78,6 +84,13 @@ class _DatabaseTagGroupState extends State<_DatabaseTagGroup> {
     final group = widget.group;
     final pack = widget.pack;
     final visibleTags = _expanded ? group.value : group.value.take(3);
+    // 問題回報 #763: words filled in from a nearby level carry their own
+    // level, as each word on 照片詳情 does.
+    String? borrowed(Map<String, dynamic> tag) {
+      final l = databaseTagLevel(tag, pack);
+      return group.key != null && l != group.key ? l : null;
+    }
+
     final out = <Widget>[];
     if (widget.compact) {
       out.add(Text(_compactTagLabels(context, group, pack, visibleTags),
@@ -110,6 +123,15 @@ class _DatabaseTagGroupState extends State<_DatabaseTagGroup> {
                   pack: pack)),
         ]),
       ));
+      if (group.value.any((t) => borrowed(t) != null)) {
+        out.add(Padding(
+          padding: const EdgeInsets.only(bottom: MSpace.xs),
+          child: UiText(
+              '這個程度不到 ${WordSelector.maxWords} 個字，已從相近程度補上',
+              key: const ValueKey('borrowed-hint'),
+              style: MFont.caption),
+        ));
+      }
       for (final tag in visibleTags) {
         final word = pack.byId((tag['lexeme_id'] as num).toInt());
         final label = databaseImageLabels({
@@ -117,6 +139,7 @@ class _DatabaseTagGroupState extends State<_DatabaseTagGroup> {
         }, pack);
         final wholePicture =
             !widget.positioned.contains((tag['lexeme_id'] as num).toInt());
+        final from = borrowed(tag);
         out.add(Container(
           margin: const EdgeInsets.only(bottom: MSpace.xxs),
           decoration: MDecor.listTileSurface(showDivider: true),
@@ -138,6 +161,11 @@ class _DatabaseTagGroupState extends State<_DatabaseTagGroup> {
                               style: MFont.manrope(
                                   15, FontWeight.w700, MColors.ink)),
                         ),
+                        if (from != null) ...[
+                          const SizedBox(width: MSpace.xs),
+                          LevelBadge(from,
+                              key: ValueKey('borrowed-${tag['lexeme_id']}')),
+                        ],
                         if (wholePicture) ...[
                           const SizedBox(width: MSpace.xs),
                           // #510: no pin on the photo; the word is about
@@ -186,19 +214,24 @@ String _compactTagLabels(
     MapEntry<String?, List<Map<String, dynamic>>> group,
     LexiconPack pack,
     Iterable<Map<String, dynamic>> tags) {
-  final words = [
-    for (final tag in tags)
-      databaseImageLabels({
-        'tags': [tag]
-      }, pack)
-  ];
   // The level in the interface language (法語模擬 A1: 「入門（A1）：cahier」
   // in the English interface), with that language's punctuation.
   final source = group.key == null ? '未分級' : levelLabel(group.key!);
   final head = ui(context, source);
-  return head == source
-      ? '$head：${words.join('、')}'
-      : '$head: ${words.join(', ')}';
+  final zh = head == source;
+  final words = [
+    for (final tag in tags)
+      databaseImageLabels({
+            'tags': [tag]
+          }, pack) +
+          // 問題回報 #763: a word borrowed from a nearby level names it.
+          switch (databaseTagLevel(tag, pack)) {
+            final l? when group.key != null && l != group.key =>
+              zh ? '（$l）' : ' ($l)',
+            _ => '',
+          }
+  ];
+  return zh ? '$head：${words.join('、')}' : '$head: ${words.join(', ')}';
 }
 
 /// 「＋」 adds the word without leaving the photo; 「✓」 once collected
