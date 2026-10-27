@@ -519,6 +519,25 @@ void main() {
       expect(find.text('照片辨識設定有誤，新照片無法辨識，點開修正'), findsOneWidget);
     });
 
+    testWidgets('#815: the fix-it hint also shows at the top and opens 進階設定',
+        (tester) async {
+      await check(tester, MockClient((r) async => health(false)),
+          '✕ 服務正常，但 API Key 不正確');
+      await tester.scrollUntilVisible(
+          find.byKey(const ValueKey('settings-fix-hint')), -300,
+          scrollable: find.descendant(of: find.byType(ListView), matching: find.byType(Scrollable)).first);
+      expect(
+          find.descendant(
+              of: find.byKey(const ValueKey('settings-fix-hint')),
+              matching: find.text('照片辨識設定有誤，新照片無法辨識，點開修正')),
+          findsOneWidget);
+      // 「更多學習語言即將推出」 is gone (owner chose 1).
+      expect(find.text('更多學習語言即將推出'), findsNothing);
+      await tester.tap(find.byKey(const ValueKey('settings-fix-hint')));
+      await tester.pumpAndSettle();
+      expect(find.text('測試連線'), findsOneWidget);
+    });
+
     testWidgets('測試連線: 401 shows the key error without the settings hint',
         (tester) async {
       // 卡 #389／#375：401 的說明句帶「（設定 → 照片辨識連線）」，結果列不顯示它。
@@ -538,6 +557,9 @@ void main() {
       expect(find.text('照片辨識暫時連不上：新照片會先排隊，連上後自動辨識，不用處理'),
           findsOneWidget);
       expect(find.textContaining('點開修正'), findsNothing);
+      await tester.scrollUntilVisible(find.text('學習語言'), -300,
+          scrollable: find.descendant(of: find.byType(ListView), matching: find.byType(Scrollable)).first);
+      expect(find.byKey(const ValueKey('settings-fix-hint')), findsNothing);
     });
 
     for (final code in [403, 500]) {
