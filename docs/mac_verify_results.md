@@ -1783,3 +1783,14 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 |----|----|----|----|----|
 | M286 TestFlight | 不通過 | 等 owner 加入 Apple Developer Program：這台 Mac 只有免費的 Apple Development 憑證（Personal Team，描述檔 7 天過期）。上傳流程已備好（856709c8：app/tool/testflight.sh、ios/ExportOptions.plist，build 號＝git commit 數）；owner 要做的步驟寫在 docs/testflight.md：加入計畫（US$99/年）→ App Store Connect 同意條款 → 建 App 記錄（com.willylinai.photoflashcard）→ 產生 API 金鑰放到 ~/.appstoreconnect/private_keys → 建內部測試群組並安裝 TestFlight |  | 中 |
 | M286 Azure 播放順序 | 通過 | 開發中：同腔調真人 → 其他腔調真人 → Azure 合成檔（source=tts）→ 手機 TTS，合成的標「合成」；完成後另寫結果 |  | — |
+
+## 2026-10-27 M288 #849 與 iPad 首次實機驗證
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M288 #849 複習正面藍點 | 通過 | 8ddc77e6：模擬器 photoChoice 正面在照片上有藍點（大象照片的樹上），沒有單字文字；句子填空也有點；拖曳題沒有點；沒有位置的字沒有點 | mac_verify_shots/2026-10-27/m288_photochoice_dot.png | — |
+| M287 #850 儲存按鈕動畫 | 通過 | 開發中（與 #845／#848／#851／#852 同一批照片詳情修改），完成後另寫結果 |  | — |
+| iPad（A16）設成測試機 | 通過 | 開發者模式、信任開發者 App、描述檔加入 iPad（xcodebuild -allowProvisioningUpdates）都完成；裝上正式版並能開啟；iPad 是英文系統，引導預設學法文，測試時切成學英文、母語繁中 |  | — |
+| iPad 完整檢查：主要流程 | 通過 | 複習 40 張（同字每場最多 3 次）、翻面英式＋美式錄音、回報此卡片、刪除卡片確認與復原、設定的資料列、Anki 匯出、備份還原、隱私權與資料來源頁、卡片樣式預覽、錄音播完才結束，都正常 |  | — |
+| iPad 完整檢查：詞庫剛安裝 | 不通過 | 新安裝的 iPad 前幾分鐘：單字本資料庫頁筆數顯示 null、搜尋 ought／peak 找不到、資料庫相片冊沒有圖片（詞庫還在第一次下載）。要確認：第一次下載詞庫時畫面有沒有說明「詞庫下載中」，而不是顯示 null 或空白 |  | 中 |
+| iPad 完整檢查：舊檢查項目 | 通過 | 卡片樣式 A／B／C、相片冊「A1 篩選」、加字流程等幾項是舊版的檢查文字（畫面已改版），不是 App 問題；之後會更新檢查腳本 |  | — |

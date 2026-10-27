@@ -2701,7 +2701,7 @@ owner 2026-10-27 原話：「幫我改為用TestFlight 測試並且用zaure 抓�
    驗證方式不變：日常用 Mac 模擬器，要實機時用 owner 的 iPad；TestFlight 是讓 owner 自己試用。
 2. Azure 語音（Windows 卡 #695，owner 已決定 A）：Windows 會把 Azure 合成的單字音檔寫進詞庫（source=tts，標「合成」）。App 播放順序請改成：該腔調的真人錄音 → 其他腔調的真人錄音 → Azure 合成音檔（source=tts）→ 手機內建 TTS；合成檔要顯示「合成」。
 
-## M287（2026-10-27 23:15）狀態：待做（Windows 卡 #711 交給 Mac 的 App 畫面部分）
+## M287（2026-10-27 23:15）狀態：完成
 卡：問題回報 #850：[給 Mac] [意見回饋] 照片詳情：給我一個儲存的按鈕 讓我存現在的這些標籤 然後給我一個動畫是
 
 照片詳情頁加「儲存」按鈕，儲存目前標籤；儲存後播放動畫——單字逐一跳進單字庫、圖片跳進相簿，最後切到拍照頁。
@@ -2712,7 +2712,7 @@ owner 2026-10-27 原話：「幫我改為用TestFlight 測試並且用zaure 抓�
 - golden / QC：未改動，無前後差異。
 - 剩下：Mac 實作畫面並驗證。
 
-## M288（2026-10-27 23:16）狀態：待做
+## M288（2026-10-27 23:16）狀態：完成
 commit `e718ae5a`（Windows：flutter analyze 無 error、01:31 +739 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/27：用 Mac 模擬器，要實機時用 owner 的 iPad；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #710：問題回報 #849：[給 Mac] [意見回饋] 複習：正面也要呈現藍點
   結果：問題 #849（複習正面要顯示藍點）是 App 畫面修改，已由 Mac 處理（問題回報 resolution：轉 Mac inbox M279），Windows 無資料／伺服器部分可做，未改任何檔案。
