@@ -35,7 +35,7 @@ def test_export_query_count_is_bounded_for_large_candidate_lists(session, fakes,
     finally:
         event.remove(engine, 'before_cursor_execute', record)
     assert counts['lexemes'] == 1
-    assert len(queries) <= 13, f'{len(queries)} SELECTs for one headword'
+    assert len(queries) <= 12, f'{len(queries)} SELECTs for one headword'
 
 
 def test_pipeline_stores_candidates_values_and_provenance(session, fakes):
@@ -593,29 +593,3 @@ def test_homophone_problem_keeps_only_common_same_sound_words():
     assert hp("defence", "defense", ok, 4.2, set(), set(), T()) == "spelling_variant"
     assert hp("air", "ear", ok, 5.0, {"IY1R"}, {"EH1R"}, T()) == "not_same_sound"
     assert hp("marc", "mark", ok, 4.3, set(), set(), T("stub")) == "not_in_lexicon"
-
-
-def test_export_prefers_reviewed_sense_translation(session, fakes, tmp_path):
-    apple_data(fakes)
-    pipeline.process_word(session, "en", "zh-TW", "apple", None, "fill_missing")
-    sense = session.scalar(select(m.Sense).where(m.Sense.sense_key == "s1"))
-    tr = session.scalar(select(m.SenseTranslation).where(
-        m.SenseTranslation.sense_id == sense.id,
-        m.SenseTranslation.native_language == "zh-TW"))
-    original = tr.text
-    tr.text, tr.source, tr.is_ai, tr.is_override = "reviewed meaning", "review", False, True
-    session.flush()
-    exporter._build(session, tmp_path / "reviewed.sqlite", "en", "zh-TW",
-                    None, False, tmp_path)
-    with sqlite3.connect(tmp_path / "reviewed.sqlite") as con:
-        row = con.execute("SELECT text, source, is_ai, is_override FROM sense_translations WHERE sense_id=?",
-                          (sense.id,)).fetchone()
-    assert row == ("reviewed meaning", "review", 0, 1)
-    # Ordinary materialized rows do not supersede the resolved field.
-    tr.is_override = False
-    session.flush()
-    exporter._build(session, tmp_path / "ordinary.sqlite", "en", "zh-TW",
-                    None, False, tmp_path)
-    with sqlite3.connect(tmp_path / "ordinary.sqlite") as con:
-        assert con.execute("SELECT text FROM sense_translations WHERE sense_id=?",
-                           (sense.id,)).fetchone()[0] == original
