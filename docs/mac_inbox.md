@@ -2587,7 +2587,7 @@ commit `baee7620`（Windows：flutter analyze 無 error、01:19 +712 ~2: All tes
 - 卡 #688：問題回報 #484：[owner] 例句裡的主字其實是專有名詞：brown 考「She was a ＿＿ before
   結果：全部完成：主字是人名或專有名詞的例句，改在匯出時用規則擋掉（exporter.py propernounexample）；全庫 166,749 句中隱藏 788 句、466 個詞條；QC 與 golden 前後無變化。
 
-## M272（2026-10-27 22:09）狀態：待做（Windows 卡 #700 交給 Mac 的 App 畫面部分）
+## M272（2026-10-27 22:09）狀態：完成
 卡：問題回報 #830：[Mac] 2026-10-27 M258–M270 記錄（Mac）：M269 #782 圖 43 義項
 
 更新詞庫後重驗 M269 圖 43。
