@@ -761,14 +761,16 @@ typedef LexRecording = ({String path, String? accent, bool synthetic});
 /// Whether a pronunciation row is a synthesized (TTS) clip rather than a
 /// person's recording. Lenient on purpose, since the Windows pack format
 /// may name it any of these ways — accepted:
-///   * `"source": "tts"` or `"source": "azure"` (any case),
+///   * `"source": "tts"`, `"azure"` or `"azure_tts"` (any case),
 ///   * `"synthetic": true`,
 ///   * `"kind": "tts_audio"`.
 /// A row with none of these (every pack before Azure) is a real recording.
 bool isSyntheticPronunciation(Map<String, dynamic> p) {
   final source = p['source'];
   if (source is String &&
-      const {'tts', 'azure'}.contains(source.trim().toLowerCase())) {
+      // Windows exports Azure files as source=azure_tts (M300, #759).
+      const {'tts', 'azure', 'azure_tts'}
+          .contains(source.trim().toLowerCase())) {
     return true;
   }
   return p['synthetic'] == true || p['kind'] == 'tts_audio';

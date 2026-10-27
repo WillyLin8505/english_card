@@ -133,6 +133,7 @@ void main() {
         ({'source': 'tts'}, true),
         ({'source': 'TTS'}, true),
         ({'source': 'azure'}, true),
+        ({'source': 'azure_tts'}, true),
         ({'synthetic': true}, true),
         ({'synthetic': false}, false),
         ({'kind': 'tts_audio'}, true),
