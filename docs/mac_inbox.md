@@ -2353,3 +2353,8 @@ QC：lexicon/logs/agents/card668_qc_before.json／after.json；golden 300 詞＋
 - 驗證 sqlite 時要等 ETag 換成目前 revision（重啟後約 6 分鐘），否則讀到舊快照。
 - 未驗 JSON 匯出（依規定不用 JSON 大檔）；兩者共用 catalog_snapshot。
 - 另有 44 個 point=null 但沒有旗標（tag 本身沒有 point），不在「整張圖」範圍，沒有改。
+
+## M237（2026-10-27 11:23）狀態：待做（Windows 卡 #671 交給 Mac 的 App 畫面部分）
+卡：問題回報 #771：[owner] [Mac] 2026-10-27 M232、M234（iPhone 模擬器，App 自己更新：M234 圖 43 標籤中文
+
+無（修好後 mac_sync 會請 Mac 重驗圖 43）。
