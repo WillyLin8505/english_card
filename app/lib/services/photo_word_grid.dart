@@ -67,7 +67,8 @@ class GridWord {
         level: c.level,
         meaning: c.meaning,
         tagId: tagId ?? c.word,
-        point: c.point,
+        // 問題回報 #703: a whole-picture word has no spot to share.
+        point: c.grounded ? c.point : null,
         candidate: c,
       );
 }

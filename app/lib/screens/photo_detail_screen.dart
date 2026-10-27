@@ -664,14 +664,16 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                 ? w.candidate.box
                 : null,
           ),
+      // 問題回報 #703: a whole-picture word has no pin, muted or not.
       for (final o in old)
-        PinData(
-          id: 'old:${o.word}',
-          anchor: o.anchor,
-          word: _shown(o.word, o.candidate.pos),
-          zh: _zh(o.word, o.candidate.pos, o.candidate.meaning),
-          muted: true,
-        ),
+        if (o.placed)
+          PinData(
+            id: 'old:${o.word}',
+            anchor: o.anchor,
+            word: _shown(o.word, o.candidate.pos),
+            zh: _zh(o.word, o.candidate.pos, o.candidate.meaning),
+            muted: true,
+          ),
     ];
     SessionWord? wordOf(PinData p) =>
         session.words.where((w) => w.word == p.id).firstOrNull;
@@ -812,7 +814,8 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                 direction: DismissDirection.endToStart,
                 background: const _KnownBackground(),
                 onDismissed: (_) {
-                  final undo = OldWord(w.candidate, w.anchor, learned: true);
+                  final undo = OldWord(w.candidate, w.anchor,
+                      learned: true, placed: w.placed);
                   session.swipe(w);
                   // 問題回報 #299: 和複習畫面一樣，提示帶「復原」按鈕.
                   ScaffoldMessenger.of(context)
@@ -830,6 +833,9 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                   ipa: w.candidate.ipa ?? _ipa(scope.repository, w.word),
                   zh: _zh(w.word, w.candidate.pos, w.candidate.meaning),
                   level: w.candidate.level,
+                  // 問題回報 #703: no pin because the recognizer could not
+                  // place it — said like the catalog's 「整張圖」.
+                  wholePicture: !w.placed && !w.candidate.grounded,
                   starred: w.starred,
                   onTap: () => _openWord(w),
                   onMore: () => _pinActions(w),
@@ -1004,7 +1010,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
     if (add != true || !mounted) return;
     final c = g.candidate;
     final w = c != null
-        ? session.addFound(c, g.point ?? c.point)
+        ? session.addFound(c, g.point ?? (c.grounded ? c.point : null))
         : session.add(
             word: g.word, meaning: g.meaning, level: g.level, at: g.point);
     if (w != null && mounted) {

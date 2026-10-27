@@ -1261,7 +1261,7 @@ class WordDatabaseRepository extends ChangeNotifier {
       photo.id,
       [
         for (final c in labels.take(WordSelector.maxWords))
-          ListedWord(c, c.point),
+          ListedWord(c, c.point, placed: c.grounded),
       ],
       difficultyOffset: 0,
       source: 'database_album',

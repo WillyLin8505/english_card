@@ -128,6 +128,9 @@ String? databaseTagLevel(Map<String, dynamic> tag, LexiconPack pack) {
 /// tagger's "don't know" — and drew a pile of pins in the top-left corner
 /// (47 photos had every pin there); without a box they count as no point.
 (double, double)? databaseLabelPoint(Map l) {
+  // 問題回報 #703 / Windows 卡 #631: a default-centre guess the tagger
+  // flagged is no point either.
+  if (labelPointUngrounded(l)) return null;
   final point = [
     for (final v in (l['point'] as List? ?? [])) (v as num).toDouble()
   ];

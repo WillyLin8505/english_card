@@ -10,6 +10,7 @@ import '../models/photo.dart';
 import '../models/word_candidate.dart';
 import '../models/word_entry.dart';
 import 'dictionary_sync.dart';
+import 'lexicon_pack.dart' show labelPointUngrounded;
 import 'photo_intake.dart';
 import 'word_database_repository.dart';
 
@@ -122,14 +123,20 @@ class DeckContent {
   }
 
   static WordCandidate _label(Map<String, dynamic> l, String? deckLevel) {
-    final point = (l['point'] as List).cast<num>();
+    final point = (l['point'] as List? ?? const []).cast<num>();
+    // 問題回報 #703 / Windows 卡 #631: no point, or one the tagger flagged
+    // as a default-centre guess, is a whole-picture label (saved unplaced).
+    final grounded = point.length >= 2 && !labelPointUngrounded(l);
     return WordCandidate(
       word: l['word'] as String,
       pos: shortPos(l['pos'] as String? ?? ''),
       meaning: '',
       level: l['cefr'] as String? ?? deckLevel ?? 'B1',
       levelSource: 'deck',
-      point: LabelPoint(point[0].toDouble(), point[1].toDouble()),
+      point: grounded
+          ? LabelPoint(point[0].toDouble(), point[1].toDouble())
+          : const LabelPoint(0.5, 0.5),
+      grounded: grounded,
     );
   }
 }
