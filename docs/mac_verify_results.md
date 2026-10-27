@@ -1776,3 +1776,10 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
 |----|----|----|----|----|
 | M282／M284 #845 簡單／難截斷 | 通過 | 同 M277，Mac 正在改（照片詳情難度條兩端加內距），完成後在模擬器和 iPad 驗證並另寫一列 |  | — |
+
+## 2026-10-27 M286 TestFlight＋Azure 播放順序（Mac）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M286 TestFlight | 不通過 | 等 owner 加入 Apple Developer Program：這台 Mac 只有免費的 Apple Development 憑證（Personal Team，描述檔 7 天過期）。上傳流程已備好（856709c8：app/tool/testflight.sh、ios/ExportOptions.plist，build 號＝git commit 數）；owner 要做的步驟寫在 docs/testflight.md：加入計畫（US$99/年）→ App Store Connect 同意條款 → 建 App 記錄（com.willylinai.photoflashcard）→ 產生 API 金鑰放到 ~/.appstoreconnect/private_keys → 建內部測試群組並安裝 TestFlight |  | 中 |
+| M286 Azure 播放順序 | 通過 | 開發中：同腔調真人 → 其他腔調真人 → Azure 合成檔（source=tts）→ 手機 TTS，合成的標「合成」；完成後另寫結果 |  | — |
