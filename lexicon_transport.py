@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 import threading
 import time
+import zlib
 
 import pack_sqlite
 
@@ -58,9 +59,13 @@ JSON_TYPE = 'application/json; charset=utf-8'
 
 class Snapshot:
     def __init__(self, body, compressed=None, sqlite_path=None):
-        self.body = body
-        self.pack = json.loads(body)
-        self.version = self.pack['created_at']
+        # Card #664: only the gzip stays resident. The 600 MB JSON text and its
+        # parsed objects (several GB) are rebuilt on demand and dropped again;
+        # keeping them took serve_app to 8-9 GB and starved every other request.
+        pack = json.loads(body)
+        self.version = pack['created_at']
+        self.languages = (pack.get('target_language'), pack.get('native_language'))
+        del pack
         self.etag = 'W/"' + self.version + '"'
         self.gzip = compressed if compressed is not None else gzip.compress(body, compresslevel=6, mtime=0)
         self.delta_from = None
@@ -76,6 +81,33 @@ class Snapshot:
         self.sqlite_delta_from = None
         self.sqlite_delta_body = None
         self.sqlite_delta_gzip = None
+
+    @property
+    def body(self):
+        return gzip.decompress(self.gzip)
+
+    @property
+    def pack(self):
+        return json.loads(self.body)
+
+    def stream(self, compressed, chunk=1 << 20):
+        """(length, chunk iterator) of the full JSON, read from the gzip in
+        pieces so a download never copies the whole text."""
+        data = memoryview(self.gzip)
+        if compressed:
+            return len(data), (data[i:i + chunk] for i in range(0, len(data), chunk))
+        length = int.from_bytes(data[-4:], 'little')  # gzip ISIZE (pack < 4 GB)
+
+        def pieces():
+            inflate = zlib.decompressobj(31)
+            for i in range(0, len(data), 1 << 16):
+                out = inflate.decompress(data[i:i + (1 << 16)])
+                if out:
+                    yield out
+            tail = inflate.flush()
+            if tail:
+                yield tail
+        return length, pieces()
 
     @property
     def slim(self):
@@ -155,7 +187,7 @@ class SnapshotStore:
             compressed = path.read_bytes()
             snapshot = Snapshot(gzip.decompress(compressed), compressed,
                                 sqlite_path=self._sqlite_path(path))
-            if (snapshot.pack['target_language'], snapshot.pack['native_language']) != pair:
+            if snapshot.languages != pair:
                 return None
             return snapshot
         except (OSError, ValueError, KeyError, EOFError):
@@ -182,7 +214,7 @@ class SnapshotStore:
         if previous and previous.body == body:
             return previous
         snapshot = Snapshot(body)
-        if (snapshot.pack.get('target_language'), snapshot.pack.get('native_language')) != pair:
+        if snapshot.languages != pair:
             raise ValueError('Exporter returned the wrong dictionary language pair')
         if previous:
             patch = encode(delta(previous.pack, snapshot.pack))

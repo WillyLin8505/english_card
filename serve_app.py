@@ -293,8 +293,12 @@ def live_pack(target: str, native: str):
                 # direct corrections, without rebuilding an unchanged pack.
                 from app import models as m
                 signatures = []
+                # Card #663: the translation, form and pronunciation tables are
+                # exported too; without them a translation-only fill (7,878 French
+                # example sentences) never changed the fingerprint.
                 for model in (m.FieldValue, m.Lexeme, m.LexemeRedirect,
-                              m.Sense, m.Example, m.LexemeRelation, m.AudioAsset,
+                              m.Sense, m.SenseTranslation, m.Example, m.ExampleTranslation,
+                              m.Form, m.Pronunciation, m.LexemeRelation, m.AudioAsset,
                               m.ImageAsset, m.SenseImage, m.ImageCandidate,
                               m.CardTemplate, m.CardTemplateVersion):
                     table = model.__tablename__
@@ -1060,7 +1064,15 @@ class Handler(SimpleHTTPRequestHandler):
         fmt = 'sqlite' if query.get('format', ['json'])[0] == 'sqlite' else 'json'
         body, ctype, gz = b'', 'application/json; charset=utf-8', False
         status = 304 if unchanged else 200
-        if not unchanged:
+        pieces = None
+        since = query.get('since', [None])[0]
+        if (not unchanged and fmt == 'json'
+                and not (since and since == snapshot.delta_from)):
+            # Card #664: the full JSON (600 MB) goes out in chunks with a
+            # Content-Length, never as one in-memory body.
+            gz = accepts_gzip(self.headers.get('Accept-Encoding', ''))
+            length, pieces = snapshot.stream(gz)
+        elif not unchanged:
             try:
                 body, ctype, gz = snapshot.respond(
                     query.get('since', [None])[0],
@@ -1078,9 +1090,12 @@ class Handler(SimpleHTTPRequestHandler):
         if not unchanged:
             if gz:
                 self.send_header('Content-Encoding', 'gzip')
-            self.send_header('Content-Length', str(len(body)))
+            self.send_header('Content-Length', str(length if pieces is not None else len(body)))
         self.end_headers()
-        if not unchanged:
+        if pieces is not None:
+            for piece in pieces:
+                self.wfile.write(piece)
+        elif not unchanged:
             self.wfile.write(body)
 
 
