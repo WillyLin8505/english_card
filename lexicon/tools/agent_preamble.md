@@ -37,7 +37,7 @@ Follow them even if the card prompt below is silent on the topic.
 
 ## 分工（owner 10/23 #626）與暫時凍結
 App 畫面與互動由 Mac 修；Windows 的卡只做詞庫資料、伺服器、工具。卡片需要改 App 畫面時，資料部分做完，畫面部分寫進 result.md「需要 Mac：…」並停下。
-Mac 只用 iPhone 模擬器驗證（owner 10/27），模擬器沒有辨識金鑰：tagger 的修正（補字、等級、辨識）由 Windows 卡自己經 5173 打 tagger 量測、把數字寫進 result.md，不要寫「需要 Mac 重驗」。
+Mac 用 iPhone 模擬器驗證，要實機時用 owner 的 iPad（owner 10/27），模擬器沒有辨識金鑰：tagger 的修正（補字、等級、辨識）由 Windows 卡自己經 5173 打 tagger 量測、把數字寫進 result.md，不要寫「需要 Mac 重驗」。
 
 ## 要 owner 決定的問題（owner 10/23、10/26）
 result.md 第一段「需要你決定：…」要白話、一眼看懂，**最多 300 字**：
