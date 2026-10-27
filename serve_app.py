@@ -239,6 +239,12 @@ def catalog_snapshot(session, target):
             enriched_tags.append(tag_out)
             label = {'word': word.lemma, 'pos': word.pos, 'point': item.get('point'),
                      'box': item.get('box'), 'lexeme_id': word.id}
+            # 問題回報 #768: a tag the tagger could not place (pointUngrounded, no box)
+            # keeps only its default centre otherwise; send no point, flag it, so the
+            # App shows 「整張圖」 instead of a pin (the field whitelist used to drop it).
+            if item.get('pointUngrounded') and not item.get('box'):
+                label['point'] = None
+                label['pointUngrounded'] = True
             if band in levels:
                 label['cefr'] = band
                 label['cefr_source'] = tag_out['cefr_source']
