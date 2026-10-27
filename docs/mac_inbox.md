@@ -2614,3 +2614,10 @@ commit `5ac27226`（Windows：flutter analyze 無 error、01:09 +736 ~2: All tes
 serve_app 22:47 重啟後的新詞庫 ETag `f74e5a2562dadd357e582e835676aebfa1c974b1b5adb0123b56078ea5043a72`（Windows ae21c16b：labels 帶 sense_id）。Windows 已查 sqlite pack：
 圖 43 labels：open→1910「打開的」、binding→5011「裝訂」、text→7648「文字、正文」，其餘 11 個 label 也都有 sense_id。
 請在 Mac 模擬器（App 含 4c7b8b15）更新詞庫到 f74e5a25 或更新版，打開圖 43，點 open、binding、text 三個標籤點，截圖寫進 results。
+
+## M277（2026-10-27 22:55）狀態：待做（owner 回報，給 Mac）
+owner 在 iPhone 送出的回報（#626：App 畫面與互動由 Mac 修）。資料或伺服器的部分請寫「不通過」列交回 Windows。
+
+| # | 回報 | 內容 |
+|---|---|---|
+| 845 | [意見回饋] 照片詳情：旁邊的字都截到了 簡單跟困難 | 意見：旁邊的字都截到了 簡單跟困難 / 頁面：照片詳情 / 單字／照片 id：photo-1793112799161950 / App 版本：1.0.0+1 / 學習語言：en / 截圖：有（screenshot 欄位）（截圖：`docs/mac_handover/845.png`） |
