@@ -1593,3 +1593,12 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 |----|----|----|----|----|
 | M243 #496 法語模擬第 25 輪 | 通過 | 4/4 通過；「引導／設定中文殘留」是照抄舊判斷，Mac 在 M242 跑 A1／B1 都是中文 0 個畫面（Windows 已改規則） |  | — |
 | M243 法語例句缺英譯 | 不通過 | Windows 結果仍寫 7,878 句缺英譯（#755 修正還沒進匯出，資料） |  | 中 |
+
+## 2026-10-27 M244（Windows 代跑法語模擬，main ab676188、fr pack 59 MB、seed 9）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M244 #796 介面與流程 | 通過 | A1 40／B1 60 兩輪 All tests passed，0 errors、中文 0 個畫面（Mac 不抓 JSON 大檔，由 Windows 經 5173 代跑） |  | — |
+| M244 沒有英文意思 | 不通過 | 跟 M242 一樣還沒補：A1 fleur；B1 ouvertement、juif、parallèle、incroyable |  | 低 |
+| M244 名詞沒有冠詞／性別 | 不通過 | B1 parallèle、incroyable：多半是形容詞被當成名詞卡；請看這兩字的名詞詞條是否該有性別，或卡片該用形容詞詞條 |  | 低 |
+| M244 沒有音檔 | 不通過 | A1 5 個（abattre、pardonner、couler、débarquer、clef）；B1 23 個（raisonnement、fumée、ouvertement、présentement、ornement、brevet、accrocher、tabouret、mature、pouce、loger、spectaculaire、colonisation、bourg、slogan、pêcheur、artificiel、tragique、réparation、valider、boston、signification、adolescent），App 會用合成語音並標「合成」 |  | 低 |
