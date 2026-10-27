@@ -764,6 +764,14 @@ def cefr_list_words() -> dict[str, dict[str, str]]:
     return _CEFR_LIST
 
 
+def _wordfreq_zipf(word: str) -> float | None:
+    try:
+        from wordfreq import zipf_frequency
+    except ImportError:
+        return None
+    return round(zipf_frequency(word, 'en'), 2)
+
+
 def word_cefr(word: str, zipf: float | None) -> tuple[str | None, str | None]:
     """A label's CEFR band and where it came from: 'list' when CEFR-J/Oxford lists it
     (the easiest band over its parts of speech), else 'estimate' from its frequency
@@ -778,6 +786,10 @@ def word_cefr(word: str, zipf: float | None) -> tuple[str | None, str | None]:
         if any(level for level, _ in found):
             return (max((lv for lv, _ in found if lv), key=LEVELS.index),
                     'list' if all(src == 'list' for _, src in found if src) else 'estimate')
+    if zipf is None:
+        # Card #685: cached labels and labels from a request without a Lexicon carry no
+        # zipf; look it up here, else the level filter would keep every unlisted word.
+        zipf = _wordfreq_zipf(w)
     if zipf is None:
         return None, None
     return zipf_level(zipf), 'estimate'

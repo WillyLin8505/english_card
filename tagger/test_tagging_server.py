@@ -325,7 +325,8 @@ def test_word_cefr_uses_the_list_before_frequency():
     assert word_cefr('pedestrian', 2.0) == ('B2', 'list')
     assert word_cefr('prominent', None) == ('B1', 'list')
     assert word_cefr('propulsion', 3.6) == ('B2', 'estimate')
-    assert word_cefr('nonexistentword', None) == (None, None)
+    # Card #685: no zipf given -> looked up, so no unlisted word stays band-less.
+    assert word_cefr('stroll', None) == ('B2', 'estimate')
     assert word_cefr('traffic light', None)[0] is not None
     assert 'abortion' in cefr_list_words()  # Oxford extra is merged in
 
@@ -334,3 +335,9 @@ def test_easier_focus_skips_the_level_filter():
     from tagging_server import finish_candidates
     items = [{'word': 'tree', 'zipf': 5.5}]
     assert finish_candidates(items, 'C2', 'en', 'easier')[0]['cefr'] == 'A1'
+
+
+def test_level_filter_drops_unlisted_easy_words_without_zipf():
+    from tagging_server import finish_candidates
+    items = [{'word': w} for w in ('stroll', 'dwell', 'congested', 'conspire')]
+    assert [i['word'] for i in finish_candidates(items, 'C2', 'en', None)] == ['congested', 'conspire']
