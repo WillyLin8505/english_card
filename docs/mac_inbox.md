@@ -2416,7 +2416,7 @@ commit `635eed9c`（Windows：flutter analyze 無 error、01:29 +711 ~2: All tes
 
 若選 B，畫面上加「也是名詞」提示由 Mac 實作。
 
-## M249（2026-10-27 15:59）狀態：待做
+## M249（2026-10-27 15:59）狀態：完成
 commit `201f0cf1`（Windows：flutter analyze 無 error、01:26 +711 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #679：問題回報 #801：[Mac] 2026-10-27 M244（Windows 代跑法語模擬，main ab67：M24
   結果：全部完成：#801 的 5 個字（fleur、ouvertement、juif、parallèle、incroyable）在資料庫與 15:29 之後重建的 App 資料包都已有英文意思，是 Mac 驗到舊資料包；本卡不需再改資料。

@@ -371,11 +371,16 @@ void main() {
           checks['verb_no_conjugation']!.add(word);
         }
       }
-      final meanings =
-          lex?.senses.map((s) => s.native ?? '').where((m) => m.isNotEmpty) ??
-              const <String>[];
-      if (!back.any((t) => meanings.any(
-          (m) => t.contains(m.split(',').first.split('(').first.trim())))) {
+      // Every entry of the word (juif, maison: the card shows the noun
+      // while the simulation recorded the adjective), and the first
+      // meaning before , or ; (fleur: "flower; bloom; …").
+      final meanings = [
+        for (final e in {if (lex != null) lex, ...pack.entriesFor(word)})
+          for (final s in e.senses)
+            if ((s.native ?? '').isNotEmpty) s.native!,
+      ];
+      if (!back.any((t) => meanings.any((m) => t.contains(
+          m.split(RegExp('[,;]')).first.split('(').first.trim())))) {
         checks['no_english_meaning']!.add(word);
       }
       final spoken =
