@@ -2450,3 +2450,8 @@ commit `89d08b5d`（Windows：flutter analyze 無 error、00:58 +711 ~2: All tes
 commit `b78962f8`（Windows：flutter analyze 無 error、01:11 +711 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #224：模擬使用者・拍照
   結果：第 187 輪（photoui）＋ pins：2/2 通過，29,092 張照片、87,276 個版面，標籤遮點 1（同 #61，無新錯誤）；沒有新的 UX 建議（#583、#584 仍待決定）。
+
+## M256（2026-10-27 20:57）狀態：待做（Windows 卡 #684 交給 Mac 的 App 畫面部分）
+卡：問題回報 #816：[Mac] 2026-10-27 M255 與 #815（iPhone 模擬器，b78962：iPhone 實機
+
+信任完成後重新安裝並驗證。
