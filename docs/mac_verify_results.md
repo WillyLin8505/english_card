@@ -1806,3 +1806,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
 |----|----|----|----|----|
 | M286 Azure 播放順序 | 通過 | 440a395e：按鈕和翻面照「同腔調真人 → 其他腔調真人 → Azure 合成檔（同腔調優先）→ 手機 TTS」；第 3、4 步標「合成」，出處顯示「Azure 神經語音（合成）」；同一個檔案一次翻面不重播。合成檔欄位接受 source=tts／azure、synthetic=true、kind=tts_audio（json 與 sqlite 都會讀）。11 個新測試，全套 753 通過。詞庫還沒有 Azure 檔，等 Windows 匯出後在模擬器實際聽一次 |  | — |
+
+## 2026-10-27 M292（Mac）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M292 #855 TestFlight 上傳驗證 | 通過 | 等 owner 照 docs/testflight.md 加入 Apple Developer Program、建 App 記錄並給 API 金鑰後，Mac 跑 app/tool/testflight.sh 上傳一版並確認 TestFlight 收到 |  | — |
