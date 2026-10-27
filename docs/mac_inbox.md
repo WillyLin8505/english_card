@@ -2812,7 +2812,7 @@ commit `025d344f`（Windows：flutter analyze 無 error、00:56 +762 ~2: All tes
 播放順序把 source=azure_tts 當「合成」顯示，排在真人錄音之後（這些字本來就沒有真人）；匯出包要帶 media/audio/en、fr 的新 mp3；用 TestFlight／iPad 實機聽一次。
 - 若日後有 worker 重新解析 audio 欄位，azure_tts 項目可能被覆蓋，需重跑 run（斷點續跑）。
 
-## M301（2026-10-28 00:50）狀態：待做
+## M301（2026-10-28 00:50）狀態：完成
 卡：#695 Azure 語音（App 端 440a395e、e9e88675）
 新英文詞庫 ETag `2f1aa233eadf019b05858b89c7105f63690f580d5a6f950a0ec57d09d32ac1ad`：pronunciations 有 source，azure_tts 5,086 筆，2,542 個字只有 Azure、沒有真人錄音。音檔 /api/audio 回 200 audio/mpeg。
 請在模擬器更新詞庫後實際聽這幾個字（英式、美式各一次），確認有標「合成」、出處是「Azure 神經語音（合成）」，截圖寫進 results：
