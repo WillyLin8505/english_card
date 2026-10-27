@@ -2202,7 +2202,7 @@ commit `64f022f1`（Windows：flutter analyze 無 error、03:01 +693 ~2: All tes
 - 卡 #225：模擬使用者・相片冊
   結果：第178輪：主模擬 album 1/1 通過（54 秒）、新問題 無、UX 建議 無新增。
 
-## M212（2026-10-27 08:09）狀態：待做
+## M212（2026-10-27 08:09）狀態：完成
 commit `05485f43`（Windows：flutter analyze 無 error、02:39 +693 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #226：模擬使用者・複習
   結果：第 180 輪：2/2 通過（learner 208 秒、restart 146 秒）；無新問題；UX 建議＝沿用 #485／#515，未重複開單。
