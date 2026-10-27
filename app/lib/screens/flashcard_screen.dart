@@ -178,9 +178,11 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
           cardScope: cardScope,
           newLimit: scope.settings.dailyNewLimit,
           reviewLimit: scope.settings.dailyReviewLimit)
-        ..addListener(_changed)
-        // 問題回報 #693: a swipe on the back loads the photos beside it.
-        ..photoSelection.addListener(_precacheBackPhoto);
+        // 問題回報 #693 / #858: a swipe on the back no longer runs the
+        // whole precache here (it ranked every card ahead and planned their
+        // photos in the middle of the swipe, a dropped frame each page); the
+        // pager decodes the pages beside the one shown itself.
+        ..addListener(_changed);
       _wasBack = false;
     });
     scope.navigator.setReviewing(true);
@@ -219,8 +221,15 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
           fit: BoxFit.contain));
     }
 
-    void warmBack(Photo photo) => warm(photoProvider(
-        photo, scope.photoStore, Size(contentWidth, look.photoHeight), dpr));
+    // 問題回報 #858: at the size of the pager's page (inset beside its
+    // neighbours), so the page finds the decoded image in the cache.
+    void warmBack(Photo photo, {int index = 0, int count = 1}) =>
+        warm(photoProvider(
+            photo,
+            scope.photoStore,
+            photoPagerPageBox(
+                Size(contentWidth, look.photoHeight), index, count),
+            dpr));
 
     // 問題回報 #726 (單字常常要 loading): every photo used to be decoded at
     // all three sizes — current, swipe neighbours and three cards ahead
@@ -229,17 +238,23 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     // pushed out again before it came up and its front waited 「正在載入
     // 圖片…」. Now only what can show next is decoded, and only at the
     // size it shows at; the cards after that are downloaded, not decoded.
+    final count = math.max(1, options.length);
     if (s.photo case final p?) {
       warmFront(p);
-      warmBack(p);
+      warmBack(p, index: math.max(0, at), count: count);
     }
     // 問題回報 #693: the photos on both sides of the one shown, so a swipe
     // either way lands on a decoded photo.
-    for (final p in [
-      ...options.skip(at + 1).take(3),
-      if (at > 0) options[at - 1],
+    for (final i in [
+      for (var i = at + 1; i < options.length && i <= at + 3; i++) i,
+      if (at > 0) at - 1,
     ]) {
-      warmBack(p);
+      warmBack(options[i], index: i, count: count);
+    }
+    // 問題回報 #859: every photo of this card's carousel is on disk before
+    // it is swiped to.
+    for (final p in options) {
+      if (p.networkUrl case final url?) CachedNetworkPhoto.prefetch(url);
     }
     final upcoming = s.upcomingCards(cards: 5);
     for (final (i, card) in upcoming.indexed) {
@@ -249,7 +264,9 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
         warmFront(photos.first);
         warmBack(photos.first);
       }
-      for (final p in photos.take(i < 2 ? 3 : 1)) {
+      // 問題回報 #859: all of the next two cards' photos (their carousels),
+      // one for the cards after.
+      for (final p in photos.take(i < 2 ? photos.length : 1)) {
         if (p.networkUrl case final url?) CachedNetworkPhoto.prefetch(url);
       }
     }

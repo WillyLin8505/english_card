@@ -12,7 +12,7 @@ import 'fsrs_scheduler.dart';
 import 'word_database_repository.dart';
 import 'lexicon_pack.dart';
 import 'dictionary_sync.dart';
-import 'pack_media.dart' show packMediaIsAsset;
+import 'pack_media.dart' show packMediaIsAsset, sizedServerImage;
 import 'photo_store.dart';
 
 /// One photo the card back can show: the photo, where the word is on it
@@ -1154,7 +1154,9 @@ class FlashcardSession extends ChangeNotifier {
             takenAt: DateTime(2000),
             createdAt: DateTime(2000),
             assetPath: asset ? url : null,
-            networkUrl: asset ? null : base.resolve(url).toString(),
+            // 問題回報 #859: the server's downscaled copy, not the original.
+            networkUrl:
+                asset ? null : sizedServerImage(base.resolve(url).toString()),
             width: (image['width'] as num?)?.toInt(),
             height: (image['height'] as num?)?.toInt()),
         anchor,

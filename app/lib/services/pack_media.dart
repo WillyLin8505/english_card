@@ -26,6 +26,23 @@ bool packMediaIsAsset(String path) => path.startsWith('assets/');
 String packRecordingUrl(String? mediaBase, String relativePath) {
   if (mediaBase == null) return 'assets/lexicon/media/$relativePath';
   return Uri.parse(resolvePackMedia(mediaBase))
-      .replace(queryParameters: {'path': relativePath})
-      .toString();
+      .replace(queryParameters: {'path': relativePath}).toString();
+}
+
+/// The longest side asked of the server for a catalog picture (問題回報
+/// #859). Wide enough for a phone's full width at 3× (402 pt × 3 = 1206 px)
+/// with room for [BoxFit.cover]; one size for every place a picture shows,
+/// so the front, the back's carousel and the dictionary share one download
+/// and one file in the disk cache.
+const servedImageSide = 1536;
+
+/// [url] asking the server for its downscaled copy (`/api/image?id=…&w=`,
+/// longest side ≤ [side]; the server sends the original when it is smaller
+/// already). Other URLs, and ones that already ask a size, are unchanged.
+String sizedServerImage(String url, {int side = servedImageSide}) {
+  final uri = Uri.tryParse(url);
+  if (uri == null || !uri.path.endsWith('/api/image')) return url;
+  final query = uri.queryParameters;
+  if (const ['w', 'max', 'size'].any(query.containsKey)) return url;
+  return uri.replace(queryParameters: {...query, 'w': '$side'}).toString();
 }
