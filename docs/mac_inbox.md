@@ -2495,3 +2495,45 @@ harder 的 congregation、architectural 本來就是 C1，不是錯。
 改動：tagger/tagging_server.py、tagger/test_tagging_server.py。備份：tagger/card685_*.bak（複製回原檔名後重啟 start_tagger.bat 即還原）。
 golden/QC：未動詞庫資料，未跑。
 剩下：Mac 重驗 M203。
+
+## M259（2026-10-27 21:33）狀態：待做（Windows 卡 #676 交給 Mac 的 App 畫面部分）
+卡：問題回報 #796：[Mac] 2026-10-27 M242（Mac）：M242 法語資料小缺口
+
+請重新驗證 M242（無畫面改動）。
+
+## M260（2026-10-27 21:33）狀態：待做（Windows 卡 #684 交給 Mac 的 App 畫面部分）
+卡：問題回報 #816：[Mac] 2026-10-27 M255 與 #815（iPhone 模擬器，b78962：iPhone 實機
+
+owner 信任憑證後，重驗 M203 並安裝最新正式版（b78962f8）。
+
+## M261（2026-10-27 21:35）狀態：待做（Windows 卡 #690 交給 Mac 的 App 畫面部分）
+卡：問題回報 #580：[owner] UX：單字詳情的近義詞／相關詞中文用整句定義翻譯，521 個超過 18 字（dwarf → small person「小人：
+
+關係詞列（app/screens/word_detail_screen.dart、app/widgets/database_word_detail.dart）顯示中文時，只取第一個「；」或「：」之前、最多 10 個字，其餘收起（可點開看全文）。範圍含 related／synonyms／hyponyms 等所有關係詞列。
+
+細節：
+- 問題回報 #580 decision = 「App 顯示時只取第一個「；」「：」之前、最多 10 個字」，不改資料，所以 Windows 端沒有資料可修、沒有改任何檔案、沒有備份／golden/QC 變動。
+- 依分工（owner 10/23 #626）App 畫面由 Mac 修，故在此停下。
+- 資料面的根因（關係詞中文是整句定義翻譯、常錯義，如 password → pass）未處理，owner 選了不重產；若日後要重產 521 筆，另開卡交 Qwen。
+- 剩下：Mac 實作顯示截斷後，問題回報 #580 可關。
+
+## M262（2026-10-27 21:35）狀態：待做（Windows 卡 #691 交給 Mac 的 App 畫面部分）
+卡：問題回報 #558：[owner] 複習背面的英文定義偏長、有時跟中文不是同一個義項（court 207 字；match「火柴」底下寫 contest 的定義）
+
+- app/lib/widgets/flashcard_back.dart（凍結中）：owner 已決定「A1–B1 預設收起英文定義（點中文意思可展開），B2 以上照舊」。
+  實作：依學習者 CEFR 判斷 A1–B1 時，英文定義預設收起，點中文意思展開。
+- 「配錯義項」（match「火柴」配 contest 定義）不在本卡範圍，由 問題回報 #434 處理。
+
+## M263（2026-10-27 21:37）狀態：待做（Windows 卡 #584 交給 Mac 的 App 畫面部分）
+卡：問題回報 #625：[Mac] 2026-10-23 owner 要求：翻卡第一次發音是機器人聲：owner 要求：補更多真人發音（交 Windows）
+
+App 播放順序要把 source=tts 排在真人之後（資料格式定案後通知）。
+
+## M264（2026-10-27 21:37）狀態：待做（Windows 卡 #686 交給 Mac 的 App 畫面部分）
+卡：問題回報 #763：[owner] 單字集的圖片頁，也要照「每個難度至少 5 個字」的規則嗎？
+
+圖片頁補字（問題回報 #763，owner 已決定 A）
+- 檔案：app/lib/screens/database_library_screen.dart 約 144–170 行（photos 模式的 `_level` 篩選）、app/lib/widgets/database_image_data.dart 的 databasePins。
+- 做法：圖片頁每個等級要顯示 5 個字；不足時從最接近的等級補（與 photo_detail 的 WordSelector 規則一致，WordSelector.maxWords = 5）。
+- 標題的「5 張圖片有這個程度的標籤」與 hint 文字也要跟著改。
+- 這是 App 畫面，Windows 不動；請 Mac 接手。問題回報 #763 保持 in_progress，等 Mac 完成再由 Mac 關閉。
