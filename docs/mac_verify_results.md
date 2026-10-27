@@ -1457,3 +1457,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 |----|----|----|----|----|
 | M220 #657 播放時顯示錄音者／授權 | 通過 | App 已在 b6e1d998、b3c1f5ee、ffaaf04d 做好：單字詳情在發音按鈕下顯示錄音者和授權（例如 CC BY-SA 4.0），讀詞庫 pronunciations 的 speaker／license／source_page，並清掉「Speaker:」「No machine-readable author…」這類字 |  | — |
 | M221 #555 背景重打佇列 | 通過 | 後端進行中（約 1 萬張等 Qwen 重打），App 沒有畫面要改；QC 閘門依 owner 決定還沒切 |  | — |
+
+## 2026-10-27 M223（Mac）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M223 #12 跨分頁／詞庫更新 | 通過 | Mac 用目前 main（含 #712 更新清單保留到按「知道了」）跑 pack_update 模擬：2/2 通過，findings 空 |  | — |

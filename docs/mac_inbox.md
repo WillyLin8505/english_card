@@ -2275,7 +2275,7 @@ App 顯示處理）。
 golden/QC：只動 tags 的 point/box/旗標，未動單字資料；qc.py check --live 前測超過 10 分鐘被截斷，未取得數字，故未做前後比對。
 剩下：續跑上列指令至完成（完成後 result 第一行才寫「全部完成」）；Mac 驗證 9564；Mac 處理 pointUngrounded。
 
-## M223（2026-10-27 09:12）狀態：待做
+## M223（2026-10-27 09:12）狀態：完成
 commit `e24eff86`（Windows：flutter analyze 無 error、01:18 +701 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #12：模擬使用者・跨分頁（亂點、詞庫更新）
   結果：第 182 輪：2/2 通過（packupdate 約 6.5 分、fuzz 800 步約 4.3 分，findings 皆空），新問題 0；UX 建議：本輪未新增（沒跑 learnerview）。
