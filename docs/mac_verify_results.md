@@ -1764,3 +1764,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
 |----|----|----|----|----|
 | M276 圖 43 labels 帶 sense_id | 通過 | App 自己更新到的詞庫 f74e5a25：open sense 1910＝打開的、binding 5011＝裝訂、text 7648＝文字、正文；照片標籤點顯示 open 打開的、binding 裝訂、text 文字 | mac_verify_shots/2026-10-27/m276_image43.png | — |
+
+## 2026-10-27 owner 照片的未收錄字（#851 截圖）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #851 Canister／Congealed 未收錄 | 不通過 | owner 照片 photo-1793112799161950、level C2：辨識給的 Canister、Congealed 顯示「未收錄」（詞庫沒有這兩個字，沒有中文和詳情）；截圖 docs/mac_handover/851.png。建議 tagger 補字優先給詞庫有的字，常出現的未收錄字排進補詞庫（資料，交 Windows） |  | 中 |
