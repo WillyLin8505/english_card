@@ -86,6 +86,13 @@ class DictionarySync extends ChangeNotifier {
   /// those two states are debugging noise, not something learners need
   /// (問題回報 #260); the failure message is.
   bool hasError = false;
+
+  /// 問題回報 #856: a fresh install fetches the whole pack (~62 MB) in its
+  /// first minutes; the 資料庫 pages show this progress instead of an empty
+  /// list. [downloadTotalBytes] is null when the server sends no length.
+  bool downloading = false;
+  int downloadedBytes = 0;
+  int? downloadTotalBytes;
   String? _activePair;
   final _forceFull = <String>{};
 
@@ -391,17 +398,19 @@ class DictionarySync extends ChangeNotifier {
         throw StateError('Dictionary unavailable');
       }
       final contentType = response.headers['content-type'] ?? '';
+      final body = trackDownload(response.stream, response.contentLength);
       if (useSqlite && contentType.contains('sqlite')) {
         // The whole pack as a file: streamed to disk, never held in memory.
         await _installSqliteDownload(
-            response.stream, pair, target, native, repo, current);
+            body, pair, target, native, repo, current);
         _forceFull.remove(pair);
         _succeeded();
         await _sendMissingQuietly();
         return;
       }
-      final bodyBytes =
-          await response.stream.toBytes().timeout(const Duration(minutes: 5));
+      final bodyBytes = await http.ByteStream(body)
+          .toBytes()
+          .timeout(const Duration(minutes: 5));
       if (!current()) return;
       // Decode off the UI thread and keep only one big copy alive at a time:
       // body bytes + string + tree + a second pack hit iOS's 2 GB limit
@@ -467,10 +476,31 @@ class DictionarySync extends ChangeNotifier {
       }
     } finally {
       _running = false;
+      downloading = false;
       if (!_disposed) notifyListeners();
       // A language switch during a request must not apply the old response.
       if (!_disposed && !current()) unawaited(refresh());
     }
+  }
+
+  /// Counts [body]'s bytes into [downloadedBytes] (問題回報 #856), telling
+  /// listeners about every ~1 MB so the progress line moves without
+  /// rebuilding the page for each chunk.
+  @visibleForTesting
+  Stream<List<int>> trackDownload(Stream<List<int>> body, int? total) {
+    downloading = true;
+    downloadedBytes = 0;
+    downloadTotalBytes = total != null && total > 0 ? total : null;
+    if (!_disposed) notifyListeners();
+    var told = 0;
+    return body.map((chunk) {
+      downloadedBytes += chunk.length;
+      if (downloadedBytes - told >= 1000000 && !_disposed) {
+        told = downloadedBytes;
+        notifyListeners();
+      }
+      return chunk;
+    });
   }
 
   /// Writes a `format=sqlite` response to a new `{pair}.server.*.sqlite`

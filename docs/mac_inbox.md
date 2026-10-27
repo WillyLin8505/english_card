@@ -2751,14 +2751,14 @@ commit `e5da0efc`（Windows：flutter analyze 無 error、01:38 +743 ~2: All tes
 owner 完成後由 Mac 跑 testflight.sh 驗證上傳。
 - 沒有資料變動，無備份；golden/QC 未跑（無改動）。
 
-## M293（2026-10-27 23:33）狀態：待做（owner 回報，給 Mac）
+## M293（2026-10-27 23:33）狀態：完成
 owner 在 iPhone 送出的回報（#626：App 畫面與互動由 Mac 修）。資料或伺服器的部分請寫「不通過」列交回 Windows。
 
 | # | 回報 | 內容 |
 |---|---|---|
 | 858 | [意見回饋] 複習：滑動圖片存在卡頓 | 意見：滑動圖片存在卡頓 / 頁面：複習 / App 版本：1.0.0+1 / 學習語言：en / 截圖：有（screenshot 欄位）（截圖：`docs/mac_handover/858.png`） |
 
-## M294（2026-10-27 23:35）狀態：待做（owner 回報，給 Mac）
+## M294（2026-10-27 23:35）狀態：完成
 owner 在 iPhone 送出的回報（#626：App 畫面與互動由 Mac 修）。資料或伺服器的部分請寫「不通過」列交回 Windows。
 
 | # | 回報 | 內容 |
@@ -2778,7 +2778,7 @@ commit `58f4681f`（Windows：flutter analyze 無 error、01:04 +754 ~2: All tes
 - 卡 #717：問題回報 #856：[Mac] 2026-10-27 M288 #849 與 iPad 首次實機驗證：iPad 完整檢查
   結果：結論：伺服器詞庫正常（sqlite 62 MB、18,288 個詞條含 ought／peak、10,720 張圖片可下載）；iPad「筆數 null、搜不到、相片冊沒圖」發生在 App 本機還沒裝好詞庫的那段時間，是 App 畫面的問題，要 Mac 改，Windows 這邊沒有資料要修。
 
-## M297（2026-10-27 23:45）狀態：待做（Windows 卡 #718 交給 Mac 的 App 畫面部分）
+## M297（2026-10-27 23:45）狀態：完成
 卡：問題回報 #858：[給 Mac] [意見回饋] 複習：滑動圖片存在卡頓
 
 複習頁滑動圖片卡頓（建議查圖片解碼尺寸 cacheWidth、預載 precacheImage、滑動時是否重建）。

@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import '../app/app_scope.dart';
 import '../l10n/ui_text.dart';
 import '../services/deck_library.dart';
+import '../services/dictionary_sync.dart';
 import '../services/lexicon_pack.dart';
 import '../services/word_database_repository.dart';
 import '../theme/mobile_theme.dart';
+import '../widgets/lexicon_download_status.dart';
 import '../widgets/mobile/common.dart';
 import 'database_library_screen.dart' show DatabaseImageTile, databaseImageTags;
 
@@ -70,12 +72,23 @@ class _WordDeckPhotosScreenState extends State<WordDeckPhotosScreen> {
   void initState() {
     super.initState();
     _library.addListener(_deckChanged);
+    // 問題回報 #856: opened before the first pack is in, the page fills in
+    // when it arrives (it found no pictures in the empty pack).
+    LexiconPack.instance.addListener(_deckChanged);
+    DictionarySync.instance.addListener(_syncChanged);
   }
 
   @override
   void dispose() {
     _library.removeListener(_deckChanged);
+    LexiconPack.instance.removeListener(_deckChanged);
+    DictionarySync.instance.removeListener(_syncChanged);
     super.dispose();
+  }
+
+  /// Download progress or failure while the pack is pending (問題回報 #856).
+  void _syncChanged() {
+    if (mounted && lexiconPending()) setState(() {});
   }
 
   void _deckChanged() {
@@ -96,6 +109,9 @@ class _WordDeckPhotosScreenState extends State<WordDeckPhotosScreen> {
   @override
   Widget build(BuildContext context) {
     final images = _images ?? const [];
+    final pending = lexiconPending();
+    final failed = pending && lexiconDownloadFailed();
+    final progress = pending ? lexiconProgressText() : null;
     return Scaffold(
       backgroundColor: MColors.canvas,
       body: SafeArea(
@@ -106,36 +122,66 @@ class _WordDeckPhotosScreenState extends State<WordDeckPhotosScreen> {
               title: widget.deck.info.title,
               leading: const BackNavButton(),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: UiText(
-                    images.isEmpty
-                        ? '這 ${_deck.wordCount} 個字在詞庫裡還沒有圖片，可以先看單字'
-                        : '單字集 · ${_deck.wordCount} 個單字 · ${images.length} 張詞庫圖片',
-                    style: MFont.manrope(13, FontWeight.w600, MColors.muted)),
+            // 問題回報 #856: before the first pack is in there are no
+            // pictures to count yet — say it is downloading instead.
+            if (pending && !failed)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      UiText('詞庫下載中（約 62 MB）',
+                          style: MFont.manrope(
+                              13, FontWeight.w600, MColors.muted)),
+                      if (progress != null)
+                        UiText(progress, style: MFont.caption),
+                    ],
+                  ),
+                ),
+              )
+            else if (!pending)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: UiText(
+                      images.isEmpty
+                          ? '這 ${_deck.wordCount} 個字在詞庫裡還沒有圖片，可以先看單字'
+                          : '單字集 · ${_deck.wordCount} 個單字 · ${images.length} 張詞庫圖片',
+                      style: MFont.manrope(13, FontWeight.w600, MColors.muted)),
+                ),
               ),
-            ),
             Expanded(
               // 問題回報 #673: a page with no pictures still shows the words
               // (the C2 slice of 基礎 3000 字 is 4 abstract words).
-              child: images.isEmpty
-                  ? _WordList(deck: _deck)
-                  : GridView.builder(
-                      padding: const EdgeInsets.fromLTRB(
-                          MSpace.md, 0, MSpace.md, MSpace.md),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: MSpace.sm,
-                        crossAxisSpacing: MSpace.sm,
-                        mainAxisExtent: 260,
-                      ),
-                      itemCount: images.length,
-                      itemBuilder: (context, i) =>
-                          DatabaseImageTile(image: images[i], level: _level),
-                    ),
+              child: failed
+                  ? const Center(
+                      child: Padding(
+                          padding: EdgeInsets.all(MSpace.xl),
+                          child: LexiconDownloadCard()))
+                  : pending
+                      ? const LexiconPicturePlaceholders(
+                          tileExtent: 260,
+                          padding: EdgeInsets.fromLTRB(
+                              MSpace.md, 0, MSpace.md, MSpace.md))
+                      : images.isEmpty
+                          ? _WordList(deck: _deck)
+                          : GridView.builder(
+                              padding: const EdgeInsets.fromLTRB(
+                                  MSpace.md, 0, MSpace.md, MSpace.md),
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                mainAxisSpacing: MSpace.sm,
+                                crossAxisSpacing: MSpace.sm,
+                                mainAxisExtent: 260,
+                              ),
+                              itemCount: images.length,
+                              itemBuilder: (context, i) => DatabaseImageTile(
+                                  image: images[i], level: _level),
+                            ),
             ),
           ],
         ),
