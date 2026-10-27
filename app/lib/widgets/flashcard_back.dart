@@ -1587,7 +1587,14 @@ class _AnchorDot extends StatelessWidget {
   /// the dot and drag it.
   final ValueChanged<LabelPoint>? onMoved;
 
-  const _AnchorDot({required this.photo, required this.anchor, this.onMoved});
+  /// The dot's key; the review front passes its own (問題回報 #849).
+  final Key dotKey;
+
+  const _AnchorDot(
+      {required this.photo,
+      required this.anchor,
+      this.onMoved,
+      this.dotKey = const ValueKey('back-anchor-dot')});
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(builder: (context, c) {
@@ -1609,7 +1616,7 @@ class _AnchorDot extends StatelessWidget {
               left: at.dx - 7,
               top: at.dy - 7,
               child: Container(
-                key: const ValueKey('back-anchor-dot'),
+                key: dotKey,
                 width: 14,
                 height: 14,
                 decoration: BoxDecoration(

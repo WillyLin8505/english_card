@@ -37,8 +37,17 @@ class _InteractiveExerciseState extends State<_InteractiveExercise> {
   /// box when it has one, but no word: the front must not give it away.
   /// A photo without the word's coordinates shows no mark. The drag
   /// question passes its own [height], [fit] and [overlay] (its drop spots).
+  ///
+  /// With [dot] (and no [mark]) the word's spot gets the card back's blue
+  /// dot instead (問題回報 #849 複習：正面也要呈現藍點) — the dot only, never
+  /// the word's label, so the front does not give the answer away. A word
+  /// with no spot on this photo (unplaced, 整張圖, no point) has no dot.
   Widget _photo(
-      {bool mark = true, double? height, BoxFit? fit, Widget? overlay}) {
+      {bool mark = true,
+      bool dot = false,
+      double? height,
+      BoxFit? fit,
+      Widget? overlay}) {
     final s = widget.session;
     final photo = s.photo;
     if (photo == null) return const SizedBox.shrink();
@@ -63,7 +72,14 @@ class _InteractiveExerciseState extends State<_InteractiveExercise> {
                       label: ui(context, '照片中標出的位置'),
                       child:
                           TargetRing(photo: photo, anchor: anchor, box: s.box))
-                  : null),
+                  : dot && anchor != null && !s.photoFailed
+                      ? Semantics(
+                          label: ui(context, '照片中標出的位置'),
+                          child: _AnchorDot(
+                              photo: photo,
+                              anchor: anchor,
+                              dotKey: const ValueKey('front-anchor-dot')))
+                      : null),
           onImageState: (ready) => s.reportPhotoState(attempt, ready),
           imageErrorBuilder: (_) => const Center(child: UiText('圖片暫時無法載入')),
         ),
@@ -94,9 +110,11 @@ class _InteractiveExerciseState extends State<_InteractiveExercise> {
       children: [
         if (x.type == ReviewExerciseType.sentenceCloze) ...[
           // Card #561 (issue #609): the fill-in front shows the word's photo
-          // too, unmarked, so the sentence and the picture work together.
+          // too, so the sentence and the picture work together. No ring, but
+          // the back's blue dot on the word's spot (問題回報 #849): it says
+          // where to look, not what the word is.
           if (widget.session.photo != null) ...[
-            _photo(mark: false),
+            _photo(mark: false, dot: true),
             const SizedBox(height: 18),
           ],
           _title(x.prompt),
@@ -140,7 +158,9 @@ class _InteractiveExerciseState extends State<_InteractiveExercise> {
           // 問題回報 #697: 選單字題 shows the photo without the target ring —
           // the ring sat on top of the tagger's box, two marks in one spot,
           // and the question is about the whole photo.
-          _photo(mark: false),
+          // 問題回報 #849: the back's small blue dot marks the word's spot
+          // instead (no box, no word), like the card back draws it.
+          _photo(mark: false, dot: true),
           const SizedBox(height: 18),
           _title(x.prompt),
           for (final option in x.options)
@@ -189,6 +209,8 @@ class _InteractiveExerciseState extends State<_InteractiveExercise> {
                 style: MFont.manrope(13, FontWeight.w700, Colors.red)),
         ],
         if (x.type == ReviewExerciseType.photoRecall) ...[
+          // 問題回報 #849: the target ring (卡 #253) already marks the spot,
+          // with the focal dot at its centre — no second dot.
           _photo(),
           const SizedBox(height: 18),
           _title(x.prompt),
@@ -288,6 +310,9 @@ class _InteractiveExerciseState extends State<_InteractiveExercise> {
         final frame = photo == null
             ? Size(c.maxWidth, c.maxWidth * 3 / 4)
             : dragPhotoFrame(photo, c.maxWidth);
+        // 問題回報 #849: no blue dot here — the learner drags the word to
+        // its spot, so a dot would point at the answer (the drop spots are
+        // the only marks).
         return _photo(
           mark: false,
           height: frame.height,
