@@ -43,6 +43,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // are recognised once the service is back) or needs the learner to fix the
   // URL/key; the collapsed hint says which.
   bool _checkNeedsFix = false;
+  // 問題回報 #815 (owner chose 1): the fix-it hint is also shown at the top
+  // of the page; tapping it scrolls down to 進階設定 and opens it.
+  final _scroll = ScrollController();
+  final _advanced = ExpansibleController();
+  final _advancedKey = GlobalKey();
   bool _checking = false;
   bool _switching = false;
 
@@ -59,6 +64,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
         accent: accent,
         audioUrl: source == null ? null : packAccentAudioUrl(source, accent));
     if (!ok && mounted) showToast(context, '播放發音失敗，請檢查音量或稍後再試');
+  }
+
+  /// The broken-recognition hint, when the last check says the learner
+  /// has to fix the URL or key (not when the service is only offline).
+  String? _fixHint(AppSettings settings) =>
+      settings.showsTaggingServer &&
+              (_check?.startsWith('✕') ?? false) &&
+              _checkNeedsFix
+          ? '照片辨識設定有誤，新照片無法辨識，點開修正'
+          : null;
+
+  Future<void> _openAdvanced() async {
+    if (_scroll.hasClients) {
+      await _scroll.animateTo(_scroll.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+    }
+    _advanced.expand();
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    final target = _advancedKey.currentContext;
+    if (target != null && target.mounted) {
+      await Scrollable.ensureVisible(target,
+          duration: const Duration(milliseconds: 200));
+    }
   }
 
   /// 掃描後台 QR code，帶入網址與金鑰後直接測試連線（手動輸入仍可用）。
@@ -144,6 +172,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void dispose() {
     _url?.dispose();
     _key?.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
@@ -185,8 +214,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 Expanded(
                   child: ListView(
+                    controller: _scroll,
                     padding: const EdgeInsets.all(MSpace.lg),
                     children: [
+                      if (_fixHint(settings) case final hint?)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: MSpace.md),
+                          child: Material(
+                            color: MColors.againFg.withValues(alpha: 0.08),
+                            borderRadius: MRadii.rLg,
+                            child: InkWell(
+                              key: const ValueKey('settings-fix-hint'),
+                              borderRadius: MRadii.rLg,
+                              onTap: _openAdvanced,
+                              child: Padding(
+                                padding: const EdgeInsets.all(MSpace.md),
+                                child: Row(children: [
+                                  const Icon(Icons.error_outline_rounded,
+                                      color: MColors.againFg, size: 20),
+                                  const SizedBox(width: MSpace.sm),
+                                  Expanded(
+                                    child: UiText(hint,
+                                        style: MFont.manrope(13,
+                                            FontWeight.w700, MColors.againFg)),
+                                  ),
+                                  const Icon(Icons.chevron_right_rounded,
+                                      color: MColors.againFg),
+                                ]),
+                              ),
+                            ),
+                          ),
+                        ),
                       _Card(
                         title: '語言',
                         children: [
@@ -209,7 +267,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   ),
                             ],
                           ),
-                          _note('更多學習語言即將推出'),
                           if (availableLearningLanguages.length > 1)
                             _note('每個學習語言有自己的相片冊、單字、卡片與程度。'),
                           const SizedBox(height: 12),
@@ -500,6 +557,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       // 問題回報 #390: advanced settings sit at the bottom,
                       // collapsed; a failed connection shows only as a hint.
                       _Card(
+                        key: _advancedKey,
+                        controller: _advanced,
                         title: '進階設定',
                         collapsed: true,
                         hint: settings.showsTaggingServer &&
@@ -781,11 +840,16 @@ class _Card extends StatelessWidget {
   /// Shown under a collapsed title (e.g. a failed connection check).
   final String? hint;
 
+  /// Opens a collapsed card from elsewhere on the page (問題回報 #815).
+  final ExpansibleController? controller;
+
   const _Card(
-      {required this.title,
+      {super.key,
+      required this.title,
       required this.children,
       this.collapsed = false,
-      this.hint});
+      this.hint,
+      this.controller});
 
   @override
   Widget build(BuildContext context) => Container(
@@ -801,6 +865,7 @@ class _Card extends StatelessWidget {
             ? Material(
                 color: Colors.transparent,
                 child: ExpansionTile(
+                    controller: controller,
                     title: UiText(title),
                     subtitle: hint == null
                         ? null
