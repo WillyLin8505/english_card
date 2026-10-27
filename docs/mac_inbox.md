@@ -1080,12 +1080,12 @@ commit `1858bf24`（Windows：flutter analyze 無 error、  D:/vibe_coding/engli
 - 卡 #541：問題回報 #581：「容易混淆的字」的中文用了對方的冷門意思：page→pale「柵欄」、dot→date「椰棗」、mo
   結果：全部完成：#581 已在 app pack 修正（2,954 → 269 個容易混淆的字中文錯用對方冷門義項，A1/A2 865 → 72），golden／QC 無退步。
 
-## M77（2026-10-23 12:38）狀態：待做
+## M77（2026-10-23 12:38）狀態：完成
 commit `6b8d6974`（Windows：flutter analyze 無 error、  D:/vibe_coding/english_card/app/test/card450_level_row_dup_test.dart: the level is shown once on the photo page (did not complete)（1 個測試檔重跑一次就過：同時有別的 flutter test 在跑））。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #540：問題回報 #209：[qc] entry.full_without_ipa：完整詞條沒有 IPA
   結果：全部完成：entry.fullwithoutipa 1→0（新匯入的 repairperson，從根因修：推導備援認得 -person／-proof），golden 不變、QC regressions=[]，測試 57 過。
 
-## M78（2026-10-23 16:29）狀態：待做
+## M78（2026-10-23 16:29）狀態：完成
 commit `eec971f5`（Windows：flutter analyze 無 error、01:14 +571 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #543：問題回報 #584：相機權限被拒時只顯示「目前無法使用相機」和「重試相機」，沒說是權限問題，重試也不會再問權限
   結果：全部完成：相機權限被拒時，徽章改「相機權限未開啟」、按鈕改「開啟權限說明」（跳出到系統設定開相機權限的步驟，內有「重試相機」）；其他錯誤維持原樣。dart analyze 無問題。；- 改：app/lib/screens/camerascreen.dart（permissionDenied 依 CameraExcept
@@ -1108,14 +1108,14 @@ commit `eec971f5`（Windows：flutter analyze 無 error、01:14 +571 ~2: All tes
 - 卡 #227：模擬使用者・單字本
   結果：第 167/169 輪：2/2 通過（database 94 秒、detail 61 秒），新問題 0、新 UX 建議 0（這輪沒做逐頁易用性評估）。
 
-## M79（2026-10-23 16:32）狀態：待做
+## M79（2026-10-23 16:32）狀態：完成
 commit `476ad234`（Windows：flutter analyze 無 error、01:01 +571 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #496：模擬使用者・法語（英語母語者學法語）
   結果：法語模擬第 10 輪：程式 4/4 通過（frmedia 先失敗，修版面溢出後通過）；pack 6153 詞；修了「全部加入」按鈕在英文介面變窄時溢出＋沒英文翻譯；沒動資料、沒開新問題回報。
 - 卡 #224：模擬使用者・拍照
   結果：第 167 輪（photoui）＋ pins：2/2 通過，14,767 張照片／44,301 次排版，標籤遮點 1（同上輪，無新錯誤）；沒有新的 UX 建議（#583、#584 仍待決定）。
 
-## M80（2026-10-23 16:36）狀態：待做
+## M80（2026-10-23 16:36）狀態：完成
 commit `b717f530`（Windows：flutter analyze 無 error、01:00 +571 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #542：問題回報 #582：法語動詞卡例句其實是另一個動詞的同形變位：suivre 20／20 句都是「je suis」（êtr
   結果：全部完成：法語動詞「與另一個常用動詞共用的變位」不再拿來找例句；全庫 1000 個法語動詞中 6 個受影響，錯例句 61 → 0（前 5 句 16 → 0），suivre 20／20 錯 → 19 句全是 suivre 本身。
@@ -1124,7 +1124,7 @@ commit `b717f530`（Windows：flutter analyze 無 error、01:00 +571 ~2: All tes
 - 卡 #455：問題回報 #449：[Mac] 2026-10-21 M30 補驗（上一輪未能驗證的 16 張新介面卡）：詞庫：cup
   結果：全部完成：依 owner 決定 B，自動核可現在要求「標籤框 ≥ 0.02 且有 visualConfidence」，不符的照片留在 pending（只管之後的照片）。
 
-## M81（2026-10-23 16:40）狀態：待做
+## M81（2026-10-23 16:40）狀態：完成
 commit `1cc4a767`（Windows：flutter analyze 無 error、00:56 +571 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #552：問題回報 #588：法語：系統 TTS 備援沒有寫進 pack（#515 決定 A 還沒生效）
   結果：exporter 現在會把 ttsfallback 匯出成 kind=tts 的發音列（#588）；程式已改，尚未重新匯出 pack，也未跑 golden / live QC。
@@ -1133,12 +1133,12 @@ commit `1cc4a767`（Windows：flutter analyze 無 error、00:56 +571 ~2: All tes
 - 卡 #553：問題回報 #589：詞庫：重新整理詞條（force_refresh 詞義）會刪掉只存在 example_translat
   結果：已修（選項 A）：materialize 重新整理不再刪 AI 例句翻譯；新測試因共用測試 DB 被其他 agent 佔用，尚未跑成功（未驗證）。；- 新測試 lexicon/tests/testcard553aiexampletranslationkept.py（AI 保留、非 AI 被刪）。
 
-## M82（2026-10-23 16:44）狀態：待做
+## M82（2026-10-23 16:44）狀態：完成
 commit `8bcd02d6`（Windows：flutter analyze 無 error、01:01 +571 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #554：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
   結果：全部完成：flutter test 571 通過（~2 skipped）、flutter analyze 0 error（1 個既有 info，在凍結檔 flashcardsessionviews.dart，未動）。
 
-## M83（2026-10-23 17:54）狀態：待做
+## M83（2026-10-23 17:54）狀態：完成
 commit `c1207cc8`（Windows：flutter analyze 無 error、00:57 +571 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器（有接實機也在 iPhone 上）逐張驗證下面的卡：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #539：問題回報 #579：同一詞性裡「第二詞源」的常用義項全被標低優先、沒有中文：second 的「秒」、tip 的「小費」、
   結果：第二詞源的常用義項不再被藏：637 字／1,655 個義項拿掉 etymology-N 標籤（A1–B1 1,040），「已確立卻被藏」從 502 降到 2，有中文的從 878 增加到 1,035；還有 557 個義項（282 字）缺中文，要等 Qwen 恢復後補（Qwen 目前暫停）。golden 與 QC 都沒有退
@@ -1150,7 +1150,7 @@ owner 實際用 iPhone 時，App 裡**看不到「照片辨識連線」設定**�
 3. 不要把金鑰寫進 repo。金鑰由 owner 自己掃 QR code 帶入，QR 在 Windows 的 D:\connect.png。
 4. 裝好後在 results 檔記一列：裝了哪個 commit、iOS 版本。若需要 Apple ID 或密碼，不要代填，記下來等 owner。
 
-## M85（2026-10-23 18:25）狀態：待做（owner 優先）
+## M85（2026-10-23 18:25）狀態：完成
 owner 18:00 起在 iPhone 送出的回報全文如下。**這些 Windows 的 dispatcher 都已經派出去了**（每筆一個 CLI，含 App 程式），Mac 不要再修，避免重工。
 Mac 要做的：這些卡完成後 mac_sync 會照常開 M 項，到時在 iPhone 實機驗證，不通過就寫「不通過」列。
 之後的分工（App 畫面交給 Mac 或照舊 Windows）已開 [待決定] 給 owner；owner 決定前一律由 Windows 派工。
@@ -1208,7 +1208,7 @@ commit `533bd111`（Windows：flutter analyze 無 error、01:09 +580 ~2: All tes
 - 卡 #558：問題回報 #605：[卡片回報] money（noun）翻譯錯
   結果：全部完成：money 的圖（asset 10290）與全庫 1031 張純文字截圖／文件圖已退件（5286 筆配圖關聯 → rejected），golden／QC 無退步。
 
-## M90（2026-10-23 19:56）狀態：待做（已裝最新、7 項已驗；#639–#643 等 Windows 修好再驗）
+## M90（2026-10-23 19:56）狀態：完成
 owner 19:00 之後在 iPhone 送出的新回報。**都已由 Windows 派出**，Mac 不要重修；修好後 mac_sync 會開 M 項，再請 Mac 在 iPhone 驗證。
 
 | # | 頁面 | 內容 | Windows 狀態 |
@@ -2126,7 +2126,7 @@ commit `c12083f2`（Windows：flutter analyze 無 error、01:13 +692 ~2: All tes
 - 卡 #655：問題回報 #747：[owner] [Mac] 2026-10-26 iPhone 12 實機驗證 M170–M195（
   結果：已修（需重啟 tagger）：補字 focus=harder 不看 level、提示只說「比日常字難」，模型回 B1 級字；現在依 level 提示並在 tagger 端按詞頻濾掉比 level-1 更簡單的字。
 
-## M201（2026-10-26 23:13）狀態：待做（重驗 M199／M200）
+## M201（2026-10-26 23:13）狀態：完成
 tagger 已在 23:12 用 start_tagger.bat 重啟，8765、8790 都回 200，裡面已是 #747 的修正（harder 會照 level 提示，tagger 也會濾掉比 level-1 更簡單的字）。請到 owner 的 iPhone 重驗 level=C2 的 harder 補字。
 
 ## M202（2026-10-26 23:25）狀態：完成
@@ -2592,7 +2592,7 @@ commit `baee7620`（Windows：flutter analyze 無 error、01:19 +712 ~2: All tes
 
 更新詞庫後重驗 M269 圖 43。
 
-## M273（2026-10-27 22:13）狀態：待做（Windows 卡 #701 交給 Mac 的 App 畫面部分）
+## M273（2026-10-27 22:13）狀態：完成
 卡：問題回報 #833：[Mac] 2026-10-27 owner iPhone 學習語言被換成法文：owner iPhone 學習語言變法文
 
 若 owner 選 A 或 C，在 settings_screen.dart 的 _switchLanguage 於 scope.switchLanguage 前加確認對話框（文案「切到<語言>？<原語言>的資料會保留」）。我沒有改畫面。
@@ -2609,7 +2609,7 @@ commit `5ac27226`（Windows：flutter analyze 無 error、01:09 +736 ~2: All tes
 - 卡 #698：問題回報 #214：CEFR 分級疑似錯誤：scarecrow (noun) 現在 C1(估) → 建議 A2/B1（具
   結果：全部完成：scarecrow 等 125 個字表外、zipf 2.5–3.3 的常見具體名詞（#607 沒涵蓋的詞條層）加入人工覆寫表，封頂 B1，scarecrow C1→B1。
 
-## M276（2026-10-27 22:55）狀態：待做
+## M276（2026-10-27 22:55）狀態：完成
 卡：問題回報 #771（M274 圖 43 照片標籤點的義項）
 serve_app 22:47 重啟後的新詞庫 ETag `f74e5a2562dadd357e582e835676aebfa1c974b1b5adb0123b56078ea5043a72`（Windows ae21c16b：labels 帶 sense_id）。Windows 已查 sqlite pack：
 圖 43 labels：open→1910「打開的」、binding→5011「裝訂」、text→7648「文字、正文」，其餘 11 個 label 也都有 sense_id。
@@ -2630,7 +2630,7 @@ owner 在 iPhone 送出的回報（#626：App 畫面與互動由 Mac 修）。�
 | 847 | [意見回饋] 照片詳情：我上傳的圖片我在後台中也要可以看到才對 | 意見：我上傳的圖片我在後台中也要可以看到才對 / 頁面：照片詳情 / 單字／照片 id：photo-1793112799161950 / App 版本：1.0.0+1 / 學習語言：en / 截圖：有（screenshot 欄位）（截圖：`docs/mac_handover/847.png`） |
 | 848 | [意見回饋] 照片詳情：下面單字不要縮起來 要完整呈現單字和一個簡短說明 | 意見：下面單字不要縮起來 要完整呈現單字和一個簡短說明 / 頁面：照片詳情 / 單字／照片 id：photo-1793112799161950 / App 版本：1.0.0+1 / 學習語言：en / 截圖：有（screenshot 欄位）（截圖：`docs/mac_handover/848.png`） |
 
-## M279（2026-10-27 22:59）狀態：待做（owner 回報，給 Mac）
+## M279（2026-10-27 22:59）狀態：完成
 owner 在 iPhone 送出的回報（#626：App 畫面與互動由 Mac 修）。資料或伺服器的部分請寫「不通過」列交回 Windows。
 
 | # | 回報 | 內容 |
@@ -2685,7 +2685,7 @@ commit `4cf6ee71`（Windows：flutter analyze 無 error、01:21 +739 ~2: All tes
 - 卡 #707：問題回報 #845：[給 Mac] [意見回饋] 照片詳情：旁邊的字都截到了 簡單跟困難
   結果：需要 Mac：#845 照片詳情「簡單／困難」文字截斷，已有 inbox M277；Windows 程式與資料變更 0 筆。
 
-## M285（2026-10-27 23:11）狀態：待做（Windows 卡 #710 交給 Mac 的 App 畫面部分）
+## M285（2026-10-27 23:11）狀態：完成
 卡：問題回報 #849：[給 Mac] [意見回饋] 複習：正面也要呈現藍點
 
 複習卡片正面也要呈現藍點（見 #849 截圖與 inbox M279）。
