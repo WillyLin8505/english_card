@@ -2455,3 +2455,28 @@ commit `b78962f8`（Windows：flutter analyze 無 error、01:11 +711 ~2: All tes
 卡：問題回報 #816：[Mac] 2026-10-27 M255 與 #815（iPhone 模擬器，b78962：iPhone 實機
 
 信任完成後重新安裝並驗證。
+
+## M257（2026-10-27 21:11）狀態：待做（Windows 卡 #685 交給 Mac 的 App 畫面部分）
+卡：問題回報 #818：[Mac] 2026-10-27 iPhone 12 實機驗證（release 022a00：M203 #748 補字等級
+
+重驗 M203（重啟後）。
+
+需要你決定：現在可以重啟辨識伺服器（tagger）嗎？
+A：現在重啟（我不自己重啟，因為 start_tagger.bat 會再開一個 llama-server，要小心不重複）
+B：等沒有人在用時由你雙擊 tagger/start_tagger.bat 重啟
+C：其他
+建議：B，因為重啟會中斷正在跑的辨識，且只能用 start_tagger.bat。
+
+根因：等級過濾 filter_level 對「查不到等級」的字一律保留。快取裡的舊標籤（以及沒帶詞典的請求）沒有 zipf，
+所以不在 CEFR-J/Oxford 清單裡的字（stroll、dwell、congested、occupancy…）cefr 為空 → 沒被濾掉，
+App 又把沒有等級的字預設成 B1，就是 Mac 看到的 B1。清單內的字（pedestrian、propulsion）原本就有濾。
+修法：word_cefr 在沒有 zipf 時自己用 wordfreq 查，所有英文候選都有等級（list 或 estimate）。
+數字（level=C2，下限 C1）：
+- 前：stroll、dwell 未濾（cefr 空）；後：stroll B2、dwell B2、pedestrian B2 濾掉；congested C1、occupancy C1、conspire C2、luminous C1 保留。
+- harder 取最難 6 個：congregation、architectural 本來就是 C1（詞庫清單），符合「不低於 C1」，不是錯。
+- 注意：詞庫與 tagger 都把 congested、occupancy 判成 C1（不是 B1），Mac 看到的 B1 是 App 沒拿到等級的預設值，修好後會帶 cefr。
+- 「只回 5 個」是過濾後的結果（C2 學習者下限 C1，12 個裡剩 5 個），是 card657 的設計（不再用低等字補滿）；若要固定回 10 個以上，需另一個決定（放寬 or 多問模型一輪），未做。
+改動：tagger/tagging_server.py（_wordfreq_zipf、word_cefr）、tagger/test_tagging_server.py（新增 1 測試、改 1 測試）。tagger 測試 18 過。
+備份：tagger/card685_tagging_server.py.bak、tagger/card685_test_tagging_server.py.bak；還原＝複製回原檔名後重啟。
+golden/QC：只動 tagger 候選等級，未動詞庫資料，未另跑（無資料變更）。
+剩下：重啟 tagger；Mac 重驗 M203。
