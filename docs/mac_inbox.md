@@ -3125,3 +3125,5 @@ commit `aaf03fee`（Windows：flutter analyze 無 error、01:28 +803 ~2: All tes
 ## M350（2026-10-29 07:43）狀態：待驗證
 commit `ef4b8108`（Windows：flutter analyze 0、card745_bulk_add_test 9/9、後台 test_card753 2/2）。owner 10/29：批量加字上限 3000。`git pull` 後用 owner 的 iPad 驗證，結果寫進 docs/mac_verify_results.md：
 - 單字本「一次加入多個」：說明寫「一次最多 3000 個」；貼 3000 個字（可用 w1..w3000）按「檢查」，畫面不卡死、可捲動到底，按「加入 3000 個」後單字本多 3000 個；記下檢查與加入各花幾秒。
+## M351（2026-10-29 07:49）狀態：待驗證
+commit `33b929bd`（Windows：flutter analyze 0、card745_bulk_add_test 9/9）。修 M350：原形和變化形同時貼上（abandon、abandoned）只算一個。`git pull` 後用 owner 的 iPad 重跑 M350 的 3000 字：按鈕「加入 N 個」的 N 要等於單字本實際多出的數量。結果寫進 docs/mac_verify_results.md。
