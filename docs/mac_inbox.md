@@ -3117,7 +3117,7 @@ commit `2ac4d7bf`（Windows：flutter analyze 無 error、01:46 +803 ~2: All tes
 - 卡 #764：問題回報 #905：Fresh 中文意思有罕用字「鱻」而且太長（新鮮、新的、新穎的；鮮的、鱻的）
   結果：Fresh 的「鱻」已移除（全庫只有 1 筆含罕用字「鱻」），並在擷取程式擋掉同類罕用變體字。
 
-## M349（2026-10-29 04:10）狀態：待做
+## M349（2026-10-29 04:10）狀態：完成
 commit `aaf03fee`（Windows：flutter analyze 無 error、01:28 +803 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #496：模擬使用者・法語（英語母語者學法語）
   結果：法語模擬第32–34輪：4/4通過；資料與上輪持平（6153詞、英文義/音檔 6153/6153、缺英譯例句 1），無新問題，chineseinenglishui=0 通過。
