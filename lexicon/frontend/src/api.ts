@@ -111,6 +111,23 @@ export const api = {
     }
     return res.json() as Promise<T>;
   },
+  /** GET a binary body (e.g. a PNG) and return it as a blob. */
+  async blob(path: string): Promise<Blob> {
+    const key = memoryKey ?? storedKey();
+    const res = await fetch(`/api${path}`, { headers: key ? { "X-API-Key": key } : {}, cache: "no-store" });
+    if (res.status === 401) keyListeners.forEach((f) => f());
+    if (!res.ok) {
+      let msg = `${res.status} ${res.statusText}`;
+      try {
+        const j = await res.json();
+        msg = typeof j.detail === "string" ? j.detail : JSON.stringify(j.detail ?? j);
+      } catch {
+        /* not JSON */
+      }
+      throw new ApiError(res.status, msg);
+    }
+    return res.blob();
+  },
   async download(path: string, filename: string) {
     const key = memoryKey ?? storedKey();
     const res = await fetch(`/api${path}`, { headers: key ? { "X-API-Key": key } : {} });

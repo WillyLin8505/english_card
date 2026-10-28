@@ -18,6 +18,7 @@ import Schedule from "./pages/Schedule";
 import ShareStats from "./pages/ShareStats";
 import Decks from "./pages/Decks";
 import AppPhotos from "./pages/AppPhotos";
+import ConnectQr from "./pages/ConnectQr";
 
 const NAV = [
   ["/", "總覽", "Dashboard"],
@@ -35,6 +36,7 @@ const NAV = [
   ["/share-stats", "分享統計", "Shared Decks"],
   ["/snapshots", "來源快照", "Source Snapshots"],
   ["/export", "匯出給 Flutter", "Export for Flutter"],
+  ["/connect-qr", "連線 QR code", "Connect QR code"],
 ] as const;
 
 function useHashRoute() {
@@ -156,6 +158,7 @@ export default function App() {
   else if (route === "/issues") page = <Issues />;
   else if (route === "/snapshots") page = <Snapshots />;
   else if (route === "/export") page = <Export />;
+  else if (route === "/connect-qr") page = <ConnectQr />;
   else page = <div className="page"><h1>找不到頁面</h1></div>;
 
   const active = NAV.filter(([p]) => (p === "/" ? route === "/" : route.startsWith(p) || (p === "/jobs" && route.startsWith("/jobs")) || (p === "/coverage" && route.startsWith("/words")))).map(([p]) => p);

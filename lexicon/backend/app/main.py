@@ -56,11 +56,12 @@ from . import images, issues, tasks
 images.register(app, Auth)
 issues.register(app, Auth)
 tasks.register(app, Auth)
-from . import accounts, app_photos, card_templates, decks
+from . import accounts, app_photos, card_templates, connect_qr, decks
 card_templates.register(app, Auth)
 decks.register(app, Auth)
 accounts.register(app, Auth)
 app_photos.register(app, Auth)
+connect_qr.register(app, Auth)
 
 
 @app.exception_handler(policies.PolicyError)

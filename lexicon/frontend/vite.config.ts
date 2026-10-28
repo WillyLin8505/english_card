@@ -15,6 +15,7 @@ export default defineConfig(({ mode }) => {
         "/api": {
           target: `http://127.0.0.1:${port}`,
           changeOrigin: true,
+          xfwd: true, // X-Forwarded-For lets the API tell local from tunnelled requests (card #758)
           rewrite: (p) => p.replace(/^\/api/, ""),
           headers: env.LEXICON_API_KEY ? { "X-API-Key": env.LEXICON_API_KEY } : {},
         },
