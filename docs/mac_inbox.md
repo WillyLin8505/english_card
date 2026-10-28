@@ -2906,12 +2906,12 @@ commit `1da940f2`（Windows：flutter analyze 無 error、02:06 +790 ~2: All tes
 - 卡 #701：問題回報 #833：[Mac] 2026-10-27 owner iPhone 學習語言被換成法文：owner iPho
   結果：全部完成：點學習語言（英文／法文）現在會先跳「切換學習語言？」確認，按確定才切換；flutter analyze 無問題，flutter test 787 項全過。
 
-## M314（2026-10-28 08:37）狀態：待做（Windows 卡 #227 交給 Mac 的 App 畫面部分）
+## M314（2026-10-28 08:37）狀態：完成
 卡：模擬使用者・單字本
 
 無。
 
-## M315（2026-10-28 08:42）狀態：待做
+## M315（2026-10-28 08:42）狀態：完成
 commit `d74ec06b`（Windows：flutter analyze 無 error、01:49 +790 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/27：用 Mac 模擬器，要實機時用 owner 的 iPad；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #226：模擬使用者・複習
   結果：第 192/193 輪：2/2 通過（learner 279 秒、restart 95 秒）；無新問題；UX 建議＝沿用 #485／#515，未重複開單。
