@@ -2962,3 +2962,8 @@ commit `580b66ff`（Windows：flutter analyze 無 error、01:02 +790 ~2: All tes
 
 英文裝置引導中文殘留、實機音訊/相機驗收。
 變更：僅測試產物；未改App/伺服器/詞庫，未commit/push。無需備份；golden/QC未跑（純檢查）。
+
+## M324（2026-10-28 15:53）狀態：待做
+commit `9d58e96f`（Windows：flutter analyze 無 error、01:08 +790 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/27：用 Mac 模擬器，要實機時用 owner 的 iPad；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #496：模擬使用者・法語（英語母語者學法語）
+  結果：法語模擬第29–31輪：4/4通過；資料與上輪持平（6153詞、英文義/音檔 6153/6153、缺英譯例句 1），無新問題。
