@@ -3017,3 +3017,7 @@ commit `48c7c86c`（Windows：flutter analyze 無 error、01:45 +805 ~2: All tes
 
 請改驗 #744（難度 bar 下是否顯示名／動／形／副一欄），M332 #742 這列作廢。
 剩下：無。
+
+## M334（2026-10-28 23:10）狀態：待驗
+commit `45bf8e2c`（Windows：analyze 0、card745_bulk_add_test 7/7 通過）。`git pull` 後在 iPhone 模擬器驗：
+- 卡 #745：單字本 → 一次加入多個。M332 回報對話框在 402pt 寬溢出 26 px（bulk_add_dialog.dart:96），已把輸入區包進 SingleChildScrollView、文字框 5–10 行。請在鍵盤開著時確認沒有黃黑溢出條，貼 20 個字、檢查、加入都正常，截圖寫進 mac_verify_results。
