@@ -3021,3 +3021,16 @@ commit `48c7c86c`（Windows：flutter analyze 無 error、01:45 +805 ~2: All tes
 ## M334（2026-10-28 23:10）狀態：待驗
 commit `45bf8e2c`（Windows：analyze 0、card745_bulk_add_test 7/7 通過）。`git pull` 後在 iPhone 模擬器驗：
 - 卡 #745：單字本 → 一次加入多個。M332 回報對話框在 402pt 寬溢出 26 px（bulk_add_dialog.dart:96），已把輸入區包進 SingleChildScrollView、文字框 5–10 行。請在鍵盤開著時確認沒有黃黑溢出條，貼 20 個字、檢查、加入都正常，截圖寫進 mac_verify_results。
+
+## M335（2026-10-28 23:10）狀態：待做
+commit `661a8a57`（Windows：flutter analyze 無 error、01:31 +803 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/27：用 Mac 模擬器，要實機時用 owner 的 iPad；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #745：[owner] 單字本：一次加入多個英文單字（批量輸入）
+  結果：全部完成：單字本新增「一次加入多個」（貼上/逗號/頓號/Tab 分隔、上限 300、先檢查預覽再加入）；flutter test 805 全過，analyze 我改的檔案 0 問題。
+- 卡 #746：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
+  結果：結論：analyze 已無 error（剩 4 info/1 warning，非本卡錯誤）；flutter test 剩 2 個失敗，都來自卡 #744 還在改的 levelcolumnpanel，不是 #571 原本的問題。
+- 卡 #744：[owner] 照片難度 bar 直接顯示表格那一欄（名／動／形／副，不要詞性按鈕）
+  結果：卡 #744 完成：照片難度 bar 下方直接顯示該難度的表格一欄（名／動／形／副四列固定都在），詞性按鈕已移除；flutter analyze 我改的檔 0 問題，flutter test 全部 802 通過。
+- 卡 #736：問題回報 #883：[Mac] 2026-10-28 M323、M324 法語（iPhone 模擬器）：母語繁中＋學法語
+  結果：全部完成：owner 決定（A：母語非英文不開放法文）已由卡 #737 實作，本輪驗證通過，未再改程式或資料。
+- 卡 #750：問題回報 #894：[Mac] 2026-10-28 M332（iPhone 模擬器，48c7c86c）：M332 #7
+  結果：全部完成：問題回報 #894 不是 bug——#742 的詞性切換（全部／名詞／動詞／形容詞／片語）已被 owner 的後續卡 #744 刻意移除，Mac 驗的 48c7c86c 本來就沒有這排。
