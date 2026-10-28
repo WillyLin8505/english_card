@@ -4,6 +4,7 @@ import { AppCtx, ErrorBox, Loading, Modal } from "./ui";
 import Dashboard from "./pages/Dashboard";
 import Policies from "./pages/Policies";
 import StartImport from "./pages/StartImport";
+import BulkAdd from "./pages/BulkAdd";
 import Jobs from "./pages/Jobs";
 import JobDetail from "./pages/JobDetail";
 import Coverage from "./pages/Coverage";
@@ -24,6 +25,7 @@ const NAV = [
   ["/issues", "問題回報", "Issue Reports"],
   ["/policies", "來源順位", "Source Policies"],
   ["/imports/new", "開始擷取", "Start Import Job"],
+  ["/bulk-add", "批量加入單字", "Bulk Add Words"],
   ["/jobs", "工作佇列", "Jobs"],
   ["/coverage", "單字資料庫", "Word Database"],
   ["/card-studio", "字卡工作室", "Card Studio"],
@@ -139,6 +141,7 @@ export default function App() {
   if (route === "/") page = <Dashboard />;
   else if (route.startsWith("/policies")) page = <Policies route={route} />;
   else if (route === "/imports/new") page = <StartImport />;
+  else if (route === "/bulk-add") page = <BulkAdd />;
   else if (route === "/jobs") page = <Jobs />;
   else if (m) page = <JobDetail id={Number(m[1])} />;
   else if (route.startsWith("/coverage")) page = <Coverage />;

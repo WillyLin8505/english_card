@@ -22,7 +22,7 @@ from sqlalchemy import func, select, text
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
 
-from . import adapters, catalog, code_watch, config, db, exporter, jobs, pipeline, policies, snapshots, views
+from . import adapters, bulk_add, catalog, code_watch, config, db, exporter, jobs, pipeline, policies, snapshots, views
 from . import models as m
 from .adapters import Context
 from .adapters.base import ARPABET
@@ -744,6 +744,32 @@ def list_requests(s: Session = DB):
 
 
 # The built admin UI (npm run build) is served at /ui/ when present.
+# ── 批量加入要學的單字 (card #753) ─────────────────────────────────────
+
+class BulkCheckBody(BaseModel):
+    text: str
+    target_language: str = "en"
+    native_language: str = "zh-TW"
+
+
+class BulkConfirmBody(BaseModel):
+    target_language: str = "en"
+    native_language: str = "zh-TW"
+    items: list[dict[str, Any]]
+
+
+@app.post("/bulk-add/check", dependencies=[Auth])
+def bulk_add_check(body: BulkCheckBody, s: Session = DB):
+    return bulk_add.check(s, body.text, body.target_language, body.native_language)
+
+
+@app.post("/bulk-add/confirm", dependencies=[Auth], status_code=201)
+def bulk_add_confirm(body: BulkConfirmBody, s: Session = DB,
+                     idempotency_key: str | None = Header(default=None)):
+    return bulk_add.confirm(s, body.items, body.target_language, body.native_language,
+                            idempotency_key)
+
+
 _dist = config.HOME / "frontend" / "dist"
 if _dist.exists():
     app.mount("/ui", StaticFiles(directory=_dist, html=True), name="ui")

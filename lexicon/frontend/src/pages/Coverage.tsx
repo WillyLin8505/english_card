@@ -31,7 +31,7 @@ function Database({ target, native, langName, meta }: Pick<ReturnType<typeof use
           <h1>單字資料庫（Word Database）</h1>
           <p className="muted">所有已建詞條與關聯詞；點單字看詞義、例句與相關詞。關聯詞尚待擷取，不代表已有完整釋義。</p>
         </div>
-        <PairPicker />
+        <div><Link to="/bulk-add" className="btn">批量加入單字</Link> <PairPicker /></div>
       </header>
       <div className="toolbar">
         <input className="input" placeholder="搜尋單字" value={q} onChange={(e) => { setQ(e.target.value); setOffset(0); }} aria-label="搜尋單字" />

@@ -15,9 +15,10 @@ def test_datamuse_function_word_rows_are_noisy_for_all_datamuse_kinds():
 
 
 def test_other_sources_and_content_words_are_kept():
-    assert not is_noisy_function_word_relation("be", "oewn", "synonyms")
-    assert not is_noisy_function_word_relation("be", "cmudict", "near_homophones")
+    # card #735 / #887: oewn / kaikki / cmudict synonyms, near_homophones and homophones are hidden now
+    # (see test_card735_function_words.py); their other kinds stay visible.
     assert not is_noisy_function_word_relation("be", "kaikki", "antonyms")
+    assert not is_noisy_function_word_relation("be", "oewn", "related")
     assert not is_noisy_function_word_relation("apple", "datamuse", "near_homophones")
     assert not is_noisy_function_word_relation("can", "datamuse", "synonyms")  # can is also a noun
     assert not is_noisy_function_word_relation("be", "datamuse", "derived_terms")
