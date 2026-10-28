@@ -3088,7 +3088,7 @@ commit `9caaeb4a`（Windows：flutter analyze 無 error、01:34 +803 ~2: All tes
 - 卡 #758：[owner] 後台加「連線 QR code」頁（給 iPad 掃）
   結果：全部完成：後台新增「連線 QR code」頁（#/connect-qr）與只限本機的 PNG 端點，後端測試 10/10 通過、前端 build 通過。
 
-## M345（2026-10-28 23:49）狀態：待做（Windows 卡 #760 交給 Mac 的 App 畫面部分）
+## M345（2026-10-28 23:49）狀態：完成
 卡：問題回報 #901：[給 Mac] [記憶體] 設定
 
 問題回報 #901（inbox M343 已派）。請在 iPad 開「設定」畫面，用 Xcode Instruments 看是否一進入就吃記憶體（例如一次載入整個詞庫、大圖或音檔快取沒釋放），再決定修法。
@@ -3100,7 +3100,7 @@ commit `9caaeb4a`（Windows：flutter analyze 無 error、01:34 +803 ~2: All tes
 - 備份、golden、QC：未動資料，不需執行。
 - 剩餘：Mac 驗證並修畫面後關閉 #901。
 
-## M346（2026-10-28 23:54）狀態：待做
+## M346（2026-10-28 23:54）狀態：完成
 commit `d0c408c6`（Windows：flutter analyze 無 error、01:26 +803 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #760：問題回報 #901：[給 Mac] [記憶體] 設定
   結果：結論：這是 iPad 上「設定」畫面的 iOS 記憶體警告（App 339 MB、剩餘 2733 MB），屬 App 畫面問題，依分工由 Mac 處理，Windows 這邊沒有詞庫資料或伺服器可修，本卡未改任何程式或資料。
