@@ -3054,3 +3054,8 @@ commit `824ecd65`（Windows：flutter analyze 無 error、01:26 +803 ~2: All tes
 
 無（App 畫面未改；pack 重匯出後請 Mac 重驗 be／the）。
 剩餘：oewn 的 beryllium（Be 符號）是錯義來源問題，若要根治需另開問題回報（不在本卡範圍）。
+
+## M339（2026-10-28 23:23）狀態：待做
+commit `beed7769`（Windows：flutter analyze 無 error、01:16 +803 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/27：用 Mac 模擬器，要實機時用 owner 的 iPad；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #755：問題回報 #898：[Mac] 2026-10-28 M334 一次加入多個（iPhone 模擬器，da1534：M33
+  結果：非 App 程式問題，是詞庫資料缺口：App 詞庫包 12813 筆只有 56 筆 phrase（片語動詞僅 13 筆），抽樣 61 個常用片語動詞（pick up、give up、look for、turn on…）0 個在庫。
