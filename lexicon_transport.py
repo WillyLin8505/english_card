@@ -284,3 +284,84 @@ class SnapshotStore:
                 threading.Thread(target=self._refresh, args=(pair, snapshot),
                                  daemon=True, name='dictionary-refresh').start()
             return snapshot
+
+
+class RequestWatch:
+    """問題回報 #904: when a request hangs or is slow, leave the evidence behind.
+
+    Every request is registered while it runs. A request that finishes slower than
+    `slow_s` is logged (method, path, status, ms, requests in flight). A watchdog
+    thread logs once, while a request is still stuck after `stuck_s`, the stack of
+    its thread, the in-flight list and the DB pool state, so a request that never
+    answers is explained after the fact too.
+    """
+
+    def __init__(self, log_path: Path, slow_s: float = 3.0, stuck_s: float = 10.0, pool=None):
+        self.log_path, self.slow_s, self.stuck_s, self.pool = Path(log_path), slow_s, stuck_s, pool
+        self._lock = threading.Lock()
+        self._active: dict[int, dict] = {}
+        self._dumped: set[int] = set()
+
+    def _write(self, text: str) -> None:
+        try:
+            self.log_path.parent.mkdir(parents=True, exist_ok=True)
+            with self.log_path.open('a', encoding='utf-8') as f:
+                f.write(time.strftime('%Y-%m-%d %H:%M:%S ') + text + '\n')
+        except OSError:
+            pass
+
+    def _pool_state(self) -> str:
+        try:
+            return self.pool.status() if self.pool is not None else ''
+        except Exception:  # noqa: BLE001 - diagnostics must never break a request
+            return ''
+
+    def begin(self, method: str, path: str, host: str = '') -> int:
+        key = threading.get_ident()
+        with self._lock:
+            self._active[key] = {'method': method, 'path': path, 'host': host,
+                                 'start': time.monotonic(), 'thread': key}
+        return key
+
+    def end(self, key: int, status) -> None:
+        with self._lock:
+            info = self._active.pop(key, None)
+            dumped = key in self._dumped
+            self._dumped.discard(key)
+            others = len(self._active)
+        if info is None:
+            return
+        ms = round((time.monotonic() - info['start']) * 1000)
+        if ms >= self.slow_s * 1000 or dumped:
+            self._write(f"SLOW {info['method']} {info['path']} host={info['host']} status={status} "
+                        f"{ms}ms others_in_flight={others} pool=[{self._pool_state()}]")
+
+    def check(self) -> None:
+        """One watchdog pass (also called by tests)."""
+        import sys
+        import traceback
+        now = time.monotonic()
+        with self._lock:
+            stuck = [dict(i) for k, i in self._active.items()
+                     if now - i['start'] >= self.stuck_s and k not in self._dumped]
+            self._dumped.update(i['thread'] for i in stuck)
+            inflight = [f"{i['method']} {i['path']} {round(now - i['start'], 1)}s" for i in self._active.values()]
+        if not stuck:
+            return
+        frames = sys._current_frames()
+        for i in stuck:
+            frame = frames.get(i['thread'])
+            stack = ''.join(traceback.format_stack(frame)[-8:]) if frame else '(thread gone)'
+            self._write(f"STUCK {i['method']} {i['path']} host={i['host']} {round(now - i['start'], 1)}s "
+                        f"threads={threading.active_count()} pool=[{self._pool_state()}]\n"
+                        f"  in flight: {inflight}\n{stack}")
+
+    def start(self) -> None:
+        def loop():
+            while True:
+                time.sleep(2)
+                try:
+                    self.check()
+                except Exception:  # noqa: BLE001
+                    logging.exception('request watchdog')
+        threading.Thread(target=loop, daemon=True, name='request-watch').start()

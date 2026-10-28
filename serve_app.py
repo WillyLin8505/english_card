@@ -33,7 +33,7 @@ try:
     import brotli as _brotli
 except ImportError:
     _brotli = None
-from lexicon_transport import SnapshotStore, Warming, accepts_gzip, matches_etag
+from lexicon_transport import RequestWatch, SnapshotStore, Warming, accepts_gzip, matches_etag
 
 _lock = threading.Lock()
 _cache = {}
@@ -448,6 +448,24 @@ class Handler(SimpleHTTPRequestHandler):
 
     def _response_status(self) -> int:
         return self._last_status
+
+    def handle_one_request(self):
+        # 問題回報 #904: record slow / stuck requests (lexicon/logs/serve_app_slow.log).
+        self._last_status = '-'
+        self._watch_key = None
+        watch = getattr(self.server, 'request_watch', None)
+        try:
+            return super().handle_one_request()
+        finally:
+            if self._watch_key is not None and watch is not None:
+                watch.end(self._watch_key, self._last_status)
+
+    def parse_request(self):
+        ok = super().parse_request()
+        watch = getattr(self.server, 'request_watch', None)
+        if ok and watch is not None:
+            self._watch_key = watch.begin(self.command, self.path, self.headers.get('Host', ''))
+        return ok
 
     def send_response(self, code, message=None):
         self._last_status = code
@@ -1163,6 +1181,8 @@ if __name__ == '__main__':
         logging.warning('Card studio could not start: %s', error)
     server = ThreadingHTTPServer(('0.0.0.0' if args.lan else '127.0.0.1', args.port), Handler)
     server.lan = args.lan
+    server.request_watch = RequestWatch(ROOT / 'lexicon' / 'logs' / 'serve_app_slow.log', pool=db.engine.pool)
+    server.request_watch.start()
     # The owner's internet name is always served (card #477: a restart without the flag answers 403).
     server.public_hosts = {'api.willylinai.com'} | {h.strip().lower() for h in
                            args.public_host + os.environ.get('PUBLIC_HOSTS', '').split(',') if h.strip()}
