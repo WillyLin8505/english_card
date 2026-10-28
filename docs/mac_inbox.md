@@ -3043,3 +3043,8 @@ commit `c2e467d5`（Windows：flutter analyze 無 error、01:21 +803 ~2: All tes
   結果：後台「批量加入單字」做好了：貼 50 個字實測 → 已有 17、變化形 8、疑似錯字 10、詞庫沒有（新增）10、重複 3。
 - 卡 #722：問題回報 #863：[owner] 標籤辨識：詞性 × CEFR 表格每一格至少一個單字
   結果：部分完成：第 6 輪，tagger(:8765)／llama-server(:8790) 已恢復（health 200），但 Qwen 仍暫停（現在 22:53，非 00:00 起的時段），30 張貼題量測未做；未改程式或資料。
+
+## M337（2026-10-28 23:19）狀態：待做
+commit `824ecd65`（Windows：flutter analyze 無 error、01:26 +803 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/27：用 Mac 模擬器，要實機時用 owner 的 iPad；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #749：問題回報 #895：[Mac] 2026-10-28 M332（iPhone 模擬器，48c7c86c）：一次加入多個（
+  結果：一次加入多個對話框在小螢幕＋鍵盤時溢出：已修（輸入區改可捲動、文字框 5–10 行），測試已過。
