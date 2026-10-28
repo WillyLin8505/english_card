@@ -126,4 +126,20 @@ void main() {
     expect(got, (added: 2, skipped: 1));
     expect(r.entryByWord('balcony'), isNotNull);
   });
+
+  testWidgets('input does not overflow on a short phone with keyboard',
+      (t) async {
+    t.view.physicalSize = const Size(402, 420);
+    t.view.devicePixelRatio = 1;
+    t.view.viewInsets = const FakeViewPadding(bottom: 260);
+    addTearDown(t.view.reset);
+    await t.pumpWidget(MaterialApp(
+        home: Builder(
+            builder: (c) => TextButton(
+                onPressed: () => showBulkAddDialog(c, repo(), pack: pack()),
+                child: const Text('go')))));
+    await t.tap(find.text('go'));
+    await t.pumpAndSettle();
+    expect(t.takeException(), isNull);
+  });
 }

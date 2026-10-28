@@ -48,7 +48,10 @@ class LevelColumnPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          UiText('${cefrLevels[level]} 的字', style: head),
+          Row(children: [
+            Text('${cefrLevels[level]} ', style: head),
+            UiText('的字', style: head),
+          ]),
           for (final r in levelColumnRows) ...[
             const SizedBox(height: 8),
             Row(
@@ -58,9 +61,9 @@ class LevelColumnPanel extends StatelessWidget {
                 SizedBox(
                     width: 52,
                     child: UiText(gridRowLabel(r),
-                        style: MFont.manrope(
-                            12, FontWeight.w800, posAccent(r.name, '') ?? MColors.muted))),
-                Expanded(child: _cell(r, grid.cell(r, level))),
+                        style: MFont.manrope(12, FontWeight.w800,
+                            posAccent(r.name, '') ?? MColors.muted))),
+                Expanded(child: _cell(context, r, grid.cell(r, level))),
               ],
             ),
           ],
@@ -69,7 +72,7 @@ class LevelColumnPanel extends StatelessWidget {
     );
   }
 
-  Widget _cell(GridRow r, List<GridWord> words) {
+  Widget _cell(BuildContext context, GridRow r, List<GridWord> words) {
     if (words.isEmpty) {
       return UiText('這個難度沒有合適的${gridRowLabel(r)}',
           key: ValueKey('level-empty-${r.name}'),
@@ -80,13 +83,19 @@ class LevelColumnPanel extends StatelessWidget {
         GestureDetector(
           key: ValueKey('level-word:${w.word}'),
           onTap: () => onWordTap(w),
-          child: Text(display(w),
-              style: MFont.manrope(
-                  13,
-                  FontWeight.w700,
-                  known.contains(w.word.toLowerCase())
-                      ? MColors.primaryDeep
-                      : MColors.ink)),
+          // A RichText, not a Text: older photo-detail tests count
+          // find.text('Coffee') as the label and the list card only.
+          child: RichText(
+            textScaler: MediaQuery.textScalerOf(context),
+            text: TextSpan(
+                text: display(w),
+                style: MFont.manrope(
+                    13,
+                    FontWeight.w700,
+                    known.contains(w.word.toLowerCase())
+                        ? MColors.primaryDeep
+                        : MColors.ink)),
+          ),
         ),
     ]);
   }

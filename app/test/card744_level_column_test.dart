@@ -17,8 +17,7 @@ void main() {
 
   Widget host(int level) => MaterialApp(
       home: Scaffold(
-          body: LevelColumnPanel(
-              grid: grid, level: level, onWordTap: (_) {})));
+          body: LevelColumnPanel(grid: grid, level: level, onWordTap: (_) {})));
 
   testWidgets('A1: four parts of speech, empty adverb hint, no phrase',
       (t) async {
@@ -27,17 +26,17 @@ void main() {
       expect(find.byKey(ValueKey('level-row-$r')), findsOneWidget);
     }
     expect(find.byKey(const ValueKey('level-row-phrase')), findsNothing);
-    expect(find.text('look up'), findsNothing);
-    expect(find.text('dog'), findsOneWidget);
+    expect(find.byKey(const ValueKey('level-word:look up')), findsNothing);
+    expect(find.byKey(const ValueKey('level-word:dog')), findsOneWidget);
     expect(find.text('這個難度沒有合適的副詞'), findsOneWidget);
-    expect(find.textContaining('pos-filter'), findsNothing);
+    expect(find.byKey(const ValueKey('pos-filter-all')), findsNothing);
   });
 
   testWidgets('changing level swaps the column but keeps all four rows',
       (t) async {
     await t.pumpWidget(host(4));
-    expect(find.text('canine'), findsOneWidget);
-    expect(find.text('dog'), findsNothing);
+    expect(find.byKey(const ValueKey('level-word:canine')), findsOneWidget);
+    expect(find.byKey(const ValueKey('level-word:dog')), findsNothing);
     for (final r in ['noun', 'verb', 'adjective', 'adverb']) {
       expect(find.byKey(ValueKey('level-row-$r')), findsOneWidget);
     }
