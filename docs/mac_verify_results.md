@@ -2046,3 +2046,11 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
 |----|----|----|----|----|
 | M333 #744 難度條下顯示名／動／形／副一欄 | 通過 | 照片詳情難度條下有「A1 的字」框，分名詞／動詞／形容詞／副詞四列（名詞 Fruit、形容詞 Green，動詞／副詞「這個難度沒有合適的」），片語不顯示；M332 的 #742 詞性切換那列作廢 | mac_verify_shots/2026-10-28/m332_photo_detail.png | — |
+
+## 2026-10-28 M334 一次加入多個（iPhone 模擬器，da153470）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M334 一次加入多個版面 | 通過 | 輸入 14 行後對話框版面正常（沒有黃黑條），文字框可捲動；模擬器用 Mac 鍵盤，螢幕鍵盤沒有跳出，鍵盤開著的情況以 Windows 的 widget test 為準 | mac_verify_shots/2026-10-28/bulk_add_fixed.png | — |
+| M334 一次加入多個檢查結果 | 通過 | 按「檢查」：balcony A2 陽臺、brewed → 變成原形 brew（可改回原字）、kettle B1 水壺、scarecrow B1 稻草人、dusk B2 黃昏、cactus B1 仙人掌；重複的字合併，按鈕「加入 7 個」 | mac_verify_shots/2026-10-28/bulk_add_checked.png | — |
+| M334 pick up 詞庫沒有 | 不通過 | 片語動詞 pick up 顯示「詞庫沒有，仍可加入」，常用片語應該在詞庫（資料） | mac_verify_shots/2026-10-28/bulk_add_checked.png | 低 |
