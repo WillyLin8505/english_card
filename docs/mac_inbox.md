@@ -2905,3 +2905,8 @@ commit `1da940f2`（Windows：flutter analyze 無 error、02:06 +790 ~2: All tes
   結果：全部完成：已把來源是 Datamuse 的功能詞 related／上下位詞標為 App 預設隱藏，共 732 筆（功能詞字頭 Datamuse 共 774 筆，其餘 42 筆本來就已隱藏）；未刪除任何資料。
 - 卡 #701：問題回報 #833：[Mac] 2026-10-27 owner iPhone 學習語言被換成法文：owner iPho
   結果：全部完成：點學習語言（英文／法文）現在會先跳「切換學習語言？」確認，按確定才切換；flutter analyze 無問題，flutter test 787 項全過。
+
+## M314（2026-10-28 08:37）狀態：待做（Windows 卡 #227 交給 Mac 的 App 畫面部分）
+卡：模擬使用者・單字本
+
+無。
