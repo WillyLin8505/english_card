@@ -1953,3 +1953,10 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 |----|----|----|----|----|
 | M319 #556 字族上限的罕用衍生字 | 通過 | dogged adj C1（原本 A1）、pigment noun／verb B1（原本 A2） |  | — |
 | M319 #867 Windows PC 資源 | 通過 | Windows 電腦的工作，App 沒有要改的 |  | — |
+
+## 2026-10-28 M320（iPhone 模擬器，詞庫 45df70d9）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M320 #875 功能詞 Datamuse 雜訊 | 通過 | be 的 antonyms:differ、the 的 related:cited／certain／particular／specific 都不再顯示 |  | — |
+| M320 功能詞其他來源的怪關係詞 | 不通過 | 仍預設顯示：be → synonyms:beryllium（化學符號 Be）、synonyms:equal、near_homophones:pee／pea、derived_terms:abe；the → synonyms:le。不是 Datamuse，可能來自 kaikki／oewn，建議功能詞的 synonyms／near_homophones 一起預設隱藏 |  | 低 |
