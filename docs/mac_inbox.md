@@ -3022,7 +3022,7 @@ commit `48c7c86c`（Windows：flutter analyze 無 error、01:45 +805 ~2: All tes
 commit `45bf8e2c`（Windows：analyze 0、card745_bulk_add_test 7/7 通過）。`git pull` 後在 iPhone 模擬器驗：
 - 卡 #745：單字本 → 一次加入多個。M332 回報對話框在 402pt 寬溢出 26 px（bulk_add_dialog.dart:96），已把輸入區包進 SingleChildScrollView、文字框 5–10 行。請在鍵盤開著時確認沒有黃黑溢出條，貼 20 個字、檢查、加入都正常，截圖寫進 mac_verify_results。
 
-## M335（2026-10-28 23:10）狀態：待做
+## M335（2026-10-28 23:10）狀態：完成
 commit `661a8a57`（Windows：flutter analyze 無 error、01:31 +803 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/27：用 Mac 模擬器，要實機時用 owner 的 iPad；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #745：[owner] 單字本：一次加入多個英文單字（批量輸入）
   結果：全部完成：單字本新增「一次加入多個」（貼上/逗號/頓號/Tab 分隔、上限 300、先檢查預覽再加入）；flutter test 805 全過，analyze 我改的檔案 0 問題。
