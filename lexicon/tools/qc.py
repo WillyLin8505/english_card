@@ -171,6 +171,13 @@ def check_pack(source: str | None, out: str, before: str | None, live: bool,
     return 1 if bad else 0
 
 
+def _live_slot(timeout_s: float = 3000.0) -> None:
+    """Card #730/#731: one heavy job (check --live builds a 1.7-2.4 GB pack) at a time on this PC."""
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import heavy_lock
+    heavy_lock.slot(timeout_s)
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="qc")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -197,6 +204,8 @@ def main(argv=None) -> int:
         if not a.live and not a.pack:
             ap.error('check requires --pack or --live')
         native = a.native or ('zh-TW' if a.target == 'en' else 'en')
+        if a.live:
+            _live_slot()
         return check_pack(a.pack, a.out, a.before, a.live, a.target, native, a.golden)
     if a.cmd == "run":
         return run(a.trigger, a.dry_run, not a.no_issues)

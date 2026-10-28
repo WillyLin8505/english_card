@@ -354,6 +354,11 @@ def main():
         # prompt always via stdin: --allowedTools is variadic and cmd.exe cuts argv at newlines
         p.stdin.write(text.encode("utf-8")); p.stdin.close()
     record_run(a.card, a.agent, p.pid)
+    try:  # card #731: memory cap + BelowNormal for the CLI's whole process tree
+        import job_limits
+        print("job limit:", job_limits.assign(p.pid, float(os.environ.get("CLI_JOB_MEM_GB", "6"))))
+    except Exception:  # noqa: BLE001
+        pass
     print(f"pid={p.pid}")
 
 

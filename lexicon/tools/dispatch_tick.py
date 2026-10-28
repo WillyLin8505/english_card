@@ -1173,7 +1173,10 @@ class Tick:
             except Exception as e:  # noqa: BLE001
                 log(f"mac_results_to_issues failed: {e}")
         self.route_app_reports()
-        if self.cfg.get("hold_new_launches"):
+        guard_hold = self.resource_guard()
+        if guard_hold:
+            log("resource_guard: memory over limit → collecting only, no new CLIs")
+        elif self.cfg.get("hold_new_launches"):
             # owner 10/23 「現有的事情做完就先不要再派新的」: finish and collect, launch nothing
             log("hold_new_launches: collecting only, no new CLIs"
                 + ("; owner's own reports still go out" if self.cfg.get("hold_allow_owner") else ""))
@@ -1195,6 +1198,40 @@ class Tick:
             log(f"serve_app reload failed: {e}")
         self.save()
         return 0
+
+    def resource_guard(self) -> bool:
+        """Card #730 (issue #867): whole-PC memory/CPU/GPU/disk under 80 %. True = memory over the limit,
+        so no new CLIs this tick (lifts by itself below release_pct). Never breaks the tick."""
+        cfg = self.cfg.get("resource_guard") or {}
+        if cfg.get("enabled") is False:
+            return False
+        try:
+            import resource_guard as rg
+            st = rg.run(dry=self.dry, cfg=cfg)
+        except Exception as e:  # noqa: BLE001
+            log(f"resource_guard failed: {e}")
+            return False
+        line = rg.summary(st)
+        log(line + (f" {st['notes']}" if st.get("notes") else ""))
+        if st.get("over"):
+            self.summary.append(line.split("｜")[0].replace("資源 ", "資源:"))
+        asked = self.state.setdefault("guard_alert", {})
+        if st.get("alert") and not self.dry:
+            key = ",".join(st["alert"])
+            if asked.get("key") != key:
+                try:
+                    top = "、".join(f"{t['name']}×{t['count']} {t['mb']}MB" for t in st.get("top", []))
+                    i = http("POST", "/issues", {"kind": "bug", "severity": "high", "area": "backend",
+                             "title": f"[owner] Windows PC 資源超過 80% 超過 10 分鐘：{key}"[:300],
+                             "detail": f"{line}\n最大程序：{top}\n自動處理（停派新 CLI、降優先權、清 TEMP）沒有降下來。",
+                             "reporter": "派工程式"})
+                    asked["key"] = key
+                    self.event("resource_alert", issue=i.get("id"), over=key)
+                except Exception as e:  # noqa: BLE001
+                    log(f"resource_guard alert: {e}")
+        elif not st.get("alert"):
+            asked.pop("key", None)
+        return bool(st.get("hold_launches"))
 
     def serve_app_reload(self):
         """Card #522 (owner decision #553 = A): serve_app hashes serve_app.py, lexicon_transport.py,
