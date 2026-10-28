@@ -2941,3 +2941,8 @@ commit `e10d1a08`（Windows：flutter analyze 無 error、01:31 +790 ~2: All tes
   結果：需要你決定：無（C 槽已依你的決定 B 清 Temp，仍 82%）。
 - 卡 #692：問題回報 #556：[owner] 字族上限把罕用衍生字標成 A1／A2：dogged A1、pigment A2、in
   結果：- 問題回報 #868 的答案：選 1（保留 8 筆罕用詞性的品質規則等級）。
+
+## M320（2026-10-28 09:49）狀態：待做
+commit `3dac53c4`（Windows：flutter analyze 無 error、01:03 +790 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/27：用 Mac 模擬器，要實機時用 owner 的 iPad；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #733：問題回報 #875：[Mac] 2026-10-28 M313（iPhone 模擬器，詞庫 f64343f3）：M313
+  結果：card733 結論：Datamuse 功能詞雜訊擴大隱藏到全部 7 種關係（223 列），QC 前後完全相同、無退步；新匯出 release 25 已就緒，be 的 differ／the 的 related 已隱藏。
