@@ -952,7 +952,24 @@ def capped_frequency_level(word: str, zipf_value: float, language: str = "en") -
     for manual review, not auto-correct them."""
     from .base import frequency_profile
     freq = frequency_profile(round(zipf_value, 1))["cefr"]
-    return family_limited(freq, derivation_cap(word, language))
+    level = family_limited(freq, derivation_cap(word, language))
+    cap = reviewed_level_caps().get(word) if language == "en" else None
+    if cap in LEVELS and level in LEVELS and LEVELS.index(cap) < LEVELS.index(level):
+        return cap  # card #696: reviewed common concrete nouns never estimate above their cap
+    return level
+
+
+@lru_cache(maxsize=1)
+def reviewed_level_caps() -> dict[str, str]:
+    """Qwen/hand-reviewed caps (cefr_photo_overrides.json, then the family
+    list, which wins) -- the same tables photo labels and the pack use."""
+    words: dict[str, str] = {}
+    for name in ("cefr_photo_overrides.json", "cefr_family_overrides.json"):
+        try:
+            words.update(json.loads((Path(__file__).resolve().parents[1] / name).read_text(encoding="utf-8")).get("words", {}))
+        except (OSError, ValueError):
+            pass
+    return words
 
 
 FR_REVIEWED = Path(__file__).resolve().parents[1] / "fr_cefr_reviewed.json"

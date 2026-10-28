@@ -682,6 +682,7 @@ class WordDatabaseRepository extends ChangeNotifier {
       dataStatus: WordDataStatus.pending,
     );
     _ensureCard(entry.id);
+    _attachOwnPhotos([entry]);
     _setProfile(
         _profile.withFamiliarity(entry.word, Familiarity.learning, clock()));
     notifyListeners();
@@ -1249,6 +1250,7 @@ class WordDatabaseRepository extends ChangeNotifier {
             _profile.withFamiliarity(e.word, Familiarity.learning, clock()));
       }
     }
+    _attachOwnPhotos(created);
     notifyListeners();
     return created;
   }
@@ -1281,7 +1283,7 @@ class WordDatabaseRepository extends ChangeNotifier {
     }
     if (albumId != null) removeAlbum(albumId);
     for (final id in wordEntryIds) {
-      _dropIfUnused(id);
+      _dropIfUnused(id, withImportedPhotos: true);
     }
     notifyListeners();
   }
@@ -1364,8 +1366,12 @@ class WordDatabaseRepository extends ChangeNotifier {
   /// Drops a word nobody needs any more: no photo, never reviewed, not
   /// edited by hand — e.g. a suggestion replaced by the difficulty dial
   /// after it had been saved once.
-  void _dropIfUnused(String wordEntryId) {
-    if (occurrencesOf(wordEntryId).isNotEmpty) return;
+  ///
+  /// [withImportedPhotos]: the learner's photos the import put the word on
+  /// ([PhotoOccurrence.fromImport]) do not keep it, and go with it.
+  void _dropIfUnused(String wordEntryId, {bool withImportedPhotos = false}) {
+    final occurrences = occurrencesOf(wordEntryId);
+    if (occurrences.any((o) => !withImportedPhotos || !o.fromImport)) return;
     final e = entry(wordEntryId);
     final card = cardOf(wordEntryId);
     if (e == null || e.userEdited.isNotEmpty) return;
@@ -1375,6 +1381,10 @@ class WordDatabaseRepository extends ChangeNotifier {
     // 已學會 (swiped away) is an archive, never a deletion (spec section 7:
     // 左滑採封存，不做不可逆刪除) — even when its last photo goes.
     if (card != null && card.archived) return;
+    for (final o in occurrences) {
+      _occurrences.removeWhere((x) => x.id == o.id);
+      _persist((s) => s.deleteOccurrence(o.id));
+    }
     if (card != null) {
       _cards.remove(card);
       _persist((s) => s.deleteCard(card.id));
@@ -1383,6 +1393,110 @@ class WordDatabaseRepository extends ChangeNotifier {
     _persist((s) => s.deleteEntry(e.id));
     if (_profile.familiarityOf(e.word) == Familiarity.learning) {
       _setProfile(_profile.withoutFamiliarity(e.word, clock()));
+    }
+  }
+
+  /// Whether [p] is a photo the learner took or picked, not a word-database
+  /// or 卡片集 picture (問題回報 #864).
+  bool isOwnPhoto(Photo p) {
+    if (p.id.startsWith('db-') || p.id.startsWith('photo-deck-')) return false;
+    if (p.networkUrl != null || p.credit != null || p.assetPath != null) {
+      return false;
+    }
+    final albumId = p.albumId;
+    return albumId == null || album(albumId)?.deckSlug == null;
+  }
+
+  /// 問題回報 #864: a word the learner imports (單字集匯入、手動新增) gets
+  /// the learner's own photo that already shows it — a saved label or one
+  /// of the photo's recognized words, counting forms of the word (cups →
+  /// cup) — as its picture, before any word-database picture. Of several
+  /// photos the newest is used. The photo's label list is not changed: the
+  /// word joins it as a context only ([PhotoOccurrence.fromImport]).
+  void _attachOwnPhotos(List<WordEntry> words) {
+    if (words.isEmpty) return;
+    final pack = _linkedPack ?? LexiconPack.instance;
+    final usePack = pack.target == language;
+    String? normPos(String? pos) => pos == null || pos.trim().isEmpty
+        ? null
+        : LexiconPack.packPos(pos.trim());
+    String key(String word, String? pos) {
+      final w = word.trim().toLowerCase();
+      if (!usePack) return w;
+      return pack.lookup(w, pos: pos)?.entry.normalized ?? w;
+    }
+
+    final wanted = <String, List<WordEntry>>{};
+    for (final e in words) {
+      wanted.putIfAbsent(key(e.word, e.pos), () => []).add(e);
+    }
+    // One look through the learner's photos per import, newest first.
+    final own = [
+      for (final p in _photos)
+        if (isOwnPhoto(p) && PhotoStore.canShow(p)) p
+    ]..sort((a, b) => b.takenAt.compareTo(a.takenAt));
+    final found = <String, PhotoOccurrence>{};
+    void offer(Photo p, String word, String? pos, PhotoOccurrence label,
+        {String? lemma}) {
+      if (p.rejectedWords.contains(word)) return;
+      for (final e in [
+        ...?wanted[key(word, pos)],
+        if (lemma != null && lemma != word) ...?wanted[key(lemma, pos)],
+      ]) {
+        if (found.containsKey(e.id)) continue;
+        final a = normPos(e.pos), b = normPos(pos);
+        if (a != null && b != null && a != b) continue;
+        found[e.id] = label;
+      }
+    }
+
+    for (final p in own) {
+      for (final o in occurrencesInPhoto(p.id)) {
+        final e = entry(o.wordEntryId);
+        if (e == null) continue;
+        offer(p, e.word, e.pos, o);
+      }
+      for (final c in p.candidates) {
+        // Only what the photo really shows (as 照片詳情 keeps contexts).
+        if (c.inferred || c.visualConfidence < 0.6) continue;
+        offer(
+            p,
+            c.word,
+            c.pos,
+            PhotoOccurrence(
+              id: '',
+              photoId: p.id,
+              wordEntryId: '',
+              anchor: c.point,
+              aiLabel: c.word,
+              evidence: c.evidence.isEmpty ? null : c.evidence,
+              confidence: c.visualConfidence,
+              placed: c.grounded,
+            ),
+            lemma: c.lemma);
+      }
+      if (found.length == words.length) break;
+    }
+    for (final e in words) {
+      final hit = found[e.id];
+      if (hit == null) continue;
+      if (occurrencesInPhoto(hit.photoId).any((o) => o.wordEntryId == e.id)) {
+        continue;
+      }
+      final occ = PhotoOccurrence(
+        id: _newId('occ'),
+        photoId: hit.photoId,
+        wordEntryId: e.id,
+        anchor: hit.anchor,
+        aiLabel: hit.aiLabel,
+        evidence: hit.evidence,
+        confidence: hit.confidence,
+        contextOnly: true,
+        placed: hit.placed,
+        fromImport: true,
+      );
+      _occurrences.add(occ);
+      _persist((s) => s.putOccurrence(occ));
     }
   }
 
@@ -1460,11 +1574,15 @@ class WordDatabaseRepository extends ChangeNotifier {
           // Listed on this photo now (e.g. restored): one of its words.
           final i = _occurrences.indexWhere((x) => x.id == o.id);
           if (i >= 0) {
-            final listedOcc = _occurrences[i].copyWith(contextOnly: false);
+            final listedOcc = _occurrences[i]
+                .copyWith(contextOnly: false, fromImport: false);
             _occurrences[i] = listedOcc;
             _persist((s) => s.putOccurrence(listedOcc));
           }
         }
+      } else if (o.fromImport) {
+        // The learner's photo an imported word was given (問題回報 #864):
+        // not on this photo's list, but stays the word's picture.
       } else if (!isArchived(e.id) && !seen.containsKey(e.word)) {
         _occurrences.remove(o);
         _persist((s) => s.deleteOccurrence(o.id));

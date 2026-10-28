@@ -597,6 +597,27 @@ class Handler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
+    def forward_app_photo(self, body: bytes):
+        """card #724 (問題回報 #853): the owner's developer-build phone sends a photo and its
+        labels to 後台 (keyed like tagging, so a store build or a stranger can't)."""
+        request = Request('http://127.0.0.1:5173/api/app-photos', data=body, method='POST',
+                          headers={'Content-Type': 'application/json'})
+        try:
+            upstream = urlopen(request, timeout=60)
+        except HTTPError as error:
+            upstream = error
+        except (OSError, URLError):
+            self.send_error(502, 'Admin API unavailable')
+            return
+        with upstream:
+            status, data = upstream.code, upstream.read()
+        self.send_response(status)
+        self.send_header('Content-Type', 'application/json; charset=utf-8')
+        self.send_header('Cache-Control', 'no-store')
+        self.send_header('Content-Length', str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
     def record_missing(self, body: bytes):
         """Words the app's dictionary pack lacks (spec section 7: 缺詞條) or
         has without native text, saved for the admin to fill. Only these two
@@ -768,7 +789,7 @@ class Handler(SimpleHTTPRequestHandler):
         if path.startswith(('/api/account/', '/api/shares')):
             self.handle_account('POST', path)
             return
-        if path not in ('/tag', '/api/missing'):
+        if path not in ('/tag', '/api/missing', '/api/app-photo'):
             self.send_error(404)
             return
         try:
@@ -781,6 +802,9 @@ class Handler(SimpleHTTPRequestHandler):
             return
         if not self.key_ok():
             self.send_error(401, 'X-API-Key required from another device')
+            return
+        if path == '/api/app-photo':
+            self.forward_app_photo(self.rfile.read(length))
             return
         if path == '/api/missing':
             if length > 256 * 1024:

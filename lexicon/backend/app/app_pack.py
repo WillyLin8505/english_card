@@ -285,11 +285,13 @@ _LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"]
 
 @lru_cache(maxsize=1)
 def _reviewed_words() -> dict:
-    path = Path(__file__).with_name("cefr_photo_overrides.json")
-    try:
-        return json.loads(path.read_text(encoding="utf-8")).get("words", {})
-    except (OSError, ValueError):
-        return {}
+    words: dict = {}
+    for name in ("cefr_photo_overrides.json", "cefr_family_overrides.json"):  # card #697: family list wins
+        try:
+            words.update(json.loads(Path(__file__).with_name(name).read_text(encoding="utf-8")).get("words", {}))
+        except (OSError, ValueError):
+            pass
+    return words
 
 
 def _reviewed_cap(word: str, language: str, level: str) -> str:

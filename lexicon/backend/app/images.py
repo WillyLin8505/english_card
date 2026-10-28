@@ -1678,11 +1678,13 @@ def classify_tag_cefr(s, tag: dict, *, include_exact: bool = True) -> dict:
 
 @functools.lru_cache(maxsize=1)
 def _photo_cefr_overrides() -> dict:
-    path = Path(__file__).with_name('cefr_photo_overrides.json')
-    try:
-        return json.loads(path.read_text(encoding='utf-8')).get('words', {})
-    except (OSError, ValueError):
-        return {}
+    words: dict = {}
+    for name in ('cefr_photo_overrides.json', 'cefr_family_overrides.json'):  # card #697: family list wins
+        try:
+            words.update(json.loads(Path(__file__).with_name(name).read_text(encoding='utf-8')).get('words', {}))
+        except (OSError, ValueError):
+            pass
+    return words
 
 
 def _old_classify_tag_cefr(s, tag: dict, *, include_exact: bool = True) -> dict:
@@ -3462,7 +3464,7 @@ def register(app, auth):
     def tag_endpoint(asset_id: int, s=Depends(db.get_session)):
         try:
             tags = tag_asset(s, asset_id)
-            return {'tags': tags, 'grid': photo_grid.build_grid(s, tags)}
+            return {'tags': tags, 'grid': photo_grid.build_grid(s, tags, photo_grid.load_fit(asset_id))}
         except (ValueError, OSError) as e:
             s.commit()  # preserve failure diagnostics before the HTTP error rolls back
             raise HTTPException(400, str(e))
@@ -3473,7 +3475,36 @@ def register(app, auth):
         asset = s.get(m.ImageAsset, asset_id)
         if asset is None:
             raise HTTPException(404, '圖片不存在')
-        return {'grid': photo_grid.build_grid(s, asset.tags)}
+        return {'grid': photo_grid.build_grid(s, asset.tags, photo_grid.load_fit(asset_id))}
+
+    @app.post('/images/{asset_id}/grid/fit', dependencies=[auth])
+    def grid_fit_endpoint(asset_id: int, s=Depends(db.get_session)):
+        # Card #722: one Qwen call asks whether each word filled from the word web fits this
+        # photo; verdicts are cached (state/photo_grid_fit.json), so GET /grid never asks again.
+        asset = s.get(m.ImageAsset, asset_id)
+        if asset is None:
+            raise HTTPException(404, '圖片不存在')
+        if asset.status != 'ready' or not asset.path:
+            raise HTTPException(400, '圖片尚未下載')
+        fits = photo_grid.load_fit(asset_id)
+        grid = photo_grid.build_grid(s, asset.tags, fits)
+        todo = [(r, w) for r, w in photo_grid.related_words(grid)
+                if photo_grid._fit_key(r, w) not in fits]
+        asked = 0
+        if todo:
+            tags = [{'word': w, 'pos': r} for r, w in todo]
+            try:
+                score_tags((config.MEDIA / asset.path).read_bytes(), tags, asset.mime, defer=False)
+            except urllib.error.HTTPError as e:
+                raise HTTPException(503 if e.code in (502, 503) else 502, f'Qwen 無法判斷（{e.code}），稍後再試')
+            except (urllib.error.URLError, OSError, TimeoutError) as e:
+                raise HTTPException(503, f'連不到 Qwen（tagger），稍後再試：{e}')
+            verdicts = {photo_grid._fit_key(r, w): t['score']
+                        for (r, w), t in zip(todo, tags) if t.get('score') is not None}
+            photo_grid.save_fit(asset_id, verdicts)
+            asked = len(verdicts)
+            fits.update(verdicts)
+        return {'asked': asked, 'grid': photo_grid.build_grid(s, asset.tags, fits)}
 
     @app.post('/photo-grid', dependencies=[auth])
     def photo_grid_endpoint(body: dict, s=Depends(db.get_session)):

@@ -14,6 +14,11 @@ grid = {"version": 1, "rows": [...], "levels": [...],
 """
 from __future__ import annotations
 
+import json
+import os
+import threading
+from pathlib import Path
+
 from sqlalchemy import select
 
 from . import models as m
@@ -36,6 +41,12 @@ FILL_HOPS = 2
 FILL_MAX_COST = 3
 FILL_FANOUT = 400
 EMPTY_REASON = "這張照片沒有合適的字"
+# Card #722 (owner B): Qwen judges whether each "related" word fits the photo (yes/no answer
+# probability, as the label scores). Below FIT_PASS the word goes back to an empty cell.
+# Verdicts are cached per photo in FIT_PATH so opening the table never asks Qwen again.
+FIT_PASS = 0.5
+FIT_PATH = Path(os.environ.get("LEXICON_GRID_FIT_PATH") or Path(__file__).resolve().parents[2] / "state" / "photo_grid_fit.json")
+_FIT_LOCK = threading.Lock()
 _DB_POS = {"verb": "verb", "noun": "noun", "adjective": "adj", "adverb": "adv"}
 _TAG_POS = {"n": "noun", "v": "verb", "a": "adjective", "adj": "adjective", "adv": "adverb",
             "d": "adverb", "p": "phrase"}
@@ -170,8 +181,59 @@ def _fill_gaps(s, cells, taken, concepts) -> None:
         taken.add((row, word))
 
 
-def build_grid(s, tags: list[dict] | None) -> dict:
-    """The grid of a photo's labels (``tags`` need word, pos, cefr, point/box)."""
+def _fit_key(row: str, word: str) -> str:
+    return f"{row}|{word}"
+
+
+def load_fit(asset_id) -> dict[str, float]:
+    """Cached Qwen photo-fit verdicts of one stored photo ("row|word" -> 0..1)."""
+    try:
+        data = json.loads(FIT_PATH.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return dict((data.get(str(asset_id)) or {}).get("words") or {})
+
+
+def save_fit(asset_id, verdicts: dict[str, float]) -> None:
+    with _FIT_LOCK:
+        try:
+            data = json.loads(FIT_PATH.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            data = {}
+        entry = data.setdefault(str(asset_id), {"words": {}})
+        entry["words"].update(verdicts)
+        FIT_PATH.parent.mkdir(parents=True, exist_ok=True)
+        tmp = FIT_PATH.with_suffix(".tmp")
+        tmp.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+        os.replace(tmp, FIT_PATH)
+
+
+def related_words(grid: dict) -> list[tuple[str, str]]:
+    """(row, word) of every word filled from the word web: the ones Qwen is asked about."""
+    return [(c["pos"], w["word"]) for c in grid["cells"] for w in c["words"] if w.get("source") == "related"]
+
+
+def _apply_fit(cells, fits) -> int:
+    """Drop related words Qwen said do not fit; mark the kept ones with their score.
+    Returns how many related words have no verdict yet."""
+    unchecked = 0
+    for (row, _), words in cells.items():
+        for w in list(words):
+            if w["source"] != "related":
+                continue
+            score = fits.get(_fit_key(row, w["word"]))
+            if score is None:
+                unchecked += 1
+            elif score < FIT_PASS:
+                words.remove(w)
+            else:
+                w["fit"] = round(float(score), 3)
+    return unchecked
+
+
+def build_grid(s, tags: list[dict] | None, fits: dict[str, float] | None = None) -> dict:
+    """The grid of a photo's labels (``tags`` need word, pos, cefr, point/box).
+    ``fits``: cached Qwen verdicts; related words scored below FIT_PASS are left out."""
     cells = {(r, c): [] for r in ROWS for c in LEVELS}
     taken: set[tuple[str, str]] = set()
     concepts = []
@@ -204,7 +266,8 @@ def build_grid(s, tags: list[dict] | None) -> dict:
             if added >= SYNONYMS_PER_CONCEPT:
                 break
     _fill_gaps(s, cells, taken, concepts)
-    return {"version": GRID_VERSION, "rows": ROWS, "levels": LEVELS,
+    unchecked = _apply_fit(cells, fits or {})
+    return {"version": GRID_VERSION, "rows": ROWS, "levels": LEVELS, "fit_unchecked": unchecked,
             "cells": [{"pos": r, "cefr": c, "words": cells[(r, c)],
                        **({} if cells[(r, c)] else {"empty_reason": EMPTY_REASON})}
                       for r in ROWS for c in LEVELS]}

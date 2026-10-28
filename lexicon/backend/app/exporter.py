@@ -28,6 +28,7 @@ from sqlalchemy.orm import Session
 from . import catalog, config
 from . import models as m
 from .quality import example_other_pos_only
+from .function_words import is_noisy_function_word_relation
 from .text import example_key, text_hash, is_column_word_list
 
 SCHEMA_VERSION = 5  # 5: per-sense register (neutral / written / spoken / slang)
@@ -736,6 +737,8 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_saf
                 target_zipf = tgt.zipf if tgt.zipf is not None else detail.get("zipf")
                 hidden = bool(detail.get("hide_by_default") or
                               (target_zipf is not None and target_zipf < 2.5))
+                if not hidden and f in ("related", "hyponyms", "hypernyms"):  # card 694 / #822
+                    hidden = is_noisy_function_word_relation(lemma, row.source)
                 mean = meanings.get(w)
                 zh = clean_native(repair_learner_gloss(row.target_word or w, mean.get("text"))) \
                     if mean else None

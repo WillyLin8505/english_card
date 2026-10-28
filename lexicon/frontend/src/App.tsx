@@ -16,6 +16,7 @@ import Issues from "./pages/Issues";
 import Schedule from "./pages/Schedule";
 import ShareStats from "./pages/ShareStats";
 import Decks from "./pages/Decks";
+import AppPhotos from "./pages/AppPhotos";
 
 const NAV = [
   ["/", "總覽", "Dashboard"],
@@ -28,6 +29,7 @@ const NAV = [
   ["/card-studio", "字卡工作室", "Card Studio"],
   ["/images", "圖片庫", "Image Library"],
   ["/decks", "卡片集", "Decks"],
+  ["/app-photos", "手機照片", "Phone Photos"],
   ["/share-stats", "分享統計", "Shared Decks"],
   ["/snapshots", "來源快照", "Source Snapshots"],
   ["/export", "匯出給 Flutter", "Export for Flutter"],
@@ -145,6 +147,7 @@ export default function App() {
   else if (route === "/audio") page = <Coverage />;
   else if (route === "/images") page = <Images />;
   else if (route === "/decks") page = <Decks />;
+  else if (route === "/app-photos") page = <AppPhotos />;
   else if (route === "/share-stats") page = <ShareStats />;
   else if (route === "/schedule") page = <Schedule />;
   else if (route === "/issues") page = <Issues />;

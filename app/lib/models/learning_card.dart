@@ -83,6 +83,12 @@ class PhotoOccurrence {
   /// quiz. [anchor] is then only the photo's centre, for crops.
   final bool placed;
 
+  /// Put here when the learner imported the word (單字集匯入、手動新增;
+  /// 問題回報 #864): the word's picture is the learner's own photo that
+  /// already showed it. Always [contextOnly]; removing the deck that added
+  /// the word takes it out again.
+  final bool fromImport;
+
   const PhotoOccurrence({
     required this.id,
     required this.photoId,
@@ -94,6 +100,7 @@ class PhotoOccurrence {
     this.confidence,
     this.contextOnly = false,
     this.placed = true,
+    this.fromImport = false,
   });
 
   /// A new [anchor] places the label.
@@ -101,7 +108,8 @@ class PhotoOccurrence {
           {String? wordEntryId,
           LabelPoint? anchor,
           bool? userEdited,
-          bool? contextOnly}) =>
+          bool? contextOnly,
+          bool? fromImport}) =>
       PhotoOccurrence(
         id: id,
         photoId: photoId,
@@ -113,6 +121,7 @@ class PhotoOccurrence {
         confidence: confidence,
         contextOnly: contextOnly ?? this.contextOnly,
         placed: anchor != null || placed,
+        fromImport: fromImport ?? this.fromImport,
       );
 
   factory PhotoOccurrence.fromJson(Map<String, dynamic> j) => PhotoOccurrence(
@@ -126,6 +135,7 @@ class PhotoOccurrence {
         confidence: (j['confidence'] as num?)?.toDouble(),
         contextOnly: j['contextOnly'] as bool? ?? false,
         placed: j['unplaced'] != true,
+        fromImport: j['fromImport'] as bool? ?? false,
       );
 
   Map<String, dynamic> toJson() => {
@@ -139,6 +149,7 @@ class PhotoOccurrence {
         'confidence': confidence,
         if (contextOnly) 'contextOnly': true,
         if (!placed) 'unplaced': true,
+        if (fromImport) 'fromImport': true,
       };
 }
 

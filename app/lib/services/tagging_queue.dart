@@ -8,6 +8,7 @@ import '../models/word_candidate.dart';
 import '../models/word_entry.dart';
 import 'app_settings.dart';
 import 'cefr_lexicon.dart';
+import 'dev_photo_upload.dart';
 import 'lexicon_pack.dart';
 import 'photo_intake.dart';
 import 'spot_crop.dart';
@@ -233,6 +234,7 @@ class TaggingQueue extends ChangeNotifier {
         taggingError: () => null,
         candidates: _merge(latest.candidates, found),
       ));
+      _uploadForDeveloper(photo.id);
       _offline = false;
       return true;
     } catch (e) {
@@ -338,6 +340,18 @@ class TaggingQueue extends ChangeNotifier {
     } finally {
       tagger.close();
     }
+  }
+
+  /// Developer build only (問題回報 #853): the photo and its labels go to 後台.
+  void _uploadForDeveloper(String photoId) {
+    if (!DevPhotoUpload.enabled(settings)) return;
+    final photo = repository().photo(photoId);
+    if (photo == null) return;
+    intake.bytesOf(photo).then((bytes) {
+      if (bytes == null) return false;
+      return DevPhotoUpload.send(settings, photo, bytes,
+          language: repository().language);
+    }).catchError((_) => false);
   }
 
   static List<WordCandidate> _merge(
@@ -448,6 +462,7 @@ class TaggingQueue extends ChangeNotifier {
         safetyStatus: PhotoSafetyStatus.safe,
         taggingError: () => null,
       ));
+      _uploadForDeveloper(photo.id);
       return fresh.length;
     });
     return fresh;

@@ -487,6 +487,12 @@ const uiCatalog = <String, (String, String)>{
   '收合項目': ('Collapse items', 'Réduire la liste'),
   '顯示全部': ('Show all', 'Tout afficher'),
   '語言': ('Languages', 'Langues'),
+  '切換學習語言？': ('Switch learning language?', 'Changer de langue étudiée ?'),
+  '目前學習語言的資料會保留，隨時可以切回來。': (
+    'Your current language’s data is kept; you can switch back any time.',
+    'Les données de la langue actuelle sont conservées ; vous pouvez revenir à tout moment.'
+  ),
+  '確定': ('OK', 'OK'),
   '學習語言': ('Learning language', 'Langue étudiée'),
   '母語': ('Native language', 'Langue maternelle'),
   '更多學習語言即將推出': (

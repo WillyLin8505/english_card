@@ -152,6 +152,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
       showToast(context, '學習語言和母語不能相同');
       return;
     }
+    // 問題回報 #833: two adjacent chips, a stray tap switched owner to French.
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const UiText('切換學習語言？'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(supportedLanguages[language] ?? language),
+            const SizedBox(height: 8),
+            const UiText('目前學習語言的資料會保留，隨時可以切回來。'),
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const UiText('取消')),
+          FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const UiText('確定')),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
     setState(() => _switching = true);
     try {
       await scope.switchLanguage(language);

@@ -1,0 +1,11 @@
+{
+ "_note": "Card #697 (問題回報 #215, owner #839 B): hand-listed 時間/天象 family aligned to the CEFR-J table (dawn=B2, sunrise/sunset=B1). Caps a frequency estimate only. Kept apart from cefr_photo_overrides.json, which the card607/698 tools rewrite.",
+ "words": {
+  "dusk": "B2",
+  "twilight": "B2",
+  "nightfall": "B2",
+  "daybreak": "B2",
+  "sundown": "B2",
+  "sunup": "B2"
+ }
+}

@@ -1007,7 +1007,10 @@ class FlashcardSession extends ChangeNotifier {
   CardPhoto _plannedPhoto(String wordId, List<CardPhoto> options) {
     final fresh =
         options.where((o) => !_recentPhotos.contains(o.$1.id)).toList();
-    final pool = fresh.isEmpty ? options : fresh;
+    var pool = fresh.isEmpty ? options : fresh;
+    // The learner's own photos before word-database pictures (問題回報 #864).
+    final own = pool.where((o) => repo.isOwnPhoto(o.$1)).toList();
+    if (own.isNotEmpty) pool = own;
     final planned =
         pool.where((o) => o.$1.id == _photoPlans[wordId]).firstOrNull;
     if (planned != null) return planned;

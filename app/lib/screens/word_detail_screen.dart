@@ -262,10 +262,22 @@ class _WordBody extends StatelessWidget {
     for (final form in entry.forms) {
       addForm(form.form, form.label);
     }
-    // The photo the learner came from first, then the rest.
+    // The photo the learner came from first, then the learner's own photos
+    // (newest first, 問題回報 #864), then the rest.
+    int rank(PhotoOccurrence o) {
+      if (o.id == occurrenceId) return 0;
+      final p = repo.photo(o.photoId);
+      return p != null && repo.isOwnPhoto(p) ? 1 : 2;
+    }
+
     final occurrences = repo.occurrencesOf(entry.id)
-      ..sort((a, b) => (a.id == occurrenceId ? 0 : 1)
-          .compareTo(b.id == occurrenceId ? 0 : 1));
+      ..sort((a, b) {
+        final r = rank(a).compareTo(rank(b));
+        if (r != 0 || rank(a) != 1) return r;
+        return repo.photo(b.photoId)!
+            .takenAt
+            .compareTo(repo.photo(a.photoId)!.takenAt);
+      });
     final contexts = [
       for (final o in occurrences)
         // A photo whose original file is gone is skipped (問題回報 #283).
