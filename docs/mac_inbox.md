@@ -3005,7 +3005,7 @@ commit `9431ac3f`（Windows：flutter analyze 無 error、01:34 +794 ~2: All tes
 - 卡 #737：[owner] 母語中文先不能選法文（#882 A 部分）
   結果：全部完成：繁中（非英文）母語不能選法文；英文母語可以。flutter analyze 無新問題，flutter test 全部通過（794 項，含新增 4 項）。
 
-## M332（2026-10-28 22:40）狀態：待做
+## M332（2026-10-28 22:40）狀態：完成
 commit `48c7c86c`（Windows：flutter analyze 無 error、01:45 +805 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/27：用 Mac 模擬器，要實機時用 owner 的 iPad；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #741：[owner] 照片標籤依程度挑詞性比例（#889 C，資料／伺服器）
   結果：結論：新增挑字層 photolabels.picklabels（30 張抽樣：A1 名詞 100%、B1 86%、C1 80%，副詞 0 次，每張 5.0／7.5／9.6 字）；單元測試 5 項全過。
