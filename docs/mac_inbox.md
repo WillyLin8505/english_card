@@ -2910,3 +2910,10 @@ commit `1da940f2`（Windows：flutter analyze 無 error、02:06 +790 ~2: All tes
 卡：模擬使用者・單字本
 
 無。
+
+## M315（2026-10-28 08:42）狀態：待做
+commit `d74ec06b`（Windows：flutter analyze 無 error、01:49 +790 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/27：用 Mac 模擬器，要實機時用 owner 的 iPad；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #226：模擬使用者・複習
+  結果：第 192/193 輪：2/2 通過（learner 279 秒、restart 95 秒）；無新問題；UX 建議＝沿用 #485／#515，未重複開單。
+- 卡 #227：模擬使用者・單字本
+  結果：第 191 輪：2/2 通過（database 開 250 詞、加入 202、待處理 39、複習 202，findings 空；detail 04:28 全過），新問題 0、UX 建議 0（本輪未做逐頁易用性評估）。
