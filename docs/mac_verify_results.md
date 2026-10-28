@@ -1960,3 +1960,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 |----|----|----|----|----|
 | M320 #875 功能詞 Datamuse 雜訊 | 通過 | be 的 antonyms:differ、the 的 related:cited／certain／particular／specific 都不再顯示 |  | — |
 | M320 功能詞其他來源的怪關係詞 | 不通過 | 仍預設顯示：be → synonyms:beryllium（化學符號 Be）、synonyms:equal、near_homophones:pee／pea、derived_terms:abe；the → synonyms:le。不是 Datamuse，可能來自 kaikki／oewn，建議功能詞的 synonyms／near_homophones 一起預設隱藏 |  | 低 |
+
+## 2026-10-28 M321（Mac）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M321 #12 跨分頁模擬 | 通過 | Windows 第 195 輪 3/3 通過（亂點、詞庫更新、學習者畫面）；新的 UX 建議 #879 是 owner 決定項，決定後若要改 App 畫面再開 M 項給 Mac |  | — |
