@@ -2871,3 +2871,8 @@ iPhone 模擬器驗證 —— 先拍一張有 cup 的照片，再手動新增 cu
 
 上傳驗證，無畫面修改）。
 無資料變動、無備份；golden/QC 未跑（無改動）。
+
+## M310（2026-10-28 08:20）狀態：待做
+commit `afdb65fd`（Windows：flutter analyze 無 error、04:48 +787 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/27：用 Mac 模擬器，要實機時用 owner 的 iPad；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #228：模擬使用者・設定
+  結果：第 15 輪（模擬輪 189）：設定 1/1 通過、findings 0；新問題無、UX 建議沿用 #474（未重複開）。
