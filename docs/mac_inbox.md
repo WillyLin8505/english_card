@@ -3059,3 +3059,8 @@ commit `824ecd65`（Windows：flutter analyze 無 error、01:26 +803 ~2: All tes
 commit `beed7769`（Windows：flutter analyze 無 error、01:16 +803 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/27：用 Mac 模擬器，要實機時用 owner 的 iPad；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #755：問題回報 #898：[Mac] 2026-10-28 M334 一次加入多個（iPhone 模擬器，da1534：M33
   結果：非 App 程式問題，是詞庫資料缺口：App 詞庫包 12813 筆只有 56 筆 phrase（片語動詞僅 13 筆），抽樣 61 個常用片語動詞（pick up、give up、look for、turn on…）0 個在庫。
+
+## M340（2026-10-28 23:27）狀態：待做
+commit `c3be7558`（Windows：flutter analyze 無 error、01:19 +803 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/27：用 Mac 模擬器，要實機時用 owner 的 iPad；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #735：問題回報 #880：[Mac] 2026-10-28 M320（iPhone 模擬器，詞庫 45df70d9）：M320
+  結果：功能詞（be、the 等）的同義詞、近似同音、同音已全部預設隱藏（所有來源）：標記 539 列、備份在 card735backup/，golden 與 QC 無退步。
