@@ -182,7 +182,8 @@ class CardLook {
         chipMinHeight: 0,
         chipWord: MFont.manrope(13, FontWeight.w800, MColors.primary),
         chipMeaning: MFont.manrope(12, FontWeight.w600, MColors.muted),
-        example: MDecor.softPanel(color: MColors.surfaceSoft, radius: MRadii.md),
+        example:
+            MDecor.softPanel(color: MColors.surfaceSoft, radius: MRadii.md),
         examplePadding: const EdgeInsets.symmetric(
             horizontal: MSpace.sm, vertical: MSpace.xs),
         exampleGap: MSpace.xxs,

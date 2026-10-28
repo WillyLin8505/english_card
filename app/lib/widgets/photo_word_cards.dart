@@ -209,8 +209,7 @@ class _WordCard extends StatelessWidget {
                               horizontal: 6, vertical: 1),
                           decoration: BoxDecoration(
                               color: MColors.surfaceSoft,
-                              borderRadius:
-                                  BorderRadius.circular(MRadii.sm)),
+                              borderRadius: BorderRadius.circular(MRadii.sm)),
                           child: UiText('整張圖', style: MFont.caption),
                         ),
                       ],

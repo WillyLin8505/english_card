@@ -5,18 +5,23 @@ import 'lexicon_pack.dart';
 String entryTypeLabel(String value) {
   if (value == 'word') return '';
   final labels = LexiconPack.instance.labels;
-  return labels['entry_type:$value'] ?? labels['entry_type.$value'] ?? labels[value] ?? switch (value) {
-    'phrasal_verb' => '片語動詞',
-    'idiom' => '慣用語',
-    'collocation' => '搭配詞',
-    'fixed_expression' => '固定表達',
-    _ => '片語',
-  };
+  return labels['entry_type:$value'] ??
+      labels['entry_type.$value'] ??
+      labels[value] ??
+      switch (value) {
+        'phrasal_verb' => '片語動詞',
+        'idiom' => '慣用語',
+        'collocation' => '搭配詞',
+        'fixed_expression' => '固定表達',
+        _ => '片語',
+      };
 }
 
 String typedMeaning(String meaning, String entryType) {
   final label = entryTypeLabel(entryType);
-  return label.isEmpty ? meaning : '[$label]${meaning.isEmpty ? '' : ' $meaning'}';
+  return label.isEmpty
+      ? meaning
+      : '[$label]${meaning.isEmpty ? '' : ' $meaning'}';
 }
 
 String posLabel(String value) => switch (value) {
@@ -116,8 +121,7 @@ final _chargedPolitics = RegExp(
 final _chargedStanceNoun = RegExp(
     r"\b(?:woman|women|migration|immigrants?|abortion|gender|pronouns?)\b",
     caseSensitive: false);
-final _chargedBan = RegExp(
-    r"\b(?:outlaw(?:ed|ing|s)?|ban(?:ned|ning)?)\b",
+final _chargedBan = RegExp(r"\b(?:outlaw(?:ed|ing|s)?|ban(?:ned|ning)?)\b",
     caseSensitive: false);
 final _chargedSoft = RegExp(
     r"\b(?:oh my god|thank god|for god'?s sake|god knows|what the hell|the hell)\b",
@@ -136,7 +140,8 @@ bool _chargedForeign(RegExp pattern, String source, String lemma) {
   final low = lemma.toLowerCase();
   for (final match in pattern.allMatches(source)) {
     final hit = match.group(0)!.toLowerCase();
-    if (low.isNotEmpty && (hit.startsWith(low) || low.startsWith(hit))) continue;
+    if (low.isNotEmpty && (hit.startsWith(low) || low.startsWith(hit)))
+      continue;
     return true;
   }
   return false;
@@ -149,7 +154,8 @@ String? exampleIsCharged(String text, String lemma) {
   if (_chargedForeign(_chargedSex, text, lemma)) return 'sex';
   if (_chargedForeign(_chargedViolence, text, lemma)) return 'violence';
   if (_chargedForeign(_chargedPolitics, text, lemma)) return 'politics';
-  if (_chargedForeign(_chargedReligion, text.replaceAll(_chargedSoft, ' '), lemma)) {
+  if (_chargedForeign(
+      _chargedReligion, text.replaceAll(_chargedSoft, ' '), lemma)) {
     return 'religion';
   }
   if (!_stanceLemmas.contains(lemma.toLowerCase()) &&
@@ -166,7 +172,8 @@ String? exampleIsCharged(String text, String lemma) {
 /// more than one level above the learner. A neutral sentence is preferred
 /// over a political, religious, violent or sexual one (問題回報 #254).
 /// Source data remains intact.
-List<WordExample> learningExamples(WordEntry entry, String level, {int maxItems = 5}) {
+List<WordExample> learningExamples(WordEntry entry, String level,
+    {int maxItems = 5}) {
   final seen = <String>{};
   // One sentence per translation (問題回報 #555): « Pourquoi es-tu mouillé ? »
   // and « Pourquoi êtes-vous mouillée ? » are both "Why are you wet?". The pack
@@ -191,7 +198,8 @@ List<WordExample> learningExamples(WordEntry entry, String level, {int maxItems 
   }
 
   int words(WordExample e) => e.text.split(' ').length;
-  int charged(WordExample e) => exampleIsCharged(e.text, entry.word) == null ? 0 : 1;
+  int charged(WordExample e) =>
+      exampleIsCharged(e.text, entry.word) == null ? 0 : 1;
   examples.sort((a, b) {
     final topic = charged(a).compareTo(charged(b));
     if (topic != 0) return topic;
@@ -222,7 +230,8 @@ bool isColumnWordList(String text, String lemma) {
 /// Do not turn noisy legacy association/spelling lists into teaching claims.
 /// Show only explicitly typed, translated and common dictionary relations.
 List<({String word, String meaning})> learningRelations(
-    WordEntry entry, String level, String kind, {int maxItems = 5}) {
+    WordEntry entry, String level, String kind,
+    {int maxItems = 5}) {
   if (entry.userEdited.contains(WordField.related)) {
     return [
       for (final r in entry.related)

@@ -51,8 +51,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           children: [
             MNavBar(
               title: '隱私權政策',
-              leading: BackNavButton(
-                  onTap: () => Navigator.of(context).pop()),
+              leading: BackNavButton(onTap: () => Navigator.of(context).pop()),
             ),
             Expanded(
               child: ListView(

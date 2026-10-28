@@ -68,12 +68,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   /// The broken-recognition hint, when the last check says the learner
   /// has to fix the URL or key (not when the service is only offline).
-  String? _fixHint(AppSettings settings) =>
-      settings.showsTaggingServer &&
-              (_check?.startsWith('✕') ?? false) &&
-              _checkNeedsFix
-          ? '照片辨識設定有誤，新照片無法辨識，點開修正'
-          : null;
+  String? _fixHint(AppSettings settings) => settings.showsTaggingServer &&
+          (_check?.startsWith('✕') ?? false) &&
+          _checkNeedsFix
+      ? '照片辨識設定有誤，新照片無法辨識，點開修正'
+      : null;
 
   Future<void> _openAdvanced() async {
     if (_scroll.hasClients) {
@@ -288,7 +287,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                         e.key == settings.learningLanguage,
                                     onSelected: _switching
                                         ? null
-                                        : (_) => _switchLanguage(e.key),
+                                        : (_) {
+                                            if (!languagePairAvailable(e.key,
+                                                settings.nativeLanguage)) {
+                                              showToast(context,
+                                                  frenchNeedsEnglishNative);
+                                              return;
+                                            }
+                                            _switchLanguage(e.key);
+                                          },
                                   ),
                             ],
                           ),
@@ -308,6 +315,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                         learning: false)),
                                     selected: e.key == settings.nativeLanguage,
                                     onSelected: (_) {
+                                      if (!languagePairAvailable(
+                                          settings.learningLanguage, e.key)) {
+                                        showToast(
+                                            context, frenchNeedsEnglishNative);
+                                        return;
+                                      }
                                       settings.nativeLanguage = e.key;
                                       scope.enricher.process();
                                     },
@@ -342,8 +355,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             Row(
                               children: [
                                 Expanded(
-                                  child: _note(
-                                      '點一下試聽「water」；單字頁、單字本和複習卡都用這個腔調。'),
+                                  child:
+                                      _note('點一下試聽「water」；單字頁、單字本和複習卡都用這個腔調。'),
                                 ),
                                 Tooltip(
                                   message: ui(context, _accentInfo),
@@ -374,8 +387,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                         style: MFont.manrope(
                                             15, FontWeight.w800, MColors.ink),
                                       )
-                                    : _note(
-                                        '新照片的單字以下面選的程度為主，App 會依你的複習慢慢調整。'),
+                                    : _note('新照片的單字以下面選的程度為主，App 會依你的複習慢慢調整。'),
                               ),
                               Tooltip(
                                 message: ui(context, _levelInfo),
@@ -619,7 +631,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   labelText: ui(context, '連線金鑰（API Key）'),
                                   // #546: the backup note no longer mentions the key;
                                   // only people who set one need to know.
-                                  helperText: ui(context, '金鑰不會存進備份檔；在新手機還原備份後要重新輸入。')),
+                                  helperText:
+                                      ui(context, '金鑰不會存進備份檔；在新手機還原備份後要重新輸入。')),
                               onChanged: (v) => settings.apiKey = v,
                             ),
                             const SizedBox(height: 12),
@@ -696,7 +709,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     AppSettings.minDailyNew) ~/
                                 5,
                             label: '${settings.dailyNewLimit}',
-                            onChanged: (v) => settings.dailyNewLimit = v.round(),
+                            onChanged: (v) =>
+                                settings.dailyNewLimit = v.round(),
                           ),
                           UiText(
                             '每天最多複習 ${settings.dailyReviewLimit} 張',

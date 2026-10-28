@@ -74,7 +74,8 @@ class Analytics {
     try {
       final box = await Hive.openBox<String>('analytics');
       _distinctId = box.get('distinctId') ?? _newId();
-      if (box.get('distinctId') == null) await box.put('distinctId', _distinctId);
+      if (box.get('distinctId') == null)
+        await box.put('distinctId', _distinctId);
     } catch (_) {
       _distinctId = _newId();
     }
@@ -138,7 +139,7 @@ class Analytics {
 
   static String _newId() {
     final r = Random.secure();
-    return List.generate(16, (_) => r.nextInt(256).toRadixString(16).padLeft(2, '0'))
-        .join();
+    return List.generate(
+        16, (_) => r.nextInt(256).toRadixString(16).padLeft(2, '0')).join();
   }
 }

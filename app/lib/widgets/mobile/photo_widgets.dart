@@ -776,10 +776,12 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
       _layout = keep.isEmpty && hit != null
           ? hit
           : [
-              for (final pl in layoutPins([
-                for (final it in items)
-                  PinItem(it.id, it.anchor - origin, it.badge),
-              ], area.size,
+              for (final pl in layoutPins(
+                  [
+                    for (final it in items)
+                      PinItem(it.id, it.anchor - origin, it.badge),
+                  ],
+                  area.size,
                   reserveTop: math.max(0.0, widget.reserveTop - area.top),
                   reserveBottom: math.max(
                       0.0, widget.reserveBottom - (box.height - area.bottom)),
@@ -841,8 +843,10 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
             _lastPlaced[pl.id] = pl;
           }
           Offset clampToBox(Offset o) => Offset(
-              o.dx.clamp(area.left + 4, math.max(area.left + 4, area.right - 4)),
-              o.dy.clamp(area.top + 4, math.max(area.top + 4, area.bottom - 4)));
+              o.dx.clamp(
+                  area.left + 4, math.max(area.left + 4, area.right - 4)),
+              o.dy.clamp(
+                  area.top + 4, math.max(area.top + 4, area.bottom - 4)));
           return Stack(
             clipBehavior: Clip.hardEdge,
             children: [
@@ -884,108 +888,116 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
                     child: Stack(
                       clipBehavior: Clip.none,
                       children: [
-                      Positioned.fill(
-                        child: IgnorePointer(
-                          child: CustomPaint(
-                            painter: _LeaderPainter([
-                              for (final pl in visible)
-                                if (!_queue.contains(pl.id)) (pl, byId[pl.id]!.muted),
-                            ], frames: [
-                              for (final p in widget.pins)
-                                if (p.frame case final f?
-                                    when p.id != _dragging && !_queue.contains(p.id))
-                                  (
-                                    Rect.fromPoints(
-                                        geo.toBox(LabelPoint(f.left, f.top)),
-                                        geo.toBox(LabelPoint(
-                                            f.left + f.width, f.top + f.height))),
-                                    p.muted,
-                                  ),
-                            ]),
+                        Positioned.fill(
+                          child: IgnorePointer(
+                            child: CustomPaint(
+                              painter: _LeaderPainter([
+                                for (final pl in visible)
+                                  if (!_queue.contains(pl.id))
+                                    (pl, byId[pl.id]!.muted),
+                              ], frames: [
+                                for (final p in widget.pins)
+                                  if (p.frame case final f?
+                                      when p.id != _dragging &&
+                                          !_queue.contains(p.id))
+                                    (
+                                      Rect.fromPoints(
+                                          geo.toBox(LabelPoint(f.left, f.top)),
+                                          geo.toBox(LabelPoint(f.left + f.width,
+                                              f.top + f.height))),
+                                      p.muted,
+                                    ),
+                              ]),
+                            ),
                           ),
                         ),
-                      ),
-                      for (final pl in visible)
-                        if (!_queue.contains(pl.id))
-                          Positioned(
-                            key: ValueKey(pl.id),
-                            left: pl.badge.left,
-                            top: pl.badge.top,
-                            child: _popIn(
-                                pl.id,
-                                GestureDetector(
-                                  onPanStart:
-                                      widget.onPinMoved == null || byId[pl.id]!.muted
-                                          ? null
-                                          : (_) => setState(() {
-                                                _dragging = pl.id;
-                                                _dragBy = Offset.zero;
-                                              }),
-                                  onPanUpdate: widget.onPinMoved == null ||
-                                          byId[pl.id]!.muted
-                                      ? null
-                                      : (d) => setState(() {
-                                            final base = placed
-                                                .firstWhere((x) => x.id == pl.id)
-                                                .anchor;
-                                            _dragBy =
-                                                clampToBox(base + _dragBy + d.delta) -
-                                                    base;
-                                          }),
-                                  onPanEnd:
-                                      widget.onPinMoved == null || byId[pl.id]!.muted
-                                          ? null
-                                          : (_) {
-                                              final base = placed
-                                                  .firstWhere((x) => x.id == pl.id)
-                                                  .anchor;
-                                              final to = base + _dragBy;
-                                              setState(() {
-                                                _dragging = null;
-                                                _dragBy = Offset.zero;
-                                              });
-                                              widget.onPinMoved!(
-                                                  byId[pl.id]!, geo.fromBox(to));
-                                            },
-                                  child: Tap(
-                                    onTap: widget.onPinTap == null
+                        for (final pl in visible)
+                          if (!_queue.contains(pl.id))
+                            Positioned(
+                              key: ValueKey(pl.id),
+                              left: pl.badge.left,
+                              top: pl.badge.top,
+                              child: _popIn(
+                                  pl.id,
+                                  GestureDetector(
+                                    onPanStart: widget.onPinMoved == null ||
+                                            byId[pl.id]!.muted
                                         ? null
-                                        : () => widget.onPinTap!(byId[pl.id]!),
-                                    label: '${byId[pl.id]!.word} ${byId[pl.id]!.zh}',
-                                    child: WordPin(
-                                      word: byId[pl.id]!.word,
-                                      zh: byId[pl.id]!.zh,
-                                      entryType: byId[pl.id]!.entryType,
-                                      large: widget.largePins,
-                                      muted: byId[pl.id]!.muted,
-                                      lifted: _dragging == pl.id,
-                                      linked: byId[pl.id]!.linked,
-                                      maxWidth: pl.badge.width,
+                                        : (_) => setState(() {
+                                              _dragging = pl.id;
+                                              _dragBy = Offset.zero;
+                                            }),
+                                    onPanUpdate: widget.onPinMoved == null ||
+                                            byId[pl.id]!.muted
+                                        ? null
+                                        : (d) => setState(() {
+                                              final base = placed
+                                                  .firstWhere(
+                                                      (x) => x.id == pl.id)
+                                                  .anchor;
+                                              _dragBy = clampToBox(base +
+                                                      _dragBy +
+                                                      d.delta) -
+                                                  base;
+                                            }),
+                                    onPanEnd: widget.onPinMoved == null ||
+                                            byId[pl.id]!.muted
+                                        ? null
+                                        : (_) {
+                                            final base = placed
+                                                .firstWhere(
+                                                    (x) => x.id == pl.id)
+                                                .anchor;
+                                            final to = base + _dragBy;
+                                            setState(() {
+                                              _dragging = null;
+                                              _dragBy = Offset.zero;
+                                            });
+                                            widget.onPinMoved!(
+                                                byId[pl.id]!, geo.fromBox(to));
+                                          },
+                                    child: Tap(
+                                      onTap: widget.onPinTap == null
+                                          ? null
+                                          : () =>
+                                              widget.onPinTap!(byId[pl.id]!),
+                                      label:
+                                          '${byId[pl.id]!.word} ${byId[pl.id]!.zh}',
+                                      child: WordPin(
+                                        word: byId[pl.id]!.word,
+                                        zh: byId[pl.id]!.zh,
+                                        entryType: byId[pl.id]!.entryType,
+                                        large: widget.largePins,
+                                        muted: byId[pl.id]!.muted,
+                                        lifted: _dragging == pl.id,
+                                        linked: byId[pl.id]!.linked,
+                                        maxWidth: pl.badge.width,
+                                      ),
                                     ),
+                                  )),
+                            ),
+                        for (final e in _leaving.entries)
+                          if (_lastPlaced[e.key] case final pl?)
+                            Positioned(
+                              key: ValueKey('leaving-${e.key}'),
+                              left: pl.badge.left,
+                              top: pl.badge.top,
+                              child: IgnorePointer(
+                                child: _FadeOutPin(
+                                  onGone: () =>
+                                      setState(() => _leaving.remove(e.key)),
+                                  child: WordPin(
+                                    word: e.value.word,
+                                    zh: e.value.zh,
+                                    entryType: e.value.entryType,
+                                    large: widget.largePins,
+                                    muted: e.value.muted,
+                                    linked: e.value.linked,
+                                    maxWidth: pl.badge.width,
                                   ),
-                                )),
-                          ),
-                      for (final e in _leaving.entries)
-                        if (_lastPlaced[e.key] case final pl?)
-                          Positioned(
-                            key: ValueKey('leaving-${e.key}'),
-                            left: pl.badge.left,
-                            top: pl.badge.top,
-                            child: IgnorePointer(
-                              child: _FadeOutPin(
-                                onGone: () => setState(() => _leaving.remove(e.key)),
-                                child: WordPin(
-                                  word: e.value.word,
-                                  zh: e.value.zh,
-                                  entryType: e.value.entryType,
-                                  large: widget.largePins,
-                                  muted: e.value.muted,
-                                  linked: e.value.linked,
-                                  maxWidth: pl.badge.width,
                                 ),
                               ),
                             ),
-                          ),
                       ],
                     ),
                   ),
@@ -1027,8 +1039,8 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
                         boxShadow: MShadows.card,
                       ),
                       child: Text('${i + 1}',
-                          style: MFont.manrope(
-                              13, FontWeight.w800, Colors.white)),
+                          style:
+                              MFont.manrope(13, FontWeight.w800, Colors.white)),
                     ),
                   ),
                 ),

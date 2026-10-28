@@ -12,7 +12,10 @@ const webCjkFamily = 'Noto Sans TC';
 /// Noto Sans TC (SIL OFL), subset to Big5 plus every character in the app's
 /// packs and source, served by the web build itself (web/fonts/).
 @visibleForTesting
-const webCjkFontFiles = ['fonts/NotoSansTC-Regular.ttf', 'fonts/NotoSansTC-Bold.ttf'];
+const webCjkFontFiles = [
+  'fonts/NotoSansTC-Regular.ttf',
+  'fonts/NotoSansTC-Bold.ttf'
+];
 
 /// Flutter web can't use the computer's fonts, so the fallbacks in MFont
 /// (Noto Sans TC, PingFang TC, Microsoft JhengHei) don't exist there and the

@@ -62,8 +62,10 @@ abstract final class MColors {
   static const photoScrim = Color(0x99000000);
   static const photoScrimLight = Color(0x66000000);
   static const frost = Color(0x33FFFFFF);
+
   /// Dark frosted chip on photos (ink @ ~85%).
   static const overlayChip = Color(0xD91C2434);
+
   /// Muted label on dark overlay chips.
   static const onOverlayMuted = Color(0xCCFFFFFF);
 }
@@ -280,7 +282,9 @@ abstract final class MDecor {
         borderRadius: BorderRadius.circular(radius),
         border: Border.all(
           color: borderColor ??
-              (active ? MColors.primary.withValues(alpha: 0.2) : MColors.hairline),
+              (active
+                  ? MColors.primary.withValues(alpha: 0.2)
+                  : MColors.hairline),
         ),
       );
 
@@ -480,4 +484,3 @@ abstract final class MobileTheme {
     );
   }
 }
-

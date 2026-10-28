@@ -139,15 +139,15 @@ class _InteractiveExerciseState extends State<_InteractiveExercise> {
           Align(
             alignment: Alignment.centerRight,
             child: IconButton(
-              tooltip: ui(context,
-                  widget.session.hintCount > 0 ? '提示已顯示' : '顯示字首提示'),
-              onPressed: !widget.session.canAnswer ||
-                      widget.session.hintCount > 0
-                  ? null
-                  : () {
-                      widget.session.useHint();
-                      setState(() {});
-                    },
+              tooltip: ui(
+                  context, widget.session.hintCount > 0 ? '提示已顯示' : '顯示字首提示'),
+              onPressed:
+                  !widget.session.canAnswer || widget.session.hintCount > 0
+                      ? null
+                      : () {
+                          widget.session.useHint();
+                          setState(() {});
+                        },
               icon: const Icon(Icons.lightbulb_outline),
             ),
           ),
@@ -170,7 +170,8 @@ class _InteractiveExerciseState extends State<_InteractiveExercise> {
                   onPressed: widget.session.canAnswer
                       ? () => widget.session.submitAnswer(option)
                       : null,
-                  child: Text(shownWord(option, AppScope.of(context).repository.language))),
+                  child: Text(shownWord(
+                      option, AppScope.of(context).repository.language))),
             ),
         ],
         if (x.type == ReviewExerciseType.similarMatch) ...[
@@ -200,7 +201,8 @@ class _InteractiveExerciseState extends State<_InteractiveExercise> {
                     : () => _match(pair),
                 child: Text(_matched.contains(pair.word)
                     ? '✓ ${shownWord(pair.word, AppScope.of(context).repository.language)}'
-                    : shownWord(pair.word, AppScope.of(context).repository.language)),
+                    : shownWord(
+                        pair.word, AppScope.of(context).repository.language)),
               ),
             ),
           if (_mistakes > 0)
@@ -222,21 +224,19 @@ class _InteractiveExerciseState extends State<_InteractiveExercise> {
                 style: MFont.manrope(14, FontWeight.w700, MColors.label)),
           const SizedBox(height: 12),
           OutlinedButton(
-              onPressed: !widget.session.canAnswer ||
-                      widget.session.hintCount > 0
-                  ? null
-                  : () {
-                      widget.session.useHint();
-                      setState(() {});
-                    },
-              child: UiText(widget.session.hintCount == 0
-                  ? '需要提示'
-                  : '提示已顯示')),
+              onPressed:
+                  !widget.session.canAnswer || widget.session.hintCount > 0
+                      ? null
+                      : () {
+                          widget.session.useHint();
+                          setState(() {});
+                        },
+              child: UiText(widget.session.hintCount == 0 ? '需要提示' : '提示已顯示')),
           if (widget.session.hintCount > 0)
             Padding(
               padding: const EdgeInsets.only(top: 8),
-              child: Text(firstLetterHint(x.answer),
-                  textAlign: TextAlign.center),
+              child:
+                  Text(firstLetterHint(x.answer), textAlign: TextAlign.center),
             ),
         ],
         if (x.type == ReviewExerciseType.imageDrag) ...[
@@ -255,13 +255,20 @@ class _InteractiveExerciseState extends State<_InteractiveExercise> {
                     data: target.word,
                     feedback: Material(
                         color: Colors.transparent,
-                        child:
-                            TagChip(shownWord(target.word, AppScope.of(context).repository.language), localize: false)),
+                        child: TagChip(
+                            shownWord(target.word,
+                                AppScope.of(context).repository.language),
+                            localize: false)),
                     childWhenDragging: Opacity(
                         opacity: .25,
-                        child:
-                            TagChip(shownWord(target.word, AppScope.of(context).repository.language), localize: false)),
-                    child: TagChip(shownWord(target.word, AppScope.of(context).repository.language), localize: false),
+                        child: TagChip(
+                            shownWord(target.word,
+                                AppScope.of(context).repository.language),
+                            localize: false)),
+                    child: TagChip(
+                        shownWord(target.word,
+                            AppScope.of(context).repository.language),
+                        localize: false),
                   ),
             ],
           ),

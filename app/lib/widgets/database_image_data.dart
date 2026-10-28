@@ -8,8 +8,8 @@ List<Map<String, dynamic>> databaseEntryImages(
   final ids = (word.pictureIds ?? [word.id]).toSet();
   return [
     for (final image in catalog)
-      if (databaseImageTags(image).any((tag) =>
-          ids.contains((tag['lexeme_id'] as num?)?.toInt())))
+      if (databaseImageTags(image)
+          .any((tag) => ids.contains((tag['lexeme_id'] as num?)?.toInt())))
         image
   ];
 }
@@ -222,8 +222,8 @@ List<Map<String, dynamic>> databaseLevelTags(
     }
   }
   if (own.length >= WordSelector.maxWords) return own;
-  nearby.sort((a, b) =>
-      a.$1 != b.$1 ? a.$1.compareTo(b.$1) : a.$2.compareTo(b.$2));
+  nearby.sort(
+      (a, b) => a.$1 != b.$1 ? a.$1.compareTo(b.$1) : a.$2.compareTo(b.$2));
   return [
     ...own,
     for (final t in nearby.take(WordSelector.maxWords - own.length)) t.$3
@@ -235,17 +235,17 @@ Photo databasePhoto(Map<String, dynamic> image) {
   final resolved = resolvePackMedia(image['url'] as String);
   final asset = packMediaIsAsset(resolved);
   return Photo(
-      id: 'db-${image['id']}',
-      title: '',
-      takenAt: DateTime(2000),
-      createdAt: DateTime(2000),
-      assetPath: asset ? resolved : null,
-      // 問題回報 #859: the same downscaled copy the review asks for, so
-      // both share one download and one cached file.
-      networkUrl: asset ? null : sizedServerImage(resolved),
-      width: (image['width'] as num?)?.toInt(),
-      height: (image['height'] as num?)?.toInt(),
-    );
+    id: 'db-${image['id']}',
+    title: '',
+    takenAt: DateTime(2000),
+    createdAt: DateTime(2000),
+    assetPath: asset ? resolved : null,
+    // 問題回報 #859: the same downscaled copy the review asks for, so
+    // both share one download and one cached file.
+    networkUrl: asset ? null : sizedServerImage(resolved),
+    width: (image['width'] as num?)?.toInt(),
+    height: (image['height'] as num?)?.toInt(),
+  );
 }
 
 /// The vision model's labels on a database picture, as photo pins where it
@@ -308,9 +308,8 @@ String? _pinMeaning(
               (t['lexeme_id'] as num?)?.toInt() == entry.id &&
               t['sense_id'] != null)
           .firstOrNull?['sense_id'];
-  final sense = id == null
-      ? null
-      : entry.senses.where((s) => s.id == id).firstOrNull;
+  final sense =
+      id == null ? null : entry.senses.where((s) => s.id == id).firstOrNull;
   final native = sense?.native?.trim();
   return native == null || native.isEmpty ? entry.nativeMeaning : native;
 }

@@ -53,7 +53,10 @@ const uiCatalog = <String, (String, String)>{
     'Les révisions en trop passent à demain. Par défaut : 100.'
   ),
   '掃描 QR code': ('Scan QR code', 'Scanner le QR code'),
-  '掃描連線 QR code': ('Scan the connection QR code', 'Scanner le QR code de connexion'),
+  '掃描連線 QR code': (
+    'Scan the connection QR code',
+    'Scanner le QR code de connexion'
+  ),
   '還原會用備份檔取代目前所有的單字、照片、相片冊、複習紀錄與設定。': (
     'Restoring replaces all your words, photos, albums, review history and settings with the backup.',
     'La restauration remplace tous vos mots, photos, albums, historique de révision et réglages par la sauvegarde.'
@@ -110,7 +113,10 @@ const uiCatalog = <String, (String, String)>{
     'The server didn’t delete this report, so it stays on this phone. You can try again later.',
     'Le serveur n’a pas supprimé ce signalement ; il reste sur ce téléphone. Vous pouvez réessayer plus tard.'
   ),
-  '只從這支手機移除': ('Remove from this phone only', 'Retirer de ce téléphone seulement'),
+  '只從這支手機移除': (
+    'Remove from this phone only',
+    'Retirer de ce téléphone seulement'
+  ),
   '先留著': ('Keep it', 'Le garder'),
   '還沒有送過意見回饋': ('No feedback sent yet', 'Aucun commentaire envoyé'),
   '還在排隊，連上網路後會送出': (
@@ -1163,7 +1169,10 @@ const _templateCopy = <String, (String, String)>{
   '處理中 · #{0}': ('In progress · #{0}', 'En cours · #{0}'),
   '已處理 · #{0}': ('Done · #{0}', 'Traité · #{0}'),
   // Before the generic 「{0} 張」 below (卡 #496).
-  '每天最多 {0} 張新卡': ('Up to {0} new cards a day', 'Jusqu’à {0} nouvelles cartes par jour'),
+  '每天最多 {0} 張新卡': (
+    'Up to {0} new cards a day',
+    'Jusqu’à {0} nouvelles cartes par jour'
+  ),
   '每天最多複習 {0} 張': ('Up to {0} reviews a day', 'Jusqu’à {0} révisions par jour'),
   '辨識單字列表 ({0})': ('Recognised words ({0})', 'Mots reconnus ({0})'),
   'AI 在這張照片找到的字最難到「{0}」，按「重新掃描標籤」請 AI 找更難的字': (

@@ -26,7 +26,8 @@ class MobileTabBar extends StatelessWidget {
     Widget tab(AppTab tab, String label, MIcon icon, MIcon activeIcon) {
       final active = tab == current;
       final needsTint = active && icon == activeIcon;
-      return Expanded(child: Tap(
+      return Expanded(
+          child: Tap(
         onTap: () => onSelect(tab),
         label: label,
         labelOnly: true,

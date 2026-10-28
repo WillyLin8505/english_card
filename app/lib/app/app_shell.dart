@@ -11,6 +11,8 @@ import '../screens/photo_grid_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/word_database_screen.dart';
 import '../screens/word_detail_screen.dart';
+import '../services/app_settings.dart';
+import '../widgets/mobile/common.dart';
 import '../widgets/mobile/tab_bar.dart';
 import 'app_scope.dart';
 import '../theme/mobile_theme.dart';
@@ -25,6 +27,7 @@ import '../services/feedback_context.dart';
 /// `AppScope.of(context).navigator`.
 class AppShell extends StatefulWidget {
   final AppTab initialTab;
+
   /// The server-catalog browser. Off in the shipped app (問題回報 #404: the
   /// app shows only what the learner owns); kept for the catalog tests.
   final bool databaseLibrary;
@@ -52,6 +55,13 @@ class AppShellState extends State<AppShell> implements AppNavigator {
     super.initState();
     FeedbackContext.instance.tab = _tab;
     widget.onNavigatorReady(this);
+    // 卡 #737: a stored 繁中母語＋法文 went back to English at start-up.
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (AppScope.of(context).settings.takePairReset()) {
+        showToast(context, '$frenchNeedsEnglishNative，已切回英文');
+      }
+    });
   }
 
   NavigatorState? _nav(AppTab tab) => _navigators[tab]!.currentState;
@@ -85,9 +95,8 @@ class AppShellState extends State<AppShell> implements AppNavigator {
       _pushInAlbumTab(PhotoDetailScreen(photoId: photoId), '照片詳情', photoId);
 
   @override
-  void openWordPhotos(String wordEntryId) =>
-      _pushInAlbumTab(PhotoGridScreen.word(wordEntryId: wordEntryId), '項目照片',
-          wordEntryId);
+  void openWordPhotos(String wordEntryId) => _pushInAlbumTab(
+      PhotoGridScreen.word(wordEntryId: wordEntryId), '項目照片', wordEntryId);
 
   @override
   void setReviewing(bool reviewing) {
@@ -96,10 +105,12 @@ class AppShellState extends State<AppShell> implements AppNavigator {
     // (a language switch ends the run): apply after this frame then.
     if (SchedulerBinding.instance.schedulerPhase ==
         SchedulerPhase.persistentCallbacks) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => setReviewing(reviewing));
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => setReviewing(reviewing));
       return;
     }
-    Analytics.instance.capture(reviewing ? 'review_started' : 'review_finished');
+    Analytics.instance
+        .capture(reviewing ? 'review_started' : 'review_finished');
     setState(() => _reviewing = reviewing);
   }
 

@@ -77,14 +77,14 @@ class DataSourcesScreen extends StatelessWidget {
           children: [
             MNavBar(
               title: '資料來源與授權',
-              leading: BackNavButton(
-                  onTap: () => Navigator.of(context).pop()),
+              leading: BackNavButton(onTap: () => Navigator.of(context).pop()),
             ),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.all(MSpace.lg),
                 children: [
-                  UiText('這份 App 使用以下資料。各資料依其授權條款標示作者與來源；'
+                  UiText(
+                      '這份 App 使用以下資料。各資料依其授權條款標示作者與來源；'
                       '圖片與音檔的作者、授權與來源頁，請長按圖片或在該張卡片查看。',
                       style: MFont.manrope(14, FontWeight.w600, MColors.ink)),
                   const SizedBox(height: 20),
@@ -97,7 +97,8 @@ class DataSourcesScreen extends StatelessWidget {
                     UiText('授權：$license',
                         style: MFont.manrope(14, FontWeight.w600, MColors.ink)),
                     SelectableText(url,
-                        style: MFont.manrope(13, FontWeight.w600, MColors.muted)),
+                        style:
+                            MFont.manrope(13, FontWeight.w600, MColors.muted)),
                     const SizedBox(height: 18),
                   ],
                   UiText('授權條文',
@@ -118,7 +119,8 @@ class DataSourcesScreen extends StatelessWidget {
                     'https://opensource.org/license/mit',
                   ])
                     SelectableText(url,
-                        style: MFont.manrope(13, FontWeight.w600, MColors.muted)),
+                        style:
+                            MFont.manrope(13, FontWeight.w600, MColors.muted)),
                   const SizedBox(height: 18),
                   UiText('圖片在 App 內以縮小後的縮圖顯示，未做其他修改。',
                       style: MFont.manrope(13, FontWeight.w600, MColors.muted)),

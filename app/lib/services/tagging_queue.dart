@@ -512,9 +512,7 @@ class TaggingQueue extends ChangeNotifier {
   Future<int> _topUp(WordDatabaseRepository repo, Photo photo,
       {required String focus, required String level}) async {
     final found = await _request(photo,
-        level: level,
-        focus: focus,
-        exclude: _topUpExclude(repo, photo, level));
+        level: level, focus: focus, exclude: _topUpExclude(repo, photo, level));
     final latest = repo.photo(photo.id);
     if (latest == null) return 0;
     final merged = _merge(latest.candidates, found);

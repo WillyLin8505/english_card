@@ -401,8 +401,7 @@ class DictionarySync extends ChangeNotifier {
       final body = trackDownload(response.stream, response.contentLength);
       if (useSqlite && contentType.contains('sqlite')) {
         // The whole pack as a file: streamed to disk, never held in memory.
-        await _installSqliteDownload(
-            body, pair, target, native, repo, current);
+        await _installSqliteDownload(body, pair, target, native, repo, current);
         _forceFull.remove(pair);
         _succeeded();
         await _sendMissingQuietly();

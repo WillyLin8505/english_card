@@ -1574,8 +1574,8 @@ class WordDatabaseRepository extends ChangeNotifier {
           // Listed on this photo now (e.g. restored): one of its words.
           final i = _occurrences.indexWhere((x) => x.id == o.id);
           if (i >= 0) {
-            final listedOcc = _occurrences[i]
-                .copyWith(contextOnly: false, fromImport: false);
+            final listedOcc =
+                _occurrences[i].copyWith(contextOnly: false, fromImport: false);
             _occurrences[i] = listedOcc;
             _persist((s) => s.putOccurrence(listedOcc));
           }

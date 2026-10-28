@@ -274,7 +274,8 @@ class _WordBody extends StatelessWidget {
       ..sort((a, b) {
         final r = rank(a).compareTo(rank(b));
         if (r != 0 || rank(a) != 1) return r;
-        return repo.photo(b.photoId)!
+        return repo
+            .photo(b.photoId)!
             .takenAt
             .compareTo(repo.photo(a.photoId)!.takenAt);
       });

@@ -75,7 +75,11 @@ class RelatedWord {
   final bool hideByDefault;
 
   const RelatedWord(this.word, this.type,
-      {this.native, this.cefr, this.zipf, this.rarity, this.hideByDefault = false});
+      {this.native,
+      this.cefr,
+      this.zipf,
+      this.rarity,
+      this.hideByDefault = false});
 
   factory RelatedWord.fromJson(Map<String, dynamic> j) => RelatedWord(
         j['word'] as String,
@@ -224,11 +228,14 @@ class WordSense {
   final String? definition;
   const WordSense({required this.id, required this.meaning, this.definition});
   factory WordSense.fromJson(Map<String, dynamic> j) => WordSense(
-      id: j['id'] as String, meaning: j['meaning'] as String,
+      id: j['id'] as String,
+      meaning: j['meaning'] as String,
       definition: j['definition'] as String?);
   Map<String, dynamic> toJson() => {
-    'id': id, 'meaning': meaning, 'definition': definition,
-  };
+        'id': id,
+        'meaning': meaning,
+        'definition': definition,
+      };
 }
 
 /// A spelling owns usages; each usage owns senses and bound examples.
@@ -242,21 +249,31 @@ class LexemeUsage {
   /// A rarer part of speech of the spelling (問題回報 #468): review skips it.
   /// Stored with the usage; absent in older data means common.
   final bool rare;
-  const LexemeUsage({required this.id, required this.pos,
-      this.senses = const [], this.examples = const [], this.rare = false});
+  const LexemeUsage(
+      {required this.id,
+      required this.pos,
+      this.senses = const [],
+      this.examples = const [],
+      this.rare = false});
   factory LexemeUsage.fromJson(Map<String, dynamic> j) => LexemeUsage(
-      id: j['id'] as String, pos: j['pos'] as String,
-      rare: j['rare'] == true,
-      senses: [for (final s in j['senses'] as List? ?? [])
-        WordSense.fromJson(Map<String, dynamic>.from(s as Map))],
-      examples: [for (final e in j['examples'] as List? ?? [])
-        WordExample.fromJson(Map<String, dynamic>.from(e as Map))]);
+          id: j['id'] as String,
+          pos: j['pos'] as String,
+          rare: j['rare'] == true,
+          senses: [
+            for (final s in j['senses'] as List? ?? [])
+              WordSense.fromJson(Map<String, dynamic>.from(s as Map))
+          ],
+          examples: [
+            for (final e in j['examples'] as List? ?? [])
+              WordExample.fromJson(Map<String, dynamic>.from(e as Map))
+          ]);
   Map<String, dynamic> toJson() => {
-    'id': id, 'pos': pos,
-    if (rare) 'rare': true,
-    'senses': [for (final s in senses) s.toJson()],
-    'examples': [for (final e in examples) e.toJson()],
-  };
+        'id': id,
+        'pos': pos,
+        if (rare) 'rare': true,
+        'senses': [for (final s in senses) s.toJson()],
+        'examples': [for (final e in examples) e.toJson()],
+      };
 }
 
 /// One lexical entry per normalized spelling; usages hold POS differences.
@@ -269,27 +286,52 @@ class WordEntry {
   /// User edits to the primary meaning/examples remain authoritative.
   List<LexemeUsage> get effectiveUsages {
     if (usages.isEmpty) {
-      return [LexemeUsage(id: 'local:$id', pos: pos,
-        senses: [WordSense(id: 'local:$id:main', meaning: meaning,
-          definition: definitionEn)], examples: examples)];
+      return [
+        LexemeUsage(
+            id: 'local:$id',
+            pos: pos,
+            senses: [
+              WordSense(
+                  id: 'local:$id:main',
+                  meaning: meaning,
+                  definition: definitionEn)
+            ],
+            examples: examples)
+      ];
     }
-    return [for (final u in usages)
-      if (shortPos(u.pos) == shortPos(pos) &&
-          (u.id.startsWith('local:') || userEdited.contains(WordField.meaning) ||
-              userEdited.contains(WordField.examples)))
-        LexemeUsage(id: u.id, pos: pos, rare: u.rare,
-          senses: [for (var i = 0; i < u.senses.length; i++)
-            if (i == 0 && (u.id.startsWith('local:') || userEdited.contains(WordField.meaning)))
-              WordSense(id: u.senses[i].id, meaning: meaning,
-                definition: u.senses[i].definition)
-            else u.senses[i]],
-          examples: u.id.startsWith('local:') || userEdited.contains(WordField.examples)
-            ? examples : u.examples)
-      else u,
+    return [
+      for (final u in usages)
+        if (shortPos(u.pos) == shortPos(pos) &&
+            (u.id.startsWith('local:') ||
+                userEdited.contains(WordField.meaning) ||
+                userEdited.contains(WordField.examples)))
+          LexemeUsage(
+              id: u.id,
+              pos: pos,
+              rare: u.rare,
+              senses: [
+                for (var i = 0; i < u.senses.length; i++)
+                  if (i == 0 &&
+                      (u.id.startsWith('local:') ||
+                          userEdited.contains(WordField.meaning)))
+                    WordSense(
+                        id: u.senses[i].id,
+                        meaning: meaning,
+                        definition: u.senses[i].definition)
+                  else
+                    u.senses[i]
+              ],
+              examples: u.id.startsWith('local:') ||
+                      userEdited.contains(WordField.examples)
+                  ? examples
+                  : u.examples)
+        else
+          u,
     ];
   }
 
-  List<String> get partsOfSpeech => effectiveUsages.map((u) => shortPos(u.pos)).toSet().toList();
+  List<String> get partsOfSpeech =>
+      effectiveUsages.map((u) => shortPos(u.pos)).toSet().toList();
   final String id;
 
   /// Normalized spelling; unique per language, regardless of part of speech.

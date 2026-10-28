@@ -62,9 +62,8 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
     with WidgetsBindingObserver {
   /// A word in the learning language's spelling (French lowercase with its
   /// article, 問題回報 #499); English stays capitalised.
-  String _shown(String word, String? pos) => shownWord(
-      word, AppScope.of(context).repository.language,
-      pos: pos);
+  String _shown(String word, String? pos) =>
+      shownWord(word, AppScope.of(context).repository.language, pos: pos);
 
   AppScope? _scope;
   PhotoWordSession? _session;
@@ -313,7 +312,8 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              title: Text('${_shown(w.word, w.candidate.pos)}　${w.candidate.meaning}',
+              title: Text(
+                  '${_shown(w.word, w.candidate.pos)}　${w.candidate.meaning}',
                   style: MFont.manrope(16, FontWeight.w800, MColors.ink)),
               subtitle: const UiText('可查看意思、改成正確的字、刪除或標為已學會。'),
             ),
@@ -371,7 +371,8 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
       case 'delete':
         session.delete(w);
         if (_placing == w) setState(() => _placing = null);
-        showToast(context, '已刪除「${_shown(w.word, w.candidate.pos)}」，這張照片不會再推薦它');
+        showToast(
+            context, '已刪除「${_shown(w.word, w.candidate.pos)}」，這張照片不會再推薦它');
       case 'known':
         session.swipe(w);
     }
@@ -422,8 +423,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
       ..._toScan,
       if (_scanningNow case final now?) now,
       for (final a in _answered) a.$1,
-    ]
-        .any(near)) {
+    ].any(near)) {
       return;
     }
     setState(() => _toScan.add(at));
@@ -482,8 +482,8 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
     final onPhoto = {for (final w in session.words) w.word};
     final choices = found.take(6).toList();
     // Other spots still waiting after this one.
-    final more = _answered.length - 1 + _toScan.length +
-        (_scanningNow == null ? 0 : 1);
+    final more =
+        _answered.length - 1 + _toScan.length + (_scanningNow == null ? 0 : 1);
     final picked = await showModalBottomSheet<Object>(
       context: context,
       isScrollControlled: true,
@@ -834,19 +834,17 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                   style: MFont.manrope(12, FontWeight.w600, MColors.muted)),
             ),
           _LevelRow(
-          bias: session.bias,
-          busy: topping ||
-              session.fetchingMore != null ||
-              session.rescanning,
-          busyLabel: session.rescanning
-              ? 'AI 正在重新掃描…'
-              : session.fetchingMore == null
-                  ? null
-                  : 'AI 正在找更多${PhotoWordSession.focusLabel(session.fetchingMore!)}…',
-          onBias: session.setBias,
-          // 問題回報 #670: read the whole photo again.
-          onRescan: session.rescanning ? null : session.rescan,
-        ),
+            bias: session.bias,
+            busy: topping || session.fetchingMore != null || session.rescanning,
+            busyLabel: session.rescanning
+                ? 'AI 正在重新掃描…'
+                : session.fetchingMore == null
+                    ? null
+                    : 'AI 正在找更多${PhotoWordSession.focusLabel(session.fetchingMore!)}…',
+            onBias: session.setBias,
+            // 問題回報 #670: read the whole photo again.
+            onRescan: session.rescanning ? null : session.rescan,
+          ),
         ],
       ),
     );
@@ -898,7 +896,8 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                   ScaffoldMessenger.of(context)
                     ..hideCurrentSnackBar()
                     ..showSnackBar(SnackBar(
-                      content: UiText('已把「${_shown(w.word, w.candidate.pos)}」移到已學會'),
+                      content:
+                          UiText('已把「${_shown(w.word, w.candidate.pos)}」移到已學會'),
                       action: SnackBarAction(
                         label: ui(context, '復原'),
                         onPressed: () => session.restore(undo),
@@ -998,7 +997,8 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                       onRestore: o.learned
                           ? () {
                               session.restore(o);
-                              showToast(context, '已復原「${_shown(o.word, o.candidate.pos)}」');
+                              showToast(context,
+                                  '已復原「${_shown(o.word, o.candidate.pos)}」');
                             }
                           : null,
                     ),
@@ -1227,8 +1227,8 @@ class _SpotNumber extends StatelessWidget {
         width: 28,
         height: 28,
         alignment: Alignment.center,
-        decoration: const BoxDecoration(
-            color: MColors.primary, shape: BoxShape.circle),
+        decoration:
+            const BoxDecoration(color: MColors.primary, shape: BoxShape.circle),
         child: Text('$number',
             style: MFont.manrope(13, FontWeight.w800, Colors.white)),
       );

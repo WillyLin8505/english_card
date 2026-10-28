@@ -64,9 +64,7 @@ class _Candidate {
     const box = ThumbnailSize.square(maxEdge);
     final option = defaultTargetPlatform == TargetPlatform.iOS
         ? ThumbnailOption.ios(
-            size: box,
-            quality: 90,
-            resizeContentMode: ResizeContentMode.fit)
+            size: box, quality: 90, resizeContentMode: ResizeContentMode.fit)
         : const ThumbnailOption(size: box, quality: 90);
     return e.thumbnailDataWithOption(option);
   }
@@ -169,8 +167,7 @@ class _PhotoPickerScreenState extends State<PhotoPickerScreen> {
       for (var i = 0; i < entities.length; i += batch) {
         final chunk = entities.skip(i).take(batch);
         final thumbs = await Future.wait(chunk.map((e) => e
-            .thumbnailDataWithSize(const ThumbnailSize.square(360),
-                quality: 85)
+            .thumbnailDataWithSize(const ThumbnailSize.square(360), quality: 85)
             .catchError((_) => null)));
         if (!mounted) return;
         final device = <_Candidate>[
@@ -446,7 +443,8 @@ class _PhotoPickerScreenState extends State<PhotoPickerScreen> {
                             child: UiText(
                                 _loadingDevice
                                     ? '正在讀取最近照片…'
-                                    : _candidates.length > sampleRecentPhotos.length
+                                    : _candidates.length >
+                                            sampleRecentPhotos.length
                                         ? '最近照片'
                                         : _sessionPicks.isEmpty
                                             ? '範例照片'

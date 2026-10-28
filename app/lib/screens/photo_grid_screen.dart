@@ -175,8 +175,7 @@ class _PhotoGridScreenState extends State<PhotoGridScreen> {
                           itemBuilder: (context, i) => _PhotoCard(
                             photo: photos[i],
                             labels: labelsOf(photos[i]),
-                            emptyText:
-                                _level == null ? null : '沒有 $_level 標籤',
+                            emptyText: _level == null ? null : '沒有 $_level 標籤',
                             onTap: () =>
                                 scope.navigator.openPhoto(photos[i].id),
                           ),
@@ -188,8 +187,7 @@ class _PhotoGridScreenState extends State<PhotoGridScreen> {
                     child: Tap(
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute<void>(
-                          builder: (_) =>
-                              FlashcardScreen(albumId: albumId),
+                          builder: (_) => FlashcardScreen(albumId: albumId),
                         ),
                       ),
                       label: '複習這本相簿',
@@ -198,7 +196,8 @@ class _PhotoGridScreenState extends State<PhotoGridScreen> {
                         decoration: MDecor.primaryPill(),
                         alignment: Alignment.center,
                         child: UiText('複習這本相簿',
-                            style: MFont.inter(16, FontWeight.w700, Colors.white)),
+                            style:
+                                MFont.inter(16, FontWeight.w700, Colors.white)),
                       ),
                     ),
                   ),

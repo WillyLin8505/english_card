@@ -126,10 +126,8 @@ class _DatabaseTagGroupState extends State<_DatabaseTagGroup> {
       if (group.value.any((t) => borrowed(t) != null)) {
         out.add(Padding(
           padding: const EdgeInsets.only(bottom: MSpace.xs),
-          child: UiText(
-              '這個程度不到 ${WordSelector.maxWords} 個字，已從相近程度補上',
-              key: const ValueKey('borrowed-hint'),
-              style: MFont.caption),
+          child: UiText('這個程度不到 ${WordSelector.maxWords} 個字，已從相近程度補上',
+              key: const ValueKey('borrowed-hint'), style: MFont.caption),
         ));
       }
       for (final tag in visibleTags) {

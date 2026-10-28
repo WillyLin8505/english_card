@@ -696,8 +696,7 @@ class RecordingCredit {
 
   /// The credit of an Azure synthetic clip (卡 #695), instead of a speaker
   /// and license.
-  static const synthetic =
-      RecordingCredit('Azure 神經語音（合成）', isSynthetic: true);
+  static const synthetic = RecordingCredit('Azure 神經語音（合成）', isSynthetic: true);
 
   /// One name from Wikimedia's speaker text (M139: "Speaker: X\nRecorder: Y"
   /// showed both lines): the name after `Speaker:`, else the first line

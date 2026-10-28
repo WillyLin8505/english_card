@@ -36,8 +36,7 @@ class _BlockState extends State<_Block> {
           child: Row(
             children: [
               Expanded(
-                  child:
-                      ExcludeSemantics(child: _SectionTitle(widget.label))),
+                  child: ExcludeSemantics(child: _SectionTitle(widget.label))),
               Icon(_open ? Icons.expand_less : Icons.expand_more,
                   size: 20, color: look.sectionIconColor),
             ],

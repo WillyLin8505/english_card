@@ -48,8 +48,8 @@ class LexiconSqlite {
     final db = sqlite3.open(path,
         mode: readOnly ? OpenMode.readOnly : OpenMode.readWrite);
     try {
-      final version = db.select(
-          "SELECT value FROM meta WHERE key = 'format_version'");
+      final version =
+          db.select("SELECT value FROM meta WHERE key = 'format_version'");
       if (version.isEmpty ||
           _decode(version.first['value'] as Uint8List) != formatVersion) {
         throw const FormatException('Not a lexicon pack (format_version)');
@@ -161,15 +161,16 @@ class LexiconSqlite {
           'INSERT OR REPLACE INTO lexemes (id, ord, head, senses, body) '
           'VALUES (?, -1, ?, ?, ?)');
       try {
-        for (final row in (patch['upserts'] as List)
-            .cast<Map<String, dynamic>>()) {
+        for (final row
+            in (patch['upserts'] as List).cast<Map<String, dynamic>>()) {
           final (head, senses, body) = splitRow(row);
           upsert.execute([(row['id'] as num).toInt(), head, senses, body]);
         }
       } finally {
         upsert.close();
       }
-      _db.execute('CREATE TEMP TABLE keep (id INTEGER PRIMARY KEY, ord INTEGER)');
+      _db.execute(
+          'CREATE TEMP TABLE keep (id INTEGER PRIMARY KEY, ord INTEGER)');
       final keep = _db.prepare('INSERT INTO keep VALUES (?, ?)');
       try {
         for (var i = 0; i < order.length; i++) {
@@ -222,7 +223,8 @@ class LexiconSqlite {
     final db = sqlite3.open(path);
     try {
       db.execute('PRAGMA journal_mode=OFF');
-      db.execute('CREATE TABLE meta(key TEXT PRIMARY KEY, value BLOB NOT NULL)');
+      db.execute(
+          'CREATE TABLE meta(key TEXT PRIMARY KEY, value BLOB NOT NULL)');
       db.execute('CREATE TABLE lexemes(id INTEGER PRIMARY KEY, '
           'ord INTEGER NOT NULL, head TEXT NOT NULL, senses BLOB, body BLOB)');
       db.execute('BEGIN');

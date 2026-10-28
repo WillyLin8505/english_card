@@ -55,7 +55,8 @@ class _DeckBrowserScreenState extends State<DeckBrowserScreen> {
     try {
       final repo = AppScope.of(context).repository;
       final decks = await _library.fetchList(
-          target: repo.language, native: AppScope.of(context).settings.nativeLanguage);
+          target: repo.language,
+          native: AppScope.of(context).settings.nativeLanguage);
       if (!mounted) return;
       setState(() => _available = decks);
     } on DeckException catch (e) {
@@ -79,10 +80,9 @@ class _DeckBrowserScreenState extends State<DeckBrowserScreen> {
       final deck = await _library.fetchDeck(info.slug);
       final created = await _library.install(deck,
           repository: scope.repository,
-          intake: scope.intake,
-          onProgress: (done, total) {
-            if (mounted) setState(() => _progress = '$done/$total');
-          });
+          intake: scope.intake, onProgress: (done, total) {
+        if (mounted) setState(() => _progress = '$done/$total');
+      });
       if (created.isNotEmpty) unawaited(scope.enricher.process());
       _message('已加入「${info.title}」，可以開始複習');
     } on DeckException catch (e) {
@@ -142,8 +142,7 @@ class _DeckBrowserScreenState extends State<DeckBrowserScreen> {
                       children: [
                         if (_error != null)
                           Padding(
-                            padding:
-                                const EdgeInsets.only(bottom: MSpace.sm),
+                            padding: const EdgeInsets.only(bottom: MSpace.sm),
                             child: Row(children: [
                               Expanded(
                                   child: UiText(_error!,
@@ -168,7 +167,8 @@ class _DeckBrowserScreenState extends State<DeckBrowserScreen> {
                           _DeckCard(
                             info: info,
                             library: _library,
-                            installed: _library.installedDeck(info.slug) != null,
+                            installed:
+                                _library.installedDeck(info.slug) != null,
                             busy: _busy == info.slug,
                             progress: _progress,
                             disabled: _busy != null,
@@ -266,8 +266,7 @@ class _DeckCard extends StatelessWidget {
                 if (info.description != null) ...[
                   const SizedBox(height: MSpace.xs),
                   UiText(info.description!,
-                      style:
-                          const TextStyle(fontSize: 14, color: MColors.ink)),
+                      style: const TextStyle(fontSize: 14, color: MColors.ink)),
                 ],
                 const SizedBox(height: MSpace.sm),
                 Align(
@@ -277,8 +276,7 @@ class _DeckCard extends StatelessWidget {
                           const SizedBox(
                               width: 18,
                               height: 18,
-                              child:
-                                  CircularProgressIndicator(strokeWidth: 2)),
+                              child: CircularProgressIndicator(strokeWidth: 2)),
                           const SizedBox(width: MSpace.xs),
                           Text(progress),
                         ])

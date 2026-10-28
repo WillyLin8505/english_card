@@ -89,7 +89,8 @@ String? _credit(Map<String, dynamic> i) {
 class DeckContent {
   final DeckInfo info;
   final List<({String word, String pos, String? level})> words;
-  final List<({int assetId, List<WordCandidate> labels, String? credit})> pictures;
+  final List<({int assetId, List<WordCandidate> labels, String? credit})>
+      pictures;
 
   const DeckContent(this.info,
       {this.words = const [], this.pictures = const []});
@@ -256,10 +257,9 @@ class DeckLibrary extends ChangeNotifier {
   final _installed = <String, InstalledDeck>{};
   String? _loadedFor;
 
-  Uri _api(String path, [Map<String, String>? query]) =>
-      DictionarySync.instance
-          .endpoint('en', 'zh-TW')
-          .replace(path: path, queryParameters: query ?? const {});
+  Uri _api(String path, [Map<String, String>? query]) => DictionarySync.instance
+      .endpoint('en', 'zh-TW')
+      .replace(path: path, queryParameters: query ?? const {});
 
   Uri imageUri(int assetId) => _api('/api/image', {'id': '$assetId'});
 

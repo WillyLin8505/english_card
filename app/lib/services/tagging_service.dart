@@ -120,18 +120,14 @@ String describeTaggingError(Object e, String url, {bool showUrl = true}) {
       451 => '這張照片含有成人內容，未加入相片冊',
       422 => '這張照片的辨識結果格式不完整，請稍後重新辨識',
       // 卡 #228：其他 HTTP 錯誤不再把英文的伺服器原文給學習者看。
-      404 => showUrl
-          ? '這個網址找不到 AI 辨識服務（$url），請確認網址'
-          : '目前找不到 AI 辨識服務',
+      404 => showUrl ? '這個網址找不到 AI 辨識服務（$url），請確認網址' : '目前找不到 AI 辨識服務',
       503 => 'AI 辨識服務還在啟動，稍後會自動重試',
       final int code => 'AI 辨識服務回應錯誤（代碼 $code），請確認網址或稍後再試',
       null => e.message,
     };
   }
   if (e is http.ClientException) {
-    return showUrl
-        ? '連不到 AI 辨識服務（$url），請確認服務已啟動'
-        : '目前連不到 AI 辨識服務';
+    return showUrl ? '連不到 AI 辨識服務（$url），請確認服務已啟動' : '目前連不到 AI 辨識服務';
   }
   if (e is TimeoutException) return 'AI 辨識服務太久沒有回應，稍後會自動重試';
   return '$e';
@@ -202,8 +198,8 @@ List<WordCandidate> parseCandidates(
     // 問題回報 #703 / Windows 卡 #631: a word the model could not place
     // (`pointUngrounded`, or no point at all) gets no invented (0.5, 0.5)
     // pin — it is a whole-picture word.
-    var grounded = item['pointUngrounded'] != true &&
-        item['point_ungrounded'] != true;
+    var grounded =
+        item['pointUngrounded'] != true && item['point_ungrounded'] != true;
     if (p is List && p.length >= 2) {
       point = LabelPoint(unit(p[0]), unit(p[1]));
     } else if (item['x'] is num && item['y'] is num) {

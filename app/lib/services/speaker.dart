@@ -156,9 +156,8 @@ class DeviceSpeaker implements Speaker, AudioPrefetcher {
         await player.play(source);
         // 問題回報 #729: stop() (the card changed) ends the wait at once
         // rather than after the timeout.
-        await Future.any([finished, stopped]).timeout(
-            const Duration(seconds: 6),
-            onTimeout: () => null);
+        await Future.any([finished, stopped])
+            .timeout(const Duration(seconds: 6), onTimeout: () => null);
         return true;
       } catch (e) {
         debugPrint('Recording failed, using TTS: $e');

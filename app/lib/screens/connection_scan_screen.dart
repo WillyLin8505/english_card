@@ -52,8 +52,8 @@ class _ConnectionScanScreenState extends State<ConnectionScanScreen> {
               child: Container(
                 padding: const EdgeInsets.all(12),
                 color: Colors.black54,
-                child: UiText(_hint!,
-                    style: const TextStyle(color: Colors.white)),
+                child:
+                    UiText(_hint!, style: const TextStyle(color: Colors.white)),
               ),
             ),
         ],

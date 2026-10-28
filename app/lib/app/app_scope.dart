@@ -148,8 +148,7 @@ class AppScope extends InheritedNotifier<AppSettings> {
       speak(context, entry.word,
           language: language,
           audioUrl: language == 'en'
-              ? accentAudioUrl(entry, settings.englishAccent,
-                  orDefault: true)
+              ? accentAudioUrl(entry, settings.englishAccent, orDefault: true)
               : entry.audioUrl);
 
   /// Downloads these recordings in the background (問題回報 #684) so the

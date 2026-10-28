@@ -126,6 +126,6 @@ void main() {
     await tester.pump();
     await tester.tap(find.text('Commencer'));
     expect((result()!.learningLanguage, result()!.nativeLanguage),
-        ('fr', 'zh-TW'));
+        ('fr', 'en'));
   });
 }

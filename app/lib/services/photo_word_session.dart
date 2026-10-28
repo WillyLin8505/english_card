@@ -104,8 +104,7 @@ class PhotoWordSession extends ChangeNotifier {
       // filled up when it opens again; the saved labels all stay.
       if (words.length < WordSelector.maxWords && photo.candidates.isNotEmpty) {
         final before = words.length;
-        _reselect(
-            allowTopUp: true, keep: {for (final w in words) w.word});
+        _reselect(allowTopUp: true, keep: {for (final w in words) w.word});
         if (words.length != before) _dirty = true;
       }
       _shownAt[_target] = [for (final w in words) w.word];
@@ -344,8 +343,7 @@ class PhotoWordSession extends ChangeNotifier {
         final added = await q.topUp(photoId, focus: focus, level: level);
         // Even with nothing new, the list is picked again: the nouns held
         // back for this request may now fill it (問題回報 #691).
-        if (!_disposed &&
-            (added > 0 || words.length < WordSelector.maxWords)) {
+        if (!_disposed && (added > 0 || words.length < WordSelector.maxWords)) {
           final before = [for (final w in words) w.word];
           _reselect();
           if (added > 0 ||
@@ -425,8 +423,7 @@ class PhotoWordSession extends ChangeNotifier {
       final before = _shownOfBias();
       _reselect(repick: true);
       final asked = _bias;
-      _askForMore(
-          asked == PosBias.actions ? 'actions' : 'descriptions',
+      _askForMore(asked == PosBias.actions ? 'actions' : 'descriptions',
           () => _bias == asked && _shownOfBias().difference(before).isNotEmpty,
           stillWanted: () => _bias == asked);
     }

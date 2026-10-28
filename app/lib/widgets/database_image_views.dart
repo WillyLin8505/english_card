@@ -40,8 +40,8 @@ class DatabaseSearchHint extends StatelessWidget {
             ),
             const SizedBox(width: 4),
             UiText('切到 $target',
-                style: MFont.inter(compact ? 11 : 13, FontWeight.w700,
-                    MColors.primaryDeep)),
+                style: MFont.inter(
+                    compact ? 11 : 13, FontWeight.w700, MColors.primaryDeep)),
           ]),
         ),
       ),

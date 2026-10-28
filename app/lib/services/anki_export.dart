@@ -95,7 +95,8 @@ class AnkiExport {
         if (known == null) {
           bytes = await photoBytes(photo);
         }
-        final file = known ?? (bytes == null ? null : '$name.${_imageExt(bytes)}');
+        final file =
+            known ?? (bytes == null ? null : '$name.${_imageExt(bytes)}');
         if (file != null) {
           if (bytes != null && media.add(file)) {
             zip.add('$mediaDir/$file', bytes);
@@ -129,7 +130,8 @@ class AnkiExport {
       }
 
       final pos = posLabel(e.pos);
-      final exampleHtml = [for (final x in examples) _html(x.text)].join('<br>');
+      final exampleHtml =
+          [for (final x in examples) _html(x.text)].join('<br>');
       final translationHtml = [
         for (final x in examples)
           _html(x.translation ?? '') +
@@ -139,7 +141,10 @@ class AnkiExport {
       ].join('<br>');
       final creditHtml = credits.map(_html).join('<br>');
       final back = [
-        '<div>${_html([pos, e.level].whereType<String>().where((s) => s.isNotEmpty).join(' · '))}</div>',
+        '<div>${_html([
+          pos,
+          e.level
+        ].whereType<String>().where((s) => s.isNotEmpty).join(' · '))}</div>',
         '<div><b>${_html(e.meaning)}</b></div>',
         if (img.isNotEmpty) '<div>$img</div>',
         if ((e.ipa ?? '').isNotEmpty || sound.isNotEmpty)
@@ -199,7 +204,9 @@ English Card → Anki 匯入說明
    - 第 1 欄是 GUID、第 ${columns.length} 欄是標籤，Anki 會自動辨認；同一個檔再匯入一次會更新原本的卡，不會重複。
 4. 牌組名稱是「English Card::$title」。
 
-檔案欄位順序：${[for (var i = 0; i < columns.length; i++) '${i + 1} ${columns[i]}'].join('、')}
+檔案欄位順序：${[
+        for (var i = 0; i < columns.length; i++) '${i + 1} ${columns[i]}'
+      ].join('、')}
 
 授權：例句、發音音檔與圖片的作者與授權寫在每張卡的「授權」欄位（背面最下方也有）。
 例句來自 Tatoeba（CC BY 2.0 FR）、Wiktionary（CC BY-SA 4.0／GFDL）、Open English WordNet（CC BY 4.0），
@@ -245,7 +252,8 @@ English Card → Anki 匯入說明
     return 'jpg';
   }
 
-  static String _safe(String s) => s.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
+  static String _safe(String s) =>
+      s.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
 
   static String _html(String s) => const HtmlEscape(HtmlEscapeMode.element)
       .convert(s)
@@ -256,9 +264,8 @@ English Card → Anki 匯入說明
 
   /// One cell: no tab, newline or double quote is left (Anki would read a
   /// quote as CSV quoting), so HTML attributes use single quotes.
-  static String _cell(String s) => s
-      .replaceAll(RegExp(r'[\t\r\n]'), ' ')
-      .replaceAll('"', '&quot;');
+  static String _cell(String s) =>
+      s.replaceAll(RegExp(r'[\t\r\n]'), ' ').replaceAll('"', '&quot;');
 }
 
 /// What to export: 全部單字, one album, or one installed 卡片集.
@@ -267,7 +274,10 @@ class AnkiExportScope {
   final String? albumId;
   final InstalledDeck? deck;
 
-  const AnkiExportScope.all() : title = '全部單字', albumId = null, deck = null;
+  const AnkiExportScope.all()
+      : title = '全部單字',
+        albumId = null,
+        deck = null;
   AnkiExportScope.album(Album album)
       : title = '相簿 ${album.name}',
         albumId = album.id,
@@ -303,7 +313,9 @@ class AnkiExportScope {
   Photo? photoFor(WordDatabaseRepository repo, String wordEntryId) {
     final all = repo.photosOfWord(wordEntryId);
     final own = _photoIds(repo);
-    return (own == null ? null : all.where((p) => own.contains(p.id)).firstOrNull) ??
+    return (own == null
+            ? null
+            : all.where((p) => own.contains(p.id)).firstOrNull) ??
         all.firstOrNull;
   }
 
@@ -418,8 +430,8 @@ class ZipWriter {
   }
 
   static void _u16(BytesBuilder b, int v) => b.add([v & 0xff, (v >> 8) & 0xff]);
-  static void _u32(BytesBuilder b, int v) => b.add(
-      [v & 0xff, (v >> 8) & 0xff, (v >> 16) & 0xff, (v >> 24) & 0xff]);
+  static void _u32(BytesBuilder b, int v) =>
+      b.add([v & 0xff, (v >> 8) & 0xff, (v >> 16) & 0xff, (v >> 24) & 0xff]);
 
   static final _table = List<int>.generate(256, (n) {
     var c = n;

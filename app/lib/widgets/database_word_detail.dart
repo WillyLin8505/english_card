@@ -90,8 +90,8 @@ class DatabaseWordScreen extends StatelessWidget {
         final shown = <String>{};
         Widget relationSection(String label, String kind) {
           final items = relations
-              .where((r) =>
-                  r.relation == kind && shown.add(r.word.toLowerCase()))
+              .where(
+                  (r) => r.relation == kind && shown.add(r.word.toLowerCase()))
               .toList();
           if (items.isEmpty) return const SizedBox.shrink();
           return section(label, [
@@ -170,7 +170,8 @@ class DatabaseWordScreen extends StatelessWidget {
               ],
               // 問題回報 #657: who recorded the pronunciation, and its license.
               if (((pack.target ?? 'en') == 'en'
-                      ? packAccentAudioCredit(word, scope.settings.englishAccent)
+                      ? packAccentAudioCredit(
+                          word, scope.settings.englishAccent)
                       : null)
                   case final credit?) ...[
                 const SizedBox(height: 2),
@@ -184,7 +185,8 @@ class DatabaseWordScreen extends StatelessWidget {
                       language: pack.target ?? 'en',
                       // 問題回報 #510: the recording in 設定's accent.
                       audioUrl: (pack.target ?? 'en') == 'en'
-                          ? packAccentAudioUrl(word, scope.settings.englishAccent,
+                          ? packAccentAudioUrl(
+                              word, scope.settings.englishAccent,
                               orDefault: true)
                           : word.audio == null
                               ? null
@@ -266,7 +268,7 @@ class DatabaseWordScreen extends StatelessWidget {
                       ),
                     const SizedBox(height: MSpace.sm),
                   ],
-              ]),
+                ]),
               if (examples.isNotEmpty)
                 section('例句', [
                   for (final example in examples)
@@ -390,9 +392,8 @@ bool addDatabaseWord(BuildContext context, LexiconPack pack, LexEntry word,
     final waiting = fin == null ? before : fin.meaning.trim().isEmpty;
     if (!quiet) {
       messenger.showSnackBar(SnackBar(
-          content: UiText(waiting
-              ? '已加入我的單字本；{N}意思補齊後會自動排進複習'
-              : '已加入我的單字本與複習')));
+          content:
+              UiText(waiting ? '已加入我的單字本；{N}意思補齊後會自動排進複習' : '已加入我的單字本與複習')));
     }
     return true;
   } on DuplicateWordException {
@@ -402,8 +403,8 @@ bool addDatabaseWord(BuildContext context, LexiconPack pack, LexEntry word,
     final archived = e != null && repo.isArchived(e.id);
     if (archived) repo.restoreWord(e.word);
     if (!quiet) {
-      messenger.showSnackBar(SnackBar(
-          content: UiText(archived ? '已從「已學會」放回複習' : '這個單字已在我的單字本')));
+      messenger.showSnackBar(
+          SnackBar(content: UiText(archived ? '已從「已學會」放回複習' : '這個單字已在我的單字本')));
     }
     return archived;
   }

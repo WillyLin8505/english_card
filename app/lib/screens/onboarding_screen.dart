@@ -117,11 +117,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           orElse: () => 'en');
 
   /// A native language other than [learning], the device's first.
-  String _nativeFor(String learning) => [
-        widget.uiLanguage,
-        'zh-TW',
-        ...supportedLanguages.keys
-      ].firstWhere((l) => l != learning && nativeLanguageAvailable(l));
+  String _nativeFor(String learning) =>
+      [widget.uiLanguage, 'zh-TW', ...supportedLanguages.keys].firstWhere((l) =>
+          l != learning &&
+          nativeLanguageAvailable(l) &&
+          languagePairAvailable(learning, l));
 
   Map<String, List<String>>? get _checkWords => placementCheckWords[_learning];
 
@@ -273,9 +273,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           for (final e in supportedLanguages.entries)
             _option(
               title: languageOptionLabel(e.key, learning: true),
-              subtitle: learningLanguageAvailable(e.key) ? null : '第一階段尚未提供詞庫',
+              subtitle: !learningLanguageAvailable(e.key)
+                  ? '第一階段尚未提供詞庫'
+                  : languagePairAvailable(e.key, _native) || _native == e.key
+                      ? null
+                      : frenchNeedsEnglishNative,
               selected: _learning == e.key,
-              onTap: learningLanguageAvailable(e.key)
+              onTap: learningLanguageAvailable(e.key) &&
+                      (languagePairAvailable(e.key, _native) ||
+                          _native == e.key)
                   ? () => setState(() {
                         _learning = e.key;
                         // Learning the native language makes no sense: move
@@ -290,10 +296,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           for (final e in supportedLanguages.entries)
             _option(
               title: languageOptionLabel(e.key, learning: false),
-              subtitle: nativeLanguageAvailable(e.key) ? null : '第一階段尚未提供翻譯資料',
+              subtitle: !nativeLanguageAvailable(e.key)
+                  ? '第一階段尚未提供翻譯資料'
+                  : languagePairAvailable(_learning, e.key) ||
+                          _learning == e.key
+                      ? null
+                      : frenchNeedsEnglishNative,
               selected: _native == e.key,
-              onTap: nativeLanguageAvailable(e.key) && e.key != _learning
+              onTap: nativeLanguageAvailable(e.key) &&
+                      languagePairAvailable(_learning, e.key) &&
+                      (e.key != _learning ||
+                          _learningFor(e.key) != e.key &&
+                              languagePairAvailable(_learningFor(e.key), e.key))
                   ? () => setState(() {
+                        // Picking the language being learned as native moves
+                        // the learning choice (English native → French).
+                        if (_learning == e.key) _learning = _learningFor(e.key);
                         _native = e.key;
                         _nativeChosen = true;
                       })

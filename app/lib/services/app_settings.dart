@@ -31,6 +31,19 @@ final availableLearningLanguages = {'en', if (frenchLearning) 'fr'};
 // Interface languages are available independently of published learning packs.
 const availableNativeLanguages = {'zh-TW', 'en', 'fr'};
 
+/// Native languages a learning language has a dictionary for (卡 #737,
+/// 問題回報 #882): French exists only with English translations so far; the
+/// 法→繁中 pack (card #738) opens 'zh-TW' by adding it here. English is
+/// learnable from any native language.
+final frenchNativeLanguages = {'en'};
+
+/// Whether the [learning]/[native] pair has a dictionary (not just each
+/// language on its own).
+bool languagePairAvailable(String learning, String native) =>
+    learning != 'fr' || frenchNativeLanguages.contains(native);
+
+const frenchNeedsEnglishNative = '法文目前只提供英文母語';
+
 bool learningLanguageAvailable(String language) =>
     availableLearningLanguages.contains(language);
 bool nativeLanguageAvailable(String language) =>
@@ -95,6 +108,16 @@ class AppSettings extends ChangeNotifier {
   static const developerTools =
       bool.fromEnvironment('DEV_TOOLS') || defaultTaggingUrl != '';
 
+  /// Set when start-up found a stored pair without a dictionary (繁中母語＋
+  /// 法文) and went back to English; the app shows it once ([takePairReset]).
+  bool _pairReset = false;
+
+  bool takePairReset() {
+    final v = _pairReset;
+    _pairReset = false;
+    return v;
+  }
+
   AppSettings._(this._box)
       : _taggingUrl = _box?.get('taggingUrl') ?? defaultTaggingUrl,
         _apiKey = _box?.get('apiKey') ?? defaultApiKey,
@@ -155,6 +178,11 @@ class AppSettings extends ChangeNotifier {
   static Future<AppSettings> open() async {
     final box = await Hive.openBox<String>(_boxName);
     final settings = AppSettings._(box);
+    if (!languagePairAvailable(
+        settings.learningLanguage, settings.nativeLanguage)) {
+      settings._learningLanguage = 'en';
+      settings._pairReset = true;
+    }
     if (box.get('learningLanguage') != settings.learningLanguage) {
       await box.put('learningLanguage', settings.learningLanguage);
     }
