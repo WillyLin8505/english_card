@@ -2054,3 +2054,13 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | M334 一次加入多個版面 | 通過 | 輸入 14 行後對話框版面正常（沒有黃黑條），文字框可捲動；模擬器用 Mac 鍵盤，螢幕鍵盤沒有跳出，鍵盤開著的情況以 Windows 的 widget test 為準 | mac_verify_shots/2026-10-28/bulk_add_fixed.png | — |
 | M334 一次加入多個檢查結果 | 通過 | 按「檢查」：balcony A2 陽臺、brewed → 變成原形 brew（可改回原字）、kettle B1 水壺、scarecrow B1 稻草人、dusk B2 黃昏、cactus B1 仙人掌；重複的字合併，按鈕「加入 7 個」 | mac_verify_shots/2026-10-28/bulk_add_checked.png | — |
 | M334 pick up 詞庫沒有 | 不通過 | 片語動詞 pick up 顯示「詞庫沒有，仍可加入」，常用片語應該在詞庫（資料） | mac_verify_shots/2026-10-28/bulk_add_checked.png | 低 |
+
+## 2026-10-28 M335（Mac）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M335 #745 一次加入多個 | 通過 | 已在 M334 模擬器驗：輸入 14 行版面正常、檢查預覽正確（brewed→brew、合併重複、加入 7 個） | mac_verify_shots/2026-10-28/bulk_add_checked.png | — |
+| M335 #744 難度條下表格一欄 | 通過 | 已在 M333 驗：名／動／形／副四列，沒有詞性按鈕 | mac_verify_shots/2026-10-28/m332_photo_detail.png | — |
+| M335 #736／#737 母語中文不開放法文 | 通過 | 已在 M331 驗 | mac_verify_shots/2026-10-28/m331_settings.png | — |
+| M335 #750 詞性切換 | 通過 | 非缺陷，owner #889 改決定取消（M332 補記） |  | — |
+| M335 #746 flutter test | 通過 | Mac 這邊全套測試通過；剩下 2 個是卡 #744 改到一半的，#744 已完成 |  | — |
