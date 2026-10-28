@@ -3087,3 +3087,15 @@ owner 在 iPhone 送出的回報（#626：App 畫面與互動由 Mac 修）。�
 commit `9caaeb4a`（Windows：flutter analyze 無 error、01:34 +803 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #758：[owner] 後台加「連線 QR code」頁（給 iPad 掃）
   結果：全部完成：後台新增「連線 QR code」頁（#/connect-qr）與只限本機的 PNG 端點，後端測試 10/10 通過、前端 build 通過。
+
+## M345（2026-10-28 23:49）狀態：待做（Windows 卡 #760 交給 Mac 的 App 畫面部分）
+卡：問題回報 #901：[給 Mac] [記憶體] 設定
+
+問題回報 #901（inbox M343 已派）。請在 iPad 開「設定」畫面，用 Xcode Instruments 看是否一進入就吃記憶體（例如一次載入整個詞庫、大圖或音檔快取沒釋放），再決定修法。
+
+細節：
+- 報告來源：App 使用者自動回報，iPad15,7 / iOS 26.5 / 版本 1.0.0+1，時間 2026-10-28T22:04:53。
+- 剩餘可用記憶體 2733 MB，App 339 MB，屬輕度警告，不是閃退。
+- 全庫量測：此問題與詞庫資料無關，無可量的受影響字數。
+- 備份、golden、QC：未動資料，不需執行。
+- 剩餘：Mac 驗證並修畫面後關閉 #901。
