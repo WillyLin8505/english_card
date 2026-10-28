@@ -2877,12 +2877,12 @@ commit `afdb65fd`（Windows：flutter analyze 無 error、04:48 +787 ~2: All tes
 - 卡 #228：模擬使用者・設定
   結果：第 15 輪（模擬輪 189）：設定 1/1 通過、findings 0；新問題無、UX 建議沿用 #474（未重複開）。
 
-## M311（2026-10-28 08:25）狀態：待做（Windows 卡 #584 交給 Mac 的 App 畫面部分）
+## M311（2026-10-28 08:25）狀態：完成
 卡：問題回報 #625：[Mac] 2026-10-23 owner 要求：翻卡第一次發音是機器人聲：owner 要求：補更多真人發音（交 Windows）
 
 App 播放順序要把 source=tts 排在真人之後（資料格式定案後通知）。
 
-## M312（2026-10-28 08:30）狀態：待做
+## M312（2026-10-28 08:30）狀態：完成
 commit `9ec931ab`（Windows：flutter analyze 無 error、02:43 +790 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/27：用 Mac 模擬器，要實機時用 owner 的 iPad；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #716：問題回報 #855：[Mac] 2026-10-27 M286 TestFlight＋Azure 播放順序（Ma：M28
   結果：結論：owner 已決定 A（加入 Apple Developer Program）；剩下 4 步都是 owner 的帳號操作，Windows 無程式可修，沒改任何程式或資料（問題回報 #855 維持待 owner 完成）。
