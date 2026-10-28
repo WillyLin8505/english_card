@@ -12,6 +12,11 @@ FUNCTION_WORDS = frozenset((
 
 NOISY_SOURCE = "datamuse"
 HIDDEN_REASON = "function_word_datamuse"
+# Card #735 / 問題回報 #880 (owner option B, #887): oewn / kaikki / cmudict also give wrong function-word
+# synonyms, near-homophones and homophones (be→beryllium, the→le, be→pee), so those three kinds are hidden
+# for every source.  Other kinds from oewn / kaikki / cmudict stay visible.
+HIDDEN_REASON_ALL_SOURCES = "function_word_relation"
+ALL_SOURCE_HIDDEN_RELATIONS = ("synonyms", "near_homophones", "homophones")
 # Relation kinds Datamuse fills (card #733); oewn / kaikki / cmudict rows of these kinds stay.
 FUNCTION_WORD_RELATIONS = ("related", "hyponyms", "hypernyms", "synonyms", "antonyms",
                            "homophones", "near_homophones")
@@ -20,4 +25,8 @@ FUNCTION_WORD_RELATIONS = ("related", "hyponyms", "hypernyms", "synonyms", "anto
 def is_noisy_function_word_relation(lemma: str, source: str | None, relation: str | None = None) -> bool:
     if relation is not None and relation not in FUNCTION_WORD_RELATIONS:
         return False
-    return (lemma or "").strip().lower() in FUNCTION_WORDS and (source or "").lower() == NOISY_SOURCE
+    if (lemma or "").strip().lower() not in FUNCTION_WORDS:
+        return False
+    if relation in ALL_SOURCE_HIDDEN_RELATIONS:
+        return True
+    return (source or "").lower() == NOISY_SOURCE
