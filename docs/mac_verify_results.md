@@ -1917,3 +1917,11 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | M312 #865 iPad | 通過 | owner 選 1 維持只支援 iPhone，不改 |  | — |
 | M312 #225 相片冊模擬、#855 TestFlight、#485 例句等級 | 通過 | #225 第 190 輪通過；TestFlight 等 owner 帳號；#485 由 Windows 卡 #726 處理中 |  | — |
 | M311 #625 TTS 排在真人之後 | 通過 | 已在 440a395e／e9e88675 做，M301 模擬器驗過（azure_tts 排在真人之後、標合成） |  | — |
+
+## 2026-10-28 M313（iPhone 模擬器，詞庫 f64343f3）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M313 #853 開發版自動上傳照片 | 通過 | 程式：DevPhotoUpload 只在 AppSettings.developerTools（DEV_TOOLS 或有 TAGGING_URL）、非本機辨識、有伺服器網址時上傳；上架版沒有網址不會上傳。模擬器沒有辨識金鑰（401），沒有實際上傳。注意：Mac 裝到 owner iPhone 和 iPad 的版本都帶 TAGGING_URL，所以 iPad 測試機辨識過的照片也會上傳到後台「手機照片」 |  | — |
+| M313 #822 功能詞相關詞 | 不通過 | 詞庫 f64343f3：be 的 existence 已不顯示，但預設仍顯示 synonyms:beryllium、synonyms:equal、antonyms:differ、near_homophones:pee／pea、derived_terms:abe；the 仍顯示 related:cited、certain、particular、specific。可能是 Datamuse 以外的來源，或新匯出還沒上線 |  | 低 |
+| M313 #833 切換學習語言確認 | 通過 | M312 已在模擬器驗：點法文跳「切換學習語言？」，取消後仍是英文 | mac_verify_shots/2026-10-28/m312_language_confirm.png | — |
