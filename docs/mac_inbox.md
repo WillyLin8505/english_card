@@ -2977,3 +2977,8 @@ commit `9d58e96f`（Windows：flutter analyze 無 error、01:08 +790 ~2: All tes
 commit `d5e38131`（Windows：flutter analyze 無 error、01:03 +790 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/27：用 Mac 模擬器，要實機時用 owner 的 iPad；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #228：模擬使用者・設定
   結果：第 16 輪（模擬輪 196）：設定 1/1 通過、findings 0；新問題無、UX 建議沿用 #474（未重複開）。
+
+## M327（2026-10-28 20:35）狀態：待做
+commit `fb06bc4f`（Windows：flutter analyze 無 error、01:02 +790 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/27：用 Mac 模擬器，要實機時用 owner 的 iPad；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #225：模擬使用者・相片冊
+  結果：第197輪：主模擬 album 1/1 通過（26 秒）、新問題 無、UX 建議 無新增。
