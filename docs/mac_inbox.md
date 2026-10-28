@@ -3105,7 +3105,7 @@ commit `d0c408c6`（Windows：flutter analyze 無 error、01:26 +803 ~2: All tes
 - 卡 #760：問題回報 #901：[給 Mac] [記憶體] 設定
   結果：結論：這是 iPad 上「設定」畫面的 iOS 記憶體警告（App 339 MB、剩餘 2733 MB），屬 App 畫面問題，依分工由 Mac 處理，Windows 這邊沒有詞庫資料或伺服器可修，本卡未改任何程式或資料。
 
-## M347（2026-10-28 23:57）狀態：待做
+## M347（2026-10-28 23:57）狀態：完成
 commit `4f47289c`（Windows：flutter analyze 無 error、01:13 +803 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #761：問題回報 #902：[Mac] 2026-10-28 iPad 實機：#850 儲存、#851 打標籤中（需要辨：伺服器
   結果：無法重現：目前 /api/decks 本機 5173 約 0.01 秒、公網 api.willylinai.com 約 0.7 秒，都回 200；23:5x 的逾時是暫時的，非 iOS／Mac 專屬問題。
