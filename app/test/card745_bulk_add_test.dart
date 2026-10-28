@@ -83,6 +83,13 @@ void main() {
     expect(r.items.map((i) => i.status),
         [BulkStatus.variant, BulkStatus.existing]);
     expect(bulkAddLimit, 3000);
+    // Mac M350: a base word and its form count once, in either order.
+    for (final text in ['brew, brewed', 'brewed, brew']) {
+      final items = checkBulkWords(text, repo(), pack()).items;
+      expect(items.where((i) => i.willAdd).length, 1, reason: text);
+      final rr = repo();
+      expect(addBulkItems(rr, items), (added: 1, skipped: 1));
+    }
     final many = [for (var i = 0; i < 3005; i++) 'w$i'].join('\n');
     final big = checkBulkWords(many, repo(), pack());
     expect(big.items.length, bulkAddLimit);

@@ -116,8 +116,13 @@ BulkParse checkBulkWords(
     }
     items.add(i);
   }
-  // Two typed forms can lead to one base word (brewed, brewing → brew).
-  final taken = <String>{};
+  // Two typed forms can lead to one base word (brewed, brewing → brew), and a
+  // base word typed as is keeps it whatever order they came in (Mac M350:
+  // abandon + abandoned counted twice, so 57 fewer were added than the button said).
+  final taken = {
+    for (final i in items)
+      if (i.status == BulkStatus.ready) i.word
+  };
   return BulkParse([
     for (final i in items)
       if (i.status == BulkStatus.variant && !taken.add(i.word))
