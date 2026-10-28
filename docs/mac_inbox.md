@@ -2881,3 +2881,18 @@ commit `afdb65fd`（Windows：flutter analyze 無 error、04:48 +787 ~2: All tes
 卡：問題回報 #625：[Mac] 2026-10-23 owner 要求：翻卡第一次發音是機器人聲：owner 要求：補更多真人發音（交 Windows）
 
 App 播放順序要把 source=tts 排在真人之後（資料格式定案後通知）。
+
+## M312（2026-10-28 08:30）狀態：待做
+commit `9ec931ab`（Windows：flutter analyze 無 error、02:43 +790 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/27：用 Mac 模擬器，要實機時用 owner 的 iPad；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #716：問題回報 #855：[Mac] 2026-10-27 M286 TestFlight＋Azure 播放順序（Ma：M28
+  結果：結論：owner 已決定 A（加入 Apple Developer Program）；剩下 4 步都是 owner 的帳號操作，Windows 無程式可修，沒改任何程式或資料（問題回報 #855 維持待 owner 完成）。
+- 卡 #225：模擬使用者・相片冊
+  結果：第190輪：主模擬 album 1/1 通過（36 秒）、新問題 無、UX 建議 無新增。
+- 卡 #725：問題回報 #831：[owner] 切換學習語言前要不要先跳確認？
+  結果：全部完成：切換學習語言前的確認對話框已在 settingsscreen.dart 的 switchLanguage 裡（owner 選 1），flutter analyze 無問題。
+- 卡 #727：問題回報 #865：[owner] App 要不要支援 iPad 全螢幕？
+  結果：全部完成：owner 已決定選 1（維持只支援 iPhone），不改程式、不改資料。
+- 卡 #689：問題回報 #485：[owner] 例句程度低估：CEFR 表查不到的字直接忽略，A2 學習者看到「That tradi
+  結果：全部完成：#485 已照決定重算例句等級（r1 完成，本輪驗證程式與資料仍在）；owner 在 #827 選 A（用 Tatoeba 補例句、不用 AI），已由卡 #726（Claude CLI 15，00:11 接手，執行中）處理，本卡不另外補，避免兩個 CLI 同時寫同一批例句。
+- 卡 #697：問題回報 #215：CEFR 分級疑似錯誤：dusk (noun) 現在 C1(估) → 建議 B1/B2（對照表上同義
+  結果：全部完成：「時間/天象」同族 6 字（dusk、twilight、nightfall、daybreak、sundown、sunup）上限 B2；全庫只有 dusk 一筆有存值，C1 → B2。
