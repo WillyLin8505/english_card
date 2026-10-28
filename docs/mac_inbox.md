@@ -3035,7 +3035,7 @@ commit `661a8a57`（Windows：flutter analyze 無 error、01:31 +803 ~2: All tes
 - 卡 #750：問題回報 #894：[Mac] 2026-10-28 M332（iPhone 模擬器，48c7c86c）：M332 #7
   結果：全部完成：問題回報 #894 不是 bug——#742 的詞性切換（全部／名詞／動詞／形容詞／片語）已被 owner 的後續卡 #744 刻意移除，Mac 驗的 48c7c86c 本來就沒有這排。
 
-## M336（2026-10-28 23:16）狀態：待做
+## M336（2026-10-28 23:16）狀態：完成
 commit `c2e467d5`（Windows：flutter analyze 無 error、01:21 +803 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/27：用 Mac 模擬器，要實機時用 owner 的 iPad；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #12：模擬使用者・跨分頁（亂點、詞庫更新）
   結果：第 201 輪：fuzz 通過（8 分 37 秒，1765 張卡無 findings）、packupdate 有 1 個 finding（gas v12），新問題 #896。
