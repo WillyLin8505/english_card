@@ -68,6 +68,49 @@ class LexiconPack extends ChangeNotifier {
   bool get fromSqlite => _source != null;
 
   bool get isEmpty => _byLemma.isEmpty;
+
+  /// The pack words spelled closest to [word] (card #745 typo hints):
+  /// edit distance 1 (2 for words of 7+ letters), nearest first.
+  List<String> similarTo(String word, {int max = 1}) {
+    final w = normalize(word);
+    final limit = w.length >= 7 ? 2 : 1;
+    // Swapped neighbouring letters (recieve → receive) are the usual typo.
+    for (var i = 0; i + 1 < w.length; i++) {
+      final swapped =
+          w.substring(0, i) + w[i + 1] + w[i] + w.substring(i + 2);
+      if (swapped != w && _byLemma.containsKey(swapped)) return [swapped];
+    }
+    final found = <(int, String)>[];
+    for (final k in _byLemma.keys) {
+      if ((k.length - w.length).abs() > limit || k == w) continue;
+      final d = _editDistance(w, k, limit);
+      if (d <= limit) found.add((d, k));
+    }
+    found.sort((a, b) {
+      final c = a.$1.compareTo(b.$1);
+      return c != 0 ? c : a.$2.compareTo(b.$2);
+    });
+    return [for (final f in found.take(max)) f.$2];
+  }
+
+  static int _editDistance(String a, String b, int limit) {
+    var prev = List<int>.generate(b.length + 1, (i) => i);
+    for (var i = 1; i <= a.length; i++) {
+      final cur = List<int>.filled(b.length + 1, 0)..[0] = i;
+      var rowMin = i;
+      for (var j = 1; j <= b.length; j++) {
+        final cost = a.codeUnitAt(i - 1) == b.codeUnitAt(j - 1) ? 0 : 1;
+        var v = prev[j - 1] + cost;
+        if (prev[j] + 1 < v) v = prev[j] + 1;
+        if (cur[j - 1] + 1 < v) v = cur[j - 1] + 1;
+        cur[j] = v;
+        if (v < rowMin) rowMin = v;
+      }
+      if (rowMin > limit) return limit + 1;
+      prev = cur;
+    }
+    return prev[b.length];
+  }
   int get size => _byId.values.where((e) => e.full).length;
 
   static String assetFor(String target, String native) =>

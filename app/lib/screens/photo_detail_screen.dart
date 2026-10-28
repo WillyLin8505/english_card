@@ -22,6 +22,7 @@ import '../widgets/mobile/common.dart';
 import '../widgets/mobile/dialogs.dart';
 import '../widgets/mobile/m_icon.dart';
 import '../widgets/mobile/photo_widgets.dart';
+import '../widgets/mobile/level_column_panel.dart';
 import '../widgets/mobile/photo_word_grid_table.dart';
 
 part '../widgets/photo_word_cards.dart';
@@ -710,6 +711,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
         if (w.placed)
           PinData(
             id: w.word,
+            pos: w.candidate.pos,
             anchor: w.anchor,
             word: _shown(w.word, w.candidate.pos),
             zh: _zh(w.word, w.candidate.pos, w.candidate.meaning),
@@ -725,6 +727,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
         if (o.placed)
           PinData(
             id: 'old:${o.word}',
+            pos: o.candidate.pos,
             anchor: o.anchor,
             word: _shown(o.word, o.candidate.pos),
             zh: _zh(o.word, o.candidate.pos, o.candidate.meaning),
@@ -845,8 +848,32 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
             // 問題回報 #670: read the whole photo again.
             onRescan: session.rescanning ? null : session.rescan,
           ),
+          _levelColumn(photo, session),
         ],
       ),
+    );
+  }
+
+  /// 卡 #744: the table's column for the level the bar is on.
+  Widget _levelColumn(Photo photo, PhotoWordSession session) {
+    final repo = AppScope.of(context).repository;
+    final words = [
+      for (final w in session.words) GridWord.fromCandidate(w.candidate),
+      for (final c in photo.candidates) GridWord.fromCandidate(c),
+      for (final o in session.oldWords) GridWord.fromCandidate(o.candidate),
+    ];
+    final listed = {for (final w in session.words) w.word.toLowerCase()};
+    return LevelColumnPanel(
+      grid: buildPhotoWordGrid(words),
+      level: session.target,
+      known: {
+        for (final w in words)
+          if (listed.contains(w.word.toLowerCase()) ||
+              repo.entryByWord(w.word) != null)
+            w.word.toLowerCase(),
+      },
+      display: (w) => _shown(w.word, w.pos),
+      onWordTap: _gridTap,
     );
   }
 

@@ -11,6 +11,7 @@ import '../services/word_database_query.dart';
 import '../theme/mobile_theme.dart';
 import '../widgets/mobile/common.dart';
 import '../widgets/mobile/dialogs.dart';
+import '../widgets/mobile/bulk_add_dialog.dart';
 
 /// 單字資料庫 — Figma "Word Database · Mobile" (35:2), the 單字本 tab.
 /// Spec section 7 (單字集與資料狀態): one row per WordEntry — the same
@@ -71,6 +72,20 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
     });
     unawaited(scope.enricher.process());
     showToast(context, '已新增「${entry.word}」，例句與翻譯會在背景補上。');
+  }
+
+  /// 一次加入多個 (card #745).
+  Future<void> _addMany() async {
+    final scope = AppScope.of(context);
+    final r = await showBulkAddDialog(context, scope.repository);
+    if (r == null || !mounted) return;
+    _search.clear();
+    setState(() {
+      _filter = WordDatabaseFilter(sort: _filter.sort);
+      _page = 0;
+    });
+    if (r.added > 0) unawaited(scope.enricher.process());
+    showToast(context, '已加入 ${r.added} 個，略過 ${r.skipped} 個');
   }
 
   /// Which words the dictionary update filled in (問題回報 #300); a word
@@ -219,6 +234,26 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
                                                   Colors.white))),
                                     ],
                                   ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: MSpace.xs),
+                            Expanded(
+                              child: Tap(
+                                onTap: _addMany,
+                                label: '一次加入多個',
+                                child: Container(
+                                  height: 48,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: MSpace.sm),
+                                  decoration: MDecor.card(radius: MRadii.md),
+                                  alignment: Alignment.center,
+                                  child: UiText('一次加入多個',
+                                      textAlign: TextAlign.center,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: MFont.manrope(
+                                          14, FontWeight.w700, MColors.ink)),
                                 ),
                               ),
                             ),

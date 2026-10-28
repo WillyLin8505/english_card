@@ -640,6 +640,24 @@ const uiCatalog = <String, (String, String)>{
   '新增單字': ('Add word', 'Ajouter un mot'),
   '新增單字標籤': ('Add word label', 'Ajouter une étiquette'),
   '開始複習': ('Start review', 'Commencer la révision'),
+  // 一次加入多個單字 (card #745)
+  '一次加入多個': ('Add several', 'Ajouter plusieurs'),
+  '貼上': ('Paste', 'Coller'),
+  '檢查': ('Check', 'Vérifier'),
+  '返回修改': ('Back', 'Modifier'),
+  '一行一個字，也可用逗號、頓號或 Tab 分隔（一次最多 300 個）。': (
+    'One word per line, or separated by commas or tabs (up to 300 at a time).',
+    'Un mot par ligne, ou séparés par des virgules ou tabulations (300 maximum).'
+  ),
+  '可加入': ('Ready', 'Prêt'),
+  '已在單字本（略過）': ('Already added (skipped)', 'Déjà ajouté (ignoré)'),
+  '詞庫沒有，仍可加入': (
+    'Not in dictionary, can still add',
+    'Absent du dictionnaire, ajout possible'
+  ),
+  '詞庫沒有，是不是：': ('Not found. Did you mean:', 'Introuvable. Vouliez-vous dire :'),
+  '改回原字': ('Keep as typed', 'Garder tel quel'),
+  '仍加入原字': ('Add as typed', 'Ajouter tel quel'),
   '還在學': ('Learning', 'En cours'),
   '學習中': ('Learning', 'En cours'),
   '已學會': ('Learned', 'Acquis'),
@@ -1368,6 +1386,16 @@ const _templateCopy = <String, (String, String)>{
     'Manquant : {0}. Ajout automatique après une mise à jour.'
   ),
   'AI 打標籤：{0}': ('AI labelling: {0}', 'Étiquetage IA : {0}'),
+  '已加入 {0} 個，略過 {1} 個': (
+    'Added {0}, skipped {1}',
+    '{0} ajouté(s), {1} ignoré(s)'
+  ),
+  '加入 {0} 個': ('Add {0}', 'Ajouter {0}'),
+  '超過 300 個，後面的 {0} 個沒有檢查': (
+    'Over 300: the last {0} were not checked',
+    'Plus de 300 : les {0} derniers n’ont pas été vérifiés'
+  ),
+  '變成原形 {0}': ('Base form: {0}', 'Forme de base : {0}'),
   '已新增「{0}」，例句與翻譯會在背景補上。': (
     'Added “{0}”; examples and translations will follow.',
     '« {0} » ajouté ; exemples et traductions suivront.'

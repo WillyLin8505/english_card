@@ -4,6 +4,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
+import 'pos_accent.dart';
 import 'package:flutter/services.dart' show HapticFeedback;
 
 import '../../app/app_scope.dart';
@@ -231,6 +232,9 @@ class WordPin extends StatelessWidget {
   final bool lifted;
   final bool linked;
 
+  /// 卡 #742: part-of-speech colour for the word and border (null = none).
+  final Color? accent;
+
   /// The widest the badge may be (the photo's width). A label that doesn't
   /// fit on one line shows the word above its meaning, both wrapped in full
   /// — never cut short with … (owner 2026-10-14: 標籤的單字跟說明展開).
@@ -245,6 +249,7 @@ class WordPin extends StatelessWidget {
     this.muted = false,
     this.lifted = false,
     this.linked = true,
+    this.accent,
     this.maxWidth,
   });
 
@@ -335,6 +340,10 @@ class WordPin extends StatelessWidget {
         vertical + w.height + (z == null ? 0 : 2 + z.height));
   }
 
+  TextStyle _wordStyle() => accent == null
+      ? wordStyle(large)
+      : wordStyle(large).copyWith(color: accent);
+
   @override
   Widget build(BuildContext context) {
     final second = secondLine(typedMeaning(zh, entryType), linked);
@@ -355,7 +364,7 @@ class WordPin extends StatelessWidget {
         borderColor: lifted
             ? MColors.primary
             : (linked
-                ? MColors.hairline
+                ? (accent?.withValues(alpha: 0.6) ?? MColors.hairline)
                 : MColors.muted.withValues(alpha: 0.45)),
         shadow: lifted
             ? MShadows.pinLifted
@@ -368,7 +377,7 @@ class WordPin extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(word, style: wordStyle(large)),
+                Text(word, style: _wordStyle()),
                 if (second.isNotEmpty) ...[
                   const SizedBox(height: 2),
                   Text(second, style: zhText),
@@ -381,7 +390,7 @@ class WordPin extends StatelessWidget {
               spacing: large ? 6 : 4,
               crossAxisAlignment: WrapCrossAlignment.end,
               children: [
-                Text(word, style: wordStyle(large)),
+                Text(word, style: _wordStyle()),
                 if (second.isNotEmpty) Text(second, style: zhText),
               ],
             ),
@@ -473,6 +482,9 @@ class PinData {
   /// In the downloaded language pack (has a lexeme id).
   final bool linked;
 
+  /// Part of speech (卡 #742), for the switcher and the label colour.
+  final String pos;
+
   /// Where the word is printed on the photo, framed (問題回報 #324).
   final LabelBox? frame;
 
@@ -488,6 +500,7 @@ class PinData {
     this.entryType = 'word',
     this.muted = false,
     this.linked = true,
+    this.pos = '',
     this.frame,
     this.lexemeId,
   });
@@ -971,6 +984,8 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
                                         muted: byId[pl.id]!.muted,
                                         lifted: _dragging == pl.id,
                                         linked: byId[pl.id]!.linked,
+                                        accent: posAccent(byId[pl.id]!.pos,
+                                            byId[pl.id]!.word),
                                         maxWidth: pl.badge.width,
                                       ),
                                     ),
@@ -993,6 +1008,8 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
                                     large: widget.largePins,
                                     muted: e.value.muted,
                                     linked: e.value.linked,
+                                    accent:
+                                        posAccent(e.value.pos, e.value.word),
                                     maxWidth: pl.badge.width,
                                   ),
                                 ),
