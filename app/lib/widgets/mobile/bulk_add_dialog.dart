@@ -65,6 +65,7 @@ class _BulkAddDialogState extends State<_BulkAddDialog> {
     final items = _items;
     final n = items?.where((i) => i.willAdd).length ?? 0;
     return AlertDialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 8),
       title: UiText('一次加入多個',
           style: MFont.manrope(18, FontWeight.w800, MColors.ink)),
       content: SizedBox(
@@ -93,7 +94,10 @@ class _BulkAddDialogState extends State<_BulkAddDialog> {
     );
   }
 
-  Widget _input() => Column(
+  // Mac M332: on a 402pt phone with the keyboard up the box overflowed, so
+  // the input scrolls and the box is shorter.
+  Widget _input() => SingleChildScrollView(
+          child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -104,8 +108,8 @@ class _BulkAddDialogState extends State<_BulkAddDialog> {
             key: const ValueKey('bulk-text'),
             controller: _text,
             autofocus: true,
-            minLines: 8,
-            maxLines: 12,
+            minLines: 5,
+            maxLines: 10,
             keyboardType: TextInputType.multiline,
             decoration: const InputDecoration(
                 hintText: 'balcony\nbrewed\npick up',
@@ -119,7 +123,7 @@ class _BulkAddDialogState extends State<_BulkAddDialog> {
                 label: const UiText('貼上')),
           ),
         ],
-      );
+      ));
 
   Widget _preview(BuildContext context, List<BulkItem> items) => ListView(
         shrinkWrap: true,
