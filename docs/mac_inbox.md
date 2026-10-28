@@ -2896,3 +2896,12 @@ commit `9ec931ab`（Windows：flutter analyze 無 error、02:43 +790 ~2: All tes
   結果：全部完成：#485 已照決定重算例句等級（r1 完成，本輪驗證程式與資料仍在）；owner 在 #827 選 A（用 Tatoeba 補例句、不用 AI），已由卡 #726（Claude CLI 15，00:11 接手，執行中）處理，本卡不另外補，避免兩個 CLI 同時寫同一批例句。
 - 卡 #697：問題回報 #215：CEFR 分級疑似錯誤：dusk (noun) 現在 C1(估) → 建議 B1/B2（對照表上同義
   結果：全部完成：「時間/天象」同族 6 字（dusk、twilight、nightfall、daybreak、sundown、sunup）上限 B2；全庫只有 dusk 一筆有存值，C1 → B2。
+
+## M313（2026-10-28 08:37）狀態：待做
+commit `1da940f2`（Windows：flutter analyze 無 error、02:06 +790 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/27：用 Mac 模擬器，要實機時用 owner 的 iPad；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #724：問題回報 #853：[owner] #847 自己拍的照片要怎麼送到後台？
+  結果：全部完成：#853 照 owner 決定 B（只有開發版手機自動上傳）做好：開發版 App 辨識完會把照片＋標籤送到後台，新頁「手機照片」可看；上架版不會上傳。
+- 卡 #694：問題回報 #822：[card687] 功能詞的 related／上下位詞來源錯誤（be→existence、the→s
+  結果：全部完成：已把來源是 Datamuse 的功能詞 related／上下位詞標為 App 預設隱藏，共 732 筆（功能詞字頭 Datamuse 共 774 筆，其餘 42 筆本來就已隱藏）；未刪除任何資料。
+- 卡 #701：問題回報 #833：[Mac] 2026-10-27 owner iPhone 學習語言被換成法文：owner iPho
+  結果：全部完成：點學習語言（英文／法文）現在會先跳「切換學習語言？」確認，按確定才切換；flutter analyze 無問題，flutter test 787 項全過。
