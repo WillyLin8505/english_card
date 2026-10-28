@@ -2924,3 +2924,8 @@ commit `a666321c`（Windows：flutter analyze 無 error、01:57 +790 ~2: All tes
   結果：選項 B 已套用（QC／golden 未跑完）——wordlevel() 現在也讀 150+ 字覆寫表（上限 B1／家族表），字典等級與照片一致（dusk C1→B2、scarecrow C1→B1、rung C1→B1、cactus C1→B1）。
 - 卡 #731：問題回報 #872：[owner] 派工啟動的 python 也要算進 80%：重工作排隊、每個 CLI 記憶體上限
   結果：已完成程式部分，但「連續 2 小時峰值 < 80%」尚未驗收（需派工程式重啟後實測）；serveapp 4 GB 只查因未改。
+
+## M317（2026-10-28 09:05）狀態：待做（Windows 卡 #584 交給 Mac 的 App 畫面部分）
+卡：問題回報 #625：[Mac] 2026-10-23 owner 要求：翻卡第一次發音是機器人聲：owner 要求：補更多真人發音（交 Windows）
+
+App 播放順序要把 source=tts 排在真人之後（資料格式定案後通知）。
