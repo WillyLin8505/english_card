@@ -3121,3 +3121,7 @@ commit `2ac4d7bf`（Windows：flutter analyze 無 error、01:46 +803 ~2: All tes
 commit `aaf03fee`（Windows：flutter analyze 無 error、01:28 +803 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #496：模擬使用者・法語（英語母語者學法語）
   結果：法語模擬第32–34輪：4/4通過；資料與上輪持平（6153詞、英文義/音檔 6153/6153、缺英譯例句 1），無新問題，chineseinenglishui=0 通過。
+
+## M350（2026-10-29 07:43）狀態：待驗證
+commit `ef4b8108`（Windows：flutter analyze 0、card745_bulk_add_test 9/9、後台 test_card753 2/2）。owner 10/29：批量加字上限 3000。`git pull` 後用 owner 的 iPad 驗證，結果寫進 docs/mac_verify_results.md：
+- 單字本「一次加入多個」：說明寫「一次最多 3000 個」；貼 3000 個字（可用 w1..w3000）按「檢查」，畫面不卡死、可捲動到底，按「加入 3000 個」後單字本多 3000 個；記下檢查與加入各花幾秒。
