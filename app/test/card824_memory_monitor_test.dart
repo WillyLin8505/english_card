@@ -101,7 +101,18 @@ void main() {
     expect(detail, contains('低於 300 MB'));
   });
 
+  test('#906 A: a warning with plenty left clears caches but sends nothing',
+      () async {
+    available = 2700 * mb; // #900: iOS warned right after install
+    var released = 0;
+    monitor.addReleaser(() => released++);
+    expect(await monitor.onMemoryWarning(), isFalse);
+    expect(released, 1);
+    expect(service.pendingCount, 0);
+  });
+
   test('a memory warning clears caches and reports once', () async {
+    available = 800 * mb; // below 1 GB (#906 A)
     var released = 0;
     monitor.addReleaser(() => released++);
     final images = PaintingBinding.instance.imageCache;

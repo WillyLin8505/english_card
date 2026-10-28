@@ -114,6 +114,11 @@ class MemoryMonitor with WidgetsBindingObserver {
   /// Report when less than this is left (owner's suggestion, #824).
   static const threshold = 300 * 1024 * 1024;
 
+  /// A memory warning is reported only below this much left (owner #906
+  /// A): iOS also warns right after install or launch with gigabytes free
+  /// (#900, 2.7 GB left), which is noise. Caches are dropped either way.
+  static const warningReportBelow = 1024 * 1024 * 1024;
+
   /// How often the numbers are checked while the app is in the foreground.
   static const interval = Duration(seconds: 60);
 
@@ -252,6 +257,7 @@ class MemoryMonitor with WidgetsBindingObserver {
     if (!enabled) return false;
     final snap = await snapshot();
     if (snap == null) return false;
+    if (snap.hasLimit && snap.available >= warningReportBelow) return false;
     return _report(warning: true, snap: snap);
   }
 
