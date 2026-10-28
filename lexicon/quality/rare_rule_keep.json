@@ -1,0 +1,13 @@
+{
+  "_note": "Card #692 / 問題回報 #868 (owner): these rare parts of speech keep their quality-rule level (set_cefr) and are not raised to the share-based estimate. Only apply_decisions reads this.",
+  "keep_rule_level": [
+    7592,
+    11001,
+    14854,
+    24966,
+    30710,
+    41274,
+    49700,
+    43229
+  ]
+}

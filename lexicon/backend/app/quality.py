@@ -680,6 +680,7 @@ def apply_decisions(pack: dict, decisions: dict | None = None) -> dict:
     redirect = {int(k): int(v) for k, v in (decisions.get("redirect") or {}).items()}
     strip = {int(x) for x in decisions.get("strip_cefr") or []}
     set_cefr = {int(k): v for k, v in (decisions.get("set_cefr") or {}).items()}
+    keep_rule = {int(x) for x in load_json("rare_rule_keep.json").get("keep_rule_level", [])}
     by_id = {lx["id"]: lx for lx in pack.get("lexemes", [])}
     counts = {"redirect": 0, "strip_cefr": 0, "set_cefr": 0, "merged_images": 0, "merged_examples": 0}
     redirects = pack.setdefault("redirects", {})
@@ -687,7 +688,9 @@ def apply_decisions(pack: dict, decisions: dict | None = None) -> dict:
         lx = by_id.get(lid)
         if lx and lid not in redirect and lid not in strip and lx.get("cefr_source") != "quality_excluded":
             cur = lx.get("cefr")
-            if (lx.get("rare_usage") and cur in LEVELS and level in LEVELS
+            # Card #692 (問題回報 #868): these rare parts of speech keep the
+            # owner's rule level even when the share-based estimate is higher.
+            if (lid not in keep_rule and lx.get("rare_usage") and cur in LEVELS and level in LEVELS
                     and LEVELS.index(level) < LEVELS.index(cur)):
                 # The rule's level is the word's (bright A1); a rare part of
                 # speech keeps its share-based estimate and is never made

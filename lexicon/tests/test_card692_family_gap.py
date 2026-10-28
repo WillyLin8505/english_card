@@ -22,3 +22,18 @@ def test_beyond_gap_the_frequency_estimate_decides():
 
 def test_no_ceiling_keeps_frequency():
     assert family_limited("C2", None) == "C2"
+
+
+def test_owner_kept_rare_rule_levels_beat_the_share_estimate(monkeypatch):
+    """Problem report #868: the 8 rare parts of speech keep the rule level (B2)
+    even though the share-based estimate is C2; other rare usages keep the #397 rule."""
+    from app import quality
+    keep = {7592, 11001, 14854, 24966, 30710, 41274, 49700, 43229}
+    real_load = quality.load_json
+    monkeypatch.setattr(quality, "load_json",
+                        lambda name: {"keep_rule_level": sorted(keep)} if name == "rare_rule_keep.json"
+                        else real_load(name))
+    lxs = [{"id": 7592, "cefr": "C2", "rare_usage": True}, {"id": 99, "cefr": "C2", "rare_usage": True}]
+    quality.apply_decisions({"lexemes": lxs}, {"set_cefr": {"7592": "B2", "99": "B2"}})
+    assert lxs[0]["cefr"] == "B2" and lxs[0]["cefr_source"] == "quality_rule"
+    assert lxs[1]["cefr"] == "C2"
