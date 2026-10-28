@@ -1907,3 +1907,13 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | M307／M308 #864 手動新增 | 通過 | 手動新增 cup：掛在我的照片、位置是標籤的點 (0.42, 0.58)，單字詳情用這張照片 | mac_verify_shots/2026-10-28/m307_cup_detail.png | — |
 | M306／M310 #228 模擬使用者・設定 | 通過 | Windows 第 15 輪 1/1、findings 0；#474／#815 設定頁已在 10/27 改好（語言區那句已刪、辨識設定有誤時頁首也有提示） |  | — |
 | M309 #855 TestFlight | 通過 | 等 owner 加入 Apple Developer Program 後由 Mac 上傳驗證（docs/testflight.md） |  | — |
+
+## 2026-10-28 M311、M312（iPhone 模擬器）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M312 #831 切換學習語言前確認 | 通過 | 設定點「法文（Français）」跳出「切換學習語言？法文（Français）目前學習語言的資料會保留，隨時可以切回來。」取消／確定；按取消學習語言仍是英文 | mac_verify_shots/2026-10-28/m312_language_confirm.png | — |
+| M312 #697 dusk 等級 | 不通過 | App 自己更新到的詞庫 f64343f3：dusk noun 仍是 C1（twilight noun 已是 B2）；dusk 的 B2 上限還沒進匯出 |  | 低 |
+| M312 #865 iPad | 通過 | owner 選 1 維持只支援 iPhone，不改 |  | — |
+| M312 #225 相片冊模擬、#855 TestFlight、#485 例句等級 | 通過 | #225 第 190 輪通過；TestFlight 等 owner 帳號；#485 由 Windows 卡 #726 處理中 |  | — |
+| M311 #625 TTS 排在真人之後 | 通過 | 已在 440a395e／e9e88675 做，M301 模擬器驗過（azure_tts 排在真人之後、標合成） |  | — |
