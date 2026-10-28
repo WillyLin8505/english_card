@@ -153,7 +153,7 @@ def inbox_item(no: int, commit: str, cards: list[dict], test_line: str) -> str:
         rows.append(f"- 卡 #{c['card']}：{clean_title(c)[:70]}\n  結果：{clean_outcome(c.get('outcome') or '')[:160]}")
     return (f"\n## M{no}（{datetime.now(TAIPEI):%Y-%m-%d %H:%M}）狀態：待做\n"
             f"commit `{commit}`（Windows：flutter analyze 無 error、{test_line}）。`git pull` 後在 iPhone 模擬器"
-            "逐張驗證下面的卡（owner 10/27：用 Mac 模擬器，要實機時用 owner 的 iPad；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，"
+            "逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，"
             "結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。"
             "不通過的開 `[Mac]` 問題回報，標題寫卡號。\n" + "\n".join(rows) + "\n")
 

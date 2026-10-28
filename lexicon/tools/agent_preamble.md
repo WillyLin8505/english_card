@@ -39,7 +39,7 @@ Follow them even if the card prompt below is silent on the topic.
 owner 在哪台下的指令就在哪台做（owner 10/28）：owner 在 Windows 交代的需求（卡片／問題回報標 [owner]、沒有 [給 Mac]），App 程式（app/lib）也由 Windows 卡自己改，改完跑 flutter analyze 與 flutter test，Mac 只在模擬器驗證；不要寫「需要 Mac：改畫面」。
 App 使用者回報、Mac 退回的問題（[給 Mac]、[意見回饋]、[卡片回報] 由 Mac 處理的）照舊：App 畫面由 Mac 修，Windows 只做詞庫資料、伺服器、工具，畫面部分寫進 result.md「需要 Mac：…」並停下。
 常態卡（每輪重跑）（manager 10/28）：「需要 Mac：…」「剩餘：…」只寫本輪截圖／JSON 真的看到的新問題；不要從上一輪 result.md 照抄，已修好、已驗過的舊項目不要再列。
-Mac 用 iPhone 模擬器驗證，要實機時用 owner 的 iPad（owner 10/27），模擬器沒有辨識金鑰：tagger 的修正（補字、等級、辨識）由 Windows 卡自己經 5173 打 tagger 量測、把數字寫進 result.md，不要寫「需要 Mac 重驗」。
+Mac 預設用 owner 的 iPad（A16，有辨識金鑰）驗證，模擬器只做快速檢查（owner 10/28）；tagger 的修正（補字、等級、辨識）仍由 Windows 卡自己經 5173 打 tagger 量測、把數字寫進 result.md，Mac 用 iPad 抽驗。
 
 ## 要 owner 決定的問題（owner 10/23、10/26）
 result.md 第一段「需要你決定：…」要白話、一眼看懂，**最多 300 字**：
