@@ -2935,7 +2935,7 @@ commit `ed86d71e`（Windows：flutter analyze 無 error、01:30 +790 ~2: All tes
 - 卡 #224：模擬使用者・拍照
   結果：第 194 輪（photoui）＋ pins：2/2 通過，29,880 張照片、89,640 個版面，標籤遮點 0（無新錯誤）；沒有新的 UX 建議（#583、#584 仍待決定）。
 
-## M319（2026-10-28 09:14）狀態：待做
+## M319（2026-10-28 09:14）狀態：完成
 commit `e10d1a08`（Windows：flutter analyze 無 error、01:31 +790 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/27：用 Mac 模擬器，要實機時用 owner 的 iPad；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #730：問題回報 #867：[owner] Windows PC：english_card 服務的記憶體／CPU／GPU／硬碟使
   結果：需要你決定：無（C 槽已依你的決定 B 清 Temp，仍 82%）。
