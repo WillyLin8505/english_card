@@ -2972,3 +2972,8 @@ commit `9d58e96f`（Windows：flutter analyze 無 error、01:08 +790 ~2: All tes
 卡：模擬使用者・設定
 
 評估 #474 與辨識設定錯誤提示位置。
+
+## M326（2026-10-28 20:27）狀態：待做
+commit `d5e38131`（Windows：flutter analyze 無 error、01:03 +790 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/27：用 Mac 模擬器，要實機時用 owner 的 iPad；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #228：模擬使用者・設定
+  結果：第 16 輪（模擬輪 196）：設定 1/1 通過、findings 0；新問題無、UX 建議沿用 #474（未重複開）。
