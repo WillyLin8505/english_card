@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 from . import jobs, models as m
 from .text import normalize_lemma
 
-LIMIT = 500
+LIMIT = 3000  # owner 10/29 (was 500)
 WANTED_LIST = "owner 想學"
 _WRONG = {"misspelling", "pronunciation-spelling", "obsolete", "nonstandard"}
 _MISSPELLING = re.compile(r"(?:[Mm]isspelling|[Ss]pelling|[Ff]orm) of ([^\W\d_][\w' -]*?)(?:[.,;:(]|$)")

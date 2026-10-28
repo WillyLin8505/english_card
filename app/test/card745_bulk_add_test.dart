@@ -78,14 +78,47 @@ void main() {
     expect(classifyBulkWord('brewed', r, pack()).status, BulkStatus.existing);
   });
 
-  test('two forms of one word count once; the limit stops at 300', () {
+  test('two forms of one word count once; the limit stops at 3000', () {
     final r = checkBulkWords('brewed, brewing', repo(), pack());
     expect(r.items.map((i) => i.status),
         [BulkStatus.variant, BulkStatus.existing]);
-    final many = [for (var i = 0; i < 305; i++) 'w$i'].join('\n');
+    expect(bulkAddLimit, 3000);
+    final many = [for (var i = 0; i < 3005; i++) 'w$i'].join('\n');
     final big = checkBulkWords(many, repo(), pack());
     expect(big.items.length, bulkAddLimit);
     expect(big.overLimit, 5);
+  });
+
+  test('3000 words: only the first 300 unknown words get a suggestion, all add',
+      () {
+    final words = [
+      for (var i = 0; i < bulkTypoCheckLimit; i++) 'q$i',
+      'balcany',
+      for (var i = 0; i < 2699; i++) 'x$i',
+    ];
+    final r = repo();
+    final sw = Stopwatch()..start();
+    final items = checkBulkWords(words.join('\n'), r, pack()).items;
+    final balcany = items.firstWhere((i) => i.typed == 'balcany');
+    expect(balcany.status, BulkStatus.unknown); // past the suggestion limit
+    expect(addBulkItems(r, items).added, 3000);
+    expect(sw.elapsed, lessThan(const Duration(seconds: 10)));
+  });
+
+  testWidgets('3000 rows in the preview do not overflow', (t) async {
+    await t.pumpWidget(MaterialApp(
+        home: Builder(
+            builder: (c) => TextButton(
+                onPressed: () => showBulkAddDialog(c, repo(), pack: pack()),
+                child: const Text('go')))));
+    await t.tap(find.text('go'));
+    await t.pumpAndSettle();
+    await t.enterText(find.byKey(const ValueKey('bulk-text')),
+        [for (var i = 0; i < 3000; i++) 'w$i'].join('\n'));
+    await t.tap(find.byKey(const ValueKey('bulk-check')));
+    await t.pumpAndSettle();
+    expect(t.takeException(), isNull);
+    expect(find.text('加入 3000 個'), findsOneWidget);
   });
 
   test('adding: skips existing and unconfirmed typos, adds the rest', () {

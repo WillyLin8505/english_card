@@ -4,8 +4,12 @@ import 'word_database_repository.dart';
 /// 一次加入多個單字 (card #745): split pasted text into words, then say what
 /// would happen to each one before anything is added.
 
-/// Most words one paste may hold.
-const bulkAddLimit = 300;
+/// Most words one paste may hold (owner 10/29: 3000).
+const bulkAddLimit = 3000;
+
+/// Unknown words that get a spelling suggestion; each one scans the whole
+/// pack, so later unknown words are just "not in the dictionary".
+const bulkTypoCheckLimit = 300;
 
 enum BulkStatus {
   /// In the dictionary; will be added.
@@ -103,7 +107,15 @@ BulkParse checkBulkWords(
     String text, WordDatabaseRepository repo, LexiconPack pack) {
   final words = splitBulkWords(text);
   final over = words.length > bulkAddLimit ? words.length - bulkAddLimit : 0;
-  final items = [for (final w in words.take(bulkAddLimit)) classifyBulkWord(w, repo, pack)];
+  var typoChecks = bulkTypoCheckLimit;
+  final items = <BulkItem>[];
+  for (final w in words.take(bulkAddLimit)) {
+    final i = classifyBulkWord(w, repo, pack, suggest: typoChecks > 0);
+    if (i.status == BulkStatus.unknown || i.status == BulkStatus.typo) {
+      typoChecks--;
+    }
+    items.add(i);
+  }
   // Two typed forms can lead to one base word (brewed, brewing → brew).
   final taken = <String>{};
   return BulkParse([
@@ -120,7 +132,8 @@ BulkParse checkBulkWords(
 }
 
 BulkItem classifyBulkWord(
-    String w, WordDatabaseRepository repo, LexiconPack pack) {
+    String w, WordDatabaseRepository repo, LexiconPack pack,
+    {bool suggest = true}) {
   final phrase = w.contains(' ');
   if (repo.entryByWord(w) != null) {
     return BulkItem(
@@ -128,7 +141,8 @@ BulkItem classifyBulkWord(
   }
   final hit = pack.isEmpty ? null : pack.lookup(w);
   if (hit == null) {
-    final near = pack.isEmpty || phrase ? const <String>[] : pack.similarTo(w);
+    final near =
+        pack.isEmpty || phrase || !suggest ? const <String>[] : pack.similarTo(w);
     return BulkItem(
         typed: w,
         status: near.isEmpty ? BulkStatus.unknown : BulkStatus.typo,

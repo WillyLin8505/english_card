@@ -100,7 +100,7 @@ export default function BulkAdd() {
       <header className="page-head">
         <div>
           <h1>批量加入單字</h1>
-          <p className="muted">貼上要學的單字：一行一個，也可用逗號、頓號、Tab 分隔（可從 Excel 貼上），一次最多 500 個。</p>
+          <p className="muted">貼上要學的單字：一行一個，也可用逗號、頓號、Tab 分隔（可從 Excel 貼上），一次最多 3000 個。</p>
         </div>
       </header>
       <section className="form-section">

@@ -101,7 +101,7 @@ class _BulkAddDialogState extends State<_BulkAddDialog> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          UiText('一行一個字，也可用逗號、頓號或 Tab 分隔（一次最多 300 個）。',
+          UiText('一行一個字，也可用逗號、頓號或 Tab 分隔（一次最多 3000 個）。',
               style: MFont.inter(12, FontWeight.w400, MColors.gray500)),
           const SizedBox(height: 8),
           TextField(
@@ -125,15 +125,20 @@ class _BulkAddDialogState extends State<_BulkAddDialog> {
         ],
       ));
 
-  Widget _preview(BuildContext context, List<BulkItem> items) => ListView(
-        shrinkWrap: true,
-        children: [
-          if (_over > 0)
-            UiText('超過 300 個，後面的 $_over 個沒有檢查',
-                style: MFont.inter(12, FontWeight.w600, MColors.againFg)),
-          for (var i = 0; i < items.length; i++) _row(context, i, items[i]),
-        ],
-      );
+  // Up to 3000 rows (owner 10/29), so rows are built lazily in a fixed height.
+  Widget _preview(BuildContext context, List<BulkItem> items) {
+    final head = _over > 0 ? 1 : 0;
+    return SizedBox(
+      height: MediaQuery.sizeOf(context).height * 0.6,
+      child: ListView.builder(
+        itemCount: items.length + head,
+        itemBuilder: (context, i) => i < head
+            ? UiText('超過 3000 個，後面的 $_over 個沒有檢查',
+                style: MFont.inter(12, FontWeight.w600, MColors.againFg))
+            : _row(context, i - head, items[i - head]),
+      ),
+    );
+  }
 
   Widget _row(BuildContext context, int i, BulkItem it) {
     final small = MFont.inter(12, FontWeight.w500, MColors.muted);
