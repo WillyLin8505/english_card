@@ -49,3 +49,8 @@ result.md 第一段「需要你決定：…」要白話、一眼看懂，**最�
 
 ## 寫檔一律 UTF-8（10/24：Codex 的 result.md 中文全變成 ???）
 result.md、progress 和所有中文檔案，都用 Python 寫：`open(path, 'w', encoding='utf-8')`。PowerShell 的 `Set-Content`／`Out-File`／`echo >`／`>` 預設不是 UTF-8，中文會變成 ?，不要用。寫完用 Python 讀回第一行確認看得到中文。
+
+## Heavy jobs one at a time (card #731)
+- Memory-heavy commands (`flutter test`, full exports / pack builds, `card*_measure` / whole-library scans) must run as
+  `python lexicon/tools/heavy_lock.py run -- <command>` (waits for its turn; `qc.py check --live` already does). Each CLI is capped at 6 GB
+  and BelowNormal; above 90 % memory for 2 min the guard ends your biggest child process ("資源不足，稍後重跑") — rerun it later.

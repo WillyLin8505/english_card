@@ -169,6 +169,84 @@ def lower_priority() -> int:
         return 0
 
 
+PROTECTED = ("serve_app", "start_services", "tagger", "llama-server", "uvicorn", "postgres", "worker",
+             "dispatch_tick", "resource_guard", "launch_agent")
+KILL_PCT, KILL_AFTER_S = 90.0, 120.0
+LOGS = ROOT / "lexicon" / "logs" / "agents"
+
+
+def process_table() -> list[dict]:
+    ps = ("Get-CimInstance Win32_Process | Select-Object ProcessId,ParentProcessId,Name,WorkingSetSize,"
+          "CommandLine | ConvertTo-Json -Compress")
+    try:
+        r = subprocess.run(["powershell", "-NoProfile", "-Command", ps], capture_output=True, timeout=60,
+                           creationflags=NO_WINDOW)
+        rows = json.loads(r.stdout.decode("utf-8", "replace") or "[]")
+        return [{"pid": x["ProcessId"], "ppid": x["ParentProcessId"], "name": x["Name"] or "",
+                 "ws": int(x["WorkingSetSize"] or 0), "cmd": x["CommandLine"] or ""} for x in rows]
+    except Exception:  # noqa: BLE001
+        return []
+
+
+def cli_roots() -> dict[int, int]:
+    """pid of every dispatched CLI -> its card id (logs/agents/card<id>.pid.json)."""
+    out = {}
+    for f in LOGS.glob("card*.pid.json"):
+        try:
+            out[int(json.loads(f.read_text(encoding="utf-8"))["pid"])] = int(f.name[4:].split(".")[0])
+        except (OSError, ValueError, KeyError):
+            continue
+    return out
+
+
+def pick_victim(table: list[dict], roots: dict[int, int], min_mb: int = 300) -> tuple[dict, int] | None:
+    """Pure: the biggest descendant (newest pid on a tie) of a dispatched CLI that is not a service and not
+    the CLI itself -> (process, card id). Services started by a CLI are skipped by name."""
+    kids: dict[int, list[dict]] = {}
+    for p in table:
+        kids.setdefault(p["ppid"], []).append(p)
+    best = None
+    for root, card in roots.items():
+        stack = list(kids.get(root, []))
+        while stack:
+            p = stack.pop()
+            stack.extend(kids.get(p["pid"], []))
+            if p["pid"] in roots or any(k in (p["name"] + " " + p["cmd"]).lower() for k in PROTECTED):
+                continue
+            if p["ws"] >= min_mb * 1024 * 1024 and (best is None or (p["ws"], p["pid"]) > (best[0]["ws"], best[0]["pid"])):
+                best = (p, card)
+    return best
+
+
+def kill_due(mem: float | None, ts: float, prev_since: float | None) -> tuple[bool, float | None]:
+    """Pure: memory > 90 % for 2 minutes -> (kill now, new over-since)."""
+    if mem is None or mem <= KILL_PCT:
+        return False, None
+    since = prev_since or ts
+    return ts - since >= KILL_AFTER_S, since
+
+
+def kill_heavy_child(dry: bool = False) -> str | None:
+    v = pick_victim(process_table(), cli_roots())
+    if not v:
+        return None
+    p, card = v
+    msg = f"資源不足，稍後重跑：結束 {p['name']} pid {p['pid']} ({p['ws'] // 2**20} MB)"
+    if dry:
+        return msg
+    subprocess.run(["taskkill", "/F", "/T", "/PID", str(p["pid"])], capture_output=True, timeout=30,
+                   creationflags=NO_WINDOW)
+    try:
+        import urllib.request
+        req = urllib.request.Request(f"http://127.0.0.1:5173/api/tasks/{card}", method="PUT",
+                                     data=json.dumps({"progress": msg}).encode("utf-8"),
+                                     headers={"Content-Type": "application/json"})
+        urllib.request.urlopen(req, timeout=10).read()
+    except Exception:  # noqa: BLE001
+        pass
+    return f"卡 #{card} {msg}"
+
+
 def run(dry: bool = False, cfg: dict | None = None) -> dict:
     cfg = {**DEFAULTS, **(cfg or {})}
     try:
@@ -186,6 +264,12 @@ def run(dry: bool = False, cfg: dict | None = None) -> dict:
         if c["folders"]:
             notes.append(f"temp cleaned {c['folders']} folders {c['freed_mb']} MB")
             m["disks"] = disk_pcts(cfg["disks"])
+    due, state_since = kill_due(m["mem"], m["ts"], prev.get("mem90_since"))
+    if due:
+        k = kill_heavy_child(dry)
+        if k:
+            notes.append(k)
+            state_since = m["ts"]  # give it another 2 minutes before the next victim
     if act["low_priority"] and not dry:
         k = lower_priority()
         if k:
@@ -197,7 +281,8 @@ def run(dry: bool = False, cfg: dict | None = None) -> dict:
     for d, v in m["disks"].items():
         peak["disk " + d] = max(peak.get("disk " + d, 0), v)
     state = {**m, **act, "cpu_sample": cpu_sample, "peak": peak, "peak_since": prev.get("peak_since", m["ts"]),
-             "top": top_processes() if act["over"] else [], "notes": notes}
+             "top": top_processes() if act["over"] else [], "notes": notes,
+             "mem90_since": state_since}
     if not dry:
         STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
         STATE_FILE.write_text(json.dumps(state, indent=1), encoding="utf-8")

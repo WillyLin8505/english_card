@@ -921,6 +921,7 @@ def fix_catalog_senses(pack: dict, approved: dict[int, int] | None = None) -> in
     for lx in pack.get("lexemes", []):
         if lx.get("status", "full") == "full" and lx.get("normalized"):
             sisters.setdefault(lx["normalized"], []).append(lx)
+    photo_senses = load_json("photo_sense_overrides.json").get("senses", {})
     changed = 0
     for im in pack.get("catalog_images") or []:
         for coll in (im.get("tags") or [], im.get("labels") or []):
@@ -944,6 +945,11 @@ def fix_catalog_senses(pack: dict, approved: dict[int, int] | None = None) -> in
                     and any(s.get("id") == want for s in senses)):
                 t.setdefault("sense_id_before", t.get("sense_id"))
                 t["sense_id"] = want
+            # Card #706 (問題回報 #843/#846): a reviewed per-photo sense replaces a long definition.
+            pick = photo_senses.get(f"{im.get('id')}:{t.get('lexeme_id')}")
+            if pick is not None and t.get("sense_id") != pick and any(s.get("id") == pick for s in senses):
+                t.setdefault("sense_id_before", t.get("sense_id"))
+                t["sense_id"] = pick
             cur = next((s for s in senses if s.get("id") == t.get("sense_id")), None)
             if cur and (cur.get("native") or "").strip() and cur.get("priority") != "low":
                 continue
