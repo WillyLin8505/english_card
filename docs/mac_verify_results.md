@@ -2091,3 +2091,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 |----|----|----|----|----|
 | M338 #880 be／the 怪關係詞 | 通過 | 新詞庫：be 預設只剩 derived_terms maybe、beware、abe、wannabe（beryllium、equal、pee、pea 都不見了）；the 只剩 derived_terms 和 similar_spelling（le 不見了）。abe 仍有點怪但影響小 |  | — |
 | M339 #898 片語動詞缺口 | 通過 | 已確認是資料缺口（App 詞庫片語動詞只有 13 筆，抽樣 61 個常用的都沒有），由 Windows #897 補；App 不用改 |  | — |
+
+## 2026-10-28 M340（Mac）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M340 #880 功能詞同義詞／同音預設隱藏 | 通過 | 已在 M338 用新詞庫 31b8fdc2 驗：be 不再顯示 beryllium、equal、pee、pea；the 不再顯示 le |  | — |
