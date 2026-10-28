@@ -3070,12 +3070,12 @@ commit `8196c894`（Windows：flutter analyze 無 error、01:18 +803 ~2: All tes
 - 卡 #751：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
   結果：全部完成：card745 的「短手機＋鍵盤」測試修好（溢出 8px → 0），card745＋card744 共 9 個測試通過，flutter analyze 0 error（5 個既有 warning/info）。
 
-## M342（2026-10-28 23:35）狀態：待做
+## M342（2026-10-28 23:35）狀態：完成
 commit `9fd8e212`（Windows：flutter analyze 無 error、01:26 +803 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/27：用 Mac 模擬器，要實機時用 owner 的 iPad；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #752：問題回報 #896：[模擬 第201輪] 詞庫更新刪掉某字後，學習中的卡意思變空（gas v12）
   結果：誤報，App 沒有壞：「annum」在詞庫本來就沒有中文意思（senses 全是 None），卡片刪字前就是空的；模擬檢查把它當成「刪字後意思變空」。已修正模擬檢查，seed 1、7 都 0 筆發現。
 
-## M343（2026-10-28 23:37）狀態：待做（owner 回報，給 Mac）
+## M343（2026-10-28 23:37）狀態：完成
 owner 在 iPhone 送出的回報（#626：App 畫面與互動由 Mac 修）。資料或伺服器的部分請寫「不通過」列交回 Windows。
 
 | # | 回報 | 內容 |
