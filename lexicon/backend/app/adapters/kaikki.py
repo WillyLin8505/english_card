@@ -1181,6 +1181,11 @@ def _dis1_index(tr: dict, raw: list[dict], floor: int, ratio: float) -> int | No
     return weights.index(top)
 
 
+# Wiktionary lists archaic multiplied-component variants beside the ordinary
+# word (fresh's 鮮 / 鱻); nobody learns them (問題回報 #905, card #764).
+_RARE_ZH = re.compile("[鱻驫麤猋羴贔皕靐龘厵嚞鸙飝]")
+
+
 def _native_word(tr: dict, native: str) -> str | None:
     word = (tr.get("word") or "").strip()
     if not word and native == "zh-TW":
@@ -1203,6 +1208,8 @@ def _native_word(tr: dict, native: str) -> str | None:
             trad = conv or trad
         # A note that is not a word: across 「but see 從一邊到另一邊」.
         if not re.search(r"[㐀-鿿]", trad) or re.search(r"[A-Za-z]{2}", trad):
+            return None
+        if _RARE_ZH.search(trad):
             return None
         return trad or None
     if native == "fr":
