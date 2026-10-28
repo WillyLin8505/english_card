@@ -3048,3 +3048,9 @@ commit `c2e467d5`（Windows：flutter analyze 無 error、01:21 +803 ~2: All tes
 commit `824ecd65`（Windows：flutter analyze 無 error、01:26 +803 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/27：用 Mac 模擬器，要實機時用 owner 的 iPad；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #749：問題回報 #895：[Mac] 2026-10-28 M332（iPhone 模擬器，48c7c86c）：一次加入多個（
   結果：一次加入多個對話框在小螢幕＋鍵盤時溢出：已修（輸入區改可捲動、文字框 5–10 行），測試已過。
+
+## M338（2026-10-28 23:23）狀態：待做（Windows 卡 #735 交給 Mac 的 App 畫面部分）
+卡：問題回報 #880：[Mac] 2026-10-28 M320（iPhone 模擬器，詞庫 45df70d9）：M320 功能詞其他來源的怪關係詞
+
+無（App 畫面未改；pack 重匯出後請 Mac 重驗 be／the）。
+剩餘：oewn 的 beryllium（Be 符號）是錯義來源問題，若要根治需另開問題回報（不在本卡範圍）。
