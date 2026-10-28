@@ -98,6 +98,7 @@ void _checkUpdate(WordDatabaseRepository repo, Findings f, String tag,
     required Map<String, String> edited,
     required Map<String, String> changed,
     required Map<String, String?> shown,
+    required Map<String, String> meaningBefore,
     required Object? goneWord}) {
   for (final c in allCards(repo)) {
     if (before[c.id] != jsonEncode(c.toJson())) f.add('詞庫更新改動了卡片或 FSRS', '${c.id} $tag');
@@ -115,7 +116,12 @@ void _checkUpdate(WordDatabaseRepository repo, Findings f, String tag,
     }
   }
   for (final e in repo.entries) {
-    if (e.word == goneWord && e.meaning.isEmpty) {
+    // Only a meaning the card had before the update can be lost (card #752,
+    // 問題回報 #896: "annum" has no 中文 in the pack, so its card was empty
+    // before the word was deleted too).
+    if (e.word == goneWord &&
+        e.meaning.isEmpty &&
+        (meaningBefore[e.id] ?? '').isNotEmpty) {
       f.add('詞庫刪掉的字，學習中的卡失去中文意思', '${e.word} $tag');
     }
     if (edited.containsKey(e.id) || e.word == goneWord) continue;
@@ -162,12 +168,13 @@ void main() {
       final v = _newVersion(json, version, rnd, repo);
       final before = {for (final c in allCards(repo)) c.id: jsonEncode(c.toJson())};
       final logs = {for (final c in allCards(repo)) c.id: repo.logsOf(c.id).length};
+      final meaningBefore = {for (final e in repo.entries) e.id: e.meaning};
       pack.loadJson(v.next);
       final shown = _shown(pack);
       repo.linkLexicon(pack);
       _checkUpdate(repo, f, 'v$version',
           before: before, logs: logs, edited: edited, changed: v.changed,
-          shown: shown, goneWord: v.goneWord);
+          shown: shown, meaningBefore: meaningBefore, goneWord: v.goneWord);
       now = now.add(const Duration(days: 2));
     }
     report['findings'] = f.toJson();
@@ -209,6 +216,7 @@ void main() {
       final v = _newVersion(json, version, rnd, repo);
       final before = {for (final c in allCards(repo)) c.id: jsonEncode(c.toJson())};
       final logs = {for (final c in allCards(repo)) c.id: repo.logsOf(c.id).length};
+      final meaningBefore = {for (final e in repo.entries) e.id: e.meaning};
       final watch = Stopwatch()..start();
       await install(v.next, 'v$version');
       final shown = _shown(pack);
@@ -261,7 +269,7 @@ void main() {
 
       _checkUpdate(repo, f, 'sqlite v$version',
           before: before, logs: logs, edited: edited, changed: v.changed,
-          shown: shown, goneWord: v.goneWord);
+          shown: shown, meaningBefore: meaningBefore, goneWord: v.goneWord);
       if (archivedEntry != null && !repo.isArchived(archivedEntry)) {
         f.add('暫停中封存的字，連結詞庫後沒有封存', '$archivedEntry sqlite v$version');
       }
