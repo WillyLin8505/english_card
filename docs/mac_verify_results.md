@@ -2084,3 +2084,10 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
 |----|----|----|----|----|
 | #896 packupdate gas v12 | 通過 | 誤報：v12 是模擬自己做的假版本；gas 的 adj 詞條更新前本來就沒有中文，舊檢查把它算成「更新後才失去中文」。卡 #752（3fcb4acc）已改成「更新前有中文、更新後才變空」才算；Mac 用 seed 201 重跑沒有重現。不是 App 詞庫更新邏輯問題 |  | — |
+
+## 2026-10-28 M338、M339（iPhone 模擬器，詞庫 31b8fdc2）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| M338 #880 be／the 怪關係詞 | 通過 | 新詞庫：be 預設只剩 derived_terms maybe、beware、abe、wannabe（beryllium、equal、pee、pea 都不見了）；the 只剩 derived_terms 和 similar_spelling（le 不見了）。abe 仍有點怪但影響小 |  | — |
+| M339 #898 片語動詞缺口 | 通過 | 已確認是資料缺口（App 詞庫片語動詞只有 13 筆，抽樣 61 個常用的都沒有），由 Windows #897 補；App 不用改 |  | — |
