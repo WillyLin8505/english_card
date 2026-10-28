@@ -2956,3 +2956,9 @@ commit `ce0cbbad`（Windows：flutter analyze 無 error、01:04 +790 ~2: All tes
 commit `580b66ff`（Windows：flutter analyze 無 error、01:02 +790 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/27：用 Mac 模擬器，要實機時用 owner 的 iPad；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #734：問題回報 #879：[UX] 卡 #12 第 195 輪：近義詞／相關詞常是錯義項（disguise 的 fancy 想
   結果：尚未全部完成：簡體字 278 筆已轉繁（0 殘留）；同義詞／相關詞錯義項的根因是「沒連到義項」，需 Qwen 續跑，但本輪 Qwen（:8790）連不到，沒有代做。
+
+## M323（2026-10-28 15:51）狀態：待做（Windows 卡 #496 交給 Mac 的 App 畫面部分）
+卡：模擬使用者・法語（英語母語者學法語）
+
+英文裝置引導中文殘留、實機音訊/相機驗收。
+變更：僅測試產物；未改App/伺服器/詞庫，未commit/push。無需備份；golden/QC未跑（純檢查）。
