@@ -3065,7 +3065,7 @@ commit `c3be7558`（Windows：flutter analyze 無 error、01:19 +803 ~2: All tes
 - 卡 #735：問題回報 #880：[Mac] 2026-10-28 M320（iPhone 模擬器，詞庫 45df70d9）：M320
   結果：功能詞（be、the 等）的同義詞、近似同音、同音已全部預設隱藏（所有來源）：標記 539 列、備份在 card735backup/，golden 與 QC 無退步。
 
-## M341（2026-10-28 23:31）狀態：待做
+## M341（2026-10-28 23:31）狀態：完成
 commit `8196c894`（Windows：flutter analyze 無 error、01:18 +803 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/27：用 Mac 模擬器，要實機時用 owner 的 iPad；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #751：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
   結果：全部完成：card745 的「短手機＋鍵盤」測試修好（溢出 8px → 0），card745＋card744 共 9 個測試通過，flutter analyze 0 error（5 個既有 warning/info）。
