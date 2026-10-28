@@ -2103,3 +2103,13 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
 |----|----|----|----|----|
 | M341 #571／#751 flutter test | 通過 | Mac 用 main（8196c894）跑全套 flutter test：802 通過、3 略過；一次加入多個「短手機＋鍵盤」版面已修好 |  | — |
+
+## 2026-10-28 iPad 實機：#850 儲存、#851 打標籤中（需要辨識）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| iPad #851 打標籤中 | 通過 | 加一張廚房照片送辨識：照片上有藍色掃描光帶和「AI 正在找單字…」轉圈 | mac_verify_shots/2026-10-28/ipad_scanning.png | — |
+| iPad 辨識 | 通過 | 辨識回 18 個候選字（Fresh、Window、Jar、Verdant、Crumbly…） | mac_verify_shots/2026-10-28/ipad_tagged.png | — |
+| iPad #850 儲存 | 通過 | 按「儲存」：按鈕變灰、存了 14 個標籤、回到拍照頁 | mac_verify_shots/2026-10-28/ipad_save_anim.png | — |
+| 伺服器連線 | 不通過 | 23:5x iPad 顯示「暫時無法連線・使用已儲存的詞庫」；Mac 打 /api/decks 15 秒逾時（serve_app 可能又卡住） | mac_verify_shots/2026-10-28/ipad_save_anim.png | 高 |
+| Fresh 標籤中文 | 不通過 | Fresh 的中文「新鮮、新的、新穎的；鮮的、鱻的」有罕用字「鱻」，標籤太長（資料） | mac_verify_shots/2026-10-28/ipad_scanning.png | 低 |
