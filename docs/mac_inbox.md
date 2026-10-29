@@ -3279,24 +3279,24 @@ commit `8f525fe0`（Windows：flutter analyze 無 error、01:56 +812 ~2: All tes
 驗證：flutter analyze lib/services 只有 2 個既有 info；card745_bulk_add、dictionary_sync、card428_sqlite_sync、relation_meaning 測試全過。
 未做：沒有針對「內建包不 fold」的單元測試，也未在 Windows 實機重現 iPad 流程；未動詞庫資料，故無需 golden/QC、備份。
 
-## M375（2026-10-29 11:46）狀態：待做
+## M375（2026-10-29 11:46）狀態：完成
 commit `80f1b848`（Windows：flutter analyze 無 error、03:18 +812 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #786：問題回報 #925：[Mac] 2026-10-29 M366～M371 複習開始時間、小螢幕選字卡、borin：#92
   結果：結論：Windows 工作樹已含修法（card #785，未 commit）；Mac 測的 5c6ff800 不含，所以重開仍掉到 8488。本卡驗證通過、未再改碼。
 - 卡 #12：模擬使用者・跨分頁（亂點、詞庫更新）
   結果：第 206/207 輪：packupdate 通過（300 秒）、fuzz 第 206 輪中途中斷、重跑第 207 輪通過（265 秒，無 findings），沒有新問題。
 
-## M376（2026-10-29 11:52）狀態：待做
+## M376（2026-10-29 11:52）狀態：完成
 commit `65a29c82`（Windows：flutter analyze 無 error、01:43 +813 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #787：問題回報 #926：[owner] App 啟動後 10 秒內連換 3 份詞庫，每次重新連結全部單字，這段時間操作卡頓
   結果：已修：App 啟動後同版詞庫（內建→下載副本→delta）不再重複連結全部單字；相關測試 31 個全過。
 
-## M377（2026-10-29 11:58）狀態：待做
+## M377（2026-10-29 11:58）狀態：完成
 commit `af874623`（Windows：flutter analyze 無 error、01:53 +813 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #788：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
   結果：全部完成：flutter test 重跑 812 過 / 0 失敗（2 個 skip），flutter analyze 0 error（4 個 info）；沒改任何程式或資料。
 
-## M378（2026-10-29 12:04）狀態：待做
+## M378（2026-10-29 12:04）狀態：完成
 commit `b0b74391`（Windows：flutter analyze 無 error、01:50 +813 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #789：問題回報 #927：[Mac] 2026-10-29 M372～M374 卡 #785／#786（#923／#9：#78
   結果：全部完成：根因已修（內建包不再改已存單字的 pos），App 端修正在工作樹，測試 12/12 通過、analyze 無問題；需 Mac 在 iPad 重驗。
