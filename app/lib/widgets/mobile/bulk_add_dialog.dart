@@ -146,7 +146,7 @@ class _BulkAddDialogState extends State<_BulkAddDialog> {
     Widget? action;
     switch (it.status) {
       case BulkStatus.existing:
-        label = '已在單字本（略過）';
+        label = it.word == it.typed ? '已在單字本（略過）' : '已在單字本（併入 ${it.word}）';
       case BulkStatus.merged:
         label = '併入原形 ${it.word}（一字一張卡，不另加）';
       case BulkStatus.ready:

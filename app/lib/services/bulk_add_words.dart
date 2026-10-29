@@ -163,9 +163,20 @@ BulkItem classifyBulkWord(
         suggestion: near.firstOrNull,
         include: near.isEmpty);
   }
-  final e = hit.entry;
+  var e = hit.entry;
+  var pos = _appPos(e.pos, phrase ? 'phrase' : 'noun');
+  // Adding goes through the repository's one-card-per-word fold, which looks
+  // the word up with its part of speech: boring (adj) is a headword without
+  // one, yet with pos it folds into bore. Classify the same way, so the count
+  // matches what lands in the word book (問題回報 #914).
+  final folded = pack.lookup(w, pos: pos);
+  if (folded != null &&
+      folded.entry.normalized != w &&
+      (folded.via == 'form' || folded.via == 'family')) {
+    e = folded.entry;
+    pos = _appPos(e.pos, pos);
+  }
   final base = e.normalized;
-  final pos = _appPos(e.pos, phrase ? 'phrase' : 'noun');
   if (repo.entryByWord(base) != null) {
     return BulkItem(
         typed: w, status: BulkStatus.existing, word: base, pos: pos);
