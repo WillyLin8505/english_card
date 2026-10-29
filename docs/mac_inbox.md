@@ -3155,7 +3155,7 @@ commit `69e1e2bb`（Windows：flutter analyze 無 error、01:14 +806 ~2: All tes
 
 用 iPad 重貼 N=196 那批（boring、amazing、wedding、being、working、worried…），確認按鈕 N = 單字本實際增加，且重開 App 後不消失。
 
-## M357（2026-10-29 08:50）狀態：待做
+## M357（2026-10-29 08:50）狀態：完成
 commit `0c234e04`（Windows：flutter analyze 無 error、01:25 +806 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #225：模擬使用者・相片冊
   結果：第203輪：主模擬 album 1/1 通過（26 秒）、新問題 無、UX 建議 無新增。
@@ -3165,12 +3165,12 @@ commit `956ec6a3`（Windows：flutter analyze 無 error、01:27 +806 ~2: All tes
 - 卡 #773：問題回報 #914：[Mac] 2026-10-29 M352／M354 卡 #771 檢查時標出併入原形（iP：#77
   結果：結論：已改檢查邏輯，讓「檢查」和加入時的「一字一張卡」(foldInto) 用同一套 lookup(word, pos:)，N 應該等於實際增加數；尚未用真實 192 字那批在 iPad 驗證。
 
-## M359（2026-10-29 09:11）狀態：待做（Windows 卡 #227 交給 Mac 的 App 畫面部分）
+## M359（2026-10-29 09:11）狀態：完成
 卡：模擬使用者・單字本
 
 無。
 
-## M360（2026-10-29 09:14）狀態：待做
+## M360（2026-10-29 09:14）狀態：完成
 commit `4451786b`（Windows：flutter analyze 無 error、01:22 +806 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #227：模擬使用者・單字本
   結果：第 204 輪：2/2 通過（database 206 秒、detail 85 秒，pack 19,957 詞條），新問題 0、UX 建議 0。
