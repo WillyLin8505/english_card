@@ -2209,3 +2209,10 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #773 按鈕 N = 加入當下增加 | 通過 | 貼剩下的 375 字：按鈕「加入 192 個」，加完 1.5 秒和 30 秒都是 +192；新的「已在單字本（併入 abandon／addict／adopt…）」12 種以上有標出來 | docs/mac_verify_shots/2026-10-29/m356_checked.png |  |
 | #773 重開 App 後不消失 | 不通過 | 重開後單字本 8680 → 8488，boring、amazing、wedding、being、working 全部不見（重試 2 次一樣）。查到原因：App 啟動時有兩份詞庫。啟動時 LexiconPack.instance.load 讀到的那份裡 boring 是 bore 的變化形（剛啟動就用 classifyBulkWord('boring') 判，回 existing → bore），main.dart 的 linkLexicon 用它把 boring 併進 bore 並刪掉；幾秒後「詞庫已更新：30 個字補上例句」換成新的一份，boring 變回自己的 lemma（adj，lemma+pos，card=null），檢查又判 ready 再加入。下次啟動又先載舊的那份，再併一次。每次啟動都顯示同樣的「詞庫已更新：30 個字」，看起來更新後的詞庫沒有存到啟動時讀的地方。建議：啟動時的 linkLexicon 等更新後的詞庫，或把更新存回去；在那之前，啟動時的「一字一張卡」併入不要刪掉字 |  | 中 |
 | #773 存檔 | 注意 | 存檔本身沒問題：加入後 repo.flush() 0 秒，wd_entries.hive 掃過 8488 筆、CRC 全對。這些字是被啟動時的合併刪掉的 |  |  |
+
+## 2026-10-29 M357 卡 #225 模擬使用者・相片冊（iPad 實機）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #225 相片冊 | 通過 | iPad 上切到相片冊約 1.3 秒（另外扣掉固定等待）；顯示 2026 年 10 月 rrr（16 個單字）、下載相片冊、選擇新照片；點相簿 0.8 秒打開 rrr（搜尋照片、程度篩選、照片 lightbulb、複習這本相簿），按返回回到相片冊；捲動 112 幀最長 2.4ms；全程沒有例外 | docs/mac_verify_shots/2026-10-29/m357_album_open.png |  |
+| #225 切換速度 | 注意 | 切到相片冊約 1.3 秒，比單字本（0.26 秒）慢很多；owner 10/29 有說操作卡頓，可再看相片冊第一次打開在等什麼 |  | 低 |
