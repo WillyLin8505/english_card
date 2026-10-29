@@ -3300,3 +3300,8 @@ commit `af874623`（Windows：flutter analyze 無 error、01:53 +813 ~2: All tes
 commit `b0b74391`（Windows：flutter analyze 無 error、01:50 +813 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #789：問題回報 #927：[Mac] 2026-10-29 M372～M374 卡 #785／#786（#923／#9：#78
   結果：全部完成：根因已修（內建包不再改已存單字的 pos），App 端修正在工作樹，測試 12/12 通過、analyze 無問題；需 Mac 在 iPad 重驗。
+
+## M379（2026-10-29 12:37）狀態：待做（Windows 卡 #792 交給 Mac 的 App 畫面部分）
+卡：問題回報 #929：[Mac] 2026-10-29 M376～M378 卡 #787 啟動卡頓、#788 fl：#787／#926 第一個畫面
+
+用 iPad 重測 #787 第一個畫面那一幀（原 3182ms，build 3178ms），確認降到 100ms 內。我在 Windows 沒有 iPad 的實測資料，只能量到相對值。
