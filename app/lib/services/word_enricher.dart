@@ -98,7 +98,10 @@ class WordEnricher extends ChangeNotifier {
       final pack = LexiconPack.instance;
       if (pack.target == repository().language &&
           pack.native == settings.nativeLanguage) {
-        repository().linkLexicon(pack);
+        // No folding here: at App start the pack may still be the bundled,
+        // older one (card #785, 問題回報 #924); DictionarySync folds with the
+        // final pack.
+        repository().linkLexicon(pack, fold: false);
       }
       while (queue?.current == null) {
         final repo = repository();

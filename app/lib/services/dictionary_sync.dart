@@ -219,7 +219,10 @@ class DictionarySync extends ChangeNotifier {
         if (_disposed) return;
         if (identical(repo, _repository!()) &&
             native == _settings!.nativeLanguage) {
-          await repo.linkLexiconInBatches(LexiconPack.instance);
+          // With a download to follow, the bundled pack may be older: no
+          // folding (card #785, 問題回報 #924).
+          await repo.linkLexiconInBatches(LexiconPack.instance,
+              fold: !remote);
           _activePair = pair;
           unawaited(LexiconPack.instance.warmMeanings());
         }

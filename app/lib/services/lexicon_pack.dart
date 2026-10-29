@@ -39,6 +39,12 @@ class LexiconPack extends ChangeNotifier {
   String? target;
   String? native;
   String? version;
+
+  /// The pack shipped inside the app (set by [load]), not a downloaded one.
+  /// It can be older than the server's, so the repository never folds the
+  /// learner's words with it (Mac M365: its "boring → bore" deleted boring
+  /// at every start, seconds before the downloaded pack said otherwise).
+  bool bundled = false;
   String? mediaBase;
   CardTemplate? cardTemplate;
   bool hasCatalog = false;
@@ -187,6 +193,7 @@ class LexiconPack extends ChangeNotifier {
         // UI thread (compute runs inline on the web).
         loadJson(await compute(jsonDecode, raw) as Map<String, dynamic>);
       }
+      bundled = true;
     } catch (e) {
       debugPrint('No language pack for $target-$native: $e');
       clear();
@@ -323,6 +330,7 @@ class LexiconPack extends ChangeNotifier {
   void releaseCaches() => _source?.invalidate();
 
   void clear() {
+    bundled = false;
     _closeDb();
     _byId.clear();
     _byLemma.clear();

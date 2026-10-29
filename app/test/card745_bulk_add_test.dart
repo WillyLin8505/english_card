@@ -73,6 +73,18 @@ void main() {
     expect(p.isPhrase, isTrue);
   });
 
+  test('the bundled pack never folds a saved word; a downloaded one does', () {
+    // Mac M365: the bundled pack said boring → bore and deleted boring at
+    // every start, seconds before the downloaded pack said it was a word.
+    final r = WordDatabaseRepository(clock: () => testNow)
+      ..addWord(word: 'brewed', pos: 'verb', meaning: '');
+    r.linkLexicon(pack()..bundled = true);
+    expect(r.entryByWord('brewed'), isNotNull);
+    r.linkLexicon(pack());
+    expect(r.entryByWord('brewed'), isNull);
+    expect(r.entryByWord('brew'), isNotNull);
+  });
+
   test('a variant of a word already in the book is skipped', () {
     final r = repo()..addWord(word: 'brew', pos: 'verb', meaning: '釀造');
     expect(classifyBulkWord('brewed', r, pack()).status, BulkStatus.existing);

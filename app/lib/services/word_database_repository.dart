@@ -1014,9 +1014,10 @@ class WordDatabaseRepository extends ChangeNotifier {
   /// Mac. 問題回報：Mac 實機量測同步新詞庫時主執行緒卡 1,151ms（M-PERF2）。
   /// A [linkLexicon] call meanwhile finishes this one first.
   Future<int> linkLexiconInBatches(LexiconPack pack,
-      {Duration budget = const Duration(milliseconds: 8)}) async {
+      {Duration budget = const Duration(milliseconds: 8),
+      bool fold = true}) async {
     _finishLink();
-    final steps = _linkSteps(pack).iterator;
+    final steps = _linkSteps(pack, fold: fold).iterator;
     _pendingLink = steps;
     var changed = 0;
     final watch = Stopwatch()..start();
@@ -1113,7 +1114,7 @@ class WordDatabaseRepository extends ChangeNotifier {
         yield 0;
         continue;
       }
-      if (fold && (hit.via == 'form' || hit.via == 'family')) {
+      if (fold && !pack.bundled && (hit.via == 'form' || hit.via == 'family')) {
         _foldInto(e, hit.entry);
         yield 1;
       } else {
