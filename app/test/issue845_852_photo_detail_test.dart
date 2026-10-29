@@ -218,7 +218,8 @@ void main() {
     });
   });
 
-  testWidgets('#851 a note on the photo while it is rescanned', (tester) async {
+  testWidgets('#851／#939 a rescan sweeps the photo; the note is under the bar',
+      (tester) async {
     final settings = AppSettings.inMemory(
         taggingUrl: 'http://predator:8765/tag', apiKey: 'k');
     final app = await pumpApp(
@@ -237,22 +238,24 @@ void main() {
     );
     app.navigator.openPhoto('photo-breakfast');
     await tester.pumpAndSettle();
-    final label = find.byKey(const ValueKey('photo-scanning-label'));
-    expect(label, findsNothing);
+    final band = find.byKey(const ValueKey('photo-scan-band'));
+    final note = find.text('AI 正在重新掃描…');
+    expect(band, findsNothing);
 
     await tester.tap(find.byKey(const ValueKey('rescan-tags')));
     await tester.pump();
-    expect(label, findsOneWidget);
-    expect(find.text('AI 正在找單字…'), findsOneWidget);
-    expect(find.byKey(const ValueKey('photo-scan-band')), findsOneWidget);
+    expect(band, findsOneWidget);
+    expect(note, findsOneWidget);
+    // #939: nothing sits on the photo over its labels.
+    expect(find.text('AI 正在找單字…'), findsNothing);
 
-    for (var i = 0; i < 40 && label.evaluate().isNotEmpty; i++) {
+    for (var i = 0; i < 40 && band.evaluate().isNotEmpty; i++) {
       await tester.runAsync(
           () => Future<void>.delayed(const Duration(milliseconds: 50)));
       await tester.pump(const Duration(milliseconds: 50));
     }
-    expect(label, findsNothing);
-    expect(find.byKey(const ValueKey('photo-scan-band')), findsNothing);
+    expect(band, findsNothing);
+    expect(note, findsNothing);
   });
 
   group('#852 the dial shows the same labels at each position', () {

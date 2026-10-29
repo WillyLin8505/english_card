@@ -337,33 +337,6 @@ class _PhotoBadgeOverlay extends StatelessWidget {
       );
 }
 
-/// 問題回報 #851: the note on the photo while the AI is still tagging it
-/// (a rescan or a top-up), over the labels without a scrim.
-class _PhotoScanningChip extends StatelessWidget {
-  const _PhotoScanningChip();
-
-  @override
-  Widget build(BuildContext context) => Container(
-        key: const ValueKey('photo-scanning-label'),
-        padding: const EdgeInsets.symmetric(
-            horizontal: MSpace.md, vertical: MSpace.sm - 2),
-        decoration: MDecor.overlayPill(radius: MRadii.xl),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox.square(
-              dimension: 14,
-              child: CircularProgressIndicator(
-                  strokeWidth: 2, color: Colors.white),
-            ),
-            const SizedBox(width: MSpace.xs),
-            UiText('AI 正在找單字…',
-                style: MFont.manrope(13, FontWeight.w700, Colors.white)),
-          ],
-        ),
-      );
-}
-
 /// 問題回報 #850: after 儲存, the listed words fly one by one to the 單字本
 /// tab and then the photo shrinks into the 相片冊 tab (about 1.8 s; a tap
 /// anywhere skips to the end). Drawn over everything on the root overlay.
