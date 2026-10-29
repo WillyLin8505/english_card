@@ -2253,3 +2253,12 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #918 相片冊切換 | 通過 | App 穩定後（啟動 30 秒後）切到相片冊 72ms；剛啟動 3 秒內切換要 1.24 秒（上次 1.3 秒），慢在啟動時詞庫載入，不在相片冊本身 |  |  |
 | #919 開始複習 | 通過 | App 穩定後點「綜合」到第一張卡 81ms；剛啟動約 10 秒內點要 7.06 秒（上次 7.2 秒） |  |  |
 | 啟動前 10 秒卡頓 | 注意 | owner 說的卡頓集中在啟動後約 10 秒：這段時間 LexiconPack 依序換 3 份詞庫（01f91fa3 → 6f3c612 → 9d3374e），每次都對單字本 8488 個字重新 link；這段時間切分頁或開複習會慢 1～7 秒。建議少換幾次或把 link 移出主執行緒 |  | 中 |
+
+## 2026-10-29 M366～M371 複習開始時間、小螢幕選字卡、boring 那批、flutter test（iPad 實機＋Mac，到 5c6ff800）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #922／#919／#778／#780 開始複習時間 | 通過 | 0757ccb0 之後 app/lib 沒再改，用同一版在 iPad（8488 字）量：啟動後第 7 秒點「綜合」→ 第一張卡 86ms；App 穩定後（啟動 30 秒以上）81ms。M364 那次 7.06 秒是在啟動後約 10 秒內點（詞庫正在換 3 份、對全部單字重新 link），兩次都在 7 秒以上的情況這輪沒有再出現。分段量測因為整段已在 0.1 秒內，不再細分 |  |  |
+| #781／#779 小螢幕照片選字卡 | 通過 | iPad iPhone 相容模式 375×667pt：照片縮小後，「哪個單字最適合這張照片？」底在 362pt，三個選項 Envy／Plate／Kilogramme 底在 414／470／526pt，都在「顯示答案」（頂 586pt）上方，完整可點 | docs/mac_verify_shots/2026-10-29/m366_choice.png |  |
+| #923／#782 重開後保留 boring 那批 | 不通過 | 同 M364：0757ccb0（含 main.dart fold:false）重貼後 8680，重開 2 次回到 8488，boring、amazing、wedding、being、working 不在。剩下兩條啟動時用內建詞庫併入的路還在：word_enricher.dart:101 repository().linkLexicon(pack)、dictionary_sync.dart:222 _useBundled() 的 linkLexiconInBatches，兩者 fold 都是預設 true |  | 中 |
+| #783 flutter analyze／test | 通過 | Mac 上 flutter analyze lib test：只有 4 個 info；flutter test：810 通過、3 個略過，All tests passed! |  |  |
