@@ -78,15 +78,17 @@ def drop_unresolved_tags(pack: dict) -> int:
     """Card #795 (問題回報 #931): a photo tag whose word is not in the pack
     (a catalog word this direction never exported, so it became a stub and
     left with strip_stubs) points nowhere in the app. Drop it; the database
-    binding stays. Run after strip_stubs. Returns the number dropped."""
+    binding stays. Run after strip_stubs. Returns the number dropped.
+    The photo's point labels mirror its tags and are filtered too (Mac M386)."""
     ids = {lx["id"] for lx in pack.get("lexemes") or []}
     dropped = 0
     for im in pack.get("catalog_images") or []:
-        tags = im.get("tags") or []
-        kept = [t for t in tags if t.get("lexeme_id") in ids]
-        if len(kept) != len(tags):
-            dropped += len(tags) - len(kept)
-            im["tags"] = kept
+        for key in ("tags", "labels"):
+            items = im.get(key) or []
+            kept = [t for t in items if t.get("lexeme_id") in ids]
+            if len(kept) != len(items):
+                dropped += len(items) - len(kept)
+                im[key] = kept
     return dropped
 
 

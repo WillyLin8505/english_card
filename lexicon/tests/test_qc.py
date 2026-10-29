@@ -83,3 +83,15 @@ def test_compare_ignores_entries_added_during_a_run():
     after["v_ids"]["sense.main_is_ai"] = [1, 2]
     after["metrics"]["v.sense.main_is_ai"] = 2
     assert qc.compare(before, after)  # entry 2 got worse
+
+
+def test_drop_unresolved_tags_and_labels():
+    # Card #795 / Mac M386: le (200017) left the French pack, but both the
+    # photo's tags and its point labels still pointed at it.
+    pack = {"lexemes": [{"id": 1}],
+            "catalog_images": [{"id": 9,
+                                "tags": [{"lexeme_id": 1}, {"lexeme_id": 200017}],
+                                "labels": [{"lexeme_id": 200017}, {"lexeme_id": 1}]}]}
+    assert qc.drop_unresolved_tags(pack) == 2
+    im = pack["catalog_images"][0]
+    assert im["tags"] == [{"lexeme_id": 1}] and im["labels"] == [{"lexeme_id": 1}]
