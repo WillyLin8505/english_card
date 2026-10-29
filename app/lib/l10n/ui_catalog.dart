@@ -1198,10 +1198,6 @@ const _templateCopy = <String, (String, String)>{
   ),
   '每天最多複習 {0} 張': ('Up to {0} reviews a day', 'Jusqu’à {0} révisions par jour'),
   '辨識單字列表 ({0})': ('Recognised words ({0})', 'Mots reconnus ({0})'),
-  'AI 在這張照片找到的字最難到「{0}」，按「重新掃描標籤」請 AI 找更難的字': (
-    'The hardest word the AI found here is “{0}”; tap “Rescan labels” for harder words',
-    'Le mot le plus difficile trouvé ici est « {0} » ; touchez « Réanalyser » pour en trouver'
-  ),
   '這 {0} 個字在詞庫裡還沒有圖片，可以先看單字': (
     'No lexicon pictures for these {0} words yet; here are the words',
     'Pas encore d’images pour ces {0} mots ; voici les mots'

@@ -106,6 +106,26 @@ void main() {
       }
     });
 
+    test('#940 a dot on the edge, or cropped away, stays on the picture', () {
+      const box = Size(358, 320);
+      for (final fit in const [BoxFit.contain, BoxFit.cover]) {
+        final geo = CoverGeometry(box, photo, fit: fit);
+        final area = geo.visibleIn(box).deflate(5.5);
+        for (final p in const [
+          LabelPoint(0, 0.5),
+          LabelPoint(1, 0),
+          LabelPoint(0.5, 1),
+          LabelPoint(0.1, 0.02), // cover crops this part away
+        ]) {
+          final dot = geo.dotIn(box, p);
+          expect(area.contains(dot), isTrue, reason: '$fit $p $dot');
+        }
+        // A point well inside is not moved.
+        const mid = LabelPoint(0.5, 0.5);
+        expect(geo.dotIn(box, mid), geo.toBox(mid));
+      }
+    });
+
     for (final frame in const [Size(358, 520), Size(358, 320)]) {
       testWidgets('dots and badges stay on the photo in a $frame frame',
           (tester) async {

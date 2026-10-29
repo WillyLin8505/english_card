@@ -230,6 +230,25 @@ class _CameraScreenState extends State<CameraScreen>
                   : 'AI 辨識就緒';
         }
 
+        // 問題回報 #941: with a camera, the 拍照 tab looks like a phone's own
+        // camera — the live view fills the screen, the controls float on it.
+        final controller = _controller;
+        if (controller != null) {
+          return _FullCamera(
+            controller: controller,
+            badge: badge,
+            busy: _busy,
+            torch: _torch,
+            onBadgeTap: !_busy && !scope.settings.taggingConfigured
+                ? () => scope.navigator.selectTab(AppTab.settings)
+                : null,
+            onSettings: () => scope.navigator.selectTab(AppTab.settings),
+            onGallery: _openPicker,
+            onShutter: _capture,
+            onTorch: _toggleTorch,
+          );
+        }
+
         return Scaffold(
           backgroundColor: MColors.canvas,
           body: SafeArea(
@@ -294,12 +313,6 @@ class _CameraScreenState extends State<CameraScreen>
                           // Without a camera the big middle button is the
                           // one 選擇照片 entry; gallery and flash are hidden
                           // (問題回報 #402).
-                          if (_controller != null)
-                            _RoundButton(
-                              label: '從相簿選擇',
-                              icon: MIcon.gallery20,
-                              onTap: _openPicker,
-                            ),
                           Tap(
                             onTap: _capture,
                             label: _controller == null ? '選擇照片' : '拍照',
@@ -339,13 +352,6 @@ class _CameraScreenState extends State<CameraScreen>
                               ),
                             ),
                           ),
-                          if (_controller != null)
-                            _RoundButton(
-                              label: _torch ? '關閉閃光燈' : '開啟閃光燈',
-                              icon: MIcon.zap,
-                              highlighted: _torch,
-                              onTap: _toggleTorch,
-                            ),
                         ],
                       ),
                       // With a camera, the badge and the top-right settings
@@ -396,45 +402,6 @@ class _CameraScreenState extends State<CameraScreen>
       },
     );
   }
-}
-
-class _RoundButton extends StatelessWidget {
-  final String label;
-  final MIcon icon;
-  final bool highlighted;
-  final VoidCallback onTap;
-
-  const _RoundButton({
-    required this.label,
-    required this.icon,
-    required this.onTap,
-    this.highlighted = false,
-  });
-
-  @override
-  Widget build(BuildContext context) => Tap(
-        onTap: onTap,
-        label: label,
-        child: Container(
-          width: 50,
-          height: 50,
-          decoration: MDecor.card(
-            color: highlighted ? MColors.primarySoft : MColors.surface,
-            borderColor: highlighted
-                ? MColors.primary.withValues(alpha: 0.3)
-                : MColors.borderSoft,
-            radius: MRadii.pill,
-            shadow: MShadows.soft,
-          ),
-          child: Center(
-            child: MSvg(
-              icon,
-              size: 20,
-              tint: highlighted ? MColors.primary : null,
-            ),
-          ),
-        ),
-      );
 }
 
 /// Figma viewfinder (11:18): 24px corners, the AI badge top-left.
@@ -538,4 +505,206 @@ class _Viewfinder extends StatelessWidget {
       ),
     );
   }
+}
+
+/// 問題回報 #941 (「看著有點陽春，換成更自然的拍照介面」): the phone-camera
+/// layout — the live view edge to edge on black, the status and 設定 on it at
+/// the top, and a dark bar at the bottom with 從相簿選擇, a white ring
+/// shutter and the flash.
+class _FullCamera extends StatelessWidget {
+  final CameraController controller;
+  final String badge;
+  final bool busy;
+  final bool torch;
+  final VoidCallback? onBadgeTap;
+  final VoidCallback onSettings;
+  final VoidCallback onGallery;
+  final VoidCallback onShutter;
+  final VoidCallback onTorch;
+
+  const _FullCamera({
+    required this.controller,
+    required this.badge,
+    required this.busy,
+    required this.torch,
+    required this.onBadgeTap,
+    required this.onSettings,
+    required this.onGallery,
+    required this.onShutter,
+    required this.onTorch,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final c = controller;
+    final Widget preview;
+    if (c.value.isInitialized) {
+      final size = c.value.previewSize;
+      final w = size == null ? 300.0 : math.min(size.width, size.height);
+      final h = size == null ? 400.0 : math.max(size.width, size.height);
+      preview = SizedBox.expand(
+        child: FittedBox(
+          fit: BoxFit.cover,
+          clipBehavior: Clip.hardEdge,
+          child: SizedBox(width: w, height: h, child: CameraPreview(c)),
+        ),
+      );
+    } else {
+      preview = const ColoredBox(color: Colors.black);
+    }
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Positioned.fill(child: preview),
+          // Top: what the camera and AI are doing, and 設定.
+          Positioned(
+            left: 0,
+            right: 0,
+            top: 0,
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                    MSpace.md, MSpace.sm, MSpace.md, 0),
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: Tap(
+                        onTap: onBadgeTap,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: MSpace.sm, vertical: MSpace.xxs + 2),
+                          decoration: MDecor.overlayPill(
+                            color: Colors.black.withValues(alpha: 0.45),
+                            radius: MRadii.xl,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const MSvg(MIcon.pulseDot, size: 8),
+                              const SizedBox(width: MSpace.xxs),
+                              Flexible(
+                                child: UiText(badge,
+                                    style: MFont.manrope(
+                                        12, FontWeight.w700, Colors.white)),
+                              ),
+                              if (onBadgeTap != null) ...[
+                                const SizedBox(width: MSpace.xxs),
+                                const Icon(Icons.chevron_right_rounded,
+                                    size: 14, color: Colors.white),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    _DarkRoundButton(
+                      label: '設定',
+                      icon: MIcon.settings20,
+                      size: 40,
+                      onTap: onSettings,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          // Bottom: gallery, shutter, flash on a dark bar.
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              color: Colors.black.withValues(alpha: 0.45),
+              padding: const EdgeInsets.fromLTRB(
+                  MSpace.xl, MSpace.md, MSpace.xl, MSpace.md),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _DarkRoundButton(
+                      label: '從相簿選擇', icon: MIcon.gallery20, onTap: onGallery),
+                  Tap(
+                    onTap: onShutter,
+                    label: '拍照',
+                    child: Container(
+                      key: const ValueKey('camera-shutter'),
+                      width: 74,
+                      height: 74,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 4),
+                      ),
+                      padding: const EdgeInsets.all(4),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: busy
+                              ? Colors.white.withValues(alpha: 0.45)
+                              : Colors.white,
+                        ),
+                        child: busy
+                            ? const Padding(
+                                padding: EdgeInsets.all(20),
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2.5, color: MColors.primary),
+                              )
+                            : null,
+                      ),
+                    ),
+                  ),
+                  _DarkRoundButton(
+                    label: torch ? '關閉閃光燈' : '開啟閃光燈',
+                    icon: MIcon.zap,
+                    highlighted: torch,
+                    onTap: onTorch,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A round button on the live view: white icon on dark glass; yellow when
+/// on (the flash), like the phone's camera.
+class _DarkRoundButton extends StatelessWidget {
+  final String label;
+  final MIcon icon;
+  final VoidCallback onTap;
+  final bool highlighted;
+  final double size;
+
+  const _DarkRoundButton({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+    this.highlighted = false,
+    this.size = 48,
+  });
+
+  @override
+  Widget build(BuildContext context) => Tap(
+        onTap: onTap,
+        label: label,
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white.withValues(alpha: highlighted ? 0.9 : 0.16),
+          ),
+          child: Center(
+            child: MSvg(icon,
+                size: 20,
+                tint: highlighted ? const Color(0xFF1F1F1F) : Colors.white),
+          ),
+        ),
+      );
 }

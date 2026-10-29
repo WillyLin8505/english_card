@@ -137,7 +137,7 @@ void main() {
   });
 
   // 問題回報 #675: set harder than anything the AI found, the page says so.
-  testWidgets('a harder setting than the photo\'s words shows a hint',
+  testWidgets('#942 a harder setting than the photo\'s words shows no hint',
       (tester) async {
     final repo = WordDatabaseRepository(
         clock: () => testNow,
@@ -168,7 +168,8 @@ void main() {
         initialTab: AppTab.album, repository: repo, size: const Size(390, 844));
     app.navigator.openPhoto('p1');
     await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('level-short-hint')), findsOneWidget);
-    expect(find.textContaining('最難到「入門」'), findsOneWidget);
+    // 問題回報 #942: the owner wants no explaining text while scanning.
+    expect(find.byKey(const ValueKey('level-short-hint')), findsNothing);
+    expect(find.textContaining('最難到'), findsNothing);
   });
 }

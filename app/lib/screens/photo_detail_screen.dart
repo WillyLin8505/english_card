@@ -804,27 +804,13 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
   /// under the difficulty bar they go with, not below the word list (#451).
   Widget _levelRow(Photo photo, PhotoWordSession session) {
     final topping = AppScope.of(context).queue.isToppingUp(photo.id);
-    // 問題回報 #675: a harder setting than any word the AI found here shows
-    // fewer words; say why and how to get harder ones.
-    final hardest = photo.candidates.isEmpty
-        ? -1
-        : photo.candidates
-            .map((c) => levelIndex(c.level))
-            .reduce((a, b) => a > b ? a : b);
-    final short = hardest >= 0 && session.target > hardest;
+    // 問題回報 #942: no explaining text here (the #675 hint 「AI 在這張照片
+    // 找到的字最難到…」 is gone); the buttons speak for themselves.
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (short)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: UiText(
-                  'AI 在這張照片找到的字最難到「${levelName(cefrLevels[hardest])}」，按「重新掃描標籤」請 AI 找更難的字',
-                  key: const ValueKey('level-short-hint'),
-                  style: MFont.manrope(12, FontWeight.w600, MColors.muted)),
-            ),
           _LevelRow(
             bias: session.bias,
             busy: topping || session.fetchingMore != null || session.rescanning,
