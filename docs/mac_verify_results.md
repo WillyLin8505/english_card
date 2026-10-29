@@ -2299,4 +2299,4 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 
 | 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
 |----|----|----|----|----|
-| #793 flutter analyze／test | 通過 | Mac 上 flutter analyze lib test 只有 4 個 info；flutter test 813 通過、3 個略過，All tests passed!（Windows 是 814 過 2 略過，多一個略過是 Mac 上那個只在 Windows 跑的測試） |  |  |
+| #793 flutter analyze／test | 通過 | Mac 上 flutter analyze lib test 只有 4 個 info；flutter test 813 通過、3 個略過，All tests passed!（Windows 是 814 過 2 略過；Mac 多 1 個略過，原因沒查） |  |  |
