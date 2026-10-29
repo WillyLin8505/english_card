@@ -2373,3 +2373,11 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 |----|----|----|----|----|
 | #798／#913 有自己卡的字不併 | 通過 | iPad 下載包 0fdcae8a：wedding、boring、being、amazing、working 都是 hasOwnEntry＝true，檢查時認成自己（已在單字本，不是併入 wed／bore／be）；對單字本 8,680 個字照 _linkSteps 的規則試算，「一字一張卡」現在會併的字 0 個 |  |  |
 | #799／#914 純變化形照樣併入原形 | 通過 | abandoned → 已在單字本（併入 abandon）、ran → run、apples → apple；brewed → brew、tethered → tether 是變成原形再加入。worried 在詞庫沒有自己的卡（hasOwnEntry＝false），照規則併入 worry。按鈕數字和實際加入一致已在 M351／M375 驗過 |  |  |
+
+## 2026-10-29 #915 清掉 iPad 測試字（[給 Mac]，owner 在 Mac 對話確認）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #915 備份 | 通過 | 刪之前把 iPad 上 7 個 wd_*.hive 複製到 Mac「flash card /ipad_backup_2026-10-29/」（不在 repo 裡）：wd_entries.hive 62,756,390 bytes（8,680 個字）、wd_cards 4,087,385、wd_meta 570,244、wd_photos 58,371、wd_occurrences 24,699、wd_review_logs 6,108、wd_albums 190 bytes |  |  |
+| #915 刪除 | 通過 | 規則：10/29 07:40～12:00（批量加字測試的時段）建立、不在任何照片上、沒有手動編輯、沒有複習紀錄的字。先試算 8,615 個，owner 在 Mac 對話確認後，在 App 開起來之前用 App 自己的 store 刪（會先檢查數字剛好 8,615 才動手）。結果：刪前 8,680 個，刪了 8,615 個字和 8,615 張卡，刪後 65 個（10/28 原有的 48 個＋照片上用到的 17 個）；照片 17、相簿 1、照片標籤 91、複習紀錄 9，刪前刪後都一樣 |  |  |
+| #915 重開兩次 | 通過 | 第 1、2 次重開：啟動時 65、20 秒後 65；照片 17 張、標籤 91 個；沒有跳「詞庫已更新」。相片冊 rrr 仍是 16 個單字，照片和 lightbulb 標籤正常；單字本第一個是 apple 蘋果 | docs/mac_verify_shots/2026-10-29/m915_album_open.png |  |
