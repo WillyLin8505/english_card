@@ -3378,3 +3378,8 @@ commit `74fb92bc`（Windows：flutter analyze 無 error、01:28 +814 ~2: All tes
   結果：結論：已改成「本身是詞庫單字就保留自己的卡」（A），wedding／boring／being 等不再併進 wed／bore／be；三個問題回報 #913、#912、#914 同一個規則處理。
 - 卡 #799：問題回報 #914：[Mac] 2026-10-29 M352／M354 卡 #771 檢查時標出併入原形（iP：#77
   結果：已修好（程式已在 repo，69e1e2bb）：檢查時改用與 foldInto 相同的 lookup(word, pos:) + form/family 規則，原形已在單字本的 boring、amazing 等標成「已在單字本（併入 X）」，N 與實際加入數一致。
+
+## M393（2026-10-29 23:05）狀態：待做
+commit `ad3ba4e9`（Windows：flutter analyze 無 error、01:19 +814 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #800：問題回報 #933：照片標籤詞性錯：serve 標成 adj.（iPad 早餐照片 photo-179328382097
+  結果：全部完成：照片標籤詞性已修正——新標籤在入庫時依詞典校正，既有 4,375 張圖共 9,235 個標籤（如 serve、texture 被標 adj.）已改成詞典有的詞性。
