@@ -46,3 +46,14 @@ String sizedServerImage(String url, {int side = servedImageSide}) {
   if (const ['w', 'max', 'size'].any(query.containsKey)) return url;
   return uri.replace(queryParameters: {...query, 'w': '$side'}).toString();
 }
+
+/// The server's small copy of a picture [sizedServerImage] asked at
+/// [servedImageSide] (問題回報 #938): for tiles and covers drawn ≤ 512 px.
+/// Other URLs are unchanged.
+String thumbServerImage(String url, {int side = 480}) {
+  final uri = Uri.tryParse(url);
+  if (uri == null || !uri.path.endsWith('/api/image')) return url;
+  if (uri.queryParameters['w'] != '$servedImageSide') return url;
+  return uri.replace(queryParameters: {...uri.queryParameters, 'w': '$side'})
+      .toString();
+}

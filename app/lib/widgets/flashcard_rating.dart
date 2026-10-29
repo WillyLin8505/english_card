@@ -20,10 +20,36 @@ class ExampleText extends StatelessWidget {
   Widget build(BuildContext context) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          LinkedText(example.text,
-              style: MFont.manrope(15, FontWeight.w800, MColors.ink),
-              links: links,
-              onOpenWord: onOpenWord),
+          // Card #807 (owner 2026-10-29): a sentence with a synthesized
+          // recording gets a play button; no recording, no button (never the
+          // phone's TTS for a whole sentence).
+          if (example.audioUrl case final url?)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: LinkedText(example.text,
+                      style: MFont.manrope(15, FontWeight.w800, MColors.ink),
+                      links: links,
+                      onOpenWord: onOpenWord),
+                ),
+                IconButton(
+                  tooltip: '播放例句',
+                  visualDensity: VisualDensity.compact,
+                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                  onPressed: () => AppScope.of(context).speak(
+                      context, example.text,
+                      language: AppScope.of(context).repository.language,
+                      audioUrl: url),
+                  icon: const Icon(Icons.volume_up_outlined, size: 20),
+                ),
+              ],
+            )
+          else
+            LinkedText(example.text,
+                style: MFont.manrope(15, FontWeight.w800, MColors.ink),
+                links: links,
+                onOpenWord: onOpenWord),
           if (showTranslation && example.translation != null) ...[
             const SizedBox(height: 2),
             Text.rich(TextSpan(children: [

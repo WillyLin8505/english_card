@@ -767,9 +767,9 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
 
   Widget? _overlayFor(Photo photo, PhotoWordSession session) {
     final scope = AppScope.of(context);
-    if (scope.queue.current == photo.id ||
-        (photo.taggingStatus == TaggingStatus.tagging &&
-            photo.candidates.isEmpty)) {
+    if (photo.candidates.isEmpty &&
+        (scope.queue.current == photo.id ||
+            photo.taggingStatus == TaggingStatus.tagging)) {
       // 問題回報 #409: a light bar sweeps the photo while it is read.
       // 問題回報 #851: says what is happening — 「AI 正在找單字…」.
       return const Stack(
@@ -782,15 +782,17 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
     // 問題回報 #851: a rescan or a top-up (多看動詞…) is tagging too — the
     // labels stay usable, with the sweep and the same note on top until
     // the AI answers.
+    // 問題回報 #939: the note sits at the bottom edge, never over the labels.
     if (session.rescanning ||
         session.fetchingMore != null ||
+        scope.queue.current == photo.id ||
         scope.queue.isToppingUp(photo.id)) {
       return const IgnorePointer(
         child: Stack(
           children: [
             Positioned.fill(child: PhotoScanSweep()),
             Positioned(
-              top: MSpace.sm,
+              bottom: MSpace.sm,
               left: 0,
               right: 0,
               child: Center(child: _PhotoScanningChip()),

@@ -8,6 +8,7 @@ import 'package:flutter/widgets.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../models/photo.dart';
+import '../../services/pack_media.dart' show thumbServerImage;
 import '../../services/photo_store.dart';
 
 // How photos are loaded (card #252: 照片載入有時候需要時間). Before, every
@@ -76,7 +77,17 @@ ImageProvider<Object>? photoProvider(
   final source = photoSource(photo, store);
   if (source == null) return null;
   final width = photoDecodeWidth(photo, box, dpr, fit: fit);
-  return width == null ? source : ResizeImage(source, width: width);
+  if (width == null) return source;
+  // 問題回報 #938: a grid tile / cover shows at ≤ 512 px, so it asks the
+  // server for a 480 px copy (≈ 30 KB) instead of the 1536 px one (≈ 400 KB).
+  final url = photo.networkUrl;
+  if (!kIsWeb && url != null && width <= 512) {
+    final small = thumbServerImage(url);
+    if (small != url) {
+      return ResizeImage(CachedNetworkPhoto(small), width: width);
+    }
+  }
+  return ResizeImage(source, width: width);
 }
 
 /// Starts loading [photo] for a [box] of that size before it is shown —

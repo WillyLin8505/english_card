@@ -19,8 +19,12 @@ void main() {
 
     // The 隱私 card's switch (設定 also has the photo-label switch).
     final sw = find.byKey(const ValueKey('usage-stats-switch'));
+    await tester.scrollUntilVisible(sw, 300,
+        scrollable: find.byType(Scrollable).first);
     expect(sw, findsOneWidget);
     await tester.ensureVisible(sw);
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -250));
+    await tester.pumpAndSettle();
     expect(tester.widget<Switch>(sw).value, isFalse);
 
     await tester.tap(sw);

@@ -14,6 +14,7 @@ import '../models/word_entry.dart';
 import '../services/accent_audio.dart';
 import '../services/app_settings.dart';
 import '../services/connection_qr.dart';
+import '../services/interest_topics.dart';
 import '../services/lexicon_pack.dart';
 import '../services/tagging_service.dart';
 import '../services/word_database_query.dart';
@@ -444,6 +445,52 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 ),
                             ],
                           ),
+                        ],
+                      ),
+                      // 卡 #814: the two onboarding questions, editable here.
+                      _Card(
+                        title: '學習目的與興趣',
+                        children: [
+                          UiText('你為什麼想學？',
+                              style: MFont.manrope(
+                                  15, FontWeight.w800, MColors.ink)),
+                          const SizedBox(height: 8),
+                          Wrap(spacing: 8, runSpacing: 8, children: [
+                            for (final (key, label, _) in learningGoalOptions)
+                              FilterChip(
+                                key: ValueKey('goal:$key'),
+                                label: UiText(label),
+                                selected: settings.learningGoals.contains(key),
+                                onSelected: (on) => settings.learningGoals = [
+                                  for (final o in learningGoalOptions)
+                                    if (o.$1 == key
+                                        ? on
+                                        : settings.learningGoals.contains(o.$1))
+                                      o.$1
+                                ],
+                              ),
+                          ]),
+                          const SizedBox(height: 16),
+                          UiText('你對哪些主題有興趣？',
+                              style: MFont.manrope(
+                                  15, FontWeight.w800, MColors.ink)),
+                          const SizedBox(height: 8),
+                          Wrap(spacing: 8, runSpacing: 8, children: [
+                            for (final (key, label, _, _) in interestOptions)
+                              FilterChip(
+                                key: ValueKey('interest:$key'),
+                                label: UiText(label),
+                                selected: settings.interests.contains(key),
+                                onSelected: (on) => settings.interests = [
+                                  for (final o in interestOptions)
+                                    if (o.$1 == key
+                                        ? on
+                                        : settings.interests.contains(o.$1))
+                                      o.$1
+                                ],
+                              ),
+                          ]),
+                          _note('用來先列出符合的卡片集。'),
                         ],
                       ),
                       // 問題回報 #317: the review card's look only.

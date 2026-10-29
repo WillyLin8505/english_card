@@ -20,6 +20,7 @@ import 'package:photo_english_app/services/speaker.dart';
 import 'package:photo_english_app/services/tagging_service.dart';
 import 'package:photo_english_app/services/word_database_repository.dart';
 import 'package:photo_english_app/theme/mobile_theme.dart';
+import 'package:photo_english_app/widgets/mobile/common.dart';
 
 import 'helpers.dart';
 
@@ -711,6 +712,10 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('已學一段時間'));
       await tester.pump();
+      for (var i = 0; i < 2; i++) {
+        await tester.tap(find.byType(PrimaryButton));
+        await tester.pumpAndSettle();
+      }
       await tester.tap(find.text('想測看看？試試單字程度（可略過）'));
       await tester.pumpAndSettle();
       for (final words in [
@@ -751,6 +756,10 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('熟練'));
       await tester.pump();
+      for (var i = 0; i < 2; i++) {
+        await tester.tap(find.byType(PrimaryButton));
+        await tester.pumpAndSettle();
+      }
       await tester.tap(find.text('想測看看？試試單字程度（可略過）'));
       await tester.pumpAndSettle();
       var screens = 0;
@@ -785,6 +794,10 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('會基礎單字'));
       await tester.pump();
+      for (var i = 0; i < 2; i++) {
+        await tester.tap(find.byType(PrimaryButton));
+        await tester.pumpAndSettle();
+      }
       await tester.tap(find.text('開始使用'));
       expect((result!.learningLanguage, result!.level, result!.source),
           ('en', 'A2', 'self'));

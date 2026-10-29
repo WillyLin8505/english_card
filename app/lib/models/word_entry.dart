@@ -148,6 +148,10 @@ class WordExample {
   /// The translation was written by the AI (「AI 翻譯」).
   final bool aiTranslated;
 
+  /// A synthesized recording of the whole sentence (card #807, owner
+  /// 2026-10-29); null means no play button.
+  final String? audioUrl;
+
   const WordExample({
     required this.text,
     this.senseId,
@@ -156,6 +160,7 @@ class WordExample {
     this.difficulty,
     this.aiGenerated = false,
     this.aiTranslated = false,
+    this.audioUrl,
   });
 
   WordExample copyWith({String? translation, bool? aiTranslated}) =>
@@ -167,6 +172,7 @@ class WordExample {
         difficulty: difficulty,
         aiGenerated: aiGenerated,
         aiTranslated: aiTranslated ?? this.aiTranslated,
+        audioUrl: audioUrl,
       );
 
   factory WordExample.fromJson(Map<String, dynamic> j) => WordExample(
@@ -177,6 +183,7 @@ class WordExample {
         difficulty: (j['difficulty'] ?? j['level']) as String?,
         aiGenerated: j['aiGenerated'] as bool? ?? false,
         aiTranslated: j['aiTranslated'] as bool? ?? false,
+        audioUrl: j['audioUrl'] as String?,
       );
 
   Map<String, dynamic> toJson() => {
@@ -187,6 +194,7 @@ class WordExample {
         'difficulty': difficulty,
         'aiGenerated': aiGenerated,
         'aiTranslated': aiTranslated,
+        if (audioUrl != null) 'audioUrl': audioUrl,
       };
 }
 
@@ -516,7 +524,8 @@ class WordEntry {
               // The word database's AI source (a level it filled / a
               // translation it lacked).
               aiGenerated: e.source == 'ai_translate',
-              aiTranslated: e.zhSource == 'ai_translate'),
+              aiTranslated: e.zhSource == 'ai_translate',
+              audioUrl: e.audioUrl),
       ],
       related: related,
       forms: [

@@ -90,6 +90,16 @@ class AppSettings extends ChangeNotifier {
   int _dailyReviewLimit;
   bool _showPhotoLabels;
 
+  // 新手引導的「學習目的」與「興趣主題」（卡 #814）: stable keys from
+  // interest_topics.dart, comma-joined in the box. Empty = skipped.
+  late List<String> _learningGoals = _readList('learningGoals');
+  late List<String> _interests = _readList('interests');
+
+  List<String> _readList(String key) => [
+        for (final s in (_box?.get(key) ?? '').split(','))
+          if (s.isNotEmpty) s
+      ];
+
   /// Defaults for a build that knows where its tagger is:
   /// `flutter run --dart-define-from-file=tagging.local.json` (see
   /// tagger/README.md). Anything typed in 設定 wins over these.
@@ -265,6 +275,23 @@ class AppSettings extends ChangeNotifier {
   /// 設定 → 照片上的單字標示: the word's label on the photo of a review card.
   /// Default on.
   bool get showPhotoLabels => _showPhotoLabels;
+
+  /// Why the learner learns (travel, work…), keys of [learningGoalOptions].
+  List<String> get learningGoals => List.unmodifiable(_learningGoals);
+
+  /// Topics the learner likes, keys of [interestOptions]; 卡片集 lists the
+  /// matching decks first.
+  List<String> get interests => List.unmodifiable(_interests);
+
+  set learningGoals(List<String> v) {
+    _learningGoals = [...v];
+    _save('learningGoals', _learningGoals.join(','));
+  }
+
+  set interests(List<String> v) {
+    _interests = [...v];
+    _save('interests', _interests.join(','));
+  }
 
   /// The level chosen in an older version's settings, used once to start
   /// the learner's profile.

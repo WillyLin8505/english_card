@@ -231,6 +231,8 @@ class _PhotoEnglishAppState extends State<PhotoEnglishApp>
   Future<void> _finishOnboarding(OnboardingResult r) async {
     final settings = widget.settings;
     settings.nativeLanguage = r.nativeLanguage;
+    settings.learningGoals = r.goals;
+    settings.interests = r.interests;
     await _switchLanguage(r.learningLanguage);
     _repository.setLevel(r.level, source: r.source);
     settings.onboarded = true;
@@ -239,6 +241,8 @@ class _PhotoEnglishAppState extends State<PhotoEnglishApp>
       'native_language': r.nativeLanguage,
       'level': r.level.toString(),
       'level_source': r.source.toString(),
+      'goals': r.goals.join(','),
+      'interests': r.interests.join(','),
     });
   }
 

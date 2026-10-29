@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../models/word_entry.dart';
 import '../services/app_settings.dart';
 import '../services/cefr_lexicon.dart';
+import '../services/interest_topics.dart';
 import '../theme/mobile_theme.dart';
 import '../widgets/mobile/common.dart';
 
@@ -16,8 +17,13 @@ class OnboardingResult {
   /// 'self' (自評 only) or 'check' (with the quick vocabulary check).
   final String source;
 
+  /// 學習目的 / 興趣主題 keys (卡 #814); empty when skipped.
+  final List<String> goals;
+  final List<String> interests;
+
   const OnboardingResult(
-      this.learningLanguage, this.nativeLanguage, this.level, this.source);
+      this.learningLanguage, this.nativeLanguage, this.level, this.source,
+      {this.goals = const [], this.interests = const []});
 }
 
 /// 自評背景 → starting CEFR (spec section 7, 首次程度估計: 從未接觸、會基礎
@@ -103,6 +109,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   // only: the native preselection falls back to Chinese).
   bool _nativeChosen = false;
   String? _self;
+  final Set<String> _goals = {};
+  final Set<String> _interests = {};
   final Map<String, List<bool>> _known = {};
 
   @override
@@ -136,12 +144,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       _native,
       checked ? levelFromCheck(_known) : self,
       checked ? 'check' : 'self',
+      goals: [
+        for (final o in learningGoalOptions)
+          if (_goals.contains(o.$1)) o.$1
+      ],
+      interests: [
+        for (final o in interestOptions)
+          if (_interests.contains(o.$1)) o.$1
+      ],
     ));
   }
 
   @override
   Widget build(BuildContext context) {
-    final steps = [_languages, _background, if (_canCheck) _check];
+    final steps = [_languages, _background, _goalsPage, _interestsPage, if (_canCheck) _check];
     return UiLanguageScope(
         language: _nativeChosen ? _native : widget.uiLanguage,
         child: Scaffold(
@@ -334,21 +350,91 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               onTap: () => setState(() => _self = level),
             ),
         ],
+        action: PrimaryButton(
+            label: '下一步',
+            onTap: _self == null ? null : () => setState(() => _step = 2)),
+      );
+
+  /// A multi-select chip (學習目的 / 興趣主題).
+  Widget _chip(String label, IconData icon, bool selected, VoidCallback onTap) =>
+      Tap(
+        onTap: onTap,
+        label: selected ? '$label（已選）' : label,
+        labelOnly: true,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: selected ? MColors.primarySoft : Colors.white,
+            border: Border.all(
+                color: selected ? MColors.primary : MColors.borderSoft,
+                width: 1.5),
+            borderRadius: MRadii.rXl,
+          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(selected ? Icons.check_circle : icon,
+                size: 20, color: selected ? MColors.primary : MColors.muted),
+            const SizedBox(width: 8),
+            Flexible(
+                child: UiText(label,
+                    style: MFont.manrope(15, FontWeight.w800, MColors.ink))),
+          ]),
+        ),
+      );
+
+  void _toggle(Set<String> set, String key) =>
+      setState(() => set.contains(key) ? set.remove(key) : set.add(key));
+
+  Widget _goalsPage() => _page(
+        title: '你為什麼想學？',
+        subtitle: '可以複選，也可以略過。',
+        children: [
+          Wrap(spacing: 10, runSpacing: 10, children: [
+            for (final (key, label, icon) in learningGoalOptions)
+              _chip(label, icon, _goals.contains(key),
+                  () => _toggle(_goals, key)),
+          ]),
+        ],
+        action: Column(children: [
+          PrimaryButton(
+              label: '下一步', onTap: () => setState(() => _step = 3)),
+          TextButton(
+              onPressed: () => setState(() {
+                    _goals.clear();
+                    _step = 3;
+                  }),
+              child: const UiText('略過')),
+        ]),
+      );
+
+  Widget _interestsPage() => _page(
+        title: '你對哪些主題有興趣？',
+        subtitle: '可以複選，也可以略過。我們會先列出符合的卡片集。',
+        children: [
+          Wrap(spacing: 10, runSpacing: 10, children: [
+            for (final (key, label, icon, _) in interestOptions)
+              _chip(label, icon, _interests.contains(key),
+                  () => _toggle(_interests, key)),
+          ]),
+        ],
         action: Column(
           children: [
             PrimaryButton(
               label: _self == 'A1' ? '從基礎開始' : '開始使用',
-              onTap: _self == null ? null : () => _finish(checked: false),
+              onTap: () => _finish(checked: false),
             ),
+            TextButton(
+                onPressed: () {
+                  _interests.clear();
+                  _finish(checked: false);
+                },
+                child: const UiText('略過')),
             if (_canCheck)
               TextButton(
-                onPressed: _self == null
-                    ? null
-                    : () => setState(() {
-                          _step = 2;
-                          _checkLevel = 0;
-                          _known.clear();
-                        }),
+                onPressed: () => setState(() {
+                  _step = 4;
+                  _checkLevel = 0;
+                  _known.clear();
+                }),
                 child: const UiText('想測看看？試試單字程度（可略過）'),
               ),
           ],

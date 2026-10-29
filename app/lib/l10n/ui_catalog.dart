@@ -1503,4 +1503,34 @@ const _templateCopy = <String, (String, String)>{
   ),
   // 問題回報 #851: the note on a photo the AI is still tagging.
   'AI 正在找單字…': ('AI is finding words…', 'L’IA cherche des mots…'),
+  // 卡 #814: 新手引導的學習目的與興趣主題.
+  '你為什麼想學？': ('Why do you want to learn?', 'Pourquoi voulez-vous apprendre ?'),
+  '你對哪些主題有興趣？': (
+    'Which topics interest you?',
+    'Quels sujets vous intéressent ?'
+  ),
+  '可以複選，也可以略過。': ('Pick any, or skip.', 'Plusieurs choix possibles, ou passez.'),
+  '可以複選，也可以略過。我們會先列出符合的卡片集。': (
+    'Pick any, or skip. Matching card sets are listed first.',
+    'Plusieurs choix possibles, ou passez. Les jeux de cartes correspondants passent en premier.'
+  ),
+  '略過': ('Skip', 'Passer'),
+  '旅行': ('Travel', 'Voyage'),
+  '工作': ('Work', 'Travail'),
+  '考試': ('Exams', 'Examens'),
+  '學校課業': ('School', 'École'),
+  '和家人朋友溝通': ('Talking with family and friends', 'Parler avec ma famille et mes amis'),
+  '興趣／看影片': ('Hobbies / watching videos', 'Loisirs / vidéos'),
+  '日常基礎': ('Everyday basics', 'Bases du quotidien'),
+  '食物': ('Food', 'Nourriture'),
+  '廚房': ('Kitchen', 'Cuisine'),
+  '客廳': ('Living room', 'Salon'),
+  '戶外': ('Outdoors', 'Extérieur'),
+  '動物': ('Animals', 'Animaux'),
+  '進階單字': ('Advanced words', 'Mots avancés'),
+  '學習目的與興趣': ('Goals and interests', 'Objectifs et centres d’intérêt'),
+  '用來先列出符合的卡片集。': (
+    'Used to list matching card sets first.',
+    'Sert à afficher d’abord les jeux de cartes correspondants.'
+  ),
 };

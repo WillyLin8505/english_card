@@ -10,6 +10,7 @@ import '../models/word_candidate.dart';
 import '../models/card_template.dart';
 import '../models/word_detail.dart';
 import '../models/word_entry.dart';
+import 'pack_media.dart';
 import 'learning_content.dart'
     show formLabel, frenchGenderLabel, frenchWithArticle, posLabel;
 import 'lexicon_sqlite_stub.dart' if (dart.library.ffi) 'lexicon_sqlite.dart';
@@ -461,7 +462,10 @@ class LexiconPack extends ChangeNotifier {
                       source: x.source,
                       difficulty: x.difficulty,
                       aiGenerated: x.aiGenerated,
-                      aiTranslated: x.translationAi)
+                      aiTranslated: x.translationAi,
+                      audioUrl: x.audio == null || x.audio!.isEmpty
+                          ? null
+                          : packRecordingUrl(mediaBase, x.audio!))
               ]),
       ];
 
@@ -758,7 +762,11 @@ class LexExample {
 
   const LexExample(this.text, this.translation, this.translationAi, this.source,
       this.difficulty,
-      {this.senseId, this.license});
+      {this.senseId, this.license, this.audio});
+
+  /// The synthesized recording of the sentence, relative to the pack's media
+  /// folder (card #807); null when it has none.
+  final String? audio;
 
   /// The sentence's license as the pack stores it ("CC BY 2.0 FR"), for
   /// credits outside the app (匯出到 Anki, 問題回報 #325).
@@ -981,7 +989,8 @@ class LexDetail {
               e['source'] as String?,
               (e['level'] ?? e['difficulty']) as String?,
               senseId: (e['sense_id'] as num?)?.toInt(),
-              license: e['license'] as String?),
+              license: e['license'] as String?,
+              audio: e['audio'] as String?),
       ],
       relations: [
         for (final r in list('relations'))
@@ -1427,7 +1436,10 @@ class LexEntry {
               zh: e.translation,
               source: e.source,
               zhSource: e.translationAi ? 'ai_translate' : null,
-              difficulty: e.difficulty),
+              difficulty: e.difficulty,
+              audioUrl: e.audio == null || e.audio!.isEmpty
+                  ? null
+                  : packRecordingUrl(LexiconPack.instance.mediaBase, e.audio!)),
       ],
       relations: [
         for (final r in relations)

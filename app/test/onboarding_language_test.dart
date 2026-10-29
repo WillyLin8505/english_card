@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:photo_english_app/screens/onboarding_screen.dart';
 import 'package:photo_english_app/services/app_settings.dart';
 import 'package:photo_english_app/theme/mobile_theme.dart';
+import 'package:photo_english_app/widgets/mobile/common.dart';
 
 import 'helpers.dart';
 
@@ -23,6 +24,14 @@ void main() {
           uiLanguage: uiLanguage),
     ));
     return () => result;
+  }
+
+  /// 背景頁 → 學習目的 → 興趣主題 (卡 #814 added two pages before the check).
+  Future<void> toInterests(WidgetTester tester) async {
+    for (var i = 0; i < 2; i++) {
+      await tester.tap(find.byType(PrimaryButton));
+      await tester.pumpAndSettle();
+    }
   }
 
   void openFrench() {
@@ -58,6 +67,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Know basic words'));
     await tester.pump();
+    await toInterests(tester);
     await tester.tap(find.text('Get started'));
     expect((result()!.learningLanguage, result()!.nativeLanguage),
         ('en', 'zh-TW'));
@@ -72,6 +82,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Je connais les bases'));
     await tester.pump();
+    await toInterests(tester);
     await tester.tap(find.text('Commencer'));
     expect(
         (result()!.learningLanguage, result()!.nativeLanguage), ('en', 'fr'));
@@ -88,6 +99,7 @@ void main() {
     expect(find.text('How well do you know French?'), findsOneWidget);
     await tester.tap(find.text('Know basic words'));
     await tester.pump();
+    await toInterests(tester);
     await tester.tap(find.text('Try a vocabulary check (optional)'));
     await tester.pumpAndSettle();
     expect(find.text('pomme'), findsOneWidget);
@@ -124,6 +136,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Je connais les bases'));
     await tester.pump();
+    await toInterests(tester);
     await tester.tap(find.text('Commencer'));
     expect((result()!.learningLanguage, result()!.nativeLanguage),
         ('fr', 'en'));

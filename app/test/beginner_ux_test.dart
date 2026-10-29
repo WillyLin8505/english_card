@@ -21,8 +21,16 @@ void main() {
     expect(find.text('上一步'), findsOneWidget);
     await tester.tap(find.text('從未接觸'));
     await tester.pump();
+    await tester.tap(find.text('下一步'));
+    await tester.pumpAndSettle();
+    expect(find.text('你為什麼想學？'), findsOneWidget);
+    await tester.tap(find.text('略過'));
+    await tester.pumpAndSettle();
+    expect(find.text('你對哪些主題有興趣？'), findsOneWidget);
     await tester.tap(find.text('從基礎開始'));
     expect(result!.level, 'A1');
+    expect(result!.goals, isEmpty);
+    expect(result!.interests, isEmpty);
     expect(result!.source, 'self');
     expect(find.text('jurisdiction'), findsNothing);
     expect(tester.takeException(), isNull);

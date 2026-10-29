@@ -9,6 +9,7 @@ import '../services/pack_media.dart' show sizedServerImage;
 import '../theme/mobile_theme.dart';
 import '../widgets/mobile/common.dart';
 import '../widgets/mobile/photo_cache.dart' show networkPhoto;
+import '../services/interest_topics.dart';
 import 'photo_grid_screen.dart';
 
 /// 卡片集 (card #323, 問題回報 #320). Layout choice: a full-screen list
@@ -124,12 +125,13 @@ class _DeckBrowserScreenState extends State<DeckBrowserScreen> {
           listenable: _library,
           builder: (context, _) {
             // Offline, the decks already downloaded stay listed and usable.
-            final shown = <DeckInfo>[
+            // 新手引導的興趣主題（卡 #814）: matching decks first.
+            final shown = sortByInterests(<DeckInfo>[
               ...?_available,
               for (final d in _library.installed)
                 if (!(_available ?? const []).any((a) => a.slug == d.info.slug))
                   d.info,
-            ];
+            ], AppScope.of(context).settings.interests);
             return Column(
               children: [
                 const MNavBar(title: '卡片集'),
@@ -232,7 +234,7 @@ class _DeckCard extends StatelessWidget {
               child: Image(
                 image: networkPhoto(sizedServerImage(
                     library.imageUri(cover).toString(),
-                    side: 1024)),
+                    side: 768)),
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) =>
                     const ColoredBox(color: MColors.primarySoft),
