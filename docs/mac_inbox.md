@@ -3372,7 +3372,7 @@ commit `6837c4b6`（Windows：flutter analyze 無 error、01:05 +814 ~2: All tes
 - 卡 #224：模擬使用者・拍照
   結果：第 211 輪（photoui）＋ pins：2/2 通過，33,439 張照片、100,317 個版面，標籤遮點 0（無新錯誤）；沒有新的 UX 建議（#583、#584 仍待決定）。
 
-## M392（2026-10-29 22:36）狀態：待做
+## M392（2026-10-29 22:36）狀態：完成
 commit `74fb92bc`（Windows：flutter analyze 無 error、01:28 +814 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #798：問題回報 #913：[owner] wedding、boring、being 這類字要不要併進 wed、bore、be
   結果：結論：已改成「本身是詞庫單字就保留自己的卡」（A），wedding／boring／being 等不再併進 wed／bore／be；三個問題回報 #913、#912、#914 同一個規則處理。

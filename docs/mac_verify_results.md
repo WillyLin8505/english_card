@@ -2366,3 +2366,10 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 |----|----|----|----|----|
 | #614 相片冊裡的圖片 | 通過 | 10/23 已修（d0d8d51b，存的路徑不在時到這次安裝的照片資料夾找同檔名，程式仍在 photo_store.dart）。iPad 實機：16 張照片都有本機檔，找不到檔案 0 張；相片冊顯示 rrr，點開後照片和標籤 lightbulb、filament 正常顯示。程式不用再改 | docs/mac_verify_shots/2026-10-29/m614_album_open.png |  |
 | #847 開發版辨識後上傳到後台 | 通過 | iPad（開發版，有伺服器網址）：DevPhotoUpload.enabled＝true；用 intake 加內建範例照片（早餐），photo id photo-1793283820973489，22:23:40 加入，49 秒辨識完，8 個標籤 apple、bread、cup、plate、saucepan、table、cut、serve；佇列自己上傳後，再用同一張照片呼叫一次 DevPhotoUpload.send，伺服器回 201（178,585 bytes）。後台「手機照片」頁需要登入，Mac 看不到，已請 Windows 確認這張有出現 |  |  |
+
+## 2026-10-29 M392 卡 #798（#913 規則 A）、#799（#914）（iPad 實機，74fb92bc，唯讀檢查）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #798／#913 有自己卡的字不併 | 通過 | iPad 下載包 0fdcae8a：wedding、boring、being、amazing、working 都是 hasOwnEntry＝true，檢查時認成自己（已在單字本，不是併入 wed／bore／be）；對單字本 8,680 個字照 _linkSteps 的規則試算，「一字一張卡」現在會併的字 0 個 |  |  |
+| #799／#914 純變化形照樣併入原形 | 通過 | abandoned → 已在單字本（併入 abandon）、ran → run、apples → apple；brewed → brew、tethered → tether 是變成原形再加入。worried 在詞庫沒有自己的卡（hasOwnEntry＝false），照規則併入 worry。按鈕數字和實際加入一致已在 M351／M375 驗過 |  |  |
