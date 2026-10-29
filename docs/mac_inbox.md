@@ -3278,3 +3278,10 @@ commit `8f525fe0`（Windows：flutter analyze 無 error、01:56 +812 ~2: All tes
 - word_database_repository.dart:1117 fold && !pack.bundled，內建包永不 fold，下載包才 fold。
 驗證：flutter analyze lib/services 只有 2 個既有 info；card745_bulk_add、dictionary_sync、card428_sqlite_sync、relation_meaning 測試全過。
 未做：沒有針對「內建包不 fold」的單元測試，也未在 Windows 實機重現 iPad 流程；未動詞庫資料，故無需 golden/QC、備份。
+
+## M375（2026-10-29 11:46）狀態：待做
+commit `80f1b848`（Windows：flutter analyze 無 error、03:18 +812 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #786：問題回報 #925：[Mac] 2026-10-29 M366～M371 複習開始時間、小螢幕選字卡、borin：#92
+  結果：結論：Windows 工作樹已含修法（card #785，未 commit）；Mac 測的 5c6ff800 不含，所以重開仍掉到 8488。本卡驗證通過、未再改碼。
+- 卡 #12：模擬使用者・跨分頁（亂點、詞庫更新）
+  結果：第 206/207 輪：packupdate 通過（300 秒）、fuzz 第 206 輪中途中斷、重跑第 207 輪通過（265 秒，無 findings），沒有新問題。
