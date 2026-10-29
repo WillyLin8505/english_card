@@ -72,7 +72,7 @@ KEY_FILE = os.path.join(HERE, '.api_key')
 CMUDICT = os.path.join(ROOT, 'data', 'raw', 'cmudict.dict')
 DEFAULT_MODEL = 'qwen3.5:4b'
 MAX_BODY = 20 * 1024 * 1024
-PROMPT_VERSION = 'photo-tags-context-v11-harder-level'
+PROMPT_VERSION = 'photo-tags-context-v12-fr-pack'
 CACHE_DIR = os.path.join(HERE, 'cache')
 MODEL_CONTEXT = int(os.environ.get('TAGGER_NUM_CTX', '4096'))
 MODEL_MAX_TOKENS = int(os.environ.get('TAGGER_NUM_PREDICT', '1200'))
@@ -207,6 +207,15 @@ def build_prompt(level: str, lang: str = 'en', native: str = 'zh-TW',
             'fill the list with A1 words such as "man", "tree", "car", "building" unless they '
             'are all the photo offers. Include at least 2 verbs or adjectives and at least 2 '
             f'labels above {level} whenever the photo supports them.')
+    if lang != 'en':
+        lines.append(
+            f'Every word must be a real {lang_name} word. The "evidence" field is the only English '
+            f'text; never answer a label in English (write pomme, not apple; ordinateur portable is '
+            f'too long, write ordinateur). Give the dictionary headword: singular noun (arbre, not '
+            f'arbres), infinitive verb, masculine singular adjective. Use common everyday '
+            f'vocabulary of a small learner dictionary, not rare or invented words. Include at '
+            f'least 2 verbs (visible actions) and 2 adjectives (visible qualities) whenever the '
+            f'photo supports them, not only nouns.')
     if focus in FOCUS:
         lines.append(FOCUS[focus])
     if focus == 'harder' and lang == 'en' and level in LEVELS:
@@ -484,6 +493,40 @@ def _looks_like_name_label(word: str, evidence: str) -> bool:
                     and not re.search(rf'\b{escaped}\b', evidence, re.I)))
 
 
+_PACK_INDEX: dict[str, tuple] = {}
+_PACK_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'pack_index')
+_POS_NAME = {'adj': 'adjective', 'adv': 'adverb'}
+
+
+def pack_index(lang: str) -> dict | None:
+    """Card 806: the app pack's words and inflected forms for ``lang`` (tagger/pack_index/<lang>.json,
+    built by lexicon/tools/card806_build_pack_index.py); None when absent = no filtering."""
+    path = os.path.join(_PACK_DIR, f'{lang}.json')
+    try:
+        mtime = os.path.getmtime(path)
+    except OSError:
+        return None
+    hit = _PACK_INDEX.get(lang)
+    if hit is None or hit[0] != mtime:
+        try:
+            with open(path, encoding='utf-8') as f:
+                hit = (mtime, json.load(f))
+        except (OSError, ValueError):
+            return None
+        _PACK_INDEX[lang] = hit
+    return hit[1]
+
+
+def pack_resolve(word: str, pos: str, index: dict) -> tuple[str, str] | None:
+    """(headword, pos) of a label in the pack, plural/feminine mapped to the lemma and the part of
+    speech taken from the pack; None when the pack cannot show it (English, invented, missing)."""
+    word = index['forms'].get(word, word)
+    pos_list = index['words'].get(word)
+    if not pos_list:
+        return None
+    return word, (pos if pos in pos_list else pos_list[0])
+
+
 def to_candidates(raw: list[dict], lexicon: 'Lexicon | None' = None,
                   exclude: list[str] | None = None, lang: str = 'en') -> list[dict]:
     """Model output -> API candidates: cleaned, clamped, one per word."""
@@ -493,7 +536,18 @@ def to_candidates(raw: list[dict], lexicon: 'Lexicon | None' = None,
         word = _SPACE.sub(
             ' ', str(c.get('word') or c.get('w') or '').replace('_', ' ').strip().lower()
         ).strip(' .,"\'')
-        if not word or word in seen or len(word) > 40:
+        if not word or len(word) > 40:
+            continue
+        pack = pack_index(lang) if lang != 'en' else None
+        if pack is not None:
+            raw_pos = str(c.get('pos') or c.get('p') or '').strip().lower()
+            raw_pos = {'n': 'noun', 'v': 'verb', 'a': 'adjective', 'd': 'adverb', 'p': 'phrase'}.get(raw_pos, raw_pos)
+            resolved = pack_resolve(word, raw_pos, pack)
+            if resolved is None:
+                continue
+            word, forced_pos = resolved
+            c = {**c, 'pos': forced_pos}
+        if word in seen:
             continue
         evidence = str(c.get('evidence') or c.get('e') or '').strip()[:120]
         # Reject descriptions of the photograph, not physical parts/materials.
