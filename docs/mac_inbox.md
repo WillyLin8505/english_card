@@ -3242,3 +3242,8 @@ commit `2070dc24`（Windows：flutter analyze 無 error、02:14 +811 ~2: All tes
   結果：全部完成：照片選字題在 375×667 小螢幕被「顯示答案」蓋住——根因是照片固定 260pt 高，已改成最高為螢幕高度的 30%（下限 120），選項回到按鈕上方。
 - 卡 #782：問題回報 #923：[Mac] 2026-10-29 M363 卡 #777（問題回報 #917）重開 App ：#77
   結果：全部完成：#923 的根因（啟動時用舊詞庫的 linkLexicon 把 boring 併進 bore 並刪掉）已由卡 #777／#775 修好，程式在 e05a7900（app/lib/main.dart 啟動改成 fold:false, refreshWords:false）；Mac 驗證時看到的是 e05a790
+
+## M370（2026-10-29 10:35）狀態：待做
+commit `a8f7ac51`（Windows：flutter analyze 無 error、01:59 +811 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #778：問題回報 #919：[owner] 開始複習要 7 秒：點「綜合」到第一張卡出現 7.2～7.3 秒，畫面不動
+  結果：卡 #778 部分完成：開始複習的 CPU 部分由約 210ms 降到約 90ms（8500 字、2250 張照片模擬），但在桌面測試重現不出 7 秒，真正的 7 秒要 iPad 實測。
