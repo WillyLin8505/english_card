@@ -2195,3 +2195,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #771「併入原形」列 | 通過 | 捲動時看到 4 列：併入原形 remain／respect／stress／swell（一字一張卡，不另加） |  |  |
 | #771 按鈕 N = 單字本實際增加 | 不通過 | 三次都差：N=2830 → +2826；N=363 → +359（提示「已加入 363 個」）；N=196 → +192。重開 App 後差更多：N=196 那批 192 個全部不見，store 檔裡也沒有。原因：這些是 boring、amazing、wedding、being、working、worried 這類字，檢查時 pack.lookup(w)（不帶詞性）判成 ready，加入後 repository 的「一字一張卡」(_foldInto，lookup(word, pos:) 經 form/family) 把它們併進單字本裡已有的 bore、amaze、wed、be、work、worry 並刪掉。新標的「併入原形」只處理同一次貼上的原形＋變化形，沒處理「單字本已經有原形」。每次重貼都有同一批 ~192 個字被加入又被併掉。建議：檢查時用和 _foldInto 一樣的 lookup(word, pos:) + form/family 規則，原形已在單字本的標成「已在單字本（併入 X）」 | docs/mac_verify_shots/2026-10-29/m352_added.png | 中 |
 | #771 請 owner 決定 | 注意 | wedding→wed、boring→bore、being→be 這類本身就是 CEFR 單字的形容詞／名詞也被「一字一張卡」併掉，是否符合預期需 owner 決定 |  |  |
+
+## 2026-10-29 M355 卡 #228 模擬使用者・設定（iPad 實機）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #228 設定 | 通過 | iPad 上點「設定」約 1.4 秒打開（單字本 8488 字）；一路往下捲讀完 75 段文字：語言、發音腔調、單字難度、卡片樣式、照片標示、學習洞察、資料（8,488 個單字 · 16 張照片）、備份／Anki、隱私、意見回饋、關於；「進階設定」點開後顯示照片辨識連線、複習安排、卡片背面順序；全程沒有例外，沒有改任何設定 | docs/mac_verify_shots/2026-10-29/m355_advanced.png |  |

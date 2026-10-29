@@ -3145,7 +3145,7 @@ commit `d2ad3983`（Windows：flutter analyze 無 error、01:11 +806 ~2: All tes
 - 卡 #771：問題回報 #912：[owner] 批量加字：檢查時先標出會被「一字一張卡」併入原形的字（M351 差 4 個）
   結果：批量加字的檢查現在會把「併入原形」的字標成獨立狀態（merged），按鈕數字與實際加入數一致（問題回報 #912）。
 
-## M355（2026-10-29 08:41）狀態：待做
+## M355（2026-10-29 08:41）狀態：完成
 commit `69e1e2bb`（Windows：flutter analyze 無 error、01:14 +806 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #228：模擬使用者・設定
   結果：第 17 輪（模擬輪 202）：設定 1/1 通過、findings 0；新問題無、UX 建議沿用 #474（未重複開）。
