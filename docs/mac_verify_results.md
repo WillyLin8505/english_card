@@ -2186,3 +2186,12 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
 |----|----|----|----|----|
 | #770 問題回報 #911（M350 按鈕比實際多 57） | 通過 | 33b929bd 已在 M351 用 iPad 重跑 3000 字驗過：按鈕「加入 2884 個」，提示「已加入 2884 個，略過 116 個」，沒有字因重複被跳過；截圖 docs/mac_verify_shots/2026-10-29/m351_checked.png、m351_added.png。之後單字本少 4 個是另一件事（#912，M352 驗） | docs/mac_verify_shots/2026-10-29/m351_added.png |  |
+
+## 2026-10-29 M352／M354 卡 #771 檢查時標出併入原形（iPad 實機，d2ad3983）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #771 檢查／捲動 | 通過 | 貼 3000 字：檢查 0.8 秒，按鈕「加入 2830 個」；捲到底 31.2 秒，最長的一幀 43.9ms | docs/mac_verify_shots/2026-10-29/m352_checked.png |  |
+| #771「併入原形」列 | 通過 | 捲動時看到 4 列：併入原形 remain／respect／stress／swell（一字一張卡，不另加） |  |  |
+| #771 按鈕 N = 單字本實際增加 | 不通過 | 三次都差：N=2830 → +2826；N=363 → +359（提示「已加入 363 個」）；N=196 → +192。重開 App 後差更多：N=196 那批 192 個全部不見，store 檔裡也沒有。原因：這些是 boring、amazing、wedding、being、working、worried 這類字，檢查時 pack.lookup(w)（不帶詞性）判成 ready，加入後 repository 的「一字一張卡」(_foldInto，lookup(word, pos:) 經 form/family) 把它們併進單字本裡已有的 bore、amaze、wed、be、work、worry 並刪掉。新標的「併入原形」只處理同一次貼上的原形＋變化形，沒處理「單字本已經有原形」。每次重貼都有同一批 ~192 個字被加入又被併掉。建議：檢查時用和 _foldInto 一樣的 lookup(word, pos:) + form/family 規則，原形已在單字本的標成「已在單字本（併入 X）」 | docs/mac_verify_shots/2026-10-29/m352_added.png | 中 |
+| #771 請 owner 決定 | 注意 | wedding→wed、boring→bore、being→be 這類本身就是 CEFR 單字的形容詞／名詞也被「一字一張卡」併掉，是否符合預期需 owner 決定 |  |  |
