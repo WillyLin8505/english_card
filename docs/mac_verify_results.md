@@ -2269,3 +2269,11 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 |----|----|----|----|----|
 | #785 啟動時內建詞庫不併字 | 通過 | 重開後第一個畫面單字本仍是 8680（之前一開就是 8488），啟動 20 秒內也不再跳「詞庫已更新」 |  |  |
 | #785／#786 重開後保留 boring 那批 | 不通過 | 重開後 6～7 秒內單字本 8680 → 8607 → 8538（−142），boring、amazing、being、working 不見，wedding 保留；第 2 次重開維持 8538。逐 0.5 秒追蹤：4.5 秒時還在內建包 01f91fa3（bundled=true），boring 在單字本但 pos 已經是 verb（加入時是 adj.）；6.4 秒換成下載包 98727dee（bundled=false），lookup('boring', pos: 'verb') → bore（via form）→ 併入刪掉。原因：WordEnricher.process() 的 linkLexicon(pack, fold: false) 仍用預設 refreshWords: true，內建包把 boring 查成 bore/verb/form，_linkSteps 的「pos 跟著詞庫走」（word_database_repository.dart 約 1136 行 moved → pos = x.pos）把 boring 的 pos 改成 verb；下載包再用 verb 查就變成 bore 的變化形。建議：內建包時 refreshWords 也要 false（或 pack.bundled 時不改 pos），或下載包併入時用原本加入的 pos |  | 中 |
+
+## 2026-10-29 M375 卡 #786（#925）boring 那批、卡 #12 跨分頁亂點（iPad 實機，80f1b848）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #786 重開後保留 boring 那批 | 通過 | 重貼 325 字，加入 142 個 → 8680。第 1 次重開每 0.5 秒追蹤 40 秒：內建包 01f91fa3 時 boring 仍是 adj.；6.3 秒換下載包 94ec6564、40.9 秒換 c104467c，單字本一直是 8680。第 2 次重開：啟動時 8680、20 秒後 8680，boring、amazing、wedding、being、working 都在，也沒跳「詞庫已更新」 |  |  |
+| #12 跨分頁亂點 | 通過 | 從啟動開始 90 秒內隨機點分頁和頁內安全按鈕（綜合、全部、還在學、進階篩選與排序、rrr、顯示答案、記得）共 117 下，沒有例外；啟動 15 秒後 662 幀，最長 65ms | docs/mac_verify_shots/2026-10-29/m375_end.png |  |
+| 啟動前 15 秒 | 注意 | 前 15 秒 124 幀裡有 3 幀超過 100ms，最長一幀 3177ms（畫面停住約 3 秒），之後就順了；可能是下載包換上時（約 6 秒）的處理還在主執行緒。#926 的「已 link 就跳過」有幫助但還有一次長停頓 |  | 中 |
