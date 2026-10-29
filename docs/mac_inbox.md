@@ -3389,7 +3389,7 @@ commit `879342ac`（Windows：flutter analyze 無 error、01:18 +814 ~2: All tes
 - 卡 #804：問題回報 #935：App 詞庫下載：新包下載完後沒清掉舊的 .part 檔（iPad 殘留 63.5 MB）
   結果：全部完成：App 詞庫下載現在會清掉殘留的 {pair}.server..sqlite.part（iPad 63.5 MB 的來源）。
 
-## M395（2026-10-29 23:49）狀態：待做（owner 回報，給 Mac）
+## M395（2026-10-29 23:49）狀態：完成
 owner 在 iPhone 送出的回報（#626：App 畫面與互動由 Mac 修）。資料或伺服器的部分請寫「不通過」列交回 Windows。
 
 | # | 回報 | 內容 |
