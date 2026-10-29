@@ -170,7 +170,6 @@ void main() {
     final pack = LexiconPack.instance..loadJson(json);
     final repo = WordDatabaseRepository(
         clock: () => testNow, profile: UserVocabularyProfile.start('A2', now: testNow));
-    final limit = int.parse(env['SIM_LIMIT'] ?? '400');
     final seed = int.parse(env['SIM_SEED'] ?? '1');
     final sample = sampleWords(pack, json).where((w) => ['can', 'tip', 'dwarf'].contains(w.lemma)).toList();
     for (final w in sample) {

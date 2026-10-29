@@ -37,8 +37,10 @@ FlashcardSession _choice(Map<String, dynamic> img) {
   return session;
 }
 
-Future<void> _pump(WidgetTester tester, FlashcardSession session) async {
+Future<void> _pump(WidgetTester tester, FlashcardSession session,
+    {Size? size}) async {
   await pumpApp(tester,
+      size: size ?? const Size(402, 874),
       repository: session.repo,
       home: Scaffold(
           body: SingleChildScrollView(
@@ -57,11 +59,8 @@ void main() {
   // 問題回報 #921: on a 375×667 screen the photo must not eat the screen.
   testWidgets('photo choice front: photo shrinks on a short screen',
       (tester) async {
-    tester.view.physicalSize = const Size(375, 667);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
     final session = _choice(image(1));
-    await _pump(tester, session);
+    await _pump(tester, session, size: const Size(375, 667));
     expect(tester.getSize(find.byType(PinnedPhoto)).height,
         lessThanOrEqualTo(667 * 0.3 + 0.5));
   });

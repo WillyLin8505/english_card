@@ -42,6 +42,7 @@ void main() {
       (tester) async {
     final session = _choice(image(1));
     await pumpApp(tester,
+        repository: session.repo,
         size: const Size(375, 667),
         home: Scaffold(
             body: CardLookScope(
@@ -49,13 +50,15 @@ void main() {
                 child: FlashcardCardView(session: session))));
     await tester.pump();
 
-    final answer = tester.getRect(find.widgetWithText(PrimaryButton, '顯示答案'));
+    final answer = tester.getRect(find.byType(PrimaryButton));
     final title = tester.getRect(find.text(session.exercise!.prompt));
     expect(title.bottom, lessThanOrEqualTo(answer.top));
-    for (final option in session.exercise!.options) {
-      final rect = tester.getRect(find.widgetWithText(OutlinedButton, option));
+    final options = find.byType(OutlinedButton);
+    expect(options, findsNWidgets(session.exercise!.options.length));
+    for (final option in tester.widgetList(options)) {
+      final rect = tester.getRect(find.byWidget(option));
       expect(rect.bottom, lessThanOrEqualTo(answer.top),
-          reason: '$option is under the 顯示答案 dock');
+          reason: 'an option is under the 顯示答案 dock');
     }
     session.dispose();
   });
