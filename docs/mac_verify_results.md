@@ -2381,3 +2381,12 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #915 備份 | 通過 | 刪之前把 iPad 上 7 個 wd_*.hive 複製到 Mac「flash card /ipad_backup_2026-10-29/」（不在 repo 裡）：wd_entries.hive 62,756,390 bytes（8,680 個字）、wd_cards 4,087,385、wd_meta 570,244、wd_photos 58,371、wd_occurrences 24,699、wd_review_logs 6,108、wd_albums 190 bytes |  |  |
 | #915 刪除 | 通過 | 規則：10/29 07:40～12:00（批量加字測試的時段）建立、不在任何照片上、沒有手動編輯、沒有複習紀錄的字。先試算 8,615 個，owner 在 Mac 對話確認後，在 App 開起來之前用 App 自己的 store 刪（會先檢查數字剛好 8,615 才動手）。結果：刪前 8,680 個，刪了 8,615 個字和 8,615 張卡，刪後 65 個（10/28 原有的 48 個＋照片上用到的 17 個）；照片 17、相簿 1、照片標籤 91、複習紀錄 9，刪前刪後都一樣 |  |  |
 | #915 重開兩次 | 通過 | 第 1、2 次重開：啟動時 65、20 秒後 65；照片 17 張、標籤 91 個；沒有跳「詞庫已更新」。相片冊 rrr 仍是 16 個單字，照片和 lightbulb 標籤正常；單字本第一個是 apple 蘋果 | docs/mac_verify_shots/2026-10-29/m915_album_open.png |  |
+
+## 2026-10-29 M393 卡 #800（#933）照片標籤詞性（iPad 上 App 下載的英文包）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #800 serve／texture 詞性 | 通過 | 從 iPad 複製 App 自己下載的英文包 en-zh-TW.server.1793285685321.sqlite（22:54，created_at d8b3e458…，10,719 張圖）：serve 的標籤 verb 48、noun 10，texture noun 283，沒有 adj. |  |  |
+| #800 全部標籤詞性 | 通過 | 141,750 個點位標籤：每個標籤的詞性都是那個字在包裡有的詞性（0 個不符）。另外 30 個標籤的詞性和它指向的 lexeme 不同：lined（verb）指向 line 的 noun lexeme ×21、domed（adj）指向 noun ×8、condensed（adj）指向 verb ×1，都是變化形指到原形的卡，供參考 |  | 低 |
+| #800 App 裡已存的自己照片 | 注意 | #847 那張早餐照片（photo-1793283820973489）在 App 裡存的辨識結果還是當時伺服器回的 serve＝adj.；#933 的修正是在入庫時校正，App 已存的不會自己改。沒有重新辨識（會再上傳一張到後台） |  | 低 |
+| iPad 殘留的下載暫存檔 | 注意 | iPad 上 lexicon/ 有兩個沒下載完的 .part 檔：en-zh-TW.server.1793144893346.sqlite.part 44.5 MB（10/28）、en-zh-TW.server.1793278872548.sqlite.part 19 MB（10/29 21:02），新包下載完後沒有被清掉，共佔 63.5 MB |  | 低 |
