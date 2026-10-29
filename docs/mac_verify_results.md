@@ -2359,3 +2359,10 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
 |----|----|----|----|----|
 | #224 拍照 | 通過 | iPad 上切到拍照約 1 秒，相機即時畫面出來，顯示「拍照學單字」、說明、「AI 辨識就緒」，快門、選照片、閃光燈按鈕都在；沒有例外。實機沒有按快門（避免照片上傳後台），辨識流程以 Windows 第 211 輪為準。同一輪也走了複習：綜合 450ms 出第一張，翻面、評分正常 | docs/mac_verify_shots/2026-10-29/m391_camera.png |  |
+
+## 2026-10-29 #614 相片冊圖片、#847 自己的照片送到後台（[給 Mac]，iPad 實機）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #614 相片冊裡的圖片 | 通過 | 10/23 已修（d0d8d51b，存的路徑不在時到這次安裝的照片資料夾找同檔名，程式仍在 photo_store.dart）。iPad 實機：16 張照片都有本機檔，找不到檔案 0 張；相片冊顯示 rrr，點開後照片和標籤 lightbulb、filament 正常顯示。程式不用再改 | docs/mac_verify_shots/2026-10-29/m614_album_open.png |  |
+| #847 開發版辨識後上傳到後台 | 通過 | iPad（開發版，有伺服器網址）：DevPhotoUpload.enabled＝true；用 intake 加內建範例照片（早餐），photo id photo-1793283820973489，22:23:40 加入，49 秒辨識完，8 個標籤 apple、bread、cup、plate、saucepan、table、cut、serve；佇列自己上傳後，再用同一張照片呼叫一次 DevPhotoUpload.send，伺服器回 201（178,585 bytes）。後台「手機照片」頁需要登入，Mac 看不到，已請 Windows 確認這張有出現 |  |  |
