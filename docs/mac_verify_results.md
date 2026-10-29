@@ -2322,3 +2322,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #496 介面沒有中文 | 通過 | 首頁、單字本、設定頁（捲 6 段）都沒有中文字串 |  |  |
 | #496 法語詞庫與卡片背面 | 通過 | 法語包 a52ae1b6…，6153 個詞條（和 Windows 一樣）；加入 12 個法文字複習：domestique、gros、chat、manger、nourriture、consommer、pomme、maison 背面字頭沒有被改大寫，名詞／形容詞有冠詞、動詞沒有，背面沒有中文 | docs/mac_verify_shots/2026-10-29/m385_fr_back.png |  |
 | #496 學法語的卡片集 | 通過 | 下載相片冊列出 French Basic 2000 Words、French Basic 3000 Words，都是法文單字集、說明是英文，沒有英文單字集。Mac 測試的判斷看到「3000」就當成英文集，這次是誤判，已看截圖確認 | docs/mac_verify_shots/2026-10-29/m385_fr_decks.png |  |
+
+## 2026-10-29 M386 卡 #795（#931）法語包「le」標籤指向包外的詞（iPhone 模擬器）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #795 法語包不再有指向包外的標籤 | 不通過 | 模擬器 App 自己下載的法語包 fr-en.server.1793263051155.sqlite（16:37 下載，meta created_at bc48e091…，6153 詞條）：catalog_images 裡還有 4 處 lexeme_id 200017，而 lexemes 表沒有 200017。修正（打包時丟掉這類標籤）在 16:42 才進 inbox；16:5x 重開 App 等 90 秒，沒有下載新的法語包（檔案時間沒變），看起來伺服器上的法語包還沒用新腳本重新打包發布。等新包上線後，重開 App 讓它更新，再查一次 |  | 低 |
