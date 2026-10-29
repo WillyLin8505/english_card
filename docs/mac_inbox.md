@@ -3254,3 +3254,8 @@ commit `5c6ff800`（Windows：flutter analyze 無 error、01:42 +811 ~2: All tes
   結果：照片選字卡在 375×667 小螢幕上，題目和三個選項已能完整顯示在「顯示答案」上方（新增自動測試通過）。
 - 卡 #783：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
   結果：全部完成：flutter analyze 0 error／0 warning（剩 4 個 info），flutter test 811 個全過（2 skipped）。
+
+## M372（2026-10-29 11:21）狀態：待做（Windows 卡 #785 交給 Mac 的 App 畫面部分）
+卡：問題回報 #924：[Mac] 2026-10-29 M364／M365 卡 #777、#774、#775（#9：#777／#775 重開後保留 boring 
+
+用 iPad 重測「貼 375 字 → 加入 192 個 → 重開 2 次」boring/amazing/wedding 是否保留。
