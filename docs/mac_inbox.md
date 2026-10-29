@@ -3255,17 +3255,17 @@ commit `5c6ff800`（Windows：flutter analyze 無 error、01:42 +811 ~2: All tes
 - 卡 #783：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
   結果：全部完成：flutter analyze 0 error／0 warning（剩 4 個 info），flutter test 811 個全過（2 skipped）。
 
-## M372（2026-10-29 11:21）狀態：待做（Windows 卡 #785 交給 Mac 的 App 畫面部分）
+## M372（2026-10-29 11:21）狀態：完成
 卡：問題回報 #924：[Mac] 2026-10-29 M364／M365 卡 #777、#774、#775（#9：#777／#775 重開後保留 boring 
 
 用 iPad 重測「貼 375 字 → 加入 192 個 → 重開 2 次」boring/amazing/wedding 是否保留。
 
-## M373（2026-10-29 11:25）狀態：待做
+## M373（2026-10-29 11:25）狀態：完成
 commit `8f525fe0`（Windows：flutter analyze 無 error、01:56 +812 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #785：問題回報 #924：[Mac] 2026-10-29 M364／M365 卡 #777、#774、#775（#9：#77
   結果：已修：啟動時另外兩條路徑（WordEnricher.process、DictionarySync.useBundled）不再用內建舊詞庫做「一字一卡」併入，boring 不會再被併進 bore 刪掉。尚未在 iPad 實機驗證。
 
-## M374（2026-10-29 11:35）狀態：待做（Windows 卡 #786 交給 Mac 的 App 畫面部分）
+## M374（2026-10-29 11:35）狀態：完成
 卡：問題回報 #925：[Mac] 2026-10-29 M366～M371 複習開始時間、小螢幕選字卡、borin：#923／#782 重開後保留 boring 
 
 把工作樹這批改動 commit 後，在 iPad 重測「重貼 8680 → 重開 2 次」，確認 boring/amazing/wedding/being/working 還在。

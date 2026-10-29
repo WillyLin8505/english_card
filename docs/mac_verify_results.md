@@ -2262,3 +2262,10 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #781／#779 小螢幕照片選字卡 | 通過 | iPad iPhone 相容模式 375×667pt：照片縮小後，「哪個單字最適合這張照片？」底在 362pt，三個選項 Envy／Plate／Kilogramme 底在 414／470／526pt，都在「顯示答案」（頂 586pt）上方，完整可點 | docs/mac_verify_shots/2026-10-29/m366_choice.png |  |
 | #923／#782 重開後保留 boring 那批 | 不通過 | 同 M364：0757ccb0（含 main.dart fold:false）重貼後 8680，重開 2 次回到 8488，boring、amazing、wedding、being、working 不在。剩下兩條啟動時用內建詞庫併入的路還在：word_enricher.dart:101 repository().linkLexicon(pack)、dictionary_sync.dart:222 _useBundled() 的 linkLexiconInBatches，兩者 fold 都是預設 true |  | 中 |
 | #783 flutter analyze／test | 通過 | Mac 上 flutter analyze lib test：只有 4 個 info；flutter test：810 通過、3 個略過，All tests passed! |  |  |
+
+## 2026-10-29 M372～M374 卡 #785／#786（#923／#924／#925）boring 那批重開後保留（iPad 實機，d3973f19）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #785 啟動時內建詞庫不併字 | 通過 | 重開後第一個畫面單字本仍是 8680（之前一開就是 8488），啟動 20 秒內也不再跳「詞庫已更新」 |  |  |
+| #785／#786 重開後保留 boring 那批 | 不通過 | 重開後 6～7 秒內單字本 8680 → 8607 → 8538（−142），boring、amazing、being、working 不見，wedding 保留；第 2 次重開維持 8538。逐 0.5 秒追蹤：4.5 秒時還在內建包 01f91fa3（bundled=true），boring 在單字本但 pos 已經是 verb（加入時是 adj.）；6.4 秒換成下載包 98727dee（bundled=false），lookup('boring', pos: 'verb') → bore（via form）→ 併入刪掉。原因：WordEnricher.process() 的 linkLexicon(pack, fold: false) 仍用預設 refreshWords: true，內建包把 boring 查成 bore/verb/form，_linkSteps 的「pos 跟著詞庫走」（word_database_repository.dart 約 1136 行 moved → pos = x.pos）把 boring 的 pos 改成 verb；下載包再用 verb 查就變成 bore 的變化形。建議：內建包時 refreshWords 也要 false（或 pack.bundled 時不改 pos），或下載包併入時用原本加入的 pos |  | 中 |
