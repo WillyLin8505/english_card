@@ -2237,3 +2237,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #226 照片選字卡在小螢幕 | 不通過 | 「哪個單字最適合這張照片？」只露出半行，被底部「顯示答案」那條蓋住，三個選項（Ice Cream／Orange／Mineral Water）完全看不到，畫面上只有照片和「顯示答案」。iPad 用 iPhone 相容模式跑，畫面 375×667pt（和 iPhone SE／8 一樣）；Windows 模擬器的螢幕比較高，所以沒看到。建議照片高度依可用高度縮小，或讓題目和選項一定在按鈕上方 | docs/mac_verify_shots/2026-10-29/m361_card_bottom.png | 中 |
 | #226 開始複習要等很久 | 不通過 | 點「綜合」到第一張卡出現 7.3 秒、7.2 秒（兩次都一樣）；這段期間畫面不動。owner 10/29 也說操作卡頓 |  | 中 |
 | #226 圖片載入 | 注意 | 第一次跑時第一張（Worcestershire sauce 例句卡）先是灰框，之後顯示「圖片暫時…載入」的提示；第二次跑圖片都正常，看起來是偶發（可能是伺服器當時慢） | docs/mac_verify_shots/2026-10-29/m361_image_fail.png | 低 |
+
+## 2026-10-29 M363 卡 #777（問題回報 #917）重開 App 後 boring 那批是否保留
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #777 重開 App 後保留 boring 那批 | 不通過 | 6f4ac97b 之後 app/lib 沒有任何變更（76bb9ccb 只改 docs/mac_inbox.md），#916（啟動時用舊詞庫的 linkLexicon 把 boring 併進 bore 並刪掉）還沒修。iPad 目前單字本 8488，boring、amazing、wedding、being、working 都不在，和 M356／M358 一樣。等 #916 的修正推上來後再用 iPad 重貼並重開驗證 |  | 中 |
