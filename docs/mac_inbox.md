@@ -3431,3 +3431,18 @@ golden/QC：未動資料，無變化。備份：無。
 卡：問題回報 #942：[給 Mac] [意見回饋] 照片詳情：我在掃描的時候會出現很多說明的文字什麼按什麼鍵會少更困難的什
 
 - 照片詳情的預設難度與空列提示（見上方 A／B／C，owner 決定後再改）。
+
+## M401（2026-10-30 00:11）狀態：待做（Windows 卡 #809 交給 Mac 的 App 畫面部分）
+卡：問題回報 #938：[owner] iPad／手機上圖片載入要等很久（一直沒解決）
+
+用 iPad 正式版量第一次／第二次的載入時間（複習背面、單字頁、相片冊縮圖、卡片集封面），確認縮圖不糊。
+
+改了什麼（app 程式，Windows 卡自己改）：
+- app/lib/services/pack_media.dart：新增 thumbServerImage（w=1536 → w=480）。
+- app/lib/widgets/mobile/photo_cache.dart：photoProvider 在解碼寬度 ≤ 512 時（相片冊、卡片集單字格子等 PhotoImage）改抓 480 版；全螢幕／卡片背面仍 1536，預抓邏輯不變。
+- app/lib/screens/deck_browser_screen.dart：卡片集封面 1024 → 768。
+- flutter analyze：無問題。flutter test：已排進 heavy_lock，送出時尚未跑完（請看是否通過）。
+
+Windows 端量到：/api/image 有 Cache-Control: public, max-age=604800（無 ETag）；經 api.willylinai.com 單張 w=480 約 74 KB。這次量測往返偏慢（3.3 s，網路當下較差），非伺服器問題待確認。
+
+剩下：Mac iPad 實測數字；是否加 ETag、下一張卡預抓（flashcard_screen 已有 prefetch）待實測後決定。未動資料，無需備份；golden/QC 不受影響（只改 App）。
