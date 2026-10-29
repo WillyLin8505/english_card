@@ -3335,7 +3335,7 @@ commit `82096e29`（Windows：flutter analyze 無 error、01:44 +814 ~2: All tes
 - 卡 #794：問題回報 #930：[Mac] 2026-10-29 M379～M381 卡 #790／#791／#792 啟動：#79
   結果：已修：WordEnricher.process() 改用 linkLexiconInBatches（8ms 一批、批間讓出），不再在 initState 內一次同步 link 8680 字（Mac 量到 2737ms）。
 
-## M385（2026-10-29 16:27）狀態：待做
+## M385（2026-10-29 16:27）狀態：完成
 commit `b2c36a11`（Windows：flutter analyze 無 error、01:50 +814 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #496：模擬使用者・法語（英語母語者學法語）
   結果：法語模擬第35–37輪：4/4通過，chineseinenglishui=0 通過；資料持平（6153詞），唯一新發現：2 張圖片的標籤「le」指向不在法語包的詞，已開問題回報 #931。
