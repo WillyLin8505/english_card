@@ -1217,7 +1217,10 @@ class WordDatabaseRepository extends ChangeNotifier {
         yield 0;
         continue;
       }
-      if (fold && !pack.bundled && (hit.via == 'form' || hit.via == 'family')) {
+      if (fold &&
+          !pack.bundled &&
+          !pack.hasOwnEntry(e.word) &&
+          (hit.via == 'form' || hit.via == 'family')) {
         _foldInto(e, hit.entry);
         yield 1;
       } else {

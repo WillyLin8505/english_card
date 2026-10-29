@@ -168,8 +168,9 @@ BulkItem classifyBulkWord(
   // Adding goes through the repository's one-card-per-word fold, which looks
   // the word up with its part of speech: boring (adj) is a headword without
   // one, yet with pos it folds into bore. Classify the same way, so the count
-  // matches what lands in the word book (問題回報 #914).
-  final folded = pack.lookup(w, pos: pos);
+  // matches what lands in the word book (問題回報 #914). A word the pack has
+  // a card for keeps it (owner 10/29, 問題回報 #913).
+  final folded = pack.hasOwnEntry(w) ? null : pack.lookup(w, pos: pos);
   if (folded != null &&
       folded.entry.normalized != w &&
       (folded.via == 'form' || folded.via == 'family')) {

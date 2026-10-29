@@ -465,6 +465,14 @@ class LexiconPack extends ChangeNotifier {
               ]),
       ];
 
+  /// Whether the pack has a card of its own for [word] (wedding, boring,
+  /// being), not just a pointer from a form: an entry whose card is none or
+  /// the word itself. Such a word keeps its own card and is not folded into
+  /// wed, bore, be (owner 2026-10-29, 問題回報 #913).
+  bool hasOwnEntry(String word) =>
+      (_byLemma[normalize(word)] ?? const <LexEntry>[])
+          .any((e) => e.card == null || e.card == e.normalized);
+
   LexEntry? byId(int id) => _byId[_redirects[id] ?? id];
 
   /// Every part of speech stored for one spelling, for the full dictionary
