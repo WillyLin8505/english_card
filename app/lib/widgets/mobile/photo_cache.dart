@@ -183,14 +183,19 @@ class CachedNetworkPhoto extends ImageProvider<CachedNetworkPhoto> {
   // HttpClient as NetworkImage uses it (tests' HTTP overrides apply too).
   static final _client = HttpClient()..autoUncompress = false;
 
+  static const _fetchTimeout = Duration(seconds: 20);
+
   static Future<Uint8List> _httpGet(Uri url) async {
-    final response = await (await _client.getUrl(url)).close();
+    final response = await (await _client.getUrl(url).timeout(_fetchTimeout))
+        .close()
+        .timeout(_fetchTimeout);
     if (response.statusCode != HttpStatus.ok) {
       await response.drain<void>();
       throw NetworkImageLoadException(
           statusCode: response.statusCode, uri: url);
     }
-    final bytes = await consolidateHttpClientResponseBytes(response);
+    final bytes = await consolidateHttpClientResponseBytes(response)
+        .timeout(_fetchTimeout);
     if (bytes.isEmpty) throw StateError('empty image: $url');
     return bytes;
   }
@@ -261,9 +266,27 @@ class CachedNetworkPhoto extends ImageProvider<CachedNetworkPhoto> {
   /// phone early, without holding decoded pixels in memory. Never throws.
   static void prefetch(String url) {
     if (kIsWeb || !_prefetched.add(url)) return;
-    bytesFor(url).then<void>((_) {}, onError: (_) {
-      _prefetched.remove(url);
-    });
+    _queue.add(url);
+    _pump();
+  }
+
+  // 問題回報 #944: prefetches run a few at a time, so the photo on screen
+  // (loaded directly, not queued) is not stuck behind 100+ downloads.
+  static const _maxPrefetches = 3;
+  static final _queue = <String>[];
+  static int _running = 0;
+
+  static void _pump() {
+    while (_running < _maxPrefetches && _queue.isNotEmpty) {
+      final url = _queue.removeLast(); // the most recently wanted first
+      _running++;
+      bytesFor(url).then<void>((_) {}, onError: (_) {
+        _prefetched.remove(url);
+      }).whenComplete(() {
+        _running--;
+        _pump();
+      });
+    }
   }
 
   /// Forgets which photos [prefetch] already fetched (問題回報 #824: memory

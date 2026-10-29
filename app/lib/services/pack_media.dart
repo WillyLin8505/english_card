@@ -34,7 +34,7 @@ String packRecordingUrl(String? mediaBase, String relativePath) {
 /// with room for [BoxFit.cover]; one size for every place a picture shows,
 /// so the front, the back's carousel and the dictionary share one download
 /// and one file in the disk cache.
-const servedImageSide = 1536;
+const servedImageSide = 1024;
 
 /// [url] asking the server for its downscaled copy (`/api/image?id=…&w=`,
 /// longest side ≤ [side]; the server sends the original when it is smaller

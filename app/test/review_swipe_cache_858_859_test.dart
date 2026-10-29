@@ -206,6 +206,25 @@ void main() {
       expect(fetched, [url]);
     });
 
+    test('#938 prefetch runs at most maxPrefetchParallel downloads', () async {
+      var running = 0, peak = 0;
+      final saved = CachedNetworkPhoto.fetch;
+      CachedNetworkPhoto.fetch = (uri) async {
+        peak = ++running > peak ? running : peak;
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        running--;
+        return _png;
+      };
+      addTearDown(() => CachedNetworkPhoto.fetch = saved);
+      for (var i = 0; i < 12; i++) {
+        CachedNetworkPhoto.prefetch('https://photos.test/938/$i.jpg');
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+      await CachedNetworkPhoto.flushWrites();
+      expect(peak, lessThanOrEqualTo(CachedNetworkPhoto.maxPrefetchParallel));
+      expect(peak, greaterThan(1));
+    });
+
     test('pruning drops the least recently used file', () async {
       final urls = [
         for (final n in ['x', 'y', 'z']) 'https://photos.test/859/$n'

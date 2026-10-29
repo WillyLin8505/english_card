@@ -253,8 +253,13 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     }
     // 問題回報 #859: every photo of this card's carousel is on disk before
     // it is swiped to.
-    for (final p in options) {
-      if (p.networkUrl case final url?) CachedNetworkPhoto.prefetch(url);
+    // 問題回報 #944: only the neighbours (a card can have 57 photos).
+    for (var i = math.max(0, at - 1);
+        i < options.length && i <= math.max(0, at) + 3;
+        i++) {
+      if (options[i].networkUrl case final url?) {
+        CachedNetworkPhoto.prefetch(url);
+      }
     }
     final upcoming = s.upcomingCards(cards: 5);
     for (final (i, card) in upcoming.indexed) {
@@ -266,7 +271,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
       }
       // 問題回報 #859: all of the next two cards' photos (their carousels),
       // one for the cards after.
-      for (final p in photos.take(i < 2 ? photos.length : 1)) {
+      for (final p in photos.take(i < 2 ? 3 : 1)) {
         if (p.networkUrl case final url?) CachedNetworkPhoto.prefetch(url);
       }
     }
