@@ -3216,3 +3216,29 @@ commit `0757ccb0`（Windows：flutter analyze 無 error、03:43 +811 ~2: All tes
 卡：問題回報 #923：[Mac] 2026-10-29 M363 卡 #777（問題回報 #917）重開 App ：#777 重開 App 後保留 boring 
 
 請用 e05a7900 之後的版本在 iPad 重貼 boring 那批（boring、amazing、wedding、being、working）並重開 App 兩次，確認單字本仍是 8680 且不再出現「30 個字補上例句」。
+
+## M368（2026-10-29 10:29）狀態：待做（Windows 卡 #778 交給 Mac 的 App 畫面部分）
+卡：問題回報 #919：[owner] 開始複習要 7 秒：點「綜合」到第一張卡出現 7.2～7.3 秒，畫面不動
+
+用 iPad（8488 字）量「點綜合 → 第一張卡」分段時間：(1) 點下到 FlashcardSession 建好 (2) 第一張卡畫面 build (3) 第一張照片解碼／下載完成。若 (3) 佔大半，根因在照片載入而非排程計算。
+
+改了什麼
+- app/lib/services/word_database_repository.dart：eligibleCards() 加快取（key＝單字版本、卡片版本、複習紀錄筆數、日期、參數）。開始一輪複習時同一份清單原本被掃約 6 次（磁磚探測、建立 session、每次 pick、進度、upcoming），每次掃全部卡。
+- 沒有改資料、沒有動詞庫；沒有備份需求。
+
+數字（flutter 桌面 JIT，8500 字／2250 照片）
+| 項目 | 前 | 後 |
+| eligibleCards 第二次起 | ~50ms | 0ms |
+| 建立 session + upcoming | ~210ms | ~90ms |
+
+驗證：flutter analyze lib/services 無新增問題；flutter test 全過（811 通過）。golden／QC 與詞庫無關，未跑。
+剩下：iPad 分段量測（見上）；若照片載入是主因，另開卡處理預載。
+
+## M369（2026-10-29 10:29）狀態：待做
+commit `2070dc24`（Windows：flutter analyze 無 error、02:14 +811 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #780：問題回報 #922：[Mac] 2026-10-29 M361 卡 #226 模擬使用者・複習（iPad 實機，：#22
+  結果：結論：已修正「開始複習要等很久」最可能的根因（每張卡掃整個圖庫目錄）；Windows 無法重現 iPad 7.3 秒，需 Mac 在 iPad 上再量一次。
+- 卡 #781：問題回報 #921：[Mac] 2026-10-29 M361 卡 #226 模擬使用者・複習（iPad 實機，：#22
+  結果：全部完成：照片選字題在 375×667 小螢幕被「顯示答案」蓋住——根因是照片固定 260pt 高，已改成最高為螢幕高度的 30%（下限 120），選項回到按鈕上方。
+- 卡 #782：問題回報 #923：[Mac] 2026-10-29 M363 卡 #777（問題回報 #917）重開 App ：#77
+  結果：全部完成：#923 的根因（啟動時用舊詞庫的 linkLexicon 把 boring 併進 bore 並刪掉）已由卡 #777／#775 修好，程式在 e05a7900（app/lib/main.dart 啟動改成 fold:false, refreshWords:false）；Mac 驗證時看到的是 e05a790
