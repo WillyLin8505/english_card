@@ -2390,3 +2390,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #800 全部標籤詞性 | 通過 | 141,750 個點位標籤：每個標籤的詞性都是那個字在包裡有的詞性（0 個不符）。另外 30 個標籤的詞性和它指向的 lexeme 不同：lined（verb）指向 line 的 noun lexeme ×21、domed（adj）指向 noun ×8、condensed（adj）指向 verb ×1，都是變化形指到原形的卡，供參考 |  | 低 |
 | #800 App 裡已存的自己照片 | 注意 | #847 那張早餐照片（photo-1793283820973489）在 App 裡存的辨識結果還是當時伺服器回的 serve＝adj.；#933 的修正是在入庫時校正，App 已存的不會自己改。沒有重新辨識（會再上傳一張到後台） |  | 低 |
 | iPad 殘留的下載暫存檔 | 注意 | iPad 上 lexicon/ 有兩個沒下載完的 .part 檔：en-zh-TW.server.1793144893346.sqlite.part 44.5 MB（10/28）、en-zh-TW.server.1793278872548.sqlite.part 19 MB（10/29 21:02），新包下載完後沒有被清掉，共佔 63.5 MB |  | 低 |
+
+## 2026-10-29 M394 卡 #804（#935）詞庫下載殘留 .part 檔（iPad 實機，879342ac）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #804 清掉殘留的 .part | 通過 | 裝 879342ac 的正式版到 iPad 前，lexicon/ 有 en-zh-TW.server.1793144893346.sqlite.part 44.5 MB（10/28）和 en-zh-TW.server.1793278872548.sqlite.part 19 MB（10/29 21:02）。裝好開 App 2.5 分鐘後：兩個 .part 都不見了，App 下載了新的 en-zh-TW.server.1793288059409.sqlite（63.8 MB，23:34），舊的 1793285685321.sqlite 也清掉；剩內建包 39.5 MB、新英文包 63.8 MB、法文包 588 KB |  |  |
