@@ -3247,3 +3247,10 @@ commit `2070dc24`（Windows：flutter analyze 無 error、02:14 +811 ~2: All tes
 commit `a8f7ac51`（Windows：flutter analyze 無 error、01:59 +811 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #778：問題回報 #919：[owner] 開始複習要 7 秒：點「綜合」到第一張卡出現 7.2～7.3 秒，畫面不動
   結果：卡 #778 部分完成：開始複習的 CPU 部分由約 210ms 降到約 90ms（8500 字、2250 張照片模擬），但在桌面測試重現不出 7 秒，真正的 7 秒要 iPad 實測。
+
+## M371（2026-10-29 10:40）狀態：待做
+commit `5c6ff800`（Windows：flutter analyze 無 error、01:42 +811 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #779：問題回報 #920：[owner] 小螢幕複習的照片選字卡：題目和三個選項被底部「顯示答案」蓋住
+  結果：照片選字卡在 375×667 小螢幕上，題目和三個選項已能完整顯示在「顯示答案」上方（新增自動測試通過）。
+- 卡 #783：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
+  結果：全部完成：flutter analyze 0 error／0 warning（剩 4 個 info），flutter test 811 個全過（2 skipped）。
