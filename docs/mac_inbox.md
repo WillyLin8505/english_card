@@ -3285,3 +3285,8 @@ commit `80f1b848`（Windows：flutter analyze 無 error、03:18 +812 ~2: All tes
   結果：結論：Windows 工作樹已含修法（card #785，未 commit）；Mac 測的 5c6ff800 不含，所以重開仍掉到 8488。本卡驗證通過、未再改碼。
 - 卡 #12：模擬使用者・跨分頁（亂點、詞庫更新）
   結果：第 206/207 輪：packupdate 通過（300 秒）、fuzz 第 206 輪中途中斷、重跑第 207 輪通過（265 秒，無 findings），沒有新問題。
+
+## M376（2026-10-29 11:52）狀態：待做
+commit `65a29c82`（Windows：flutter analyze 無 error、01:43 +813 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #787：問題回報 #926：[owner] App 啟動後 10 秒內連換 3 份詞庫，每次重新連結全部單字，這段時間操作卡頓
+  結果：已修：App 啟動後同版詞庫（內建→下載副本→delta）不再重複連結全部單字；相關測試 31 個全過。
