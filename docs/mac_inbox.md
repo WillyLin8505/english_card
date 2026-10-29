@@ -3329,3 +3329,8 @@ commit `eed28cc9`（Windows：flutter analyze 無 error、01:42 +814 ~2: All tes
 卡：問題回報 #930：[Mac] 2026-10-29 M379～M381 卡 #790／#791／#792 啟動：#791／#928 第一個畫面
 
 用 iPad 重量 #791 第一個畫面時間（build 應不再含 ~2.7s）。
+
+## M384（2026-10-29 13:26）狀態：待做
+commit `82096e29`（Windows：flutter analyze 無 error、01:44 +814 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #794：問題回報 #930：[Mac] 2026-10-29 M379～M381 卡 #790／#791／#792 啟動：#79
+  結果：已修：WordEnricher.process() 改用 linkLexiconInBatches（8ms 一批、批間讓出），不再在 initState 內一次同步 link 8680 字（Mac 量到 2737ms）。
