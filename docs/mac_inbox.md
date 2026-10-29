@@ -3139,3 +3139,8 @@ commit `33b929bd`（Windows：flutter analyze 0、card745_bulk_add_test 9/9）�
 commit `754a47bf`（Windows：flutter analyze 無 error、01:10 +806 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #770：問題回報 #911：[Mac] 2026-10-29 M350 一次加入 3000 個（iPad 實機）：M350 加入
   結果：全部完成：M350 的「按鈕數字比實際多 57」在 commit 33b929bd 已修好，本輪重跑測試 9/9 通過，不需再改程式。
+
+## M354（2026-10-29 08:09）狀態：待做
+commit `d2ad3983`（Windows：flutter analyze 無 error、01:11 +806 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #771：問題回報 #912：[owner] 批量加字：檢查時先標出會被「一字一張卡」併入原形的字（M351 差 4 個）
+  結果：批量加字的檢查現在會把「併入原形」的字標成獨立狀態（merged），按鈕數字與實際加入數一致（問題回報 #912）。
