@@ -34,7 +34,7 @@ sys.path.insert(0, str(ROOT / 'backend'))
 from sqlalchemy import select  # noqa: E402
 from app import db, images, models as m  # noqa: E402
 
-FIELDS = ('cefr', 'cefrSource', 'cefrLemma', 'cefrCoreWord')
+FIELDS = ('pos', 'cefr', 'cefrSource', 'cefrLemma', 'cefrCoreWord')
 
 
 def recompute_list(s, tag_list: list[dict] | None) -> tuple[list[dict], int]:

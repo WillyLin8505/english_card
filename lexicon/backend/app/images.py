@@ -1612,6 +1612,30 @@ def _base_level_simple(word: str, s=None):
     return None
 
 
+_TAG_POS_OF = {'noun': 'noun', 'verb': 'verb', 'adjective': 'adj', 'adverb': 'adv'}
+_TAG_POS_NAME = {v: k for k, v in _TAG_POS_OF.items()}
+
+
+def _dictionary_pos(s, word: str, pos: str) -> str:
+    """The vision model often names a part of speech the word does not have
+    (serve → adjective, texture → adjective; card #800 / 問題回報 #933). When
+    the word is a full dictionary entry whose parts of speech exclude the
+    model's, take the one with the most senses (serve → verb); otherwise keep it."""
+    if ' ' in word or pos not in _TAG_POS_OF:
+        return pos
+    if pos == 'verb' and word.endswith(('ing', 'ed')):
+        return pos  # a participle (standing, arranged): the verb's form, not its own entry
+    rows = s.execute(select(m.Lexeme.pos, func.count(m.Sense.id)).outerjoin(
+        m.Sense, m.Sense.lexeme_id == m.Lexeme.id).where(
+        m.Lexeme.language == 'en', m.Lexeme.normalized == word,
+        m.Lexeme.status == 'full', m.Lexeme.pos.in_(list(_TAG_POS_NAME))).group_by(
+        m.Lexeme.pos)).all()
+    if not rows or any(p == _TAG_POS_OF[pos] for p, _ in rows):
+        return pos
+    best = max(rows, key=lambda r: (r[1], r[0] == 'noun'))[0]
+    return _TAG_POS_NAME[best]
+
+
 def classify_tag_cefr(s, tag: dict, *, include_exact: bool = True) -> dict:
     """A label's level (owner decisions, 問題回報 option A + 2026-10-06):
     1. the CEFR-J / Octanove list's level for the same word and part of
@@ -1629,6 +1653,9 @@ def classify_tag_cefr(s, tag: dict, *, include_exact: bool = True) -> dict:
     pos = str(tag.get('pos') or '').strip().lower()
     if not word:
         return tag
+    fixed = _dictionary_pos(s, word, pos)
+    if fixed != pos:
+        tag['posModel'], tag['pos'], pos = pos, fixed, fixed
     hit = _list_level(s, word, pos)
     if hit:
         tag['cefr'], tag['cefrSource'] = hit[0], 'cefrj'
