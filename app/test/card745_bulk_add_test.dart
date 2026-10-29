@@ -85,6 +85,17 @@ void main() {
     expect(r.entryByWord('brew'), isNotNull);
   });
 
+  test('the bundled pack does not move a saved word to another pos', () {
+    // Mac M374: bundled pack had boring only as a verb form, moved the saved
+    // adj. to verb, then the downloaded pack folded boring (verb) into bore.
+    final r = WordDatabaseRepository(clock: () => testNow)
+      ..addWord(word: 'balcony', pos: 'verb', meaning: '');
+    r.linkLexicon(pack()..bundled = true);
+    expect(r.entryByWord('balcony')!.pos, 'verb');
+    r.linkLexicon(pack());
+    expect(r.entryByWord('balcony')!.pos, 'noun');
+  });
+
   test('a variant of a word already in the book is skipped', () {
     final r = repo()..addWord(word: 'brew', pos: 'verb', meaning: '釀造');
     expect(classifyBulkWord('brewed', r, pack()).status, BulkStatus.existing);

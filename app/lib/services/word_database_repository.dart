@@ -1002,11 +1002,50 @@ class WordDatabaseRepository extends ChangeNotifier {
   int linkLexicon(LexiconPack pack,
       {bool fold = true, bool refreshWords = true}) {
     _finishLink();
+    _linkedKey = null; // a direct link may rewrite words: later syncs redo it
     var changed = 0;
     for (final n in _linkSteps(pack, fold: fold, refreshWords: refreshWords)) {
       changed += n;
     }
     return changed;
+  }
+
+  /// What the last complete link covered: "target-native-version", whether
+  /// it folded, whether it refreshed the saved words. App start links the
+  /// bundled pack, then DictionarySync opens the downloaded copy of the same
+  /// version and applies a delta: linking every photo and word again for a
+  /// pack that is already linked made the first seconds stutter (card #787,
+  /// 問題回報 #926).
+  String? _linkedKey;
+  bool _linkedFold = false, _linkedRefresh = false;
+  int _linkedCount = 0;
+
+  int get _linkCount => _photos.length + _entries.length;
+
+  String? _packKey(LexiconPack pack) => pack.version == null || pack.isEmpty
+      ? null
+      : '${pack.target}-${pack.native}-${pack.version}';
+
+  bool _alreadyLinked(LexiconPack pack, bool fold, bool refreshWords) {
+    final key = _packKey(pack);
+    return key != null &&
+        key == _linkedKey &&
+        _linkedCount == _linkCount &&
+        (_linkedFold || !fold) &&
+        (_linkedRefresh || !refreshWords);
+  }
+
+  void _markLinked(LexiconPack pack, bool fold, bool refreshWords) {
+    final key = _packKey(pack);
+    _linkedCount = _linkCount;
+    if (key != null && key == _linkedKey) {
+      _linkedFold |= fold;
+      _linkedRefresh |= refreshWords;
+    } else {
+      _linkedKey = key;
+      _linkedFold = fold;
+      _linkedRefresh = refreshWords;
+    }
   }
 
   /// [linkLexicon] in slices of about [budget], yielding to the UI between
@@ -1017,13 +1056,17 @@ class WordDatabaseRepository extends ChangeNotifier {
       {Duration budget = const Duration(milliseconds: 8),
       bool fold = true}) async {
     _finishLink();
+    if (_alreadyLinked(pack, fold, true)) return 0;
     final steps = _linkSteps(pack, fold: fold).iterator;
     _pendingLink = steps;
     var changed = 0;
     final watch = Stopwatch()..start();
     try {
       while (identical(_pendingLink, steps) && !_disposed) {
-        if (!steps.moveNext()) break;
+        if (!steps.moveNext()) {
+          _markLinked(pack, fold, true);
+          break;
+        }
         changed += steps.current;
         if (watch.elapsed >= budget) {
           _linkPauses++;
@@ -1143,7 +1186,12 @@ class WordDatabaseRepository extends ChangeNotifier {
       // the card moves to the pos the pack kept, so it keeps updating. A pos
       // the learner set themselves stays as it is.
       final moved = x.pos != LexiconPack.packPos(e.pos);
-      if (moved && e.userEdited.contains(WordField.pos)) continue;
+      // Nor does the bundled pack move it: it can be older (Mac M374: it
+      // made boring adj. → verb, and the downloaded pack then folded boring
+      // verb into bore).
+      if (moved && (e.userEdited.contains(WordField.pos) || pack.bundled)) {
+        continue;
+      }
       final pos = !moved
           ? e.pos
           : switch (x.pos) { 'adj' => 'adj.', 'adv' => 'adv.', final p => p };
