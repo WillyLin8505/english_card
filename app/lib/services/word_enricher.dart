@@ -100,8 +100,9 @@ class WordEnricher extends ChangeNotifier {
           pack.native == settings.nativeLanguage) {
         // No folding here: at App start the pack may still be the bundled,
         // older one (card #785, 問題回報 #924); DictionarySync folds with the
-        // final pack.
-        repository().linkLexicon(pack, fold: false);
+        // final pack. In batches: start() runs in the App's initState, and a
+        // one-go link of 8,680 words held the first frame 2.7 s (Mac M381).
+        await repository().linkLexiconInBatches(pack, fold: false);
       }
       while (queue?.current == null) {
         final repo = repository();
