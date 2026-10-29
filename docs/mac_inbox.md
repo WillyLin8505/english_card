@@ -3196,3 +3196,9 @@ commit `b1d13747`（Windows：flutter analyze 無 error、02:06 +807 ~2: All tes
   結果：已修：App 啟動時不再用內建（舊）詞庫做「一字一張卡」併入，boring 等字重開後不會被刪（未在 iPad 實機驗證）。；結果：flutter analyze 無問題；lexiconpacktest 與 #558 測試共 20 項通過。未動詞庫資料，沒有備份需求；golden/QC 不受影響（未執行）。
 - 卡 #774：問題回報 #918：[owner] 切到相片冊要 1.3 秒（單字本只要 0.26 秒），找出第一次打開在等什麼
   結果：部分完成：找到相片冊第一次打開慢的程式原因並修正（未在實機量秒數，需 iPad 驗證）。；根因：WordDatabaseRepository.photos 每次呼叫都複製並排序全部照片；相片冊每次 build，每本相簿又呼叫 photosInAlbum 多次（albumGroup、封面、單字數、副標，albumGrou
+
+## M364（2026-10-29 10:18）狀態：待驗證
+commit `9892937b`（Windows：flutter analyze 0；card312／card745／lexicon_pack 測試 26 項通過）。#916／#917：啟動時不再用內建舊詞庫併字或覆寫字；#918：相片冊排序快取。`git pull` 後用 owner 的 iPad：
+- 重貼 boring 那批字（boring、amazing、wedding、being、working、worried…），記下單字本數字，關掉 App 重開兩次：數字不變、這批字還在；啟動後不應每次都顯示「30 個字補上例句」。
+- 切到相片冊分頁的時間（M357 是 1.3 秒）。
+結果寫進 docs/mac_verify_results.md。
