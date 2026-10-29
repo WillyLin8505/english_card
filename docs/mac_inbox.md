@@ -3345,7 +3345,7 @@ commit `9e6e6a31`（Windows：flutter analyze 無 error、01:40 +814 ~2: All tes
 - 卡 #795：問題回報 #931：法語模擬：2 張圖片標籤「le」指向的詞不在法語包裡（lexeme 200017）
   結果：根因已修：法語包有 2 張圖片標籤指向被排除在包外的詞（le，lexeme 200017），現在打包時會自動丟掉這類標籤；全庫量測見下。
 
-## M387（2026-10-29 20:57）狀態：待做
+## M387（2026-10-29 20:57）狀態：完成
 commit `fe53e300`（Windows：flutter analyze 無 error、01:06 +814 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #228：模擬使用者・設定
   結果：第 18 輪（模擬輪 208）：設定 1/1 通過、findings 0；新問題無、UX 建議沿用 #474（未重複開）。
