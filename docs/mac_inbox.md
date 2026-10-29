@@ -3319,3 +3319,8 @@ commit `d8f6b907`（Windows：flutter analyze 無 error、01:41 +814 ~2: All tes
   結果：根因找到並修了：相片冊分頁（啟動時所有分頁一起 build）對每本相簿重掃全部 occurrence，400 本×3 萬筆在 iPad 上要數秒；改成一次掃完＋快取。
 - 卡 #791：問題回報 #928：[owner] App 第一個畫面 build 要 3.2 秒（單字本 8,680 字），啟動時畫面
   結果：修好（待 Mac 在 iPad 驗證）：App 一開始同時建了 5 個分頁，單字本（8,680 字）、設定、複習都擠在第一幀；改成只建第一個分頁，其餘第一次點到才建。測試機 8,680 字第一幀 1082 ms → 698 ms（內建 3 字範例約 478 ms，是引擎暖機底線）。
+
+## M382（2026-10-29 12:52）狀態：待做
+commit `eed28cc9`（Windows：flutter analyze 無 error、01:42 +814 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #793：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
+  結果：全部完成：flutter test 814 全過（2 skip）、flutter analyze 0 error（4 個 info）。
