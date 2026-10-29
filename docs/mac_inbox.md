@@ -3453,3 +3453,9 @@ Windows 端量到：/api/image 有 Cache-Control: public, max-age=604800（無 E
 用 iPad 重量並確認畫質。
 - golden／QC：未動詞庫資料，未跑。
 - flutter analyze：改動的三個檔 No issues；flutter test（照片快取兩個測試檔，17 項）全過。
+
+## M403（2026-10-30 01:11）狀態：待做（Windows 卡 #817 交給 Mac 的 App 畫面部分）
+卡：問題回報 #944：[Mac] 2026-10-30 #938 圖片載入很慢：iPad 實測（唯讀，量測不改程式：#938 複習：開始和翻面
+
+用同一方法重測「綜合」開卡與顯示答案的下載數量與單張秒數。
+無資料變更，無需備份；golden/QC 不受影響。
