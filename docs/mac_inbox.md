@@ -3184,3 +3184,8 @@ commit `e2393d02`（Windows：flutter analyze 無 error、01:19 +806 ~2: All tes
 commit `6f4ac97b`（Windows：flutter analyze 無 error、02:24 +806 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #224：模擬使用者・拍照
   結果：第 205 輪（photoui）＋ pins：2/2 通過，31,189 張照片、93,567 個版面，標籤遮點 0（無新錯誤）；沒有新的 UX 建議（#583、#584 仍待決定）。
+
+## M363（2026-10-29 10:05）狀態：待做（Windows 卡 #777 交給 Mac 的 App 畫面部分）
+卡：問題回報 #917：[Mac] 2026-10-29 M356／M358 卡 #773 重貼 boring 那批：#773 重開 App 後不消失
+
+用 iPad 重開 App 驗 boring、amazing、wedding、being、working 是否保留（單字本 8680 不變）。
