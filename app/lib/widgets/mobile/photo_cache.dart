@@ -272,12 +272,13 @@ class CachedNetworkPhoto extends ImageProvider<CachedNetworkPhoto> {
 
   // 問題回報 #944: prefetches run a few at a time, so the photo on screen
   // (loaded directly, not queued) is not stuck behind 100+ downloads.
-  static const _maxPrefetches = 3;
+  @visibleForTesting
+  static const maxPrefetchParallel = 3;
   static final _queue = <String>[];
   static int _running = 0;
 
   static void _pump() {
-    while (_running < _maxPrefetches && _queue.isNotEmpty) {
+    while (_running < maxPrefetchParallel && _queue.isNotEmpty) {
       final url = _queue.removeLast(); // the most recently wanted first
       _running++;
       bytesFor(url).then<void>((_) {}, onError: (_) {
