@@ -3470,3 +3470,9 @@ Windows 端量到：/api/image 有 Cache-Control: public, max-age=604800（無 E
 卡：問題回報 #945：照片標籤沒有位置時被放在左上角 (0,0)：約 1,395 張資料庫圖片
 
 iPad 抽驗圖 35、44 的 frame／symbol／mark／motif 應列在「整張圖」、不再有左上角藍點。
+
+## M406（2026-10-30 02:29）狀態：待做（Windows 卡 #807 交給 Mac 的 App 畫面部分）
+卡：[owner] 法語 3000 字例句加上 Azure 發音（每字前 3 句，約 8,855 句）
+
+- 重跑 flutter test 確認那 6 個失敗，並跑 qc／golden。
+- 重新匯出 fr→en 詞庫包，確認例句 audio_id 有值、/api/audio 能播；Mac 在 iPad 驗證例句播放鍵。
