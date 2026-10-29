@@ -490,16 +490,42 @@ class WordDatabaseRepository extends ChangeNotifier {
   }
 
   /// Distinct words being learned across the album's photos ("18 個單字").
-  int albumWordCount(String albumId) {
-    final photoIds = {
-      for (final p in _photos)
-        if (p.albumId == albumId) p.id
+  int albumWordCount(String albumId) => _albumWordCounts()[albumId] ?? 0;
+
+  // Card #792: all albums' counts in one pass over the occurrences (it was a
+  // scan of every photo and occurrence per album, per build of the 相片冊).
+  Map<String?, int>? _albumWordCountsCache;
+  (int, int, int, Object)? _albumWordCountsKey;
+
+  Map<String?, int> _albumWordCounts() {
+    photosInAlbum('');
+    final byAlbum = _photosByAlbum!;
+    final seen = _albumWordCountsKey;
+    final cached = _albumWordCountsCache;
+    if (cached != null &&
+        seen != null &&
+        seen.$1 == _occurrences.version &&
+        seen.$2 == _entries.version &&
+        seen.$3 == _cards.version &&
+        identical(seen.$4, byAlbum)) {
+      return cached;
+    }
+    final albumOfPhoto = <String, String?>{
+      for (final l in byAlbum.values)
+        for (final p in l) p.id: p.albumId,
     };
-    return {
-      for (final o in _occurrences)
-        if (photoIds.contains(o.photoId) && !isArchived(o.wordEntryId))
-          o.wordEntryId,
-    }.length;
+    final words = <String?, Set<String>>{};
+    for (final o in _occurrences) {
+      if (!albumOfPhoto.containsKey(o.photoId) || isArchived(o.wordEntryId)) {
+        continue;
+      }
+      (words[albumOfPhoto[o.photoId]] ??= {}).add(o.wordEntryId);
+    }
+    _albumWordCountsKey =
+        (_occurrences.version, _entries.version, _cards.version, byAlbum);
+    return _albumWordCountsCache = {
+      for (final e in words.entries) e.key: e.value.length,
+    };
   }
 
   /// The cover shown on an album card: the newest photo that can be shown
@@ -906,6 +932,49 @@ class WordDatabaseRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Scene scores per album (card #792): one pass over every occurrence
+  /// instead of one per album (the 相片冊 tab asked for each album's group
+  /// several times per build, and it is built with the first screen).
+  Map<String?, Map<String, int>>? _sceneScoresCache;
+  (int, int, Object)? _sceneScoresKey;
+
+  Map<String?, Map<String, int>> _sceneScores() {
+    photosInAlbum('');
+    final byAlbum = _photosByAlbum!;
+    final key = (_occurrences.version, _entries.version, byAlbum);
+    final cached = _sceneScoresCache;
+    final seen = _sceneScoresKey;
+    if (cached != null &&
+        seen != null &&
+        seen.$1 == key.$1 &&
+        seen.$2 == key.$2 &&
+        identical(seen.$3, byAlbum)) {
+      return cached;
+    }
+    final albumOfPhoto = <String, String?>{
+      for (final l in byAlbum.values)
+        for (final p in l) p.id: p.albumId,
+    };
+    final wordScenes = <String, List<String>>{};
+    final out = <String?, Map<String, int>>{};
+    for (final o in _occurrences) {
+      if (!albumOfPhoto.containsKey(o.photoId)) continue;
+      final word = entry(o.wordEntryId)?.word.toLowerCase();
+      if (word == null) continue;
+      final scenes = wordScenes[word] ??= [
+        for (final e in albumSceneWords.entries)
+          if (e.value.contains(word)) e.key,
+      ];
+      if (scenes.isEmpty) continue;
+      final m = out[albumOfPhoto[o.photoId]] ??= {};
+      for (final k in scenes) {
+        m[k] = (m[k] ?? 0) + 1;
+      }
+    }
+    _sceneScoresKey = (key.$1, key.$2, byAlbum);
+    return _sceneScoresCache = out;
+  }
+
   /// The group an album sits in on the 相片冊, worked out from what is in
   /// it (問題回報 #404): a stored [Album.category] from older data wins, a
   /// 卡片集 album goes under 圖片集, otherwise the scene most of its
@@ -915,16 +984,7 @@ class WordDatabaseRepository extends ChangeNotifier {
       return album.category!;
     }
     if (album.deckSlug != null) return deckAlbumGroup;
-    final photoIds = {for (final p in photosInAlbum(album.id)) p.id};
-    final scores = <String, int>{};
-    for (final o in _occurrences) {
-      if (!photoIds.contains(o.photoId)) continue;
-      final word = entry(o.wordEntryId)?.word.toLowerCase();
-      if (word == null) continue;
-      for (final e in albumSceneWords.entries) {
-        if (e.value.contains(word)) scores[e.key] = (scores[e.key] ?? 0) + 1;
-      }
-    }
+    final scores = _sceneScores()[album.id] ?? const <String, int>{};
     if (scores.isNotEmpty) {
       return scores.entries.reduce((a, b) => b.value > a.value ? b : a).key;
     }

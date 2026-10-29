@@ -46,6 +46,11 @@ class AppShell extends StatefulWidget {
 class AppShellState extends State<AppShell> implements AppNavigator {
   late AppTab _tab = widget.initialTab;
   bool _reviewing = false;
+  // Tabs are built the first time they are shown: building all five at start
+  // put the 單字本 list, settings and review in the first frame (3.2 s with
+  // 8,680 words on a phone; card #791, 問題回報 #928). Once built a tab stays
+  // alive in the IndexedStack, so its state and navigation stack are kept.
+  late final Set<AppTab> _built = {widget.initialTab};
   final _navigators = {
     for (final t in AppTab.values) t: GlobalKey<NavigatorState>()
   };
@@ -64,6 +69,11 @@ class AppShellState extends State<AppShell> implements AppNavigator {
     });
   }
 
+  void _show(AppTab tab) {
+    _tab = tab;
+    _built.add(tab);
+  }
+
   NavigatorState? _nav(AppTab tab) => _navigators[tab]!.currentState;
 
   @override
@@ -74,13 +84,13 @@ class AppShellState extends State<AppShell> implements AppNavigator {
       return;
     }
     FeedbackContext.instance.tab = tab;
-    setState(() => _tab = tab);
+    setState(() => _show(tab));
     Analytics.instance.screen(tab.name);
   }
 
   void _pushInAlbumTab(Widget screen, String name, String subject) {
     FeedbackContext.instance.tab = AppTab.album;
-    setState(() => _tab = AppTab.album);
+    setState(() => _show(AppTab.album));
     // The album navigator may not have built yet if the tab was never
     // shown; push after this frame.
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -164,7 +174,7 @@ class AppShellState extends State<AppShell> implements AppNavigator {
         if (nav != null && nav.canPop()) {
           nav.pop();
         } else if (_tab != AppTab.camera) {
-          setState(() => _tab = AppTab.camera);
+          setState(() => _show(AppTab.camera));
         } else {
           SystemNavigator.pop();
         }
@@ -177,12 +187,15 @@ class AppShellState extends State<AppShell> implements AppNavigator {
             index: _tab.index,
             children: [
               for (final tab in AppTab.values)
-                Navigator(
-                  key: _navigators[tab],
-                  observers: [FeedbackObserver(tab)],
-                  onGenerateRoute: (_) =>
-                      MaterialPageRoute<void>(builder: (_) => _root(tab)),
-                ),
+                if (_built.contains(tab))
+                  Navigator(
+                    key: _navigators[tab],
+                    observers: [FeedbackObserver(tab)],
+                    onGenerateRoute: (_) =>
+                        MaterialPageRoute<void>(builder: (_) => _root(tab)),
+                  )
+                else
+                  const SizedBox.shrink(),
             ],
           ),
         ),

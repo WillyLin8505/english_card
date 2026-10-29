@@ -311,6 +311,11 @@ class DictionarySync extends ChangeNotifier {
         !_disposed &&
         identical(repo, _repository!()) &&
         native == _settings!.nativeLanguage;
+    // The downloaded copy opened at start is linked only once the server has
+    // answered: a delta or a new pack then links once instead of twice in
+    // the first seconds (card #790, 問題回報 #926). Linking the pack that is
+    // open is skipped when it was already linked (same version).
+    var linkOwed = false;
     try {
       if (_activePair != pair) {
         String? saved;
@@ -323,7 +328,7 @@ class DictionarySync extends ChangeNotifier {
             if (copy != null) {
               final candidate = await LexiconPack.openSqlite(copy);
               LexiconPack.instance.replaceWith(candidate);
-              await repo.linkLexiconInBatches(LexiconPack.instance);
+              linkOwed = true;
               opened = true;
               if (_cache?.containsKey(pair) ?? false) {
                 await _cache?.delete(pair);
@@ -477,6 +482,11 @@ class DictionarySync extends ChangeNotifier {
         BackgroundErrors.instance.report(this, status, retry: refresh);
       }
     } finally {
+      if (linkOwed && current()) {
+        try {
+          await repo.linkLexiconInBatches(LexiconPack.instance);
+        } catch (_) {}
+      }
       _running = false;
       downloading = false;
       if (!_disposed) notifyListeners();
