@@ -3190,7 +3190,7 @@ commit `6f4ac97b`（Windows：flutter analyze 無 error、02:24 +806 ~2: All tes
 
 用 iPad 重開 App 驗 boring、amazing、wedding、being、working 是否保留（單字本 8680 不變）。
 
-## M364（2026-10-29 10:11）狀態：待做
+## M364（2026-10-29 10:11）狀態：完成
 commit `b1d13747`（Windows：flutter analyze 無 error、02:06 +807 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #777：問題回報 #917：[Mac] 2026-10-29 M356／M358 卡 #773 重貼 boring 那批：#77
   結果：已修：App 啟動時不再用內建（舊）詞庫做「一字一張卡」併入，boring 等字重開後不會被刪（未在 iPad 實機驗證）。；結果：flutter analyze 無問題；lexiconpacktest 與 #558 測試共 20 項通過。未動詞庫資料，沒有備份需求；golden/QC 不受影響（未執行）。
@@ -3202,7 +3202,7 @@ commit `9892937b`（Windows：flutter analyze 0；card312／card745／lexicon_pa
 - 重貼 boring 那批字（boring、amazing、wedding、being、working、worried…），記下單字本數字，關掉 App 重開兩次：數字不變、這批字還在；啟動後不應每次都顯示「30 個字補上例句」。
 - 切到相片冊分頁的時間（M357 是 1.3 秒）。
 結果寫進 docs/mac_verify_results.md。
-## M365（2026-10-29 10:21）狀態：待做
+## M365（2026-10-29 10:21）狀態：完成
 commit `0757ccb0`（Windows：flutter analyze 無 error、03:43 +811 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #775：問題回報 #916：App 啟動時用舊詞庫把單字本的字併掉刪除；詞庫更新沒存回，每次啟動都顯示「30 個字補上例句」
   結果：全部完成：根因是 App 啟動先用「內建（較舊）詞庫」覆蓋單字本內容，之後下載的新詞庫再補一次 → 每次啟動都顯示「30 個字補上例句」；已修（只改 App 程式，無資料變更）。

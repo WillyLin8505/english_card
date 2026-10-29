@@ -2243,3 +2243,13 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
 |----|----|----|----|----|
 | #777 重開 App 後保留 boring 那批 | 不通過 | 6f4ac97b 之後 app/lib 沒有任何變更（76bb9ccb 只改 docs/mac_inbox.md），#916（啟動時用舊詞庫的 linkLexicon 把 boring 併進 bore 並刪掉）還沒修。iPad 目前單字本 8488，boring、amazing、wedding、being、working 都不在，和 M356／M358 一樣。等 #916 的修正推上來後再用 iPad 重貼並重開驗證 |  | 中 |
+
+## 2026-10-29 M364／M365 卡 #777、#774、#775（#916／#917／#918／#919，iPad 實機，到 0757ccb0）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #775 啟動不再跳「詞庫已更新」 | 通過 | 連續重開 2 次，20 秒內都沒出現「詞庫已更新：30 個字補上例句」 |  |  |
+| #777／#775 重開後保留 boring 那批 | 不通過 | 重貼 375 字：按鈕「加入 192 個」→ 單字本 8488 → 8680；重開 2 次都回到 8488，boring、amazing、wedding、being、working 都不在。存檔沒問題：加入後 wd_entries.hive 裡有這筆，是下次啟動到第一個畫面之前被刪。main.dart 已改 linkLexicon(fold: false, refreshWords: false)，但啟動時還有兩條路用內建（舊）詞庫做併入：WordEnricher.process() 的 repository().linkLexicon(pack)（fold 預設 true），以及 DictionarySync._useBundled() 的 linkLexiconInBatches（fold 預設 true）。剛啟動時 LexiconPack 是內建那份（01f91fa3…，boring → bore/verb/form），5 秒內換成 6f3c612…、9d3374e…（boring 自己是 adj）。建議這兩條也要等最終詞庫再併入，或在內建詞庫時傳 fold: false。註：Mac 測試啟動程式（本機 mac_verify_test.dart）也同步改成 fold: false 後重測，結果相同 |  | 中 |
+| #918 相片冊切換 | 通過 | App 穩定後（啟動 30 秒後）切到相片冊 72ms；剛啟動 3 秒內切換要 1.24 秒（上次 1.3 秒），慢在啟動時詞庫載入，不在相片冊本身 |  |  |
+| #919 開始複習 | 通過 | App 穩定後點「綜合」到第一張卡 81ms；剛啟動約 10 秒內點要 7.06 秒（上次 7.2 秒） |  |  |
+| 啟動前 10 秒卡頓 | 注意 | owner 說的卡頓集中在啟動後約 10 秒：這段時間 LexiconPack 依序換 3 份詞庫（01f91fa3 → 6f3c612 → 9d3374e），每次都對單字本 8488 個字重新 link；這段時間切分頁或開複習會慢 1～7 秒。建議少換幾次或把 link 移出主執行緒 |  | 中 |
