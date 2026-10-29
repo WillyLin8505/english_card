@@ -3164,3 +3164,8 @@ commit `0c234e04`（Windows：flutter analyze 無 error、01:25 +806 ~2: All tes
 commit `956ec6a3`（Windows：flutter analyze 無 error、01:27 +806 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #773：問題回報 #914：[Mac] 2026-10-29 M352／M354 卡 #771 檢查時標出併入原形（iP：#77
   結果：結論：已改檢查邏輯，讓「檢查」和加入時的「一字一張卡」(foldInto) 用同一套 lookup(word, pos:)，N 應該等於實際增加數；尚未用真實 192 字那批在 iPad 驗證。
+
+## M359（2026-10-29 09:11）狀態：待做（Windows 卡 #227 交給 Mac 的 App 畫面部分）
+卡：模擬使用者・單字本
+
+無。
