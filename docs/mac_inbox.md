@@ -3383,3 +3383,8 @@ commit `74fb92bc`（Windows：flutter analyze 無 error、01:28 +814 ~2: All tes
 commit `ad3ba4e9`（Windows：flutter analyze 無 error、01:19 +814 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #800：問題回報 #933：照片標籤詞性錯：serve 標成 adj.（iPad 早餐照片 photo-179328382097
   結果：全部完成：照片標籤詞性已修正——新標籤在入庫時依詞典校正，既有 4,375 張圖共 9,235 個標籤（如 serve、texture 被標 adj.）已改成詞典有的詞性。
+
+## M394（2026-10-29 23:31）狀態：待做
+commit `879342ac`（Windows：flutter analyze 無 error、01:18 +814 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #804：問題回報 #935：App 詞庫下載：新包下載完後沒清掉舊的 .part 檔（iPad 殘留 63.5 MB）
+  結果：全部完成：App 詞庫下載現在會清掉殘留的 {pair}.server..sqlite.part（iPad 63.5 MB 的來源）。
