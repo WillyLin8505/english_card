@@ -31,6 +31,14 @@ from .quality import example_other_pos_only
 from .function_words import FUNCTION_WORD_RELATIONS, is_noisy_function_word_relation
 from .text import example_key, text_hash, is_column_word_list
 
+SENTENCE_VOICES = {"fr": "fr-FR-DeniseNeural"}  # card #807
+
+
+def sentence_audio_url(target: str, text_hash_: str) -> str:
+    """audio_assets.source_url of a sentence's synthesized recording."""
+    return f"azure-tts://{SENTENCE_VOICES.get(target, '')}/s/{text_hash_}"
+
+
 SCHEMA_VERSION = 5  # 5: per-sense register (neutral / written / spoken / slang)
 
 DDL = """
@@ -69,7 +77,8 @@ CREATE INDEX ix_pron_lexeme ON pronunciations(lexeme_id, ordinal);
 CREATE TABLE examples (
   id INTEGER PRIMARY KEY, lexeme_id INTEGER NOT NULL REFERENCES lexemes(id),
   sense_id INTEGER REFERENCES senses(id), text TEXT NOT NULL, difficulty TEXT,
-  source TEXT NOT NULL, source_record_id TEXT, license TEXT, ordinal INTEGER NOT NULL);
+  source TEXT NOT NULL, source_record_id TEXT, license TEXT, ordinal INTEGER NOT NULL,
+  audio_id INTEGER REFERENCES audio(id));
 CREATE INDEX ix_examples_lexeme ON examples(lexeme_id, ordinal);
 CREATE TABLE example_translations (
   example_id INTEGER PRIMARY KEY REFERENCES examples(id), text TEXT NOT NULL,
@@ -497,6 +506,23 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_saf
     stub_ids: set[int] = set()
     exported: set[int] = set()
 
+    def add_audio_row(asset) -> None:
+        if asset.id in audio_ids:
+            return
+        audio_ids[asset.id] = {"path": asset.path, "sha256": asset.sha256,
+                               "bytes": asset.size_bytes, "mime": asset.mime}
+        con.execute("INSERT INTO audio VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                    (asset.id, asset.path, asset.sha256, asset.mime, asset.accent,
+                     asset.speaker, asset.license, asset.attribution,
+                     asset.source_url, asset.duration_s, asset.source_page, asset.source))
+        counts["audio"] += 1
+        if include_audio:
+            src = config.MEDIA / asset.path
+            dst = tmp_dir / "media" / asset.path
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            if src.exists():
+                shutil.copy2(src, dst)
+
     def used(src, n=1):
         if src:
             used_sources[src] = used_sources.get(src, 0) + n
@@ -694,9 +720,16 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_saf
             # master row's (the lowest lexeme id of the word, often the noun):
             # a verb-sense sentence under fear/noun was still shown on the noun
             # card (問題回報 #557).
-            con.execute("INSERT INTO examples VALUES (?,?,?,?,?,?,?,?,?)",
+            # Card #807: a synthesized sentence recording (azure_tts_sentence), one per text.
+            ex_asset = audio_by_url.get(sentence_audio_url(target, ex.text_hash))
+            if ex_asset is not None and ex_asset.status == "ready" and ex_asset.path:
+                add_audio_row(ex_asset)
+            else:
+                ex_asset = None
+            con.execute("INSERT INTO examples VALUES (?,?,?,?,?,?,?,?,?,?)",
                         (ex.id, own_lx if own_lx is not None else ex.lexeme_id, sid, ex.text,
-                         ex_level.get(k), it.get("source", ""), ex.source_record_id, ex.license, n))
+                         ex_level.get(k), it.get("source", ""), ex.source_record_id, ex.license, n,
+                         ex_asset.id if ex_asset is not None else None))
             used(it.get("source"))
             counts["examples"] += 1
             tr = ex_tr.get(k)
@@ -913,7 +946,8 @@ def _check(db_path: Path, folder: Path, include_audio: bool) -> list[dict]:
         add("translation_pairs", orphan_tr == 0, "例句翻譯都配對到例句" if not orphan_tr
             else f"{orphan_tr} 筆例句翻譯沒有對應例句")
         orphan_audio = con.execute("SELECT count(*) FROM audio a WHERE NOT EXISTS (SELECT 1 FROM"
-                                   " pronunciations p WHERE p.audio_id = a.id)").fetchone()[0]
+                                   " pronunciations p WHERE p.audio_id = a.id) AND NOT EXISTS"
+                                   " (SELECT 1 FROM examples e WHERE e.audio_id = a.id)").fetchone()[0]
         add("orphan_audio", orphan_audio == 0, "沒有孤立音檔" if not orphan_audio
             else f"{orphan_audio} 個音檔沒有詞條使用")
         if include_audio:

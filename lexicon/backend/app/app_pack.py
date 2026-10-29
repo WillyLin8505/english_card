@@ -61,7 +61,9 @@ def build(db_path: Path) -> dict:
         by_lex[r["lexeme_id"]]["examples"].append({
             "id": r["id"], "text": r["text"], "translation": r["translation"],
             "translation_ai": bool(r["is_ai"]), "level": r["difficulty"], "sense_id": r["sense_id"],
-            "source": r["source"], "license": r["license"]})
+            "source": r["source"], "license": r["license"],
+            # Card #807: synthesized sentence recording (older packs have no audio_id).
+            "audio": (audio.get(r["audio_id"]) or {}).get("path") if "audio_id" in r.keys() and r["audio_id"] else None})
     for r in q("SELECT * FROM relations ORDER BY lexeme_id, relation, ordinal"):
         by_lex[r["lexeme_id"]]["relations"].append({
             "relation": r["relation"], "word": r["target_word"], "lexeme_id": r["target_lexeme_id"],

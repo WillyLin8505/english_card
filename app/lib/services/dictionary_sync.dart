@@ -221,8 +221,7 @@ class DictionarySync extends ChangeNotifier {
             native == _settings!.nativeLanguage) {
           // With a download to follow, the bundled pack may be older: no
           // folding (card #785, 問題回報 #924).
-          await repo.linkLexiconInBatches(LexiconPack.instance,
-              fold: !remote);
+          await repo.linkLexiconInBatches(LexiconPack.instance, fold: !remote);
           _activePair = pair;
           unawaited(LexiconPack.instance.warmMeanings());
         }
@@ -276,17 +275,28 @@ class DictionarySync extends ChangeNotifier {
     return name.startsWith('$pair.server.') && name.endsWith('.sqlite');
   }
 
+  /// Leftover `{pair}.server.*.sqlite.part` from a download that was killed
+  /// before it could clean up (問題回報 #935: 63.5 MB on an iPad).
+  static bool _isServerPart(String path, String pair) {
+    final name = path.split(Platform.pathSeparator).last;
+    return name.startsWith('$pair.server.') && name.endsWith('.sqlite.part');
+  }
+
   static String _newServerCopyPath(Directory dir, String pair) =>
       '${dir.path}/$pair.server.${DateTime.now().millisecondsSinceEpoch}.sqlite';
 
   /// Deletes downloaded packs other than [keep] (a replaced file that is
   /// still open is deleted on a later run).
-  static Future<void> _pruneServerCopies(String pair, String? keep) async {
+  static Future<void> _pruneServerCopies(String pair, String? keep,
+      {bool partsOnly = false}) async {
     try {
       final dir = await LexiconPack.storageDirectory();
       if (!await dir.exists()) return;
       for (final f in dir.listSync()) {
-        if (f is File && _isServerCopy(f.path, pair) && f.path != keep) {
+        if (f is File &&
+            f.path != keep &&
+            ((!partsOnly && _isServerCopy(f.path, pair)) ||
+                _isServerPart(f.path, pair))) {
           try {
             await f.delete();
           } catch (_) {}
@@ -527,6 +537,8 @@ class DictionarySync extends ChangeNotifier {
       bool Function() current) async {
     final dir = await LexiconPack.storageDirectory();
     await dir.create(recursive: true);
+    // Only one download runs at a time, so any older .part is an orphan.
+    await _pruneServerCopies(pair, null, partsOnly: true);
     final path = _newServerCopyPath(dir, pair);
     final part = File('$path.part');
     final LexiconPack candidate;

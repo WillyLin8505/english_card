@@ -72,7 +72,7 @@ KEY_FILE = os.path.join(HERE, '.api_key')
 CMUDICT = os.path.join(ROOT, 'data', 'raw', 'cmudict.dict')
 DEFAULT_MODEL = 'qwen3.5:4b'
 MAX_BODY = 20 * 1024 * 1024
-PROMPT_VERSION = 'photo-tags-context-v12-fr-pack'
+PROMPT_VERSION = 'photo-tags-context-v11-harder-level'
 CACHE_DIR = os.path.join(HERE, 'cache')
 MODEL_CONTEXT = int(os.environ.get('TAGGER_NUM_CTX', '4096'))
 MODEL_MAX_TOKENS = int(os.environ.get('TAGGER_NUM_PREDICT', '1200'))
@@ -1227,7 +1227,9 @@ class Tagger:
             'level': level if level in LEVELS else None,
             'focus': focus,
             'exclude': sorted(w.strip().lower() for w in (exclude or []) if w.strip()),
-            'prep': IMAGE_PREP_VERSION},
+            'prep': IMAGE_PREP_VERSION,
+            # Card 806: non-English prompts/filters changed; English keys stay as they were.
+            **({'lang_policy': 'pack-v1'} if lang != 'en' else {})},
             sort_keys=True).encode()
         cache_file = os.path.join(CACHE_DIR, hashlib.sha256(key_data).hexdigest() + '.json')
         # The cache holds the model's labels; the level filter and CEFR bands are applied
