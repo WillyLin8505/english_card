@@ -597,6 +597,14 @@ def to_candidates(raw: list[dict], lexicon: 'Lexicon | None' = None,
         # (night, city); with no box that is a guess, not a location. Flag it for re-grounding.
         if not item['box'] and (round(float(point[0])), round(float(point[1]))) in ((500, 500), (500, 400)):
             item['pointUngrounded'] = True
+        # Card #819 (問題回報 #945): (0, 0) is the model's "don't know" and a point outside
+        # 0..1000 clamps into a corner; neither is a place. Use the box centre, or no pin.
+        if item['point'][0] in (0.0, 1.0) and item['point'][1] in (0.0, 1.0):
+            if item['box']:
+                b = item['box']
+                item['point'] = [round((b[0] + b[2]) / 2, 4), round((b[1] + b[3]) / 2, 4)]
+            else:
+                item['pointUngrounded'] = True
         if lexicon is not None:
             item.update(lexicon.describe(word))
         out.append(item)

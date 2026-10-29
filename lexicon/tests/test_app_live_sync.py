@@ -144,6 +144,20 @@ def test_ungrounded_tag_flag_reaches_catalog_label(session, fakes):
     session.flush()
     label = serve_app.catalog_snapshot(session, 'en')[1][0]['labels'][0]
     assert label['point'] == [0.5, 0.5] and 'pointUngrounded' not in label
+    # Card #819 (問題回報 #945): (0, 0) / a clamped corner is no place: box centre, else no pin.
+    asset.tags = [{'word': 'apple', 'pos': 'noun', 'point': [0.0, 0.0], 'box': [0.2, 0.2, 0.6, 0.4]}]
+    session.flush()
+    label = serve_app.catalog_snapshot(session, 'en')[1][0]['labels'][0]
+    assert label['point'] == [0.4, 0.3] and 'pointUngrounded' not in label
+    for corner in ([0.0, 0.0], [1.0, 1.0], [0.0, 1.0]):
+        asset.tags = [{'word': 'apple', 'pos': 'noun', 'point': corner, 'box': None}]
+        session.flush()
+        label = serve_app.catalog_snapshot(session, 'en')[1][0]['labels'][0]
+        assert label['point'] is None and label['pointUngrounded'] is True
+    asset.tags = [{'word': 'apple', 'pos': 'noun', 'point': [0.5, 1.0], 'box': None}]
+    session.flush()
+    label = serve_app.catalog_snapshot(session, 'en')[1][0]['labels'][0]
+    assert label['point'] == [0.5, 1.0] and 'pointUngrounded' not in label
 
 
 def test_label_takes_position_from_inflected_tag(session, fakes):

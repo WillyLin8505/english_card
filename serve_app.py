@@ -29,6 +29,7 @@ ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / 'lexicon' / 'backend'))
 from app import accounts, app_pack, catalog, config, db, decks, exporter
 from app.meaning_labels import add_meaning_tags, meaning_index  # noqa: F401 (meaning_index: tools use serve_app.meaning_index)
+from app.label_points import anchor as point_anchor
 try:
     import brotli as _brotli
 except ImportError:
@@ -239,20 +240,16 @@ def catalog_snapshot(session, target):
             enriched_tags.append(tag_out)
             label = {'word': word.lemma, 'pos': word.pos, 'point': item.get('point'),
                      'box': item.get('box'), 'lexeme_id': word.id}
-            # 問題回報 #768: a tag the tagger could not place (pointUngrounded, no box)
-            # keeps only its default centre otherwise; send no point, flag it, so the
-            # App shows 「整張圖」 instead of a pin (the field whitelist used to drop it).
-            if item.get('pointUngrounded') and not item.get('box'):
-                label['point'] = None
-                label['pointUngrounded'] = True
+            # 問題回報 #768 / #769: a tag the tagger could not place (pointUngrounded,
+            # no box) sends no point, flagged, so the App shows 「整張圖」, no pin.
+            # Card #819 (#945): (0, 0) and clamped corners too, or their box's centre.
+            if item:
+                label['point'], ungrounded = point_anchor(item)
+                if ungrounded:
+                    label['pointUngrounded'] = True
             if band in levels:
                 label['cefr'] = band
                 label['cefr_source'] = tag_out['cefr_source']
-            if item.get('pointUngrounded') and not item.get('box'):
-                # Card #669 (問題回報 #769): the tagger's default centre is no
-                # real place (card #631); the app shows 「整張圖」, no pin.
-                label['point'] = None
-                label['pointUngrounded'] = True
             labels.append(label)
         images.append({'id': asset.id, 'url': f'/api/image?id={asset.id}',
                        'width': asset.width, 'height': asset.height,

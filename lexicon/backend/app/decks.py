@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 
 from . import db
 from . import models as m
+from .label_points import anchor
 
 KINDS = ("words", "photos")
 CEFR = ("A1", "A2", "B1", "B2", "C1", "C2")
@@ -81,8 +82,7 @@ def clean_labels(tags: list | None, limit: int = LABEL_LIMIT) -> list[dict]:
     out, seen = [], set()
     for t in sorted(tags or [], key=lambda t: -(t.get("score") or 0)):
         word = (t.get("word") or "").strip().lower()
-        point = t.get("point")
-        ungrounded = bool(t.get("pointUngrounded")) and not t.get("box")
+        point, ungrounded = anchor(t)  # card #819: (0, 0) / corners are no place either
         if not word or word in seen or (not ungrounded and (not point or len(point) != 2)):
             continue
         seen.add(word)

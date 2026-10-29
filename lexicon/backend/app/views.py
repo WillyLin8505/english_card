@@ -480,9 +480,11 @@ def french_label_words(s: Session, target: str, tags: list) -> dict:
 def _anchor_fields(tg: dict) -> dict:
     """point/box of a tag; an ungrounded default point goes out as null +
     point_ungrounded (card #631) so the app shows no dot."""
-    if tg.get("pointUngrounded") and not tg.get("box"):
+    from .label_points import anchor
+    point, ungrounded = anchor(tg)  # card #819: (0, 0) / corners are no place either
+    if ungrounded:
         return {"point": None, "box": None, "point_ungrounded": True}
-    return {"point": tg.get("point"), "box": tg.get("box")}
+    return {"point": point, "box": tg.get("box")}
 
 
 def french_labels(row, tags: list, dropped: list, target: str = "fr", others: dict | None = None) -> dict:

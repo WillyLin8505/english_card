@@ -83,6 +83,21 @@ def test_compact_cefr_candidates_decode_to_public_shape():
     assert out[0]["box"] is None
 
 
+def test_zero_or_corner_point_is_ungrounded_or_box_centre():
+    """Card #819 (問題回報 #945): (0, 0) / out-of-range corners are no place."""
+    out = to_candidates([
+        {"w": "sky", "p": "n", "e": "blue sky", "x": 0, "y": 0},
+        {"w": "wall", "p": "n", "e": "a wall", "x": 1400, "y": 1200},
+        {"w": "door", "p": "n", "e": "a door", "point": [0, 0], "box": [200, 200, 600, 400]},
+        {"w": "floor", "p": "n", "e": "the floor", "x": 500, "y": 1000},
+    ])
+    by = {c["word"]: c for c in out}
+    assert by["sky"]["pointUngrounded"] is True
+    assert by["wall"]["pointUngrounded"] is True
+    assert by["door"]["point"] == [0.4, 0.3] and "pointUngrounded" not in by["door"]
+    assert by["floor"]["point"] == [0.5, 1.0] and "pointUngrounded" not in by["floor"]
+
+
 def test_unsafe_image_is_rejected_before_candidates_are_cached(monkeypatch, tmp_path):
     import pytest
     import tagging_server as ts
