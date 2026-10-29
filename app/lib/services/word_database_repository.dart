@@ -1870,6 +1870,35 @@ class WordDatabaseRepository extends ChangeNotifier {
   List<LearningCard> eligibleCards(
       {bool includeFuture = false, int? newLimit, int? reviewLimit}) {
     final now = clock();
+    // 問題回報 #919: starting a run asked for the same list six times (the
+    // tile probe, the run's progress, every pick); each is a scan of every
+    // card. Same words, cards, log and day → same answer.
+    final key = (
+      _entries.version,
+      _cards.version,
+      _reviewLogs.length,
+      now.year * 10000 + now.month * 100 + now.day,
+      includeFuture,
+      newLimit,
+      reviewLimit,
+    );
+    final cached = _eligibleCache;
+    if (cached != null && cached.$1 == key) return List.of(cached.$2);
+    final out = _eligibleCards(now,
+        includeFuture: includeFuture,
+        newLimit: newLimit,
+        reviewLimit: reviewLimit);
+    _eligibleCache = (key, out);
+    return List.of(out);
+  }
+
+  (
+    (int, int, int, int, bool, int?, int?),
+    List<LearningCard>
+  )? _eligibleCache;
+
+  List<LearningCard> _eligibleCards(DateTime now,
+      {required bool includeFuture, int? newLimit, int? reviewLimit}) {
     // One lookup table, not a scan of every word per card: with a few
     // thousand words the 複習 tab waited seconds for each next card.
     final byId = {for (final e in _entries) e.id: e};
