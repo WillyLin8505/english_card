@@ -93,7 +93,7 @@ section{margin:36px 0}section>h2{font-size:23px;margin:0 0 16px}.cards{display:g
 <tr><td>發音</td><td>IPA、口音標籤、音素、單字真人音檔</td><td>音檔保存授權與來源；可指定預設口音。</td></tr>
 <tr><td>詞彙關係</td><td>近義字、同音／近音字、拼字相近字、詞形變化、詞性衍生</td><td>關係需保存類型，不把所有相關字混成同一清單。</td></tr>
 <tr><td>構詞</td><td>字根、字首、字尾／後綴、詞源</td><td>資料缺少時隱藏整個區塊，不顯示空標題。</td></tr>
-<tr><td>例句</td><td>目標語言例句、母語翻譯、CEFR、例句來源、翻譯配對 ID</td><td>A1～C2 每級目標保存 3～5 組，最多 30 組；優先保存中英對照，不提供整句發音。</td></tr>
+<tr><td>例句</td><td>目標語言例句、母語翻譯、CEFR、例句來源、翻譯配對 ID</td><td>A1～C2 每級目標保存 3～5 組，最多 30 組；優先保存中英對照；有合成音檔的例句可播放整句（owner 2026-10-29）。</td></tr>
 <tr><td>照片情境</td><td>照片參照、標籤座標、情境說明、AI 原始標籤、使用者修正版</td><td>屬於 PhotoOccurrence，不因合併重複單字而遺失。</td></tr>
 <tr><td>學習資訊</td><td>卡片狀態、FSRS difficulty／stability／due、複習次數、遺忘次數、最後複習</td><td>屬於 LearningCard；同一語言相同單字的所有照片共用。</td></tr>
 <tr><td>來源追蹤</td><td>各欄位來源、授權、擷取時間、可信狀態 <span class="status">AI／已核對</span></td><td>來源以欄位為單位保存，允許使用者覆寫並保留原始值。</td></tr>
@@ -127,7 +127,7 @@ section{margin:36px 0}section>h2{font-size:23px;margin:0 0 16px}.cards{display:g
 <tr><th scope="row">英文例句</th><td>Tatoeba</td><td>Kaikki／Wiktionary</td><td>Open English WordNet</td><td>Tatoeba 適合大量句子；Kaikki 的例句能連到字典詞義。</td></tr>
 <tr><th scope="row">例句中文翻譯</th><td>Tatoeba</td><td>—</td><td>—</td><td>可取得英中句對，但並非每句都有中文翻譯。</td></tr>
 </tbody></table></div>
-<aside><h2>規格說明</h2><p>「—」表示本規格未指定該順位的資料來源。例句不提供整句發音。第一階段只建置英文目標語言詞庫；法文與繁體中文的目標語言來源順位與專屬欄位延後。資料覆蓋率與音檔授權於實作時依各筆來源確認。</p></aside>
+<aside><h2>規格說明</h2><p>「—」表示本規格未指定該順位的資料來源。例句整句發音僅限已合成音檔的例句（法語基礎 3000 字每字前 3 句，Azure 合成語音；owner 2026-10-29），沒有音檔的例句不提供，也不用系統 TTS 唸整句。第一階段只建置英文目標語言詞庫；法文與繁體中文的目標語言來源順位與專屬欄位延後。資料覆蓋率與音檔授權於實作時依各筆來源確認。</p></aside>
 </section>
 <section aria-labelledby="decisions-title"><h2 id="decisions-title">7. 使用者訪談確認決策 <span class="locked">已確認</span></h2>
 <p class="section-intro">本節整合逐題確認結果；若與前文舊敘述不同，以本節及已同步修正的條文為準。</p>
@@ -162,7 +162,7 @@ section{margin:36px 0}section>h2{font-size:23px;margin:0 0 16px}.cards{display:g
 <article class="card"><h3>背面</h3><p>顯示答案、完整規格資料與照片。依使用者目前 CEFR 先顯示同級且有中英翻譯的 3～5 組例句；同級不足時才用相鄰程度補足。內容可上下捲動，底部固定四個評分按鈕。</p></article>
 <article class="card"><h3>連續卡流</h3><p>由 FSRS 遺忘機率、最近出現時間與情境多樣性混合抽卡，不設定固定張數；沒有達到複習條件的卡片時停止。</p></article>
 </div>
-<ul class="rule-list"><li>底部導覽增加 Flashcard 入口；五個導覽按鈕的排列暫未決定。</li><li>Again／Hard／Good／Easy 依母語顯示，並標示按下後預計再次出現的時間。</li><li>卡片建立時若母語意思仍為空，保留卡片但不排入複習，複習頁顯示「等待詞庫補齊」；詞庫同步補上母語意思後自動恢復排程。（問題 #44，2026-10-01）</li><li>按 Again 的卡會在同一次連續測驗稍後再次出現；同一張卡在一輪中最多額外出現 2 次。第二次重出仍選 Again 時保存 FSRS 與 review log，但本輪不再排入，依排程隔天再學，避免單一卡片讓低壓複習無限延長。（問題 #64，2026-10-01）</li><li>同一單字只有一張卡與一份 FSRS；多張相關照片在背面隨機輪流顯示，避免連續重複。</li><li>翻到背面時自動播放單字真人發音；所有順位皆無音檔時才使用系統 TTS。</li><li>移除例句整句發音。例句優先採用 Tatoeba 已存在的中英配對；缺少翻譯時由資料後台的 AI 翻譯補上並標記 AI（2026-09-29 起），App 與照片辨識流程本身不產生翻譯。</li><li>卡片欄位順序、各區顯示數量與收合規則在資料庫管理 App 的字卡版型編輯器調整；MVP 所有學習語言共用同一套已發布版型。</li></ul>
+<ul class="rule-list"><li>底部導覽增加 Flashcard 入口；五個導覽按鈕的排列暫未決定。</li><li>Again／Hard／Good／Easy 依母語顯示，並標示按下後預計再次出現的時間。</li><li>卡片建立時若母語意思仍為空，保留卡片但不排入複習，複習頁顯示「等待詞庫補齊」；詞庫同步補上母語意思後自動恢復排程。（問題 #44，2026-10-01）</li><li>按 Again 的卡會在同一次連續測驗稍後再次出現；同一張卡在一輪中最多額外出現 2 次。第二次重出仍選 Again 時保存 FSRS 與 review log，但本輪不再排入，依排程隔天再學，避免單一卡片讓低壓複習無限延長。（問題 #64，2026-10-01）</li><li>同一單字只有一張卡與一份 FSRS；多張相關照片在背面隨機輪流顯示，避免連續重複。</li><li>翻到背面時自動播放單字真人發音；所有順位皆無音檔時才使用系統 TTS。</li><li>例句整句發音：有合成音檔（Azure 神經語音，標示合成）的例句旁顯示播放鍵，沒有音檔就不顯示，不用系統 TTS 唸整句（owner 2026-10-29 修訂，原為移除例句整句發音）。例句優先採用 Tatoeba 已存在的中英配對；缺少翻譯時由資料後台的 AI 翻譯補上並標記 AI（2026-09-29 起），App 與照片辨識流程本身不產生翻譯。</li><li>卡片欄位順序、各區顯示數量與收合規則在資料庫管理 App 的字卡版型編輯器調整；MVP 所有學習語言共用同一套已發布版型。</li></ul>
 
 <h3>單字集與資料狀態</h3><ul class="rule-list"><li>手機單字集以 LexicalEntry 為一列；相同單字或片語只顯示一次，點入後查看所有照片情境、卡片、完整 review log 與 FSRS 變化。</li><li>預設依字母排列並提供搜尋；MVP 篩選條件暫不實作。</li><li>使用者可編輯所有 AI 與字典資料。使用者修改值優先於後續自動更新，不得被覆寫。</li><li>字典資料必須先由後台批次擷取、清理、整合並建立成版本化詞庫；圖片辨識時只回傳候選單字或片語、詞性、照片語境與標記位置，再查本機詞庫取得完整資料並建立照片關聯，不在辨識當下即時爬取外部網站。</li><li>詞庫查不到的候選詞條保存為「缺詞條」，等待管理後台補抓並在下一版詞庫更新；不可阻塞照片保存或要求使用者等待網路來源。</li><li>背景補抓仍失敗時保存來源與失敗狀態；單字集必須指出發音、例句、詞源、翻譯等具體失敗欄位，不可只顯示整個詞條錯誤。</li></ul>
 
@@ -224,7 +224,7 @@ section{margin:36px 0}section>h2{font-size:23px;margin:0 0 16px}.cards{display:g
 <tr><td>Kaikki／Wiktionary</td><td>優先讀取可下載 JSONL 資料包，不爬 HTML 頁面；保存版本、語言、授權與原始紀錄。</td></tr>
 <tr><td>Open English WordNet</td><td>使用官方 JSON 或 WN-LMF，取得詞義、同義集合與語義關係。</td></tr>
 <tr><td>CMUdict</td><td>保存 ARPAbet 音素及重音；不得誤標成 IPA，可用於美式近音與同音字計算。</td></tr>
-<tr><td>Tatoeba</td><td>使用 bulk dump 取得句子與英中／英法配對；本產品不保存或播放例句整句發音。</td></tr>
+<tr><td>Tatoeba</td><td>使用 bulk dump 取得句子與英中／英法配對；本產品不保存或播放 Tatoeba 的例句整句發音（owner 2026-10-29：改由 Azure 合成語音另行產生，見第 7 節）。</td></tr>
 <tr><td>Datamuse</td><td>透過 API 補充相關字、近音與拼字相近結果；必須有快取、節流與重試。</td></tr>
 <tr><td>AI 翻譯</td><td>本機 Qwen3-VL 經影像辨識服務的 <code>/translate</code>，永遠排在字典來源之後：補字典沒有的母語翻譯，並在 A1～C2 仍不足 3 項的等級補例句、同義詞與相關詞；每一筆標記 AI，繁中一律台灣用法。不產生英文釋義與構詞拆解；App 端的 <code>/enrich</code> 維持停用，App 只讀詞庫。（2026-09-29 起）</td></tr>
 <tr><td>系統 TTS</td><td>只有所有真人單字音檔來源都失敗時才作為播放備援，不假裝是真人音檔。</td></tr>
