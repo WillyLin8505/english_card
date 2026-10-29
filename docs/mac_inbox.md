@@ -3295,3 +3295,8 @@ commit `65a29c82`（Windows：flutter analyze 無 error、01:43 +813 ~2: All tes
 commit `af874623`（Windows：flutter analyze 無 error、01:53 +813 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #788：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
   結果：全部完成：flutter test 重跑 812 過 / 0 失敗（2 個 skip），flutter analyze 0 error（4 個 info）；沒改任何程式或資料。
+
+## M378（2026-10-29 12:04）狀態：待做
+commit `b0b74391`（Windows：flutter analyze 無 error、01:50 +813 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #789：問題回報 #927：[Mac] 2026-10-29 M372～M374 卡 #785／#786（#923／#9：#78
+  結果：全部完成：根因已修（內建包不再改已存單字的 pos），App 端修正在工作樹，測試 12/12 通過、analyze 無問題；需 Mac 在 iPad 重驗。
