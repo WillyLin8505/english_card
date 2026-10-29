@@ -74,6 +74,22 @@ def strip_stubs(pack: dict) -> dict:
 
 
 
+def drop_unresolved_tags(pack: dict) -> int:
+    """Card #795 (問題回報 #931): a photo tag whose word is not in the pack
+    (a catalog word this direction never exported, so it became a stub and
+    left with strip_stubs) points nowhere in the app. Drop it; the database
+    binding stays. Run after strip_stubs. Returns the number dropped."""
+    ids = {lx["id"] for lx in pack.get("lexemes") or []}
+    dropped = 0
+    for im in pack.get("catalog_images") or []:
+        tags = im.get("tags") or []
+        kept = [t for t in tags if t.get("lexeme_id") in ids]
+        if len(kept) != len(tags):
+            dropped += len(tags) - len(kept)
+            im["tags"] = kept
+    return dropped
+
+
 # Gate floor for photo.fewer_than_3_tags (key name kept for baselines). Raise to 5
 # (LEXICON_QC_PHOTO_MIN_TAGS=5) once the card-555 re-label has finished.
 PHOTO_MIN_TAGS = int(os.environ.get("LEXICON_QC_PHOTO_MIN_TAGS", "3"))

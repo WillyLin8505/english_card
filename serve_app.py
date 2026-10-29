@@ -351,6 +351,7 @@ def live_pack(target: str, native: str):
             # they resolve to a full entry.
             from app import qc as pack_qc
             pack_qc.strip_stubs(pack)
+            pack_qc.drop_unresolved_tags(pack)
             from app.picture_need import assign_picture_ids
             assign_picture_ids(pack['lexemes'])
             # QUALITY P3: every pack build records validators + metrics.
