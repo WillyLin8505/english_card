@@ -3388,3 +3388,10 @@ commit `ad3ba4e9`（Windows：flutter analyze 無 error、01:19 +814 ~2: All tes
 commit `879342ac`（Windows：flutter analyze 無 error、01:18 +814 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #804：問題回報 #935：App 詞庫下載：新包下載完後沒清掉舊的 .part 檔（iPad 殘留 63.5 MB）
   結果：全部完成：App 詞庫下載現在會清掉殘留的 {pair}.server..sqlite.part（iPad 63.5 MB 的來源）。
+
+## M395（2026-10-29 23:49）狀態：待做（owner 回報，給 Mac）
+owner 在 iPhone 送出的回報（#626：App 畫面與互動由 Mac 修）。資料或伺服器的部分請寫「不通過」列交回 Windows。
+
+| # | 回報 | 內容 |
+|---|---|---|
+| 939 | [意見回饋] 照片詳情：正在尋找標籤的那個標示不要擋住我的標籤啊 | 意見：正在尋找標籤的那個標示不要擋住我的標籤啊 / 頁面：照片詳情 / 單字／照片 id：photo-1793288886528744 / App 版本：1.0.0+1 / 學習語言：en / 截圖：有（screenshot 欄位）（截圖：`docs/mac_handover/939.png`） |
