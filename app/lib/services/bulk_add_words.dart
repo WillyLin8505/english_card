@@ -22,6 +22,11 @@ enum BulkStatus {
   /// learner switches back.
   variant,
 
+  /// An inflected form whose base word is also in this paste (abandon +
+  /// abandoned): one card per word, so it is folded into the base word and
+  /// not added (Mac M351: the check did not show these).
+  merged,
+
   /// Not in the dictionary; still added, data is filled in the background.
   unknown,
 
@@ -65,7 +70,8 @@ class BulkItem {
   bool get isPhrase => pos == 'phrase';
 
   /// Whether confirming adds this word.
-  bool get willAdd => status != BulkStatus.existing && include;
+  bool get willAdd =>
+      status != BulkStatus.existing && status != BulkStatus.merged && include;
 
   /// The spelling that will be added.
   String get target => status == BulkStatus.variant && keepTyped ? typed : word;
@@ -119,6 +125,7 @@ BulkParse checkBulkWords(
   // Two typed forms can lead to one base word (brewed, brewing → brew), and a
   // base word typed as is keeps it whatever order they came in (Mac M350:
   // abandon + abandoned counted twice, so 57 fewer were added than the button said).
+  // Such a form is shown as merged at check time, so the count matches the add.
   final taken = {
     for (final i in items)
       if (i.status == BulkStatus.ready) i.word
@@ -128,7 +135,7 @@ BulkParse checkBulkWords(
       if (i.status == BulkStatus.variant && !taken.add(i.word))
         BulkItem(
             typed: i.typed,
-            status: BulkStatus.existing,
+            status: BulkStatus.merged,
             word: i.word,
             pos: i.pos)
       else

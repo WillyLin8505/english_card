@@ -81,12 +81,15 @@ void main() {
   test('two forms of one word count once; the limit stops at 3000', () {
     final r = checkBulkWords('brewed, brewing', repo(), pack());
     expect(r.items.map((i) => i.status),
-        [BulkStatus.variant, BulkStatus.existing]);
+        [BulkStatus.variant, BulkStatus.merged]);
     expect(bulkAddLimit, 3000);
     // Mac M350: a base word and its form count once, in either order.
     for (final text in ['brew, brewed', 'brewed, brew']) {
       final items = checkBulkWords(text, repo(), pack()).items;
       expect(items.where((i) => i.willAdd).length, 1, reason: text);
+      // The folded form is marked at check time (not left as "existing").
+      expect(items.where((i) => i.status == BulkStatus.merged).length, 1,
+          reason: text);
       final rr = repo();
       expect(addBulkItems(rr, items), (added: 1, skipped: 1));
     }

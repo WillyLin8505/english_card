@@ -147,6 +147,8 @@ class _BulkAddDialogState extends State<_BulkAddDialog> {
     switch (it.status) {
       case BulkStatus.existing:
         label = '已在單字本（略過）';
+      case BulkStatus.merged:
+        label = '併入原形 ${it.word}（一字一張卡，不另加）';
       case BulkStatus.ready:
         label = '可加入';
       case BulkStatus.variant:
