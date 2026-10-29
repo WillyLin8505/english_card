@@ -1258,6 +1258,18 @@ class Tagger:
             if content.get('safe') is not True:
                 raise UnsafeImage('explicit adult content')
             items = to_candidates(content.get('candidates', []), self.lexicon, exclude, lang)
+            if lang != 'en' and len(items) < 5 and content.get('candidates')                     and pack_index(lang) is not None:
+                # Card 806: the photo came back (mostly) in English / words the pack lacks.
+                # Ask once more, naming what was refused.
+                said = ', '.join(str(c.get('word') or '') for c in content['candidates'][:15])
+                retry = self._chat(
+                    build_prompt(level, lang, native, focus, exclude)
+                    + f' Your previous answer ({said}) was rejected: use only genuine {LANGS[lang]} '
+                    f'words, never English. Answer again entirely in {LANGS[lang]}.',
+                    CANDIDATE_SCHEMA, prepared, compact=COMPACT_JSON)
+                items = to_candidates(
+                    list(retry.get('candidates', [])) + list(content.get('candidates', [])),
+                    self.lexicon, exclude, lang)
             temporary = cache_file + f'.{os.getpid()}.tmp'
             try:
                 with open(temporary, 'w', encoding='utf-8') as f:

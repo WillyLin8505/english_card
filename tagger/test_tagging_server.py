@@ -51,7 +51,7 @@ def test_prompt_explicitly_excludes_names_and_invalidates_old_cache():
     assert "not company, product, model or person names" in prompt
     assert "Ignore words" in prompt and "logos" in prompt
     assert "safe=false" in prompt and "explicit adult nudity" in prompt
-    assert PROMPT_VERSION == "photo-tags-context-v11-harder-level"
+    assert PROMPT_VERSION == "photo-tags-context-v12-fr-pack"
 
 
 def test_cefr_prompt_lists_visible_objects_level_from_lexicon():
@@ -341,3 +341,13 @@ def test_level_filter_drops_unlisted_easy_words_without_zipf():
     from tagging_server import finish_candidates
     items = [{'word': w} for w in ('stroll', 'dwell', 'congested', 'conspire')]
     assert [i['word'] for i in finish_candidates(items, 'C2', 'en', None)] == ['congested', 'conspire']
+
+
+def test_french_labels_resolve_against_pack_index():
+    from tagging_server import pack_resolve
+    index = {"words": {"arbre": ["noun"], "lit": ["noun"], "marcher": ["verb"]},
+             "forms": {"arbres": "arbre"}}
+    assert pack_resolve("arbres", "noun", index) == ("arbre", "noun")
+    assert pack_resolve("lit", "adjective", index) == ("lit", "noun")
+    assert pack_resolve("apple", "noun", index) is None
+    assert "Every word must be a real French word" in build_prompt("A2", "fr", "en")
