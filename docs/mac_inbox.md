@@ -3446,3 +3446,10 @@ golden/QC：未動資料，無變化。備份：無。
 Windows 端量到：/api/image 有 Cache-Control: public, max-age=604800（無 ETag）；經 api.willylinai.com 單張 w=480 約 74 KB。這次量測往返偏慢（3.3 s，網路當下較差），非伺服器問題待確認。
 
 剩下：Mac iPad 實測數字；是否加 ETag、下一張卡預抓（flashcard_screen 已有 prefetch）待實測後決定。未動資料，無需備份；golden/QC 不受影響（只改 App）。
+
+## M402（2026-10-30 01:07）狀態：待做（Windows 卡 #816 交給 Mac 的 App 畫面部分）
+卡：問題回報 #938：[owner] iPad／手機上圖片載入要等很久（一直沒解決）
+
+用 iPad 重量並確認畫質。
+- golden／QC：未動詞庫資料，未跑。
+- flutter analyze：改動的三個檔 No issues；flutter test（照片快取兩個測試檔，17 項）全過。
