@@ -2286,3 +2286,11 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #787／#926 第一個畫面 | 不通過 | 兩次都只有一幀超過 100ms：啟動後 4.9 秒、第一個畫面那一幀 3182ms／3181ms（build 3178ms、raster 4ms），當時還是內建包 01f91fa3。也就是說剩下的 3 秒停頓是第一個畫面的 build（單字本 8680 字），不是換包；請查第一個分頁 build 時在算什麼（例如 eligibleCards、相片冊排序、單字本統計之類對全部單字的計算） |  | 中 |
 | #788 flutter analyze／test | 通過 | Mac 上 flutter analyze lib test 只有 4 個 info；flutter test 812 通過、3 個略過，All tests passed! |  |  |
 | #789 boring 那批 | 通過 | 已在 M375 用 80f1b848 驗過，之後 app/lib 沒再改：重開 2 次單字本都維持 8680，boring、amazing、wedding、being、working 都在 |  |  |
+
+## 2026-10-29 M379～M381 卡 #790／#791／#792 啟動第一個畫面、分頁延後建立、換包（iPad 實機，d8f6b907）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #790 換包 | 通過 | 啟動後不點任何東西量 25 秒（兩次）：5.8～6.2 秒換成下載包（24ab36f7／13233e48），換包時沒有超過 100ms 的幀 |  |  |
+| #791／#792 第一次點各分頁 | 通過 | 啟動 25 秒後依序第一次點相片冊／複習／單字本／設定／拍照：畫面 0.2～0.27 秒穩定，最慢一幀 35～102ms（兩次各只有一個分頁剛好 100～102ms） |  |  |
+| #791／#928 第一個畫面 | 不通過 | 三次量到 2772ms、3127ms、2756ms（build 2751～3122ms），沒有降到 1 秒內。用 Flutter 的 timeline 收集看：PhotoEnglishApp 這一層 2744ms，底下 AppScope 只有 7.6ms、MaterialApp 和所有分頁約 3ms，所以不是分頁。再在本機 main.dart 暫時加碼錶量 initState 各步（量完已還原，沒有提交）：flushReports 0ms、applyRetention 0ms、queue.start 0ms、DictionarySync.start 0ms、_enricher.start() 2737ms。原因：WordEnricher.start → process() 同步呼叫 repository().linkLexicon(pack, fold: false)，refreshWords 用預設 true；main.dart 剛用 refreshWords: false link 過，_alreadyLinked 要求 (_linkedRefresh || !refreshWords)，所以不會跳過，對 8680 字整個重新 link，而且在 initState 裡、主執行緒上。建議：start() 時不要同步 link（改成 linkLexiconInBatches 或延到第一幀之後），或在內建包時傳 refreshWords: false 讓 _alreadyLinked 生效 |  | 中 |
