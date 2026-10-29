@@ -3264,3 +3264,17 @@ commit `5c6ff800`（Windows：flutter analyze 無 error、01:42 +811 ~2: All tes
 commit `8f525fe0`（Windows：flutter analyze 無 error、01:56 +812 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #785：問題回報 #924：[Mac] 2026-10-29 M364／M365 卡 #777、#774、#775（#9：#77
   結果：已修：啟動時另外兩條路徑（WordEnricher.process、DictionarySync.useBundled）不再用內建舊詞庫做「一字一卡」併入，boring 不會再被併進 bore 刪掉。尚未在 iPad 實機驗證。
+
+## M374（2026-10-29 11:35）狀態：待做（Windows 卡 #786 交給 Mac 的 App 畫面部分）
+卡：問題回報 #925：[Mac] 2026-10-29 M366～M371 複習開始時間、小螢幕選字卡、borin：#923／#782 重開後保留 boring 
+
+把工作樹這批改動 commit 後，在 iPad 重測「重貼 8680 → 重開 2 次」，確認 boring/amazing/wedding/being/working 還在。
+
+根因：啟動時兩條路用內建詞庫（可能較舊）做 fold，把 boring→bore 等變形併入原形並刪掉。
+修法（已在工作樹）：
+- word_enricher.dart:104 linkLexicon(pack, fold:false)
+- dictionary_sync.dart:224 linkLexiconInBatches(..., fold: !remote)（有下載要跟進時不 fold）
+- lexicon_pack.dart 新增 bundled 旗標（load() 設 true；replaceWith→clear() 設 false，下載包不受影響）
+- word_database_repository.dart:1117 fold && !pack.bundled，內建包永不 fold，下載包才 fold。
+驗證：flutter analyze lib/services 只有 2 個既有 info；card745_bulk_add、dictionary_sync、card428_sqlite_sync、relation_meaning 測試全過。
+未做：沒有針對「內建包不 fold」的單元測試，也未在 Windows 實機重現 iPad 流程；未動詞庫資料，故無需 golden/QC、備份。
