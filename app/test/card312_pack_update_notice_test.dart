@@ -70,6 +70,24 @@ void main() {
     expect(repo.filledByUpdate, isEmpty);
   });
 
+  test('start link with the older bundled pack keeps the newer fill (#916)',
+      () {
+    // Session 1: newer downloaded pack filled apple's example.
+    final repo = linked();
+    repo.linkLexicon(
+        LexiconPack.instance..loadJson(pack('v2', examples: true)));
+    expect(repo.entryByWord('apple')!.examples, isNotEmpty);
+    // Session 2 start: the older bundled pack links first, words untouched.
+    final restarted = WordDatabaseRepository(entries: repo.entries);
+    restarted.linkLexicon(LexiconPack.instance..loadJson(pack('v1')),
+        fold: false, refreshWords: false);
+    expect(restarted.entryByWord('apple')!.examples, isNotEmpty);
+    // Then the downloaded pack: nothing new, so no notice.
+    restarted.linkLexicon(
+        LexiconPack.instance..loadJson(pack('v2', examples: true)));
+    expect(restarted.filledByUpdate, isEmpty);
+  });
+
   test('relinking the same version or an update with no gain → no notice', () {
     final repo = linked();
     repo.linkLexicon(LexiconPack.instance);

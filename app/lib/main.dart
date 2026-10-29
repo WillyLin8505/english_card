@@ -86,7 +86,7 @@ Future<void> main() async {
           LexiconPack.instance.detail(w) ??
           WordDetailService.instance.lookup(w),
       profile: UserVocabularyProfile.start(settings.legacyLevel ?? 'A1'),
-    )..linkLexicon(LexiconPack.instance);
+    )..linkLexicon(LexiconPack.instance, fold: false, refreshWords: false);
   }
 
   final repository = await open(settings.learningLanguage);

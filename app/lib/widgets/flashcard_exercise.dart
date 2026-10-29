@@ -54,8 +54,14 @@ class _InteractiveExerciseState extends State<_InteractiveExercise> {
     final attempt = s.photoAttempt;
     final anchor = s.anchor;
     final look = CardLook.of(context);
+    // 問題回報 #921: on a short screen (375×667 iPhone SE / iPad in iPhone
+    // mode) a fixed-height photo pushed the question and options under the
+    // 顯示答案 dock. Cap the photo to ~30 % of the screen height (floor 120).
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final maxHeight = (screenHeight * 0.3).clamp(120.0, double.infinity);
+    final photoHeight = height ?? look.frontPhotoHeight;
     return SizedBox(
-      height: height ?? look.frontPhotoHeight,
+      height: photoHeight > maxHeight ? maxHeight : photoHeight,
       child: Stack(fit: StackFit.expand, children: [
         PinnedPhoto(
           key: ValueKey(attempt),

@@ -335,8 +335,22 @@ class WordDatabaseRepository extends ChangeNotifier {
   /// the server rejects as unsafe (HTTP 451) are hidden, and TaggingQueue
   /// removes those from the repository outright, so nothing here can show
   /// them.
-  List<Photo> get photos =>
+  List<Photo> get photos => [...(_sortedPhotos ??= _sortPhotos())];
+
+  // Derived views of _photos, rebuilt after any change (問題回報 #918: the
+  // 相片冊 tab re-sorted every photo once per album per build).
+  List<Photo>? _sortedPhotos;
+  Map<String?, List<Photo>>? _photosByAlbum;
+
+  List<Photo> _sortPhotos() =>
       [..._photos]..sort((a, b) => b.takenAt.compareTo(a.takenAt));
+
+  @override
+  void notifyListeners() {
+    _sortedPhotos = null;
+    _photosByAlbum = null;
+    super.notifyListeners();
+  }
 
   /// Same as [photos]; kept for the queue and the duplicate check, which
   /// read every photo whatever its safety state.
@@ -464,10 +478,16 @@ class WordDatabaseRepository extends ChangeNotifier {
     ];
   }
 
-  List<Photo> photosInAlbum(String albumId) => [
-        for (final p in photos)
-          if (p.albumId == albumId) p
-      ];
+  List<Photo> photosInAlbum(String albumId) {
+    final byAlbum = _photosByAlbum ??= () {
+      final m = <String?, List<Photo>>{};
+      for (final p in _sortedPhotos ??= _sortPhotos()) {
+        (m[p.albumId] ??= []).add(p);
+      }
+      return m;
+    }();
+    return [...?byAlbum[albumId]];
+  }
 
   /// Distinct words being learned across the album's photos ("18 個單字").
   int albumWordCount(String albumId) {
@@ -962,6 +982,7 @@ class WordDatabaseRepository extends ChangeNotifier {
 
   void addPhoto(Photo photo) {
     _photos.add(photo);
+    _sortedPhotos = _photosByAlbum = null;
     _persist((s) => s.putPhoto(photo));
     notifyListeners();
   }
@@ -971,10 +992,18 @@ class WordDatabaseRepository extends ChangeNotifier {
   /// examples the entry is still missing (spec section 08: 命中後只保存
   /// photo ↔ lexeme_id；釋義、發音、例句直接由詞庫讀取). Learner edits are
   /// kept. Returns how many photos and words changed.
-  int linkLexicon(LexiconPack pack) {
+  ///
+  /// [fold] false skips the "one card per word" merge: App start links the
+  /// bundled pack, which may be older than the downloaded one that follows
+  /// seconds later (card #777, 問題回報 #917: boring folded into bore and
+  /// deleted at every start). DictionarySync links again, with folding,
+  /// once the final pack is open. [refreshWords] false leaves the saved
+  /// words' content alone (photos still link), same reason (#916).
+  int linkLexicon(LexiconPack pack,
+      {bool fold = true, bool refreshWords = true}) {
     _finishLink();
     var changed = 0;
-    for (final n in _linkSteps(pack)) {
+    for (final n in _linkSteps(pack, fold: fold, refreshWords: refreshWords)) {
       changed += n;
     }
     return changed;
@@ -1022,7 +1051,8 @@ class WordDatabaseRepository extends ChangeNotifier {
 
   /// The work of [linkLexicon], one photo or word per step (each yields how
   /// many changed).
-  Iterable<int> _linkSteps(LexiconPack pack) sync* {
+  Iterable<int> _linkSteps(LexiconPack pack,
+      {bool fold = true, bool refreshWords = true}) sync* {
     final update = _linkedPack != null &&
         pack.version != null &&
         pack.version != _linkedVersion;
@@ -1083,13 +1113,19 @@ class WordDatabaseRepository extends ChangeNotifier {
         yield 0;
         continue;
       }
-      if (hit.via == 'form' || hit.via == 'family') {
+      if (fold && (hit.via == 'form' || hit.via == 'family')) {
         _foldInto(e, hit.entry);
         yield 1;
       } else {
         yield 0;
       }
     }
+    // App start (refreshWords false): the bundled pack must not write its
+    // older content over words a downloaded pack filled in last session —
+    // DictionarySync refreshes them from the final pack, and the start
+    // overwrite made the same 30 words 「補上例句」 again at every launch
+    // (card #775, 問題回報 #916).
+    if (!refreshWords) return;
     entryNow = null;
     for (final snap in [..._entries]) {
       entryNow = afterPause(_entries, (e) => e.id) ?? entryNow;
@@ -1196,6 +1232,7 @@ class WordDatabaseRepository extends ChangeNotifier {
     final i = _photos.indexWhere((p) => p.id == photo.id);
     if (i < 0) return;
     _photos[i] = photo;
+    _sortedPhotos = _photosByAlbum = null;
     _persist((s) => s.putPhoto(photo));
     notifyListeners();
   }
@@ -1212,6 +1249,7 @@ class WordDatabaseRepository extends ChangeNotifier {
     }
     _occurrences.removeWhere((o) => o.photoId == photoId);
     _photos.removeWhere((p) => p.id == photoId);
+    _sortedPhotos = _photosByAlbum = null;
     _persist((s) => s.deletePhoto(photoId));
     for (final id in affected) {
       _dropIfUnused(id);

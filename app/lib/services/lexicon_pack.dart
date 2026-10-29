@@ -43,6 +43,48 @@ class LexiconPack extends ChangeNotifier {
   CardTemplate? cardTemplate;
   bool hasCatalog = false;
   List<Map<String, dynamic>> catalogImages = [];
+
+  // Card #780: a review card looked its word's pictures up by scanning every
+  // catalog image (tags and all) per card, seconds on a big pack. These
+  // tables are built once per catalog and answer in one lookup.
+  List<Map<String, dynamic>>? _indexedImages;
+  int _indexedCount = -1;
+  final Map<String, Map<String, dynamic>> _imageByDbId = {};
+  final Map<int, List<Map<String, dynamic>>> _approvedByLexeme = {};
+
+  void _indexCatalog() {
+    if (identical(_indexedImages, catalogImages) &&
+        _indexedCount == catalogImages.length) {
+      return;
+    }
+    _indexedImages = catalogImages;
+    _indexedCount = catalogImages.length;
+    _imageByDbId.clear();
+    _approvedByLexeme.clear();
+    for (final image in catalogImages) {
+      _imageByDbId.putIfAbsent('db-${image['id']}', () => image);
+      final seen = <int>{};
+      for (final tag in (image['tags'] as List? ?? const [])) {
+        if (tag is! Map || tag['review_status'] != 'approved') continue;
+        final id = tag['lexeme_id'];
+        if (id is num && seen.add(id.toInt())) {
+          (_approvedByLexeme[id.toInt()] ??= []).add(image);
+        }
+      }
+    }
+  }
+
+  /// The catalog image whose card photo id is [dbId] (`db-<id>`).
+  Map<String, dynamic>? catalogImageByDbId(String dbId) {
+    _indexCatalog();
+    return _imageByDbId[dbId];
+  }
+
+  /// Catalog images with an approved tag for [lexemeId], in catalog order.
+  List<Map<String, dynamic>> approvedImagesOf(int lexemeId) {
+    _indexCatalog();
+    return _approvedByLexeme[lexemeId] ?? const [];
+  }
   List<LexEntry> get catalogWords => _byId.values.toList(growable: false);
   final Map<int, LexEntry> _byId = {};
   final Map<String, List<LexEntry>> _byLemma = {};

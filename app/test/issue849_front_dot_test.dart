@@ -54,6 +54,18 @@ Future<void> _pump(WidgetTester tester, FlashcardSession session) async {
 void main() {
   tearDown(() => LexiconPack.instance.clear());
 
+  // 問題回報 #921: on a 375×667 screen the photo must not eat the screen.
+  testWidgets('photo choice front: photo shrinks on a short screen',
+      (tester) async {
+    tester.view.physicalSize = const Size(375, 667);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final session = _choice(image(1));
+    await _pump(tester, session);
+    expect(tester.getSize(find.byType(PinnedPhoto)).height,
+        lessThanOrEqualTo(667 * 0.3 + 0.5));
+  });
+
   testWidgets('photo choice front: one dot on the word, no word text',
       (tester) async {
     final session = _choice(image(1));

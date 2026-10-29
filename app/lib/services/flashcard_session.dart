@@ -623,8 +623,9 @@ class FlashcardSession extends ChangeNotifier {
     if (photoId.startsWith('db-')) {
       // Catalog images can show several valid labels even when only one of
       // them belongs to this review card. None can be a wrong answer.
-      for (final image in _lexicon.catalogImages) {
-        if ('db-${image['id']}' != photoId) continue;
+      for (final image in [
+        if (_lexicon.catalogImageByDbId(photoId) case final i?) i
+      ]) {
         for (final label in [
           ...(image['tags'] as List? ?? []),
           ...(image['labels'] as List? ?? []),
@@ -747,8 +748,9 @@ class FlashcardSession extends ChangeNotifier {
     } else if (_anchor != null) {
       add(entry.word, entry.meaning, _anchor!);
       // The catalog picture's other reviewed labels.
-      for (final image in _lexicon.catalogImages) {
-        if ('db-${image['id']}' != photo.id) continue;
+      for (final image in [
+        if (_lexicon.catalogImageByDbId(photo.id) case final i?) i
+      ]) {
         for (final label in (image['labels'] as List? ?? [])) {
           final id = label is Map ? label['lexeme_id'] : null;
           final point = label is Map ? label['point'] : null;
@@ -1064,15 +1066,9 @@ class FlashcardSession extends ChangeNotifier {
         .endpoint(repo.language, _lexicon.native ?? 'zh-TW');
     final found = <(Photo, LabelPoint?, String?)>[];
     final seen = <String>{};
-    for (final image in _lexicon.catalogImages) {
+    for (final image in _lexicon.approvedImagesOf(lexemeId)) {
       final url = image['url'];
-      if (image['status'] != 'ready' ||
-          url is! String ||
-          url.trim().isEmpty ||
-          !(image['tags'] as List? ?? []).any((tag) =>
-              tag is Map &&
-              tag['lexeme_id'] == lexemeId &&
-              tag['review_status'] == 'approved')) {
+      if (image['status'] != 'ready' || url is! String || url.trim().isEmpty) {
         continue;
       }
       final id = 'db-${image['id']}';
