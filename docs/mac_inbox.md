@@ -3189,3 +3189,10 @@ commit `6f4ac97b`（Windows：flutter analyze 無 error、02:24 +806 ~2: All tes
 卡：問題回報 #917：[Mac] 2026-10-29 M356／M358 卡 #773 重貼 boring 那批：#773 重開 App 後不消失
 
 用 iPad 重開 App 驗 boring、amazing、wedding、being、working 是否保留（單字本 8680 不變）。
+
+## M364（2026-10-29 10:11）狀態：待做
+commit `b1d13747`（Windows：flutter analyze 無 error、02:06 +807 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #777：問題回報 #917：[Mac] 2026-10-29 M356／M358 卡 #773 重貼 boring 那批：#77
+  結果：已修：App 啟動時不再用內建（舊）詞庫做「一字一張卡」併入，boring 等字重開後不會被刪（未在 iPad 實機驗證）。；結果：flutter analyze 無問題；lexiconpacktest 與 #558 測試共 20 項通過。未動詞庫資料，沒有備份需求；golden/QC 不受影響（未執行）。
+- 卡 #774：問題回報 #918：[owner] 切到相片冊要 1.3 秒（單字本只要 0.26 秒），找出第一次打開在等什麼
+  結果：部分完成：找到相片冊第一次打開慢的程式原因並修正（未在實機量秒數，需 iPad 驗證）。；根因：WordDatabaseRepository.photos 每次呼叫都複製並排序全部照片；相片冊每次 build，每本相簿又呼叫 photosInAlbum 多次（albumGroup、封面、單字數、副標，albumGrou
