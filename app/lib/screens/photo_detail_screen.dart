@@ -780,36 +780,14 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
       );
     }
     // 問題回報 #851: a rescan or a top-up (多看動詞…) is tagging too — the
-<<<<<<< HEAD
-    // labels stay usable, with the sweep and the same note on top until
-    // the AI answers.
-    // 問題回報 #939: the note sits at the bottom edge, never over the labels.
-=======
     // labels stay usable, with the sweep until the AI answers. The note
     // that says so is the one under the difficulty bar, not a chip on the
     // photo: labels can sit anywhere, and a chip covered them (問題回報 #939).
->>>>>>> origin/main
     if (session.rescanning ||
         session.fetchingMore != null ||
         scope.queue.current == photo.id ||
         scope.queue.isToppingUp(photo.id)) {
-<<<<<<< HEAD
-      return const IgnorePointer(
-        child: Stack(
-          children: [
-            Positioned.fill(child: PhotoScanSweep()),
-            Positioned(
-              bottom: MSpace.sm,
-              left: 0,
-              right: 0,
-              child: Center(child: _PhotoScanningChip()),
-            ),
-          ],
-        ),
-      );
-=======
       return const IgnorePointer(child: PhotoScanSweep());
->>>>>>> origin/main
     }
     if (photo.taggingStatus == TaggingStatus.pending &&
         photo.candidates.isEmpty) {
