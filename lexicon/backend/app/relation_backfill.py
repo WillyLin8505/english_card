@@ -59,7 +59,8 @@ def _relation_item(s: Session, target: str, head: str, rel: str, word: str) -> d
 
 
 def fill_row(s: Session, target: str, row, is_full, lookup: LexiconLookup | None = None,
-             backup: dict | None = None, write: bool = True) -> list[dict]:
+             backup: dict | None = None, write: bool = True,
+             source: str = "lexicon") -> list[dict]:
     """Fill the slots of one ``*_native`` row whose words [is_full] says are
     entries now. Returns the items added; with [write] they go into the row
     (status / missing recomputed) and into relation_translations. [backup]
@@ -72,7 +73,9 @@ def fill_row(s: Session, target: str, row, is_full, lookup: LexiconLookup | None
         return []
     ctx = Context(target, row.native_language, row.lemma, row.lemma, session=s, resolved={
         rel: [_relation_item(s, target, row.lemma, rel, w) for w in words]})
-    new = [dict(c.value, key=c.value["slot"], source="lexicon", confidence=1.0)
+    slot = lambda c: c.value.get("slot") or c.slot  # noqa: E731
+    new = [dict(c.value, key=slot(c), slot=slot(c), source=source,
+                confidence=1.0 if source == "lexicon" else c.confidence)
            for c in lookup.normalize(row.field, None, ctx)]
     added = [{"head": row.lemma, "native": row.native_language, "field": row.field,
               "word": i["word"], "text": i["text"]} for i in new]
@@ -98,7 +101,7 @@ def fill_row(s: Session, target: str, row, is_full, lookup: LexiconLookup | None
                     m.RelationTranslation.native_language == row.native_language)).first():
                 continue
             rt = m.RelationTranslation(relation_id=rel_id, native_language=row.native_language,
-                                       text=i["text"], source="lexicon", is_ai=False)
+                                       text=i["text"], source=source, is_ai=False)
             s.add(rt)
             s.flush()
             if backup is not None:

@@ -65,6 +65,78 @@ def sh(*args, cwd=ROOT, timeout=1800) -> subprocess.CompletedProcess:
     return subprocess.run(list(args), cwd=cwd, capture_output=True, text=True, encoding="utf-8",
                           errors="replace", timeout=timeout, creationflags=NO_WINDOW)
 
+GIT_BUSY_FILES = ("MERGE_HEAD", "REBASE_HEAD", "CHERRY_PICK_HEAD", "rebase-merge", "rebase-apply")
+MARKER_RE = re.compile(r"^\+(<<<<<<< |>>>>>>> )", re.M)
+
+
+def git_dir() -> Path:
+    return ROOT / ".git"
+
+
+def git_busy() -> str:
+    """Name of an unfinished merge/rebase/cherry-pick in progress (someone is resolving it), else ''."""
+    for n in GIT_BUSY_FILES:
+        if (git_dir() / n).exists():
+            return n
+    return ""
+
+
+def conflict_marker_files(paths: list[str] | None = None) -> list[str]:
+    """Files whose working-tree diff adds git conflict markers (10/30 #949: 25cd7b82 pushed some)."""
+    bad = []
+    cmd = ["git", "diff", "HEAD", "-U0", "--no-color"]
+    if paths:
+        cmd += ["--", *paths]
+    cur = ""
+    for line in sh(*cmd).stdout.splitlines():
+        if line.startswith("+++ b/"):
+            cur = line[6:]
+        elif MARKER_RE.match(line) and cur and cur not in bad:
+            bad.append(cur)
+    # untracked files are not in `git diff HEAD`
+    for line in sh("git", "ls-files", "-o", "--exclude-standard").stdout.splitlines():
+        f = ROOT / line.strip()
+        try:
+            if f.is_file() and f.stat().st_size < 2_000_000 and re.search(
+                    r"^<<<<<<< ", f.read_text(encoding="utf-8", errors="ignore"), re.M):
+                bad.append(line.strip())
+        except OSError:
+            pass
+    return bad
+
+
+def warn(text: str):
+    """Visible on the board: a ⚠ event (dispatch_digest) and a line on #13."""
+    log("WARN " + text)
+    try:
+        with EVENTS.open("a", encoding="utf-8") as f:
+            f.write(json.dumps({"t": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                                "type": "blocker", "agent": "mac_sync", "outcome": text[:300]},
+                               ensure_ascii=False) + "
+")
+        http("PUT", "/tasks/13", {"by": "Grokbot",
+                                  "progress": f"{datetime.now(TAIPEI):%H:%M} mac_sync：{text}"[:500]})
+    except Exception as e:  # board down: the log line above still exists
+        log(f"warn: board not updated ({e})")
+
+
+def unsafe_to_commit(paths: list[str] | None = None) -> str:
+    busy = git_busy()
+    if busy:
+        return f"git 正在合併／重放中（{busy}），不提交、不推"
+    bad = conflict_marker_files(paths)
+    if bad:
+        return "工作區有衝突標記，不提交、不推：" + ", ".join(bad[:5])
+    return ""
+
+
+def push_origin(what: str) -> bool:
+    """git push; a failure (e.g. non-fast-forward) must be seen on the board, never skipped quietly."""
+    p = sh("git", "push", "origin", "main")
+    if p.returncode != 0:
+        warn(f"{what} push 失敗（可能非 fast-forward）：{(p.stderr or p.stdout).strip()[-200:]}")
+    return p.returncode == 0
+
 
 def app_cards(since: str | None) -> list[dict]:
     """Finished one-off cards since `since` whose result touches the app."""
@@ -181,6 +253,10 @@ def push_non_app() -> int:
     if not paths:
         log("no finished app cards since last sync; nothing else to push")
         return 0
+    why = unsafe_to_commit()
+    if why:
+        warn(why)
+        return 1
     LOCK.write_text(str(os.getpid()))
     try:
         sh("git", "add", "-A", "--", *paths)
@@ -195,9 +271,10 @@ def push_non_app() -> int:
             log("merge with origin/main failed (non-app push)")
             sh("git", "merge", "--abort")
             return 1
-        p = sh("git", "push", "origin", "main")
-        log(f"pushed {len(paths)} non-app path(s)" if p.returncode == 0 else f"push failed: {p.stderr[-300:]}")
-        return 0 if p.returncode == 0 else 1
+        ok = push_origin("non-app")
+        if ok:
+            log(f"pushed {len(paths)} non-app path(s)")
+        return 0 if ok else 1
     finally:
         LOCK.unlink(missing_ok=True)
 
@@ -233,6 +310,11 @@ def main(argv=None) -> int:
             LOCK.unlink(missing_ok=True)
             push_non_app()
             return 1
+        why = unsafe_to_commit()  # checks take minutes: re-check now, a merge may have started meanwhile
+        if why:
+            warn(why)
+            LOCK.unlink(missing_ok=True)
+            return 1
         sh("git", "add", "-A")
         # GitHub refuses files over 100 MB and then every later push fails too (10/22: a 327 MB
         # agent scratch pack blocked the Mac for hours) — never commit anything that big
@@ -259,9 +341,7 @@ def main(argv=None) -> int:
         with INBOX.open("a", encoding="utf-8", newline="\n") as f:
             f.write(inbox_item(no, commit, cards, line))
         sh("git", "commit", "-q", "-m", f"Mac inbox M{no}: verify cards on iPhone", "--", "docs/mac_inbox.md")
-        p = sh("git", "push", "origin", "main")
-        if p.returncode != 0:
-            log(f"push failed: {p.stderr[-300:]}")
+        if not push_origin("app"):
             return 1
         mark_issues(cards, no, commit)
         # the web app served by serve_app.py (127.0.0.1:8123 / api.willylinai.com) is a build:

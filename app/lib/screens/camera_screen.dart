@@ -14,7 +14,7 @@ import '../services/text_scan.dart';
 import 'photo_picker_screen.dart';
 
 /// 圖辨單字 — Figma camera-view (11:6), the 拍照 tab: viewfinder, shutter,
-/// 從相簿選擇 (gallery button) and flash.
+/// 從相簿選擇 (gallery button) and the shutter.
 ///
 /// The mock shows words pinned on the live view ("AI 實時辨識中"). The
 /// tagger (spec section 2) works on a still photo, so here the shutter
@@ -44,7 +44,6 @@ class _CameraScreenState extends State<CameraScreen>
   bool _starting = false;
   String? _cameraError;
   bool _permissionDenied = false;
-  bool _torch = false;
   bool _busy = false;
   bool _active = false;
 
@@ -143,7 +142,6 @@ class _CameraScreenState extends State<CameraScreen>
   void _stop() {
     final c = _controller;
     _controller = null;
-    _torch = false;
     c?.dispose();
     if (mounted) setState(() {});
   }
@@ -188,21 +186,6 @@ class _CameraScreenState extends State<CameraScreen>
     }
   }
 
-  Future<void> _toggleTorch() async {
-    final c = _controller;
-    if (c == null) {
-      showToast(context, '相機未啟用');
-      return;
-    }
-    try {
-      await c.setFlashMode(_torch ? FlashMode.off : FlashMode.torch);
-      setState(() => _torch = !_torch);
-    } catch (e) {
-      debugPrint('Flash toggle failed: $e');
-      if (mounted) showToast(context, '這台裝置不支援閃光燈');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final scope = AppScope.of(context);
@@ -238,14 +221,12 @@ class _CameraScreenState extends State<CameraScreen>
             controller: controller,
             badge: badge,
             busy: _busy,
-            torch: _torch,
             onBadgeTap: !_busy && !scope.settings.taggingConfigured
                 ? () => scope.navigator.selectTab(AppTab.settings)
                 : null,
             onSettings: () => scope.navigator.selectTab(AppTab.settings),
             onGallery: _openPicker,
             onShutter: _capture,
-            onTorch: _toggleTorch,
           );
         }
 
@@ -510,28 +491,24 @@ class _Viewfinder extends StatelessWidget {
 /// 問題回報 #941 (「看著有點陽春，換成更自然的拍照介面」): the phone-camera
 /// layout — the live view edge to edge on black, the status and 設定 on it at
 /// the top, and a dark bar at the bottom with 從相簿選擇, a white ring
-/// shutter and the flash.
+/// shutter (no flash button, like the iPhone's own).
 class _FullCamera extends StatelessWidget {
   final CameraController controller;
   final String badge;
   final bool busy;
-  final bool torch;
   final VoidCallback? onBadgeTap;
   final VoidCallback onSettings;
   final VoidCallback onGallery;
   final VoidCallback onShutter;
-  final VoidCallback onTorch;
 
   const _FullCamera({
     required this.controller,
     required this.badge,
     required this.busy,
-    required this.torch,
     required this.onBadgeTap,
     required this.onSettings,
     required this.onGallery,
     required this.onShutter,
-    required this.onTorch,
   });
 
   @override
@@ -612,7 +589,7 @@ class _FullCamera extends StatelessWidget {
               ),
             ),
           ),
-          // Bottom: gallery, shutter, flash on a dark bar.
+          // Bottom: gallery and shutter on a dark bar.
           Positioned(
             left: 0,
             right: 0,
@@ -656,12 +633,7 @@ class _FullCamera extends StatelessWidget {
                       ),
                     ),
                   ),
-                  _DarkRoundButton(
-                    label: torch ? '關閉閃光燈' : '開啟閃光燈',
-                    icon: MIcon.zap,
-                    highlighted: torch,
-                    onTap: onTorch,
-                  ),
+                  const SizedBox(width: 48, height: 48),
                 ],
               ),
             ),
@@ -672,20 +644,17 @@ class _FullCamera extends StatelessWidget {
   }
 }
 
-/// A round button on the live view: white icon on dark glass; yellow when
-/// on (the flash), like the phone's camera.
+/// A round button on the live view: white icon on dark glass.
 class _DarkRoundButton extends StatelessWidget {
   final String label;
   final MIcon icon;
   final VoidCallback onTap;
-  final bool highlighted;
   final double size;
 
   const _DarkRoundButton({
     required this.label,
     required this.icon,
     required this.onTap,
-    this.highlighted = false,
     this.size = 48,
   });
 
@@ -698,12 +667,12 @@ class _DarkRoundButton extends StatelessWidget {
           height: size,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Colors.white.withValues(alpha: highlighted ? 0.9 : 0.16),
+            color: Colors.white.withValues(alpha: 0.16),
           ),
           child: Center(
             child: MSvg(icon,
                 size: 20,
-                tint: highlighted ? const Color(0xFF1F1F1F) : Colors.white),
+                tint: Colors.white),
           ),
         ),
       );
