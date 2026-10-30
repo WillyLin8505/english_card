@@ -3681,3 +3681,8 @@ commit `93a36f08`（Windows：flutter analyze 無 error、01:27 +826 ~2: All tes
 - 無障礙文字「最近一張照片」「切換鏡頭」加入 ui_catalog 英／法翻譯；card496 法文／英文介面無中文測試通過。
 - 移除未使用的 _DarkRoundButton。
 備註：施工中另一個寫入者同時改了同一檔（鏡頭／閃光狀態變數 _lens、_flashing、_flip），已合併成單一實作。沒有資料改動，無需備份；golden/QC 不受影響（純 App UI）。
+
+## M434（2026-10-30 21:05）狀態：待做
+commit `1572dbb0`（Windows：flutter analyze 無 error、01:07 +826 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #848：[owner] 拍照頁改成 iPhone 相機式（問題回報 #1019）
+  結果：全部完成：拍照頁 FullCamera 改成 iPhone 相機式（app/lib/screens/camerascreen.dart），analyze 無問題、相關 widget test 8/8 通過。
