@@ -3783,3 +3783,8 @@ commit `a6544e59`（Windows：flutter analyze 無 error、01:43 +826 ~2: All tes
 卡：[owner] 做法文→繁中詞庫（#882 B 部分）
 
 用 iPad 載入 fr×zh-TW 新 sqlite 查 maison、le、alors、dire 驗證。
+
+## M454（2026-10-31 03:53）狀態：待做（Windows 卡 #738 交給 Mac 的 App 畫面部分）
+卡：[owner] 做法文→繁中詞庫（#882 B 部分）
+
+用 iPad 載入 fr×zh-TW 新 sqlite 查 maison、le、alors、dire 驗證。
