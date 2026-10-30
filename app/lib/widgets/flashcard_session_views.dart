@@ -346,7 +346,7 @@ class _ScopeGrid extends StatelessWidget {
             for (final (value, name, count, downloaded, cover, asset, url)
                 in tiles)
               Tap(
-                label: '$name，今天 $count 張',
+                label: '${ui(context, name)}, ${ui(context, '今天 $count 張')}',
                 onTap: () {
                   // 問題回報 #683: a book with nothing to review says why
                   // instead of opening an empty run.

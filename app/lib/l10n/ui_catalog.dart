@@ -1222,6 +1222,9 @@ class _UiTemplate {
 }
 
 const _templateCopy = <String, (String, String)>{
+  // 問題回報 #970: spoken labels with names; before every generic 「{0} 張」.
+  '{0}，{1} 個單字': ('{0}, {1} words', '{0}, {1} mots'),
+  '{0}，查看是哪些字': ('{0}, see which words', '{0}, voir quels mots'),
   // Owner 2026-10-30: photos from another learning language.
   '從英文匯入 {0} 張照片': (
     'Import {0} photos from English',

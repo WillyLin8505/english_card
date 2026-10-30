@@ -68,7 +68,7 @@ void main() {
       if (repo.albumWordCount(album.id) != studied.length) {
         f.add('相簿單字數和實際不同', '${album.name}：${repo.albumWordCount(album.id)} vs ${studied.length}');
       }
-      final card = find.bySemanticsLabel(RegExp('^${album.name}，'));
+      final card = find.bySemanticsLabel(RegExp('^${album.name}, '));
       if (card.evaluate().isEmpty) {
         // Albums are grouped by category; switch to the other one.
         final other = find.text(album.category == '生活' ? '生活' : '美食');

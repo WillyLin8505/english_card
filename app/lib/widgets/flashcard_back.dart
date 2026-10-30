@@ -1352,7 +1352,9 @@ class _FormCell extends StatelessWidget {
   Widget build(BuildContext context) {
     final id = links.idFor(word);
     return Tap(
-      label: id == null ? '$kind $word' : '$kind $word，查看單字',
+      label: id == null
+          ? '${ui(context, kind)} $word'
+          : '${ui(context, kind)} $word, ${ui(context, '查看單字')}',
       onTap: id == null ? null : () => openWordLink(context, id, onOpenWord),
       child: Container(
         key: ValueKey('form-cell-$kind'),
@@ -1414,7 +1416,7 @@ class _WordChipState extends State<_WordChip> {
     final meaning = _full ? full : short;
     void toggle() => setState(() => _full = !_full);
     return Tap(
-      label: id == null ? null : '$word，查看單字',
+      label: id == null ? null : '$word, ${ui(context, '查看單字')}',
       onTap: id == null
           ? (cut ? toggle : null)
           : () => openWordLink(context, id, widget.onOpenWord),
@@ -1536,7 +1538,7 @@ class _MorphemeBox extends StatelessWidget {
     final native = (m.native ?? '').trim();
     final id = links.idFor(m.part.replaceAll('-', ''));
     return Tap(
-      label: id == null ? null : '${m.part}，查看單字',
+      label: id == null ? null : '${m.part}, ${ui(context, '查看單字')}',
       onTap: id == null ? null : () => openWordLink(context, id, onOpenWord),
       child: Container(
         constraints: const BoxConstraints(minWidth: 72),

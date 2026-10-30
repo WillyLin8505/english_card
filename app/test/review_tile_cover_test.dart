@@ -19,7 +19,7 @@ void main() {
     final all = repo.reviewCoverPhoto(null);
     expect(all, isNotNull);
     final allTile = find.ancestor(
-        of: find.text('綜合'), matching: find.bySemanticsLabel(RegExp('^綜合，')));
+        of: find.text('綜合'), matching: find.bySemanticsLabel(RegExp('^綜合, ')));
     expect(allTile, findsOneWidget);
     expect(
         find.descendant(of: allTile, matching: find.byType(PhotoImage)),
@@ -27,7 +27,7 @@ void main() {
 
     // Each album tile: its newest photo (or its bundled cover).
     for (final a in repo.albums) {
-      final tile = find.bySemanticsLabel(RegExp('^${RegExp.escape(a.name)}，'));
+      final tile = find.bySemanticsLabel(RegExp('^${RegExp.escape(a.name)}, '));
       if (tile.evaluate().isEmpty) continue;
       final pictures = find.descendant(
           of: tile,
