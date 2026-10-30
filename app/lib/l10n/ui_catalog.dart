@@ -1,6 +1,31 @@
 /// Traditional Chinese source keys are stable UI identifiers, never dictionary
 /// content. Missing keys/languages deliberately retain the original copy.
 const uiCatalog = <String, (String, String)>{
+  // Owner 2026-10-30: bring photos over from another learning language.
+  '匯入照片？': ('Import photos?', 'Importer les photos ?'),
+  '匯入': ('Import', 'Importer'),
+  '這些照片都已經匯入過了': ('These photos are already here', 'Ces photos sont déjà là'),
+  // One photo: the templates below say "photos".
+  '從英文匯入 1 張照片': (
+    'Import 1 photo from English',
+    'Importer 1 photo depuis l’anglais'
+  ),
+  '從法文匯入 1 張照片': (
+    'Import 1 photo from French',
+    'Importer 1 photo depuis le français'
+  ),
+  '把英文的 1 張照片匯入{L}，用{L}重新辨識標籤。單字本不會搬。': (
+    'Copy 1 photo from English into {L} and find its words again in {L}. Your word book stays as it is.',
+    'Copier 1 photo de l’anglais vers le {L} et y retrouver les mots en {L}. Votre carnet de mots ne change pas.'
+  ),
+  '把法文的 1 張照片匯入{L}，用{L}重新辨識標籤。單字本不會搬。': (
+    'Copy 1 photo from French into {L} and find its words again in {L}. Your word book stays as it is.',
+    'Copier 1 photo du français vers l’{L} et y retrouver les mots en {L}. Votre carnet de mots ne change pas.'
+  ),
+  '已匯入 1 張照片，正在重新辨識標籤': (
+    '1 photo imported; finding its words again',
+    '1 photo importée ; recherche des mots en cours'
+  ),
   '意見回饋': ('Feedback', 'Commentaires'),
   // 問題回報 #558: the card back's folded definition (A1–B1).
   '顯示定義': ('Show definition', 'Afficher la définition'),
@@ -351,10 +376,22 @@ const uiCatalog = <String, (String, String)>{
   '動詞': ('Verb', 'Verbe'),
   '形容詞': ('Adjective', 'Adjectif'),
   '副詞': ('Adverb', 'Adverbe'),
-  '這個難度沒有合適的名詞': ('No suitable noun at this level', 'Pas de nom adapté à ce niveau'),
-  '這個難度沒有合適的動詞': ('No suitable verb at this level', 'Pas de verbe adapté à ce niveau'),
-  '這個難度沒有合適的形容詞': ('No suitable adjective at this level', 'Pas d’adjectif adapté à ce niveau'),
-  '這個難度沒有合適的副詞': ('No suitable adverb at this level', 'Pas d’adverbe adapté à ce niveau'),
+  '這個難度沒有合適的名詞': (
+    'No suitable noun at this level',
+    'Pas de nom adapté à ce niveau'
+  ),
+  '這個難度沒有合適的動詞': (
+    'No suitable verb at this level',
+    'Pas de verbe adapté à ce niveau'
+  ),
+  '這個難度沒有合適的形容詞': (
+    'No suitable adjective at this level',
+    'Pas d’adjectif adapté à ce niveau'
+  ),
+  '這個難度沒有合適的副詞': (
+    'No suitable adverb at this level',
+    'Pas d’adverbe adapté à ce niveau'
+  ),
   '的字': ('words', 'mots'),
   '代名詞': ('Pronoun', 'Pronom'),
   '介系詞': ('Preposition', 'Préposition'),
@@ -1180,6 +1217,27 @@ class _UiTemplate {
 }
 
 const _templateCopy = <String, (String, String)>{
+  // Owner 2026-10-30: photos from another learning language.
+  '從英文匯入 {0} 張照片': (
+    'Import {0} photos from English',
+    'Importer {0} photos depuis l’anglais'
+  ),
+  '從法文匯入 {0} 張照片': (
+    'Import {0} photos from French',
+    'Importer {0} photos depuis le français'
+  ),
+  '把英文的 {0} 張照片匯入{L}，用{L}重新辨識標籤。單字本不會搬。': (
+    'Copy {0} photos from English into {L} and find their words again in {L}. Your word book stays as it is.',
+    'Copier {0} photos de l’anglais vers le {L} et y retrouver les mots en {L}. Votre carnet de mots ne change pas.'
+  ),
+  '把法文的 {0} 張照片匯入{L}，用{L}重新辨識標籤。單字本不會搬。': (
+    'Copy {0} photos from French into {L} and find their words again in {L}. Your word book stays as it is.',
+    'Copier {0} photos du français vers l’{L} et y retrouver les mots en {L}. Votre carnet de mots ne change pas.'
+  ),
+  '已匯入 {0} 張照片，正在重新辨識標籤': (
+    '{0} photos imported; finding their words again',
+    '{0} photos importées ; recherche des mots en cours'
+  ),
   // 問題回報 #856: pack download progress.
   '已下載 {0} / {1} MB（{2}%）': (
     '{0} / {1} MB downloaded ({2}%)',

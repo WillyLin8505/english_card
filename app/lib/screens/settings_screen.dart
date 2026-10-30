@@ -6,6 +6,8 @@ import '../screens/privacy_policy_screen.dart';
 import '../services/learning_content.dart';
 import '../services/learning_insights.dart';
 import '../services/dictionary_sync.dart';
+import '../services/language_photo_import.dart';
+import '../services/word_database_store.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
@@ -300,8 +302,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   ),
                             ],
                           ),
-                          if (availableLearningLanguages.length > 1)
+                          if (availableLearningLanguages.length > 1) ...[
                             _note('每個學習語言有自己的相片冊、單字、卡片與程度。'),
+                            // Owner 2026-10-30: bring the other language's
+                            // photos over, recognized again here.
+                            _PhotoImportButtons(
+                                key: ValueKey(settings.learningLanguage)),
+                          ],
                           const SizedBox(height: 12),
                           _label('母語'),
                           Wrap(
@@ -967,5 +974,110 @@ class _Card extends StatelessWidget {
                   ...children,
                 ],
               ),
+      );
+}
+
+/// 「從英文匯入 16 張照片」 under 學習語言, one per other learning language
+/// that has photos of the learner's own (owner 2026-10-30). The photos are
+/// copied into this language and recognized again; the 單字本 stays.
+class _PhotoImportButtons extends StatefulWidget {
+  const _PhotoImportButtons({super.key});
+
+  @override
+  State<_PhotoImportButtons> createState() => _PhotoImportButtonsState();
+}
+
+class _PhotoImportButtonsState extends State<_PhotoImportButtons> {
+  Future<Map<String, ImportSource>>? _sources;
+  bool _importing = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final scope = AppScope.of(context);
+    _sources ??= _load(scope.settings.learningLanguage,
+        saved: scope.repository.store is HiveWordDatabaseStore);
+  }
+
+  /// [saved]: the App keeps its data in Hive. An in-memory repository (the
+  /// sample data, widget tests) has no other language on disk to read.
+  static Future<Map<String, ImportSource>> _load(String current,
+      {required bool saved}) async {
+    if (kIsWeb || !saved) return const {};
+    final out = <String, ImportSource>{};
+    for (final l in availableLearningLanguages) {
+      if (l == current) continue;
+      try {
+        final s = await LanguagePhotoImport.load(l);
+        if (s.photos.isNotEmpty) out[l] = s;
+      } catch (_) {}
+    }
+    return out;
+  }
+
+  Future<void> _import(String from, ImportSource source) async {
+    final scope = AppScope.of(context);
+    final name = languageNameZh[from] ?? from;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const UiText('匯入照片？'),
+        content: UiText(
+            '把$name的 ${source.photos.length} 張照片匯入{L}，用{L}重新辨識標籤。單字本不會搬。'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const UiText('取消')),
+          FilledButton(
+              key: const ValueKey('photo-import-confirm'),
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const UiText('匯入')),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    setState(() => _importing = true);
+    try {
+      final added = await LanguagePhotoImport.copy(
+          source, scope.repository, scope.intake);
+      scope.queue.process();
+      if (!mounted) return;
+      showToast(
+          context, added == 0 ? '這些照片都已經匯入過了' : '已匯入 $added 張照片，正在重新辨識標籤');
+    } finally {
+      if (mounted) setState(() => _importing = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      FutureBuilder<Map<String, ImportSource>>(
+        future: _sources,
+        builder: (context, snap) {
+          final sources = snap.data ?? const {};
+          if (sources.isEmpty) return const SizedBox.shrink();
+          return Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final e in sources.entries)
+                  OutlinedButton.icon(
+                    key: ValueKey('photo-import-${e.key}'),
+                    onPressed:
+                        _importing ? null : () => _import(e.key, e.value),
+                    icon: _importing
+                        ? const SizedBox.square(
+                            dimension: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Icon(Icons.photo_library_outlined, size: 18),
+                    label: UiText(
+                        '從${languageNameZh[e.key] ?? e.key}匯入 ${e.value.photos.length} 張照片'),
+                  ),
+              ],
+            ),
+          );
+        },
       );
 }
