@@ -3543,3 +3543,8 @@ commit `f27233cb`（Windows：flutter analyze 無 error、01:22 +818 ~2: All tes
 卡：問題回報 #948：[owner] [意見回饋] 拍照：旁邊那個閃光燈的選項拿掉吧，就我覺得這個介面盡量保持得跟iP
 
 在 iPad 拍照分頁確認底部只有相簿＋快門、快門置中。
+
+## M413（2026-10-30 09:35）狀態：待做（Windows 卡 #807 交給 Mac 的 App 畫面部分）
+卡：[owner] 法語 3000 字例句加上 Azure 發音（每字前 3 句，約 8,855 句）
+
+iPad 驗證例句播放鍵與 /api/audio 播放。
