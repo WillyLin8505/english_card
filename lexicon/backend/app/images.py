@@ -3497,15 +3497,15 @@ def register(app, auth):
             raise HTTPException(400, str(e))
 
     @app.get('/images/{asset_id}/grid', dependencies=[auth])
-    def grid_endpoint(asset_id: int, s=Depends(db.get_session)):
+    def grid_endpoint(asset_id: int, target: str = 'en', s=Depends(db.get_session)):
         # 詞性 x CEFR table of a photo's labels (card #645); built from the stored labels.
         asset = s.get(m.ImageAsset, asset_id)
         if asset is None:
             raise HTTPException(404, '圖片不存在')
-        return {'grid': photo_grid.build_grid(s, asset.tags, photo_grid.load_fit(asset_id))}
+        return {'grid': photo_grid.build_grid(s, asset.tags, photo_grid.load_fit(asset_id, target), target)}
 
     @app.post('/images/{asset_id}/grid/fit', dependencies=[auth])
-    def grid_fit_endpoint(asset_id: int, s=Depends(db.get_session)):
+    def grid_fit_endpoint(asset_id: int, target: str = 'en', s=Depends(db.get_session)):
         # Card #722: one Qwen call asks whether each word filled from the word web fits this
         # photo; verdicts are cached (state/photo_grid_fit.json), so GET /grid never asks again.
         asset = s.get(m.ImageAsset, asset_id)
@@ -3513,8 +3513,8 @@ def register(app, auth):
             raise HTTPException(404, '圖片不存在')
         if asset.status != 'ready' or not asset.path:
             raise HTTPException(400, '圖片尚未下載')
-        fits = photo_grid.load_fit(asset_id)
-        grid = photo_grid.build_grid(s, asset.tags, fits)
+        fits = photo_grid.load_fit(asset_id, target)
+        grid = photo_grid.build_grid(s, asset.tags, fits, target)
         todo = [(r, w) for r, w in photo_grid.related_words(grid)
                 if photo_grid._fit_key(r, w) not in fits]
         asked = 0
@@ -3528,10 +3528,10 @@ def register(app, auth):
                 raise HTTPException(503, f'連不到 Qwen（tagger），稍後再試：{e}')
             verdicts = {photo_grid._fit_key(r, w): t['score']
                         for (r, w), t in zip(todo, tags) if t.get('score') is not None}
-            photo_grid.save_fit(asset_id, verdicts)
+            photo_grid.save_fit(asset_id, verdicts, target)
             asked = len(verdicts)
             fits.update(verdicts)
-        return {'asked': asked, 'grid': photo_grid.build_grid(s, asset.tags, fits)}
+        return {'asked': asked, 'grid': photo_grid.build_grid(s, asset.tags, fits, target)}
 
     @app.post('/photo-grid', dependencies=[auth])
     def photo_grid_endpoint(body: dict, s=Depends(db.get_session)):
@@ -3539,10 +3539,11 @@ def register(app, auth):
         # user's own photo); labels without a level are graded like stored ones.
         tags = [t if tag_level(t) else classify_tag_cefr(s, t)
                 for t in body.get('tags') or [] if isinstance(t, dict)]
-        return {'grid': photo_grid.build_grid(s, tags)}
+        target = str(body.get('target') or 'en')
+        return {'grid': photo_grid.build_grid(s, tags, None, target)}
 
     @app.post('/photo-grid/tag-upload', dependencies=[auth])
-    async def photo_grid_tag_upload(request: Request, s=Depends(db.get_session)):
+    async def photo_grid_tag_upload(request: Request, target: str = 'en', s=Depends(db.get_session)):
         # 後台「上傳照片測試」（問題回報 #734）: the tagger labels an uploaded picture; nothing is
         # stored. The UI then sends these labels to POST /photo-grid for the table.
         data = await request.body()
@@ -3553,7 +3554,7 @@ def register(app, auth):
             tags = await asyncio.to_thread(_tag_uploaded_photo, s, data, mime)
         except (ValueError, OSError) as e:
             raise HTTPException(400, str(e))
-        return {'tags': tags, 'grid': photo_grid.build_grid(s, tags)}
+        return {'tags': tags, 'grid': photo_grid.build_grid(s, tags, None, target)}
 
     @app.post('/images/{asset_id}/retag-short', dependencies=[auth])
     def retag_short_endpoint(asset_id: int, s=Depends(db.get_session)):

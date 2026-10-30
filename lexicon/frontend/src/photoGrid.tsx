@@ -7,7 +7,7 @@ import { ErrorBox, Link, Loading, useLoad } from './ui';
 // point and box show on the picture, and every word of the same concept lights up.
 
 export type GridWord = { word: string; concept_id: string; anchor: { point: number[]; box: number[] | null }; source: 'photo' | 'lexicon' | 'related'; fit?: number };
-export type Grid = { fit_unchecked?: number; rows: string[]; levels: string[]; cells: { pos: string; cefr: string; words: GridWord[] }[] };
+export type Grid = { fit_unchecked?: number; lang?: string; no_translation?: string[]; rows: string[]; levels: string[]; cells: { pos: string; cefr: string; words: GridWord[] }[] };
 
 const ROW_NAME: Record<string, string> = { verb: '動詞', noun: '名詞', adjective: '形容詞', adverb: '副詞', phrase: '片語' };
 
@@ -51,6 +51,7 @@ export function PhotoGridPanel({ src, grid, target, native, title }: { src: stri
             })}
           </tr>)}</tbody>
         </table>
+        {!!grid.no_translation?.length && <p className="muted" style={{ margin: '8px 0 0' }}>沒有{target === 'fr' ? '法文' : '對應語言'}對應的英文標籤 {grid.no_translation.length} 個：{grid.no_translation.join('、')}</p>}
       </div>
     </div>
   </section>;
@@ -58,7 +59,7 @@ export function PhotoGridPanel({ src, grid, target, native, title }: { src: stri
 
 /** A library picture: its grid from the stored labels (GET /images/{id}/grid). */
 export function StoredPhotoGrid({ assetId, src, target, native, onClose }: { assetId: number; src: string; target: string; native: string; onClose: () => void }) {
-  const grid = useLoad<{ grid: Grid }>(`/images/${assetId}/grid`, [assetId]);
+  const grid = useLoad<{ grid: Grid }>(`/images/${assetId}/grid?target=${target}`, [assetId, target]);
   const [checked, setChecked] = useState<Grid | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<unknown>(null);
@@ -66,7 +67,7 @@ export function StoredPhotoGrid({ assetId, src, target, native, onClose }: { ass
   // Card #722: one Qwen call judges the related words; verdicts are cached on the server.
   const check = async () => {
     setBusy(true); setErr(null);
-    try { setChecked((await api.post<{ grid: Grid }>(`/images/${assetId}/grid/fit`)).grid); } catch (e) { setErr(e); } finally { setBusy(false); }
+    try { setChecked((await api.post<{ grid: Grid }>(`/images/${assetId}/grid/fit?target=${target}`)).grid); } catch (e) { setErr(e); } finally { setBusy(false); }
   };
   return <>
     <div className="toolbar"><button className="btn btn-small" onClick={onClose}>收起表格</button>
@@ -87,7 +88,7 @@ export function PhotoUploadTest({ target, native }: { target: string; native: st
     setBusy(true); setError('');
     try {
       const tagged = await api.upload<{ tags: unknown[] }>('/photo-grid/tag-upload', file);
-      const built = await api.post<{ grid: Grid }>('/photo-grid', { tags: tagged.tags });
+      const built = await api.post<{ grid: Grid }>('/photo-grid', { tags: tagged.tags, target });
       setResult({ src: URL.createObjectURL(file), grid: built.grid });
     } catch (e) {
       setError((e as Error).message);

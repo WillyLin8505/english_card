@@ -15,6 +15,7 @@ grid = {"version": 1, "rows": [...], "levels": [...],
 from __future__ import annotations
 
 import json
+import re
 import os
 import threading
 from pathlib import Path
@@ -52,6 +53,81 @@ _TAG_POS = {"n": "noun", "v": "verb", "a": "adjective", "adj": "adjective", "adv
             "d": "adverb", "p": "phrase"}
 
 
+def _native(lang: str) -> str:
+    """The meaning language a word of ``lang`` must have to count as an entry the app can show."""
+    return "zh-TW" if lang == "en" else "en"
+
+
+_FR_INDEX: dict | None = None
+_FR_LOCK = threading.Lock()
+_FR_POS = {"noun": "noun", "verb": "verb", "adj": "adjective", "adv": "adverb"}
+
+
+def _gloss_parts(text: str) -> set[str]:
+    """English glosses of one translation line: "cat, tom (male cat)" -> {cat, tom}."""
+    out = set()
+    for part in re.split(r"[,;/]", re.sub(r"\([^)]*\)", "", text or "")):
+        part = _norm(part)
+        if part.startswith("to "):
+            out.add(part[3:])
+        if part:
+            out.add(part)
+    return out
+
+
+def _french_index(s) -> dict:
+    """(english gloss, grid row) -> [(zipf, lemma, cefr, lexeme id)] from the fr->en pack."""
+    global _FR_INDEX
+    with _FR_LOCK:
+        if _FR_INDEX is None:
+            idx: dict = {}
+            rows = s.execute(select(m.Lexeme.id, m.Lexeme.normalized, m.Lexeme.pos, m.Lexeme.cefr,
+                                    m.Lexeme.zipf, m.SenseTranslation.text).join(
+                m.Sense, m.Sense.lexeme_id == m.Lexeme.id).join(
+                m.SenseTranslation, m.SenseTranslation.sense_id == m.Sense.id).where(
+                m.Lexeme.language == "fr", m.Lexeme.status == "full",
+                m.SenseTranslation.native_language == "en", m.SenseTranslation.text != ""))
+            for lid, lemma, pos, cefr, zipf, text in rows:
+                if cefr not in LEVELS:
+                    continue
+                row = "phrase" if " " in lemma else _FR_POS.get(pos)
+                if row is None:
+                    continue
+                for g in _gloss_parts(text):
+                    entry = (float(zipf or 0), lemma, cefr, lid)
+                    lst = idx.setdefault((g, row), [])
+                    if all(e[3] != lid for e in lst):
+                        lst.append(entry)
+            _FR_INDEX = idx
+        return _FR_INDEX
+
+
+def to_french(s, tags: list[dict] | None) -> tuple[list[dict], list[str]]:
+    """English labels -> French ones: each label becomes the most common French entry whose
+    English meaning is that word (same part of speech); its CEFR is the French entry's.
+    Returns (french tags, English words with no French entry)."""
+    idx = _french_index(s)
+    out, missing, seen = [], [], set()
+    for tag in tags or []:
+        if not isinstance(tag, dict):
+            continue
+        row = row_of(tag)
+        hit = None
+        for key in (_norm(tag.get("word")), _norm(tag.get("cefrLemma"))):
+            if key and row and idx.get((key, row)):
+                hit = max(idx[(key, row)], key=lambda e: (e[0], e[1]))
+                break
+        if hit is None:
+            if tag.get("word"):
+                missing.append(_norm(tag.get("word")))
+            continue
+        if (row, hit[1]) in seen:
+            continue
+        seen.add((row, hit[1]))
+        out.append({**tag, "word": hit[1], "pos": row, "cefr": hit[2], "en": _norm(tag.get("word"))})
+    return out, missing
+
+
 def _norm(word) -> str:
     return " ".join(str(word or "").strip().lower().split())
 
@@ -70,15 +146,15 @@ def _anchor(tag: dict) -> dict:
     return {"point": tag.get("point") or [], "box": tag.get("box")}
 
 
-def _lexeme_ids(s, word: str, pos: str) -> list[int]:
+def _lexeme_ids(s, word: str, pos: str, lang: str = "en") -> list[int]:
     if pos == "phrase":
         return []
     return list(s.scalars(select(m.Lexeme.id).where(
-        m.Lexeme.language == "en", m.Lexeme.normalized == word,
+        m.Lexeme.language == lang, m.Lexeme.normalized == word,
         m.Lexeme.pos == _DB_POS[pos], m.Lexeme.status == "full")))
 
 
-def _synonyms(s, lexeme_ids: list[int], pos: str) -> list[tuple[str, str]]:
+def _synonyms(s, lexeme_ids: list[int], pos: str, lang: str = "en") -> list[tuple[str, str]]:
     """(word, cefr) of the database's synonyms of these lexemes: same part of
     speech, a CEFR level, a Chinese meaning - the entries the app can show."""
     if not lexeme_ids:
@@ -96,14 +172,14 @@ def _synonyms(s, lexeme_ids: list[int], pos: str) -> list[tuple[str, str]]:
     candidates = {}
     for query in (forward, backward):
         for lex, strength in s.execute(query):
-            if (lex.language == "en" and lex.status == "full" and lex.pos == db_pos
+            if (lex.language == lang and lex.status == "full" and lex.pos == db_pos
                     and lex.cefr in LEVELS and lex.id not in lexeme_ids):
                 candidates[lex.id] = (lex, float(strength or 0))
     if not candidates:
         return []
     with_zh = set(s.scalars(select(m.Sense.lexeme_id).join(
         m.SenseTranslation, m.SenseTranslation.sense_id == m.Sense.id).where(
-        m.Sense.lexeme_id.in_(list(candidates)), m.SenseTranslation.native_language == "zh-TW",
+        m.Sense.lexeme_id.in_(list(candidates)), m.SenseTranslation.native_language == _native(lang),
         m.SenseTranslation.text != "")))
     for lex_id, (lex, strength) in candidates.items():
         if lex_id in with_zh:
@@ -120,7 +196,7 @@ def _cell_row(lex) -> str | None:
     return next((r for r, p in _DB_POS.items() if p == lex.pos), None)
 
 
-def _fill_gaps(s, cells, taken, concepts) -> None:
+def _fill_gaps(s, cells, taken, concepts, lang: str = "en") -> None:
     """Put one word of the right part of speech and level into each empty cell: the
     nearest database entry (fewest link steps, then strongest link) around a word the
     photo shows. The word keeps that concept's anchor; source is "related"."""
@@ -130,7 +206,7 @@ def _fill_gaps(s, cells, taken, concepts) -> None:
     seen: dict[int, tuple[int, float, tuple]] = {}  # lexeme id -> (hops, -strength, concept)
     for concept in concepts:
         _, row, word, _, _ = concept
-        for lid in _lexeme_ids(s, word, row):
+        for lid in _lexeme_ids(s, word, row, lang):
             seen[lid] = (0, 0.0, concept)
     best: dict[tuple[str, str], tuple[tuple, str, tuple]] = {}
     frontier = list(seen)
@@ -156,10 +232,10 @@ def _fill_gaps(s, cells, taken, concepts) -> None:
         if not found:
             break
         lexes = {l.id: l for l in s.scalars(select(m.Lexeme).where(
-            m.Lexeme.id.in_(list(found)), m.Lexeme.language == "en", m.Lexeme.status == "full"))}
+            m.Lexeme.id.in_(list(found)), m.Lexeme.language == lang, m.Lexeme.status == "full"))}
         with_zh = set(s.scalars(select(m.Sense.lexeme_id).join(
             m.SenseTranslation, m.SenseTranslation.sense_id == m.Sense.id).where(
-            m.Sense.lexeme_id.in_(list(lexes)), m.SenseTranslation.native_language == "zh-TW",
+            m.Sense.lexeme_id.in_(list(lexes)), m.SenseTranslation.native_language == _native(lang),
             m.SenseTranslation.text != "")))
         for lid, cand in found.items():
             seen[lid] = cand
@@ -185,22 +261,26 @@ def _fit_key(row: str, word: str) -> str:
     return f"{row}|{word}"
 
 
-def load_fit(asset_id) -> dict[str, float]:
+def _fit_id(asset_id, lang: str = "en") -> str:
+    return str(asset_id) if lang == "en" else f"{asset_id}:{lang}"
+
+
+def load_fit(asset_id, lang: str = "en") -> dict[str, float]:
     """Cached Qwen photo-fit verdicts of one stored photo ("row|word" -> 0..1)."""
     try:
         data = json.loads(FIT_PATH.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return {}
-    return dict((data.get(str(asset_id)) or {}).get("words") or {})
+    return dict((data.get(_fit_id(asset_id, lang)) or {}).get("words") or {})
 
 
-def save_fit(asset_id, verdicts: dict[str, float]) -> None:
+def save_fit(asset_id, verdicts: dict[str, float], lang: str = "en") -> None:
     with _FIT_LOCK:
         try:
             data = json.loads(FIT_PATH.read_text(encoding="utf-8"))
         except (OSError, ValueError):
             data = {}
-        entry = data.setdefault(str(asset_id), {"words": {}})
+        entry = data.setdefault(_fit_id(asset_id, lang), {"words": {}})
         entry["words"].update(verdicts)
         FIT_PATH.parent.mkdir(parents=True, exist_ok=True)
         tmp = FIT_PATH.with_suffix(".tmp")
@@ -231,9 +311,12 @@ def _apply_fit(cells, fits) -> int:
     return unchecked
 
 
-def build_grid(s, tags: list[dict] | None, fits: dict[str, float] | None = None) -> dict:
+def build_grid(s, tags: list[dict] | None, fits: dict[str, float] | None = None, lang: str = "en") -> dict:
     """The grid of a photo's labels (``tags`` need word, pos, cefr, point/box).
     ``fits``: cached Qwen verdicts; related words scored below FIT_PASS are left out."""
+    missing: list[str] = []
+    if lang != "en":
+        tags, missing = to_french(s, tags)
     cells = {(r, c): [] for r in ROWS for c in LEVELS}
     taken: set[tuple[str, str]] = set()
     concepts = []
@@ -254,7 +337,7 @@ def build_grid(s, tags: list[dict] | None, fits: dict[str, float] | None = None)
     # Words the photo shows hold their cells first; synonyms only fill what is left.
     for concept_id, row, word, level, anchor in concepts:
         added = 0
-        for syn, syn_level in _synonyms(s, _lexeme_ids(s, word, row), row):
+        for syn, syn_level in _synonyms(s, _lexeme_ids(s, word, row, lang), row, lang):
             cell = cells[(row, syn_level)]
             if (row, syn) in taken or len(cell) >= CELL_MAX or any(
                     w["concept_id"] == concept_id for w in cell):
@@ -265,9 +348,10 @@ def build_grid(s, tags: list[dict] | None, fits: dict[str, float] | None = None)
             added += 1
             if added >= SYNONYMS_PER_CONCEPT:
                 break
-    _fill_gaps(s, cells, taken, concepts)
+    _fill_gaps(s, cells, taken, concepts, lang)
     unchecked = _apply_fit(cells, fits or {})
-    return {"version": GRID_VERSION, "rows": ROWS, "levels": LEVELS, "fit_unchecked": unchecked,
+    extra = {"lang": lang, "no_translation": sorted(set(missing))} if lang != "en" else {}
+    return {"version": GRID_VERSION, "rows": ROWS, "levels": LEVELS, "fit_unchecked": unchecked, **extra,
             "cells": [{"pos": r, "cefr": c, "words": cells[(r, c)],
                        **({} if cells[(r, c)] else {"empty_reason": EMPTY_REASON})}
                       for r in ROWS for c in LEVELS]}
