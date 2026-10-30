@@ -3706,3 +3706,8 @@ commit `9c9f0de6`（Windows：flutter analyze 無 error、01:11 +826 ~2: All tes
 commit `7746951c`（Windows：flutter analyze 無 error、01:37 +826 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #226：模擬使用者・複習
   結果：第 200 輪：4/4 通過（learner 58 秒、restart 27 秒；learnerrender 172 張 0 錯）；無新問題；UX 建議沿用 #485／#515，未重複開單。
+
+## M439（2026-10-30 22:27）狀態：待做（Windows 卡 #227 交給 Mac 的 App 畫面部分）
+卡：模擬使用者・單字本
+
+無。
