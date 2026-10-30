@@ -3657,3 +3657,8 @@ commit `da076d16`（Windows：flutter analyze 無 error、01:04 +826 ~2: All tes
   結果：第 1 輪：問題回報 #970 的帶變數無障礙標籤已改走 uicatalog（en/fr），新測試與 analyze 通過；全庫 Semantics 靜態掃描只做了抽樣，未做完。
 - 卡 #844：問題回報 #975：[Mac] 2026-10-30 M423～M426 #840（#969）、#841（#97：#84
   結果：全部完成：#970 兩處中文無障礙文字已改成跟介面語言走（複習格子、卡背連結），flutter analyze 無問題，flutter test 相關測試通過。
+
+## M431（2026-10-30 16:57）狀態：待做
+commit `805d178d`（Windows：flutter analyze 無 error、01:03 +826 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #496：模擬使用者・法語（英語母語者學法語）
+  結果：法語模擬第41–43輪：4/4通過，chineseinenglishui=0 通過；音檔缺口已補齊（6326/6326），僅剩15句例句缺英譯。
