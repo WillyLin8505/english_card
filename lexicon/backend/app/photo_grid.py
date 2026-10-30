@@ -324,49 +324,6 @@ def _fill_via_english(s, cells, taken, concepts) -> None:
         taken.add((row, word))
 
 
-def _fill_phrases_by_gloss(s, cells, taken, concepts) -> None:
-    """French grids (card #847): empty phrase cells take a French phrase whose English meaning
-    contains the English meaning of a shown word ("faire attention" = "pay attention" for a
-    photo of attention). Most shown words first, then the most common phrase."""
-    empty = {k for k in cells if k[0] == "phrase" and not cells[k]}
-    if not empty or not concepts:
-        return
-    idx = _french_index(s)
-    glosses_of: dict[tuple[str, str], set[str]] = {}
-    for (gloss, row), entries in idx.items():
-        for e in entries:
-            glosses_of.setdefault((e[1], row), set()).add(gloss)
-    shown: dict[str, tuple] = {}
-    for concept in concepts:
-        for g in glosses_of.get((concept[2], concept[1]), ()):
-            if g not in _STOP_GLOSS and len(g) > 2:
-                shown.setdefault(g, concept)
-    scored: dict[tuple[str, str], tuple[tuple, tuple]] = {}
-    for (gloss, row), entries in idx.items():
-        if row != "phrase":
-            continue
-        hits = [shown[w] for w in set(gloss.split()) if w in shown]
-        for zipf, lemma, level, _ in entries:
-            key = ("phrase", level)
-            if key not in empty or ("phrase", lemma) in taken or not hits:
-                continue
-            rank = (-len(hits), -zipf, lemma)
-            if lemma not in scored or rank < scored[lemma][0]:
-                scored[lemma] = (rank, hits[0], key)
-    best: dict[tuple[str, str], tuple] = {}
-    for lemma, (rank, concept, key) in scored.items():
-        if key not in best or rank < best[key][0]:
-            best[key] = (rank, lemma, concept)
-    for key, (_, lemma, concept) in best.items():
-        cells[key].append({"word": lemma, "concept_id": concept[0], "anchor": concept[4],
-                           "source": "related"})
-        taken.add(("phrase", lemma))
-
-
-_STOP_GLOSS = {"the", "and", "for", "with", "not", "has", "was", "are", "you", "his", "her", "its",
-               "one", "who", "but", "all", "out", "off", "get", "from", "that", "this", "have"}
-
-
 def _fit_key(row: str, word: str) -> str:
     return f"{row}|{word}"
 
@@ -461,7 +418,6 @@ def build_grid(s, tags: list[dict] | None, fits: dict[str, float] | None = None,
     _fill_gaps(s, cells, taken, concepts, lang)
     if lang != "en":
         _fill_via_english(s, cells, taken, concepts)
-        _fill_phrases_by_gloss(s, cells, taken, concepts)
     unchecked = _apply_fit(cells, fits or {})
     extra = {"lang": lang, "no_translation": sorted(set(missing))} if lang != "en" else {}
     return {"version": GRID_VERSION, "rows": ROWS, "levels": LEVELS, "fit_unchecked": unchecked, **extra,
