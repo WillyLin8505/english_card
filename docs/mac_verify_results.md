@@ -2475,3 +2475,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #841（#970）無障礙文字不再是中文 | 不通過 | 逐頁收集無障礙 label／hint／tooltip：單字本（39 條）、相片冊（11 條）、複習卡正面（13 條）沒有中文；但還有兩處是中文：(1) 複習分頁的卡片集格子 flashcard_session_views.dart:349 label '$name，今天 $count 張'，英文介面朗讀成「綜合，今天 3 photos Last reviewed All together 3 due today…」「今天新加的單字，今天 3 photos…」「弱項單字，今天 0 photos…」（名稱和「今天…張」沒翻，數量還被唸成 photos）；(2) 複習卡背面的連結 flashcard_back.dart:1355／1417／1539 '$kind $word，查看單字'、'$word，查看單字'、'${m.part}，查看單字'，朗讀成「複數 mangers，查看單字」「陰陽性 m，查看單字」「nourriture，查看單字」 |  | 低 |
 | #842 flutter test | 通過 | Mac 上 main da358fb1：flutter analyze 4 個 info；flutter test 823 通過、3 略過 |  |  |
 | #841 VoiceOver 實機 | 注意 | M424 要在 iPad 英文介面開 VoiceOver 抽驗；iPad 現在是母語法文、owner 正在用，沒有去改語言或開 VoiceOver；上面是用無障礙樹直接讀出的文字，和 VoiceOver 唸的相同 |  |  |
+
+## 2026-10-30 M427 卡 #12 跨分頁亂點（iPad 實機，cb2271d8）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #12 跨分頁亂點 | 通過 | iPad（介面法文）從啟動 90 秒亂點 21 下（含分頁與頁內安全按鈕），沒有例外；啟動 15 秒後 901 幀，最長 60ms，沒有超過 100ms 的幀 |  |  |
