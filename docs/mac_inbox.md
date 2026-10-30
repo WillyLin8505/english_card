@@ -3625,3 +3625,8 @@ commit `6aebc08e`（Windows：flutter analyze 無 error、01:13 +824 ~2: All tes
 卡：問題回報 #970：帶變數的無障礙標籤與提示仍是中文（英文介面朗讀／提示看到中文）
 
 用 iPad 英文介面開 VoiceOver，抽驗上述 5 個元件朗讀英文。
+
+## M425（2026-10-30 12:03）狀態：待做
+commit `e7686bf6`（Windows：flutter analyze 無 error、01:10 +824 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #841：問題回報 #970：帶變數的無障礙標籤與提示仍是中文（英文介面朗讀／提示看到中文）
+  結果：全部完成：#970 已修。5 處帶變數的無障礙標籤（單字難度、搜尋的字、標籤程度、第 N 張共 M 張、N 個單字）在英文／法文介面改為英文／法文；flutter analyze 無新問題（剩 2 個既有 info），flutter test 824 通過、2 略過。
