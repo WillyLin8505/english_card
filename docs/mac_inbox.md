@@ -3538,3 +3538,8 @@ commit `25cd7b82`（Windows：flutter analyze 無 error、01:25 +817 ~2: All tes
 commit `f27233cb`（Windows：flutter analyze 無 error、01:22 +818 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #825：問題回報 #946：[給 Mac] [意見回饋] 照片詳情：你已經打完標籤了，之後就不用再我拖曳的時候又再重新打標籤，並
   結果：結論：問題回報 #946 是 App 照片詳情畫面的互動改版（星星→單字收集區、動畫、拖曳、儲存才入庫），屬 [給 Mac][意見回饋]，Windows 不改 App 畫面，沒有動任何程式或資料。
+
+## M412（2026-10-30 09:33）狀態：待做（Windows 卡 #836 交給 Mac 的 App 畫面部分）
+卡：問題回報 #948：[owner] [意見回饋] 拍照：旁邊那個閃光燈的選項拿掉吧，就我覺得這個介面盡量保持得跟iP
+
+在 iPad 拍照分頁確認底部只有相簿＋快門、快門置中。
