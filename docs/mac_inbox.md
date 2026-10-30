@@ -3582,3 +3582,8 @@ commit `16174e94`（Windows：flutter analyze 無 error、01:13 +819 ~2: All tes
 驗證：flutter analyze lib 只剩 2 個既有 info。flutter test（session／screens／issue845_852／card670／recognition）：第一次 2 個失敗（舊測試預期星星後全部列表都存、星星字只出現 2 次），已依新規則改 test/session_test.dart、test/screens_test.dart，session＋screens 重跑 49 項全過；其餘 3 個檔第一次已通過。
 未做：無資料備份需求（沒改詞庫）；golden／QC 與 App 無關，不受影響。
 剩餘：「星星只在本次有效」仍成立（離開頁面不保存星星）；若 owner 要星星跨次保留需另開。
+
+## M417（2026-10-30 10:07）狀態：待做（Windows 卡 #227 交給 Mac 的 App 畫面部分）
+卡：模擬使用者・單字本
+
+無。
