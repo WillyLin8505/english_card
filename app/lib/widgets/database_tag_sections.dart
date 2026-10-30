@@ -247,7 +247,7 @@ class _CollectButton extends StatelessWidget {
         return IconButton(
           key: ValueKey('collect-${word.id}'),
           visualDensity: VisualDensity.compact,
-          tooltip: done ? '已加入我的單字本' : '加入我的單字本與複習',
+          tooltip: ui(context, done ? '已加入我的單字本' : '加入我的單字本與複習'),
           icon: Icon(done ? Icons.check_circle : Icons.add_circle_outline,
               color: done ? MColors.primary : MColors.muted),
           onPressed: done ? null : () => addDatabaseWord(context, pack, word),

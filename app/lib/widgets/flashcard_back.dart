@@ -1020,7 +1020,7 @@ class FlashcardBack extends StatelessWidget {
                     // play button (問題回報 #495).
                     if (entry.language != 'en')
                       IconButton(
-                        tooltip: '播放發音',
+                        tooltip: ui(context, '播放發音'),
                         onPressed: () => AppScope.of(context).speak(
                             context, entry.word,
                             language: entry.language, audioUrl: entry.audioUrl),
@@ -1029,7 +1029,8 @@ class FlashcardBack extends StatelessWidget {
                     if (entry.language == 'en')
                       for (final accent in const ['en-GB', 'en-US'])
                         IconButton(
-                          tooltip: accent == 'en-GB' ? '播放英式發音' : '播放美式發音',
+                          tooltip: ui(context,
+                              accent == 'en-GB' ? '播放英式發音' : '播放美式發音'),
                           onPressed: () {
                             // 問題回報 #729: a tap replaces the flip's two
                             // accents rather than being followed by them.
@@ -1855,7 +1856,7 @@ class _PhotoPagerState extends State<_PhotoPager> {
   /// a swipe rebuilds (問題回報 #858).
   Widget _dots(int count, int index) {
     return Semantics(
-      label: '第 ${index + 1} 張，共 $count 張，左右滑動切換照片',
+      label: ui(context, '第 ${index + 1} 張，共 $count 張，左右滑動切換照片'),
       child: count > _maxDotPhotos
           // Too many dots overflow a 350px phone row (card #308), so
           // a counter replaces them.

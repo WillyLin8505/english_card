@@ -43,7 +43,7 @@ class PhotoDifficultyBar extends StatelessWidget {
     final ends = MFont.manrope(12, FontWeight.w700, MColors.label);
     return Semantics(
       slider: true,
-      label: '單字難度 ${levelName(level)}，左右拖曳調整',
+      label: ui(context, '單字難度 ${ui(context, levelName(level))}，左右拖曳調整'),
       value: _barText(level, offset),
       // 問題回報 #845: the bar sits in the page's margin like the photo
       // above it, so 簡單／難 are never cut by the screen edges.

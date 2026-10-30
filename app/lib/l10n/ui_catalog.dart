@@ -780,6 +780,11 @@ const uiCatalog = <String, (String, String)>{
   '復原學習': ('Resume learning', 'Reprendre l’apprentissage'),
   '已從「已學會」放回複習': ('Returned to review', 'Remis en révision'),
   '播放發音': ('Play pronunciation', 'Écouter la prononciation'),
+  // Card 840 (問題回報 #969): tooltips and labels that were hard-coded Chinese.
+  '播放例句': ('Play example', 'Écouter l’exemple'),
+  '播放英式發音': ('Play British pronunciation', 'Écouter la prononciation britannique'),
+  '播放美式發音': ('Play American pronunciation', 'Écouter la prononciation américaine'),
+  '已加入我的單字本': ('Added to my word book', 'Ajouté à mon carnet de mots'),
   '聽發音': ('Listen', 'Écouter'),
   '查看更多例句': ('More examples', 'Plus d’exemples'),
   '更多單字資訊': ('More word information', 'Plus d’informations'),
@@ -1364,6 +1369,15 @@ const _templateCopy = <String, (String, String)>{
     'Fewer than {0} words at this level; filled from nearby levels',
     'Moins de {0} mots à ce niveau ; complété par les niveaux voisins'
   ),
+  // Before the shorter 「搜尋的字 {0} 在 {1}」 (card 841).
+  '搜尋的字 {0} 在 {1}，切到 {2}': (
+    'Searched word {0} is at {1}; switch to {2}',
+    'Le mot {0} est au niveau {1} ; passer à {2}'
+  ),
+  '搜尋的字 {0} 沒有分級，切到 {1}': (
+    'Searched word {0} has no level; switch to {1}',
+    'Le mot {0} n’a pas de niveau ; passer à {1}'
+  ),
   '搜尋的字 {0} 在 {1}': (
     'Searched word {0} is at {1}',
     'Le mot {0} est au niveau {1}'
@@ -1372,6 +1386,12 @@ const _templateCopy = <String, (String, String)>{
     'Searched word {0} has no level',
     'Le mot {0} n’a pas de niveau'
   ),
+  // 卡 #841: spoken labels with variables.
+  '單字難度 {0}，左右拖曳調整': (
+    'Word difficulty {0}; drag left or right to adjust',
+    'Difficulté du mot {0} ; faites glisser pour ajuster'
+  ),
+  '標籤程度 {0}': ('Tag level {0}', 'Niveau de l’étiquette {0}'),
   '切到 {0}': ('Switch to {0}', 'Passer à {0}'),
   '包含待補齊單字（{0}）': (
     'Include incomplete words ({0})',

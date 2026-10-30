@@ -1292,7 +1292,7 @@ class HourglassBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Semantics(
-        label: '等待 AI 辨識',
+        label: ui(context, '等待 AI 辨識'),
         child: Container(
           width: 24,
           height: 24,

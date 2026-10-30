@@ -34,7 +34,7 @@ class ExampleText extends StatelessWidget {
                       onOpenWord: onOpenWord),
                 ),
                 IconButton(
-                  tooltip: '播放例句',
+                  tooltip: ui(context, '播放例句'),
                   visualDensity: VisualDensity.compact,
                   constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                   onPressed: () => AppScope.of(context).speak(

@@ -18,11 +18,14 @@ class DatabaseSearchHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final target = ui(context, hit.level ?? '全部');
     final where = hit.level == null ? '沒有分級' : '在 ${levelLabel(hit.level!)}';
-    final target = hit.level ?? '全部';
+    final spoken = hit.level == null
+        ? '搜尋的字 ${hit.word} 沒有分級，切到 $target'
+        : '搜尋的字 ${hit.word} 在 ${ui(context, levelLabel(hit.level!))}，切到 $target';
     return Semantics(
       button: true,
-      label: '搜尋的字 ${hit.word} $where，切到 $target',
+      label: ui(context, spoken),
       excludeSemantics: true,
       child: Tap(
         onTap: () => onSwitch(hit.level),

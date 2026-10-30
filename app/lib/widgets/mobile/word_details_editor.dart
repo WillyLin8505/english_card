@@ -177,7 +177,7 @@ class _WordDetailsEditorState extends State<WordDetailsEditor> {
                   onChanged: (value) => setState(() => r.type = value!),
                 )),
                 IconButton(
-                    tooltip: '刪除相關字',
+                    tooltip: ui(context, '刪除相關字'),
                     icon: const Icon(Icons.delete_outline),
                     onPressed: () => setState(() => d._related.remove(r))),
               ]),
@@ -197,7 +197,7 @@ class _WordDetailsEditorState extends State<WordDetailsEditor> {
               Row(children: [
                 Expanded(child: field(f.form, '變化形', required: true)),
                 IconButton(
-                    tooltip: '刪除詞形變化',
+                    tooltip: ui(context, '刪除詞形變化'),
                     icon: const Icon(Icons.delete_outline),
                     onPressed: () => setState(() => d._forms.remove(f))),
               ]),

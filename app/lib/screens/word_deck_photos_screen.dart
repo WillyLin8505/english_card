@@ -200,7 +200,7 @@ class WordDeckAlbumCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Tap(
         onTap: onTap,
-        label: '${deck.info.title}，${deck.wordCount} 個單字',
+        label: '${deck.info.title}，${ui(context, '${deck.wordCount} 個單字')}',
         child: Container(
           decoration: BoxDecoration(
             color: MColors.primarySoft,

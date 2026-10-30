@@ -471,7 +471,7 @@ class LabelLevelBar extends StatelessWidget {
                 child: MergeSemantics(
                   child: Semantics(
                     selected: l == level,
-                    label: l == null ? null : '標籤程度 ${levelLabel(l)}',
+                    label: l == null ? null : ui(context, '標籤程度 ${ui(context, levelLabel(l))}'),
                     child: Tap(
                       onTap: () => onChanged(l),
                       child: Container(
