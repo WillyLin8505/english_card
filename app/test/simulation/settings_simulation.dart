@@ -210,8 +210,8 @@ void main() {
     if (reviewAdvanced.evaluate().isEmpty) {
       f.add('找不到複習安排設定', current);
     } else {
+      // 第 19 輪：「複習安排」現在是進階設定裡的固定區塊標題，不是可點開的列。
       await tester.ensureVisible(reviewAdvanced);
-      await tester.tap(reviewAdvanced);
       await tester.pumpAndSettle();
       current = '拖動希望記住的比例';
       final slider = find.byType(Slider);

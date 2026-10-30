@@ -119,8 +119,8 @@ void main() {
       expect(repo.photo('photo-breakfast')!.difficultyOffset,
           4 - repo.profile.level);
       expect(repo.entryByWord(starred.word), isNotNull);
-      expect(saved.created.map((e) => e.word),
-          containsAll(s.words.map((w) => w.word)));
+      // 卡 #835: with a word collected (☆), only collected words are saved.
+      expect(saved.created.map((e) => e.word), [starred.word]);
     });
 
     test('swipe left → 已學會 and the next word fills in; restore brings it back',

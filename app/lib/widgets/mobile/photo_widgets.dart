@@ -534,6 +534,11 @@ class PinnedPhoto extends StatefulWidget {
   final ValueChanged<PinData>? onPinTap;
   final void Function(PinData pin, LabelPoint to)? onPinMoved;
 
+  /// 卡 #835: told where the finger lifted (screen coordinates) after a drag;
+  /// true means the label was dropped somewhere else (the 單字收集區) and
+  /// stays where it was.
+  final bool Function(PinData pin, Offset globalPosition)? onPinDropped;
+
   /// A tap on the photo itself (not a label): where, as a fraction of the
   /// original image — used to place a word the learner added by hand.
   final ValueChanged<LabelPoint>? onPhotoTap;
@@ -619,6 +624,7 @@ class PinnedPhoto extends StatefulWidget {
     this.largePins = false,
     this.onPinTap,
     this.onPinMoved,
+    this.onPinDropped,
     this.onPhotoTap,
     this.onPhotoLongPress,
     this.onPhotoLongPressAt,
@@ -970,7 +976,17 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
                                     onPanEnd: widget.onPinMoved == null ||
                                             byId[pl.id]!.muted
                                         ? null
-                                        : (_) {
+                                        : (d) {
+                                            if (widget.onPinDropped?.call(
+                                                    byId[pl.id]!,
+                                                    d.globalPosition) ==
+                                                true) {
+                                              setState(() {
+                                                _dragging = null;
+                                                _dragBy = Offset.zero;
+                                              });
+                                              return;
+                                            }
                                             final base = placed
                                                 .firstWhere(
                                                     (x) => x.id == pl.id)

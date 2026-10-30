@@ -88,6 +88,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
   /// 問題回報 #709: a tap on the photo hides the labels; another shows them.
   bool _pinsHidden = false;
   final _photoKey = GlobalKey();
+  final _trayKey = GlobalKey();
 
   /// 問題回報：Mac 實機量測照片詳情開啟 114ms（M-PERF）: the whole page in its
   /// first frame took up to 96 ms to build. Frame 0 is the photo and the
@@ -663,6 +664,13 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                           ),
                         ),
                         if (session != null) ...[
+                          _CollectionTray(
+                            trayKey: _trayKey,
+                            words: [
+                              for (final w in session.collected)
+                                _shown(w.word, w.candidate.pos)
+                            ],
+                          ),
                           _AfterFrames(
                             frames: _after(1),
                             child: PhotoDifficultyBar(
@@ -742,6 +750,16 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
       onPinTap: (p) {
         final w = wordOf(p);
         if (w != null) _pinActions(w);
+      },
+      // 卡 #835: a label let go over the 單字收集區 is collected, not moved.
+      onPinDropped: (p, global) {
+        final w = wordOf(p);
+        final box = _trayKey.currentContext?.findRenderObject();
+        if (w == null || box is! RenderBox || !box.attached) return false;
+        final rect = box.localToGlobal(Offset.zero) & box.size;
+        if (!rect.inflate(16).contains(global)) return false;
+        session.collect(w);
+        return true;
       },
       onPinMoved: (p, to) {
         final w = wordOf(p);

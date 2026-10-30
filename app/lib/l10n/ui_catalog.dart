@@ -1255,6 +1255,11 @@ const _templateCopy = <String, (String, String)>{
     'Jusqu’à {0} nouvelles cartes par jour'
   ),
   '每天最多複習 {0} 張': ('Up to {0} reviews a day', 'Jusqu’à {0} révisions par jour'),
+  '單字收集區 ({0})': ('Word collection ({0})', 'Mots collectés ({0})'),
+  '按單字的星星，或把照片上的標籤拖到這裡；按儲存才會進單字庫。': (
+    'Tap a word’s star, or drag a label from the photo here; only these go to your word book when you save.',
+    'Touchez l’étoile d’un mot, ou glissez une étiquette de la photo ici ; seuls ces mots entrent dans votre carnet à l’enregistrement.'
+  ),
   '辨識單字列表 ({0})': ('Recognised words ({0})', 'Mots reconnus ({0})'),
   '這 {0} 個字在詞庫裡還沒有圖片，可以先看單字': (
     'No lexicon pictures for these {0} words yet; here are the words',

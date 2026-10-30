@@ -478,3 +478,75 @@ class _SaveFlightState extends State<_SaveFlight>
     );
   }
 }
+
+/// 卡 #835 單字收集區: under the photo. Words whose ☆ is on (or whose label
+/// was dragged here) fly in as chips; only these go to the word book on 儲存.
+class _CollectionTray extends StatelessWidget {
+  final List<String> words;
+  final GlobalKey trayKey;
+
+  const _CollectionTray({required this.words, required this.trayKey});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      key: trayKey,
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.all(12),
+      constraints: const BoxConstraints(minHeight: 64),
+      decoration: BoxDecoration(
+        color: MColors.primary.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: MColors.primary.withValues(alpha: 0.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          UiText('單字收集區 (${words.length})',
+              style: MFont.manrope(13, FontWeight.w800, MColors.primary)),
+          const SizedBox(height: 6),
+          if (words.isEmpty)
+            UiText('按單字的星星，或把照片上的標籤拖到這裡；按儲存才會進單字庫。',
+                style: MFont.manrope(12, FontWeight.w600, MColors.muted))
+          else
+            AnimatedSize(
+              duration: const Duration(milliseconds: 250),
+              alignment: Alignment.topLeft,
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final w in words)
+                    TweenAnimationBuilder<double>(
+                      key: ValueKey('collected:$w'),
+                      tween: Tween(begin: 0, end: 1),
+                      duration: const Duration(milliseconds: 450),
+                      curve: Curves.easeOutBack,
+                      builder: (context, t, child) => Opacity(
+                        opacity: t.clamp(0.0, 1.0),
+                        child: Transform.translate(
+                          offset: Offset(0, -80 * (1 - t)),
+                          child: Transform.scale(
+                              scale: 0.6 + 0.4 * t, child: child),
+                        ),
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: MColors.primary,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: UiText(w,
+                            style: MFont.manrope(
+                                13, FontWeight.w800, Colors.white)),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}

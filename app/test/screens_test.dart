@@ -125,7 +125,8 @@ void main() {
       await tester.tapAt(_barLevel(tester, 3));
       await tester.pumpAndSettle();
       expect(find.text('中高階 · 挑戰'), findsOneWidget);
-      expect(find.text('Apple'), findsNWidgets(2), reason: 'starred');
+      expect(find.text('Apple'), findsNWidgets(3),
+          reason: 'starred: pin, card and 單字收集區 chip');
       expect(find.text('Coffee'), findsNothing,
           reason: 'A1 is too far from B2');
 

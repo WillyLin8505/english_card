@@ -532,6 +532,19 @@ class PhotoWordSession extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 卡 #835 單字收集區: the starred words, in list order.
+  List<SessionWord> get collected => [
+        for (final w in words)
+          if (w.starred) w
+      ];
+
+  /// A label dragged into the 單字收集區 (or a word starred by hand).
+  void collect(SessionWord w) {
+    if (w.starred) return;
+    w.starred = true;
+    notifyListeners();
+  }
+
   /// 修改標籤 (spec: AI 英文標籤「可改」; 問題回報 #323): another word or
   /// meaning for this spot. A new word is looked up again — lemma, sense
   /// and lexeme id from the language pack, [level] from the CEFR list — and
@@ -798,13 +811,16 @@ class PhotoWordSession extends ChangeNotifier {
     final created = repo.savePhotoWords(
       photoId,
       [
+        // 卡 #835: once the learner has collected words, only those go to
+        // the word book; with none collected the whole list is saved as before.
         for (final w in words)
-          ListedWord(w.candidate, w.anchor,
-              aiLabel: w.edited ? w.aiLabel : null,
-              edited: w.edited,
-              added: w.added,
-              placed: w.placed,
-              ownMeaning: w.ownMeaning),
+          if (w.starred || !words.any((x) => x.starred))
+            ListedWord(w.candidate, w.anchor,
+                aiLabel: w.edited ? w.aiLabel : null,
+                edited: w.edited,
+                added: w.added,
+                placed: w.placed,
+                ownMeaning: w.ownMeaning),
       ],
       difficultyOffset: offset,
       alsoSeen: alsoSeen,
