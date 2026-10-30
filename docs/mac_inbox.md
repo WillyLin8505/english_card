@@ -3818,3 +3818,11 @@ commit `a6544e59`（Windows：flutter analyze 無 error、01:43 +826 ~2: All tes
 卡：[owner] 做法文→繁中詞庫（#882 B 部分）
 
 用 iPad 載入 fr×zh-TW 新 sqlite 查 maison、le、alors、dire 驗證。
+
+## M461（2026-10-31 05:09）狀態：待做（Windows 卡 #496 交給 Mac 的 App 畫面部分）
+卡：模擬使用者・法語（英語母語者學法語）
+
+英文 iPad 開 onboarding 第1步，確認選「法文」時繁中選項下方的中文小字是否可接受（或需英文化）。
+15句缺英譯例句連三輪不變（詞庫補值缺口，走 Qwen 流程）；#797 已 fixed 但這15句仍在，下輪若仍在由人決定是否重開。
+關聯問題 #363 #494 #495 #496 #498 #499 #501 皆 fixed、無新證據。
+變更：僅測試產物；未改App/伺服器/詞庫，未commit/push。無需備份；golden/QC未跑（純檢查）。
