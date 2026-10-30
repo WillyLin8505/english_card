@@ -121,6 +121,9 @@ def decision_options(block: str) -> list[str]:
 DECISION_RE = re.compile(r"需要你決定|待你決定|請你決定|需使用者決定|需要使用者決定|decision needed|needs owner", re.I)
 ALL_DONE_RE = re.compile(r"^\s*(全部完成|ALL DONE)", re.I | re.M)
 BLOCKER_RE = re.compile(r"^\s*(BLOCKED|卡住|無法完成)", re.I | re.M)
+# owner 10/30: 「很多單字都還沒補齊」— cards #803／#738／#807 wrote 未完成 or 部分完成 and were
+# closed as done, so nobody ran them again. Such a result goes back to the queue.
+NOT_DONE_RE = re.compile(r"^[^\n]{0,10}?(未完成|部分完成|尚未完成|還沒完成|本夜尚未|本輪未完成|NOT DONE)", re.I)
 
 DEFAULT_CFG = {
     "agents_order": AGENTS, "prefer": {}, "reserved": {}, "multi_round_tasks": [],
@@ -648,8 +651,16 @@ class Tick:
             action = "queued"
             self.write("PUT", f"/tasks/{card_id}", {"by": "Grokbot", "status": "queued", "agent": None,
                                                      "progress": progress}, "next round")
+        elif NOT_DONE_RE.search(text.lstrip()[:200]):
+            n = self.state.setdefault("partial", {}).get(str(card_id), 0) + 1
+            if not self.dry:
+                self.state["partial"][str(card_id)] = n
+            action = "blocked" if n >= self.cfg.get("max_partial_rounds", 5) else "queued"
+            self.write("PUT", f"/tasks/{card_id}", {"by": "Grokbot", "status": action, "agent": None,
+                       "progress": f"第 {n} 輪未完成：{progress}"[:600]}, f"not done → {action}")
         else:
             action = "done"
+            self.state.get("partial", {}).pop(str(card_id), None)
             self.write("PUT", f"/tasks/{card_id}", {"by": "Grokbot", "status": "done", "progress": progress}, "done")
             self.close_issues(fresh, outcome, rel)
         kind = {"waiting": "decision", "blocked": "blocker"}.get(action, "finished")

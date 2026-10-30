@@ -232,6 +232,16 @@ def test_all_done_marker_ends_a_multi_round_card():
     assert not d.ALL_DONE_RE.search("第 2 輪：補了 800 槽，還剩 4,752")
 
 
+def test_not_done_result_is_queued_again():
+    import dispatch_tick as d
+    for text in ("本夜尚未補到字：stub 仍剩 7,612", "未完成：第一批 100 字已補完",
+                 "卡 #809 部分完成：縮圖格子改要 480", "本輪未完成：已補 269／7,949"):
+        assert d.NOT_DONE_RE.search(text), text
+    for text in ("全部完成：8,973 句", "已修好（程式已在 repo）：不會再完成前就關卡",
+                 "結論：已改成保留自己的卡；未完成的部分無"):
+        assert not d.NOT_DONE_RE.search(text), text
+
+
 def test_tag_fallback_starts_run_only_when_enabled(tmp_path, monkeypatch):
     calls = []
     monkeypatch.setattr(dt.subprocess, "Popen", lambda cmd, **kw: calls.append(cmd))
