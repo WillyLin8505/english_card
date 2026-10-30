@@ -3662,3 +3662,8 @@ commit `da076d16`（Windows：flutter analyze 無 error、01:04 +826 ~2: All tes
 commit `805d178d`（Windows：flutter analyze 無 error、01:03 +826 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #496：模擬使用者・法語（英語母語者學法語）
   結果：法語模擬第41–43輪：4/4通過，chineseinenglishui=0 通過；音檔缺口已補齊（6326/6326），僅剩15句例句缺英譯。
+
+## M432（2026-10-30 20:46）狀態：待做
+commit `93a36f08`（Windows：flutter analyze 無 error、01:27 +826 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #846：問題回報 #1016：[owner] 法文詞庫後台的圖片標籤表格全是英文字
+  結果：第 1 輪：法文後台圖片標籤表格改成法文詞（#10435 英文標籤 16 個 → 法文 12 個格子詞，4 個無法文對應列在表格下方）；英文結果 5 張圖改前改後逐字一致。
