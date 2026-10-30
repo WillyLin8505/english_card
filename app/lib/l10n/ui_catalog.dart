@@ -947,6 +947,8 @@ const uiCatalog = <String, (String, String)>{
     'No photos yet. Take your first one!',
     'Aucune photo. Prenez la première !'
   ),
+  '切換鏡頭': ('Flip camera', 'Changer de caméra'),
+  '最近一張照片': ('Latest photo', 'Dernière photo'),
   '相機未啟用': ('Camera is off', 'Appareil photo désactivé'),
   '正在開啟相機…': ('Opening camera…', 'Ouverture de l’appareil photo…'),
   '目前無法使用相機': ('Camera is unavailable', 'Appareil photo indisponible'),
