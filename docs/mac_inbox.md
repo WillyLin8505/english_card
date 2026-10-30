@@ -3615,3 +3615,8 @@ commit `fc0a9b7e`（Windows：flutter analyze 無 error、01:09 +821 ~2: All tes
 
 無。
 - 剩下：llama-server 恢復後 `python lexicon/tools/card169_fill_zh.py run --limit 3 --batch 200`，每批抽查 ≤20 筆、批後跑 golden/QC；'s 仍在 todo 開頭，可再排除以 apostrophe 開頭的詞；photo 義項沒中文上升（31→113）原因未查。
+
+## M423（2026-10-30 11:55）狀態：待做
+commit `6aebc08e`（Windows：flutter analyze 無 error、01:13 +824 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #840：問題回報 #969：例句播放鍵的提示文字沒翻譯：英文介面仍顯示中文「播放例句」（卡 #807）
+  結果：全部完成：#969 已修。例句播放鍵的 tooltip 改走 ui()，uicatalog 補 en／fr，順便改掉另外 5 個 tooltip 與 1 個語音標籤寫死中文的 tooltip／語音標籤；flutter analyze 無問題，flutter test 全部通過（823 通過、2 略過）。
