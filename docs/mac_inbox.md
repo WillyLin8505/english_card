@@ -3561,3 +3561,8 @@ commit `b3a11a0f`（Windows：flutter analyze 無 error、01:19 +819 ~2: All tes
   結果：全部完成：拍照畫面的閃光燈按鈕已拿掉（app/lib/screens/camerascreen.dart），底部只剩「從相簿選擇」與快門，跟 iPhone 原生相機一致。；- 刪除 toggleTorch、torch 狀態、FullCamera 的 torch/onTorch 參數與右側閃光燈按鈕；右側改放 48px 
 - 卡 #807：[owner] 法語 3000 字例句加上 Azure 發音（每字前 3 句，約 8,855 句）
   結果：尚未完全驗證：8,973 句法語例句 Azure 音檔已全數合成（355,131 字元），本輪確認匯出會帶例句 audioid；flutter test 全跑與 QC/golden 仍沒跑完。
+
+## M415（2026-10-30 09:59）狀態：待做
+commit `16174e94`（Windows：flutter analyze 無 error、01:13 +819 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #226：模擬使用者・複習
+  結果：第 199 輪：4/4 通過（learner 73 秒、restart 35 秒；learnerrender 159 張 0 錯）；無新問題；UX 建議沿用 #485／#515，未重複開單。
