@@ -3609,3 +3609,9 @@ commit `ebe63a70`（Windows：flutter analyze 無 error、01:10 +821 ~2: All tes
 commit `fc0a9b7e`（Windows：flutter analyze 無 error、01:09 +821 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #224：模擬使用者・拍照
   結果：第 219 輪（photoui＋pins）：2/2 通過，33,890 張照片、101,670 個版面，標籤遮點 0（無新錯誤）；本輪沒有新的 UX 建議（#583、#584 仍待決定）。
+
+## M422（2026-10-30 10:55）狀態：待做（Windows 卡 #169 交給 Mac 的 App 畫面部分）
+卡：常態：全庫掃描中文意思缺漏與品質
+
+無。
+- 剩下：llama-server 恢復後 `python lexicon/tools/card169_fill_zh.py run --limit 3 --batch 200`，每批抽查 ≤20 筆、批後跑 golden/QC；'s 仍在 todo 開頭，可再排除以 apostrophe 開頭的詞；photo 義項沒中文上升（31→113）原因未查。
