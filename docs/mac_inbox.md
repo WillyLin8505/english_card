@@ -3691,3 +3691,8 @@ commit `1572dbb0`（Windows：flutter analyze 無 error、01:07 +826 ~2: All tes
 卡：模擬使用者・相片冊
 
 用 iPad 做相片冊實機易用性評估（我的相片冊、資料庫相片冊、照片詳情、CEFR 切換、從照片加入收藏）。
+
+## M436（2026-10-30 21:31）狀態：待做
+commit `164439a1`（Windows：flutter analyze 無 error、01:04 +826 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #225：模擬使用者・相片冊
+  結果：第221輪：主模擬 album 1/1 通過（27 秒）、新問題 無、UX 建議 無新增。
