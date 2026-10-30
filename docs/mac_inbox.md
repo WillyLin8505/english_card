@@ -3548,3 +3548,16 @@ commit `f27233cb`（Windows：flutter analyze 無 error、01:22 +818 ~2: All tes
 卡：[owner] 法語 3000 字例句加上 Azure 發音（每字前 3 句，約 8,855 句）
 
 iPad 驗證例句播放鍵與 /api/audio 播放。
+
+## M414（2026-10-30 09:50）狀態：待做
+commit `b3a11a0f`（Windows：flutter analyze 無 error、01:19 +819 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #837：問題回報 #949：mac_sync 在合併途中提交了帶衝突標記的檔案並推上 main；推送失敗兩天沒人知道
+  結果：結論：macsync 現在遇到合併中／衝突標記不提交不推，push 失敗會在看板發 ⚠ 並寫 #13；新增 4 個測試全過。
+- 卡 #225：模擬使用者・相片冊
+  結果：第214輪：主模擬 album 1/1 通過（31 秒）、新問題 無、UX 建議 無新增。
+- 卡 #228：模擬使用者・設定
+  結果：第 19 輪（模擬輪 215）：設定 1/1 通過、findings 0；新問題無、UX 建議沿用 #474（未重複開）。
+- 卡 #836：問題回報 #948：[owner] [意見回饋] 拍照：旁邊那個閃光燈的選項拿掉吧，就我覺得這個介面盡量保持得跟iP
+  結果：全部完成：拍照畫面的閃光燈按鈕已拿掉（app/lib/screens/camerascreen.dart），底部只剩「從相簿選擇」與快門，跟 iPhone 原生相機一致。；- 刪除 toggleTorch、torch 狀態、FullCamera 的 torch/onTorch 參數與右側閃光燈按鈕；右側改放 48px 
+- 卡 #807：[owner] 法語 3000 字例句加上 Azure 發音（每字前 3 句，約 8,855 句）
+  結果：尚未完全驗證：8,973 句法語例句 Azure 音檔已全數合成（355,131 字元），本輪確認匯出會帶例句 audioid；flutter test 全跑與 QC/golden 仍沒跑完。
