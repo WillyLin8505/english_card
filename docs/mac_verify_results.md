@@ -2450,3 +2450,28 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #815／#824 flutter test | 通過 | Mac 上合併 5965ce7d 後：flutter analyze 4 個 info；flutter test 818 通過、3 略過 |  |  |
 | #722 | 通過 | owner 已決定維持現狀，本輪沒有程式或資料變更 |  |  |
 | #947 證據（給 Windows） | 注意 | iPad 學英文＋母語法文：複習卡背面介面法文、意思中文（Plate「盤子、碟、碟子」、Shiny「有光澤的」）；單字頁 ability 黃框說缺內容、意思中文、沒有圖片 | docs/mac_verify_shots/2026-10-30/m947_review_fr.png |  |
+
+## 2026-10-30 M412～M422 驗證（iPad 介面法文＋模擬器，main 到 f6db4f7e）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #836（#948）拍照拿掉閃光燈 | 通過 | iPad 拍照分頁：有白圈快門，沒有閃光燈鍵；介面法文「Reconnaissance IA prête」 | docs/mac_verify_shots/2026-10-30/m948_camera.png |  |
+| #835（#946）單字收集區 | 通過 | iPad 照片 photo-1793288886528744：按 Fixture 的星星，Fixture 進「Mots collectés」；把照片上的 Roll 標籤拖到收集區放開，Roll 進收集區、標籤留在照片上；離開頁面後兩個字都在單字本（本來就有，所以 1,717 → 1,717）。收集區在照片正下方 | docs/mac_verify_shots/2026-10-30/m946_tray.png |  |
+| #807 例句播放（M413） | 通過 | iPad 是學英文，看不到法語例句；已在模擬器學法文驗過（見 M406 列）：卡片背面有播放鍵，點了沒有例外 |  |  |
+| #225 相片冊 | 通過 | iPad（介面法文）切到相片冊 0.27 秒，rrr 相簿 0.77 秒打開，捲動最長 2.4ms，沒有例外 |  |  |
+| #227 單字本 | 通過 | iPad 單字本 0.26 秒打開，捲動 216 幀最長 6.5ms，沒有例外。注意：母語法文時列表意思是中文（a「誒；阿」），同 #947 |  |  |
+| #228 設定 | 通過 | iPad 設定 95 段文字都讀得到，進階設定能展開，沒有例外 |  |  |
+| #226 複習 | 通過 | iPad 啟動後 2.6 秒點綜合，第一張卡 65ms；25 張內沒遇到照片選字卡（版面已在 M390 驗過） |  |  |
+| #224 拍照 | 通過 | 見 #836 列：相機畫面、AI 辨識就緒、快門正常，沒有例外 |  |  |
+| #838 flutter test | 通過 | Mac 上 main f6db4f7e：flutter analyze 4 個 info；flutter test 820 通過、3 略過 |  |  |
+| #839（#956）複習卡死 | 通過 | 不是 App 問題：Mac 測試用中文找分頁，iPad 介面已被改成法文所以找不到、測試停住，誤報為卡死。已撤回，請關 #956／#839 |  |  |
+| #837 mac_sync、#169 中文意思 | 注意 | Windows 工具與資料，Mac 沒有 App 畫面可驗 |  |  |
+
+## 2026-10-30 M423～M426 #840（#969）、#841（#970）、#842 flutter test（模擬器英文介面＋Mac，main 到 da358fb1）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #840（#969）例句播放鍵提示文字 | 通過 | 模擬器（學法文、介面英文）看了 6 張卡背面，4 張有例句播放鍵，提示文字是「Play example」 |  |  |
+| #841（#970）無障礙文字不再是中文 | 不通過 | 逐頁收集無障礙 label／hint／tooltip：單字本（39 條）、相片冊（11 條）、複習卡正面（13 條）沒有中文；但還有兩處是中文：(1) 複習分頁的卡片集格子 flashcard_session_views.dart:349 label '$name，今天 $count 張'，英文介面朗讀成「綜合，今天 3 photos Last reviewed All together 3 due today…」「今天新加的單字，今天 3 photos…」「弱項單字，今天 0 photos…」（名稱和「今天…張」沒翻，數量還被唸成 photos）；(2) 複習卡背面的連結 flashcard_back.dart:1355／1417／1539 '$kind $word，查看單字'、'$word，查看單字'、'${m.part}，查看單字'，朗讀成「複數 mangers，查看單字」「陰陽性 m，查看單字」「nourriture，查看單字」 |  | 低 |
+| #842 flutter test | 通過 | Mac 上 main da358fb1：flutter analyze 4 個 info；flutter test 823 通過、3 略過 |  |  |
+| #841 VoiceOver 實機 | 注意 | M424 要在 iPad 英文介面開 VoiceOver 抽驗；iPad 現在是母語法文、owner 正在用，沒有去改語言或開 VoiceOver；上面是用無障礙樹直接讀出的文字，和 VoiceOver 唸的相同 |  |  |
