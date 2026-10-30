@@ -61,8 +61,8 @@ def http(method: str, path: str, body: dict | None = None):
         return json.load(r)
 
 
-def sh(*args, cwd=ROOT, timeout=1800) -> subprocess.CompletedProcess:
-    return subprocess.run(list(args), cwd=cwd, capture_output=True, text=True, encoding="utf-8",
+def sh(*args, cwd=None, timeout=1800) -> subprocess.CompletedProcess:
+    return subprocess.run(list(args), cwd=cwd or ROOT, capture_output=True, text=True, encoding="utf-8",
                           errors="replace", timeout=timeout, creationflags=NO_WINDOW)
 
 GIT_BUSY_FILES = ("MERGE_HEAD", "REBASE_HEAD", "CHERRY_PICK_HEAD", "rebase-merge", "rebase-apply")
@@ -112,8 +112,7 @@ def warn(text: str):
         with EVENTS.open("a", encoding="utf-8") as f:
             f.write(json.dumps({"t": datetime.now(timezone.utc).isoformat(timespec="seconds"),
                                 "type": "blocker", "agent": "mac_sync", "outcome": text[:300]},
-                               ensure_ascii=False) + "
-")
+                               ensure_ascii=False) + "\n")
         http("PUT", "/tasks/13", {"by": "Grokbot",
                                   "progress": f"{datetime.now(TAIPEI):%H:%M} mac_sync：{text}"[:500]})
     except Exception as e:  # board down: the log line above still exists
