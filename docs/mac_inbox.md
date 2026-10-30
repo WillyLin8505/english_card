@@ -3566,3 +3566,19 @@ commit `b3a11a0f`（Windows：flutter analyze 無 error、01:19 +819 ~2: All tes
 commit `16174e94`（Windows：flutter analyze 無 error、01:13 +819 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #226：模擬使用者・複習
   結果：第 199 輪：4/4 通過（learner 73 秒、restart 35 秒；learnerrender 159 張 0 錯）；無新問題；UX 建議沿用 #485／#515，未重複開單。
+
+## M416（2026-10-30 10:03）狀態：待做（Windows 卡 #835 交給 Mac 的 App 畫面部分）
+卡：問題回報 #946：[owner] [意見回饋] 照片詳情：你已經打完標籤了，之後就不用再我拖曳的時候又再重新打標籤，並
+
+在 iPad 驗證（1）按單字星星後，字會從上方飛進收集區；（2）把照片上的標籤拖到收集區放開，標籤留在原位、字進收集區；（3）收集區有字時儲存，單字本只多這些字。
+
+改了什麼（app/）：
+- lib/services/photo_word_session.dart：新增 collected、collect()；save() 在有收集字時只存星星字（沒有任何星星時維持原行為，整張列表都存）。
+- lib/widgets/photo_word_cards.dart：新增 _CollectionTray（收集區，晶片以位移＋縮放＋淡入動畫進場）。
+- lib/widgets/mobile/photo_widgets.dart：PinnedPhoto 新增 onPinDropped（放開手指的螢幕座標）。
+- lib/screens/photo_detail_screen.dart：收集區放在照片下方；標籤放在收集區上 → collect，不移位。
+- 上方標籤與下方列表本來就都來自 session.words（一致）；拖曳標籤只呼叫 move()，不會重打標籤。
+
+驗證：flutter analyze lib 只剩 2 個既有 info。flutter test（session／screens／issue845_852／card670／recognition）：第一次 2 個失敗（舊測試預期星星後全部列表都存、星星字只出現 2 次），已依新規則改 test/session_test.dart、test/screens_test.dart，session＋screens 重跑 49 項全過；其餘 3 個檔第一次已通過。
+未做：無資料備份需求（沒改詞庫）；golden／QC 與 App 無關，不受影響。
+剩餘：「星星只在本次有效」仍成立（離開頁面不保存星星）；若 owner 要星星跨次保留需另開。
