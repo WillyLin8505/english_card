@@ -3686,3 +3686,8 @@ commit `93a36f08`（Windows：flutter analyze 無 error、01:27 +826 ~2: All tes
 commit `1572dbb0`（Windows：flutter analyze 無 error、01:07 +826 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #848：[owner] 拍照頁改成 iPhone 相機式（問題回報 #1019）
   結果：全部完成：拍照頁 FullCamera 改成 iPhone 相機式（app/lib/screens/camerascreen.dart），analyze 無問題、相關 widget test 8/8 通過。
+
+## M435（2026-10-30 21:29）狀態：待做（Windows 卡 #225 交給 Mac 的 App 畫面部分）
+卡：模擬使用者・相片冊
+
+用 iPad 做相片冊實機易用性評估（我的相片冊、資料庫相片冊、照片詳情、CEFR 切換、從照片加入收藏）。
