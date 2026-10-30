@@ -3826,3 +3826,8 @@ commit `a6544e59`（Windows：flutter analyze 無 error、01:43 +826 ~2: All tes
 15句缺英譯例句連三輪不變（詞庫補值缺口，走 Qwen 流程）；#797 已 fixed 但這15句仍在，下輪若仍在由人決定是否重開。
 關聯問題 #363 #494 #495 #496 #498 #499 #501 皆 fixed、無新證據。
 變更：僅測試產物；未改App/伺服器/詞庫，未commit/push。無需備份；golden/QC未跑（純檢查）。
+
+## M462（2026-10-31 05:12）狀態：待做
+commit `421fd6ae`（Windows：flutter analyze 無 error、01:35 +826 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #496：模擬使用者・法語（英語母語者學法語）
+  結果：法語模擬第44–46輪：4/4通過；音檔6326/6326；但 onboarding 第1步仍有1句中文（「法文目前只提供英文母語」），與41輪相同，非新退步。
