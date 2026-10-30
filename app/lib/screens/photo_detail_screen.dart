@@ -780,13 +780,20 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
       );
     }
     // 問題回報 #851: a rescan or a top-up (多看動詞…) is tagging too — the
+<<<<<<< HEAD
     // labels stay usable, with the sweep and the same note on top until
     // the AI answers.
     // 問題回報 #939: the note sits at the bottom edge, never over the labels.
+=======
+    // labels stay usable, with the sweep until the AI answers. The note
+    // that says so is the one under the difficulty bar, not a chip on the
+    // photo: labels can sit anywhere, and a chip covered them (問題回報 #939).
+>>>>>>> origin/main
     if (session.rescanning ||
         session.fetchingMore != null ||
         scope.queue.current == photo.id ||
         scope.queue.isToppingUp(photo.id)) {
+<<<<<<< HEAD
       return const IgnorePointer(
         child: Stack(
           children: [
@@ -800,6 +807,9 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
           ],
         ),
       );
+=======
+      return const IgnorePointer(child: PhotoScanSweep());
+>>>>>>> origin/main
     }
     if (photo.taggingStatus == TaggingStatus.pending &&
         photo.candidates.isEmpty) {
@@ -817,27 +827,13 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
   /// under the difficulty bar they go with, not below the word list (#451).
   Widget _levelRow(Photo photo, PhotoWordSession session) {
     final topping = AppScope.of(context).queue.isToppingUp(photo.id);
-    // 問題回報 #675: a harder setting than any word the AI found here shows
-    // fewer words; say why and how to get harder ones.
-    final hardest = photo.candidates.isEmpty
-        ? -1
-        : photo.candidates
-            .map((c) => levelIndex(c.level))
-            .reduce((a, b) => a > b ? a : b);
-    final short = hardest >= 0 && session.target > hardest;
+    // 問題回報 #942: no explaining text here (the #675 hint 「AI 在這張照片
+    // 找到的字最難到…」 is gone); the buttons speak for themselves.
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (short)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: UiText(
-                  'AI 在這張照片找到的字最難到「${levelName(cefrLevels[hardest])}」，按「重新掃描標籤」請 AI 找更難的字',
-                  key: const ValueKey('level-short-hint'),
-                  style: MFont.manrope(12, FontWeight.w600, MColors.muted)),
-            ),
           _LevelRow(
             bias: session.bias,
             busy: topping || session.fetchingMore != null || session.rescanning,

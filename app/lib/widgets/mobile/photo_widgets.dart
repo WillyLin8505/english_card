@@ -92,6 +92,20 @@ class CoverGeometry {
   Offset toBox(LabelPoint p) =>
       offset + Offset(p.x * imageWidth * scale, p.y * imageHeight * scale);
 
+  /// Where [p]'s dot is drawn in [box]: [toBox], kept [inset] inside the
+  /// part the photo covers. 問題回報 #940: a point on the photo's edge, or
+  /// in the part cover crops away, left its dot (5.5 px) half off the
+  /// picture.
+  Offset dotIn(Size box, LabelPoint p, {double inset = 6}) {
+    final area = visibleIn(box), o = toBox(p);
+    return Offset(
+      o.dx.clamp(
+          area.left + inset, math.max(area.left + inset, area.right - inset)),
+      o.dy.clamp(
+          area.top + inset, math.max(area.top + inset, area.bottom - inset)),
+    );
+  }
+
   LabelPoint fromBox(Offset o) => LabelPoint(
         ((o.dx - offset.dx) / (imageWidth * scale)).clamp(0.0, 1.0),
         ((o.dy - offset.dy) / (imageHeight * scale)).clamp(0.0, 1.0),
@@ -838,7 +852,7 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
             for (final p in widget.pins)
               PinItem(
                   p.id,
-                  geo.toBox(p.anchor),
+                  geo.dotIn(box, p.anchor),
                   WordPin._sizeOf(p.word, p.zh, widget.largePins, scaler,
                       entryType: p.entryType,
                       linked: p.linked,
