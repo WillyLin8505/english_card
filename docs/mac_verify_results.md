@@ -2428,3 +2428,11 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #811／#940 藍點留在圖內 | 通過 | Mac f65ec07c 已修（CoverGeometry.dotIn），M396 在 iPad 驗過：資料庫圖 35、45 的邊角藍點都在圖內；照片詳情和「圖片與單字標籤」共用 | docs/mac_verify_shots/2026-10-30/m940_image_45.png |  |
 | #812／#941 拍照介面 | 通過 | Mac f65ec07c 已改成手機相機樣式，M397 在 iPad 驗過。注意：之後 owner 在 #948 要拿掉閃光燈、盡量和 iPhone 原生相機一樣，依 10/30 新規則由 Windows 派卡 | docs/mac_verify_shots/2026-10-30/m941_camera.png |  |
 | #813／#942 掃描時不要說明文字 | 通過 | Mac f65ec07c 已拿掉「AI 在這張照片找到的字最難到…」提示，M397 在 iPad 驗過 | docs/mac_verify_shots/2026-10-30/m942_detail.png |  |
+
+## 2026-10-30 M407～M409、M411 #946／#947／#948（照 owner 10/30 新規則移交 Windows）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #946 照片詳情單字收集區 | 注意 | owner 10/30：「現在一律只要發現新的問題，就直接在 Windows 這邊派卡修理」。App 程式改由 Windows 改，Mac 只驗證；M409／卡 #825 不在 Mac 實作，等 Windows 改好後驗 |  |  |
+| #947 英文母語學法文的複習卡 | 注意 | 同上，移交 Windows；Mac 可協助在模擬器（學法文、母語英文）開卡片截圖給 Windows |  |  |
+| #948 拍照拿掉閃光燈 | 注意 | 同上，移交 Windows。現在的拍照畫面（f65ec07c）右下有閃光燈鍵 |  |  |
