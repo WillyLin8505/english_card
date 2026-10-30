@@ -3533,3 +3533,8 @@ commit `25cd7b82`（Windows：flutter analyze 無 error、01:25 +817 ~2: All tes
   結果：法語模擬第38–40輪：4/4通過，chineseinenglishui=0 通過；詞庫增至6326詞，新增觀察：173詞無音檔、15句例句缺英譯（皆為新增詞庫的缺口，尚未開問題）。
 - 卡 #824：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
   結果：全部完成：flutter test 全過（+817 ~2 skipped），flutter analyze 0 error（4 個 info）；未改任何程式。
+
+## M411（2026-10-30 09:04）狀態：待做
+commit `f27233cb`（Windows：flutter analyze 無 error、01:22 +818 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #825：問題回報 #946：[給 Mac] [意見回饋] 照片詳情：你已經打完標籤了，之後就不用再我拖曳的時候又再重新打標籤，並
+  結果：結論：問題回報 #946 是 App 照片詳情畫面的互動改版（星星→單字收集區、動畫、拖曳、儲存才入庫），屬 [給 Mac][意見回饋]，Windows 不改 App 畫面，沒有動任何程式或資料。
