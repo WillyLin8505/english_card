@@ -3640,3 +3640,13 @@ commit `da358fb1`（Windows：flutter analyze 無 error、01:02 +824 ~2: All tes
 commit `cb2271d8`（Windows：flutter analyze 無 error、01:00 +826 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #12：模擬使用者・跨分頁（亂點、詞庫更新）
   結果：第 220 輪：2/2 通過（packupdate 244 秒、fuzz 192 秒，pack 21624 詞），沒有新問題。
+
+## M428（2026-10-30 12:37）狀態：待做（Windows 卡 #843 交給 Mac 的 App 畫面部分）
+卡：問題回報 #970：帶變數的無障礙標籤與提示仍是中文（英文介面朗讀／提示看到中文）
+
+用 iPad／模擬器（英文介面學法文）重讀無障礙樹確認「綜合」「複數 mangers」不再有中文。
+
+## M429（2026-10-30 12:37）狀態：待做（Windows 卡 #844 交給 Mac 的 App 畫面部分）
+卡：問題回報 #975：[Mac] 2026-10-30 M423～M426 #840（#969）、#841（#97：#841（#970）無障礙文字不再是中文
+
+用英文介面在 iPad 再收集一次複習格子與卡背連結的朗讀文字。
