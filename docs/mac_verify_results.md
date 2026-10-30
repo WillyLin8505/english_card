@@ -2436,3 +2436,17 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #946 照片詳情單字收集區 | 注意 | owner 10/30：「現在一律只要發現新的問題，就直接在 Windows 這邊派卡修理」。App 程式改由 Windows 改，Mac 只驗證；M409／卡 #825 不在 Mac 實作，等 Windows 改好後驗 |  |  |
 | #947 英文母語學法文的複習卡 | 注意 | 同上，移交 Windows；Mac 可協助在模擬器（學法文、母語英文）開卡片截圖給 Windows |  |  |
 | #948 拍照拿掉閃光燈 | 注意 | 同上，移交 Windows。現在的拍照畫面（f65ec07c）右下有閃光燈鍵 |  |  |
+
+## 2026-10-30 M401～M406、M410 驗證（iPad＋模擬器，main 到 5965ce7d／ead3c607）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #809／#816／#817（#938）圖片載入重量 | 注意 | 量不了：iPad 現在是學英文、母語法文（owner 今早改的），這個組合沒有 en→fr 詞庫包，資料庫圖片完全不載入（單字頁黃框「Le contenu manquant apparaîtra après la mise à jour du dictionnaire」）。複習綜合 12 張都用本機照片（owner 自己的照片與水果卡片集），正面 60～70ms 出現、0 下載。母語切回繁中後重量 | docs/mac_verify_shots/2026-10-30/m947_ability_fr.png |  |
+| #819（#945）圖 35、44 不再有左上角點 | 注意 | 同上，iPad 這個語言組合下資料庫圖不載入，量不了；母語切回後再驗 |  |  |
+| #12 跨分頁亂點 | 通過 | iPad（介面法文）從啟動 90 秒亂點 21 下（多數時間在關全螢幕頁），沒有例外；15 秒後 901 幀，最長 68ms |  |  |
+| #814 新手引導兩題 | 通過 | 模擬器全新安裝（學法文、母語英文）：程度之後出現「Why do you want to learn?」（Travel／Work／Exams／School／Talking with family and friends／Hobbies / watching videos，可略過）和「Which topics interest you?」（Everyday basics／Food／Kitchen／Living room／Outdoors／Animals／Advanced words），兩頁都沒有中文；選了 Food 後卡片集只有 French Basic 2000／3000（法文沒有食物主題集） |  |  |
+| #496 法語模擬 | 通過 | 同一次全新安裝：首頁、單字本、設定沒有中文；法語包 6ff9ec5d…，6,326 詞條（和 Windows 一樣）；卡片背面字頭沒被改大寫、名詞／形容詞有冠詞；卡片集只有法文集 |  |  |
+| #807 法語例句播放鍵 | 通過 | 模擬器學法文：複習卡背面例句旁有播放鍵，點了沒有例外。小問題：英文介面下這個鍵的提示文字還是中文「播放例句」（ui_catalog 沒有這條翻譯） | docs/mac_verify_shots/2026-10-30/m406_back.png | 低 |
+| #815／#824 flutter test | 通過 | Mac 上合併 5965ce7d 後：flutter analyze 4 個 info；flutter test 818 通過、3 略過 |  |  |
+| #722 | 通過 | owner 已決定維持現狀，本輪沒有程式或資料變更 |  |  |
+| #947 證據（給 Windows） | 注意 | iPad 學英文＋母語法文：複習卡背面介面法文、意思中文（Plate「盤子、碟、碟子」、Shiny「有光澤的」）；單字頁 ability 黃框說缺內容、意思中文、沒有圖片 | docs/mac_verify_shots/2026-10-30/m947_review_fr.png |  |
