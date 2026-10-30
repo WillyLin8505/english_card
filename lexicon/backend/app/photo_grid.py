@@ -257,6 +257,116 @@ def _fill_gaps(s, cells, taken, concepts, lang: str = "en") -> None:
         taken.add((row, word))
 
 
+def _fill_via_english(s, cells, taken, concepts) -> None:
+    """French grids only (card #847): the French word web is thin, so cells still empty are
+    filled through the English one: English meaning of a shown French word -> its English word
+    web (same links and cost limit as _fill_gaps) -> French entries with those English
+    meanings. Nearest first; source stays "related" so the Qwen fit check still judges them."""
+    empty = {k for k, v in cells.items() if not v}
+    if not empty or not concepts:
+        return
+    idx = _french_index(s)
+    glosses_of: dict[tuple[str, str], set[str]] = {}
+    for (gloss, row), entries in idx.items():
+        for e in entries:
+            glosses_of.setdefault((e[1], row), set()).add(gloss)
+    seen: dict[int, tuple[int, float, tuple]] = {}
+    for concept in concepts:
+        _, row, word, _, _ = concept
+        glosses = glosses_of.get((word, row))
+        if not glosses or row not in _DB_POS:
+            continue
+        for lid in s.scalars(select(m.Lexeme.id).where(
+                m.Lexeme.language == "en", m.Lexeme.normalized.in_(list(glosses)),
+                m.Lexeme.pos == _DB_POS[row], m.Lexeme.status == "full")):
+            seen.setdefault(lid, (0, 0.0, concept))
+    best: dict[tuple[str, str], tuple[tuple, str, tuple]] = {}
+    frontier = list(seen)
+    for hop in range(1, FILL_HOPS + 1):
+        if not frontier or not empty:
+            break
+        links = []
+        for col, other in ((m.LexemeRelation.lexeme_id, m.LexemeRelation.target_lexeme_id),
+                           (m.LexemeRelation.target_lexeme_id, m.LexemeRelation.lexeme_id)):
+            links += s.execute(select(col, other, m.LexemeRelation.strength,
+                                      m.LexemeRelation.relation).where(
+                col.in_(frontier), m.LexemeRelation.relation.in_(list(FILL_RELATIONS))).limit(
+                FILL_FANOUT * len(frontier))).all()
+        found: dict[int, tuple[int, float, tuple]] = {}
+        for src, dst, strength, relation in links:
+            if dst in seen:
+                continue
+            cand = (hop + FILL_RELATIONS[relation], -float(strength or 0), seen[src][2])
+            if cand[0] <= FILL_MAX_COST and (dst not in found or cand[:2] < found[dst][:2]):
+                found[dst] = cand
+        if not found:
+            break
+        lexes = {l.id: l for l in s.scalars(select(m.Lexeme).where(
+            m.Lexeme.id.in_(list(found)), m.Lexeme.language == "en", m.Lexeme.status == "full"))}
+        for lid, cand in found.items():
+            seen[lid] = cand
+            lex = lexes.get(lid)
+            row = _cell_row(lex) if lex is not None else None
+            if row is None:
+                continue
+            for _, fr_word, fr_level, _ in sorted(idx.get((lex.normalized, row), []), reverse=True):
+                key = (row, fr_level)
+                if key not in empty or (row, fr_word) in taken:
+                    continue
+                rank = (cand[0], cand[1], fr_word)
+                if key not in best or rank < best[key][0]:
+                    best[key] = (rank, fr_word, cand[2])
+        frontier = list(found)
+        empty -= set(best)
+    for (row, level), (_, word, concept) in best.items():
+        cells[(row, level)].append({"word": word, "concept_id": concept[0], "anchor": concept[4],
+                                    "source": "related"})
+        taken.add((row, word))
+
+
+def _fill_phrases_by_gloss(s, cells, taken, concepts) -> None:
+    """French grids (card #847): empty phrase cells take a French phrase whose English meaning
+    contains the English meaning of a shown word ("faire attention" = "pay attention" for a
+    photo of attention). Most shown words first, then the most common phrase."""
+    empty = {k for k in cells if k[0] == "phrase" and not cells[k]}
+    if not empty or not concepts:
+        return
+    idx = _french_index(s)
+    glosses_of: dict[tuple[str, str], set[str]] = {}
+    for (gloss, row), entries in idx.items():
+        for e in entries:
+            glosses_of.setdefault((e[1], row), set()).add(gloss)
+    shown: dict[str, tuple] = {}
+    for concept in concepts:
+        for g in glosses_of.get((concept[2], concept[1]), ()):
+            if g not in _STOP_GLOSS and len(g) > 2:
+                shown.setdefault(g, concept)
+    scored: dict[tuple[str, str], tuple[tuple, tuple]] = {}
+    for (gloss, row), entries in idx.items():
+        if row != "phrase":
+            continue
+        hits = [shown[w] for w in set(gloss.split()) if w in shown]
+        for zipf, lemma, level, _ in entries:
+            key = ("phrase", level)
+            if key not in empty or ("phrase", lemma) in taken or not hits:
+                continue
+            rank = (-len(hits), -zipf, lemma)
+            if lemma not in scored or rank < scored[lemma][0]:
+                scored[lemma] = (rank, hits[0], key)
+    best: dict[tuple[str, str], tuple] = {}
+    for lemma, (rank, concept, key) in scored.items():
+        if key not in best or rank < best[key][0]:
+            best[key] = (rank, lemma, concept)
+    for key, (_, lemma, concept) in best.items():
+        cells[key].append({"word": lemma, "concept_id": concept[0], "anchor": concept[4],
+                           "source": "related"})
+        taken.add(("phrase", lemma))
+
+
+_STOP_GLOSS = {"the", "and", "for", "with", "not", "has", "was", "are", "you", "his", "her", "its",
+               "one", "who", "but", "all", "out", "off", "get", "from", "that", "this", "have"}
+
+
 def _fit_key(row: str, word: str) -> str:
     return f"{row}|{word}"
 
@@ -349,6 +459,9 @@ def build_grid(s, tags: list[dict] | None, fits: dict[str, float] | None = None,
             if added >= SYNONYMS_PER_CONCEPT:
                 break
     _fill_gaps(s, cells, taken, concepts, lang)
+    if lang != "en":
+        _fill_via_english(s, cells, taken, concepts)
+        _fill_phrases_by_gloss(s, cells, taken, concepts)
     unchecked = _apply_fit(cells, fits or {})
     extra = {"lang": lang, "no_translation": sorted(set(missing))} if lang != "en" else {}
     return {"version": GRID_VERSION, "rows": ROWS, "levels": LEVELS, "fit_unchecked": unchecked, **extra,
