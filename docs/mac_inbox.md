@@ -4616,3 +4616,13 @@ commit `ea3ffe04`（Windows：flutter analyze 無 error、03:59 +972 ~2: All tes
 commit `f1cbc493`（Windows：flutter analyze 無 error、03:59 +972 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #169：常態：全庫掃描中文意思缺漏與品質
   結果：第 15 輪：沒補詞——QC 基準線（qc check --live）兩次都跑不完被終止，沒有前後比對就不改資料；沒中文的完整詞是 4,850（上輪 4,855）。
+
+## M568（2026-11-01 05:33）狀態：待做（Windows 卡 #879 交給 Mac 的 App 畫面部分）
+卡：[owner] 全部英文例句發音：真人優先，其餘 Piper，夜間批次（問題回報 #1128）
+
+iPad 複習時播 5 句英文例句
+
+## M569（2026-11-01 05:34）狀態：待做
+commit `82943bf3`（Windows：flutter analyze 無 error、03:59 +972 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #879：[owner] 全部英文例句發音：真人優先，其餘 Piper，夜間批次（問題回報 #1128）
+  結果：全部完成：真人 1042 句、Piper 179891 句（report：human left 0、piper left 0）
