@@ -4,6 +4,9 @@ Start with `lexicon/docs/PROJECT_MAP.md` (where things are, file sizes, how to r
 instead of exploring the tree. Details that only some cards need live in `lexicon/docs/agents/`.
 
 All features, problems and feedback follow one flow (owner, 2026-10-31): `lexicon/docs/PIPELINE.md`.
+Stages are worked out by `lexicon/tools/flow_tick.py` (run by dispatch_tick); never set them by hand. Overview:
+http://127.0.0.1:5173/ui/#/flow. A card's `done` only means the CLI finished: a new App 問題回報 stays 處理中 until
+the iPad passed. Mac rows need the card number first, plus 結果 and 裝置 columns.
 
 ## 排程看板: report what you work on, pull cards when idle
 

@@ -49,6 +49,18 @@ def parse_inbox(text: str) -> dict[int, tuple[str, str]]:
     return out
 
 
+def item_cards(text: str) -> dict[str, list[int]]:
+    """M item → its cards, for result rows that name the item instead of the card."""
+    out: dict[str, list[int]] = {}
+    for sec in re.split(r"(?m)^(?=## M\d+)", text):
+        no = re.match(r"## (M\d+)", sec)
+        if no:
+            head = sec.split("\n", 1)[0]
+            out[no.group(1)] = [int(n) for n in re.findall(r"(?m)^- 卡 #(\d+)[：:]", sec)
+                                + re.findall(r"Windows 卡 #(\d+)", head)]
+    return out
+
+
 def inbox_todo(text: str) -> int:
     return len(re.findall(r"(?m)^## M\d+.*狀態：待做", text))
 
@@ -94,12 +106,10 @@ def _cards(first: str, items: dict[str, list[int]]) -> list[int]:
     return [int(n) for n in re.findall(r"#(\d+)", outside)]
 
 
-def parse_results(text: str, inbox: dict[int, tuple[str, str]] | None = None) -> list[Row]:
+def parse_results(text: str, items: dict[str, list[int]] | None = None) -> list[Row]:
     """Verdict rows of docs/mac_verify_results.md, oldest first. A table counts when its
     header has a 結果 column; an optional 裝置 column beats guessing the device."""
-    items: dict[str, list[int]] = {}
-    for card, (item, _) in (inbox or {}).items():
-        items.setdefault(item, []).append(card)
+    items = items or {}
     out, section, cols = [], "", None
     for line in text.splitlines():
         if line.startswith("## "):

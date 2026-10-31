@@ -18,6 +18,7 @@ Line counts as of 2026-10-17. **Big files: search first, then read a range** (se
 - `models.py` 877 — all SQLAlchemy tables (`AgentTask`, `IssueReport`, `ImageAsset`, `Lexeme`, `Sense`…).
 - `pipeline.py` 805, `exporter.py` 700 (app pack export), `materialize.py` 460, `jobs.py` 577 (import jobs).
 - `tasks.py` 649 — 排程 board API (`/tasks`, `/schedule/*`, difficulty, agents-info). `agent_usage.py` — AI usage panel.
+- `flow.py` — 統一流程總覽 API (#916; stages come from `tools/flow_tick.py` + `flow_rules.py`).
 - `issues.py` — 問題回報 API. `quality.py` 495, `qc.py`, `qc_fix.py` — quality rules. `policies.py` 428.
 - `adapters/` — dictionary sources (kaikki 810, local 792, ai 311, tatoeba, ecdict, cmudict, oewn, commons…).
 - Shared request budgets (one state file per source under `lexicon/state/*_gate.json`, all processes): `wikimedia_gate.py`

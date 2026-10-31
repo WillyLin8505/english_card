@@ -23,20 +23,20 @@ const ago = (h: number) => (h >= 48 ? `${Math.floor(h / 24)} 天` : `${h} 小時
 export default function Flow() {
   const [q, setQ] = useState("");
   const data = useLoad<Overview>(`/flow/overview${q ? `?q=${encodeURIComponent(q)}` : ""}`, [q], 30000);
-  if (data.error) return <ErrorBox>{data.error}</ErrorBox>;
+  if (data.error) return <ErrorBox error={data.error} onRetry={() => data.reload()} />;
   const o = data.data;
   if (!o) return <Loading />;
   const stage = (k: string | null) => (k ? o.stages[k] ?? k : "流程開始前");
 
   return (
-    <>
-      <div className="page-head">
+    <div className="page page-wide">
+      <header className="page-head">
         <h1>流程總覽（Pipeline）</h1>
         <p className="muted">
           卡 #{o.start.task}、問題回報 #{o.start.issue} 起自動追蹤
           {o.updated_at ? `，最後更新 ${fmtTime(o.updated_at)}` : ""}
         </p>
-      </div>
+      </header>
 
       <div className="card">
         <h2>需要你</h2>
@@ -104,6 +104,6 @@ export default function Flow() {
           </table>
         )}
       </div>
-    </>
+    </div>
   );
 }

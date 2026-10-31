@@ -144,7 +144,7 @@ def main(argv=None) -> int:
         return 0
     inbox_text = on_main("docs/mac_inbox.md")
     pushed = fr.parse_inbox(inbox_text)
-    rows = fr.parse_results(on_main("docs/mac_verify_results.md"), pushed)
+    rows = fr.parse_results(on_main("docs/mac_verify_results.md"), fr.item_cards(inbox_text))
     released = released_cards(pushed, on_main("docs/releases.md"))
     filed = (json.loads(MAC_ISSUES.read_text(encoding="utf-8")) if MAC_ISSUES.exists() else {}).get("filed", {})
     failing = http("GET", f"/issues?status=active&q={urllib.parse.quote(FAIL_QUERY)}").get("items", [])

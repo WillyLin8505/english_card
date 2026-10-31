@@ -687,8 +687,10 @@ class Tick:
                 continue
             if i.get("status") in ("fixed", "wont_fix", "needs_decision"):
                 continue
+            result = ROOT / rel
             if flow_rules.holds_issue(int(iid), i.get("area"), task["id"],
-                                      int((self.cfg.get("flow") or {}).get("start_issue") or 0)):
+                                      int((self.cfg.get("flow") or {}).get("start_issue") or 0),
+                                      result.read_text(encoding="utf-8", errors="replace") if result.is_file() else None):
                 self.write("PUT", f"/issues/{int(iid)}", {"status": "in_progress", "by": "Grokbot",
                            "resolution": f"卡 #{task.get('id')}：{outcome}（{rel}；等 iPad 驗證）"[:600]},
                            "issue waits for iPad")

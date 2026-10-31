@@ -34,6 +34,34 @@
 
 其餘事情不應該需要 owner 查看。需要時由每日摘要列出，不在對話裡零散通知。
 
+## 自動化怎麼運作（卡 #916）
+
+`lexicon/tools/flow_tick.py` 每次 dispatch_tick 跑一次，不用 LLM。從卡片狀態與 origin/main 的
+`docs/mac_inbox.md`、`docs/mac_verify_results.md`、`docs/releases.md` 算出階段，存進卡與問題回報的
+`stage`；沒有人工更新階段的流程。卡 #919、問題回報 #1175 起才追蹤（`dispatch_config.json` 的
+`flow`），更早的資料欄位維持空值。
+
+| 欄位值 | 階段 | 什麼時候進來 |
+|---|---|---|
+| `dev` | 開發 | 卡還沒做完 |
+| `windows_check` | Windows 檢查 | App 卡 done，mac_sync 還沒推 |
+| `mac_verify` | Mac 驗證 | M 項（有 commit 的 `- 卡 #N`）已在 origin/main |
+| `ipad_verify` | iPad 驗證 | 模擬器那列通過 |
+| `ready` | 可發布 | iPad 那列通過 |
+| `released` | 已發布 | commit 包含在 `docs/releases.md` 的某一版 |
+| `done` | 完成（不需驗證） | 非 App 卡做完，不經過 Mac |
+| `cancelled` | 取消 | 卡取消或問題不處理 |
+
+- 不通過或注意：停在該階段，`stage_state` 為 `failed`／`note`；不通過的列由 mac_results_to_issues 開問題，
+  那個問題走完流程後原卡自動往下。
+- App 判定：`flow_rules.is_app`，result.md 提到 `app/lib` 等路徑、`.dart`、`flutter test`、「需要 Mac：」，
+  或有畫面相關字眼且問題範圍是 App。mac_sync 用同一規則。
+- 問題回報：跟著最慢的那張卡。新問題的 App 卡做完時維持「處理中」，過 iPad 才變「已修正」。
+
+後台「流程總覽」（`#/flow`，`GET /api/flow/overview`）：需要你、能不能發布與原因、每階段張數、卡住最久、
+手機回饋對到卡號與階段。每日摘要在 09:00 後由 flow_tick 產生，只列「需要你」的事，存
+`lexicon/logs/daily_digest/<日期>.md` 並顯示在總覽頁；沒事就不產生。
+
 ## 目前還沒自動化的部分
 
-由卡片補上，完成後刪掉這段：階段狀態與總覽頁、檢查失敗時不擋住全部卡、Mac 結果全部入庫、每日摘要。
+由卡片補上，完成後刪掉這段：檢查失敗時不擋住全部卡（#917）、Mac 的注意列開卡與回報格式（#918）。

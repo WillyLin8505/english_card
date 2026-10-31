@@ -42,7 +42,7 @@ RESULTS = """
 
 
 def rows():
-    return fr.parse_results(RESULTS, fr.parse_inbox(INBOX))
+    return fr.parse_results(RESULTS, fr.item_cards(INBOX))
 
 
 def rows_of(card):
@@ -58,6 +58,11 @@ def test_results_read_card_verdict_and_device():
     got = [(r.cards, r.verdict, r.device) for r in rows()]
     assert got == [([930], "pass", "sim"), ([931], "fail", "sim"), ([930], "pass", "ipad"),
                    ([933], "note", "ipad"), ([934], "pass", "sim")]
+
+
+def test_row_naming_an_item_reaches_its_cards_even_a_hand_over():
+    text = "## x\n| 卡 | 結果 | 實際 |\n|--|--|--|\n| M11 畫面 | 通過 | 好 |\n| M10 全部 | 通過 | 好 |\n"
+    assert [r.cards for r in fr.parse_results(text, fr.item_cards(INBOX))] == [[932], [930, 931]]
 
 
 def test_issue_number_in_brackets_is_not_a_card():
