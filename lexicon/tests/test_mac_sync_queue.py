@@ -60,6 +60,8 @@ def repo(tmp_path, monkeypatch):
         monkeypatch.setattr(mac_sync, name, value)
     monkeypatch.setattr(mac_sync.flow_rules, "result_text", lambda c: "")
     monkeypatch.setattr(mac_sync, "open_cards", lambda: {})
+    monkeypatch.setattr(mac_sync.heavy_lock, "slot", lambda timeout_s=0: True)     # never wait for a real job
+    monkeypatch.setattr(mac_sync.heavy_lock, "release", lambda: None)
     monkeypatch.setattr(mac_sync, "mark_issues", lambda *a: None)
     monkeypatch.setattr(mac_sync, "sh", _no_web_build(mac_sync.sh))
     reports = []
@@ -129,6 +131,21 @@ def test_the_bytes_that_passed_are_what_gets_committed(repo, monkeypatch):
     assert mac_sync.sync_app(_cards(1), {}) == 0
     assert _shown(root, "app/lib/a.dart") == "// checked"
     assert "changed after" in (root / "app/lib/a.dart").read_text(encoding="utf-8")
+
+
+def test_snapshot_commit_leaves_a_crlf_tree_clean(repo, monkeypatch):
+    """This PC runs core.autocrlf=true: the commit must not make every pushed file look changed."""
+    root, sessions, _ = repo
+    _git(root, "config", "core.autocrlf", "true")
+    data = bytes([47, 47, 32, 97, 13, 10, 47, 47, 32, 98, 13, 10])     # "// a", "// b" with CRLF
+    (root / "app/lib/new.dart").write_bytes(data)
+    _session(sessions, "s1", 1, [("app/lib/new.dart", "2026-10-31T10:00:00Z")])
+    FakeFlutter(monkeypatch)
+    assert mac_sync.sync_app(_cards(1), {}) == 0
+    assert (root / "app/lib/new.dart").read_bytes() == data
+    shown = subprocess.run(["git", "cat-file", "blob", "origin/main:app/lib/new.dart"], cwd=root, capture_output=True).stdout
+    assert 13 not in shown
+    assert _git(root, "status", "--porcelain", "--", "app/") == ""
 
 
 def test_compile_error_blocks_only_that_card(repo, monkeypatch):

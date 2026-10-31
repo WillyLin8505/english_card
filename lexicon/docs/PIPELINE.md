@@ -10,7 +10,7 @@
 | 1 | 收件 | 系統 | 任何來源都成為一張卡或問題回報，標來源 | — |
 | 2 | 派工 | dispatch_tick | 分級後自動派給 CLI | 需要產品決定 → 待決定 |
 | 3 | 開發 | CLI | result.md 寫出結果與測試 | 排回待辦 |
-| 4 | Windows 檢查 | mac_sync | flutter analyze、flutter test 全過後推送 | 自動開修復卡 |
+| 4 | Windows 檢查 | mac_sync | flutter analyze、flutter test 全過後推送 | 只擋造成失敗的卡，自動開修復卡，其他卡照推 |
 | 5 | Mac 驗證 | Mac | 模擬器逐項通過，寫進 mac_verify_results | 自動開 Windows 卡，回到 2 |
 | 6 | iPad 驗證 | Mac | 實機逐項通過；相機由 owner 手動確認 | 同上 |
 | 7 | 可發布 | 系統 | 該版本的卡全部通過，沒有高嚴重度問題 | — |
@@ -64,8 +64,21 @@
 
 不寄 Gmail，也不需要應用程式密碼（owner 10/31 改決定，問題回報 #1175）：摘要只放後台，顯示在控制台現況頁。`tools/gmail_send.py` 已移除。
 
-## 目前還沒自動化的部分
+## Windows 檢查怎麼不擋住全部卡（卡 #917）
 
-由卡片補上，完成後刪掉這段：檢查失敗時不擋住全部卡（#917）。
+`lexicon/tools/mac_sync.py` 加 `merge_candidate.py`。工作目錄裡做完的和做到一半的程式混在一起，所以檢查不看工作目錄，
+而是在私人副本裡組一份「可以推的候選」：
+
+1. 還在改的檔案在副本裡放回 HEAD：未完成的卡（待辦、卡住、進行中都算）改過的檔、10 分鐘內有人動過的檔、
+   Codex／Cursor 開工後動過的檔，以及沒有紀錄也沒有卡認領、又是在某張進行中的卡開工後才動的檔。誰改了什麼來自 Claude 工作階段紀錄。
+2. 在副本跑 analyze 和 test。失敗時把造成失敗的檔案拿出來（analyze 看錯誤所在檔，test 用二分法把檔案放回 HEAD 找出原因），
+   那張卡留下、開修復卡，其餘的重跑後照推。同一張卡有檔案留下，整張都不推，只有和可推的卡共用的檔案例外。
+3. 提交的是通過檢查的那份內容，不是當下工作目錄的內容，所以檢查期間 CLI 繼續改也不會混進來。
+
+- 擋下的檔案記在 `mac_sync.json` 的 `quarantine`，內容沒變就不重測，2 小時後或內容改了再試。
+- 整批跑失敗但單獨重跑通過的測試不擋卡，寫進 log 和 M 項。HEAD 上本來就失敗的不怪這批，照推、開修復卡，也寫進 M 項。
+- 一次沒跑完（逾時）不算判定：不怪任何卡，發 ⚠，下一輪重試。`flutter test` 上限 25 分鐘，兩次測試至少隔 10 分鐘，讓 CLI 用 heavy_lock。
+- 每張卡為什麼還在等，由 flow_tick 寫進 `stage_note`，顯示在流程總覽；只有自己失敗的卡才標 `failed`。
+- 只試跑不推：`python lexicon/tools/mac_sync.py --check-only`。
 
 （#918 已做：Mac 回報格式在 docs/mac_verify.md「報告格式」；`注意` 列由 mac_results_to_issues 開 `[Mac 注意]` 低嚴重度待辦，不用卡號也行；通過列由 flow_tick 推進階段；同一項未結案不重複開；Mac 定時讀 inbox 見 mac_inbox M541。）

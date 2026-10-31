@@ -33,7 +33,7 @@
    - 截圖放 `docs/mac_verify_shots/`，commit 並 push（只 commit 截圖，不要改 App 程式碼），在問題的 detail 寫檔名。
 
 ## 每張卡都要在 iPhone 上驗證（owner 10/18）
-- Windows 每完成一批改到 App 的卡，`mac_sync.py` 會在 Windows 跑過 flutter analyze＋test 後 push，並在
+- Windows 每完成一批改到 App 的卡，`mac_sync.py` 會在 Windows 跑過 flutter analyze＋test 後 push（只推做完的卡，檢查沒過的卡留在 Windows，見 lexicon/docs/PIPELINE.md 卡 #917），並在
   `docs/mac_inbox.md` 加一項 M<n>，列出要驗的卡。每一項都要：`git pull` → iPhone 模擬器跑 → 每張卡照它的結果實際操作 →
   results 檔每張卡一列（第一欄卡號 #N、「結果」欄寫 通過／不通過／注意、「裝置」欄寫 iPad 或 模擬器，＋原因＋截圖；階段依這幾欄自動前進，卡 #916），不通過的開 `[Mac]` 問題回報（標題寫卡號）→ 把 M 項狀態改「完成」並 push。
 - 實機：owner 把 iPhone 接上 Mac 時，也用 `flutter run -d <iPhone>`（`flutter devices` 找 id）跑一次。第一次要在 Xcode

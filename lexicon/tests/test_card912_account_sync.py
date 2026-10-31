@@ -1,8 +1,15 @@
 """跨裝置自動同步 (card #912): newest record wins, repeats count once, deletions reach every device."""
 
+import json
+import sys
+from pathlib import Path
+
 import pytest
 
 from app import accounts, account_sync, config
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+import serve_app
 
 
 class User:
@@ -103,3 +110,23 @@ def test_delete_account_removes_records_and_photos(session, tmp_path, monkeypatc
     account_sync.put_blob(user, "p1", b"x")
     accounts.delete_account(session, user)
     assert list((tmp_path / "user_sync").iterdir()) == []
+
+
+def test_routes_push_pull_and_blob_end_to_end(session, tmp_path, monkeypatch):
+    """Through the handler the App calls, with the App's JSON and query shapes."""
+    monkeypatch.setattr(config, "MEDIA", tmp_path)
+    call = serve_app.Handler.run_account
+    _, token = accounts.register_email(session, "r912@x.com", "password1", "R", "zh-TW", "B1")
+    body = json.dumps({"device": "a", "records": [rec("en/entries/é", 10, "蘋果")]}).encode()
+    assert call(session, "POST", ["account", "sync", "push"], body, token)["accepted"] == 1
+    assert call(session, "POST", ["account", "sync", "blob", "p1"], b"\xff\xd8jpeg", token) == {"size": 6}
+    page = call(session, "GET", ["account", "sync", "pull"], b"", token, {"since": "0", "device": "b"})
+    assert page["records"][0]["data"] == "蘋果" and page["next"] == 1
+    assert call(session, "GET", ["account", "sync", "pull"], b"", token, {"since": "1"})["records"] == []
+    with pytest.raises(accounts.AccountError) as e:
+        call(session, "GET", ["account", "sync", "pull"], b"", "bad-token", {"since": "0"})
+    assert e.value.status == 401
+
+
+def test_push_limit_fits_the_largest_batch_the_app_sends():
+    assert account_sync.PUSH_MAX_BYTES >= 4 * 1024 * 1024 + 300 * 512    # app: 3 MB + one record, 300 keys

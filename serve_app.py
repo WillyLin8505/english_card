@@ -870,6 +870,8 @@ class Handler(SimpleHTTPRequestHandler):
         except ValueError:
             length = -1
         limit = accounts.BACKUP_MAX_BYTES if path == '/api/account/backup' else accounts.PHOTO_MAX_BYTES
+        if path == '/api/account/sync/push':
+            limit = account_sync.PUSH_MAX_BYTES
         if path.startswith('/api/account/sync/blob/'):
             limit = account_sync.BLOB_MAX_BYTES
         if not 0 <= length <= limit + 1:
