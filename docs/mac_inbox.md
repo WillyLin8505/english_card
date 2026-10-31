@@ -4545,3 +4545,8 @@ commit `19081bdf`（Windows：flutter analyze 無 error、01:50 +968 ~2: All tes
 卡：問題回報 #947：[意見回饋] 複習：我母語如果社英語學習語言學是法語的話，感覺你都不對吧，這個你
 
 在 iPad 用學英文＋母語法文確認單字頁與複習卡不再出現中文意思。
+
+## M554（2026-10-31 21:14）狀態：待做
+commit `b0471315`（Windows：flutter analyze 無 error、01:49 +972 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #813：問題回報 #942：[意見回饋] 照片詳情：我在掃描的時候會出現很多說明的文字什麼按什麼鍵會少更困難的什
+  結果：照片詳情預設停在這張照片實際找到的最高難度（不再停在精通）；全套 flutter test 975 通過（+2 略過），flutter analyze 無問題。
