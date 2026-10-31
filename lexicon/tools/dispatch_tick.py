@@ -1135,6 +1135,13 @@ class Tick:
                 self.state["note"] = {"text": line, "at": self.now.timestamp()}
 
     def run(self) -> int:
+        if not self.dry and os.name == "nt":  # owner 10/31: AI work stays under 80 % of the PC
+            try:
+                import ai_watch
+                if ai_watch.ensure_running():
+                    log("ai_watch started")
+            except Exception as e:  # noqa: BLE001
+                log(f"ai_watch failed: {e}")
         every = float(self.cfg.get("watchdog_minutes", 60))  # owner 10/22: 「2分鐘太頻繁了 改成1小時」
         if (not self.dry and os.name == "nt" and self.cfg.get("watchdog", True)
                 and time.time() - self.state.get("watchdog_at", 0) >= every * 60):

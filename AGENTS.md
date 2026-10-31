@@ -81,6 +81,13 @@ launches a card for each idle AI (pick_card rules + `lexicon/tools/dispatch_conf
   check by hand: `python lexicon/tools/serve_app_stale.py`).
 - Dry run: `python lexicon/tools/dispatch_tick.py --dry-run`. Tests: `lexicon/tests/test_dispatch_tick.py`.
 
+## AI 資源上限 (owner, 2026-10-31: PC powered off under load)
+
+`lexicon/tools/ai_watch.py` (kept running by dispatch_tick) holds AI processes to 80 %: shared Job Object
+(CPU hard cap 80 %, 42 GB, below-normal), own job per Claude/Codex CLI (12 % CPU, 12 GB), GPU over 80 % for
+60 s or ≥ 85 °C suspends the model servers 20 s. A process over its memory limit gets out-of-memory errors:
+split the work, don't work around it. Log: `lexicon/logs/ai_watch.log` (one line every 10 s).
+
 ## Standing preamble (auto-attached on every launch)
 
 `launch_agent.py` always prepends `lexicon/tools/agent_preamble.md` (foreground work in steps < 10 min,
