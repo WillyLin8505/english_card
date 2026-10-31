@@ -3687,48 +3687,48 @@ commit `1572dbb0`（Windows：flutter analyze 無 error、01:07 +826 ~2: All tes
 - 卡 #848：[owner] 拍照頁改成 iPhone 相機式（問題回報 #1019）
   結果：全部完成：拍照頁 FullCamera 改成 iPhone 相機式（app/lib/screens/camerascreen.dart），analyze 無問題、相關 widget test 8/8 通過。
 
-## M435（2026-10-30 21:29）狀態：待做（Windows 卡 #225 交給 Mac 的 App 畫面部分）
+## M435（2026-10-30 21:29）狀態：完成
 卡：模擬使用者・相片冊
 
 用 iPad 做相片冊實機易用性評估（我的相片冊、資料庫相片冊、照片詳情、CEFR 切換、從照片加入收藏）。
 
-## M436（2026-10-30 21:31）狀態：待做
+## M436（2026-10-30 21:31）狀態：完成
 commit `164439a1`（Windows：flutter analyze 無 error、01:04 +826 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #225：模擬使用者・相片冊
   結果：第221輪：主模擬 album 1/1 通過（27 秒）、新問題 無、UX 建議 無新增。
 
-## M437（2026-10-30 21:39）狀態：待做
+## M437（2026-10-30 21:39）狀態：完成
 commit `9c9f0de6`（Windows：flutter analyze 無 error、01:11 +826 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #228：模擬使用者・設定
   結果：第 20 輪（模擬輪 222）：設定 1/1 通過、findings 0；新問題無、UX 建議沿用 #474（未重複開）。
 
-## M438（2026-10-30 22:14）狀態：待做
+## M438（2026-10-30 22:14）狀態：完成
 commit `7746951c`（Windows：flutter analyze 無 error、01:37 +826 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #226：模擬使用者・複習
   結果：第 200 輪：4/4 通過（learner 58 秒、restart 27 秒；learnerrender 172 張 0 錯）；無新問題；UX 建議沿用 #485／#515，未重複開單。
 
-## M439（2026-10-30 22:27）狀態：待做（Windows 卡 #227 交給 Mac 的 App 畫面部分）
+## M439（2026-10-30 22:27）狀態：完成
 卡：模擬使用者・單字本
 
 無。
 
-## M440（2026-10-30 22:30）狀態：待做
+## M440（2026-10-30 22:30）狀態：完成
 commit `32b05638`（Windows：flutter analyze 無 error、01:32 +826 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #227：模擬使用者・單字本
   結果：第 223 輪：2/2 通過（database 184 秒、detail 128 秒，pack 26,352 詞條），新問題 0、UX 建議 0。
 
-## M441（2026-10-30 22:49）狀態：待做
+## M441（2026-10-30 22:49）狀態：完成
 commit `1cd018f2`（Windows：flutter analyze 無 error、02:05 +826 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #224：模擬使用者・拍照
   結果：第 224 輪（photoui＋pins）：2/2 通過，33,890 張照片、101,670 個版面，標籤遮點 0（無新錯誤）；本輪沒有新的 UX 建議（#583、#584 仍待決定）。
 
-## M442（2026-10-30 23:13）狀態：待做（Windows 卡 #169 交給 Mac 的 App 畫面部分）
+## M442（2026-10-30 23:13）狀態：完成
 卡：常態：全庫掃描中文意思缺漏與品質
 
 無。
 - 剩下：llama-server 恢復後 `python lexicon/tools/card169_fill_zh.py run --limit 3 --batch 200`，每批抽查 ≤20 筆、批後跑 golden/QC；查匯入流程為何沒補中文；photo 義項沒中文（31→113）原因未查；scan_library 變慢需查。
 
-## M443（2026-10-31 00:59）狀態：待做
+## M443（2026-10-31 00:59）狀態：完成
 commit `a6544e59`（Windows：flutter analyze 無 error、01:43 +826 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #12：模擬使用者・跨分頁（亂點、詞庫更新）
   結果：第 225 輪：2/2 通過（packupdate 466 秒、fuzz 376 秒，pack 26352 詞），沒有新問題。
@@ -3819,7 +3819,7 @@ commit `a6544e59`（Windows：flutter analyze 無 error、01:43 +826 ~2: All tes
 
 用 iPad 載入 fr×zh-TW 新 sqlite 查 maison、le、alors、dire 驗證。
 
-## M461（2026-10-31 05:09）狀態：待做（Windows 卡 #496 交給 Mac 的 App 畫面部分）
+## M461（2026-10-31 05:09）狀態：完成
 卡：模擬使用者・法語（英語母語者學法語）
 
 英文 iPad 開 onboarding 第1步，確認選「法文」時繁中選項下方的中文小字是否可接受（或需英文化）。
@@ -3827,7 +3827,7 @@ commit `a6544e59`（Windows：flutter analyze 無 error、01:43 +826 ~2: All tes
 關聯問題 #363 #494 #495 #496 #498 #499 #501 皆 fixed、無新證據。
 變更：僅測試產物；未改App/伺服器/詞庫，未commit/push。無需備份；golden/QC未跑（純檢查）。
 
-## M462（2026-10-31 05:12）狀態：待做
+## M462（2026-10-31 05:12）狀態：完成
 commit `421fd6ae`（Windows：flutter analyze 無 error、01:35 +826 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #496：模擬使用者・法語（英語母語者學法語）
   結果：法語模擬第44–46輪：4/4通過；音檔6326/6326；但 onboarding 第1步仍有1句中文（「法文目前只提供英文母語」），與41輪相同，非新退步。
