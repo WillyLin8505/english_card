@@ -633,11 +633,30 @@ const uiCatalog = <String, (String, String)>{
     'Only anonymous activity is sent, to improve the app. Turning it off changes nothing.',
     'Seules des activités anonymes sont envoyées, pour améliorer l’app. Désactiver ne change rien.'
   ),
+  '匿名安裝與留存統計': (
+    'Anonymous install and retention',
+    'Installation anonyme et rétention'
+  ),
+  '預設打開。只送隨機安裝編號與「安裝、完成引導、第一次拍照、第一次複習、每天開啟」，不含帳號或內容；關閉後不再送出。':
+      (
+    'On by default. Only a random install id is sent, plus install, finished the guide, first photo, first review, and one open per day. No account and no content. Turning it off stops further sends.',
+    'Activé par défaut. Seul un identifiant d’installation aléatoire est envoyé, plus l’installation, le guide terminé, la première photo, la première révision et une ouverture par jour. Pas de compte ni de contenu. Le désactiver arrête tout envoi.'
+  ),
+  '匿名安裝與留存': (
+    'Anonymous install and retention',
+    'Installation anonyme et rétention'
+  ),
+  '「設定 → 匿名安裝與留存統計」預設是打開的，用來計算新安裝、有沒有完成引導、有沒有做第一次複習，以及安裝後第 1、7、30 天有沒有回來。打開時只送這次安裝的隨機編號，以及「安裝、完成引導、第一次拍照、第一次複習、每天開啟」這幾種事件的名稱和日期，送到我們自己的伺服器。不送姓名、帳號、電子郵件、照片、單字或位置，也不跟登入帳號合併。可以隨時關掉；關掉後還沒送出的事件會捨棄。這項跟「分享使用統計」分開。':
+      (
+    'Settings → Anonymous install and retention is on by default. It counts new installs, whether the guide was finished, whether a first review happened, and whether the app was opened on day 1, 7 and 30. While it is on, only a random id for this install is sent, plus the name and date of these events: install, finished the guide, first photo, first review, and one open per day, to our own server. No name, account, email, photo, word or location, and it is not joined to a signed-in account. You can turn it off at any time; events not yet sent are discarded. This is separate from Share usage statistics.',
+    'Réglages → Installation anonyme et rétention est activé par défaut. Cela compte les nouvelles installations, si le guide a été terminé, si une première révision a eu lieu, et si l’app a été ouverte aux jours 1, 7 et 30. Lorsqu’il est activé, seul un identifiant aléatoire de cette installation est envoyé, avec le nom et la date de ces événements : installation, guide terminé, première photo, première révision et une ouverture par jour, vers notre serveur. Pas de nom, de compte, d’e-mail, de photo, de mot ni de lieu, et rien n’est relié à un compte connecté. Vous pouvez le désactiver ; ce qui n’est pas encore envoyé est effacé. C’est distinct du partage des statistiques.'
+  ),
   '查看隱私權政策': ('View privacy policy', 'Voir la politique de confidentialité'),
   '隱私權政策': ('Privacy policy', 'Politique de confidentialité'),
-  '本政策說明「拍照學單字」如何處理資料。分享使用統計預設是關閉的。': (
-    'This policy explains how 拍照學單字 handles data. Sharing usage statistics is off by default.',
-    'Cette politique explique comment 拍照學單字 traite les données. Le partage des statistiques est désactivé par défaut.'
+  '本政策說明「拍照學單字」如何處理資料。分享使用統計預設是關閉的。匿名安裝與留存統計預設是打開的，可在設定裡關閉。':
+      (
+    'This policy explains how 拍照學單字 handles data. Sharing usage statistics is off by default. Anonymous install and retention statistics are on by default and can be turned off in Settings.',
+    'Cette politique explique comment 拍照學單字 traite les données. Le partage des statistiques est désactivé par défaut. Les statistiques anonymes d’installation et de rétention sont activées par défaut et peuvent être désactivées dans Réglages.'
   ),
   '使用統計': ('Usage statistics', 'Statistiques d’usage'),
   '打開「分享使用統計」之後，操作紀錄會送到 PostHog（主機 us.i.posthog.com）。送出的只有：這次安裝產生的隨機代號、開啟 App、所在分頁、學習語言、母語、程度與程度來源、有沒有加入照片或單字（不含照片和單字本身）、複習開始與結束，以及單次作答的評分、題型、對錯、提示次數、作答時間與下次間隔天數。不送姓名、帳號、電子郵件或廣告識別碼。隨時可以在設定裡關掉；還沒送出的紀錄會一併捨棄。':

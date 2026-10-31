@@ -683,7 +683,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ),
                             ],
                           ),
-                          _note('只送隨機安裝編號與「安裝、完成引導、第一次拍照、第一次複習、每天開啟」這幾種事件，不含帳號或任何內容。'),
+                          _note('預設打開。只送隨機安裝編號與「安裝、完成引導、第一次拍照、第一次複習、每天開啟」，不含帳號或內容；關閉後不再送出。'),
                           Align(
                             alignment: Alignment.centerLeft,
                             child: TextButton(
