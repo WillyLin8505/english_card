@@ -1359,6 +1359,11 @@ class Tick:
         m = re.search(r"需要 ?Mac[：:]", text)
         if not m or self.dry:
             return
+        # Mac 10/31: #738 handed the same check every round (M444–M472); a multi-round card
+        # hands its Mac part once, with the round that says 全部完成.
+        if card_id in set(self.cfg["multi_round_tasks"]) and not ALL_DONE_RE.search(text[:200]):
+            log(f"#{card_id}: Mac part held until the card is 全部完成")
+            return
         part = text[m.end():].split("\n\n## ")[0].strip()[:1500]
         inbox = ROOT / "docs" / "mac_inbox.md"
         no = max([int(n) for n in re.findall(r"^## M(\d+)", inbox.read_text(encoding="utf-8"), re.M)] or [0]) + 1

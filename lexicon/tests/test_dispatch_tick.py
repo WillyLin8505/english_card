@@ -242,6 +242,21 @@ def test_not_done_result_is_queued_again():
         assert not d.NOT_DONE_RE.search(text), text
 
 
+def test_multi_round_card_hands_mac_part_only_when_all_done(tmp_path, monkeypatch):
+    import datetime
+    monkeypatch.setattr(dt, "ROOT", tmp_path)
+    (tmp_path / "docs").mkdir()
+    inbox = tmp_path / "docs" / "mac_inbox.md"
+    inbox.write_text("## M1\n", encoding="utf-8")
+    tick = dt.Tick.__new__(dt.Tick)
+    tick.dry, tick.now, tick.cfg = False, datetime.datetime(2026, 10, 31), {"multi_round_tasks": [738]}
+    tick.hand_to_mac(738, {}, "第 3 輪：補了 100，還剩 900\n需要 Mac：查 maison")
+    assert "M2" not in inbox.read_text(encoding="utf-8")
+    tick.hand_to_mac(738, {}, "全部完成：fr→zh-TW\n需要 Mac：查 maison")
+    tick.hand_to_mac(845, {}, "已修好\n需要 Mac：截圖")
+    assert "## M2" in inbox.read_text(encoding="utf-8") and "## M3" in inbox.read_text(encoding="utf-8")
+
+
 def test_tag_fallback_starts_run_only_when_enabled(tmp_path, monkeypatch):
     calls = []
     monkeypatch.setattr(dt.subprocess, "Popen", lambda cmd, **kw: calls.append(cmd))

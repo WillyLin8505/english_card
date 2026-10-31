@@ -3881,3 +3881,8 @@ commit `421fd6ae`（Windows：flutter analyze 無 error、01:35 +826 ~2: All tes
 卡：[owner] 做法文→繁中詞庫（#882 B 部分）
 
 用 iPad 載入 fr×zh-TW 新 sqlite 查 maison、le、alors、dire 驗證。
+
+## M473（2026-10-31 09:43）狀態：待做（Windows 卡 #225 交給 Mac 的 App 畫面部分）
+卡：模擬使用者・相片冊
+
+用 iPad 做相片冊實機易用性評估（我的相片冊、資料庫相片冊、照片詳情、CEFR 切換、從照片加入收藏）。
