@@ -41,6 +41,10 @@ class CameraScreen extends StatefulWidget {
   State<CameraScreen> createState() => _CameraScreenState();
 }
 
+const _openTimeout = Duration(seconds: 30);
+const _closeTimeout = Duration(seconds: 3);
+const _shutterTimeout = Duration(seconds: 6);
+
 class _CameraScreenState extends State<CameraScreen>
     with WidgetsBindingObserver {
   CameraController? _controller;
@@ -49,8 +53,16 @@ class _CameraScreenState extends State<CameraScreen>
   bool _permissionDenied = false;
   bool _busy = false;
   bool _active = false;
+  bool _foreground = true;
   bool _flashing = false;
   CameraLensDirection _lens = CameraLensDirection.back;
+
+  /// 問題回報 #1135: opening a controller while the last one was closing left
+  /// a black preview whose takePicture never returned, so every open and
+  /// close runs in the one loop of [_runSync].
+  Future<void>? _sync;
+  CameraLensDirection? _openLens;
+  bool _reopen = false;
 
   @override
   void initState() {
@@ -67,16 +79,18 @@ class _CameraScreenState extends State<CameraScreen>
             (ModalRoute.of(context)?.isCurrent ?? true);
     if (active == _active) return;
     _active = active;
-    active ? _start() : _stop();
+    _syncCamera();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.inactive ||
         state == AppLifecycleState.paused) {
-      _stop();
-    } else if (state == AppLifecycleState.resumed && _active) {
-      _start();
+      _foreground = false;
+      _syncCamera();
+    } else if (state == AppLifecycleState.resumed) {
+      _foreground = true;
+      _syncCamera();
     }
   }
 
@@ -84,6 +98,7 @@ class _CameraScreenState extends State<CameraScreen>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _controller?.dispose();
+    _controller = null;
     super.dispose();
   }
 
@@ -97,7 +112,7 @@ class _CameraScreenState extends State<CameraScreen>
           TextButton(
             onPressed: () {
               Navigator.of(ctx).pop();
-              _start();
+              _syncCamera();
             },
             child: const UiText('重試相機'),
           ),
@@ -110,45 +125,78 @@ class _CameraScreenState extends State<CameraScreen>
     );
   }
 
-  Future<void> _start() async {
-    if (_controller != null || _starting) return;
-    _starting = true;
-    _cameraError = null;
-    _permissionDenied = false;
+  bool get _wanted => mounted && _active && _foreground;
+
+  /// Brings the camera to what is wanted now. One run at a time; a change
+  /// made while it runs is picked up by the loop in [_runSync].
+  void _syncCamera() {
+    _sync ??= _runSync().whenComplete(() => _sync = null);
+  }
+
+  Future<void> _runSync() async {
+    while (true) {
+      final open = _controller != null;
+      if (open && (!_wanted || _reopen || _openLens != _lens)) {
+        await _closeCamera();
+      } else if (!open && _wanted) {
+        if (!await _openCamera()) return;
+      } else {
+        return;
+      }
+    }
+  }
+
+  Future<bool> _openCamera() async {
+    final lens = _lens;
+    CameraController? controller;
+    setState(() {
+      _starting = true;
+      _cameraError = null;
+      _permissionDenied = false;
+    });
     try {
       final cameras = await availableCameras();
       if (cameras.isEmpty) throw CameraException('none', '找不到相機');
       final camera = cameras.firstWhere(
-        (c) => c.lensDirection == _lens,
+        (c) => c.lensDirection == lens,
         orElse: () => cameras.first,
       );
-      final controller =
+      controller =
           CameraController(camera, ResolutionPreset.high, enableAudio: false);
-      await controller.initialize();
-      if (!mounted || !_active) {
-        await controller.dispose();
-        return;
-      }
-      setState(() {
-        _controller = controller;
-        _cameraError = null;
-      });
+      // Long enough for the first-run permission dialog.
+      await controller.initialize().timeout(_openTimeout);
+      _controller = controller;
+      _openLens = lens;
+      _reopen = false;
+      return true;
     } catch (e) {
+      await _release(controller);
       _cameraError = e is CameraException ? e.description ?? e.code : '$e';
       _permissionDenied = e is CameraException &&
           (e.code.startsWith('CameraAccess') || e.code.contains('Permission'));
       debugPrint('Camera unavailable: $_cameraError');
+      return false;
     } finally {
       _starting = false;
       if (mounted) setState(() {});
     }
   }
 
-  void _stop() {
+  Future<void> _closeCamera() async {
     final c = _controller;
     _controller = null;
-    c?.dispose();
+    _reopen = false;
     if (mounted) setState(() {});
+    await _release(c);
+  }
+
+  /// A stuck session must not hold up the next open.
+  Future<void> _release(CameraController? c) async {
+    try {
+      await c?.dispose().timeout(_closeTimeout);
+    } catch (e) {
+      debugPrint('Camera close: $e');
+    }
   }
 
   void _openPicker() => Navigator.of(context).push(MaterialPageRoute<void>(
@@ -160,8 +208,7 @@ class _CameraScreenState extends State<CameraScreen>
     _lens = _lens == CameraLensDirection.back
         ? CameraLensDirection.front
         : CameraLensDirection.back;
-    _stop();
-    _start();
+    _syncCamera();
   }
 
   Future<void> _capture() async {
@@ -180,7 +227,7 @@ class _CameraScreenState extends State<CameraScreen>
       if (mounted) setState(() => _flashing = false);
     });
     try {
-      final shot = await c.takePicture();
+      final shot = await c.takePicture().timeout(_shutterTimeout);
       final bytes = await shot.readAsBytes();
       if (!mounted) return;
       final now = scope.clock();
@@ -199,6 +246,11 @@ class _CameraScreenState extends State<CameraScreen>
           scanMode: choice.scanMode);
       unawaited(scope.queue.process());
       scope.navigator.openPhoto(photo.id);
+    } on TimeoutException {
+      // 問題回報 #1135: the shutter never goes dead; reopen and let them retry.
+      if (mounted) showToast(context, '相機沒有回應，已重新開啟，請再按一次');
+      _reopen = true;
+      _syncCamera();
     } catch (e) {
       if (mounted) showToast(context, photoErrorMessage(e));
     } finally {
@@ -386,7 +438,7 @@ class _CameraScreenState extends State<CameraScreen>
                                       ? null
                                       : _permissionDenied
                                           ? _showPermissionHelp
-                                          : _start,
+                                          : _syncCamera,
                                   icon: const MSvg(MIcon.pulseDot, size: 16),
                                   label: UiText(
                                       _permissionDenied ? '開啟權限說明' : '重試相機'),

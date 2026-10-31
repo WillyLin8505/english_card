@@ -1004,6 +1004,10 @@ const uiCatalog = <String, (String, String)>{
   '範例照片': ('Example photos', 'Photos d’exemple'),
   '不要這張': ('Discard this photo', 'Ne pas garder cette photo'),
   '照片未儲存': ('Photo not saved', 'Photo non enregistrée'),
+  '相機沒有回應，已重新開啟，請再按一次': (
+      'The camera stopped responding. It has been reopened, so please try again.',
+      'L’appareil photo ne répondait plus. Il a été rouvert, veuillez réessayer.',
+  ),
   '存到相片冊': ('Save to album', 'Enregistrer dans un album'),
   '這張照片已經加入過': ('This photo is already added', 'Cette photo est déjà ajoutée'),
   '仍要再加入': ('Add anyway', 'Ajouter quand même'),
