@@ -3,6 +3,8 @@
 Start with `lexicon/docs/PROJECT_MAP.md` (where things are, file sizes, how to read big files)
 instead of exploring the tree. Details that only some cards need live in `lexicon/docs/agents/`.
 
+All features, problems and feedback follow one flow (owner, 2026-10-31): `lexicon/docs/PIPELINE.md`.
+
 ## 排程看板: report what you work on, pull cards when idle
 
 The owner runs several AIs (Claude Code, Codex, Cursor CLI) and watches them on the 排程 board
