@@ -52,6 +52,7 @@ import math
 import os
 import re
 import secrets
+import socket
 import sys
 import threading
 import time
@@ -1800,6 +1801,33 @@ def load_api_key() -> str:
     return key
 
 
+class ExclusiveThreadingHTTPServer(ThreadingHTTPServer):
+    """Windows lets two sockets bind one port unless the bind is exclusive (card #929)."""
+    allow_reuse_address = False
+
+    def server_bind(self):
+        if os.name == 'nt' and hasattr(socket, 'SO_EXCLUSIVEADDRUSE'):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        super().server_bind()
+
+
+def probe_port_owner(host: str, port: int) -> str:
+    """'free' | 'tagger' (our /health answers) | 'other' (something else holds the port)."""
+    import urllib.request
+    probe = socket.socket()
+    probe.settimeout(1.5)
+    try:
+        if probe.connect_ex((host, port)) != 0:
+            return 'free'
+    finally:
+        probe.close()
+    try:
+        with urllib.request.urlopen(f'http://{host}:{port}/health', timeout=3) as r:
+            return 'tagger' if b'"backend"' in r.read() else 'other'
+    except Exception:  # noqa: BLE001
+        return 'other'
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument('--host', default='127.0.0.1')
@@ -1808,11 +1836,19 @@ def main() -> None:
     parser.add_argument('--model', default=os.environ.get('TAGGER_MODEL', DEFAULT_MODEL))
     args = parser.parse_args()
     tagger_config.check_backend()
+    owner = probe_port_owner(args.host, args.port)
+    if owner == 'tagger':
+        print(f'Tagging API already running on {args.host}:{args.port}; not starting a second one '
+              f'(the model server is started separately by start_llm.py).', flush=True)
+        return
+    if owner == 'other':
+        raise SystemExit(f'ERROR: port {args.port} is held by another program (not the tagging API). '
+                         f'Find it with: netstat -ano | findstr :{args.port}')
     print('Effective config:', tagger_config.effective_config(), flush=True)
 
     api_key = load_api_key()
     tagger = Tagger(args.ollama, args.model)
-    server = ThreadingHTTPServer((args.host, args.port), make_handler(tagger, api_key))
+    server = ExclusiveThreadingHTTPServer((args.host, args.port), make_handler(tagger, api_key))
     print(f'Tagging API on http://{args.host}:{args.port}/tag  (model {args.model})')
     where = LLAMACPP_URL + ' (llama-server)' if BACKEND == 'llamacpp' else args.ollama
     print(f'Model server {"reachable" if tagger.ollama_ok() else "NOT reachable"} at {where}')

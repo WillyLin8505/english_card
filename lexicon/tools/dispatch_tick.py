@@ -1119,7 +1119,45 @@ class Tick:
             if not self.dry:
                 self.state["note"] = {"text": line, "at": self.now.timestamp()}
 
+    def check_model_night(self):
+        """card #929: night cards need llama-server (:8790). Down for model_down_minutes inside the night
+        window -> one [待決定] issue (shows under 「需要你」); the flag clears when the model is back."""
+        if self.dry or os.name != "nt":
+            return
+        try:
+            from pick_card import is_night
+            import json as _j
+            caps = _j.loads((ROOT / "lexicon" / "tools" / "agent_capabilities.json").read_text(encoding="utf-8"))
+            from watchdog import port_up
+            if port_up(8790):
+                self.state.pop("model_down_since", None)
+                self.state.pop("model_down_asked", None)
+                return
+            if not is_night(caps):
+                self.state.pop("model_down_since", None)
+                return
+            since = self.state.setdefault("model_down_since", time.time())
+            wait = float(self.cfg.get("model_down_minutes", 10))
+            if time.time() - since < wait * 60 or self.state.get("model_down_asked"):
+                return
+            body = {"kind": "decision", "severity": "high", "area": "admin", "reporter": "派工程式",
+                    "title": "[待決定] 夜間模型（:8790）沒有開，夜間卡在空轉",
+                    "detail": chr(10).join([
+                        "需要你決定：夜間時段模型沒開，Qwen 卡片無法工作。",
+                        "A：我去雙擊 tagger/start_tagger.bat 把模型開起來",
+                        "B：交給 watchdog 自動重開（最多 1 小時內）",
+                        "C：今晚不跑夜間卡",
+                        "建議：A，因為 start_tagger.bat 現在不會重複開打標服務，安全。",
+                        "",
+                        f"偵測：{int((time.time() - since) / 60)} 分鐘 :8790 不通。"])}
+            http("POST", "/issues", body)
+            self.state["model_down_asked"] = True
+            log("model down at night -> decision issue opened")
+        except Exception as e:  # noqa: BLE001
+            log(f"check_model_night: {e}")
+
     def run(self) -> int:
+        self.check_model_night()
         if not self.dry and os.name == "nt":  # owner 10/31: AI work stays under 80 % of the PC
             try:
                 import ai_watch
