@@ -989,24 +989,46 @@ class Handler(SimpleHTTPRequestHandler):
 
     @staticmethod
     def thumbnail_path(asset_id, source, width):
-        """Cached downscaled copy (longest side <= width) under media/thumbs; None = serve the original."""
-        if source.suffix.lower() not in {'.jpg', '.jpeg', '.png', '.webp'}:
+        """Cached downscaled copy (longest side <= width) under media/thumbs; None = serve the original.
+        Opaque PNG sources become WebP (card #853); .png is kept only when the picture has real alpha."""
+        suffix = source.suffix.lower()
+        if suffix not in {'.jpg', '.jpeg', '.png', '.webp'}:
             return None
-        ext = '.png' if source.suffix.lower() == '.png' else '.jpg'
-        target = config.MEDIA / 'thumbs' / f'{asset_id}_{width}{ext}'
-        if target.is_file():
-            return target
+        folder = config.MEDIA / 'thumbs'
+        names = ('.png', '.webp') if suffix == '.png' else ('.jpg',)
+        for ext in names:
+            cached = folder / f'{asset_id}_{width}{ext}'
+            if cached.is_file():
+                return cached
         try:
             from PIL import Image
             with Image.open(source) as img:
-                if max(img.size) <= width:
+                small = max(img.size) <= width
+                has_alpha = suffix == '.png' and (
+                    img.mode in ('RGBA', 'LA', 'PA') or (img.mode == 'P' and 'transparency' in img.info)
+                    or (img.mode == 'RGB' and 'transparency' in img.info))
+                if has_alpha:
+                    img = img.convert('RGBA')
+                    if img.getchannel('A').getextrema()[0] == 255:
+                        has_alpha = False
+                if suffix == '.png' and not has_alpha:
+                    ext, fmt, opts = '.webp', 'WEBP', {'quality': 85}
+                elif suffix == '.png':
+                    ext, fmt, opts = '.png', 'PNG', {}
+                elif small:
                     return None
-                img.thumbnail((width, width), Image.LANCZOS)
-                if ext == '.jpg':
+                else:
+                    ext, fmt, opts = '.jpg', 'JPEG', {'quality': 85}
+                if small and fmt == 'PNG':
+                    return None
+                if not small:
+                    img.thumbnail((width, width), Image.LANCZOS)
+                if fmt != 'PNG':
                     img = img.convert('RGB')
+                target = folder / f'{asset_id}_{width}{ext}'
                 target.parent.mkdir(parents=True, exist_ok=True)
                 tmp = target.with_suffix(target.suffix + f'.{threading.get_ident()}.tmp')
-                img.save(tmp, 'PNG' if ext == '.png' else 'JPEG', **({} if ext == '.png' else {'quality': 85}))
+                img.save(tmp, fmt, **opts)
             os.replace(tmp, target)
             return target
         except Exception:
