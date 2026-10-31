@@ -41,6 +41,23 @@ def _activity(ctx: Context, kind: str, items: list[dict]) -> str:
     return urllib.parse.quote(f"{ctx.lemma}：{label}，{len(items)} 項")
 
 
+
+_FOREIGN_ROOT = re.compile(r"[A-Za-z][A-Za-z'’\-]*(?:[ 	][A-Za-z][A-Za-z'’\-]*)*")
+_NOTE_SPAN = re.compile(r"[（(][^）)]*[）)]")
+
+
+def _paren_foreign_roots(text: str) -> str:
+    """card #832: etymology notes quote foreign roots (appel, preserva). The zh-TW
+    validator allows Latin letters only inside a parenthetical note, so wrap each
+    bare run in （）; runs already inside parentheses stay as they are."""
+    out, last = [], 0
+    for m in _NOTE_SPAN.finditer(text):
+        out.append(_FOREIGN_ROOT.sub(lambda r: f"（{r.group(0)}）", text[last:m.start()]))
+        out.append(m.group(0))
+        last = m.end()
+    out.append(_FOREIGN_ROOT.sub(lambda r: f"（{r.group(0)}）", text[last:]))
+    return "".join(out)
+
 class AITranslate(SourceAdapter):
     key = "ai_translate"
     BATCH_SIZE = 80
@@ -322,6 +339,8 @@ class AITranslate(SourceAdapter):
                 got, tag = self._text_call(f, ctx, kind, items)
                 got = self._repair_outlaw(items, got)
                 if got.get("e"):
+                    if ctx.native == "zh-TW":
+                        got["e"] = _paren_foreign_roots(got["e"])
                     C.append(Candidate(f, ctx.native, {"text": got["e"], "ai": True}, "e",
                                        confidence=0.6, source_record_id=tag))
         elif f == "morphemes":
