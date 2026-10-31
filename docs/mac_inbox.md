@@ -4570,3 +4570,8 @@ commit `f4f0dde3`（Windows：flutter analyze 無 error、01:47 +972 ~2: All tes
 commit `311edb5e`（Windows：flutter analyze 無 error、01:47 +972 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #225：模擬使用者・相片冊
   結果：第 238 輪：相片冊模擬 0/1 通過（逾時 9 分鐘；重跑又 MemoryError）、新問題 無（環境／規模問題，非相片冊畫面）、UX 建議 無（沒跑完）。
+
+## M559（2026-10-31 23:16）狀態：待做
+commit `15f37adf`（Windows：flutter analyze 無 error、01:44 +972 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #228：模擬使用者・設定
+  結果：第 22 輪：未完成（settings 0/1，三次都逾時 9 分鐘，非 App 錯誤）；新問題無、UX 建議沿用 #474。
