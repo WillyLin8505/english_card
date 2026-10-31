@@ -2587,3 +2587,10 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #873／#874（#1130／#1136）切鏡頭→開相簿→返回 | 通過 | owner 用 iPad 正式版手動：切鏡頭、開相簿、返回後還能拍 |  |  |
 | #857／#860（#1118）預覽左右滿版 | 通過 | owner 手動確認：拍照頁預覽左右滿版 |  |  |
 | #864（#1123）單一錄音只有一顆喇叭 | 通過 | owner 手動確認：eye 卡背面只有一顆喇叭 |  |  |
+
+## 2026-10-31 照片辨識時間：不帶 TAGGING_URL／DEV_TOOLS 的 build（iPad 實機）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| 本機辨識單張時間 | 通過 | 不帶 dart-define 的 build：usesLocalRecognition＝true、developerTools＝false。內建早餐照片（1152×928）單張約 0.1 秒（process 124ms），狀態 done，14 個標籤；量了 2 次。#847 的 49 秒是走伺服器（開發版帶 TAGGING_URL），不代表新使用者 |  |  |
+| 本機辨識的標籤品質 | 注意 | Apple Vision 標籤偏分類詞：structure、wood processed、tableware、food、utensil，混著 plate、cutting board、spoon、apple；同張照片伺服器給 apple、bread、cup、plate、saucepan、table、cut、serve。上架版使用者看到的是前者，學習價值較低，也沒有動詞；請評估 |  | 中 |
