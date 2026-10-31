@@ -108,8 +108,8 @@ class RatingBar extends StatelessWidget {
                     FittedBox(
                         fit: BoxFit.scaleDown,
                         child: Text(r.labelIn(native),
-                            style: MFont.manrope(look.ratingLabelSize,
-                                FontWeight.w800, colors(r).fg))),
+                            style: MFont.cjk(look.ratingLabelSize,
+                                FontWeight.w700, colors(r).fg))),
                     if (!extraPractice) const SizedBox(height: 2),
                     // An Again card comes back later in this same run.
                     if (!extraPractice)
@@ -122,7 +122,7 @@ class RatingBar extends StatelessWidget {
                           textAlign: TextAlign.center,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: MFont.manrope(11, FontWeight.w600,
+                          style: MFont.cjk(11, FontWeight.w600,
                               colors(r).fg.withValues(alpha: 0.75))),
                   ],
                 ),

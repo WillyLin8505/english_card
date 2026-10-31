@@ -12,17 +12,17 @@ import 'helpers.dart';
 void main() {
   tearDown(() => LexiconPack.instance.clear());
 
-  testWidgets('the 卡片集 label is one line', (tester) async {
+  testWidgets('the 相片冊 label is one line', (tester) async {
     final app = await pumpApp(tester,
         initialTab: AppTab.words, size: const Size(402, 2400));
     app.repository.addAlbum(
-        name: '水果與蔬菜圖片集',
+        name: '水果與蔬菜相片冊',
         deckSlug: 'food-b1',
         author: 'English Card 編輯部 with a very long name');
     app.navigator.selectTab(AppTab.album);
     await tester.pumpAndSettle();
     final label = tester.widget<Text>(find.byWidgetPredicate(
-        (w) => w is Text && (w.data ?? '').startsWith('卡片集 · English')));
+        (w) => w is Text && (w.data ?? '').startsWith('相片冊 · English')));
     expect(label.maxLines, 1);
     expect(label.overflow, TextOverflow.ellipsis);
   });

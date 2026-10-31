@@ -265,15 +265,15 @@ void main() {
       var said = await flip('cat', 1);
       expect([for (final s in said) s.$1], ['en-GB', 'en-US']);
       expect(said.every((s) => !s.$2!.contains('-tts')), isTrue);
-      // The real US clip stands for both accents: heard once, no Azure.
+      // The real US clip stands for both accents: heard twice, no Azure.
       said = await flip('dog', 2);
-      expect(said, hasLength(1));
-      expect(said.single.$2, endsWith('dog-US.mp3'));
+      expect(said, hasLength(2));
+      expect(said.every((s) => s.$2!.endsWith('dog-US.mp3')), isTrue);
       said = await flip('yak', 3);
       expect([for (final s in said) s.$2!.split('/').last],
           ['yak-UK-tts.mp3', 'yak-US-tts.mp3']);
       said = await flip('gnu', 4);
-      expect(said, hasLength(1));
+      expect(said, hasLength(2));
       said = await flip('zebu', 5);
       expect([for (final s in said) s.$2], [null, null]);
     });

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
@@ -14,10 +16,13 @@ import '../screens/word_detail_screen.dart';
 import '../services/app_settings.dart';
 import '../widgets/mobile/common.dart';
 import '../widgets/mobile/tab_bar.dart';
+import '../widgets/tab_tutorial.dart';
 import 'app_scope.dart';
 import '../theme/mobile_theme.dart';
 import '../services/analytics.dart';
 import '../services/feedback_context.dart';
+import '../services/event_report.dart';
+import '../services/usage_report.dart';
 
 /// The five tabs, each with its own navigation stack so the tab bar
 /// stays visible on pushed screens, as the mocks show (照片詳情 and
@@ -46,6 +51,10 @@ class AppShell extends StatefulWidget {
 class AppShellState extends State<AppShell> implements AppNavigator {
   late AppTab _tab = widget.initialTab;
   bool _reviewing = false;
+  // 卡 #893: the tab tutorials wait a moment after start-up, so the first one
+  // does not land on top of the screen onboarding just left.
+  bool _tutorialReady = false;
+  Timer? _tutorialTimer;
   // Tabs are built the first time they are shown: building all five at start
   // put the 單字本 list, settings and review in the first frame (3.2 s with
   // 8,680 words on a phone; card #791, 問題回報 #928). Once built a tab stays
@@ -60,6 +69,16 @@ class AppShellState extends State<AppShell> implements AppNavigator {
     super.initState();
     FeedbackContext.instance.tab = _tab;
     widget.onNavigatorReady(this);
+    // Card #911: signed-in usage numbers, once a day, failures ignored.
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final scope = AppScope.of(context);
+      UsageReport(scope.settings, scope.repository).sendIfDue();
+      EventReport.instance.appStarted();
+    });
+    _tutorialTimer = Timer(const Duration(milliseconds: 1500), () {
+      if (mounted) setState(() => _tutorialReady = true);
+    });
     // 卡 #737: a stored 繁中母語＋法文 went back to English at start-up.
     SchedulerBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -131,6 +150,7 @@ class AppShellState extends State<AppShell> implements AppNavigator {
   @override
   void dispose() {
     FeedbackContext.instance.tab = null;
+    _tutorialTimer?.cancel();
     _reviewRequest.dispose();
     super.dispose();
   }
@@ -181,24 +201,42 @@ class AppShellState extends State<AppShell> implements AppNavigator {
       },
       child: Scaffold(
         backgroundColor: MColors.canvas,
-        body: ActiveTabScope(
-          tab: _tab,
-          child: IndexedStack(
-            index: _tab.index,
-            children: [
-              for (final tab in AppTab.values)
-                if (_built.contains(tab))
-                  Navigator(
-                    key: _navigators[tab],
-                    observers: [FeedbackObserver(tab)],
-                    onGenerateRoute: (_) =>
-                        MaterialPageRoute<void>(builder: (_) => _root(tab)),
-                  )
-                else
-                  const SizedBox.shrink(),
-            ],
-          ),
-        ),
+        body: Stack(children: [
+          Positioned.fill(
+              child: ActiveTabScope(
+            tab: _tab,
+            child: IndexedStack(
+              index: _tab.index,
+              children: [
+                for (final tab in AppTab.values)
+                  if (_built.contains(tab))
+                    Navigator(
+                      key: _navigators[tab],
+                      observers: [FeedbackObserver(tab)],
+                      onGenerateRoute: (_) =>
+                          MaterialPageRoute<void>(builder: (_) => _root(tab)),
+                    )
+                  else
+                    const SizedBox.shrink(),
+              ],
+            ),
+          )),
+          if (_tutorialReady && !_reviewing)
+            Align(
+                alignment: Alignment.bottomCenter,
+                child: ListenableBuilder(
+                    listenable: AppScope.of(context).settings,
+                    builder: (context, _) {
+                      final settings = AppScope.of(context).settings;
+                      if (settings.tutorialSeen(_tab.name)) {
+                        return const SizedBox.shrink();
+                      }
+                      return TabTutorialOverlay(
+                          key: ValueKey(_tab),
+                          tab: _tab,
+                          onDone: () => settings.markTutorialSeen(_tab.name));
+                    })),
+        ]),
         bottomNavigationBar: _reviewing && _tab == AppTab.review
             ? null
             : MobileTabBar(current: _tab, onSelect: selectTab),

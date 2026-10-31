@@ -184,8 +184,9 @@ class FlashcardSession extends ChangeNotifier {
   /// sessions have no image renderer; rendered photo questions wait for pixels.
   void guardPhoto() {
     if (_photoGuarded || _back) return;
-    if (_exercise?.type == ReviewExerciseType.photoChoice ||
-        _exercise?.type == ReviewExerciseType.photoRecall ||
+    // 卡 #901: photoChoice's options are words, so they are tappable at
+    // once and do not wait for the picture (it can take 1–8 s to load).
+    if (_exercise?.type == ReviewExerciseType.photoRecall ||
         _exercise?.type == ReviewExerciseType.imageDrag) {
       _photoGuarded = true;
       _photoReady = false;
@@ -997,13 +998,61 @@ class FlashcardSession extends ChangeNotifier {
 
   final _photoPlans = <String, String>{};
 
-  List<CardPhoto> _optionsFor(String wordId) {
-    final all = _photosOf(wordId);
+  List<CardPhoto> _optionsFor(String wordId, {String? senseId}) {
+    final all = _photosForSense(wordId, senseId);
     final inAlbum = [
       for (final o in all)
         if (_albumPhotos?.contains(o.$1.id) ?? false) o,
     ];
     return inAlbum.isEmpty ? all : inAlbum;
+  }
+
+  /// Card #894: a word-database picture is tagged with the sense it shows
+  /// (run 跑步 on a runner), so a card testing another sense (The soap has run
+  /// out) leaves it out - no picture rather than a picture of another meaning.
+  /// The learner's own photos and untagged pictures stay; the pictures that
+  /// stay are listed best first (a dot and box on the word, then pack order).
+  List<CardPhoto> _photosForSense(String wordId, String? senseId) {
+    final all = _photosOf(wordId);
+    final want = senseId == null
+        ? null
+        : int.tryParse(senseId.split(':').last);
+    final kept = [
+      for (final o in all)
+        if (want == null ||
+            !_photoSenses.containsKey(o.$1.id) ||
+            _photoSenses[o.$1.id]!.isEmpty ||
+            _photoSenses[o.$1.id]!.contains(want))
+          o,
+    ];
+    int rank(CardPhoto o) =>
+        repo.isOwnPhoto(o.$1)
+            ? 0
+            : (o.$2 != null ? 0 : 2) + (_boxes.containsKey(o.$1.id) ? 0 : 1);
+    final ranked = [for (final (i, o) in kept.indexed) (i, o)]
+      ..sort((a, b) {
+        final r = rank(a.$2).compareTo(rank(b.$2));
+        return r != 0 ? r : a.$1.compareTo(b.$1);
+      });
+    return [for (final e in ranked) e.$2];
+  }
+
+  /// The sense ids a database picture is tagged with for the card's word.
+  final _photoSenses = <String, Set<int>>{};
+
+  /// The sense [_buildExercise] will try first for the card now up, so the
+  /// picture is chosen before the exercise needs it (card #894).
+  String? _intendedSenseId() {
+    final c = card;
+    final original = c == null ? null : repo.entry(c.wordEntryId);
+    if (original == null) return null;
+    final all = original.effectiveUsages;
+    final own = shortPos(original.pos);
+    final common = all.where((u) => !u.rare || shortPos(u.pos) == own).toList();
+    final usages = common.isEmpty ? all : common;
+    if (usages.isEmpty) return null;
+    final usage = usages[_step % usages.length];
+    return usage.senses.where((s) => s.meaning.trim().isNotEmpty).firstOrNull?.id;
   }
 
   CardPhoto _plannedPhoto(String wordId, List<CardPhoto> options) {
@@ -1016,7 +1065,8 @@ class FlashcardSession extends ChangeNotifier {
     final planned =
         pool.where((o) => o.$1.id == _photoPlans[wordId]).firstOrNull;
     if (planned != null) return planned;
-    final chosen = pool[_random.nextInt(pool.length)];
+    // Card #894: the best picture first (the list is ranked), not a random one.
+    final chosen = pool.first;
     _photoPlans[wordId] = chosen.$1.id;
     return chosen;
   }
@@ -1031,7 +1081,9 @@ class FlashcardSession extends ChangeNotifier {
   void _choosePhoto() {
     final c = card;
     if (c == null) return;
-    final options = _photoOptions = _optionsFor(c.wordEntryId);
+    final senseId = _intendedSenseId();
+    final options = _optionsFor(c.wordEntryId, senseId: senseId);
+    _photoOptions = options;
     if (options.isEmpty) {
       _photo = null;
       _anchor = null;
@@ -1041,6 +1093,7 @@ class FlashcardSession extends ChangeNotifier {
     }
     final chosen = _plannedPhoto(c.wordEntryId, options);
     _photoPlans.remove(c.wordEntryId);
+    _photoOptions = [chosen, ...options.where((o) => o.$1.id != chosen.$1.id)];
     _photo = chosen.$1;
     _anchor = chosen.$2;
     _box = _boxes[chosen.$1.id];
@@ -1073,6 +1126,14 @@ class FlashcardSession extends ChangeNotifier {
       }
       final id = 'db-${image['id']}';
       if (!seen.add(id)) continue;
+      _photoSenses[id] = {
+        for (final tag in (image['tags'] as List? ?? const []))
+          if (tag is Map &&
+              tag['review_status'] == 'approved' &&
+              tag['lexeme_id'] == lexemeId &&
+              tag['sense_id'] is num)
+            (tag['sense_id'] as num).toInt(),
+      };
       LabelPoint? anchor;
       for (final label in (image['labels'] as List? ?? [])) {
         if (label is! Map || label['lexeme_id'] != lexemeId) continue;

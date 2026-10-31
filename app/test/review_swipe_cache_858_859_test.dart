@@ -166,8 +166,16 @@ void main() {
       dir = Directory.systemTemp.createTempSync('photo_cache_859');
       CachedNetworkPhoto.cacheDirectory = () async => dir;
     });
-    tearDown(() {
-      if (dir.existsSync()) dir.deleteSync(recursive: true);
+    tearDown(() async {
+      await CachedNetworkPhoto.flushWrites();
+      for (var i = 0; i < 10; i++) {
+        try {
+          if (dir.existsSync()) dir.deleteSync(recursive: true);
+          return;
+        } on FileSystemException {
+          await Future<void>.delayed(const Duration(milliseconds: 40));
+        }
+      }
     });
 
     File cached(String url) => File(

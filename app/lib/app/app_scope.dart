@@ -4,6 +4,7 @@ import '../models/word_entry.dart';
 import '../services/accent_audio.dart';
 import '../services/app_settings.dart';
 import '../services/cefr_lexicon.dart';
+import '../services/cloud_sync.dart';
 import '../services/photo_intake.dart';
 import '../services/photo_store.dart';
 import '../services/speaker.dart';
@@ -45,6 +46,9 @@ abstract interface class AppNavigator {
 class AppNavigatorProxy implements AppNavigator {
   AppNavigator? target;
 
+  /// A review run is going on (cross-device sync holds its changes back).
+  bool reviewing = false;
+
   AppNavigator get _t => target ?? (throw StateError('AppShell not built yet'));
 
   @override
@@ -61,7 +65,10 @@ class AppNavigatorProxy implements AppNavigator {
       _t.openWord(wordEntryId, occurrenceId: occurrenceId);
 
   @override
-  void setReviewing(bool reviewing) => target?.setReviewing(reviewing);
+  void setReviewing(bool reviewing) {
+    this.reviewing = reviewing;
+    target?.setReviewing(reviewing);
+  }
 
   @override
   void reviewCards(List<String> cardIds) => _t.reviewCards(cardIds);
@@ -103,6 +110,9 @@ class AppScope extends InheritedNotifier<AppSettings> {
   /// 從備份還原 replaced what is in it. Null in widget tests.
   final Future<void> Function()? reloadData;
 
+  /// 跨裝置自動同步 (card #912). Null in widget tests.
+  final CloudSync? cloudSync;
+
   /// Injectable for tests so 下次出現 labels are deterministic.
   final DateTime Function() clock;
 
@@ -119,6 +129,7 @@ class AppScope extends InheritedNotifier<AppSettings> {
     required this.navigator,
     required this.switchLanguage,
     this.reloadData,
+    this.cloudSync,
     this.clock = DateTime.now,
     required super.child,
   }) : super(notifier: settings);

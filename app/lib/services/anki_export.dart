@@ -283,7 +283,7 @@ class AnkiExportScope {
         albumId = album.id,
         deck = null;
   AnkiExportScope.deck(InstalledDeck this.deck)
-      : title = '卡片集 ${deck.info.title}',
+      : title = '相片冊 ${deck.info.title}',
         albumId = null;
 
   /// Photos that belong to this scope (none for 全部單字: every photo).
@@ -322,7 +322,7 @@ class AnkiExportScope {
   String photoCredit(Photo p) {
     if (p.credit != null) return p.credit!;
     if (p.id.startsWith('photo-deck-')) {
-      return '卡片集圖片（作者與授權見 App「資料來源與授權」：Wikimedia Commons 等，各圖授權不同）';
+      return '相片冊圖片（作者與授權見 App「資料來源與授權」：Wikimedia Commons 等，各圖授權不同）';
     }
     if (p.assetPath != null) return 'English Card 範例照片';
     return '你自己的照片';
@@ -341,7 +341,7 @@ class AnkiExportScope {
       if ((e.level ?? '').isNotEmpty) 'CEFR::${e.level}',
       if (e.pos.isNotEmpty) 'EnglishCard::${tag(posLabel(e.pos))}',
       for (final a in albums) 'EnglishCard::相簿::${tag(a)}',
-      if (deck != null) 'EnglishCard::卡片集::${tag(deck!.info.title)}',
+      if (deck != null) 'EnglishCard::相片冊::${tag(deck!.info.title)}',
       for (final t in e.tags)
         if (t.trim().isNotEmpty) tag(t),
       if (repo.isArchived(e.id)) 'EnglishCard::已學會',

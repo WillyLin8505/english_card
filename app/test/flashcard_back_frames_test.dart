@@ -69,7 +69,7 @@ void main() {
     expect(find.text(displayWord('sunlight')), findsOneWidget);
     expect(find.text('陽光'), findsOneWidget);
     expect(find.byType(PinnedPhoto), findsNothing);
-    expect(find.text('例句與翻譯'), findsNothing);
+    expect(find.byType(ExampleText), findsNothing);
 
     expect(find.byTooltip('播放英式發音'), findsNothing);
 
@@ -80,11 +80,11 @@ void main() {
     expect(find.byType(PinnedPhoto), findsNothing);
     await tester.pump();
     expect(find.byType(PinnedPhoto), findsOneWidget);
-    expect(find.text('例句與翻譯'), findsNothing);
+    expect(find.byType(ExampleText), findsNothing);
 
     // Then one section per frame, in order.
     await tester.pump();
-    expect(find.text('例句與翻譯'), findsOneWidget);
+    expect(find.byType(ExampleText), findsOneWidget);
     expect(find.text('詞形變化'), findsNothing);
     await tester.pump();
     expect(find.text('詞形變化'), findsOneWidget);

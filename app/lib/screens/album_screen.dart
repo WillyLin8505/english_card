@@ -105,12 +105,17 @@ class _AlbumScreenState extends State<AlbumScreen> {
               children: [
                 AlbumTopBar(
                   title: '相片冊',
-                  leading: RoundIconButton(
-                    label: '返回',
-                    icon: const MSvg(MIcon.arrowLeft, size: 20),
-                    onTap: widget.onBack ??
-                        () => scope.navigator.selectTab(AppTab.camera),
-                  ),
+                  // 卡 #897: the tab's root has nothing above it, so no 返回
+                  // (the system back and the tab bar still leave the tab).
+                  leading: widget.onBack != null ||
+                          Navigator.of(context).canPop()
+                      ? RoundIconButton(
+                          label: '返回',
+                          icon: const MSvg(MIcon.arrowLeft, size: 20),
+                          onTap: widget.onBack ??
+                              () => Navigator.of(context).pop(),
+                        )
+                      : const SizedBox(width: 48),
                   trailing: RoundIconButton(
                     label: '搜尋照片',
                     icon: const MSvg(MIcon.search20, size: 20),
@@ -160,7 +165,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
                       if (i == albums.length + decks.length) {
                         return _DownloadAlbumTile(
                             hint: repo.albums.isEmpty && wordDecks.isEmpty
-                                ? '還沒有相片：去拍照，或到卡片集下載圖片集'
+                                ? '還沒有相片：去拍照，或下載相片冊'
                                 : null,
                             onTap: _downloadAlbums);
                       }
@@ -267,8 +272,8 @@ class _AlbumCard extends StatelessWidget {
                       // to two and covered the cover's own text.
                       child: UiText(
                           album.author == null
-                              ? '卡片集'
-                              : '卡片集 · ${album.author}',
+                              ? '相片冊'
+                              : '相片冊 · ${album.author}',
                           maxLines: 1,
                           softWrap: false,
                           overflow: TextOverflow.ellipsis,

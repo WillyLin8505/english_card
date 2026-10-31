@@ -252,11 +252,15 @@ void main() {
       final context = tester.element(find.byType(Scaffold).first);
       for (final (word, id) in [('eye', 7), ('owl', 8)]) {
         speaker.said.clear();
+        // One recording stands for both accents and is played twice
+        // (問題回報 #1122). finishAll only completes says already started.
         final run = playBothAccents(context, _word(word, lexemeId: id));
         await tester.pump();
         speaker.finishAll();
+        await tester.pump();
+        speaker.finishAll();
         await run;
-        expect(speaker.said, hasLength(1), reason: word);
+        expect(speaker.said, hasLength(2), reason: word);
         expect(cardAccentAudioUrl(_word(word, lexemeId: id), 'en-GB'),
             endsWith('$word.mp3'));
       }

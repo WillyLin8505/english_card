@@ -16,6 +16,28 @@ ReviewLog _log(String card, DateTime at, Rating r) => ReviewLog(
 void main() {
   final now = DateTime(2026, 10, 18, 12);
 
+  LearningInsights streak(List<int> agesInDays) => LearningInsights.compute(
+        logs: [
+          for (final a in agesInDays)
+            _log('a', now.subtract(Duration(days: a)), Rating.good),
+        ],
+        profile: UserVocabularyProfile.start('A2', now: now),
+        wordOf: (id) => 'apple',
+        now: now,
+      );
+
+  test('streak: runs ending today, or yesterday, and the longest run', () {
+    final a = streak([0, 1, 2, 5, 6, 7, 8, 9]);
+    expect(a.currentStreak, 3);
+    expect(a.longestStreak, 5);
+    expect(a.activeDays, 8);
+    expect(streak([1, 2]).currentStreak, 2); // today not done yet
+    expect(streak([2, 3]).currentStreak, 0); // broken
+    expect(streak([]).longestStreak, 0);
+    expect(a.monthly.length, 30);
+    expect(a.monthly.last, 1);
+  });
+
   test('counts per day and week, ranks weak words', () {
     final logs = [
       _log('a', now, Rating.again),

@@ -113,12 +113,14 @@ class DatabaseWordScreen extends StatelessWidget {
 
         // A part of speech with no Chinese yet is left out whole, and the
         // section with it when no part of speech has any (stub words).
+        // 卡 #895: a part of speech whose senses are all rare (apple 動詞
+        // 「使看似蘋果」) goes after the common ones; sort is stable.
         final meaningUsages = [
           for (final usage in usages)
             if (usage.senses
                 .any((sense) => (sense.native ?? '').trim().isNotEmpty))
               usage,
-        ];
+        ]..sort((a, b) => _rareOnly(a).compareTo(_rareOnly(b)));
         // 「包含待補齊單字」: a stub (pos unknown, no Chinese, no photo).
         final stub = !word.full;
         final noMeaning = (word.learnerMeaning ?? '').trim().isEmpty;
@@ -211,6 +213,15 @@ class DatabaseWordScreen extends StatelessWidget {
                   ),
                 ),
               ),
+              // 卡 #895: the first picture sits in the first screen, short
+              // enough for a small phone; the rest stay at the bottom.
+              if (images.isNotEmpty) ...[
+                const SizedBox(height: MSpace.sm),
+                SizedBox(
+                    key: const ValueKey('database-first-image'),
+                    height: 160,
+                    child: DatabaseImageTile(image: images.first)),
+              ],
               const SizedBox(height: MSpace.md),
               // Already collected: says so before any tap.
               ListenableBuilder(
@@ -240,12 +251,13 @@ class DatabaseWordScreen extends StatelessWidget {
                     // Common senses first, slang/obsolete last (卡 #227).
                     // 問題回報 #698 #699: numbered 1 2 3 within each part of
                     // speech, one per line.
-                    for (final (i, sense) in [
+                    // 卡 #895: the same Chinese twice (蘋果／蘋果) shows once.
+                    for (final (i, sense) in _distinctNatives([
                       for (final tier in const [0, 1, 2])
                         ...usage.senses.where((s) =>
                             s.displayTier == tier &&
                             (s.native ?? '').trim().isNotEmpty)
-                    ].indexed)
+                    ]).indexed)
                       Padding(
                         key: ValueKey('sense-${usage.id}-${i + 1}'),
                         padding: const EdgeInsets.only(bottom: MSpace.xxs),
@@ -341,30 +353,41 @@ class DatabaseWordScreen extends StatelessWidget {
                 ]),
               // No photo: no empty 「資料庫圖片（0）」 section — one muted line,
               // and nothing at all for a stub (its notice says it is pending).
-              if (images.isEmpty && !sharesNounPicture) ...[
+              // A spelling with no noun shares no picture (問題回報 #1166):
+              // say so instead of a 0-picture heading.
+              if (images.isEmpty) ...[
                 if (!stub) ...[
                   const SizedBox(height: MSpace.lg),
-                  UiText('資料庫尚未加入這個單字的圖片', style: MFont.caption),
+                  UiText(
+                      sharesNounPicture
+                          ? '這個拼法沒有名詞，所以沒有圖片'
+                          : '資料庫尚未加入這個單字的圖片',
+                      style: MFont.caption),
                 ],
               ] else ...[
                 const SizedBox(height: MSpace.lg),
                 UiText('資料庫圖片（${images.length}）', style: MFont.titleSm),
                 const SizedBox(height: MSpace.xs),
               ],
-              if (sharesNounPicture)
-                Container(
-                  padding: const EdgeInsets.all(MSpace.lg),
-                  decoration: MDecor.emptyStateCard(),
-                  child: UiText('這個詞性顯示同拼法名詞的圖片。這個拼法沒有名詞。',
-                      style: MFont.bodyMuted),
-                ),
-              for (final image in images)
+              for (final image in images.skip(1))
                 Padding(
                     padding: const EdgeInsets.only(top: MSpace.sm),
                     child: SizedBox(
                         height: 240, child: DatabaseImageTile(image: image))),
             ]));
       });
+}
+
+/// 1 when every sense of [u] is rare (tier above 0), else 0.
+int _rareOnly(LexEntry u) => u.senses.every((s) => s.displayTier > 0) ? 1 : 0;
+
+/// [senses] without a repeated Chinese text (first one wins).
+List<LexSense> _distinctNatives(List<LexSense> senses) {
+  final seen = <String>{};
+  return [
+    for (final s in senses)
+      if (seen.add(s.native!.trim())) s,
+  ];
 }
 
 /// Adds a pack word to 我的單字本 and review; shared by the word detail and

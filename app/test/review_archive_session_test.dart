@@ -75,8 +75,8 @@ void main() {
     final first =
         tester.widget<FlashcardFront>(find.byType(FlashcardFront)).entry;
     final card = repo.cardOf(first.id)!;
-    expect(find.bySemanticsLabel('刪除此卡片'), findsOneWidget);
-    await tester.tap(find.bySemanticsLabel('刪除此卡片'));
+    expect(find.bySemanticsLabel('標為已學會'), findsOneWidget);
+    await tester.tap(find.bySemanticsLabel('標為已學會'));
     await tester.pumpAndSettle();
     // 問題回報 #262: 一顆確認對話框先擋下誤觸.
     expect(find.text('移除'), findsOneWidget);
@@ -108,7 +108,7 @@ void main() {
     final first =
         tester.widget<FlashcardFront>(find.byType(FlashcardFront)).entry;
     final card = repo.cardOf(first.id)!;
-    await tester.tap(find.bySemanticsLabel('刪除此卡片'));
+    await tester.tap(find.bySemanticsLabel('標為已學會'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('取消'));
     await tester.pumpAndSettle();

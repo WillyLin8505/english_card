@@ -49,6 +49,33 @@ void main() {
     expect({for (final c in cs) '${c.point.x},${c.point.y}'}.length, cs.length);
   });
 
+  test('card 909: category labels are dropped, specific nouns lead', () {
+    final cs = candidatesFromLabels(
+      [
+        (label: 'structure', confidence: 0.95),
+        (label: 'wood_processed', confidence: 0.9),
+        (label: 'tableware', confidence: 0.88),
+        (label: 'food', confidence: 0.85),
+        (label: 'utensil', confidence: 0.8),
+        (label: 'table', confidence: 0.7),
+        (label: 'plate', confidence: 0.6),
+        (label: 'spoon', confidence: 0.5),
+        (label: 'apple', confidence: 0.4),
+      ],
+      lexicon: testLexicon(),
+      level: 'A1',
+      pack: LexiconPack(),
+    );
+    final words = cs.map((c) => c.word).toList();
+    for (final w in ['structure', 'wood processed', 'tableware', 'food', 'utensil']) {
+      expect(words, isNot(contains(w)));
+    }
+    // 'table' is weak: it ranks after 'plate' even at higher confidence.
+    if (words.contains('table') && words.contains('plate')) {
+      expect(words.indexOf('plate'), lessThan(words.indexOf('table')));
+    }
+  });
+
   test('a learner-level word outranks a harder one at equal confidence', () {
     final cs = candidatesFromLabels(
       [

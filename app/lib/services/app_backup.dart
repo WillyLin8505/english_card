@@ -6,6 +6,7 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 
+import '../models/photo.dart';
 import 'app_settings.dart';
 import 'photo_store.dart';
 import 'word_database_store.dart';
@@ -96,33 +97,23 @@ class AppBackup {
       }
     }
 
-    // Photos whose file is gone are left out (their record still
-    // restores, showing no picture).
-    Future<Uint8List?> bytesOf(Map<String, dynamic> p) async {
-      final path = p['filePath'] as String?;
-      final key = p['storedKey'] as String?;
-      if (path != null && !kIsWeb) return readFile!(PhotoStore.localPath(path));
-      if (key != null) return photoStore.storedBytes(key);
-      return null;
-    }
-
     final manifest = {
       'format': 'english_card_backup',
       'version': version,
       'createdAt': (now ?? DateTime.now()).toUtc().toIso8601String(),
       'schema': HiveWordDatabaseStore.schemaVersion,
-      'settings': _settingsOf(settings),
+      'settings': settingsOf(settings),
       'languages': languages,
     };
     await write(utf8.encode('$magic $version\n${jsonEncode(manifest)}\n'));
-    var photoBytes = 0, photoCount = 0;
+    var totalBytes = 0, photoCount = 0;
     for (final p in photos) {
-      final bytes = await bytesOf(p.json);
+      final bytes = await photoBytes(p.json, photoStore, readFile: readFile);
       if (bytes == null) continue;
       await write(
           utf8.encode('${jsonEncode({'key': p.key, 'size': bytes.length})}\n'));
       await write(bytes);
-      photoBytes += bytes.length;
+      totalBytes += bytes.length;
       photoCount++;
     }
     // End marker: lets restore tell a complete file from a cut-off one.
@@ -131,7 +122,23 @@ class AppBackup {
         words: words,
         photos: photoCount,
         reviews: reviews,
-        photoBytes: photoBytes);
+        photoBytes: totalBytes);
+  }
+
+  /// The pixels of the photo record [p]. Photos whose file is gone give null
+  /// and are left out (their record still restores, showing no picture).
+  static Future<Uint8List?> photoBytes(
+    Map<String, dynamic> p,
+    PhotoStore photoStore, {
+    Future<Uint8List?> Function(String path)? readFile,
+  }) async {
+    final path = p['filePath'] as String?;
+    final key = p['storedKey'] as String?;
+    if (path != null && !kIsWeb) {
+      return (readFile ?? _readFile)(PhotoStore.localPath(path));
+    }
+    if (key != null) return photoStore.storedBytes(key);
+    return null;
   }
 
   /// A backup in memory — the web, and tests.
@@ -232,7 +239,12 @@ class AppBackup {
           if (suffix == 'photos') photos += values.length;
         }
       }
-      _applySettings(settings, manifest['settings']);
+      applySettings(settings, manifest['settings']);
+      // The sync marks described what was just replaced.
+      for (final language in supportedLanguages.keys) {
+        final p = HiveWordDatabaseStore.prefixFor(language);
+        await (await Hive.openBox<String>('${p}sync')).clear();
+      }
       return BackupSummary(
           words: words,
           photos: photos,
@@ -265,16 +277,23 @@ class AppBackup {
     return jsonEncode(json);
   }
 
-  static Map<String, Object> _settingsOf(AppSettings s) => {
+  static Map<String, Object> settingsOf(AppSettings s) => {
         'learningLanguage': s.learningLanguage,
         'nativeLanguage': s.nativeLanguage,
         'englishAccent': s.englishAccent,
         'cardStyle': s.cardStyle.name,
         'desiredRetention': s.desiredRetention,
         'shareUsageStats': s.shareUsageStats,
+        'dailyNewLimit': s.dailyNewLimit,
+        'dailyReviewLimit': s.dailyReviewLimit,
+        'showPhotoLabels': s.showPhotoLabels,
+        'learningGoals': s.learningGoals,
+        'interests': s.interests,
+        'reviewScope': s.reviewScope,
+        'scanMode': s.scanMode.name,
       };
 
-  static void _applySettings(AppSettings s, Object? raw) {
+  static void applySettings(AppSettings s, Object? raw) {
     if (raw is! Map) return;
     if (raw['learningLanguage'] case final String v
         when learningLanguageAvailable(v)) {
@@ -290,6 +309,22 @@ class AppBackup {
       s.desiredRetention = v.toDouble();
     }
     if (raw['shareUsageStats'] case final bool v) s.shareUsageStats = v;
+    if (raw['dailyNewLimit'] case final num v) s.dailyNewLimit = v.toInt();
+    if (raw['dailyReviewLimit'] case final num v) {
+      s.dailyReviewLimit = v.toInt();
+    }
+    if (raw['showPhotoLabels'] case final bool v) s.showPhotoLabels = v;
+    if (raw['learningGoals'] case final List v) {
+      s.learningGoals = [for (final e in v) '$e'];
+    }
+    if (raw['interests'] case final List v) {
+      s.interests = [for (final e in v) '$e'];
+    }
+    if (raw['reviewScope'] case final String v) s.reviewScope = v;
+    if (raw['scanMode'] case final String v
+        when PhotoScanMode.values.asNameMap().containsKey(v)) {
+      s.scanMode = PhotoScanMode.values.asNameMap()[v]!;
+    }
   }
 
   static Future<Map<String, Box<String>>> _open(String language) async {

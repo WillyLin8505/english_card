@@ -374,6 +374,15 @@ abstract final class MFont {
       _font('Manrope', (s) => GoogleFonts.manrope(textStyle: s), size, weight,
           color, height);
 
+  /// Chinese labels: Noto Sans TC has real 600/700 cuts, so no system font
+  /// is asked for a weight it lacks and smeared into fake bold (#1165).
+  static TextStyle cjk(double size, FontWeight weight, Color color) {
+    final base = TextStyle(fontSize: size, fontWeight: weight, color: color);
+    return useGoogleFonts
+        ? GoogleFonts.notoSansTc(textStyle: base)
+        : base.copyWith(fontFamilyFallback: _cjkFallback);
+  }
+
   static TextStyle inter(double size, FontWeight weight, Color color,
           {double? height}) =>
       _font('Inter', (s) => GoogleFonts.inter(textStyle: s), size, weight,

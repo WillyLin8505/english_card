@@ -124,6 +124,9 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // Card #911: counted for the signed-in usage report (a number, no content).
+    WidgetsBinding.instance.addPostFrameCallback(
+        (_) => mounted ? AppScope.of(context).settings.bumpUsage('photosOpened') : null);
     _advanceAfterFrame();
   }
 
@@ -747,7 +750,19 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
     return PinnedPhoto(
       photo: photo,
       pins: pins,
+      // 問題回報 #1153: a tap means 「我要這個字」 (collect it); a long press
+      // opens the list of things to do with it.
       onPinTap: (p) {
+        final w = wordOf(p);
+        if (w == null) return;
+        if (w.starred) {
+          showToast(context, '「${_shown(w.word, w.candidate.pos)}」已收集');
+        } else {
+          session.collect(w);
+          showToast(context, '已收集「${_shown(w.word, w.candidate.pos)}」');
+        }
+      },
+      onPinLongPress: (p) {
         final w = wordOf(p);
         if (w != null) _pinActions(w);
       },

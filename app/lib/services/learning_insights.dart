@@ -27,16 +27,31 @@ class LearningInsights {
   final List<LevelChange> levelChanges;
   final List<WeakWord> weakWords;
 
+  /// Reviews per day for the last [progressDays] days, oldest first.
+  final List<int> monthly;
+
+  /// 連續天數 (問題回報 #1172): consecutive local days with a review, ending
+  /// today — or yesterday while today has none yet, so the streak is not
+  /// shown as lost before the day is over.
+  final int currentStreak;
+  final int longestStreak;
+  final int activeDays;
+
   const LearningInsights({
     required this.daily,
     required this.weekly,
     required this.total,
     required this.levelChanges,
     required this.weakWords,
+    this.monthly = const [],
+    this.currentStreak = 0,
+    this.longestStreak = 0,
+    this.activeDays = 0,
   });
 
   static const days = 7;
   static const weeks = 4;
+  static const progressDays = 30;
   static const minWeakPresses = 2;
 
   /// [wordOf] maps a card id to its word (null for a deleted word).
@@ -50,10 +65,14 @@ class LearningInsights {
     final today = DateTime(now.year, now.month, now.day);
     final daily = List.filled(days, 0);
     final weekly = List.filled(weeks, 0);
+    final monthly = List.filled(progressDays, 0);
+    final dayNumbers = <int>{}; // local calendar days since the epoch
     final perCard = <String, List<int>>{}; // [reviews, again, hard]
     for (final l in logs) {
       final t = l.reviewedAt.toLocal();
       final age = today.difference(DateTime(t.year, t.month, t.day)).inDays;
+      if (age >= 0 && age < progressDays) monthly[progressDays - 1 - age]++;
+      if (age >= 0) dayNumbers.add(_dayNumber(t));
       if (age >= 0 && age < days) daily[days - 1 - age]++;
       if (age >= 0 && age < weeks * 7) weekly[weeks - 1 - age ~/ 7]++;
       // What the learner pressed; legacy logs only have the effective rating.
@@ -75,7 +94,24 @@ class LearningInsights {
       final s = b.score.compareTo(a.score);
       return s != 0 ? s : b.reviews.compareTo(a.reviews);
     });
+    final todayNo = _dayNumber(today);
+    var current = 0;
+    for (var d = dayNumbers.contains(todayNo) ? todayNo : todayNo - 1;
+        dayNumbers.contains(d);
+        d--) {
+      current++;
+    }
+    var longest = 0, run = 0;
+    final sorted = dayNumbers.toList()..sort();
+    for (var i = 0; i < sorted.length; i++) {
+      run = i > 0 && sorted[i] == sorted[i - 1] + 1 ? run + 1 : 1;
+      if (run > longest) longest = run;
+    }
     return LearningInsights(
+      monthly: monthly,
+      currentStreak: current,
+      longestStreak: longest,
+      activeDays: dayNumbers.length,
       daily: daily,
       weekly: weekly,
       total: logs.length,
@@ -83,4 +119,8 @@ class LearningInsights {
       weakWords: weak.take(maxWeak).toList(),
     );
   }
+
+  /// Calendar day count that ignores DST (UTC midnight of the local date).
+  static int _dayNumber(DateTime t) =>
+      DateTime.utc(t.year, t.month, t.day).millisecondsSinceEpoch ~/ 86400000;
 }

@@ -12,7 +12,10 @@ import 'app/app_shell.dart';
 import 'app/phone_frame.dart';
 import 'models/vocabulary_profile.dart';
 import 'screens/onboarding_screen.dart';
+import 'services/event_report.dart';
+import 'screens/recommended_decks_screen.dart';
 import 'services/app_settings.dart';
+import 'services/rating_prompt.dart';
 import 'services/background_errors.dart';
 import 'services/cefr_lexicon.dart';
 import 'services/lexicon_pack.dart';
@@ -23,6 +26,7 @@ import 'services/tagging_queue.dart';
 import 'services/web_fonts.dart';
 import 'services/word_database_repository.dart';
 import 'services/word_database_store.dart';
+import 'services/cloud_sync.dart';
 import 'services/word_detail_service.dart';
 import 'services/local_vision.dart';
 import 'services/text_scan.dart';
@@ -31,6 +35,7 @@ import 'theme/mobile_theme.dart';
 import 'widgets/background_error_banner.dart';
 import 'widgets/tagging_progress.dart';
 import 'services/analytics.dart';
+import 'services/crash_reporting.dart';
 import 'services/card_report.dart';
 import 'services/feedback_context.dart';
 import 'services/memory_monitor.dart';
@@ -42,7 +47,10 @@ import 'widgets/feedback_button.dart';
 Widget phoneFrameBuilder(BuildContext context, Widget? child) =>
     PhoneFrame(child: child ?? const SizedBox.shrink());
 
-Future<void> main() async {
+/// Crash reports (Sentry) only exist when a SENTRY_DSN was compiled in.
+Future<void> main() => CrashReporting.instance.run(_start);
+
+Future<void> _start() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Web only: the Chinese font loads in the background, never blocking the
   // first frame (問題回報 #357); text re-lays out when it arrives.
@@ -51,6 +59,7 @@ Future<void> main() async {
   await WordDetailService.instance.load();
   final lexicon = await CefrLexicon.load();
   final settings = await AppSettings.open();
+  unawaited(RatingPrompt.open().then((p) => p.noteUse()));
   // Photos are recognized on the phone when it can (Apple Vision); only a
   // developer build with a server address uploads them (問題回報 #265).
   AppSettings.localRecognition = await LocalVision.probe();
@@ -58,7 +67,10 @@ Future<void> main() async {
   // Usage analytics (PostHog). Nothing is sent until 分享使用統計 is on,
   // and nothing is sent without POSTHOG_API_KEY.
   Analytics.instance.sharing = settings.shareUsageStats;
+  CrashReporting.instance.sharing = settings.shareUsageStats;
   await Analytics.instance.start();
+  // Card #914: anonymous install / retention events (設定 → 隱私 can switch off).
+  EventReport.instance.attach(settings);
 
   Future<WordDatabaseRepository> open(String language) async {
     // The downloaded language pack for this direction (assets/lexicon/).
@@ -151,6 +163,12 @@ class _PhotoEnglishAppState extends State<PhotoEnglishApp>
     queue: _queue,
   );
   late final Speaker _speaker = widget.speaker ?? DeviceSpeaker();
+  late final _cloudSync = CloudSync(
+    widget.settings,
+    widget.photoStore,
+    reload: _reloadData,
+    canApply: () => !_navigator.reviewing,
+  );
 
   @override
   void initState() {
@@ -166,6 +184,7 @@ class _PhotoEnglishAppState extends State<PhotoEnglishApp>
       unawaited(
           DictionarySync.instance.start(widget.settings, () => _repository));
       _enricher.start();
+      _cloudSync.start();
       // 問題回報 #824: report when iOS memory runs low; iOS only.
       MemoryMonitor.instance.addReleaser(_releaseSpeakerMemory);
       unawaited(
@@ -181,6 +200,11 @@ class _PhotoEnglishAppState extends State<PhotoEnglishApp>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && widget.runWorkers) {
       _flushReports();
+    }
+    if (widget.runWorkers &&
+        (state == AppLifecycleState.resumed ||
+            state == AppLifecycleState.paused)) {
+      _cloudSync.syncSoon(Duration.zero);
     }
   }
 
@@ -198,6 +222,7 @@ class _PhotoEnglishAppState extends State<PhotoEnglishApp>
     }
     _queue.dispose();
     _enricher.dispose();
+    _cloudSync.dispose();
     super.dispose();
   }
 
@@ -236,6 +261,13 @@ class _PhotoEnglishAppState extends State<PhotoEnglishApp>
     await _switchLanguage(r.learningLanguage);
     _repository.setLevel(r.level, source: r.source);
     settings.onboarded = true;
+    // 卡 #891: recommended card sets right after the questions.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _rootNavigator.currentState?.push(MaterialPageRoute<void>(
+          builder: (_) => RecommendedDecksScreen(
+              interests: r.interests, goals: r.goals, level: r.level)));
+    });
+    EventReport.instance.once('onboarded');
     Analytics.instance.capture('onboarding_completed', {
       'learning_language': r.learningLanguage,
       'native_language': r.nativeLanguage,
@@ -260,6 +292,7 @@ class _PhotoEnglishAppState extends State<PhotoEnglishApp>
       navigator: _navigator,
       switchLanguage: _switchLanguage,
       reloadData: _reloadData,
+      cloudSync: widget.runWorkers ? _cloudSync : null,
       clock: widget.clock,
       child: ListenableBuilder(
         listenable: widget.settings,
@@ -295,6 +328,7 @@ class _PhotoEnglishAppState extends State<PhotoEnglishApp>
                 : OnboardingScreen(
                     lexicon: widget.lexicon,
                     onDone: _finishOnboarding,
+                    settings: widget.settings,
                     uiLanguage: deviceLanguage(
                         WidgetsBinding.instance.platformDispatcher.locale)),
           ),

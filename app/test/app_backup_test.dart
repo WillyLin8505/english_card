@@ -157,4 +157,118 @@ void main() {
     expect((after.wordCount, after.photoCount),
         (before.wordCount, before.photoCount));
   });
+
+  test(
+      'card 907: a real file restores every box byte for byte and every setting',
+      () async {
+    final (_, photos, pixels) = await fill();
+    final settings = AppSettings.inMemory()
+      ..desiredRetention = 0.82
+      ..englishAccent = 'en-US'
+      ..cardStyle = CardStyle.playful
+      ..shareUsageStats = true
+      ..dailyNewLimit = 35
+      ..dailyReviewLimit = 250
+      ..showPhotoLabels = false
+      ..learningGoals = ['travel', 'work']
+      ..interests = ['food']
+      ..reviewScope = 'weak';
+    // Everything every box holds, per language, before the backup.
+    Future<Map<String, Map<String, List<String>>>> snapshot() async => {
+          for (final lang in ['en', 'fr'])
+            lang: {
+              for (final suffix in [
+                'entries',
+                'photos',
+                'albums',
+                'occurrences',
+                'cards',
+                'review_logs',
+              ])
+                suffix: await () async {
+                  final box = await Hive.openBox<String>(
+                      '${HiveWordDatabaseStore.prefixFor(lang)}$suffix');
+                  return suffix == 'review_logs'
+                      ? box.values.toList()
+                      : [
+                          for (final k in box.keys.toList()..sort())
+                            '$k=${box.get(k)}'
+                        ];
+                }(),
+            }
+        };
+    final before = await snapshot();
+    expect(before['en']!['review_logs'], isNotEmpty);
+    expect(before['en']!['cards'], isNotEmpty);
+
+    final file = File('${dir.path}/backup.${AppBackup.fileExtension}');
+    final sink = file.openWrite();
+    final made = await AppBackup.write(
+        settings: settings,
+        photoStore: photos,
+        write: (b) async => sink.add(b),
+        now: now);
+    await sink.close();
+    expect(file.lengthSync(), greaterThan(pixels.length));
+
+    await wipeDevice();
+    final newPhotos = PhotoStore.inMemory();
+    final fresh = AppSettings.inMemory();
+    final restored = await AppBackup.restore(file.openRead(),
+        settings: fresh, photoStore: newPhotos);
+    // `made.photos` counts photos with pixels; restore counts records.
+    expect(made.photos, 2);
+    expect((restored.words, restored.reviews), (made.words, made.reviews));
+    expect(restored.photos, before['en']!['photos']!.length);
+
+    // Photos are re-pointed at this device, so compare them without the
+    // two location fields; every other box must be identical.
+    String stripLocation(String v) {
+      try {
+        final j = jsonDecode(v.substring(v.indexOf('=') + 1));
+        if (j is Map && j.containsKey('storedKey')) {
+          j['filePath'] = null;
+          j['storedKey'] = null;
+          return jsonEncode(j);
+        }
+      } catch (_) {}
+      return v;
+    }
+
+    final after = await snapshot();
+    for (final lang in before.keys) {
+      for (final suffix in before[lang]!.keys) {
+        final a = after[lang]![suffix]!;
+        final b = before[lang]![suffix]!;
+        if (suffix == 'photos') {
+          expect([
+            for (final v in a) stripLocation(v)
+          ], [
+            for (final v in b) stripLocation(v)
+          ], reason: '$lang/$suffix');
+        } else {
+          expect(a, b, reason: '$lang/$suffix');
+        }
+      }
+    }
+
+    expect(fresh.desiredRetention, 0.82);
+    expect(fresh.englishAccent, 'en-US');
+    expect(fresh.cardStyle, CardStyle.playful);
+    expect(fresh.shareUsageStats, isTrue);
+    expect(fresh.dailyNewLimit, 35);
+    expect(fresh.dailyReviewLimit, 250);
+    expect(fresh.showPhotoLabels, isFalse);
+    expect(fresh.learningGoals, ['travel', 'work']);
+    expect(fresh.interests, ['food']);
+    expect(fresh.reviewScope, 'weak');
+    // scanMode reads back through a per-device fallback (text scan is not
+    // available on every platform), so it is not compared here.
+    expect(fresh.apiKey, '');
+    expect(fresh.cloudToken, '');
+
+    final repo = await open();
+    expect(await newPhotos.storedBytes(repo.photo('photo-web')!.storedKey!),
+        pixels);
+  });
 }

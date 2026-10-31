@@ -13,6 +13,7 @@ import 'tagging_service.dart';
 import 'text_scan.dart';
 import 'word_database_repository.dart';
 import 'analytics.dart';
+import 'event_report.dart';
 
 class TaggingNotConfigured implements Exception {
   @override
@@ -122,6 +123,7 @@ class PhotoIntake {
       scanMode: scanMode,
     );
     repo.addPhoto(photo);
+    EventReport.instance.once('first_photo');
     Analytics.instance
         .capture('photo_added', {'in_album': albumId != null}, now);
     return photo;

@@ -336,7 +336,7 @@ const albumSceneWords = <String, Set<String>>{
 };
 
 /// 圖片集 albums (downloaded 卡片集) sit under this group.
-const deckAlbumGroup = '圖片集';
+const deckAlbumGroup = '下載的相片冊';
 
 class Album {
   final String id;

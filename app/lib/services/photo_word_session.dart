@@ -31,8 +31,8 @@ class SessionWord {
   /// False for an added word that was never put on the photo: no pin.
   bool placed;
 
-  /// ☆: kept when the dial moves; only for this visit (星星只在本次照片
-  /// 選詞期間有效…離開頁面後不保存星星狀態).
+  /// ☆ collects the word (卡 #835／#899): kept when the dial moves, and it
+  /// goes to the word book only on 儲存 (not 鎖定 any more).
   bool starred = false;
 
   SessionWord(this.candidate, this.anchor,
@@ -382,28 +382,22 @@ class PhotoWordSession extends ChangeNotifier {
     }
   }
 
-  /// Moves the dial. While dragging ([live]) only the existing pool is
-  /// used; on release the model may be asked for more words. A step to
-  /// another level (難一點 / 簡單一點) scans the photo for harder (easier)
-  /// words every time (問題回報 #666, #671).
+  /// Moves the dial. Only the photo's existing candidates are used — the
+  /// AI is never asked again by a dial move (問題回報 #1154, which
+  /// supersedes the harder/easier rescans of #666, #671).
   void setTarget(int level, {bool live = false}) {
     final t = level.clamp(0, cefrLevels.length - 1);
     if (t == _target && live) return;
     final from = _target;
-    final before = [for (final w in words) w.word];
     _target = t;
     _dirty = true;
     if (live || t == from) {
       _reselect(allowTopUp: !live);
     } else {
+      // 問題回報 #1154: a step on the bar only picks from the words the AI
+      // already found — no new scan. The AI reads the photo again only on
+      // 重新掃描, a long press on the photo, or when the photo is taken.
       _reselect();
-      final focus = t > from ? 'harder' : 'easier';
-      // 問題回報 #852: what this finds only fills empty places — the
-      // positions already shown keep their labels.
-      _askForMore(focus, () {
-        final now = [for (final w in words) w.word];
-        return !listEquals(before, now);
-      }, stillWanted: () => _target == t, swapIn: false);
     }
     notifyListeners();
   }

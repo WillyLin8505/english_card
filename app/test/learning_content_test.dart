@@ -174,7 +174,7 @@ void main() {
         reason: 'spec 08: no untranslated etymology text');
     expect(learningEtymology(w('sofa')), isNull);
     expect(missingFieldNames(w('grass')), contains('詞源'),
-        reason: '單字集必須指出詞源等具體缺漏欄位');
+        reason: '相片冊必須指出詞源等具體缺漏欄位');
     expect(LexiconPack.instance.lookup('cup')!.entry.etymology!.text, 'From Old English cuppe.');
     expect(missingFieldNames(w('green')), isNot(contains('詞源')));
   });

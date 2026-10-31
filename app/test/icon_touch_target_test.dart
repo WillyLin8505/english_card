@@ -14,7 +14,7 @@ void main() {
     await tester.pumpAndSettle();
     final star = find.descendant(
       of: row,
-      matching: find.bySemanticsLabel('鎖定（調整難度時保留）'),
+      matching: find.bySemanticsLabel('收集單字（按儲存後加入單字庫）'),
     );
     final audio = find.descendant(
       of: row,
@@ -29,7 +29,7 @@ void main() {
     expect(starRect.overlaps(audioRect), isFalse);
     await tester.tapAt(starRect.bottomRight - const Offset(1, 1));
     await tester.pump();
-    expect(find.descendant(of: row, matching: find.bySemanticsLabel('取消鎖定')),
+    expect(find.descendant(of: row, matching: find.bySemanticsLabel('取消收集單字')),
         findsOneWidget);
     expect(find.text('單字詳情'), findsNothing);
     expect(tester.takeException(), isNull);

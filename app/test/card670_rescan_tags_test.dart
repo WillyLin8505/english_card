@@ -165,7 +165,8 @@ void main() {
       s.dispose();
     });
 
-    testWidgets('難一點 twice → two focus=harder requests', (tester) async {
+    // 問題回報 #1154: a dial step no longer asks the AI again.
+    testWidgets('難一點 steps send no focus=harder request', (tester) async {
       final intake = intakeFor();
       final queue = queueFor(intake);
       final id = await deckPicture(tester, intake);
@@ -176,11 +177,8 @@ void main() {
       await idle(tester, s);
       s.setTarget(s.target + 1);
       await idle(tester, s);
-      expect(
-          seen
-              .where((r) => r.url.queryParameters['focus'] == 'harder')
-              .length,
-          2);
+      expect(seen.where((r) => r.url.queryParameters['focus'] == 'harder'),
+          isEmpty);
       s.dispose();
     });
   });

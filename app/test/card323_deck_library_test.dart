@@ -24,7 +24,7 @@ void main() {
     ],
   };
   final photosDeck = {
-    'slug': 'fruit', 'kind': 'photos', 'title': '水果圖片集', 'cefr': 'B1',
+    'slug': 'fruit', 'kind': 'photos', 'title': '水果相片冊', 'cefr': 'B1',
     'count': 1, 'cover_asset_id': 7,
     'items': [
       {
@@ -112,7 +112,7 @@ void main() {
         repository: repo, intake: intake);
     expect(created.map((e) => e.word).toSet(), {'tomato', 'ripe'});
     final photo = repo.photos.single;
-    expect(photo.title, '水果圖片集');
+    expect(photo.title, '水果相片冊');
     expect(repo.activeLabels(photo.id).length, 2);
     expect(await intake.bytesOf(photo), isNotNull);
 
@@ -146,13 +146,13 @@ void main() {
     expect(online.installed.single.info.title, '基礎單字');
   });
 
-  testWidgets('the 卡片集 screen lists decks and adds one', (tester) async {
+  testWidgets('the 相片冊 screen lists decks and adds one', (tester) async {
     final lib = DeckLibrary(client: server(), remote: true, persist: false);
     final app = await pumpApp(tester,
         home: DeckBrowserScreen(library: lib), size: const Size(402, 1200));
     await settle(tester);
     expect(find.text('基礎單字'), findsOneWidget);
-    expect(find.text('水果圖片集'), findsOneWidget);
+    expect(find.text('水果相片冊'), findsOneWidget);
     expect(find.textContaining('B1'), findsOneWidget);
 
     await tester.tap(find.text('加入').first);

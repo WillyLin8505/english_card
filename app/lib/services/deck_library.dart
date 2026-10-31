@@ -281,12 +281,12 @@ class DeckLibrary extends ChangeNotifier {
       DeckContent.fromJson(await _getJson(_api('/api/decks/$slug')));
 
   Future<Map<String, dynamic>> _getJson(Uri uri) async {
-    if (!remote) throw const DeckException('目前沒有連線到卡片集伺服器');
+    if (!remote) throw const DeckException('目前沒有連線到相片冊伺服器');
     try {
       final r = await client.get(uri).timeout(const Duration(seconds: 20));
       if (r.statusCode == 429) throw const DeckException('太頻繁了，請稍後再試');
       if (r.statusCode != 200) {
-        throw DeckException('卡片集暫時無法使用（${r.statusCode}）');
+        throw DeckException('相片冊暫時無法使用（${r.statusCode}）');
       }
       return jsonDecode(utf8.decode(r.bodyBytes)) as Map<String, dynamic>;
     } on DeckException {
@@ -317,6 +317,9 @@ class DeckLibrary extends ChangeNotifier {
     notifyListeners();
     unawaited(fillDeckWords(language));
   }
+
+  /// 跨裝置同步 changed the saved list: the next [load] reads it again.
+  void forgetLoaded() => _loadedFor = null;
 
   void _restore(String raw) {
     for (final d in (jsonDecode(raw) as List).cast<Map<String, dynamic>>()) {

@@ -33,7 +33,7 @@ void giveMeanings(WordDatabaseRepository repo) {
 /// goes with the deck when the deck is removed.
 void main() {
   final photosDeck = {
-    'slug': 'fruit', 'kind': 'photos', 'title': '水果圖片集', 'cefr': 'B1',
+    'slug': 'fruit', 'kind': 'photos', 'title': '水果相片冊', 'cefr': 'B1',
     'author': '編輯部', 'count': 1, 'cover_asset_id': 7,
     'items': [
       {
@@ -83,10 +83,10 @@ void main() {
 
     final albumId = lib.installedDeck('fruit')!.albumId!;
     final album = repo.album(albumId)!;
-    expect(album.name, '水果圖片集');
+    expect(album.name, '水果相片冊');
     expect(album.deckSlug, 'fruit');
     expect(album.author, '編輯部');
-    expect(repo.photosInAlbum(albumId).single.title, '水果圖片集');
+    expect(repo.photosInAlbum(albumId).single.title, '水果相片冊');
     expect(repo.albumWordCount(albumId), 2);
   });
 
@@ -149,12 +149,12 @@ void main() {
     // pumpApp brings the sample albums along; the deck's one is the new one.
     final deckAlbum = app.repository.albums.singleWhere(
         (a) => a.deckSlug == 'fruit');
-    expect(deckAlbum.name, '水果圖片集');
+    expect(deckAlbum.name, '水果相片冊');
     expect(find.text('已在相片冊'), findsOneWidget);
 
     await tester.tap(find.text('開啟相簿'));
     await settle(tester, rounds: 5);
-    expect(find.text('水果圖片集'), findsWidgets);
+    expect(find.text('水果相片冊'), findsWidgets);
     expect(find.text('複習這本相簿'), findsOneWidget);
     // A pointer tap on this button did not reach its GestureDetector in the
     // test harness (cause not pinned down), so the button's own handler runs

@@ -47,7 +47,7 @@ class _AnkiExportButtonState extends State<AnkiExportButton> {
       ('全部單字（${repo.wordCount}）', const AnkiExportScope.all()),
       for (final a in repo.albums) ('相簿：${a.name}', AnkiExportScope.album(a)),
       for (final d in decks.installed)
-        ('卡片集：${d.info.title}', AnkiExportScope.deck(d)),
+        ('相片冊：${d.info.title}', AnkiExportScope.deck(d)),
     ];
     return showDialog<AnkiExportScope>(
       context: context,

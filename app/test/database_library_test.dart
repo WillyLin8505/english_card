@@ -254,6 +254,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('apple · 蘋果'));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+        find.text('資料庫圖片（1）'), 300,
+        scrollable: find.byType(Scrollable).last);
     expect(find.text('資料庫圖片（1）'), findsOneWidget);
     expect(find.text('蘋果'), findsOneWidget);
     expect(tester.takeException(), isNull);

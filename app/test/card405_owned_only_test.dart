@@ -28,12 +28,12 @@ void main() {
       expect(find.text(c), findsNothing, reason: '$c is not a pre-made pill');
     }
     expect(find.text('全部'), findsOneWidget);
-    expect(find.text('還沒有相片：去拍照，或到卡片集下載圖片集'), findsOneWidget);
+    expect(find.text('還沒有相片：去拍照，或下載相片冊'), findsOneWidget);
   });
 
   test('albums are grouped by content, deck, or month; rename keeps data', () {
     final repo = testRepository();
-    final deck = repo.addAlbum(name: '別人的圖片集', deckSlug: 'x', author: 'a');
+    final deck = repo.addAlbum(name: '別人的相片冊', deckSlug: 'x', author: 'a');
     final plain = repo.addAlbum(name: '週末');
     expect(repo.albumGroup(deck), deckAlbumGroup);
     expect(repo.albumGroup(plain), '${testNow.year} 年 ${testNow.month} 月');

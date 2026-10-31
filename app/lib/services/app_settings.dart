@@ -7,6 +7,8 @@ import 'package:hive/hive.dart';
 import '../models/photo.dart';
 import '../theme/card_style.dart';
 import 'analytics.dart';
+import 'cloud_token_store.dart';
+import 'crash_reporting.dart';
 import 'text_scan.dart';
 
 export '../theme/card_style.dart' show CardStyle;
@@ -79,6 +81,8 @@ class AppSettings extends ChangeNotifier {
 
   String _taggingUrl;
   String _apiKey;
+  String _cloudToken;
+  String _cloudEmail;
   double _desiredRetention;
   String _learningLanguage;
   String _nativeLanguage;
@@ -94,6 +98,29 @@ class AppSettings extends ChangeNotifier {
   // interest_topics.dart, comma-joined in the box. Empty = skipped.
   late List<String> _learningGoals = _readList('learningGoals');
   late List<String> _interests = _readList('interests');
+
+  // 各分頁的使用教學（卡 #893）: names of the tabs whose tutorial was
+  // seen or skipped, comma-joined in the box.
+  late final Set<String> _seenTutorials = _readList('seenTutorials').toSet();
+
+  /// Whether the tutorial of the tab called [tab] (an `AppTab.name`) was
+  /// already seen or skipped.
+  bool tutorialSeen(String tab) => _seenTutorials.contains(tab);
+
+  void markTutorialSeen(String tab) {
+    if (!_seenTutorials.add(tab)) return;
+    _save('seenTutorials', _seenTutorials.join(','));
+  }
+
+  /// 設定 → 使用教學: shows the tutorial of [tab] again, or of every tab.
+  void resetTutorials([String? tab]) {
+    if (tab == null) {
+      _seenTutorials.clear();
+    } else if (!_seenTutorials.remove(tab)) {
+      return;
+    }
+    _save('seenTutorials', _seenTutorials.join(','));
+  }
 
   List<String> _readList(String key) => [
         for (final s in (_box?.get(key) ?? '').split(','))
@@ -131,6 +158,8 @@ class AppSettings extends ChangeNotifier {
   AppSettings._(this._box)
       : _taggingUrl = _box?.get('taggingUrl') ?? defaultTaggingUrl,
         _apiKey = _box?.get('apiKey') ?? defaultApiKey,
+        _cloudToken = '',
+        _cloudEmail = _box?.get('cloudEmail') ?? '',
         _desiredRetention =
             (double.tryParse(_box?.get('desiredRetention') ?? '') ?? 0.9)
                 .clamp(minRetention, maxRetention),
@@ -170,9 +199,14 @@ class AppSettings extends ChangeNotifier {
     bool onboarded = true,
     bool shareUsageStats = false,
     bool showPhotoLabels = true,
+    // Tests start with every tab tutorial seen, so the card does not cover
+    // the screen under test (卡 #893).
+    bool tutorialsSeen = true,
   })  : _box = null,
         _taggingUrl = taggingUrl,
         _apiKey = apiKey,
+        _cloudToken = '',
+        _cloudEmail = '',
         _desiredRetention = 0.9,
         _learningLanguage = learningLanguage,
         _nativeLanguage = nativeLanguage,
@@ -183,11 +217,38 @@ class AppSettings extends ChangeNotifier {
         _showPhotoLabels = showPhotoLabels,
         _reviewScope = 'all',
         _dailyNewLimit = defaultDailyNewLimit,
-        _dailyReviewLimit = defaultDailyReviewLimit;
+        _dailyReviewLimit = defaultDailyReviewLimit {
+    if (tutorialsSeen) {
+      _seenTutorials.addAll(['camera', 'album', 'review', 'words', 'settings']);
+    }
+  }
 
-  static Future<AppSettings> open() async {
+  CloudTokenStore? _tokenStore;
+
+  @visibleForTesting
+  void attachTokenStoreForTest(CloudTokenStore store) => _tokenStore = store;
+
+  /// Card #910: the login token is kept in the Keychain (not the Hive box); an
+  /// older build's token in the box is moved there once.
+  Future<void> _loadCloudToken(CloudTokenStore store) async {
+    _tokenStore = store;
+    try {
+      var token = await store.read();
+      final legacy = _box?.get('cloudToken') ?? '';
+      if (token.isEmpty && legacy.isNotEmpty) {
+        await store.write(token = legacy);
+      }
+      if (legacy.isNotEmpty) await _box?.delete('cloudToken');
+      _cloudToken = token;
+    } catch (_) {
+      // No Keychain (web, tests): stay signed out rather than store it in the box.
+    }
+  }
+
+  static Future<AppSettings> open({CloudTokenStore? tokenStore}) async {
     final box = await Hive.openBox<String>(_boxName);
     final settings = AppSettings._(box);
+    await settings._loadCloudToken(tokenStore ?? const KeychainTokenStore());
     if (!languagePairAvailable(
         settings.learningLanguage, settings.nativeLanguage)) {
       settings._learningLanguage = 'en';
@@ -305,6 +366,70 @@ class AppSettings extends ChangeNotifier {
   set taggingUrl(String v) => _save('taggingUrl', _taggingUrl = v.trim());
   set apiKey(String v) => _save('apiKey', _apiKey = v.trim());
 
+  /// 雲端備份帳號 (card #902): the login token and email of the account the
+  /// backup is stored under. Not part of a backup file (belongs to this device).
+  String get cloudToken => _cloudToken;
+  String get cloudEmail => _cloudEmail;
+  bool get cloudSignedIn => _cloudToken.isNotEmpty;
+
+  /// 跨裝置自動同步 (card #912). These belong to this device: not in a
+  /// backup and not synced. Photos wait for Wi-Fi unless the learner says.
+  bool get cloudSyncEnabled => _flag('cloudSyncEnabled', true);
+  set cloudSyncEnabled(bool v) => _setFlag('cloudSyncEnabled', v);
+  bool get syncPhotos => _flag('syncPhotos', true);
+  set syncPhotos(bool v) => _setFlag('syncPhotos', v);
+  bool get syncPhotosWifiOnly => _flag('syncPhotosWifiOnly', true);
+  set syncPhotosWifiOnly(bool v) => _setFlag('syncPhotosWifiOnly', v);
+
+  final _flags = <String, bool>{};
+  bool _flag(String key, bool byDefault) =>
+      _flags[key] ??
+      switch (_box?.get(key)) {
+        'true' => true,
+        'false' => false,
+        _ => byDefault,
+      };
+  void _setFlag(String key, bool v) {
+    _flags[key] = v;
+    _save(key, '$v');
+  }
+
+  void setCloudAccount(String token, String email) {
+    _cloudToken = token;
+    final store = _tokenStore;
+    if (store != null) {
+      (token.isEmpty ? store.delete() : store.write(token)).catchError((_) {});
+    }
+    _save('cloudEmail', _cloudEmail = email);
+  }
+
+  /// Usage counters for the account's stats report (card #911). Numbers only; kept
+  /// out of backups and without notifyListeners so a tap never rebuilds the app.
+  final _usage = <String, String>{}; // used when there is no Hive box (tests)
+  String? _usageGet(String k) => _box?.get(k) ?? _usage[k];
+  void _usagePut(String k, String v) {
+    _usage[k] = v;
+    _box?.put(k, v);
+  }
+
+  int usageCount(String key) => int.tryParse(_usageGet('usage_$key') ?? '') ?? 0;
+  void bumpUsage(String key) => _usagePut('usage_$key', '${usageCount(key) + 1}');
+
+  /// Raw usage-store access for the anonymous events (card #914).
+  String? usageValue(String key) => _usageGet(key);
+  void setUsageValue(String key, String v) => _usagePut(key, v);
+
+  /// 設定 → 匿名使用事件 (card #914). Default on; off means nothing is queued or sent.
+  bool get anonymousEvents => _usageGet('anonEvents') != 'false';
+  set anonymousEvents(bool v) {
+    _usagePut('anonEvents', '$v');
+    notifyListeners();
+  }
+
+  /// When the last stats report reached the server (ms since epoch; 0 = never).
+  int get statsSentAt => int.tryParse(_usageGet('statsSentAt') ?? '') ?? 0;
+  set statsSentAt(int v) => _usagePut('statsSentAt', '$v');
+
   set desiredRetention(double v) => _save('desiredRetention',
       '${_desiredRetention = v.clamp(minRetention, maxRetention)}');
 
@@ -365,5 +490,6 @@ class AppSettings extends ChangeNotifier {
     _shareUsageStats = v;
     _save('shareUsageStats', '$v');
     Analytics.instance.sharing = v;
+    CrashReporting.instance.sharing = v;
   }
 }

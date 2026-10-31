@@ -41,7 +41,7 @@ class DataSourcesScreen extends StatelessWidget {
       'https://github.com/skywind3000/ECDICT',
     ),
     (
-      '卡片集『基礎 3000 字』',
+      '相片冊『基礎 3000 字』',
       'New General Service List 1.2（Browne, Culligan & Phillips）',
       'CC BY-SA 4.0',
       'https://www.newgeneralservicelist.com/',

@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import '../models/word_entry.dart';
 import '../services/app_settings.dart';
 import '../services/cefr_lexicon.dart';
+import '../services/deck_library.dart';
 import '../services/interest_topics.dart';
 import '../theme/mobile_theme.dart';
+import '../widgets/account_sign_in.dart';
 import '../widgets/mobile/common.dart';
 
 /// What the learner chose on first launch.
@@ -88,11 +90,20 @@ class OnboardingScreen extends StatefulWidget {
   /// it is the preselected native language when it can be one.
   final String uiLanguage;
 
+  /// Lists the card sets (卡 #891); tests inject a fake.
+  final Future<List<DeckInfo>> Function({String? target, String? native})?
+      loadDecks;
+
+  /// Card #910: when given, the last page offers an optional account sign-in.
+  final AppSettings? settings;
+
   const OnboardingScreen(
       {super.key,
       required this.lexicon,
       required this.onDone,
-      this.uiLanguage = 'zh-TW'});
+      this.uiLanguage = 'zh-TW',
+      this.loadDecks,
+      this.settings});
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -111,6 +122,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   String? _self;
   final Set<String> _goals = {};
   final Set<String> _interests = {};
+  // 卡 #891: only interests that have a real deck are offered.
+  List<DeckInfo>? _decks;
   final Map<String, List<bool>> _known = {};
 
   @override
@@ -210,18 +223,40 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
-              children: [
-                UiText(title,
-                    style: MFont.manrope(24, FontWeight.w800, MColors.ink)),
-                const SizedBox(height: 8),
-                UiText(subtitle,
-                    style: MFont.manrope(14, FontWeight.w600, MColors.muted)),
-                const SizedBox(height: 24),
-                ...children,
-              ],
-            ),
+            // 問題回報 #1147: on a short phone the last line is cut at the
+            // scroll edge, right above Next. A fade makes that cut read as
+            // "scroll" instead of "covered by the button".
+            child: Stack(children: [
+              ListView(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+                children: [
+                  UiText(title,
+                      style: MFont.manrope(24, FontWeight.w800, MColors.ink)),
+                  const SizedBox(height: 8),
+                  UiText(subtitle,
+                      style: MFont.manrope(14, FontWeight.w600, MColors.muted)),
+                  const SizedBox(height: 24),
+                  ...children,
+                ],
+              ),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: 28,
+                child: IgnorePointer(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [MColors.canvas.withAlpha(0), MColors.canvas],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ]),
           ),
           Padding(
               padding: const EdgeInsets.fromLTRB(24, 8, 24, 24), child: action),
@@ -381,6 +416,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ),
       );
 
+  Future<void> _loadDecks() async {
+    try {
+      final decks = await (widget.loadDecks ?? DeckLibrary.instance.fetchList)(
+          target: _learning, native: _native);
+      if (mounted) setState(() => _decks = decks);
+    } catch (_) {
+      // Offline: the standard list stays.
+    }
+  }
+
   void _toggle(Set<String> set, String key) =>
       setState(() => set.contains(key) ? set.remove(key) : set.add(key));
 
@@ -396,22 +441,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ],
         action: Column(children: [
           PrimaryButton(
-              label: '下一步', onTap: () => setState(() => _step = 3)),
+              label: '下一步',
+              onTap: () {
+                setState(() => _step = 3);
+                _loadDecks();
+              }),
           TextButton(
-              onPressed: () => setState(() {
-                    _goals.clear();
-                    _step = 3;
-                  }),
+              onPressed: () {
+                setState(() {
+                  _goals.clear();
+                  _step = 3;
+                });
+                _loadDecks();
+              },
               child: const UiText('略過')),
         ]),
       );
 
   Widget _interestsPage() => _page(
         title: '你對哪些主題有興趣？',
-        subtitle: '可以複選，也可以略過。我們會先列出符合的卡片集。',
+        subtitle: '可以複選，也可以略過。我們會先列出符合的相片冊。',
         children: [
           Wrap(spacing: 10, runSpacing: 10, children: [
-            for (final (key, label, icon, _) in interestOptions)
+            for (final (key, label, icon, _)
+                in availableInterests(_decks ?? const []))
               _chip(label, icon, _interests.contains(key),
                   () => _toggle(_interests, key)),
           ]),
@@ -428,6 +481,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   _finish(checked: false);
                 },
                 child: const UiText('略過')),
+            if (widget.settings != null)
+              TextButton(
+                key: const Key('onboardingSignIn'),
+                onPressed: () => showDialog<void>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const UiText('已有帳號？登入（可略過）'),
+                    content: AccountSignInButtons(
+                        settings: widget.settings!,
+                        onSignedIn: () => Navigator.of(context).pop()),
+                    actions: [
+                      TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const UiText('略過')),
+                    ],
+                  ),
+                ),
+                child: const UiText('已有帳號？登入（可略過）'),
+              ),
             if (_canCheck)
               TextButton(
                 onPressed: () => setState(() {

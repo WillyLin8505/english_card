@@ -149,7 +149,7 @@ class _WordDeckPhotosScreenState extends State<WordDeckPhotosScreen> {
                   child: UiText(
                       images.isEmpty
                           ? '這 ${_deck.wordCount} 個字在詞庫裡還沒有圖片，可以先看單字'
-                          : '單字集 · ${_deck.wordCount} 個單字 · ${images.length} 張詞庫圖片',
+                          : '相片冊 · ${_deck.wordCount} 個單字 · ${images.length} 張詞庫圖片',
                       style: MFont.manrope(13, FontWeight.w600, MColors.muted)),
                 ),
               ),
@@ -215,7 +215,7 @@ class WordDeckAlbumCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(
                     horizontal: MSpace.xs, vertical: 2),
                 decoration: MDecor.softPanel(color: Colors.white, radius: 10),
-                child: UiText('單字集',
+                child: UiText('相片冊',
                     style: MFont.inter(11, FontWeight.w700, MColors.primary)),
               ),
               const Spacer(),

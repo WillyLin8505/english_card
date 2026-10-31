@@ -100,6 +100,11 @@ class _InteractiveExerciseState extends State<_InteractiveExercise> {
                       : null),
           onImageState: (ready) => s.reportPhotoState(attempt, ready),
           imageErrorBuilder: (_) => const Center(child: UiText('圖片暫時無法載入')),
+          imageErrorWithReason: (_, error) => Center(
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+            const UiText('圖片暫時無法載入'),
+            UiText(CachedNetworkPhoto.failureReason(error)),
+          ])),
         ),
         if (s.photoFailed)
           Align(

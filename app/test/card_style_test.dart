@@ -182,9 +182,12 @@ void main() {
       await showBack(tester, s);
       expect(find.byType(FlashcardBack), findsOneWidget);
       // #251's items are all still there.
-      for (final text in ['詞性與意思', '例句與翻譯', '詞形變化', '同義詞', '相關詞',
-        '容易混淆的字', '構詞拆解']) {
+      for (final text in ['詞形變化', '同義詞', '相關詞', '容易混淆的字', '構詞拆解']) {
         expect(find.text(text), findsOneWidget, reason: '$style $text');
+      }
+      // 問題回報 #1167: titles that only repeat the content are gone.
+      for (final text in ['詞性與意思', '例句與翻譯']) {
+        expect(find.text(text), findsNothing, reason: '$style $text');
       }
       expect(find.byTooltip('播放英式發音'), findsOneWidget);
       expect(find.byTooltip('播放美式發音'), findsOneWidget);

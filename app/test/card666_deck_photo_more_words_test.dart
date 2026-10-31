@@ -171,13 +171,14 @@ void main() {
       s.onNotice = notices.add;
       s.setBias(PosBias.actions);
       expect(notices.single, contains('連上照片辨識'));
+      // 問題回報 #1154: a dial step asks nothing, so no notice either.
       s.setTarget(s.target + 1);
-      expect(notices.last, contains('沒有更多更難的字'));
+      expect(notices, hasLength(1));
       expect(seen, isEmpty);
       s.dispose();
     });
 
-    testWidgets('難一點 with nothing harder asks for harder words',
+    testWidgets('難一點 with nothing harder asks the AI nothing (#1154)',
         (tester) async {
       reply = [];
       queue = queueFor(
@@ -192,8 +193,8 @@ void main() {
           await Future<void>.delayed(const Duration(milliseconds: 10));
         }
       });
-      expect(seen.single.url.queryParameters['focus'], 'harder');
-      expect(notices.single, contains('沒有更多更難的字'));
+      expect(seen, isEmpty);
+      expect(notices, isEmpty);
       s.dispose();
     });
 

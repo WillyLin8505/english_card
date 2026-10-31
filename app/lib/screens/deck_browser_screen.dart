@@ -134,7 +134,7 @@ class _DeckBrowserScreenState extends State<DeckBrowserScreen> {
             ], AppScope.of(context).settings.interests);
             return Column(
               children: [
-                const MNavBar(title: '卡片集'),
+                const MNavBar(title: '相片冊'),
                 Expanded(
                   child: RefreshIndicator(
                     onRefresh: _refresh,
@@ -163,7 +163,7 @@ class _DeckBrowserScreenState extends State<DeckBrowserScreen> {
                         if (!_loading && shown.isEmpty && _error == null)
                           const Padding(
                             padding: EdgeInsets.all(MSpace.xl),
-                            child: Center(child: UiText('目前還沒有卡片集')),
+                            child: Center(child: UiText('目前還沒有相片冊')),
                           ),
                         for (final info in shown)
                           _DeckCard(
@@ -258,7 +258,7 @@ class _DeckCard extends StatelessWidget {
                 const SizedBox(height: MSpace.xxs),
                 Text(
                   [
-                    ui(context, info.isPhotos ? '圖片集' : '單字集'),
+                    ui(context, info.isPhotos ? '相片冊' : '相片冊'),
                     if (info.topic != null) ui(context, info.topic!),
                     '${info.count} ${ui(context, info.isPhotos ? '張' : '字')}',
                     if (info.author != null) ui(context, info.author!),

@@ -62,7 +62,7 @@ WordDatabaseRepository ratingRepo() {
 
 void main() {
   test(
-      'all three photo exercise types require a loaded image in rendered sessions',
+      'photo recall and drag wait for a loaded image; photo choice does not',
       () {
     final repo = ratingRepo();
     final session = FlashcardSession(repo);
@@ -81,15 +81,20 @@ void main() {
           expect(x.targets, hasLength(FlashcardSession.dragTargets));
           expect(x.targets.map((t) => t.word), contains(x.answer));
         }
-        final attempt = session.photoAttempt;
-        session.showAnswer();
-        session.submitAnswer(session.exercise!.answer);
-        session.completeInteraction(correct: true, attempts: 1);
-        expect(session.showingBack, isFalse);
-        expect(session.attempts, 0);
-        session.reportPhotoState(attempt, false);
-        expect(session.photoFailed, isTrue);
-        session.reportPhotoState(attempt, true);
+        // 卡 #901: photo choice is words, tappable before the picture loads.
+        if (type != ReviewExerciseType.photoChoice) {
+          final attempt = session.photoAttempt;
+          session.showAnswer();
+          session.submitAnswer(session.exercise!.answer);
+          session.completeInteraction(correct: true, attempts: 1);
+          expect(session.showingBack, isFalse);
+          expect(session.attempts, 0);
+          session.reportPhotoState(attempt, false);
+          expect(session.photoFailed, isTrue);
+          session.reportPhotoState(attempt, true);
+        } else {
+          expect(session.canAnswer, isTrue);
+        }
       }
       session.showAnswer();
       session.rate(Rating.again);

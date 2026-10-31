@@ -147,14 +147,22 @@ class PhotoImage extends StatelessWidget {
   final BoxFit fit;
   final Alignment alignment;
   final WidgetBuilder? imageErrorBuilder;
+
+  /// 問題回報 #1157: like [imageErrorBuilder], but also told what went wrong.
+  final Widget Function(BuildContext, Object error)? imageErrorWithReason;
   final ValueChanged<bool>? onImageState;
+
+  /// 問題回報 #1160: decode a small copy (see [photoProvider]).
+  final bool thumbnail;
 
   const PhotoImage(
     this.photo, {
     super.key,
+    this.thumbnail = false,
     this.fit = BoxFit.cover,
     this.alignment = Alignment.center,
     this.imageErrorBuilder,
+    this.imageErrorWithReason,
     this.onImageState,
   });
 
@@ -164,8 +172,11 @@ class PhotoImage extends StatelessWidget {
         .addPostFrameCallback((_) => onImageState?.call(ready));
   }
 
-  Widget _error(BuildContext context) {
+  Widget _error(BuildContext context, [Object? error]) {
     _report(false);
+    if (error != null && imageErrorWithReason != null) {
+      return imageErrorWithReason!(context, error);
+    }
     return imageErrorBuilder?.call(context) ?? _placeholder();
   }
 
@@ -191,7 +202,8 @@ class PhotoImage extends StatelessWidget {
           context.dependOnInheritedWidgetOfExactType<AppScope>()?.photoStore,
           box,
           MediaQuery.maybeDevicePixelRatioOf(context) ?? 1,
-          fit: fit);
+          fit: fit,
+          thumbnail: thumbnail);
       if (image == null) {
         _report(false);
         return _placeholder();
@@ -214,7 +226,7 @@ class PhotoImage extends StatelessWidget {
           height: double.infinity,
           gaplessPlayback: true,
           frameBuilder: _frame,
-          errorBuilder: (context, _, __) => _error(context),
+          errorBuilder: (context, error, __) => _error(context, error),
         ),
       );
     });
@@ -532,6 +544,7 @@ class PinnedPhoto extends StatefulWidget {
   final double radius;
   final bool largePins;
   final ValueChanged<PinData>? onPinTap;
+  final ValueChanged<PinData>? onPinLongPress;
   final void Function(PinData pin, LabelPoint to)? onPinMoved;
 
   /// 卡 #835: told where the finger lifted (screen coordinates) after a drag;
@@ -566,6 +579,7 @@ class PinnedPhoto extends StatefulWidget {
   final bool hidePins;
   final Widget? overlay;
   final WidgetBuilder? imageErrorBuilder;
+  final Widget Function(BuildContext, Object error)? imageErrorWithReason;
   final ValueChanged<bool>? onImageState;
 
   /// Bands at the top / bottom that labels keep clear of (chips or
@@ -623,6 +637,7 @@ class PinnedPhoto extends StatefulWidget {
     this.radius = 24,
     this.largePins = false,
     this.onPinTap,
+    this.onPinLongPress,
     this.onPinMoved,
     this.onPinDropped,
     this.onPhotoTap,
@@ -634,6 +649,7 @@ class PinnedPhoto extends StatefulWidget {
     this.hidePins = false,
     this.overlay,
     this.imageErrorBuilder,
+    this.imageErrorWithReason,
     this.onImageState,
     this.reserveTop = 0,
     this.reserveBottom = 0,
@@ -641,7 +657,11 @@ class PinnedPhoto extends StatefulWidget {
     this.revealNew = false,
     this.focus,
     this.fit = BoxFit.cover,
+    this.thumbnail = false,
   });
+
+  /// 問題回報 #1160: show a small copy (review card's photo).
+  final bool thumbnail;
 
   @override
   State<PinnedPhoto> createState() => _PinnedPhotoState();
@@ -904,9 +924,11 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
                 // The photo stays still while labels pop in (#409).
                 child: RepaintBoundary(
                   child: PhotoImage(widget.photo,
+                      thumbnail: widget.thumbnail,
                       fit: fit,
                       alignment: alignment,
                       imageErrorBuilder: widget.imageErrorBuilder,
+                      imageErrorWithReason: widget.imageErrorWithReason,
                       onImageState: widget.onImageState),
                 ),
               )),
@@ -999,6 +1021,10 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
                                             widget.onPinMoved!(
                                                 byId[pl.id]!, geo.fromBox(to));
                                           },
+                                    onLongPress: widget.onPinLongPress == null
+                                        ? null
+                                        : () => widget
+                                            .onPinLongPress!(byId[pl.id]!),
                                     child: Tap(
                                       onTap: widget.onPinTap == null
                                           ? null

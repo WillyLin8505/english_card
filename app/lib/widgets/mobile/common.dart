@@ -145,6 +145,9 @@ class MNavBar extends StatelessWidget {
   /// Width of each side slot; wider when [trailing] holds two buttons.
   final double sideWidth;
 
+  /// Width of the trailing slot when it differs from [sideWidth].
+  final double? trailingWidth;
+
   const MNavBar({
     super.key,
     required this.title,
@@ -152,6 +155,7 @@ class MNavBar extends StatelessWidget {
     this.trailing,
     this.divider = true,
     this.sideWidth = 48,
+    this.trailingWidth,
   });
 
   @override
@@ -172,7 +176,7 @@ class MNavBar extends StatelessWidget {
               style: MFont.title,
             ),
           ),
-          SizedBox(width: sideWidth, child: trailing),
+          SizedBox(width: trailingWidth ?? sideWidth, child: trailing),
         ],
       ),
     );

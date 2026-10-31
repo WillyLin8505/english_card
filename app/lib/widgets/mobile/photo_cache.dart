@@ -25,6 +25,9 @@ import '../../services/photo_store.dart';
 /// as wide as it is shown, so near-equal boxes share one cache entry.
 const photoDecodeWidths = [128, 256, 384, 512, 768, 1024, 1536, 2048];
 
+/// The widest a [photoProvider] thumbnail is decoded (and fetched).
+const photoThumbnailWidth = 512;
+
 int photoDecodeBucket(double px) => photoDecodeWidths.firstWhere((w) => px <= w,
     orElse: () => photoDecodeWidths.last);
 
@@ -73,11 +76,13 @@ ImageProvider<Object> networkPhoto(String url) {
 /// [photo] decoded for a [box] of that size (see [photoDecodeWidth]).
 ImageProvider<Object>? photoProvider(
     Photo photo, PhotoStore? store, Size box, double dpr,
-    {BoxFit fit = BoxFit.cover}) {
+    {BoxFit fit = BoxFit.cover, bool thumbnail = false}) {
   final source = photoSource(photo, store);
   if (source == null) return null;
-  final width = photoDecodeWidth(photo, box, dpr, fit: fit);
+  var width = photoDecodeWidth(photo, box, dpr, fit: fit);
   if (width == null) return source;
+  // 問題回報 #1160: a review card's photo only needs a thumbnail.
+  if (thumbnail) width = math.min(width, photoThumbnailWidth);
   // 問題回報 #938: a grid tile / cover shows at ≤ 512 px, so it asks the
   // server for a 480 px copy (≈ 30 KB) instead of the 1536 px one (≈ 400 KB).
   final url = photo.networkUrl;
@@ -238,6 +243,24 @@ class CachedNetworkPhoto extends ImageProvider<CachedNetworkPhoto> {
       (error is NetworkImageLoadException &&
           (error.statusCode == 429 || error.statusCode >= 500));
 
+  /// 問題回報 #1157: why a photo failed, in words for the learner (a key of
+  /// the UI catalog).
+  static String failureReason(Object error) {
+    if (error is NetworkImageLoadException) {
+      final code = error.statusCode;
+      if (code == 404 || code == 403 || code == 410) return '原因：找不到這張圖';
+      if (code == 429 || code >= 500) return '原因：伺服器忙碌中';
+      return '原因：找不到這張圖';
+    }
+    if (error is SocketException ||
+        error is HandshakeException ||
+        error is TimeoutException ||
+        error is HttpException) {
+      return '原因：沒有網路或連線不穩';
+    }
+    return '原因：找不到這張圖';
+  }
+
   static Future<Uint8List> _fetchRetrying(Uri url) async {
     for (var attempt = 0;; attempt++) {
       try {
@@ -327,9 +350,18 @@ class CachedNetworkPhoto extends ImageProvider<CachedNetworkPhoto> {
 
   static final _writing = <Future<void>>{};
 
-  /// Waits for the downloads being written to the cache folder.
+  /// Waits until queued prefetches have finished writing to the cache folder.
   @visibleForTesting
-  static Future<void> flushWrites() => Future.wait([..._writing]);
+  static Future<void> flushWrites() async {
+    while (_queue.isNotEmpty || _running > 0 || _writing.isNotEmpty) {
+      final pending = [..._writing];
+      if (pending.isEmpty) {
+        await Future<void>.delayed(const Duration(milliseconds: 1));
+        continue;
+      }
+      await Future.wait(pending);
+    }
+  }
 
   static Future<void> _touch(File file) async {
     try {

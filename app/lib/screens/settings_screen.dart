@@ -1,8 +1,10 @@
 import '../l10n/ui_text.dart';
+import '../widgets/cloud_backup_buttons.dart';
 import '../screens/connection_scan_screen.dart';
 import '../screens/data_sources_screen.dart';
 import '../screens/my_feedback_screen.dart';
 import '../screens/privacy_policy_screen.dart';
+import '../screens/progress_screen.dart';
 import '../services/learning_content.dart';
 import '../services/learning_insights.dart';
 import '../services/dictionary_sync.dart';
@@ -15,6 +17,7 @@ import '../app/app_scope.dart';
 import '../models/word_entry.dart';
 import '../services/accent_audio.dart';
 import '../services/app_settings.dart';
+import '../services/card_report.dart';
 import '../services/connection_qr.dart';
 import '../services/interest_topics.dart';
 import '../services/lexicon_pack.dart';
@@ -26,6 +29,7 @@ import '../widgets/mobile/dialogs.dart';
 import '../widgets/anki_export_button.dart';
 import '../widgets/card_style_picker.dart';
 import '../widgets/backup_buttons.dart';
+import '../widgets/tab_tutorial.dart';
 
 /// 設定 — the fifth tab. The Figma file has no frame for it, so it uses
 /// the other screens' nav bar and card style. It holds spec section 4's
@@ -51,6 +55,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _scroll = ScrollController();
   final _advanced = ExpansibleController();
   final _advancedKey = GlobalKey();
+  // 卡 #906: 頂端目錄跳到各區。
+  final _sectionKeys = <String, GlobalKey>{
+    for (final t in _tocSections) t: GlobalKey(),
+  };
+  static const _tocSections = [
+    '語言',
+    '單字難度',
+    '卡片樣式',
+    '資料',
+    '隱私',
+    '使用教學',
+    '關於',
+    '進階設定',
+  ];
+
+  GlobalKey _keyFor(String title) =>
+      title == '進階設定' ? _advancedKey : _sectionKeys[title]!;
+
+  Future<void> _jumpTo(String title) async {
+    if (title == '進階設定') return _openAdvanced();
+    var target = _keyFor(title).currentContext;
+    if (target == null) {
+      // The ListView builds lazily: a section far below is not built yet, so
+      // scroll toward it from the table of contents until it exists.
+      final toc = _tocKey.currentContext;
+      if (toc == null || !toc.mounted) return;
+      final position = Scrollable.of(toc).position;
+      for (var i = 0; i < 20 && target == null; i++) {
+        if (position.pixels >= position.maxScrollExtent) break;
+        position.jumpTo(
+            (position.pixels + position.viewportDimension)
+                .clamp(0.0, position.maxScrollExtent));
+        await WidgetsBinding.instance.endOfFrame;
+        if (!mounted) return;
+        target = _keyFor(title).currentContext;
+      }
+    }
+    if (target != null && target.mounted) {
+      await Scrollable.ensureVisible(target,
+          duration: const Duration(milliseconds: 250));
+    }
+  }
+  final _tocKey = GlobalKey();
   bool _checking = false;
   bool _switching = false;
 
@@ -272,7 +319,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                           ),
                         ),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: MSpace.md),
+                        child: Wrap(
+                          key: _tocKey,
+                          spacing: 8,
+                          runSpacing: 4,
+                          children: [
+                            for (final t in _tocSections)
+                              ActionChip(
+                                key: ValueKey('settings-toc-$t'),
+                                label: UiText(t),
+                                onPressed: () => _jumpTo(t),
+                              ),
+                          ],
+                        ),
+                      ),
                       _Card(
+                        key: _keyFor('語言'),
                         title: '語言',
                         children: [
                           _label('學習語言'),
@@ -382,6 +446,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ],
                       ),
                       _Card(
+                        key: _keyFor('單字難度'),
                         title: '單字難度',
                         children: [
                           // 問題回報 #511: a level the user picked is already
@@ -497,11 +562,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 ],
                               ),
                           ]),
-                          _note('用來先列出符合的卡片集。'),
+                          _note('用來先列出符合的相片冊。'),
                         ],
                       ),
                       // 問題回報 #317: the review card's look only.
                       _Card(
+                        key: _keyFor('卡片樣式'),
                         title: '卡片樣式',
                         children: [
                           CardStylePicker(
@@ -561,10 +627,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               child: const UiText('重新連線')),
                         ]),
                       _Card(
+                        key: _keyFor('資料'),
                         title: '資料',
                         children: [
                           UiText(
-                            '字卡和複習紀錄保存在${kIsWeb ? '此瀏覽器' : '此裝置'}。',
+                            kIsWeb ? '字卡和複習紀錄保存在此瀏覽器。' : '字卡和複習紀錄保存在此裝置。',
                             style: MFont.manrope(
                                 14, FontWeight.w700, MColors.success),
                           ),
@@ -574,15 +641,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           // one to choose from (問題回報 #572, like #474).
                           _note(
                               '${availableLearningLanguages.length > 1 ? '${ui(context, supportedLanguages[repo.language]!)}：' : ''}'
-                              '${formatCount(repo.wordCount)} 個單字 · '
-                              '${formatCount(repo.photoCount)} 張照片 · '
-                              '已學會 ${formatCount(profile.learned.length)} 個'),
+                              '${ui(context, '${formatCount(repo.wordCount)} 個單字')} · '
+                              '${ui(context, '${formatCount(repo.photoCount)} 張照片')} · '
+                              '${ui(context, '已學會 ${formatCount(profile.learned.length)} 個')}'),
                           const SizedBox(height: 6),
                           const BackupButtons(),
+                          const CloudBackupButtons(),
                           const AnkiExportButton(),
                         ],
                       ),
                       _Card(
+                        key: _keyFor('隱私'),
                         title: '隱私',
                         children: [
                           Row(
@@ -600,6 +669,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ],
                           ),
                           _note('只送匿名的操作紀錄，用來改善 App；關閉不影響任何功能。'),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: UiText('匿名安裝與留存統計',
+                                    style: MFont.manrope(
+                                        15, FontWeight.w800, MColors.ink)),
+                              ),
+                              Switch(
+                                key: const ValueKey('anonymous-events-switch'),
+                                value: settings.anonymousEvents,
+                                onChanged: (v) => settings.anonymousEvents = v,
+                              ),
+                            ],
+                          ),
+                          _note('只送隨機安裝編號與「安裝、完成引導、第一次拍照、第一次複習、每天開啟」這幾種事件，不含帳號或任何內容。'),
                           Align(
                             alignment: Alignment.centerLeft,
                             child: TextButton(
@@ -609,6 +693,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                           const PrivacyPolicyScreen())),
                               child: const UiText('查看隱私權政策'),
                             ),
+                          ),
+                        ],
+                      ),
+                      // 卡 #893: 各分頁的使用教學可以重看。
+                      _Card(
+                        key: _keyFor('使用教學'),
+                        title: '使用教學',
+                        children: [
+                          _note('每個分頁第一次進入會顯示教學。想再看，選分頁或全部重看。'),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 4,
+                            children: [
+                              TextButton(
+                                key: const ValueKey('tutorial-reset-all'),
+                                onPressed: () {
+                                  settings.resetTutorials();
+                                  showToast(context, '切到各分頁時會再顯示教學');
+                                },
+                                child: const UiText('全部重看'),
+                              ),
+                              for (final t in tabTutorialNames.entries)
+                                TextButton(
+                                  key: ValueKey('tutorial-reset-${t.key.name}'),
+                                  onPressed: () {
+                                    settings.resetTutorials(t.key.name);
+                                    showToast(context, '切到各分頁時會再顯示教學');
+                                  },
+                                  child: UiText(t.value),
+                                ),
+                            ],
                           ),
                         ],
                       ),
@@ -631,8 +746,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ],
                       ),
                       _Card(
+                        key: _keyFor('關於'),
                         title: '關於',
                         children: [
+                          UiText(
+                            '${ui(context, '版本')} ${CardReport.appVersion.split('+').first}'
+                            '（${ui(context, 'build')} ${CardReport.appVersion.contains('+') ? CardReport.appVersion.split('+').last : '-'}）',
+                            key: const ValueKey('about-version'),
+                            style: MFont.manrope(
+                                14, FontWeight.w700, MColors.ink),
+                          ),
                           Align(
                             alignment: Alignment.centerLeft,
                             child: TextButton(
@@ -838,6 +961,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           UiText('最近 4 週（每週）：${bars(ins.weekly)}',
               style: MFont.manrope(13, FontWeight.w600, MColors.ink)),
           _note('共 ${ins.total} 次複習。'),
+          if (ins.currentStreak > 0) _note('已連續複習 ${ins.currentStreak} 天。'),
         ],
       if (shownChanges.isNotEmpty)
         [
@@ -873,6 +997,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
         if (i > 0) const SizedBox(height: 12),
         ...sections[i],
       ],
+      if (ins.total > 0)
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton(
+            key: const ValueKey('open-progress'),
+            onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                    builder: (_) => const ProgressScreen())),
+            child: const UiText('查看學習進度'),
+          ),
+        ),
     ]);
   }
 

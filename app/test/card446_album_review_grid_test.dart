@@ -19,7 +19,7 @@ import 'helpers.dart';
 /// books (綜合 first) instead of a dropdown or picker.
 void main() {
   final deck = {
-    'slug': 'fruit', 'kind': 'photos', 'title': '水果圖片集', 'cefr': 'B1',
+    'slug': 'fruit', 'kind': 'photos', 'title': '水果相片冊', 'cefr': 'B1',
     'author': '編輯部', 'count': 1, 'cover_asset_id': 7,
     'items': [
       {
@@ -65,14 +65,14 @@ void main() {
     await tester.pumpAndSettle();
     Navigator.of(tester.element(find.byType(DeckBrowserScreen))).pop();
     await tester.pumpAndSettle();
-    expect(find.text('水果圖片集'), findsOneWidget);
-    expect(find.textContaining('卡片集 · 編輯部'), findsOneWidget);
+    expect(find.text('水果相片冊'), findsOneWidget);
+    expect(find.textContaining('相片冊 · 編輯部'), findsOneWidget);
   });
 
-  testWidgets('單字本 no longer links to 卡片集', (tester) async {
+  testWidgets('單字本 no longer links to 相片冊', (tester) async {
     await pumpApp(tester, initialTab: AppTab.words);
     await tester.pumpAndSettle();
-    expect(find.textContaining('卡片集：下載'), findsNothing);
+    expect(find.textContaining('相片冊：下載'), findsNothing);
   });
 
   testWidgets('複習 opens on a grid: 綜合 first, no dropdown; a tile starts',

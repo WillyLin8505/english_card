@@ -109,22 +109,25 @@ void main() {
         createdAt: testNow,
         storedKey: 'k1');
     repo.addPhoto(photo);
-    repo.savePhotoWords(photo.id, [
-      const ListedWord(
-          WordCandidate(
-              word: 'apple',
-              pos: 'noun',
-              meaning: '蘋果',
-              level: 'A1',
-              levelSource: 'user',
-              point: LabelPoint(0.5, 0.5)),
-          LabelPoint(0.5, 0.5)),
-    ], difficultyOffset: 0);
+    repo.savePhotoWords(
+        photo.id,
+        [
+          const ListedWord(
+              WordCandidate(
+                  word: 'apple',
+                  pos: 'noun',
+                  meaning: '蘋果',
+                  level: 'A1',
+                  levelSource: 'user',
+                  point: LabelPoint(0.5, 0.5)),
+              LabelPoint(0.5, 0.5)),
+        ],
+        difficultyOffset: 0);
     return (repo, album, repo.photo('photo-1')!);
   }
 
-  Future<AnkiExportResult> build(WordDatabaseRepository repo,
-          AnkiExportScope scope) =>
+  Future<AnkiExportResult> build(
+          WordDatabaseRepository repo, AnkiExportScope scope) =>
       AnkiExport.build(
         repository: repo,
         scope: scope,
@@ -211,7 +214,7 @@ void main() {
         contains('#deck:English Card::相簿 我的 廚房'));
   });
 
-  test('卡片集: the deck\'s words and pictures, credited as deck pictures',
+  test('相片冊: the deck\'s words and pictures, credited as deck pictures',
       () async {
     final (repo, _, photo) = env();
     final deck = InstalledDeck(
@@ -223,7 +226,7 @@ void main() {
     final r = await build(repo, AnkiExportScope.deck(deck));
     final all = rows(unzip(r.bytes));
     expect(all.map((r) => r[3]), ['run']);
-    expect(all.single[13], contains('EnglishCard::卡片集::基礎'));
+    expect(all.single[13], contains('EnglishCard::相片冊::基礎'));
     expect(AnkiExportScope.deck(deck).photoCredit(photo), '你自己的照片');
     expect(
         AnkiExportScope.deck(deck).photoCredit(Photo(
@@ -231,7 +234,7 @@ void main() {
             title: '',
             takenAt: testNow,
             createdAt: testNow)),
-        contains('卡片集圖片'));
+        contains('相片冊圖片'));
   });
 
   test('a photo whose file is gone is left out, the note still exports',
@@ -250,5 +253,22 @@ void main() {
     expect(apple[9], isEmpty);
     // Without the pack, the sentence license comes from its source.
     expect(apple[12], '例句：Tatoeba，CC BY 2.0 FR');
+  });
+
+  test('card 907: every word is one note, with a unique id and full columns',
+      () async {
+    final (repo, _, _) = env();
+    for (var i = 0; i < 40; i++) {
+      repo.addWord(word: 'word$i', pos: 'noun', meaning: '字$i');
+    }
+    final r = await build(repo, const AnkiExportScope.all());
+    expect(r.notes, repo.wordCount);
+    final all = rows(unzip(r.bytes));
+    expect(all.length, repo.wordCount);
+    expect(all.every((c) => c.length == AnkiExport.columns.length), isTrue);
+    expect({for (final c in all) c[0]}.length, all.length,
+        reason: 'guids are unique');
+    expect({for (final c in all) c[3]},
+        containsAll(['apple', 'run', 'word0', 'word39']));
   });
 }

@@ -52,7 +52,8 @@ void main() {
       final app = await pumpApp(tester, initialTab: AppTab.words);
       expect(find.text('我的單字本'), findsOneWidget);
       expect(find.text('apple'), findsOneWidget);
-      expect(find.text('第 1-8 個，共 21 個'), findsOneWidget);
+      expect(find.text('共 21 個'), findsOneWidget);
+      expect(find.text('›'), findsNothing);
 
       // A failed background fetch is marked in the list.
       app.repository.applyWordData(app.repository.entryByWord('apple')!.id,
@@ -118,7 +119,7 @@ void main() {
       expect(find.text('入門 · 剛好'), findsOneWidget);
 
       // ☆ Apple, then turn the dial to B2.
-      await tester.tap(find.bySemanticsLabel('鎖定（調整難度時保留）').at(1));
+      await tester.tap(find.bySemanticsLabel('收集單字（按儲存後加入單字庫）').at(1));
       await tester.pump();
       // The difficulty bar under the photo (問題回報 #442): tap where B2 is
       // (問題回報 #708: the bar no longer shows the A1…C2 ticks).
@@ -468,7 +469,7 @@ void main() {
       await tester.tap(find.text('記得'));
       await tester.pumpAndSettle();
       expect(find.text('自由加練，不更動下次複習時間'), findsNothing);
-      expect(find.bySemanticsLabel('刪除此卡片'), findsOneWidget);
+      expect(find.bySemanticsLabel('標為已學會'), findsOneWidget);
       expect(find.textContaining(RegExp(r'\d+\s*張')), findsNothing,
           reason: 'no card counts');
     });
@@ -652,13 +653,16 @@ void main() {
           initialTab: AppTab.settings,
           settings: settings,
           size: const Size(402, 1600));
-      await tester.scrollUntilVisible(find.text('進階設定'), 300);
+      // The table of contents repeats 進階設定 at the top. Open the section.
+      final advanced = find.descendant(
+          of: find.byType(ExpansionTile), matching: find.text('進階設定'));
+      await tester.scrollUntilVisible(advanced, 300);
       // Clear the bottom bar: the second learning language (#700) adds a
       // line above, so the row can stop right under it.
       await tester.drag(
           find.byType(Scrollable).first, const Offset(0, -200));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('進階設定'));
+      await tester.tap(advanced);
       await tester.pumpAndSettle();
       expect(find.byType(Slider), findsNWidgets(3)); // + 每日上限 x2 (#398)
       expect(tester.takeException(), isNull);

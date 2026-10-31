@@ -42,7 +42,7 @@ void main() {
   test('decks matching the interests come first, others keep their order', () {
     final decks = [
       _deck('a', '基礎 3000 字', '基礎單字'),
-      _deck('b', '水果與蔬菜圖片集', '食物'),
+      _deck('b', '水果與蔬菜相片冊', '食物'),
       _deck('c', '進階單字・C1', '進階單字'),
     ];
     expect(sortByInterests(decks, const ['food']).map((d) => d.slug),

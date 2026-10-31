@@ -2,6 +2,7 @@ import '../l10n/ui_text.dart';
 import 'dart:async';
 import 'dart:math' as math;
 
+import '../services/rating_prompt.dart';
 import '../services/learning_content.dart';
 import 'package:flutter/gestures.dart' show TapGestureRecognizer;
 import 'package:flutter/material.dart';
@@ -97,6 +98,7 @@ class FlashcardScreen extends StatefulWidget {
 class _FlashcardScreenState extends State<FlashcardScreen> {
   FlashcardSession? _session;
   WordDatabaseRepository? _repo;
+  bool _ratingChecked = false;
   bool _wasBack = false;
 
   // 問題回報 #729: the card on screen (its id, the run's step, and how far
@@ -164,6 +166,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
   }
 
   void _start({List<String> focus = const []}) {
+    _ratingChecked = false;
     final scope = AppScope.of(context);
     // A message from another tab (資料庫「已加入…」) would sit on the
     // grade buttons (問題回報 #97).
@@ -229,7 +232,9 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
             scope.photoStore,
             photoPagerPageBox(
                 Size(contentWidth, look.photoHeight), index, count),
-            dpr));
+            dpr,
+            fit: PinnedPhoto.fitFor(photo, BoxFit.cover),
+            thumbnail: true));
 
     // 問題回報 #726 (單字常常要 loading): every photo used to be decoded at
     // all three sizes — current, swipe neighbours and three cards ahead
@@ -394,7 +399,14 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     _wasBack = s.showingBack;
     _precacheBackPhoto();
     // The run is over (今天先到這裡): the tab bar comes back.
-    if (s.finished) AppScope.of(context).navigator.setReviewing(false);
+    if (s.finished) {
+      AppScope.of(context).navigator.setReviewing(false);
+      // Card #915: a finished run is the good moment (once per version).
+      if (!_ratingChecked) {
+        _ratingChecked = true;
+        unawaited(RatingPrompt.instance?.onReviewCompleted());
+      }
+    }
     setState(() {});
   }
 
@@ -439,19 +451,22 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
             children: [
               MNavBar(
                 title: '複習',
-                sideWidth: s == null || s.finished ? 48 : 104,
+                sideWidth: s == null || s.finished ? 48 : 112,
+                trailingWidth: s == null || s.finished ? 48 : 150,
                 // 問題回報 #534: its own node, so 返回 is not merged into the
                 // screen once the end screen scrolls.
                 leading: Semantics(
                   container: s == null || s.finished,
+                  // 卡 #897: the start page of the 複習 tab has no 返回 (it is
+                  // the root); a finished run's summary or a pushed album
+                  // run keeps it, and the session's own 返回 still ends it.
                   child: s == null
-                      ? BackNavButton(
-                          onTap: _lastRun != null
-                              ? _dismissSummary
-                              : widget.albumId != null
-                                  ? () => Navigator.of(context).pop()
-                                  : () =>
-                                      scope.navigator.selectTab(AppTab.camera))
+                      ? _lastRun == null && !Navigator.of(context).canPop()
+                          ? null
+                          : BackNavButton(
+                              onTap: _lastRun != null
+                                  ? _dismissSummary
+                                  : () => Navigator.of(context).pop())
                       : s.finished
                           ? BackNavButton(onTap: () => _end(summary: true))
                           : Row(mainAxisSize: MainAxisSize.min, children: [
@@ -472,7 +487,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
                 ),
                 trailing: s == null || s.finished
                     ? null
-                    : Row(mainAxisSize: MainAxisSize.min, children: [
+                    : Row(children: [
                         NavIconButton(
                           label: '回報此卡片',
                           icon: const Icon(Icons.flag_outlined,
@@ -480,15 +495,43 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
                           onTap: () => _reportCard(s),
                         ),
                         const SizedBox(width: 8),
-                        NavIconButton(
-                          label: '刪除此卡片',
-                          background: MColors.againBg,
-                          icon: const Icon(Icons.close,
-                              size: 20, color: MColors.againFg),
-                          onTap: () {
-                            final card = s.card;
-                            if (card != null) _deleteCard(card.wordEntryId);
-                          },
+                        // 卡 #896: a red ✕ read as "close"; this moves the card
+                        // to 已學會, so say so with a check icon and text.
+                        // French 「Acquis」 is wider than the 150px slot (375pt).
+                        Flexible(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerRight,
+                            child: Tap(
+                              key: const ValueKey('mark-learned'),
+                              label: '標為已學會',
+                              labelOnly: true,
+                              onTap: () {
+                                final card = s.card;
+                                if (card != null) {
+                                  _deleteCard(card.wordEntryId);
+                                }
+                              },
+                              child: Container(
+                                height: 48,
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 10),
+                                decoration: MDecor.softPanel(
+                                    color: MColors.surfaceSoft,
+                                    radius: MRadii.sm),
+                                child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.check_circle_outline,
+                                          size: 18, color: MColors.label),
+                                      const SizedBox(width: 4),
+                                      UiText('已學會',
+                                          style: MFont.cjk(13, FontWeight.w700,
+                                              MColors.label)),
+                                    ]),
+                              ),
+                            ),
+                          ),
                         ),
                       ]),
               ),

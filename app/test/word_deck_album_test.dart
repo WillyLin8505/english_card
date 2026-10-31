@@ -71,7 +71,7 @@ void main() {
     await tester.tap(find.text('基礎 3000 字・C2'));
     await tester.pumpAndSettle();
     expect(find.byType(WordDeckPhotosScreen), findsOneWidget);
-    expect(find.text('單字集 · 2 個單字 · 2 張詞庫圖片'), findsOneWidget);
+    expect(find.text('相片冊 · 2 個單字 · 2 張詞庫圖片'), findsOneWidget);
   });
 
   testWidgets('a word set without pictures lists its words (#673)',

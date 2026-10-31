@@ -73,11 +73,11 @@ void main() {
     expect(speaker.calls.every((c) => c.$2 != null), isTrue);
 
     // Only an American recording: it stands for both accents and is heard
-    // once — no robotic British TTS after it (問題回報 #724).
+    // twice, no robotic TTS after it (問題回報 #724, #1122).
     speaker.calls.clear();
     await playBothAccents(context, _word('yak'));
-    expect(speaker.calls.map((c) => c.$1), ['en-US']);
-    expect(speaker.calls.single.$2, endsWith('yak-US.mp3'));
+    expect(speaker.calls.map((c) => c.$1), ['en-US', 'en-GB']);
+    expect(speaker.calls.every((c) => c.$2!.endsWith('yak-US.mp3')), isTrue);
 
     // No recording at all: both accents in TTS.
     speaker.calls.clear();

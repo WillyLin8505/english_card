@@ -5,7 +5,12 @@ class _Block extends StatefulWidget {
   final Widget child;
   final bool collapsed;
 
-  const _Block(this.label, this.child, {this.collapsed = false});
+  /// 問題回報 #1167: the review back leaves out titles that only say what
+  /// the content already shows (the meaning, the examples), so more fits.
+  final bool showTitle;
+
+  const _Block(this.label, this.child,
+      {this.collapsed = false, this.showTitle = true});
 
   @override
   State<_Block> createState() => _BlockState();
@@ -17,6 +22,7 @@ class _BlockState extends State<_Block> {
   @override
   Widget build(BuildContext context) {
     final look = CardLook.of(context);
+    if (!widget.showTitle) return widget.child;
     if (!widget.collapsed) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -40,9 +40,7 @@ Future<bool> playAccent(
 List<String> _accentButtons(WordEntry entry) {
   final gb = cardAccentAudioUrl(entry, 'en-GB');
   final us = cardAccentAudioUrl(entry, 'en-US');
-  return gb != null && gb == us
-      ? const ['en-GB']
-      : const ['en-GB', 'en-US'];
+  return gb != null && gb == us ? const ['en-GB'] : const ['en-GB', 'en-US'];
 }
 
 /// Card #251: when the card turns, the word is heard in both accents.
@@ -50,7 +48,8 @@ List<String> _accentButtons(WordEntry entry) {
 /// American recording sounded robotic — 67% of A1 words have no British
 /// clip). 問題回報 #724: an accent without its own recording uses the
 /// word's other recording, and one recording standing for both accents is
-/// heard once — the TTS voice is used only for a word with no recording.
+/// played twice (問題回報 #1122, owner: 同一個錄音重複唸兩次) — every word is
+/// heard two times; the TTS voice is used only for a word with no recording.
 ///
 /// 問題回報 #729: a newer run, or [stopCardAudio] (the card changed), ends
 /// this one before its next accent.
@@ -61,14 +60,7 @@ Future<void> playBothAccents(BuildContext context, WordEntry entry) async {
   // synthetic files, then TTS (卡 #695/#759); British first within a rank.
   final rank = {for (final a in both) a: accentAudioRank(entry, a)};
   final ordered = [...both]..sort((a, b) => rank[a]!.compareTo(rank[b]!));
-  final accents = <String>[];
-  final urls = <String>{};
   for (final accent in ordered) {
-    final url = cardAccentAudioUrl(entry, accent);
-    // One recording standing for both accents is heard once.
-    if (url == null || urls.add(url)) accents.add(accent);
-  }
-  for (final accent in accents) {
     if (!context.mounted || run != _cardAudioRun) return;
     if (!await playAccent(context, entry, accent)) return;
   }
@@ -437,7 +429,9 @@ class FlashcardBack extends StatelessWidget {
   Widget? _configuredField(BuildContext context, TemplateField setting,
       WordLinks links, CardLook look) {
     final block = _field(context, setting.field, links, look);
-    if (block is _Block) return _Block(block.label, block.child);
+    if (block is _Block) {
+      return _Block(block.label, block.child, showTitle: block.showTitle);
+    }
     return block;
   }
 
@@ -653,7 +647,8 @@ class FlashcardBack extends StatelessWidget {
                   : _numbered(
                       field,
                       [for (final sense in meanings) Text(sense.native!)],
-                      look));
+                      look),
+              showTitle: false);
         }
         final senses = meaningParts(meaning);
         final Widget meaningText = senses.length > 1
@@ -707,6 +702,7 @@ class FlashcardBack extends StatelessWidget {
               ],
             ],
           ),
+          showTitle: false,
         );
       case CardBackField.photoContext:
         final all = photos.isNotEmpty
@@ -771,6 +767,7 @@ class FlashcardBack extends StatelessWidget {
                   ),
               ],
               look),
+          showTitle: false,
         );
       case CardBackField.formsAndDerivations:
         // 問題回報 #406: one cell per kind of form (過去式、過去分詞、現在分詞、
@@ -1443,16 +1440,20 @@ class _WordChipState extends State<_WordChip> {
         constraints: BoxConstraints(minHeight: look.chipMinHeight),
         padding: look.chipPadding,
         decoration: look.chip(id != null),
-        child: Text.rich(TextSpan(children: [
-          TextSpan(
-              text: word,
-              style: look.chipWord.copyWith(
-                  decoration: id == null ? null : TextDecoration.underline,
-                  decorationColor:
-                      look.chipWord.color?.withValues(alpha: 0.45))),
-          if (meaning.isNotEmpty)
-            TextSpan(text: '  $meaning', style: look.chipMeaning),
-        ])),
+        // Meaning under the word (問題回報 #1168): narrower chips, so several
+        // fit on one line instead of one per row.
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(word,
+                style: look.chipWord.copyWith(
+                    decoration: id == null ? null : TextDecoration.underline,
+                    decorationColor:
+                        look.chipWord.color?.withValues(alpha: 0.45))),
+            if (meaning.isNotEmpty) Text(meaning, style: look.chipMeaning),
+          ],
+        ),
       ),
     );
   }
@@ -1763,7 +1764,7 @@ class _PhotoPagerState extends State<_PhotoPager> {
       final photo = photos[i].$1;
       final provider = photoProvider(
           photo, store, photoPagerPageBox(frame, i, photos.length), dpr,
-          fit: PinnedPhoto.fitFor(photo, BoxFit.cover));
+          fit: PinnedPhoto.fitFor(photo, BoxFit.cover), thumbnail: true);
       if (provider == null) continue;
       precacheImage(provider, context, onError: (_, __) {});
     }
@@ -1775,6 +1776,7 @@ class _PhotoPagerState extends State<_PhotoPager> {
     final credit = o.$3?.trim();
     return PinnedPhoto(
       photo: p,
+      thumbnail: true,
       // 問題回報 #651: the photo shifts so this card's dot stays inside.
       focus: a,
       onPhotoLongPress: credit == null || credit.isEmpty

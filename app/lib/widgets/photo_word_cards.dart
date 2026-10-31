@@ -228,7 +228,7 @@ class _WordCard extends StatelessWidget {
             action(
               starred ? MColors.successSoft : MColors.surfaceSoft,
               MSvg(starred ? MIcon.star : MIcon.starOff, size: 18),
-              starred ? '取消鎖定' : '鎖定（調整難度時保留）',
+              starred ? '取消收集單字' : '收集單字（按儲存後加入單字庫）',
               onStar,
             ),
           ],

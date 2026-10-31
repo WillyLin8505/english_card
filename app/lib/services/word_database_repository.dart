@@ -21,6 +21,7 @@ import 'word_database_query.dart';
 import 'word_database_store.dart';
 import 'word_selector.dart';
 import 'analytics.dart';
+import 'event_report.dart';
 
 class DuplicateWordException implements Exception {
   final WordEntry existing;
@@ -180,6 +181,10 @@ class WordDatabaseRepository extends ChangeNotifier {
   /// Timestamps new records; injectable for tests.
   final DateTime Function() clock;
 
+  /// Two devices that add a word in the same microsecond still get different
+  /// ids (cloud sync merges by the word, and the ids must not collide).
+  static int _instances = 0;
+  final int _instance = _instances++;
   int _nextId = 0;
   LexiconPack? _linkedPack;
   String? _linkedVersion;
@@ -317,7 +322,7 @@ class WordDatabaseRepository extends ChangeNotifier {
   }
 
   String _newId(String prefix) =>
-      '$prefix-${clock().microsecondsSinceEpoch}-${_nextId++}';
+      '$prefix-${clock().microsecondsSinceEpoch}-$_instance-${_nextId++}';
 
   // ── Reads ────────────────────────────────────────────────────────────
 
@@ -1905,6 +1910,7 @@ class WordDatabaseRepository extends ChangeNotifier {
     );
     _setCard(i, after);
     _reviewLogs.add(log);
+    EventReport.instance.once('first_review');
     Analytics.instance.capture(
         'card_reviewed',
         {

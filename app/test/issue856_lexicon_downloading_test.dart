@@ -178,7 +178,7 @@ void main() {
         initialTab: AppTab.album, size: const Size(402, 1400));
     await lib.install(
         const DeckContent(
-            DeckInfo(slug: 'b1', kind: 'words', title: '單字集・B1', count: 2),
+            DeckInfo(slug: 'b1', kind: 'words', title: '相片冊・B1', count: 2),
             words: [
               (word: 'ought', pos: 'verb', level: 'B1'),
               (word: 'peak', pos: 'noun', level: 'B1'),
@@ -187,7 +187,7 @@ void main() {
         intake:
             AppScope.of(tester.element(find.byType(Scaffold).first)).intake);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('單字集・B1'));
+    await tester.tap(find.text('相片冊・B1'));
     await tester.pumpAndSettle();
     expect(find.byType(WordDeckPhotosScreen), findsOneWidget);
     expect(find.text('詞庫下載中（約 62 MB）'), findsOneWidget);
@@ -198,7 +198,7 @@ void main() {
     sync.downloading = false;
     LexiconPack.instance.loadJson(pack());
     await tester.pumpAndSettle();
-    expect(find.text('單字集 · 2 個單字 · 2 張詞庫圖片'), findsOneWidget);
+    expect(find.text('相片冊 · 2 個單字 · 2 張詞庫圖片'), findsOneWidget);
     expect(find.byType(DatabaseImageTile), findsNWidgets(2));
   });
 

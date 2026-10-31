@@ -4,6 +4,7 @@ import 'package:hive/hive.dart';
 
 import '../models/card_template.dart';
 import 'fsrs_optimizer.dart';
+import 'sync_index.dart';
 import '../models/learning_card.dart';
 import '../models/photo.dart';
 import '../models/vocabulary_profile.dart';
@@ -77,7 +78,7 @@ class HiveWordDatabaseStore
 
   @override
   Future<void> putFsrsOptimization(FsrsOptimization? result) =>
-      _meta.put(_fsrsKey, jsonEncode(result?.toJson()));
+      sync.put(SyncBoxes.meta, _fsrsKey, jsonEncode(result?.toJson()));
 
   FsrsOptimization? _loadFsrsOptimization() {
     try {
@@ -100,6 +101,10 @@ class HiveWordDatabaseStore
   final Box<String> _logs;
   final Box<String> _meta;
 
+  /// Writes go through here so 跨裝置同步 knows when each record changed
+  /// (card #912).
+  final SyncBoxes sync;
+
   HiveWordDatabaseStore._(
     this._entries,
     this._photos,
@@ -108,7 +113,17 @@ class HiveWordDatabaseStore
     this._cards,
     this._logs,
     this._meta,
-  );
+    Box<String> syncIndex,
+  ) : sync = SyncBoxes(
+          entriesBox: _entries,
+          photosBox: _photos,
+          albumsBox: _albums,
+          occurrencesBox: _occurrences,
+          cardsBox: _cards,
+          logsBox: _logs,
+          metaBox: _meta,
+          index: syncIndex,
+        );
 
   List<Box<String>> get _all =>
       [_entries, _photos, _albums, _occurrences, _cards, _logs, _meta];
@@ -120,8 +135,10 @@ class HiveWordDatabaseStore
       };
 
   /// Hive must already be initialised (Hive.initFlutter / Hive.init).
-  static Future<HiveWordDatabaseStore> open({String language = 'en'}) async {
-    final p = prefixFor(language);
+  /// [boxPrefix] keeps a second simulated device apart in tests.
+  static Future<HiveWordDatabaseStore> open(
+      {String language = 'en', String boxPrefix = ''}) async {
+    final p = '$boxPrefix${prefixFor(language)}';
     final store = HiveWordDatabaseStore._(
       await Hive.openBox<String>('${p}entries'),
       await Hive.openBox<String>('${p}photos'),
@@ -130,6 +147,7 @@ class HiveWordDatabaseStore
       await Hive.openBox<String>('${p}cards'),
       await Hive.openBox<String>('${p}review_logs'),
       await Hive.openBox<String>('${p}meta'),
+      await Hive.openBox<String>('${p}sync'),
     );
     if (store._meta.get(_schemaKey) == '2') await store._migrateFrom2();
     return store;
@@ -245,53 +263,54 @@ class HiveWordDatabaseStore
 
   @override
   Future<void> putEntry(WordEntry entry) =>
-      _entries.put(entry.id, jsonEncode(entry.toJson()));
+      sync.put(SyncBoxes.entries, entry.id, jsonEncode(entry.toJson()));
 
   @override
-  Future<void> deleteEntry(String id) => _entries.delete(id);
+  Future<void> deleteEntry(String id) => sync.delete(SyncBoxes.entries, id);
 
   @override
   Future<void> putPhoto(Photo photo) =>
-      _photos.put(photo.id, jsonEncode(photo.toJson()));
+      sync.put(SyncBoxes.photos, photo.id, jsonEncode(photo.toJson()));
 
   @override
-  Future<void> deletePhoto(String id) => _photos.delete(id);
+  Future<void> deletePhoto(String id) => sync.delete(SyncBoxes.photos, id);
 
   @override
   Future<void> putAlbum(Album album) =>
-      _albums.put(album.id, jsonEncode(album.toJson()));
+      sync.put(SyncBoxes.albums, album.id, jsonEncode(album.toJson()));
 
   @override
-  Future<void> deleteAlbum(String id) => _albums.delete(id);
+  Future<void> deleteAlbum(String id) => sync.delete(SyncBoxes.albums, id);
 
   @override
-  Future<void> putOccurrence(PhotoOccurrence occurrence) =>
-      _occurrences.put(occurrence.id, jsonEncode(occurrence.toJson()));
+  Future<void> putOccurrence(PhotoOccurrence occurrence) => sync.put(
+      SyncBoxes.occurrences, occurrence.id, jsonEncode(occurrence.toJson()));
 
   @override
-  Future<void> deleteOccurrence(String id) => _occurrences.delete(id);
+  Future<void> deleteOccurrence(String id) =>
+      sync.delete(SyncBoxes.occurrences, id);
 
   @override
   Future<void> putCard(LearningCard card) =>
-      _cards.put(card.id, jsonEncode(card.toJson()));
+      sync.put(SyncBoxes.cards, card.id, jsonEncode(card.toJson()));
 
   @override
-  Future<void> deleteCard(String id) => _cards.delete(id);
+  Future<void> deleteCard(String id) => sync.delete(SyncBoxes.cards, id);
 
   @override
   Future<void> putTemplate(CardTemplate template) =>
-      _meta.put(_templateKey, jsonEncode(template.toJson()));
+      sync.put(SyncBoxes.meta, _templateKey, jsonEncode(template.toJson()));
 
   @override
   Future<void> addReviewLog(ReviewLog log) =>
-      _logs.add(jsonEncode(log.toJson()));
+      sync.addLog(jsonEncode(log.toJson()));
 
   @override
   Future<void> putProfile(UserVocabularyProfile profile) =>
-      _meta.put(_profileKey, jsonEncode(profile.toJson()));
+      sync.put(SyncBoxes.meta, _profileKey, jsonEncode(profile.toJson()));
 
   Future<void> close() async {
-    for (final box in _all) {
+    for (final box in [..._all, sync.index]) {
       await box.close();
     }
   }

@@ -93,7 +93,8 @@ void main() {
         if (tab == AppTab.settings) {
           // 進階設定 is collapsed: open it and read it too.
           final advanced = find.text(translateUi('進階設定', native));
-          await tester.ensureVisible(advanced);
+          await tester.scrollUntilVisible(advanced, 300,
+              scrollable: find.byType(Scrollable).first);
           await tester.pumpAndSettle();
           await tester.tap(advanced, warnIfMissed: false);
           await tester.pumpAndSettle();

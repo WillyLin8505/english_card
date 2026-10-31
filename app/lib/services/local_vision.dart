@@ -9,6 +9,7 @@ import '../models/word_candidate.dart';
 import '../models/word_entry.dart';
 import 'cefr_lexicon.dart';
 import 'lexicon_pack.dart';
+import 'local_vision_rules.dart';
 import 'tagging_service.dart';
 
 /// One label from the device's image classifier, e.g. (`banana`, 0.93).
@@ -103,6 +104,7 @@ List<WordCandidate> candidatesFromLabels(
     if (l.confidence < minConfidence) continue;
     final word = l.label.trim().toLowerCase().replaceAll('_', ' ');
     if (word.isEmpty || excluded.contains(word)) continue;
+    if (visionCategoryLabels.contains(word)) continue;
     items.add({
       'label': word,
       'visualConfidence': l.confidence,
@@ -118,7 +120,9 @@ List<WordCandidate> candidatesFromLabels(
   ];
   final target = levelIndex(level);
   double score(WordCandidate c) =>
-      c.visualConfidence * (1 - 0.12 * (levelIndex(c.level) - target).abs());
+      c.visualConfidence *
+      (1 - 0.12 * (levelIndex(c.level) - target).abs()) *
+      (visionWeakLabels.contains(c.word.toLowerCase()) ? visionWeakFactor : 1);
   known.sort((a, b) => score(b).compareTo(score(a)));
   final kept = known.take(maxCandidates).toList();
   return [

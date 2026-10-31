@@ -72,12 +72,12 @@ String reviewScopeLabel(WordDatabaseRepository repo, String scope) {
   if (scope.startsWith('album:')) {
     final a = repo.album(scope.substring(6));
     if (a != null) {
-      return a.deckSlug != null ? '卡片集：${a.name}' : '相片冊：${a.name}';
+      return a.deckSlug != null ? '相片冊：${a.name}' : '相片冊：${a.name}';
     }
   }
   if (scope.startsWith('deck:')) {
     final d = DeckLibrary.instance.installedDeck(scope.substring(5));
-    if (d != null) return '單字集：${d.info.title}';
+    if (d != null) return '相片冊：${d.info.title}';
   }
   return '全部';
 }
@@ -198,7 +198,7 @@ class _Intro extends StatelessWidget {
                         : '今天的份量已完成。想多練習可以繼續，想休息時按左上角結束。')
                     : waiting
                         ? '單字的{N}意思補齊後，會自動加入複習。'
-                        : '在照片詳情挑幾個單字，或下載卡片集，就會變成卡片。',
+                        : '在照片詳情挑幾個單字，或下載相片冊，就會變成卡片。',
                 textAlign: TextAlign.center,
                 style: MFont.manrope(14, FontWeight.w600, MColors.muted),
               ),
@@ -388,10 +388,7 @@ class _ScopeGrid extends StatelessWidget {
                               else if (url != null)
                                 _NetworkCover(url)
                               else
-                                ColoredBox(
-                                    color: value == 'all'
-                                        ? MColors.primarySoft
-                                        : MColors.albumPill),
+                                DefaultScopeCover(value),
                               Positioned(
                                 top: 6,
                                 left: 6,
@@ -404,7 +401,7 @@ class _ScopeGrid extends StatelessWidget {
                                       const _TileBadge('上次複習',
                                           color: MColors.primary),
                                     if (downloaded)
-                                      const _TileBadge('卡片集',
+                                      const _TileBadge('相片冊',
                                           color: MColors.muted),
                                   ],
                                 ),
@@ -460,7 +457,7 @@ class _NetworkCover extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final resolved = resolvePackMedia(url);
-    const blank = ColoredBox(color: MColors.albumPill);
+    const blank = DefaultScopeCover('deck');
     return packMediaIsAsset(resolved)
         ? Image.asset(resolved,
             fit: BoxFit.cover, errorBuilder: (_, __, ___) => blank)
@@ -472,6 +469,38 @@ class _NetworkCover extends StatelessWidget {
 }
 
 /// A small label on a 複習 tile's cover (上次複習, 卡片集), readable on a photo.
+/// The designed cover of a 複習 tile with no photo to show (a new learner's
+/// 綜合 / 今天新加 / 弱項, card #900): a soft gradient and an icon, never a
+/// bare grey block.
+class DefaultScopeCover extends StatelessWidget {
+  final String scope;
+
+  const DefaultScopeCover(this.scope, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final icon = switch (scope) {
+      'new' => Icons.fiber_new_rounded,
+      'weak' => Icons.trending_up_rounded,
+      _ => Icons.style_rounded,
+    };
+    return DecoratedBox(
+      key: const ValueKey('default-scope-cover'),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [MColors.primarySoft, Color(0xFFD3E4F8)],
+        ),
+      ),
+      child: Center(
+        child: Icon(icon,
+            size: 44, color: MColors.primary.withValues(alpha: 0.55)),
+      ),
+    );
+  }
+}
+
 class _TileBadge extends StatelessWidget {
   final String text;
   final Color color;
@@ -661,7 +690,9 @@ class FlashcardCardView extends StatelessWidget {
       children: [
         Expanded(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+            // 卡 #896: extra room under the card so the last lines can be
+            // scrolled clear of the rating bar.
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
             child: Column(children: [
               // 問題回報 #692: 回到正面 above the word too, not only at the
               // bottom.
