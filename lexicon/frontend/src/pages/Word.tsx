@@ -24,7 +24,7 @@ type WordView = {
     lookups: { source: string; status: string; count: number; error: string | null; at: string }[];
   }[];
   senses: { n: number; sense_key: string; sense_id: number | null; pos: string; gloss: string; labels: string[]; source: string; native: Item | null; status: string }[];
-  examples: { n: number; key: string; text: string; source: string; level: string | null; translation: Item | null; status: string }[];
+  examples: { n: number; key: string; text: string; source: string; level: string | null; translation: Item | null; status: string; audio?: { id: number; source: string; voice: string | null } | null }[];
   relations: Record<string, { label: string; items: { word: string; pos: string | null; source: string; note: string | null; difference: string | null; relation: Item | null; native: Item | null; lexeme_id: number | null; linked: string | null; status: string; zipf: number | null; rarity: string | null; cefr: string | null; cefr_source: string | null; hide_by_default: boolean }[] }>;
   morphemes: {
     summary: string;
@@ -226,9 +226,10 @@ export default function Word({ target, native, lemma }: { target: string; native
             A1–C2 每級目標 3–5 句，優先採用有{langName(native)}翻譯的句子。{" "}
             {(["A1", "A2", "B1", "B2", "C1", "C2"] as const).map((level) =>
               `${level} ${d.examples.filter((e) => e.level === level).length}`).join(" · ")}
+            {" "}· 有發音 {d.examples.filter((e) => e.audio).length}／{d.examples.length} 句
           </p>
           <table className="table bilingual">
-            <thead><tr><th>#</th><th>{langName(target)}</th><th>{langName(native)}</th><th>難度</th></tr></thead>
+            <thead><tr><th>#</th><th>{langName(target)}</th><th>{langName(native)}</th><th>難度</th><th>發音</th></tr></thead>
             <tbody>
               {d.examples.map((e) => (
                 <tr key={e.key}>
@@ -236,6 +237,7 @@ export default function Word({ target, native, lemma }: { target: string; native
                   <td>{e.text} <span className="src">{sourceName(e.source)}</span></td>
                   <td>{e.translation ? <>{String(e.translation.text)} <span className="src">{String(e.translation.source)}</span>{Boolean(e.translation.ai) && <span className="ai">AI</span>}{Boolean(e.translation.converted) && <span className="pill">簡→繁</span>}</> : <span className="bad">例句 #{e.n} 缺翻譯</span>}</td>
                   <td>{e.level ?? "—"}</td>
+                  <td>{e.audio ? <><audio controls preload="none" src={`/api/audio/${e.audio.id}/file`} /> <span className="src">{e.audio.source === "azure_tts_sentence" ? `Azure 合成${e.audio.voice ? ` · ${e.audio.voice}` : ""}` : e.audio.source}</span></> : <span className="bad">缺發音</span>}</td>
                 </tr>
               ))}
             </tbody>

@@ -122,6 +122,17 @@ def word(s: Session, t: str, n: str, lemma_in: str) -> dict:
     # The learner app consumes sentences by CEFR band.  Keep the API
     # deterministic and place bilingual pairs before untranslated fallbacks.
     level_order = {level: n for n, level in enumerate(("A1", "A2", "B1", "B2", "C1", "C2"))}
+    # Card #865: synthesized sentence recording (card #807), looked up like the exporter does.
+    from .exporter import SENTENCE_VOICES, sentence_audio_url
+    from .text import text_hash
+    urls = {sentence_audio_url(t, text_hash(ex["text"] or "")): ex for ex in examples} if t in SENTENCE_VOICES else {}
+    assets = {a.source_url: a for a in s.execute(select(m.AudioAsset).where(
+        m.AudioAsset.source_url.in_(list(urls)), m.AudioAsset.status == "ready")).scalars()} if urls else {}
+    for ex in examples:
+        a = assets.get(sentence_audio_url(t, text_hash(ex["text"] or ""))) if urls else None
+        ex["audio"] = ({"id": a.id, "path": a.path, "source": a.source, "mime": a.mime or "audio/mpeg",
+                        "voice": a.source_url.split("/")[2] if a.source_url.startswith("azure-tts://") else a.speaker}
+                       if a is not None and a.path else None)
     examples.sort(key=lambda ex: (level_order.get(ex["level"], 6),
                                   ex["translation"] is None, ex["n"]))
     for k, ex in enumerate(examples, 1):
