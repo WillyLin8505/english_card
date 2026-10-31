@@ -3896,3 +3896,9 @@ commit `6db6d76e`（Windows：flutter analyze 無 error、01:36 +826 ~2: All tes
 commit `d6e90e09`（Windows：flutter analyze 無 error、01:57 +826 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #228：模擬使用者・設定
   結果：第 21 輪（模擬輪 227）：設定 1/1 通過、findings 0；新問題無、UX 建議沿用 #474（未重複開）。
+
+## M476（2026-10-31 10:01）狀態：待做（Windows 卡 #850 交給 Mac 的 App 畫面部分）
+卡：英文包暴增：iPad 下載 91 MB（前天 64 MB），義項 images （問題回報 #1111）
+
+iPad 重新下載英文包，量大小（預期約 91 MB），翻 10 張卡圖片正常（圖片本來就來自 catalog_images）。
+- 若選 C：在 lexicon_transport 的 JSON 表示中去掉 senses[].images（後台 qc.py／quality.py 讀完整 pack，需分開處理）。
