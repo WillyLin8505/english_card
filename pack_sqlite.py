@@ -76,7 +76,9 @@ def build(pack: dict, path: Path) -> Path:
     con = sqlite3.connect(tmp)
     try:
         con.executescript(
-            "PRAGMA page_size=4096; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF;"
+            # Card #852 (問題回報 #1111): a row is ~2 KB, so 4 KB pages left about
+            # a quarter of the file empty (91 MB → 72 MB with 16 KB pages).
+            "PRAGMA page_size=16384; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF;"
             "CREATE TABLE meta(key TEXT PRIMARY KEY, value BLOB NOT NULL);"
             "CREATE TABLE lexemes(id INTEGER PRIMARY KEY, ord INTEGER NOT NULL,"
             " head TEXT NOT NULL, senses BLOB, body BLOB);")
