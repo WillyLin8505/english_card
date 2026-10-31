@@ -183,8 +183,8 @@ def rows_for(card: int, rows: list[Row], pushed: dict[int, tuple[str, str]], cre
         if card not in r.cards:
             continue
         if r.direct:
-            if r.top:
-                if not no or r.top < no:
+            if r.top_item:
+                if not no or r.top_item < no:
                     continue
             elif created and r.date and r.date < created[:10]:
                 continue
