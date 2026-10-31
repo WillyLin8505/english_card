@@ -119,13 +119,12 @@
   },
   "_mac_sync_note": "owner 10/18：每張改到 App 的卡都要在 Mac 的 iPhone 模擬器／實機驗證。每輪巡檢後跑 mac_sync.py：flutter analyze＋test 過了才 commit/push，並在 docs/mac_inbox.md 加 M 項。",
   "qwen_schedule": {
-    "enabled": false,
+    "enabled": true,
     "windows": [
-      "09:30-19:30",
-      "00:00-06:00"
+      "01:00-07:00"
     ]
   },
-  "_qwen_schedule_note": "owner 10/31：Qwen 暫停到 owner 說開始。開始時：enabled 改回 true，並 POST /agents/Qwen/resume。",
+  "_qwen_schedule_note": "owner 10/31：Qwen 只在晚上 01:00–07:00 開工（配合夜間補資料卡），白天暫停。",
   "qwen_wait_tasks": [
     4,
     396,
