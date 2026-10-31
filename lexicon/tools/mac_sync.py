@@ -5,30 +5,40 @@ simulator, and a real iPhone) before it counts. The Mac only sees what is on Git
 
  1. Collect cards finished since the last sync (dispatch_events.jsonl `finished`) whose
     result.md touches the app (app/…, flutter, iOS).
- 2. `flutter analyze` (errors only) and `flutter test` on Windows. Failing → nothing is pushed;
-    a 問題回報 "[Windows] flutter test 失敗" is opened/updated so the issue swarm fixes it.
- 3. Commit the working tree (.gitignore applies), merge origin/main, push.
- 4. Add an item M<n> to docs/mac_inbox.md (commit, cards, what to check on the iPhone) and
+ 2. Take a private copy of app/ and put every file still being edited back to HEAD (card #917,
+    merge_candidate.py): a card in progress blocks nobody and is never pushed.
+ 3. `flutter analyze` (errors only) and `flutter test` on that copy. A failure takes the changes
+    that caused it out of the copy, those cards keep waiting and 問題回報 "[Windows] flutter test 失敗"
+    is opened/updated so the issue swarm fixes them; the other cards go on.
+ 4. Commit exactly the bytes that passed, merge origin/main, push.
+ 5. Add an item M<n> to docs/mac_inbox.md (commit, cards, what to check on the iPhone) and
     push it; mark those issues "待 Mac 驗證" in their resolution.
 
     python lexicon/tools/mac_sync.py            # one sync (run by dispatch_tick, own lock)
     python lexicon/tools/mac_sync.py --dry-run  # list what would be handed over
+    python lexicon/tools/mac_sync.py --check-only  # run the checks; commit and push nothing
 State: lexicon/state/mac_sync.json · log: lexicon/logs/mac_sync.log
 """
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.request
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import flow_rules
+import heavy_lock
+import merge_candidate as mc
 from flutter_check_workspace import check_workspace
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -44,6 +54,17 @@ TAIPEI = timezone(timedelta(hours=8))
 FAIL_TITLE = "[Windows] flutter test 失敗：修好才會推給 Mac 驗證"
 FLUTTER = "flutter.bat" if os.name == "nt" else "flutter"
 NO_WINDOW = 0x08000000 if os.name == "nt" else 0
+SESSIONS = Path.home() / ".claude" / "projects" / re.sub(r"[:\\/_]", "-", str(ROOT))
+QUIET_S = 10 * 60               # a file touched this recently may be mid-edit, whoever did it
+INTERACTIVE_S = 60 * 60         # an interactive session has no card that says when it is finished
+SESSION_HOURS = 48
+ANALYZE_TIMEOUT_S = 540
+TEST_TIMEOUT_S = 25 * 60        # 540 s ended every run under load 10/31 11:41–16:07, without a word
+SLOT_WAIT_S = 20 * 60
+TEST_GAP_S = 10 * 60            # CLIs wait for the same heavy slot
+MAX_TEST_ROUNDS = 2
+MAX_ANALYZE_ROUNDS = 12
+QUARANTINE_S = 2 * 60 * 60      # the cause may be fixed in another file: try again after this
 
 
 def log(msg: str):
@@ -61,9 +82,30 @@ def http(method: str, path: str, body: dict | None = None):
         return json.load(r)
 
 
-def sh(*args, cwd=None, timeout=1800) -> subprocess.CompletedProcess:
+def sh(*args, cwd=None, timeout=1800, env=None) -> subprocess.CompletedProcess:
     return subprocess.run(list(args), cwd=cwd or ROOT, capture_output=True, text=True, encoding="utf-8",
-                          errors="replace", timeout=timeout, creationflags=NO_WINDOW)
+                          errors="replace", timeout=timeout, creationflags=NO_WINDOW, env=env)
+
+
+def flutter(*args, cwd, timeout) -> tuple[int, str]:
+    """(exit code, output); 124 = timed out. flutter.bat's children keep the pipes open after a
+    plain kill, so output goes to a file and the whole process tree is ended."""
+    LOCK.touch()    # a run outlives one lock age; the next tick must not start a second one
+    with tempfile.TemporaryFile() as out:
+        p = subprocess.Popen([FLUTTER, *args], cwd=cwd, stdout=out, stderr=subprocess.STDOUT,
+                             creationflags=NO_WINDOW)
+        try:
+            code = p.wait(timeout)
+        except subprocess.TimeoutExpired:
+            if os.name == "nt":
+                subprocess.run(["taskkill", "/T", "/F", "/PID", str(p.pid)], capture_output=True,
+                               creationflags=NO_WINDOW)
+            p.kill()
+            p.wait()
+            code = 124
+        out.seek(0)
+        return code, out.read().decode("utf-8", "replace").strip()
+
 
 GIT_BUSY_FILES = ("MERGE_HEAD", "REBASE_HEAD", "CHERRY_PICK_HEAD", "rebase-merge", "rebase-apply")
 MARKER_RE = re.compile(r"^\+(<<<<<<< |>>>>>>> )", re.M)
@@ -85,16 +127,17 @@ def conflict_marker_files(paths: list[str] | None = None) -> list[str]:
     """Files whose working-tree diff adds git conflict markers (10/30 #949: 25cd7b82 pushed some)."""
     bad = []
     cmd = ["git", "diff", "HEAD", "-U0", "--no-color"]
-    if paths:
-        cmd += ["--", *paths]
-    cur = ""
-    for line in sh(*cmd).stdout.splitlines():
-        if line.startswith("+++ b/"):
-            cur = line[6:]
-        elif MARKER_RE.match(line) and cur and cur not in bad:
-            bad.append(cur)
+    for i in range(0, len(paths or [None]), 100):   # Windows limits a command line to 32 KB
+        cur = ""
+        for line in sh(*cmd, *(["--", *paths[i:i + 100]] if paths else [])).stdout.splitlines():
+            if line.startswith("+++ b/"):
+                cur = line[6:]
+            elif MARKER_RE.match(line) and cur and cur not in bad:
+                bad.append(cur)
     # untracked files are not in `git diff HEAD`
     for line in sh("git", "ls-files", "-o", "--exclude-standard").stdout.splitlines():
+        if paths and line.strip() not in paths:
+            continue
         f = ROOT / line.strip()
         try:
             if f.is_file() and f.stat().st_size < 2_000_000 and re.search(
@@ -144,9 +187,10 @@ def issue_areas(card: int) -> list[str]:
         return []
 
 
-def app_cards(since: str | None) -> list[dict]:
-    """Finished one-off cards since `since` whose result touches the app."""
-    out, seen = [], set()
+def app_cards(since: str | None, handed: dict | None = None) -> list[dict]:
+    """Finished one-off cards since `since` whose result touches the app, minus those already
+    handed over (`handed`: card → event time; a later round of the same card comes back)."""
+    out, seen, handed = [], {}, handed or {}
     if not EVENTS.exists():
         return out
     for line in EVENTS.read_text(encoding="utf-8").splitlines():
@@ -158,32 +202,381 @@ def app_cards(since: str | None) -> list[dict]:
             continue
         if since and e["t"] <= since:
             continue
+        if e["t"] <= handed.get(str(e["card"]), ""):
+            continue
         res = ROOT / (e.get("result") or "")
         text = res.read_text(encoding="utf-8", errors="replace") if res.is_file() else e.get("summary", "")
         if e["card"] in seen:
+            out[seen[e["card"]]] = e
             continue
         if not flow_rules.is_app(text, None if flow_rules.STRONG_RE.search(text) else issue_areas(e["card"])):
             continue
-        seen.add(e["card"])
+        seen[e["card"]] = len(out)
         out.append(e)
     return out
 
 
-def checks() -> tuple[bool, str]:
-    # Each agent (including simulations) may run Flutter in APP. A retry in that
-    # same directory still races its asset cleanup / loaded sqlite3.dll on Windows.
-    # A private source copy gives analyze AND the whole test suite their own caches.
-    with check_workspace(ROOT) as app:
-        a = sh(FLUTTER, "analyze", "--no-fatal-infos", "--no-fatal-warnings", cwd=app, timeout=540)
-        if a.returncode != 0:
-            return False, "flutter analyze ????\n" + (a.stdout + a.stderr)[-3000:]
-        t = sh(FLUTTER, "test", "--reporter=expanded", cwd=app, timeout=540)
-        output = (t.stdout + t.stderr).strip()
-        if t.returncode != 0:
-            # Include pre-test filesystem errors, which have no test [E] line.
-            failed = [line for line in output.splitlines() if "[E]" in line]
-            return False, "flutter test ???\n" + "\n".join(failed[:15]) + "\n" + output[-3000:]
+@dataclass
+class Scan:
+    changed: list[str]
+    held: dict[str, str]
+    owned: dict[int, set[str]]      # waiting card → changed files it touched
+
+
+class CheckStopped(Exception):
+    """The checks themselves couldn't finish: no verdict, no card blamed."""
+
+
+def open_cards() -> dict[int, dict]:
+    """Unfinished cards. Raises when the board is down: nothing can be called finished then."""
+    tasks: dict[int, dict] = {}
+    for status in mc.OPEN_STATUS:
+        items = http("GET", f"/tasks?status={status}")
+        for t in items if isinstance(items, list) else items.get("items", []):
+            if t.get("status") == status:
+                tasks[t["id"]] = {k: t.get(k) for k in ("status", "agent", "started_at")}
+    return tasks
+
+
+def result_of(card: dict) -> str:
+    """A repeat card's result is renamed card<id>.rN.result.md; the event knows which."""
+    f = ROOT / (card.get("result") or "-")
+    return f.read_text(encoding="utf-8", errors="replace") if f.is_file() else flow_rules.result_text(int(card["card"]))
+
+
+def scan_tree(cards: list[dict]) -> Scan:
+    changed = mc.changed_paths(ROOT)
+    sessions = mc.read_sessions(SESSIONS, ROOT, mc.age_cutoff(SESSION_HOURS))
+    owned = {int(c["card"]): mc.card_files(int(c["card"]), result_of(c), sessions, changed) for c in cards}
+    known = {p for files in owned.values() for p in files}
+    held = mc.held_files(changed, ROOT, sessions, open_cards(), time.time(), QUIET_S, INTERACTIVE_S, known)
+    return Scan(changed, held, owned)
+
+
+def tree_sig(scan: Scan, cards: list[dict]) -> str:
+    """Same value = same inputs as the last run, so that run's verdict still stands."""
+    bits = [sh("git", "rev-parse", "HEAD:app").stdout.strip(), sorted(scan.held), sorted(str(c["card"]) for c in cards)]
+    for p in scan.changed:
+        f = ROOT / p
+        bits.append((p, f.stat().st_mtime_ns if f.is_file() else 0))
+    return hashlib.sha1(repr(bits).encode("utf-8", "replace")).hexdigest()
+
+
+class Candidate:
+    """The private copy under check. `out` = file taken out (back to HEAD) → why."""
+
+    def __init__(self, app: Path, scan: Scan, quarantine: dict):
+        self.app, self.checkout, self.scan = app, app.parent, scan
+        self.out: dict[str, str] = dict(scan.held)
+        self.blamed: dict[str, str] = {}    # taken out because a check failed, not merely unfinished
+        self.known_failures: list[str] = []
+        self.bytes: dict[str, bytes | None] = {}
+        for p in scan.changed:
+            mine = self.checkout / p
+            if p not in scan.held and not mine.exists() and (ROOT / p).is_file():
+                mine.parent.mkdir(parents=True, exist_ok=True)     # app/ios, app/android…: not check inputs
+                shutil.copy2(ROOT / p, mine)
+            self.bytes[p] = mine.read_bytes() if mine.is_file() else None
+        for p, q in quarantine.items():
+            if p in self.bytes and p not in self.out and time.time() - q["at"] < QUARANTINE_S \
+                    and q["sha"] == self.sha(p):
+                self.out[p] = "上次檢查擋下，內容還沒改"
+                self.blamed[p] = q.get("why") or self.out[p]
+        for p in self.out:
+            self.head(p)
+
+    def sha(self, path: str) -> str:
+        return hashlib.sha1(self.bytes.get(path) or b"").hexdigest()
+
+    @property
+    def included(self) -> set[str]:
+        return set(self.scan.changed) - set(self.out)
+
+    def head(self, path: str):
+        f = self.checkout / path
+        data = subprocess.run(["git", "show", f"HEAD:{path}"], cwd=ROOT, capture_output=True, creationflags=NO_WINDOW)
+        if data.returncode == 0:
+            f.parent.mkdir(parents=True, exist_ok=True)
+            f.write_bytes(data.stdout)
+        else:
+            f.unlink(missing_ok=True)
+
+    def mine(self, path: str):
+        f = self.checkout / path
+        if self.bytes.get(path) is None:
+            f.unlink(missing_ok=True)
+        else:
+            f.write_bytes(self.bytes[path])
+
+    def take_out(self, files: set[str], why: str, blamed: bool = False):
+        for p in files:
+            self.out[p] = why
+            if blamed:
+                self.blamed[p] = why
+            self.head(p)
+
+    def settle(self) -> bool:
+        """A card missing a file doesn't go at all: nothing half-done reaches the Mac."""
+        extra = mc.only_theirs(self.scan.owned, set(self.out)) - set(self.out)
+        self.take_out(extra, "同一張卡還有檔案沒好")
+        return bool(extra)
+
+    def unready(self, card: dict) -> bool:
+        return bool(self.scan.owned[int(card["card"])] & set(self.out))
+
+    def fingerprint(self) -> str:
+        bits = [sh("git", "rev-parse", "HEAD:app").stdout.strip()] + [(p, self.sha(p)) for p in sorted(self.included)]
+        return hashlib.sha1(repr(bits).encode("utf-8", "replace")).hexdigest()
+
+
+def analyze(c: Candidate) -> tuple[bool, str]:
+    """Take out what doesn't compile until the rest does. Needing a card that isn't finished is
+    nobody's failure, so only real errors are blamed."""
+    for _ in range(MAX_ANALYZE_ROUNDS):
+        code, output = flutter("analyze", "--no-fatal-infos", "--no-fatal-warnings", cwd=c.app, timeout=ANALYZE_TIMEOUT_S)
+        if code == 0:
+            if c.settle():
+                continue
+            return True, ""
+        errors = mc.analyze_errors(output)
+        if code == 124 or not errors:
+            return False, f"flutter analyze 沒跑完（{code}）\n" + output[-2000:]
+        moved = False
+        for f in errors:
+            reach = mc.import_closure(c.checkout, f)
+            suspects = {f} if f in c.included else reach & c.included
+            if not suspects:
+                continue
+            if reach & set(c.scan.held):
+                c.take_out(suspects, "依賴還沒做完的卡")
+            else:
+                c.take_out(suspects, f"analyze error：{f}", blamed=True)
+            moved = True
+        if not moved:
+            c.known_failures += errors
+            return False, "flutter analyze 的錯誤不在這批改動裡\n" + output[-2000:]
+    return False, "flutter analyze 拆了太多輪還是有錯"
+
+
+def run_tests(c: Candidate, files: list[str] | None = None) -> tuple[int, str]:
+    args = ["test", "--reporter=expanded", *[f.split("/", 1)[1] for f in files or []]]
+    return flutter(*args, cwd=c.app, timeout=TEST_TIMEOUT_S)
+
+
+def test_passes_without(c: Candidate, failed: list[str], group: set[str]) -> bool:
+    for p in group:
+        c.head(p)
+    try:
+        return run_tests(c, failed)[0] == 0
+    finally:
+        for p in group:
+            c.mine(p)
+
+
+def test_round(c: Candidate) -> tuple[bool, str]:
+    """(passed, line). False: something was taken out, check what is left."""
+    code, output = run_tests(c)
+    if code == 0:
         return True, output.splitlines()[-1] if output else "flutter test passed"
+    failed = mc.failed_tests(output)
+    if code == 124 or not failed:
+        raise CheckStopped(f"flutter test 沒跑完（{code}）\n" + output[-2000:])
+    code2, again = run_tests(c, failed)
+    still = [] if code2 == 0 else mc.failed_tests(again)
+    if code2 != 0 and not still:
+        raise CheckStopped("flutter test 重跑沒跑完\n" + again[-2000:])
+    flaky = sorted(set(failed) - set(still))
+    if flaky:
+        log("failed in the full run, passed alone: " + ", ".join(flaky[:8]))
+    moved = False
+    for t in still:
+        suspects = c.included & (mc.import_closure(c.checkout, t) | {p for p in c.included if not p.endswith(".dart")})
+        cause = mc.narrow(lambda g: test_passes_without(c, [t], g), suspects)
+        if not cause:
+            c.known_failures.append(t)
+            continue
+        c.take_out(cause, f"flutter test 失敗：{t}", blamed=True)
+        moved = True
+    if moved:
+        return False, ""
+    return True, f"flutter test 全過（{len(flaky)} 檔在全部一起跑時失敗、單獨重跑通過）" if flaky else "flutter test 全過"
+
+
+def commit_snapshot(c: Candidate, paths: list[str], msg: str) -> bool:
+    """Commit the bytes that passed, not whatever the tree holds by now."""
+    index = c.checkout / ".candidate_index"
+    env = {**os.environ, "GIT_INDEX_FILE": str(index)}
+    base = ["git", "--git-dir", str(git_dir()), "--work-tree", str(c.checkout)]
+    sh(*base, "read-tree", "HEAD", env=env, cwd=c.checkout)
+    for i in range(0, len(paths), 100):
+        r = sh(*base, "add", "-A", "--", *paths[i:i + 100], env=env, cwd=c.checkout)
+        if r.returncode != 0:
+            log(f"add failed: {r.stderr[-300:]}")
+            return False
+    if sh(*base, "diff", "--cached", "--quiet", env=env, cwd=c.checkout).returncode == 0:
+        return True
+    r = sh(*base, "commit", "-q", "-m", msg, env=env, cwd=c.checkout)
+    if r.returncode != 0:
+        log(f"commit failed: {r.stderr[-300:]}")
+        return False
+    for i in range(0, len(paths), 100):     # the real index follows; the working tree isn't touched
+        sh("git", "reset", "-q", "--", *paths[i:i + 100])
+    return True
+
+
+def quarantine_of(c: Candidate, state: dict) -> dict:
+    kept = {p: q for p, q in (state.get("quarantine") or {}).items() if p in c.blamed and p in c.bytes}
+    for p, why in c.blamed.items():
+        kept.setdefault(p, {"sha": c.sha(p), "at": time.time(), "why": why})
+    return kept
+
+
+def report_blamed(c: Candidate, cards: list[dict], state: dict):
+    if not c.blamed and not c.known_failures:
+        return
+    sig = hashlib.sha1(repr((sorted(c.blamed), sorted(c.known_failures))).encode("utf-8", "replace")).hexdigest()
+    if sig == state.get("reported"):    # one failure, one CLI: not a new one every two minutes
+        return
+    lines = [f"{p}：{why}" for p, why in sorted(c.blamed.items())][:15]
+    if c.known_failures:
+        lines.append("HEAD 上就失敗，不是這批改動造成：" + "、".join(c.known_failures[:10]))
+    report_failure("\n".join(lines), [x for x in cards if c.scan.owned[int(x["card"])] & set(c.blamed)] or cards)
+    state["reported"] = sig
+
+
+def note_waiting(state: dict, cards: list[dict], why: dict[str, str], blamed: dict[str, str], owned: dict):
+    """What flow_tick shows per card: why it waits, and which cards are blocked by their own failure."""
+    state["waiting"] = {str(x["card"]): sorted({why[p] for p in owned[int(x["card"])] if p in why})[:3]
+                        for x in cards if owned[int(x["card"])] & set(why)}
+    state["blocked"] = sorted(int(x["card"]) for x in cards if owned[int(x["card"])] & set(blamed))
+
+
+def save_state(state: dict):
+    STATE.write_text(json.dumps(state, ensure_ascii=False, indent=1), encoding="utf-8")
+
+
+def sync_app(cards: list[dict], state: dict, check_only: bool = False) -> int:
+    scan = scan_tree(cards)
+    sig = tree_sig(scan, cards)
+    if sig == state.get("last_sig") and not check_only:
+        return 0
+    ready = [c for c in cards if not scan.owned[int(c["card"])] & set(scan.held)]
+    log(f"{len(cards)} app card(s) to hand over: {', '.join('#' + str(c['card']) for c in cards)}"
+        f"; {len(scan.held)} of {len(scan.changed)} changed files still being edited, {len(ready)} card(s) ready")
+    if not ready and not check_only:
+        note_waiting(state, cards, scan.held, {}, scan.owned)
+        state["last_sig"] = sig
+        save_state(state)
+        return 0
+    if time.time() - (state.get("tested_at") or 0) < TEST_GAP_S and not check_only:
+        return 2    # the CLIs need the heavy slot too; a later tick tries again
+    with check_workspace(ROOT) as app:
+        head = sh("git", "rev-parse", "HEAD").stdout.strip()
+        c = Candidate(app, scan_tree(cards), state.get("quarantine") or {})     # an edit during the copy counts
+        started = time.time()
+        rc = check_and_push(c, cards, state, head, check_only)
+        log(f"check took {int(time.time() - started)} s, exit {rc}, left out: {len(c.out)} file(s), "
+            f"{len(c.blamed)} blamed, {len(c.scan.held)} still being edited")
+        if check_only:
+            log(f"would take out: {sorted(c.blamed)[:8]}; known failures {c.known_failures[:8]}")
+            return rc
+        state["quarantine"] = quarantine_of(c, state)
+        note_waiting(state, cards, c.out, c.blamed, c.scan.owned)
+        report_blamed(c, cards, state)      # also on a push: the others went on, these still need a fix
+        state["last_sig"] = sig if rc == 1 else None
+        save_state(state)
+        return rc
+
+
+def check_and_push(c: Candidate, cards: list[dict], state: dict, head: str, check_only: bool) -> int:
+    """0 = pushed or nothing to do · 1 = no push, the verdict stands · 2 = no verdict, try again."""
+    line = ""
+    try:
+        for _ in range(MAX_TEST_ROUNDS):
+            LOCK.touch()
+            ok, why = analyze(c)
+            if not ok:
+                raise CheckStopped(why)
+            if all(c.unready(x) for x in cards):
+                log("no card can go yet: " + "; ".join(f"{p}: {w}" for p, w in list(c.out.items())[:5]))
+                return 1
+            mark = c.fingerprint()
+            if mark == state.get("passed"):
+                line = state.get("passed_line") or "flutter test 全過"
+                break
+            if mark == state.get("failed"):
+                return 1
+            if not heavy_lock.slot(SLOT_WAIT_S):
+                log("heavy slot busy → next tick")
+                return 2
+            LOCK.touch()
+            try:
+                passed, line = test_round(c)
+            finally:
+                heavy_lock.release()
+                state["tested_at"] = time.time()
+            if passed:
+                state["passed"], state["passed_line"] = mark, line
+                break
+            state["failed"] = mark
+        else:
+            log("checks failed → taken out: " + ", ".join(sorted(c.blamed)[:8]))
+            return 1
+    except CheckStopped as e:
+        warn("檢查沒跑完：" + str(e)[:200].replace("\n", " "))
+        return 2
+    landing = [x for x in cards if not c.unready(x)]
+    log(f"checks passed: {len(landing)} card(s) go, {len(cards) - len(landing)} wait; {line}")
+    if c.known_failures:
+        line += f"；另有 {len(c.known_failures)} 檔在 HEAD 上就失敗（已開問題回報，不是這批造成）"
+    return 0 if check_only else push_cards(c, landing, cards, state, head, line)
+
+
+def push_cards(c: Candidate, landing: list[dict], cards: list[dict], state: dict, head: str, line: str) -> int:
+    paths = sorted(c.included)
+    why = unsafe_to_commit(paths)
+    if why:
+        warn(why)
+        return 2
+    moved = sh("git", "diff", "--name-only", head, "HEAD", "--", "app/").stdout.split()     # not what was checked
+    if moved:
+        log("HEAD moved under the check: " + ", ".join(moved[:5]))
+        return 2
+    msg = ("Sync for Mac verification: cards " + ", ".join(f"#{x['card']}" for x in landing)
+           + "\n\nCommitted by lexicon/tools/mac_sync.py after flutter analyze + flutter test passed.")
+    if paths and not commit_snapshot(c, paths, msg):
+        return 2
+    sh("git", "fetch", "-q", "origin")
+    r = sh("git", "merge", "-q", "--no-edit", "origin/main")
+    if r.returncode != 0:
+        log(f"merge with origin/main failed: {r.stdout[-300:]} {r.stderr[-300:]}")
+        sh("git", "merge", "--abort")
+        return 2
+    commit = sh("git", "rev-parse", "--short", "HEAD").stdout.strip()
+    no = next_item_no()
+    with INBOX.open("a", encoding="utf-8", newline="\n") as f:
+        f.write(inbox_item(no, commit, landing, line))
+    sh("git", "commit", "-q", "-m", f"Mac inbox M{no}: verify cards on iPhone", "--", "docs/mac_inbox.md")
+    if not push_origin("app"):
+        return 2
+    mark_issues(landing, no, commit)
+    # the web app served by serve_app.py (127.0.0.1:8123 / api.willylinai.com) is a build:
+    # rebuild it so the owner sees the same code the Mac verifies (owner 10/19)
+    defines = ["--dart-define-from-file=posthog.local.json"] if (APP / "posthog.local.json").exists() else []
+    b = sh(FLUTTER, "build", "web", "--release", *defines, cwd=APP, timeout=1500)
+    log("web build " + ("OK" if b.returncode == 0 else f"failed: {(b.stdout + b.stderr)[-300:]}"))
+    handed = state.setdefault("handed", {})
+    for x in landing:
+        if x["t"]:
+            handed[str(x["card"])] = x["t"]
+    if len(landing) == len(cards):      # nobody left behind: the plain time mark is enough again
+        state["since"] = max([x["t"] for x in cards if x["t"]] or [state.get("since") or ""])
+        state["handed"] = {}
+    state["last"] = {"at": datetime.now(TAIPEI).isoformat(timespec="seconds"), "item": f"M{no}",
+                     "commit": commit, "cards": [x["card"] for x in landing]}
+    save_state(state)
+    log(f"pushed {commit}; inbox M{no} with {len(landing)} card(s)")
+    return 0
 
 
 def report_failure(text: str, cards: list[dict]):
@@ -292,80 +685,36 @@ def main(argv=None) -> int:
     sys.stdout.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--check-only", action="store_true")
     ap.add_argument("--also", default="", help="extra card ids (e.g. cards launched by hand), comma-separated")
     a = ap.parse_args(argv)
     if LOCK.exists() and time.time() - LOCK.stat().st_mtime < 60 * 60:
         log("another mac_sync is running → skip")
         return 0
     state = json.loads(STATE.read_text(encoding="utf-8")) if STATE.exists() else {}
-    cards = app_cards(state.get("since"))
+    cards = app_cards(state.get("since"), state.get("handed"))
     for cid in [int(x) for x in a.also.split(",") if x.strip()]:
         if all(c["card"] != cid for c in cards):
             t = http("GET", f"/tasks/{cid}")
             cards.append({"card": cid, "t": "", "title": t.get("title"), "outcome": (t.get("progress") or "")[:200]})
     if not cards:
         return 0 if a.dry_run else push_non_app()
-    log(f"{len(cards)} app card(s) to hand over: {', '.join('#' + str(c['card']) for c in cards)}")
     if a.dry_run:
+        log(f"{len(cards)} app card(s) to hand over: {', '.join('#' + str(c['card']) for c in cards)}")
+        scan = scan_tree(cards)
+        ready = [str(c["card"]) for c in cards if not scan.owned[int(c["card"])] & set(scan.held)]
+        log(f"{len(scan.changed)} changed, {len(scan.held)} still being edited; ready now: {', '.join(ready)}")
         return 0
     LOCK.write_text(str(os.getpid()))
     try:
-        upto = max([c["t"] for c in cards if c["t"]] or [state.get("since") or ""])
-        ok, line = checks()
-        if not ok:
-            log("checks failed → not pushing app/; reported as an issue")
-            report_failure(line, cards)
-            # the Mac's inbox and screenshots don't wait for app tests (10/26: #726–#729 shots stuck)
-            LOCK.unlink(missing_ok=True)
-            push_non_app()
-            return 1
-        why = unsafe_to_commit()  # checks take minutes: re-check now, a merge may have started meanwhile
-        if why:
-            warn(why)
-            LOCK.unlink(missing_ok=True)
-            return 1
-        sh("git", "add", "-A")
-        # GitHub refuses files over 100 MB and then every later push fails too (10/22: a 327 MB
-        # agent scratch pack blocked the Mac for hours) — never commit anything that big
-        for p in sh("git", "diff", "--cached", "--name-only").stdout.splitlines():
-            f = ROOT / p.strip()
-            if f.is_file() and f.stat().st_size > 50 * 1024 * 1024:
-                log(f"not committing {p} ({f.stat().st_size // 2**20} MB)")
-                sh("git", "reset", "-q", "--", p.strip())
-        if sh("git", "diff", "--cached", "--quiet").returncode != 0:
-            msg = ("Sync for Mac verification: cards " + ", ".join(f"#{c['card']}" for c in cards)
-                   + "\n\nCommitted by lexicon/tools/mac_sync.py after flutter analyze + flutter test passed.")
-            r = sh("git", "commit", "-q", "-m", msg)
-            if r.returncode != 0:
-                log(f"commit failed: {r.stderr[-300:]}")
-                return 1
-        sh("git", "fetch", "-q", "origin")
-        r = sh("git", "merge", "-q", "--no-edit", "origin/main")
-        if r.returncode != 0:
-            log(f"merge with origin/main failed: {r.stdout[-300:]} {r.stderr[-300:]}")
-            sh("git", "merge", "--abort")
-            return 1
-        commit = sh("git", "rev-parse", "--short", "HEAD").stdout.strip()
-        no = next_item_no()
-        with INBOX.open("a", encoding="utf-8", newline="\n") as f:
-            f.write(inbox_item(no, commit, cards, line))
-        sh("git", "commit", "-q", "-m", f"Mac inbox M{no}: verify cards on iPhone", "--", "docs/mac_inbox.md")
-        if not push_origin("app"):
-            return 1
-        mark_issues(cards, no, commit)
-        # the web app served by serve_app.py (127.0.0.1:8123 / api.willylinai.com) is a build:
-        # rebuild it so the owner sees the same code the Mac verifies (owner 10/19)
-        defines = ["--dart-define-from-file=posthog.local.json"] if (APP / "posthog.local.json").exists() else []
-        b = sh(FLUTTER, "build", "web", "--release", *defines, cwd=APP, timeout=1500)
-        log("web build " + ("OK" if b.returncode == 0 else f"failed: {(b.stdout + b.stderr)[-300:]}"))
-        state["since"] = upto
-        state["last"] = {"at": datetime.now(TAIPEI).isoformat(timespec="seconds"), "item": f"M{no}",
-                         "commit": commit, "cards": [c["card"] for c in cards]}
-        STATE.write_text(json.dumps(state, ensure_ascii=False, indent=1), encoding="utf-8")
-        log(f"pushed {commit}; inbox M{no} with {len(cards)} card(s)")
-        return 0
+        rc = sync_app(cards, state, a.check_only)
     finally:
         LOCK.unlink(missing_ok=True)
+        heavy_lock.release()
+    if not a.check_only:
+        # the Mac's inbox and screenshots don't wait for app tests (10/26: #726–#729 shots stuck)
+        push_non_app()
+    return rc
 
 
 if __name__ == "__main__":

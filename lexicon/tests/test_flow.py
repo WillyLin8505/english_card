@@ -240,3 +240,16 @@ def test_feedback_finds_its_card(client):
     _stage(client, "issue", i["id"], "ipad_verify")
     rows_ = client.get(f"/flow/overview?q=%23{i['id']}", headers=H).json()["feedback"]
     assert rows_[0]["cards"] == [t["id"]] and rows_[0]["stage"] == "ipad_verify"
+
+
+def test_one_cards_failure_fails_only_that_card():
+    """Card #917: other cards in Windows 檢查 show why they wait, not a shared failure."""
+    def task(i):
+        return {"id": i, "status": "done", "issue_ids": []}
+    items = {"tasks": [task(1), task(2), task(3)], "issues": []}
+    sync = {"blocked": [1], "waiting": {"1": ["flutter test 失敗：test/a_test.dart"], "2": ["卡 #9 還沒做完"]}}
+    changes, _ = flow_tick.plan(items, [], {}, set(), {}, sync, text_of=lambda c: "app/lib/a.dart")
+    got = {c["id"]: (c["stage"], c["state"], c["note"]) for c in changes}
+    assert got[1] == ("windows_check", "failed", "flutter test 失敗：test/a_test.dart")
+    assert got[2] == ("windows_check", None, "卡 #9 還沒做完")
+    assert got[3] == ("windows_check", None, None)

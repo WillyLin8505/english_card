@@ -42,10 +42,21 @@ def slot(timeout_s: float = 3000.0) -> bool:
     end = time.time() + timeout_s
     while not _try(_FH):
         if time.time() > end:
+            release()       # a later slot() in this process must not take the open file for the lock
             return False
         time.sleep(5)
     os.environ[ENV] = "1"
     return True
+
+
+def release():
+    """Give the slot back early, for a caller that needs it for only part of its run."""
+    global _FH
+    if _FH is None:
+        return
+    _FH.close()     # closing drops the OS lock
+    _FH = None
+    os.environ.pop(ENV, None)
 
 
 def main(argv: list[str]) -> int:

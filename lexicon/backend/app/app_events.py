@@ -48,8 +48,9 @@ def record(s: Session, body: dict, today: date | None = None) -> dict:
         except ValueError:
             pass
         res = s.execute(pg_insert(m.AppEvent).values(install_id=iid, event=item["event"], day=day)
-                        .on_conflict_do_nothing(constraint="uq_app_event"))
-        stored += res.rowcount or 0
+                        .on_conflict_do_nothing(constraint="uq_app_event")
+                        .returning(m.AppEvent.id))
+        stored += len(res.fetchall())
     return {"ok": True, "stored": stored}
 
 

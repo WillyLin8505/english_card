@@ -18,7 +18,6 @@ import re
 import subprocess
 import sys
 import urllib.error
-import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -36,7 +35,6 @@ CONFIRMED = STATE_DIR / "owner_confirmed.json"
 LOG = ROOT / "lexicon" / "logs" / "flow_tick.log"
 API = "http://127.0.0.1:5173/api"
 TAIPEI = timezone(timedelta(hours=8))
-FAIL_QUERY = "flutter test 失敗"
 RELEASE_RE = re.compile(r"(?m)^\|\s*(\d+\.\d+\.\d+\S*)\s*\|[^|]*\|\s*`?([0-9a-f]{6,40})`?\s*\|")
 DIGEST_HOUR = 9
 

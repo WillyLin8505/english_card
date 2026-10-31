@@ -267,6 +267,141 @@ def test_check_only_changes_nothing(repo, monkeypatch):
     assert _git(root, "rev-parse", "HEAD") == head and not mac_sync.STATE.exists()
 
 
+def test_check_only_reports_and_saves_nothing(repo, monkeypatch):
+    root, sessions, reports = repo
+    (root / "app/lib/a.dart").write_text("// a bad\n", encoding="utf-8")
+    _session(sessions, "s1", 1, [("app/lib/a.dart", "2026-10-31T10:00:00Z")])
+    FakeFlutter(monkeypatch, lambda app, args: (1, "  error - nope - lib\\a.dart:1:1 - nope") if args[0] == "analyze"
+                and "bad" in (app / "lib" / "a.dart").read_text(encoding="utf-8") else (0, "ok"))
+    state = {}
+    assert mac_sync.sync_app(_cards(1), state, check_only=True) == 1
+    assert not reports and state == {} and not mac_sync.STATE.exists()
+
+
+def test_a_blamed_card_gets_its_fix_card_even_when_the_others_are_pushed(repo, monkeypatch):
+    root, sessions, reports = repo
+    (root / "app/lib/a.dart").write_text("// a ok\n", encoding="utf-8")
+    (root / "app/lib/b.dart").write_text("broken(\n", encoding="utf-8")
+    _session(sessions, "s1", 1, [("app/lib/a.dart", "2026-10-31T10:00:00Z")])
+    _session(sessions, "s2", 2, [("app/lib/b.dart", "2026-10-31T10:00:00Z")])
+    FakeFlutter(monkeypatch, lambda app, args: (1, "  error - x - lib\\b.dart:1:1 - x") if args[0] == "analyze"
+                and "broken" in (app / "lib" / "b.dart").read_text(encoding="utf-8") else (0, "ok"))
+    state = {}
+    assert mac_sync.sync_app(_cards(1, 2), state) == 0
+    assert len(reports) == 1 and "app/lib/b.dart" in reports[0][0]
+    assert [c["card"] for c in reports[0][1]] == ["2"]      # the issue names that card, not the batch
+    assert state["blocked"] == [2]
+
+
+def test_failure_head_also_has_opens_a_fix_card(repo, monkeypatch):
+    root, sessions, reports = repo
+    (root / "app/lib/a.dart").write_text("// a new\n", encoding="utf-8")
+    _session(sessions, "s1", 1, [("app/lib/a.dart", "2026-10-31T10:00:00Z")])
+    FakeFlutter(monkeypatch, lambda app, args: (1, "00:01 +0 -1: test/a_test.dart: old failure [E]") if args[0] == "test" else (0, "ok"))
+    state = {}
+    assert mac_sync.sync_app(_cards(1), state) == 0
+    assert len(reports) == 1 and "HEAD 上就失敗" in reports[0][0] and not state["blocked"]
+
+
+def test_analyze_error_outside_the_batch_opens_a_fix_card(repo, monkeypatch):
+    root, sessions, reports = repo
+    (root / "app/lib/a.dart").write_text("// a new\n", encoding="utf-8")
+    _session(sessions, "s1", 1, [("app/lib/a.dart", "2026-10-31T10:00:00Z")])
+    FakeFlutter(monkeypatch, lambda app, args: (1, "  error - x - lib\\c.dart:1:1 - x") if args[0] == "analyze" else (0, "ok"))
+    state = {}
+    assert mac_sync.sync_app(_cards(1), state) == 2
+    assert any(cards and "app/lib/c.dart" in text for text, cards in reports)
+    assert _shown(root, "app/lib/a.dart") == "// a v1"
+
+
+def test_a_pubspec_change_can_be_the_cause_of_a_failing_test(repo, monkeypatch):
+    root, sessions, _ = repo
+    (root / "app/pubspec.yaml").write_text("name: app\n# bad\n", encoding="utf-8")
+    (root / "app/lib/c.dart").write_text("// c ok\n", encoding="utf-8")
+    _session(sessions, "s1", 1, [("app/pubspec.yaml", "2026-10-31T10:00:00Z")])
+    _session(sessions, "s3", 3, [("app/lib/c.dart", "2026-10-31T10:00:00Z")])
+
+    def rule(app, args):
+        if args[0] == "test" and "bad" in (app / "pubspec.yaml").read_text(encoding="utf-8"):
+            return 1, "00:01 +0 -1: test/a_test.dart: works [E]\n  boom"
+        return 0, "ok"
+    FakeFlutter(monkeypatch, rule)
+    state = {}
+    assert mac_sync.sync_app(_cards(1, 3), state) == 0
+    assert "bad" not in _shown(root, "app/pubspec.yaml") and list(state["waiting"]) == ["1"]
+
+
+def test_cooling_down_touches_nothing(repo, monkeypatch):
+    root, sessions, _ = repo
+    (root / "app/lib/a.dart").write_text("// a\n", encoding="utf-8")
+    _session(sessions, "s1", 1, [("app/lib/a.dart", "2026-10-31T10:00:00Z")])
+    monkeypatch.setattr(mac_sync, "TEST_GAP_S", 600)
+    fake = FakeFlutter(monkeypatch)
+    state = {"tested_at": time.time()}
+    assert mac_sync.sync_app(_cards(1), state) == 2
+    assert not fake.calls
+
+
+def test_second_round_after_a_blame_runs_inside_the_cool_down(repo, monkeypatch):
+    root, sessions, reports = repo
+    (root / "app/lib/a.dart").write_text("// a bad\n", encoding="utf-8")
+    (root / "app/lib/c.dart").write_text("// c ok\n", encoding="utf-8")
+    _session(sessions, "s1", 1, [("app/lib/a.dart", "2026-10-31T10:00:00Z")])
+    _session(sessions, "s3", 3, [("app/lib/c.dart", "2026-10-31T10:00:00Z")])
+    monkeypatch.setattr(mac_sync, "TEST_GAP_S", 600)
+    FakeFlutter(monkeypatch, lambda app, args: (1, "00:01 +0 -1: test/a_test.dart: w [E]") if args[0] == "test"
+                and "bad" in (app / "lib" / "a.dart").read_text(encoding="utf-8") else (0, "ok"))
+    assert mac_sync.sync_app(_cards(1, 3), {}) == 0
+    assert _shown(root, "app/lib/c.dart") == "// c ok" and len(reports) == 1
+
+
+def test_head_moving_in_app_under_the_check_stops_the_push(repo, monkeypatch):
+    root, sessions, _ = repo
+    (root / "app/lib/a.dart").write_text("// a\n", encoding="utf-8")
+    _session(sessions, "s1", 1, [("app/lib/a.dart", "2026-10-31T10:00:00Z")])
+
+    def rule(app, args):
+        if args[0] == "test":     # someone else commits another app file meanwhile
+            (root / "app/lib/c.dart").write_text("// c other\n", encoding="utf-8")
+            _git(root, "add", "app/lib/c.dart")
+            _git(root, "commit", "-qm", "other")
+        return 0, "ok"
+    FakeFlutter(monkeypatch, rule)
+    assert mac_sync.sync_app(_cards(1), {}) == 2
+    assert _shown(root, "app/lib/a.dart") == "// a v1"
+
+
+def test_file_no_log_explains_waits_for_the_clis_running_when_it_was_written(tmp_path):
+    import os
+    f = tmp_path / "a.dart"
+    f.write_text("x", encoding="utf-8")
+    now = time.time()
+    ago = lambda s: time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now - s))  # noqa: E731
+    os.utime(f, (now - 5000, now - 5000))
+    running = {5: {"status": "in_progress", "agent": "Claude CLI 1", "started_at": ago(6000)}}
+    later = {5: {"status": "in_progress", "agent": "Claude CLI 1", "started_at": ago(100)}}
+    assert "a.dart" in mc.held_files(["a.dart"], tmp_path, [], running, now, 600, 3600)
+    assert "a.dart" not in mc.held_files(["a.dart"], tmp_path, [], later, now, 600, 3600)       # that CLI came later
+    assert "a.dart" not in mc.held_files(["a.dart"], tmp_path, [], running, now, 600, 3600, {"a.dart"})    # a result names it
+    assert "a.dart" not in mc.held_files(["a.dart"], tmp_path, [], {}, now, 600, 3600)
+
+
+def test_slot_timeout_leaves_no_fake_lock(tmp_path, monkeypatch):
+    import heavy_lock
+    monkeypatch.setattr(heavy_lock, "LOCK", tmp_path / "h.lock")
+    monkeypatch.delenv(heavy_lock.ENV, raising=False)
+    monkeypatch.setattr(heavy_lock, "_try", lambda fh: False)
+    assert heavy_lock.slot(0) is False
+    assert heavy_lock._FH is None and heavy_lock.slot(0) is False
+
+
+def test_conflict_marker_scan_takes_long_path_lists(repo):
+    root, _, _ = repo
+    (root / "app/lib/a.dart").write_text("// x\n<<<<<<< HEAD\n", encoding="utf-8")
+    paths = [f"app/lib/none{i}.dart" for i in range(250)] + ["app/lib/a.dart"]
+    assert mac_sync.conflict_marker_files(paths) == ["app/lib/a.dart"]
+
+
 def test_a_later_round_of_a_handed_card_comes_back(repo):
     root, _, _ = repo
     lines = [{"t": "2026-10-31T10:00:00+08:00", "type": "finished", "card": "7", "action": "done", "summary": "app/lib/a.dart"},
@@ -304,6 +439,7 @@ def test_parsers():
            "  error - The getter 'cards' isn't defined - test\\card912_cloud_sync_test.dart:223:19 - undefined_getter\n"
            "  error - no - lib\\services\\b.dart:1:1 - z\n")
     assert mc.analyze_errors(out) == ["app/test/card912_cloud_sync_test.dart", "app/lib/services/b.dart"]
+    assert mc.analyze_errors("   error • no • lib\\c.dart:1:1 • z\n") == ["app/lib/c.dart"]    # Windows Terminal
     out = ("00:01 +1: test/ok_test.dart: fine\n"
            "00:02 +1 -1: test/simulation/x_test.dart: name [E]\n"
            "00:03 +1 -2: C:/tmp/app/test/y_test.dart: other [E]\n"

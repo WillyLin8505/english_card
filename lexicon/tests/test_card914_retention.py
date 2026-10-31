@@ -16,7 +16,10 @@ def _id(n):
 
 
 def _ev(s, n, event, day):
-    app_events.record(s, {"install_id": _id(n), "events": [{"event": event, "day": day.isoformat()}]}, TODAY)
+    """Rows are inserted directly: the public API refuses a date more than 2 days off,
+    which would hide the classic day-7 and day-30 cases."""
+    s.add(m.AppEvent(install_id=_id(n), event=event, day=day))
+    s.flush()
 
 
 def test_classic_retention_hand_checked(session):
