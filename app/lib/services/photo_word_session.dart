@@ -88,7 +88,7 @@ class PhotoWordSession extends ChangeNotifier {
   }) : pack = pack ?? LexiconPack.instance {
     final photo = repo.photo(photoId);
     _rejected.addAll(photo?.rejectedWords ?? const []);
-    _target = (repo.profile.level + (photo?.difficultyOffset ?? 0)).clamp(0, 5);
+    _target = _openingTarget(photo);
     _poolSize = photo?.candidates.length ?? 0;
     if (photo != null && photo.wordsSavedAt != null) {
       words = [
@@ -117,6 +117,31 @@ class PhotoWordSession extends ChangeNotifier {
   }
 
   late int _target;
+
+  /// 問題回報 #942 / #943: a photo the learner has not dialled yet opens at
+  /// the highest level its own candidates reach, not at the learner's level
+  /// (on about half the photos the top level has no word, so the list is
+  /// blank). Saved photos keep the dial they were left on.
+  int _openingTarget(Photo? photo) {
+    final learner = (repo.profile.level + (photo?.difficultyOffset ?? 0))
+        .clamp(0, cefrLevels.length - 1);
+    if (photo == null ||
+        photo.wordsSavedAt != null ||
+        photo.difficultyOffset != 0 ||
+        photo.candidates.isEmpty) {
+      return learner;
+    }
+    var top = -1;
+    for (final c in photo.candidates) {
+      final i = cefrLevels.indexOf(c.level);
+      if (i > top) top = i;
+    }
+    return top < 0 || top >= learner ? learner : top;
+  }
+
+  /// Whether the learner moved the dial on this photo. The opening position
+  /// is not a choice, so it is not recorded as a dial signal or saved.
+  bool _dialMoved = false;
   int _poolSize = 0;
 
   /// 問題回報 #852: the words each dial position has shown, so sliding away
@@ -390,6 +415,7 @@ class PhotoWordSession extends ChangeNotifier {
     if (t == _target && live) return;
     final from = _target;
     _target = t;
+    if (t != from) _dialMoved = true;
     _dirty = true;
     if (live || t == from) {
       _reselect(allowTopUp: !live);
@@ -780,7 +806,9 @@ class PhotoWordSession extends ChangeNotifier {
       // Tagged, but the dial left nothing to learn at this level: keep the
       // dial for this photo (spec: 輪盤選擇只保存為此照片的
       // difficultyOffset), so reopening shows the same empty level.
-      if (p.candidates.isNotEmpty && offset != p.difficultyOffset) {
+      if (p.candidates.isNotEmpty &&
+          _dialMoved &&
+          offset != p.difficultyOffset) {
         repo.updatePhoto(p.copyWith(difficultyOffset: offset));
         _dirty = false;
       }
@@ -799,7 +827,9 @@ class PhotoWordSession extends ChangeNotifier {
             !c.inferred)
           ListedWord(c, c.point, placed: c.grounded),
     ];
-    if (offset != p.difficultyOffset && offset != 0) {
+    // The opening position (see _openingTarget) is not the learner's choice.
+    final savedOffset = _dialMoved ? offset : p.difficultyOffset;
+    if (_dialMoved && offset != p.difficultyOffset && offset != 0) {
       repo.recordSignal(DialSignal(offset));
     }
     final created = repo.savePhotoWords(
@@ -816,7 +846,7 @@ class PhotoWordSession extends ChangeNotifier {
                 placed: w.placed,
                 ownMeaning: w.ownMeaning),
       ],
-      difficultyOffset: offset,
+      difficultyOffset: savedOffset,
       alsoSeen: alsoSeen,
     );
     _dirty = false;

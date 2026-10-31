@@ -156,6 +156,7 @@ class WordEnricher extends ChangeNotifier {
     repo.applyWordData(e.id,
         ipa: localIpa,
         ipaSource: localIpa == null ? null : 'cmudict',
+        dropStale: retranslate,
         status: WordDataStatus.failed,
         error: '離線字庫缺少：${missing.join('、')}');
     return true;

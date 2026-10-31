@@ -767,7 +767,9 @@ class WordDatabaseRepository extends ChangeNotifier {
   /// Background word data (local dictionary / AI). Fields the learner
   /// edited are left alone; examples are only added. With [translatedFor]
   /// the meaning, definition and example translations are replaced by
-  /// ones in that native language (母語變更後重新翻譯).
+  /// ones in that native language (母語變更後重新翻譯). [dropStale] blanks
+  /// those fields instead when no translation in the new native language
+  /// exists (問題回報 #947: never show another native's meaning).
   void applyWordData(
     String wordEntryId, {
     String? meaning,
@@ -777,6 +779,7 @@ class WordDatabaseRepository extends ChangeNotifier {
     List<WordExample> newExamples = const [],
     Map<int, String> translations = const {},
     String? translatedFor,
+    bool dropStale = false,
     required WordDataStatus status,
     String? error,
   }) {
@@ -785,6 +788,11 @@ class WordDatabaseRepository extends ChangeNotifier {
     final replace = translatedFor != null && translatedFor != e.nativeOfData;
     bool free(String field) => !e.userEdited.contains(field);
     final examples = [...e.examples];
+    if (dropStale && free(WordField.examples)) {
+      for (var i = 0; i < examples.length; i++) {
+        examples[i] = examples[i].copyWith(translation: '');
+      }
+    }
     if (free(WordField.examples)) {
       for (final t in translations.entries) {
         if (t.key < examples.length &&
@@ -803,7 +811,9 @@ class WordDatabaseRepository extends ChangeNotifier {
       }
     }
     _putEntry(e.copyWith(
-      meaning: free(WordField.meaning) &&
+      meaning: dropStale && free(WordField.meaning)
+          ? ''
+          : free(WordField.meaning) &&
               (replace || e.meaning.isEmpty) &&
               (meaning ?? '').isNotEmpty
           ? meaning
