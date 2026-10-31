@@ -3902,3 +3902,9 @@ commit `d6e90e09`（Windows：flutter analyze 無 error、01:57 +826 ~2: All tes
 
 iPad 重新下載英文包，量大小（預期約 91 MB），翻 10 張卡圖片正常（圖片本來就來自 catalog_images）。
 - 若選 C：在 lexicon_transport 的 JSON 表示中去掉 senses[].images（後台 qc.py／quality.py 讀完整 pack，需分開處理）。
+
+## M477（2026-10-31 10:05）狀態：待做（Windows 卡 #852 交給 Mac 的 App 畫面部分）
+卡：問題回報 #1111：英文包暴增：iPad 下載 91 MB（前天 64 MB），義項 images 塞上千張圖
+
+iPad 重新下載英文包，量大小，翻 10 張卡圖片正常（改分頁後畫面應該不變）。
+- 未做：綁定與 catalog tags 瘦身（會改 App 看到的圖，等決定）。
