@@ -466,8 +466,28 @@ def build_pack() -> dict:
     """Same in-process pack as ``qc.py`` ``build_pack``. Read-only transaction."""
     import serve_app
     serve_app._cache.clear()
-    body, _etag = serve_app.live_pack("en", "zh-TW")
-    return json.loads(body)
+    # card #171 r18: live_pack serialises the whole pack three times (MemoryError under the
+    # 6 GB CLI cap). Capture the pack object at its first json.dumps and skip the copies.
+    captured: list = []
+
+    class _Capture:
+        def __getattr__(self, name):
+            return getattr(json, name)
+
+        @staticmethod
+        def dumps(obj, *args, **kwargs):
+            if isinstance(obj, dict) and "lexemes" in obj:
+                captured.append(obj)
+                return ""
+            return json.dumps(obj, *args, **kwargs)
+
+    real_json = serve_app.json
+    serve_app.json = _Capture()
+    try:
+        serve_app.live_pack("en", "zh-TW")
+    finally:
+        serve_app.json = real_json
+    return captured[0]
 
 
 def _load_previous(path: Path) -> dict | None:
