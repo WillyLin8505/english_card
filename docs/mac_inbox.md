@@ -3733,88 +3733,88 @@ commit `a6544e59`（Windows：flutter analyze 無 error、01:43 +826 ~2: All tes
 - 卡 #12：模擬使用者・跨分頁（亂點、詞庫更新）
   結果：第 225 輪：2/2 通過（packupdate 466 秒、fuzz 376 秒，pack 26352 詞），沒有新問題。
 
-## M444（2026-10-31 01:39）狀態：待做（Windows 卡 #738 交給 Mac 的 App 畫面部分）
+## M444（2026-10-31 01:39）狀態：等 #738 全部完成
 卡：[owner] 做法文→繁中詞庫（#882 B 部分）
 
 用 fr×zh-TW 新 sqlite 在 iPad 查 maison、le。
 - 注意：我誤將一次 QC 放背景（缺 --out 立刻失敗，無影響），之後皆前景執行。
 
-## M445（2026-10-31 02:01）狀態：待做（Windows 卡 #738 交給 Mac 的 App 畫面部分）
+## M445（2026-10-31 02:01）狀態：等 #738 全部完成
 卡：[owner] 做法文→繁中詞庫（#882 B 部分）
 
 用 iPad 載入 fr×zh-TW 新 sqlite 查 maison、le、alors、dire 驗證。
 
-## M446（2026-10-31 02:13）狀態：待做（Windows 卡 #738 交給 Mac 的 App 畫面部分）
+## M446（2026-10-31 02:13）狀態：等 #738 全部完成
 卡：[owner] 做法文→繁中詞庫（#882 B 部分）
 
 用 iPad 載入 fr×zh-TW 新 sqlite 查 maison、le、alors、dire 驗證。
 
-## M447（2026-10-31 02:25）狀態：待做（Windows 卡 #738 交給 Mac 的 App 畫面部分）
+## M447（2026-10-31 02:25）狀態：等 #738 全部完成
 卡：[owner] 做法文→繁中詞庫（#882 B 部分）
 
 用 iPad 載入 fr×zh-TW 新 sqlite 查 maison、le、alors、dire 驗證。
 
-## M448（2026-10-31 02:37）狀態：待做（Windows 卡 #738 交給 Mac 的 App 畫面部分）
+## M448（2026-10-31 02:37）狀態：等 #738 全部完成
 卡：[owner] 做法文→繁中詞庫（#882 B 部分）
 
 用 iPad 載入 fr×zh-TW 新 sqlite 查 maison、le、alors、dire 驗證。
 
-## M449（2026-10-31 02:53）狀態：待做（Windows 卡 #738 交給 Mac 的 App 畫面部分）
+## M449（2026-10-31 02:53）狀態：等 #738 全部完成
 卡：[owner] 做法文→繁中詞庫（#882 B 部分）
 
 用 iPad 載入 fr×zh-TW 新 sqlite 查 maison、le、alors、dire 驗證。
 
-## M450（2026-10-31 03:05）狀態：待做（Windows 卡 #738 交給 Mac 的 App 畫面部分）
+## M450（2026-10-31 03:05）狀態：等 #738 全部完成
 卡：[owner] 做法文→繁中詞庫（#882 B 部分）
 
 用 iPad 載入 fr×zh-TW 新 sqlite 查 maison、le、alors、dire 驗證。
 
-## M451（2026-10-31 03:17）狀態：待做（Windows 卡 #738 交給 Mac 的 App 畫面部分）
+## M451（2026-10-31 03:17）狀態：等 #738 全部完成
 卡：[owner] 做法文→繁中詞庫（#882 B 部分）
 
 用 iPad 載入 fr×zh-TW 新 sqlite 查 maison、le、alors、dire 驗證。
 
-## M452（2026-10-31 03:29）狀態：待做（Windows 卡 #738 交給 Mac 的 App 畫面部分）
+## M452（2026-10-31 03:29）狀態：等 #738 全部完成
 卡：[owner] 做法文→繁中詞庫（#882 B 部分）
 
 用 iPad 載入 fr×zh-TW 新 sqlite 查 maison、le、alors、dire 驗證。
 
-## M453（2026-10-31 03:41）狀態：待做（Windows 卡 #738 交給 Mac 的 App 畫面部分）
+## M453（2026-10-31 03:41）狀態：等 #738 全部完成
 卡：[owner] 做法文→繁中詞庫（#882 B 部分）
 
 用 iPad 載入 fr×zh-TW 新 sqlite 查 maison、le、alors、dire 驗證。
 
-## M454（2026-10-31 03:53）狀態：待做（Windows 卡 #738 交給 Mac 的 App 畫面部分）
+## M454（2026-10-31 03:53）狀態：等 #738 全部完成
 卡：[owner] 做法文→繁中詞庫（#882 B 部分）
 
 用 iPad 載入 fr×zh-TW 新 sqlite 查 maison、le、alors、dire 驗證。
 
-## M455（2026-10-31 04:05）狀態：待做（Windows 卡 #738 交給 Mac 的 App 畫面部分）
+## M455（2026-10-31 04:05）狀態：等 #738 全部完成
 卡：[owner] 做法文→繁中詞庫（#882 B 部分）
 
 用 iPad 載入 fr×zh-TW 新 sqlite 查 maison、le、alors、dire 驗證。
 
-## M456（2026-10-31 04:17）狀態：待做（Windows 卡 #738 交給 Mac 的 App 畫面部分）
+## M456（2026-10-31 04:17）狀態：等 #738 全部完成
 卡：[owner] 做法文→繁中詞庫（#882 B 部分）
 
 用 iPad 載入 fr×zh-TW 新 sqlite 查 maison、le、alors、dire 驗證。
 
-## M457（2026-10-31 04:29）狀態：待做（Windows 卡 #738 交給 Mac 的 App 畫面部分）
+## M457（2026-10-31 04:29）狀態：等 #738 全部完成
 卡：[owner] 做法文→繁中詞庫（#882 B 部分）
 
 用 iPad 載入 fr×zh-TW 新 sqlite 查 maison、le、alors、dire 驗證。
 
-## M458（2026-10-31 04:41）狀態：待做（Windows 卡 #738 交給 Mac 的 App 畫面部分）
+## M458（2026-10-31 04:41）狀態：等 #738 全部完成
 卡：[owner] 做法文→繁中詞庫（#882 B 部分）
 
 用 iPad 載入 fr×zh-TW 新 sqlite 查 maison、le、alors、dire 驗證。
 
-## M459（2026-10-31 04:53）狀態：待做（Windows 卡 #738 交給 Mac 的 App 畫面部分）
+## M459（2026-10-31 04:53）狀態：等 #738 全部完成
 卡：[owner] 做法文→繁中詞庫（#882 B 部分）
 
 用 iPad 載入 fr×zh-TW 新 sqlite 查 maison、le、alors、dire 驗證。
 
-## M460（2026-10-31 05:05）狀態：待做（Windows 卡 #738 交給 Mac 的 App 畫面部分）
+## M460（2026-10-31 05:05）狀態：等 #738 全部完成
 卡：[owner] 做法文→繁中詞庫（#882 B 部分）
 
 用 iPad 載入 fr×zh-TW 新 sqlite 查 maison、le、alors、dire 驗證。
@@ -3832,52 +3832,52 @@ commit `421fd6ae`（Windows：flutter analyze 無 error、01:35 +826 ~2: All tes
 - 卡 #496：模擬使用者・法語（英語母語者學法語）
   結果：法語模擬第44–46輪：4/4通過；音檔6326/6326；但 onboarding 第1步仍有1句中文（「法文目前只提供英文母語」），與41輪相同，非新退步。
 
-## M463（2026-10-31 05:17）狀態：待做（Windows 卡 #738 交給 Mac 的 App 畫面部分）
+## M463（2026-10-31 05:17）狀態：等 #738 全部完成
 卡：[owner] 做法文→繁中詞庫（#882 B 部分）
 
 用 iPad 載入 fr×zh-TW 新 sqlite 查 maison、le、alors、dire 驗證。
 
-## M464（2026-10-31 05:29）狀態：待做（Windows 卡 #738 交給 Mac 的 App 畫面部分）
+## M464（2026-10-31 05:29）狀態：等 #738 全部完成
 卡：[owner] 做法文→繁中詞庫（#882 B 部分）
 
 用 iPad 載入 fr×zh-TW 新 sqlite 查 maison、le、alors、dire 驗證。
 
-## M465（2026-10-31 05:41）狀態：待做（Windows 卡 #738 交給 Mac 的 App 畫面部分）
+## M465（2026-10-31 05:41）狀態：等 #738 全部完成
 卡：[owner] 做法文→繁中詞庫（#882 B 部分）
 
 用 iPad 載入 fr×zh-TW 新 sqlite 查 maison、le、alors、dire 驗證。
 
-## M466（2026-10-31 05:53）狀態：待做（Windows 卡 #738 交給 Mac 的 App 畫面部分）
+## M466（2026-10-31 05:53）狀態：等 #738 全部完成
 卡：[owner] 做法文→繁中詞庫（#882 B 部分）
 
 用 iPad 載入 fr×zh-TW 新 sqlite 查 maison、le、alors、dire 驗證。
 
-## M467（2026-10-31 06:05）狀態：待做（Windows 卡 #738 交給 Mac 的 App 畫面部分）
+## M467（2026-10-31 06:05）狀態：等 #738 全部完成
 卡：[owner] 做法文→繁中詞庫（#882 B 部分）
 
 用 iPad 載入 fr×zh-TW 新 sqlite 查 maison、le、alors、dire 驗證。
 
-## M468（2026-10-31 06:17）狀態：待做（Windows 卡 #738 交給 Mac 的 App 畫面部分）
+## M468（2026-10-31 06:17）狀態：等 #738 全部完成
 卡：[owner] 做法文→繁中詞庫（#882 B 部分）
 
 用 iPad 載入 fr×zh-TW 新 sqlite 查 maison、le、alors、dire 驗證。
 
-## M469（2026-10-31 06:29）狀態：待做（Windows 卡 #738 交給 Mac 的 App 畫面部分）
+## M469（2026-10-31 06:29）狀態：等 #738 全部完成
 卡：[owner] 做法文→繁中詞庫（#882 B 部分）
 
 用 iPad 載入 fr×zh-TW 新 sqlite 查 maison、le、alors、dire 驗證。
 
-## M470（2026-10-31 06:41）狀態：待做（Windows 卡 #738 交給 Mac 的 App 畫面部分）
+## M470（2026-10-31 06:41）狀態：等 #738 全部完成
 卡：[owner] 做法文→繁中詞庫（#882 B 部分）
 
 用 iPad 載入 fr×zh-TW 新 sqlite 查 maison、le、alors、dire 驗證。
 
-## M471（2026-10-31 06:53）狀態：待做（Windows 卡 #738 交給 Mac 的 App 畫面部分）
+## M471（2026-10-31 06:53）狀態：等 #738 全部完成
 卡：[owner] 做法文→繁中詞庫（#882 B 部分）
 
 用 iPad 載入 fr×zh-TW 新 sqlite 查 maison、le、alors、dire 驗證。
 
-## M472（2026-10-31 07:05）狀態：待做（Windows 卡 #738 交給 Mac 的 App 畫面部分）
+## M472（2026-10-31 07:05）狀態：等 #738 全部完成
 卡：[owner] 做法文→繁中詞庫（#882 B 部分）
 
 用 iPad 載入 fr×zh-TW 新 sqlite 查 maison、le、alors、dire 驗證。
