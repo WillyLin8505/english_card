@@ -4605,3 +4605,14 @@ commit `a3a109f3`（Windows：flutter analyze 無 error、03:59 +972 ~2: All tes
 commit `ea3ffe04`（Windows：flutter analyze 無 error、03:59 +972 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #224：模擬使用者・拍照
   結果：第 226 輪（photoui＋pins）：未完成，0/2 通過——整輪跑不完（背景 10 分鐘上限被殺、再用 round 245 沿用 pack 單跑 photoui 也撞 9.5 分鐘），不是畫面錯誤；沒有新問題、沒有 UX 結論。
+
+## M566（2026-11-01 04:21）狀態：待做（Windows 卡 #169 交給 Mac 的 App 畫面部分）
+卡：常態：全庫掃描中文意思缺漏與品質
+
+無。
+- 剩下：下輪先確認沒有其他重工作業佔鎖，把 qc check --live 以背景長時間（≤2 小時）方式跑出 before，再 `python lexicon/tools/card169_fill_zh.py run --limit 3 --batch 200` 補 4,850 缺口（標 AI），之後跑 after 與 golden 比對；scan_library 變慢、照片義項沒中文仍未查。
+
+## M567（2026-11-01 04:24）狀態：待做
+commit `f1cbc493`（Windows：flutter analyze 無 error、03:59 +972 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #169：常態：全庫掃描中文意思缺漏與品質
+  結果：第 15 輪：沒補詞——QC 基準線（qc check --live）兩次都跑不完被終止，沒有前後比對就不改資料；沒中文的完整詞是 4,850（上輪 4,855）。
