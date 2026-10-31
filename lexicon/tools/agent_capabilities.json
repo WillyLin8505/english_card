@@ -120,7 +120,7 @@
       "dispatchable": false
     }
   },
-  "night_only_tasks": [722, 738, 747, 756, 803, 827, 828, 831, 832, 833],
+  "night_only_tasks": [722, 738, 747, 756, 803, 827, 828, 831, 832, 833, 879],
   "_night_722_note": "manager 10/28 23:15：#722 Qwen 貼題量測、#738 法→繁中、#747 翻譯樣本、#748 Vision 對 Qwen 都要 Qwen，白天跑只會「Qwen 暫停」空轉，改夜間派。",
   "_night_166_note": "owner 10/18 晚：Qwen 暫停期間 #166 改由 Claude 直接寫例句，不再限夜間。",
   "night_window": {
