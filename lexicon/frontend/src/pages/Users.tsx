@@ -44,7 +44,7 @@ function RetentionBox() {
     <section className="card">
       <h2>留存與活化（匿名安裝，近 {data.data.weeks} 週）</h2>
       <p className="muted">
-        {data.data.definition}　資料來自 App 的匿名事件（隨機安裝編號，不含個資；使用者可在設定關閉）。
+        {data.data.definition}　資料來自 App 的匿名事件（隨機安裝編號，不含個資；設定裡預設打開，可關閉）。已經做完引導的人，更新 App 後不會被算成新安裝。
       </p>
       <p>
         新安裝 <b>{t.installs}</b>　引導完成率 <b>{pct(t.onboarded_rate)}</b>　第一次複習率 <b>{pct(t.first_review_rate)}</b>　第 1 天{" "}

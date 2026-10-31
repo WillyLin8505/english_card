@@ -18,6 +18,8 @@ PostHog 的 `distinct_id` 是安裝時產生、存在 Hive 的隨機代號，每
 
 Product Interaction 涵蓋：`app_opened`、`$screen`、`onboarding_completed`（學習語言、母語、程度、程度來源）、`photo_added`、`word_added`（詞性）、`card_reviewed`（評分、題型、對錯、hints、duration_ms、scheduled_days）、`review_started`／`review_finished`。
 
+（卡 #914）另外有一組送到我們自己伺服器的匿名事件，跟 PostHog 分開，而且預設打開（設定 → 匿名安裝與留存統計可關），所以不能用「使用者明確打開才收集」的豁免。事件只有：`install`、`onboarded`、`first_photo`、`first_review`、每天一次 `open`，外加隨機安裝編號。沒有照片、單字、帳號、Email，也不跟登入帳號合併。同一組 Product Interaction／User ID（Analytics、未連結、不追蹤）已涵蓋；因為登入後的使用數字會對到 Email，App Store 上 Product Interaction 與 User ID 仍答「連結到使用者：是」。
+
 Data Used to Track You：無。不需 ATT。`app/ios/Runner/PrivacyInfo.xcprivacy` 已設 `NSPrivacyTracking=false`、`NSPrivacyTrackingDomains` 空、上述兩種資料類型（Analytics、未連結、不追蹤）。Info.plist 沒有 `NSUserTrackingUsageDescription`。
 
 「產品改善、使用者明確打開、可隨時關閉、不影響功能」這組條件理論上可以選擇不揭露。因為事件帶著持久的 User ID，「未連結身分」站得住的前提是之後不把這個代號跟帳號或裝置身份接回去。為避免審查來問，仍建議照上表揭露。

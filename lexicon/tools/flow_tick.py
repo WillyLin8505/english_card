@@ -110,9 +110,11 @@ def card_evidence(rows: list[fr.Row], pushed: dict, times: dict[str, str] | None
     return {str(c): [*v, (times or {}).get(v[1][:7])] for c, v in pushed.items()}, verdicts
 
 
-def plan(items: dict, rows: list[fr.Row], pushed: dict, released: set[int], filed: dict, check_failing: bool,
+def plan(items: dict, rows: list[fr.Row], pushed: dict, released: set[int], filed: dict, sync: dict | None,
          text_of=fr.result_text, confirmed: dict | None = None) -> tuple[list[dict], list[tuple[dict, str]]]:
-    """(stage changes, 問題回報 to close with the reason)."""
+    """(stage changes, 問題回報 to close with the reason). `sync` = mac_sync's state: which cards wait
+    and why; since card #917 one card's failure fails that card only."""
+    waiting, blocked = (sync or {}).get("waiting") or {}, (sync or {}).get("blocked") or []
     issues = {i["id"]: i for i in items["issues"]}
     cleared = cleared_rows(rows, filed, issues) | owner_confirmed_rows(rows, confirmed or {})
     changes, cards_of, closes = [], {}, []
@@ -121,7 +123,9 @@ def plan(items: dict, rows: list[fr.Row], pushed: dict, released: set[int], file
         app = t.get("stage") in (*fr.ORDER[1:6],) or (t["status"] == "done" and fr.is_app(text_of(t["id"]), linked))
         mine = [r for r in rows if t["id"] in r.cards]
         stage, state, note = fr.derive_card(t["status"], app, mine, t["id"] in pushed, t["id"] in released,
-                                            cleared, check_failing)
+                                            cleared, t["id"] in blocked)
+        if stage == "windows_check" and waiting.get(str(t["id"])):
+            note = "；".join(waiting[str(t["id"])])[:300]
         if (stage, state, note) != (t.get("stage"), t.get("stage_state"), t.get("stage_note")):
             changes.append({"type": "task", "id": t["id"], "stage": stage, "state": state, "note": note})
         for iid in t.get("issue_ids") or []:
@@ -170,9 +174,9 @@ def main(argv=None) -> int:
     rows = fr.parse_results(on_main("docs/mac_verify_results.md"), fr.item_cards(inbox_text))
     released = released_cards(pushed, on_main("docs/releases.md"))
     filed = (json.loads(MAC_ISSUES.read_text(encoding="utf-8")) if MAC_ISSUES.exists() else {}).get("filed", {})
-    failing = http("GET", f"/issues?status=active&q={urllib.parse.quote(FAIL_QUERY)}").get("items", [])
     confirmed = json.loads(CONFIRMED.read_text(encoding="utf-8")) if CONFIRMED.exists() else {}
-    changes, closes = plan(items, rows, pushed, released, filed, bool(failing), confirmed=confirmed)
+    sync_state = json.loads(mac_sync.STATE.read_text(encoding="utf-8")) if mac_sync.STATE.exists() else {}
+    changes, closes = plan(items, rows, pushed, released, filed, sync_state, confirmed=confirmed)
     if a.dry_run:
         for c in changes:
             print("DRY", c["type"], c["id"], c["stage"], c["state"] or "")
@@ -190,8 +194,7 @@ def main(argv=None) -> int:
         log(f"skip: /console/followups not available ({e})")
     last = git("log", "-1", "--format=%ct", "origin/main", "--", "docs/mac_verify_results.md").stdout.strip()
     now = datetime.now(TAIPEI)
-    sync_state = json.loads(mac_sync.STATE.read_text(encoding="utf-8")) if mac_sync.STATE.exists() else {}
-    unpushed = {int(e["card"]) for e in mac_sync.app_cards(sync_state.get("since"))}
+    unpushed = {int(e["card"]) for e in mac_sync.app_cards(sync_state.get("since"), sync_state.get("handed"))}
     todo = fr.todo_cards(inbox_text)
     start = items["start"]["task"]
     legacy = {str(c): st for c in sorted(unpushed | todo) if c < start

@@ -22,7 +22,7 @@ OPEN_STATUS = ("in_progress", "queued", "blocked", "waiting")
 FIRST_USER_LINES = 40
 EDIT_TOOLS = ("Edit", "Write", "NotebookEdit")
 CARD_RE = re.compile(r"# 卡 #(\d+)[：:]")
-ANALYZE_ERROR_RE = re.compile(r"^\s*error - .* - (\S+?):\d+:\d+ - \S+\s*$", re.M)
+ANALYZE_ERROR_RE = re.compile(r"^\s*error [-•] .* [-•] (\S+?):\d+:\d+ [-•] \S+\s*$", re.M)    # • in Windows Terminal
 FAILED_TEST_RE = re.compile(r"(?:^|[\s/\\])(test[/\\]\S*?_test\.dart)\b.*\[E\]\s*$", re.M)
 IMPORT_RE = re.compile(r"""^\s*(?:import|export|part)\s+['"]([^'"]+)['"]""", re.M)
 
@@ -117,8 +117,10 @@ def read_sessions(folder: Path, root: Path, newer_than: float) -> list[Session]:
 
 
 def held_files(changed: list[str], root: Path, sessions: list[Session], tasks: dict[int, dict], now: float,
-               quiet_s: float, interactive_s: float) -> dict[str, str]:
-    """Changed file → why it is not ready. `tasks` holds only unfinished cards."""
+               quiet_s: float, interactive_s: float, named: set[str] = frozenset()) -> dict[str, str]:
+    """Changed file → why it is not ready. `tasks` holds only unfinished cards; `named` = files a
+    finished card's result claims. A file no log and no result explains (a CLI that wrote it through a
+    script or subagent) may be half done: it waits until every CLI running at that moment has finished."""
     held: dict[str, str] = {}
     wanted = set(changed)
     has_log = {s.card for s in sessions if s.card is not None}
@@ -138,10 +140,16 @@ def held_files(changed: list[str], root: Path, sessions: list[Session], tasks: d
             f = root / p
             if p not in held and f.is_file() and f.stat().st_mtime >= start:
                 held[p] = f"{t.get('agent')} 卡 #{cid} 開工後改過"
+    starts = [_when(t.get("started_at")) for t in tasks.values() if t.get("status") == "in_progress"]
+    logged = {p for s in sessions for p, _ in s.edits}
     for p in changed:
         f = root / p
-        if p not in held and f.is_file() and now - f.stat().st_mtime < quiet_s:
+        if p in held or not f.is_file():
+            continue
+        if now - f.stat().st_mtime < quiet_s:
             held[p] = "剛改過"
+        elif p not in logged and p not in named and starts and f.stat().st_mtime >= min(starts):
+            held[p] = "不知道是哪張卡改的，等進行中的卡做完"
     return held
 
 
