@@ -3882,22 +3882,22 @@ commit `421fd6ae`（Windows：flutter analyze 無 error、01:35 +826 ~2: All tes
 
 用 iPad 載入 fr×zh-TW 新 sqlite 查 maison、le、alors、dire 驗證。
 
-## M473（2026-10-31 09:43）狀態：待做（Windows 卡 #225 交給 Mac 的 App 畫面部分）
+## M473（2026-10-31 09:43）狀態：完成
 卡：模擬使用者・相片冊
 
 用 iPad 做相片冊實機易用性評估（我的相片冊、資料庫相片冊、照片詳情、CEFR 切換、從照片加入收藏）。
 
-## M474（2026-10-31 09:46）狀態：待做
+## M474（2026-10-31 09:46）狀態：完成
 commit `6db6d76e`（Windows：flutter analyze 無 error、01:36 +826 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #225：模擬使用者・相片冊
   結果：第226輪：主模擬 album 1/1 通過（32 秒）、新問題 無、UX 建議 無新增。
 
-## M475（2026-10-31 09:52）狀態：待做
+## M475（2026-10-31 09:52）狀態：完成
 commit `d6e90e09`（Windows：flutter analyze 無 error、01:57 +826 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #228：模擬使用者・設定
   結果：第 21 輪（模擬輪 227）：設定 1/1 通過、findings 0；新問題無、UX 建議沿用 #474（未重複開）。
 
-## M476（2026-10-31 10:01）狀態：待做（Windows 卡 #850 交給 Mac 的 App 畫面部分）
+## M476（2026-10-31 10:01）狀態：完成
 卡：英文包暴增：iPad 下載 91 MB（前天 64 MB），義項 images （問題回報 #1111）
 
 iPad 重新下載英文包，量大小（預期約 91 MB），翻 10 張卡圖片正常（圖片本來就來自 catalog_images）。
