@@ -102,7 +102,7 @@
   "probe_interval_minutes": 60,
   "issue_swarm": {
     "enabled": true,
-    "max_parallel": 6,
+    "max_parallel": 25,
     "cover_for": [
       "Cursor CLI",
       "Codex"

@@ -37,8 +37,7 @@ NO_WINDOW = 0x08000000
 CPU_PCT = 80
 # 80 % of 63 GB less what stays outside the job: serve_app (~12 GB) and Windows' own use.
 JOB_MEMORY_GB = 42
-# With issue_swarm.max_parallel 6 these add up to 72 % CPU and 72 GB at the very worst; memory that
-# high never happens together, and resource_guard stops new CLIs at 80 % whole-PC memory.
+# Per CLI, not a total; resource_guard stops new CLIs at 80 % whole-PC memory.
 TREE_CPU_PCT = 12
 TREE_MEMORY_GB = 12
 GPU_PCT = 80
