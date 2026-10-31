@@ -45,6 +45,7 @@ from pathlib import Path
 TOOLS = Path(__file__).resolve().parent
 sys.path.insert(0, str(TOOLS))
 import flow_rules  # noqa: E402
+from flow_rules import decision_options  # noqa: E402
 import proc_identity  # noqa: E402
 ROOT = TOOLS.parents[1]
 STATE_DIR = ROOT / "lexicon" / "state"
@@ -99,26 +100,6 @@ def real_decision(text: str) -> bool:
     (10/23: those opened empty [待決定] issues and parked finished cards)."""
     m = DECISION_RE.search(text[:800])
     return bool(m) and not NO_DECISION_RE.match(text[m.end():m.end() + 40])
-
-
-OPTION_RE = re.compile(r"^\s*(?:選項\s*)?([A-Ca-c1-3])\s*[\.、：:．)）]\s*(.+)$")
-
-
-def decision_options(block: str) -> list[str]:
-    """owner 10/26: 問題回報頁上的決定要一眼看懂、最多三個選項可以點選，另有「其他」欄位。
-    The card's lines 「A：…」／「1. …」 become at most 3 buttons; the one its 「建議：X」 names is
-    marked （建議）."""
-    opts, keys = [], []
-    for line in block.splitlines():
-        m = OPTION_RE.match(line)
-        if m and len(opts) < 3:
-            keys.append(m.group(1).upper())
-            opts.append(m.group(2).strip()[:120])
-    rec = re.search(r"建議[：:]\s*(?:選項\s*)?([A-Ca-c1-3])", block)
-    if rec and rec.group(1).upper() in keys:
-        k = keys.index(rec.group(1).upper())
-        opts[k] = opts[k] + "（建議）"
-    return [f"{n + 1}. {o}" for n, o in enumerate(opts)]
 
 
 DECISION_RE = re.compile(r"需要你決定|待你決定|請你決定|需使用者決定|需要使用者決定|decision needed|needs owner", re.I)
@@ -214,23 +195,7 @@ def load_config() -> dict:
 # ── lock ─────────────────────────────────────────────────────────────
 
 def pid_alive(pid: int | None) -> bool:
-    if not pid:
-        return False
-    if os.name == "nt":
-        import ctypes
-        k = ctypes.windll.kernel32
-        h = k.OpenProcess(0x1000, False, int(pid))  # PROCESS_QUERY_LIMITED_INFORMATION
-        if not h:
-            return False
-        code = ctypes.c_ulong()
-        ok = k.GetExitCodeProcess(h, ctypes.byref(code))
-        k.CloseHandle(h)
-        return bool(ok) and code.value == 259  # STILL_ACTIVE
-    try:
-        os.kill(int(pid), 0)
-        return True
-    except OSError:
-        return False
+    return proc_identity.process_started(pid) is not None
 
 
 def acquire_lock(path: Path = LOCK_FILE, stale_s: int = LOCK_STALE_S) -> bool:

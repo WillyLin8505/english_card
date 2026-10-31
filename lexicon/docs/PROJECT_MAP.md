@@ -19,6 +19,7 @@ Line counts as of 2026-10-17. **Big files: search first, then read a range** (se
 - `pipeline.py` 805, `exporter.py` 700 (app pack export), `materialize.py` 460, `jobs.py` 577 (import jobs).
 - `tasks.py` 649 — 排程 board API (`/tasks`, `/schedule/*`, difficulty, agents-info). `agent_usage.py` — AI usage panel.
 - `flow.py` — 統一流程總覽 API (#916; stages come from `tools/flow_tick.py` + `flow_rules.py`).
+- `console.py` 730 — 控制台 API (#919: one item per 問題+卡, timeline, 需要你, 介入). `runs.py` — 工作中／等收卡／等你／閒置 from real processes (`tools/proc_identity.py`).
 - `issues.py` — 問題回報 API. `quality.py` 495, `qc.py`, `qc_fix.py` — quality rules. `policies.py` 428.
 - `adapters/` — dictionary sources (kaikki 810, local 792, ai 311, tatoeba, ecdict, cmudict, oewn, commons…).
 - Shared request budgets (one state file per source under `lexicon/state/*_gate.json`, all processes): `wikimedia_gate.py`

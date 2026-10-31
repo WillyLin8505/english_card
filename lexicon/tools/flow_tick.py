@@ -94,13 +94,20 @@ def owner_confirmed_rows(rows: list[fr.Row], confirmed: dict) -> set[str]:
     return {r.key for r in rows if r.device == "ipad" and any(str(c) in confirmed for c in r.cards)}
 
 
-def card_evidence(rows: list[fr.Row], pushed: dict) -> tuple[dict, dict]:
-    """What the 控制台 timeline quotes per card: hand-over and last verdict row per device."""
+def commit_times() -> dict[str, str]:
+    """Short hash → commit time, for the timeline's Windows 檢查 step."""
+    out = git("log", "-n", "5000", "--format=%H %cI", "origin/main").stdout
+    return {x[:7]: x.split()[1] for x in out.splitlines() if " " in x}
+
+
+def card_evidence(rows: list[fr.Row], pushed: dict, times: dict[str, str] | None = None) -> tuple[dict, dict]:
+    """What the 控制台 timeline quotes per card: hand-over ([M item, commit, its time]) and last
+    verdict row per device."""
     verdicts: dict[str, dict] = {}
     for r in rows:
         for c in r.cards:
-            verdicts.setdefault(str(c), {})[r.device] = {"verdict": r.verdict, "text": r.text[:240]}
-    return {str(c): list(v) for c, v in pushed.items()}, verdicts
+            verdicts.setdefault(str(c), {})[r.device] = {"verdict": r.verdict, "text": r.text[:240], "date": r.date}
+    return {str(c): [*v, (times or {}).get(v[1][:7])] for c, v in pushed.items()}, verdicts
 
 
 def plan(items: dict, rows: list[fr.Row], pushed: dict, released: set[int], filed: dict, check_failing: bool,
@@ -189,7 +196,7 @@ def main(argv=None) -> int:
     start = items["start"]["task"]
     legacy = {str(c): st for c in sorted(unpushed | todo) if c < start
               and (st := fr.legacy_stage(c, rows, pushed, todo, unpushed))}
-    handed, verdicts = card_evidence(rows, pushed)
+    handed, verdicts = card_evidence(rows, pushed, commit_times())
     tmp = FACTS.with_suffix(".json.tmp")
     tmp.write_text(json.dumps({"at": now.isoformat(timespec="seconds"), "inbox_todo": fr.inbox_todo(inbox_text),
                                "mac_last_at": int(last) if last.isdigit() else None,

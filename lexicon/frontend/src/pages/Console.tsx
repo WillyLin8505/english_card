@@ -24,8 +24,7 @@ type Overview = {
   runs: Runs;
   cards_verifying: number;
   legacy_waiting: number;
-  digest: { date?: string | null; lines?: string[]; mailed?: string | null; mail_error?: string | null };
-  gmail_ready?: boolean | null;
+  digest: { date?: string | null; lines?: string[] };
   flow_at: string | null;
   groups: Record<string, number>;
 };
@@ -233,10 +232,7 @@ function Now({ o, onOpen, onFilter, act }: {
           </ul>
         )}
         {o.digest?.date && (
-          <p className="muted">
-            每日摘要 {o.digest.date}：{o.digest.lines?.length ?? 0} 項
-            {o.digest.mailed === o.digest.date ? "，已寄 Gmail" : o.digest.mail_error ? `，${o.digest.mail_error}` : ""}
-          </p>
+          <p className="muted">每日摘要 {o.digest.date}：{o.digest.lines?.length ?? 0} 項</p>
         )}
       </section>
     </>

@@ -21,6 +21,26 @@ STRONG_RE = re.compile(r"(?<!backend/)(?<!backend\\)\bapp[/\\](?:lib|test|ios|an
 WEAK_RE = re.compile(r"flutter|iOS|iPhone|畫面|Widget", re.I)
 
 
+OPTION_RE = re.compile(r"^\s*(?:選項\s*)?([A-Ca-c1-3])\s*[\.、：:．)）]\s*(.+)$")
+
+
+def decision_options(block: str) -> list[str]:
+    """owner 10/26: 問題回報頁上的決定要一眼看懂、最多三個選項可以點選，另有「其他」欄位。
+    The card's lines 「A：…」／「1. …」 become at most 3 buttons; the one its 「建議：X」 names is
+    marked （建議）."""
+    opts, keys = [], []
+    for line in block.splitlines():
+        m = OPTION_RE.match(line)
+        if m and len(opts) < 3:
+            keys.append(m.group(1).upper())
+            opts.append(m.group(2).strip()[:120])
+    rec = re.search(r"建議[：:]\s*(?:選項\s*)?([A-Ca-c1-3])", block)
+    if rec and rec.group(1).upper() in keys:
+        k = keys.index(rec.group(1).upper())
+        opts[k] = opts[k] + "（建議）"
+    return [f"{n + 1}. {o}" for n, o in enumerate(opts)]
+
+
 def is_app(text: str, areas: list[str] | None = None) -> bool:
     """Would rather send a card to the Mac once too often than skip verifying an App change."""
     if STRONG_RE.search(text or ""):
@@ -78,6 +98,7 @@ class Row:
     device: str             # sim · ipad
     text: str
     key: str = field(default="")
+    date: str = field(default="")   # from the section heading, 2026-10-31
 
 
 def _verdict(cell: str) -> str | None:
@@ -117,9 +138,12 @@ def parse_results(text: str, items: dict[str, list[int]] | None = None) -> list[
     header has a 結果 column; an optional 裝置 column beats guessing the device."""
     items = items or {}
     out, section, cols = [], "", None
+    date = ""
     for line in text.splitlines():
         if line.startswith("## "):
             section, cols = line[3:].strip(), None
+            found = re.match(r"\d{4}-\d{2}-\d{2}", section)
+            date = found.group(0) if found else ""
             continue
         if not line.startswith("|"):
             cols = None
@@ -140,7 +164,7 @@ def parse_results(text: str, items: dict[str, list[int]] | None = None) -> list[
         device = cells[cols["裝置"]] if "裝置" in cols and cols["裝置"] < len(cells) else None
         raw = line.strip()
         out.append(Row(cards, verdict, _device(raw, section, device), raw,
-                       hashlib.sha1(raw.encode("utf-8")).hexdigest()[:16]))
+                       hashlib.sha1(raw.encode("utf-8")).hexdigest()[:16], date))
     return out
 
 

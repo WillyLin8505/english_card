@@ -5,13 +5,13 @@ instead of exploring the tree. Details that only some cards need live in `lexico
 
 All features, problems and feedback follow one flow (owner, 2026-10-31): `lexicon/docs/PIPELINE.md`.
 Stages are worked out by `lexicon/tools/flow_tick.py` (run by dispatch_tick); never set them by hand. Overview:
-http://127.0.0.1:5173/ui/#/flow. A card's `done` only means the CLI finished: a new App 問題回報 stays 處理中 until
+http://127.0.0.1:5173/ui/#/console. A card's `done` only means the CLI finished: a new App 問題回報 stays 處理中 until
 the iPad passed. Mac rows need the card number first, plus 結果 and 裝置 columns.
 
 ## 排程看板: report what you work on, pull cards when idle
 
 The owner runs several AIs (Claude Code, Codex, Cursor CLI) and watches them on the 排程 board
-(http://127.0.0.1:5173/ui/#/schedule): AIs on the left, task cards on the right — the owner's
+(控制台 http://127.0.0.1:5173/ui/#/console, replaces #/schedule, #/flow, #/issues): the owner's
 requests, open 問題回報 (bugs / unbuilt requirements), and standing cards (recurring checks).
 
 Use `python lexicon/tools/task.py` (local tools only; dispatched agents use the 5173 proxy, see the
@@ -76,7 +76,7 @@ launches a card for each idle AI (pick_card rules + `lexicon/tools/dispatch_conf
 - **Issue swarm** (owner, 2026-10-18): every new 問題回報 card (and every decision the owner has answered) gets its
   own new Claude CLI (`Claude CLI 1..N`, `issue_swarm.max_parallel` in dispatch_config.json, Claude Code's quota);
   a finished card marks its issues fixed. Agents read the issue's `decision` field and follow it.
-- One card, one CLI (card #431): `launch_agent.py` records each CLI in `lexicon/logs/agents/card<id>.pid.json`
+- One card, one CLI (card #431): `launch_agent.py` records each CLI in `lexicon/logs/agents/card<id>.pid.json` (pid + creation time; every liveness check goes through `proc_identity.py` because Windows reuses pids)
   and refuses to launch a card whose previous CLI still runs; the tick skips such cards, waits
   `finish_grace_alive_minutes` (45) before collecting a card whose CLI is still alive, and ends a CLI quiet for
   `lingering_kill_minutes` (90).

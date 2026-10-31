@@ -301,6 +301,26 @@ def test_timeline_of_an_app_card_quotes_its_evidence(client, tmp_path, monkeypat
     assert steps["ipad_verify"]["state"] == "current" and steps["ready"]["state"] == "todo"
 
 
+def test_every_gate_says_when_with_the_commit_and_the_verdict_day(client, monkeypatch):
+    from app import console
+    t = _task(client, "改畫面", status="done")
+    client.post("/flow/stages", headers=H, json={"items": [{"type": "task", "id": t["id"], "stage": "ready"}]})
+    monkeypatch.setattr(console, "facts", lambda: {
+        "handed": {str(t["id"]): ["M540", "abcdef123456", "2026-10-31T12:00:00+08:00"]},
+        "verdicts": {str(t["id"]): {"ipad": {"verdict": "pass", "text": "| M540 | 通過 |", "date": "2026-10-31"}}}})
+    steps = {x["key"]: x for x in _one(client, f"t{t['id']}")["timeline"]}
+    assert steps["windows_check"]["at"] == "2026-10-31T12:00:00+08:00"
+    assert steps["ipad_verify"]["evidence"][0].startswith("10/31 通過")
+    assert "以 iPad 那列為準" in steps["mac_verify"]["evidence"][0]
+
+
+def test_card_evidence_carries_commit_time_and_section_date():
+    rows = fr.parse_results("## 2026-10-30 M1\n| 項目 | 結果 |\n|---|---|\n| #5 | 通過 |\n")
+    handed, verdicts = flow_tick.card_evidence(rows, {5: ("M1", "abcdef1")}, {"abcdef1": "2026-10-30T09:00:00+08:00"})
+    assert handed["5"] == ["M1", "abcdef1", "2026-10-30T09:00:00+08:00"]
+    assert verdicts["5"]["sim"]["date"] == "2026-10-30"
+
+
 def test_timeline_skips_the_mac_for_a_card_outside_the_app(client):
     t = _task(client, "後台", status="done")
     client.post("/flow/stages", headers=H, json={"items": [{"type": "task", "id": t["id"], "stage": "done"}]})
@@ -336,6 +356,15 @@ def test_account_step_and_decision_are_needs_you(client):
     assert decision["options"] == ["A：要", "B：不要"]
     assert _act(client, f"i{d['id']}", "answer", text="A：要")
     assert client.get("/console/overview", headers=H).json()["needs_you"][0]["kind"] == "account"
+
+
+def test_waiting_card_can_be_answered_in_one_click(client, tmp_path):
+    plain = _task(client, "等金鑰", status="waiting", progress="請到網站註冊")
+    asks = _task(client, "二選一", status="waiting", progress="要哪個？")
+    (tmp_path / f"card{asks['id']}.result.md").write_text("需要你決定：要哪個？\nA：甲\nB：乙\n建議：B，因為快\n\n細節\nC：不是選項\n", encoding="utf-8")
+    options = {n["key"]: n["options"] for n in client.get("/console/overview", headers=H).json()["needs_you"]}
+    assert options[f"t{plain['id']}"] == ["已處理好，繼續"]
+    assert options[f"t{asks['id']}"] == ["1. 甲", "2. 乙（建議）"]
 
 
 def test_answering_a_waiting_card_sends_it_back_with_the_answer(client):

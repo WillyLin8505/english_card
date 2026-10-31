@@ -22,6 +22,8 @@ from sqlalchemy.orm import Session
 from . import db, flow, issues, runs, tasks
 from . import models as m
 
+import flow_rules  # noqa: E402  (tools/ is on sys.path through runs)
+
 TAIPEI = timezone(timedelta(hours=8))
 STAGES = {"queue": "派工", "standing": "常態檢查", **flow.STAGES}
 ORDER = ("queue", "dev", "windows_check", "mac_verify", "ipad_verify", "ready", "released", "done")
@@ -35,6 +37,7 @@ GROUPS = {"active": "要處理", "qc": "長期 QC", "closed": "已結案", "all"
 LAST_POSITION = 1_000_000.0   # tools/pick_card.py: at or past this a card goes after everything else
 FOLLOW_PREFIX = "等 #"
 FOLLOW_RE = re.compile(r"^等 #(\d+) 收卡")
+DONE_ANSWER = "已處理好，繼續"   # a card waiting for the owner to do something, not to choose
 TEST_RE = re.compile(r"\d+\s*(?:項|個)?\s*(?:passed|failed|過|敗)|全過|flutter (?:test|analyze)|npm run build", re.I)
 DECIDE_RE = re.compile(r"^(?:\*\*)?需要你決定[：:]\s*")
 ASK_RE = re.compile(r"(?:^|[，。；—])(請.+)")   # the part that says what to do, after the report of what was done
@@ -189,6 +192,11 @@ def _ask(text: str | None) -> str:
     return (found.group(1) if found else line)[:160]
 
 
+def _reply_options(card: int) -> list[str]:
+    """One click: the card's own A／B／C, else the answer that lets it go on."""
+    return flow_rules.decision_options(result_of(card)[1].split("\n\n")[0]) or [DONE_ANSWER]
+
+
 def item_need(it: Item) -> dict | None:
     """Why this item can only go on with the owner, with the one thing to do."""
     decision = next((i for i in it.issues if flow.is_decision(i)), None)
@@ -199,7 +207,7 @@ def item_need(it: Item) -> dict | None:
         need = flow.task_need(t)
         if need == "reply":
             return {"kind": "reply", "task": t.id, "ask": _ask(t.progress) or f"這張卡在等你回覆：{t.title[:60]}",
-                    "options": [], "since": t.updated_at}
+                    "options": _reply_options(t.id), "since": t.updated_at}
         if need == "account":
             return {"kind": "account", "task": t.id, "ask": "需要帳號／付款／憑證：" + _first_line(t.progress, 90),
                     "options": [], "since": t.updated_at}
@@ -368,19 +376,23 @@ def timeline(it: Item, t, fx: dict) -> list[dict]:
     pos = ORDER.index(stage) if stage in ORDER else 0
     bad = t.stage_state in ("failed", "note")
 
-    def gate(key: str, label: str, device: str | None, notes: list[str]) -> dict:
+    def gate(key: str, label: str, device: str | None, notes: list[str], when: str | None = None) -> dict:
         at, by = _stage_at(t.history, flow.STAGES[ORDER[ORDER.index(key) + 1]])
         state = "done" if pos > ORDER.index(key) else "current" if pos == ORDER.index(key) and done_dev else "todo"
         if state == "current" and bad:
             state = "failed" if t.stage_state == "failed" else "current"
         v = verdicts.get(device) if device else None
         if v:
-            notes = [*notes, f"{ {'pass': '通過', 'fail': '不通過', 'note': '注意'}.get(v['verdict'], v['verdict']) }：{v['text']}"]
+            day = f"{v['date'][5:].replace('-', '/')} " if v.get("date") else ""
+            notes = [*notes, f"{day}{ {'pass': '通過', 'fail': '不通過', 'note': '注意'}.get(v['verdict'], v['verdict']) }：{v['text']}"]
+        elif device == "sim" and state == "done" and verdicts.get("ipad"):
+            notes = [*notes, "Mac 沒有單獨一列，以 iPad 那列為準"]
         if state == "current" and t.stage_note:
             notes = [*notes, t.stage_note[:200]]
-        return _step(key, label, state, at, by or ("Mac" if device else "mac_sync" if state == "done" else None), notes)
+        return _step(key, label, state, at or when, by or ("Mac" if device else "mac_sync" if state == "done" else None), notes)
 
-    steps.append(gate("windows_check", "Windows 檢查", None, [f"已推給 Mac：{handed[0]}（commit {handed[1][:8]}）"] if handed else []))
+    steps.append(gate("windows_check", "Windows 檢查", None, [f"已推給 Mac：{handed[0]}（commit {handed[1][:8]}）"] if handed else [],
+                      handed[2] if handed and len(handed) > 2 else None))
     steps.append(gate("mac_verify", "Mac", "sim", []))
     steps.append(gate("ipad_verify", "iPad", "ipad", []))
     at, by = _stage_at(t.history, flow.STAGES["ready"])
