@@ -115,6 +115,10 @@ void main() {
     // 辨識，不該出現網址／金鑰欄位 ---
     current = '商店版照片辨識說明';
     if (!settings.showsTaggingServer) {
+      // 設定 grew: this card is now below the lazily built area.
+      await tester.dragUntilVisible(find.text('照片辨識'),
+          find.byType(Scrollable).first, const Offset(0, -400));
+      await tester.pump();
       if (find.text('照片辨識').evaluate().isEmpty) {
         f.add('商店版找不到照片辨識說明', current);
       }
