@@ -4600,3 +4600,8 @@ commit `572df232`（Windows：flutter analyze 無 error、03:59 +972 ~2: All tes
 commit `a3a109f3`（Windows：flutter analyze 無 error、03:59 +972 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #12：模擬使用者・跨分頁（亂點、詞庫更新）
   結果：第 227 輪：0/2 跑完（packupdate 前景等 heavylock 約 9 分鐘仍沒輪到，無輸出；fuzz 未開始），沒有新問題。
+
+## M565（2026-11-01 02:46）狀態：待做
+commit `ea3ffe04`（Windows：flutter analyze 無 error、03:59 +972 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #224：模擬使用者・拍照
+  結果：第 226 輪（photoui＋pins）：未完成，0/2 通過——整輪跑不完（背景 10 分鐘上限被殺、再用 round 245 沿用 pack 單跑 photoui 也撞 9.5 分鐘），不是畫面錯誤；沒有新問題、沒有 UX 結論。
