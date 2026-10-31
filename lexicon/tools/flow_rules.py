@@ -99,6 +99,8 @@ class Row:
     text: str
     key: str = field(default="")
     date: str = field(default="")   # from the section heading, 2026-10-31
+    top_item: int = 0               # highest M item in the section heading (0 = none named)
+    direct: bool = False            # the first cell named a #number, not an M item
 
 
 def _verdict(cell: str) -> str | None:
@@ -124,13 +126,13 @@ def _device(text: str, section: str, cell: str | None) -> str:
     return "ipad" if re.search(r"iPad|實機", section) else "sim"
 
 
-def _cards(first: str, items: dict[str, list[int]]) -> list[int]:
+def _cards(first: str, items: dict[str, list[int]]) -> tuple[list[int], bool]:
     outside = re.sub(r"（[^）]*）|\([^)]*\)", "", first)
     outside = re.sub(r"問題回報 ?#\d+", "", outside)
     item = re.match(r"M(\d+)", outside.strip())
     if item:
-        return list(items.get(f"M{item.group(1)}", []))
-    return [int(n) for n in re.findall(r"#(\d+)", outside)]
+        return list(items.get(f"M{item.group(1)}", [])), False
+    return [int(n) for n in re.findall(r"#(\d+)", outside)], True
 
 
 def parse_results(text: str, items: dict[str, list[int]] | None = None) -> list[Row]:
@@ -138,12 +140,13 @@ def parse_results(text: str, items: dict[str, list[int]] | None = None) -> list[
     header has a 結果 column; an optional 裝置 column beats guessing the device."""
     items = items or {}
     out, section, cols = [], "", None
-    date = ""
+    date, top = "", 0
     for line in text.splitlines():
         if line.startswith("## "):
             section, cols = line[3:].strip(), None
             found = re.match(r"\d{4}-\d{2}-\d{2}", section)
             date = found.group(0) if found else ""
+            top = max([int(n) for n in re.findall(r"M(\d+)", section)] or [0])
             continue
         if not line.startswith("|"):
             cols = None
@@ -158,13 +161,34 @@ def parse_results(text: str, items: dict[str, list[int]] | None = None) -> list[
         if at is None or at >= len(cells):
             continue
         verdict = _verdict(cells[at])
-        cards = _cards(cells[0], items)
+        cards, direct = _cards(cells[0], items)
         if not verdict or not cards:
             continue
         device = cells[cols["裝置"]] if "裝置" in cols and cols["裝置"] < len(cells) else None
         raw = line.strip()
         out.append(Row(cards, verdict, _device(raw, section, device), raw,
-                       hashlib.sha1(raw.encode("utf-8")).hexdigest()[:16], date))
+                       hashlib.sha1(raw.encode("utf-8")).hexdigest()[:16], date, top, direct))
+    return out
+
+
+def rows_for(card: int, rows: list[Row], pushed: dict[int, tuple[str, str]], created: str = "") -> list[Row]:
+    """Rows that really are about this card (card #927). A #number in a row may be a 問題回報 or an older
+    card, so a row naming it directly counts only when the section's M items (heading) reach the card's
+    hand-over item, i.e. the Mac tested code that already had this card; a heading without M items falls
+    back to the card's creation date. Rows that name an M item are always exact."""
+    item = pushed.get(card)
+    no = int(item[0][1:]) if item and item[0][1:].isdigit() else 0
+    out = []
+    for r in rows:
+        if card not in r.cards:
+            continue
+        if r.direct:
+            if r.top:
+                if not no or r.top < no:
+                    continue
+            elif created and r.date and r.date < created[:10]:
+                continue
+        out.append(r)
     return out
 
 

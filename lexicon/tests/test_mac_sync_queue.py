@@ -477,3 +477,20 @@ def test_narrow():
     assert mc.narrow(lambda g: True, set()) == set()
     both = {"a", "z"}                                          # needs two files: the whole group stays out
     assert mc.narrow(lambda g: both <= g or len(g) == 8, set("abcdwxyz")) == set("abcdwxyz")
+
+
+def test_card_927_quiet_leftover_of_a_handed_card_goes_round_again(repo, monkeypatch):
+    root, sessions, _ = repo
+    (root / "app/lib/a.dart").write_text("// a left behind\n", encoding="utf-8")
+    _session(sessions, "s1", 1, [("app/lib/a.dart", "2026-10-31T10:00:00Z")])
+    ev = {"type": "finished", "action": "done", "card": 1, "t": "2026-10-31T10:00:00+08:00",
+          "summary": "改 app/lib/a.dart", "result": ""}
+    mac_sync.EVENTS.write_text(json.dumps(ev) + "\n", encoding="utf-8")
+    state = {"handed": {"1": ev["t"]}, "since": ev["t"]}
+    assert mac_sync.app_cards(state["since"], state["handed"]) == []           # nothing new finished
+    monkeypatch.setattr(mac_sync, "open_cards", lambda: {7: {"status": "in_progress", "agent": "x"}})
+    assert mac_sync.leftover_cards(state) == []                                 # a card is still open: wait
+    monkeypatch.setattr(mac_sync, "open_cards", lambda: {})
+    assert [c["card"] for c in mac_sync.leftover_cards(state)] == [1]
+    (root / "app/lib/a.dart").write_text("// a v1\n", encoding="utf-8")        # nothing left over
+    assert mac_sync.leftover_cards(state) == []

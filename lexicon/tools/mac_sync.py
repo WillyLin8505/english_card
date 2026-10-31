@@ -187,7 +187,7 @@ def issue_areas(card: int) -> list[str]:
         return []
 
 
-def app_cards(since: str | None, handed: dict | None = None) -> list[dict]:
+def app_cards(since: str | None, handed: dict | None = None, again: set[int] | None = None) -> list[dict]:
     """Finished one-off cards since `since` whose result touches the app, minus those already
     handed over (`handed`: card → event time; a later round of the same card comes back)."""
     out, seen, handed = [], {}, handed or {}
@@ -202,7 +202,7 @@ def app_cards(since: str | None, handed: dict | None = None) -> list[dict]:
             continue
         if since and e["t"] <= since:
             continue
-        if e["t"] <= handed.get(str(e["card"]), ""):
+        if e["t"] <= handed.get(str(e["card"]), "") and e["card"] not in (again or ()):
             continue
         res = ROOT / (e.get("result") or "")
         text = res.read_text(encoding="utf-8", errors="replace") if res.is_file() else e.get("summary", "")
@@ -646,6 +646,29 @@ def mark_issues(cards: list[dict], no: int, commit: str):
                                                "by": "mac_sync"})
 
 
+def leftover_cards(state: dict) -> list[dict]:
+    """Card #927: app/ files a handed-over card left behind (held as 「還在改」 at that run). Once no card is
+    open and every changed file is quiet, the owning cards go round again, not waiting for the next card."""
+    changed = [p for p in mc.changed_paths(ROOT) if p.startswith("app/")]
+    if not changed or not state.get("handed"):
+        return []
+    try:
+        if open_cards():
+            return []
+    except Exception:  # noqa: BLE001 — board down: wait
+        return []
+    cards = app_cards(None, state.get("handed"), {int(c) for c in state["handed"]})
+    last = {}
+    for c in cards:
+        last[c["card"]] = c
+    cards = list(last.values())
+    scan = scan_tree(cards)
+    owners = [c for c in cards if scan.owned[int(c["card"])] & set(scan.changed)]
+    if scan.held or not owners:
+        return []
+    return owners
+
+
 def push_non_app() -> int:
     """owner 10/23 「修改完就push」: changes outside app/ (lexicon, server, tools, docs) need no
     flutter checks — commit and push them as they come. app/ still waits for its checks above."""
@@ -697,6 +720,10 @@ def main(argv=None) -> int:
         if all(c["card"] != cid for c in cards):
             t = http("GET", f"/tasks/{cid}")
             cards.append({"card": cid, "t": "", "title": t.get("title"), "outcome": (t.get("progress") or "")[:200]})
+    if not cards:
+        cards = leftover_cards(state)
+        if cards:
+            log(f"leftover app changes of handed-over card(s) {', '.join('#' + str(c['card']) for c in cards)}")
     if not cards:
         return 0 if a.dry_run else push_non_app()
     if a.dry_run:

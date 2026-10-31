@@ -207,12 +207,13 @@ def register(app, auth):
         """What flow_tick needs, without histories and screenshots."""
         start = start_ids()
         task_cols = (m.AgentTask.id, m.AgentTask.title, m.AgentTask.status, m.AgentTask.issue_ids, m.AgentTask.stage,
-                     m.AgentTask.stage_state, m.AgentTask.stage_note)
+                     m.AgentTask.stage_state, m.AgentTask.stage_note, m.AgentTask.created_at)
         issue_cols = (m.IssueReport.id, m.IssueReport.title, m.IssueReport.status, m.IssueReport.area,
                       m.IssueReport.stage, m.IssueReport.stage_state, m.IssueReport.stage_note)
         return {"start": start,
-                "tasks": [dict(r._mapping) for r in s.execute(select(*task_cols).where(
-                    m.AgentTask.kind == "once", m.AgentTask.id >= start["task"]))],
+                "tasks": [{**dict(r._mapping), "created_at": str(r._mapping["created_at"] or "")}
+                          for r in s.execute(select(*task_cols).where(
+                              m.AgentTask.kind == "once", m.AgentTask.id >= start["task"]))],
                 "issues": [dict(r._mapping) for r in s.execute(select(*issue_cols).where(
                     m.IssueReport.id >= start["issue"]))]}
 

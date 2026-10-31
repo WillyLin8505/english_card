@@ -253,3 +253,36 @@ def test_one_cards_failure_fails_only_that_card():
     assert got[1] == ("windows_check", "failed", "flutter test 失敗：test/a_test.dart")
     assert got[2] == ("windows_check", None, "卡 #9 還沒做完")
     assert got[3] == ("windows_check", None, None)
+
+
+STALE_INBOX = INBOX + """
+## M20（2026-11-01 12:00）狀態：待做
+commit `def5678`（Windows：flutter analyze 無 error、全過）。
+- 卡 #940：新卡
+  結果：完成
+"""
+STALE_RESULTS = """
+## 2026-10-29 M5～M8 舊的驗證（iPad 實機）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #7／#940 第一個畫面 | 不通過 | #940 在這裡是問題回報 |  |  |
+
+## 2026-11-01 M20 新驗證（iPad 實機）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 |
+|----|----|----|----|----|
+| #940 新卡 | 通過 | 正常 |  |  |
+"""
+
+
+def test_card_927_old_section_row_naming_the_number_is_not_this_card():
+    pushed = fr.parse_inbox(STALE_INBOX)
+    rows = fr.parse_results(STALE_RESULTS, fr.item_cards(STALE_INBOX))
+    assert len(fr.rows_for(940, rows, pushed, "2026-11-01T10:00:00+08:00")) == 1      # only the M20 row
+    assert fr.rows_for(940, rows, pushed)[0].verdict == "pass"
+    # no hand-over yet: an old row cannot be about it, a heading without M items falls back to the date
+    assert fr.rows_for(941, fr.parse_results(STALE_RESULTS.replace("#940", "#941"), {}), {}) == []
+    dated = "## 2026-10-29 例行\n\n| 卡 | 結果 |\n|--|--|\n| #950 x | 不通過 |\n"
+    assert fr.rows_for(950, fr.parse_results(dated, {}), {}, "2026-10-31T10:00:00+08:00") == []
+    assert len(fr.rows_for(950, fr.parse_results(dated, {}), {}, "2026-10-28T10:00:00+08:00")) == 1

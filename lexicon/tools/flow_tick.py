@@ -119,7 +119,7 @@ def plan(items: dict, rows: list[fr.Row], pushed: dict, released: set[int], file
     for t in items["tasks"]:
         linked = [issues[i].get("area") for i in t.get("issue_ids") or [] if i in issues]
         app = t.get("stage") in (*fr.ORDER[1:6],) or (t["status"] == "done" and fr.is_app(text_of(t["id"]), linked))
-        mine = [r for r in rows if t["id"] in r.cards]
+        mine = fr.rows_for(t["id"], rows, pushed, t.get("created_at") or "")
         stage, state, note = fr.derive_card(t["status"], app, mine, t["id"] in pushed, t["id"] in released,
                                             cleared, t["id"] in blocked)
         if stage == "windows_check" and waiting.get(str(t["id"])):
