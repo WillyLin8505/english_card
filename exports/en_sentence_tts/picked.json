@@ -1,0 +1,56 @@
+[
+ {
+  "word": "eat",
+  "text": "You cannot have your cake and eat it, too.",
+  "zh": "既要馬好，又要馬不吃草。",
+  "tatoeba_id": 23667,
+  "audio_id": 4140,
+  "author": "CK",
+  "license": null
+ },
+ {
+  "word": "water",
+  "text": "I've finished watering the flowers.",
+  "zh": "我已經澆完花了。",
+  "tatoeba_id": 23760,
+  "audio_id": 340717,
+  "author": "CK",
+  "license": null
+ },
+ {
+  "word": "friend",
+  "text": "You need to have friends who can help you out.",
+  "zh": "你需要可以幫助你的朋友。",
+  "tatoeba_id": 16188,
+  "audio_id": 907955,
+  "author": "CK",
+  "license": null
+ },
+ {
+  "word": "school",
+  "text": "This school supplies students with textbooks.",
+  "zh": "這所學校為學生提供教科書。",
+  "tatoeba_id": 59932,
+  "audio_id": 908906,
+  "author": "CK",
+  "license": null
+ },
+ {
+  "word": "happy",
+  "text": "I'm sure Tom will happy to do that for Mary.",
+  "zh": null,
+  "tatoeba_id": 8375440,
+  "audio_id": 752735,
+  "author": "CK",
+  "license": null
+ },
+ {
+  "word": "remember",
+  "text": "Did you remember your father's birthday?",
+  "zh": "你記得了你父親的生日嗎？",
+  "tatoeba_id": 8264607,
+  "audio_id": 680385,
+  "author": "CK",
+  "license": null
+ }
+]

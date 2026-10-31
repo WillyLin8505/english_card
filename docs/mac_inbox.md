@@ -3947,3 +3947,34 @@ App 畫面若和這個決定不同，請照決定改。
 問題：[待決定] 卡 #863：複習翻卡時，只有一個真人錄音的單字，要不要也唸兩次（英式＋美式）？
 **owner 決定**：3. 同一個錄音重複唸兩次。
 App 畫面若和這個決定不同，請照決定改。
+
+## M483（2026-10-31 10:29）狀態：待做（Windows 卡 #851 交給 Mac 的 App 畫面部分）
+卡：縮圖沒有轉檔：PNG 原圖縮到 w=1024 還有 1.66 MB（問題回報 #1112）
+
+iPad 清快取後複習 20 張，量單張時間。
+
+隨機抽樣 1268 張（全庫約 64,044 檔，全量掃描逾時；seed 851），24 張有真透明：
+| 寬度 | 改前 >400KB | 改後 >400KB | 改前中位/p95/max KB | 改後中位/p95/max KB |
+| 480 | 1 | 0 | 39/85/424 | 28/65/274 |
+| 1024 | 23 (of 579) | 4 | 156/374/1775 | 116/316/967 |
+改後 1024 仍 >400KB 的 4 張（約 0.7%）是照片類大圖，可再降 quality，未做。
+
+改動：serve_app.py 的 thumbnail_path（我的 JPEG 版被 #853 的 WebP 版覆蓋，以 #853 為準，未重複改）；新增 lexicon/tools/card851_measure.py（抽樣統計，參數=樣本數）。
+備份：11 個舊 PNG 縮圖移到 lexicon/exports/card851_thumbs_png_backup/（快取可重生，還原=移回 lexicon/media/thumbs）。
+golden/QC：未動資料，未跑。
+剩下：serve_app 需重啟載入新碼（tick 會自動）；全庫 >400KB 精確張數需背景全量掃描。
+
+## M484（2026-10-31 10:31）狀態：待做（Windows 卡 #850 交給 Mac 的 App 畫面部分）
+卡：英文包暴增：iPad 下載 91 MB（前天 64 MB），義項 images （問題回報 #1111）
+
+iPad 重新下載英文包，量大小（預期約 91 MB），翻 10 張卡圖片正常（最多 5 張、不同次進入可見不同照片）。
+
+## M485（2026-10-31 10:35）狀態：待做（Windows 卡 #857 交給 Mac 的 App 畫面部分）
+卡：拍照頁 3:4 預覽在 375×667 左右有黑邊（iPhone 相機左右滿版）（問題回報 #1118）
+
+375×667 與 iPad 截圖（確認 375 寬左右無黑邊、快門／相簿／翻轉鈕未被切到；iPad 置中）。
+
+改動：app/lib/screens/camera_screen.dart `_FullCameraState.build`（LayoutBuilder：fullH=寬*4/3，spare=可用高-fullH；hintH 無提示且 spare<140 時為 0；bandH 夾在 84–108；快門=min(76,bandH-16)）。
+驗證：flutter analyze camera_screen.dart 無問題；test/issue727_728_test.dart 5 項通過。完整 flutter test 在 10 分鐘內未跑完（被逾時中止），未全跑。
+無資料改動，不需備份；未動 golden/QC。
+剩下：Mac 截圖確認。若 bandH 最小 84 仍使 375×667 不足（安全區較高的機型），預覽會被 Expanded 縮小而非溢出。
