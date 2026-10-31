@@ -31,6 +31,11 @@ JPEG, PNG = b"\xff\xd8\xff", b"\x89PNG\r\n\x1a\n"
 # Pluggable so tests and a future Worker can swap it: (identity_token) -> {"sub", "email"} or raises ValueError.
 # The real one verifies Apple's JWT signature against https://appleid.apple.com/auth/keys (needs PyJWT).
 apple_verifier = None
+# Same shape for Google (card #910): (id_token) -> claims or raises ValueError. None = built from
+# LEXICON_GOOGLE_CLIENT_IDS (comma list of OAuth client IDs: iOS / Android / web) on first use.
+google_verifier = None
+GOOGLE_ISSUERS = ("https://accounts.google.com", "accounts.google.com")
+GOOGLE_JWKS_URL = "https://www.googleapis.com/oauth2/v3/certs"
 
 
 class AccountError(Exception):
@@ -62,7 +67,7 @@ def _issue_token(s: Session, user: m.User) -> str:
 
 
 def profile(user: m.User) -> dict:
-    return {"id": user.id, "nickname": user.nickname, "native_lang": user.native_lang,
+    return {"id": user.id, "nickname": user.nickname, "email": user.email, "native_lang": user.native_lang,
             "level": user.level, "provider": user.provider}
 
 
@@ -83,7 +88,7 @@ def register_email(s: Session, email: str, password: str, nickname: str,
     if len(password or "") < 8:
         raise AccountError(422, "密碼至少 8 個字元")
     nickname, native_lang, level = _clean_profile(nickname, native_lang, level)
-    if s.scalar(select(m.User.id).where(m.User.provider_sub == email)):
+    if s.scalar(select(m.User.id).where((m.User.provider_sub == email) | (m.User.email == email))):
         raise AccountError(409, "這個 Email 已經註冊了")
     user = m.User(provider="email", provider_sub=email, email=email, password_hash=_hash_pw(password),
                   nickname=nickname, native_lang=native_lang, level=level)
@@ -104,10 +109,8 @@ def login_email(s: Session, email: str, password: str) -> tuple[m.User, str]:
 
 def login_apple(s: Session, identity_token: str, nickname: str | None = None,
                 native_lang: str | None = None, level: str | None = None) -> tuple[m.User, str]:
-    if apple_verifier is None:
-        raise AccountError(501, "伺服器還沒設定 Sign in with Apple 驗證")
     try:
-        claims = apple_verifier(identity_token)
+        claims = (apple_verifier or _default_apple_verifier)(identity_token)
     except ValueError as e:
         raise AccountError(401, f"Apple 登入驗證失敗：{e}")
     user = s.scalar(select(m.User).where(m.User.provider_sub == claims["sub"]))
@@ -115,6 +118,78 @@ def login_apple(s: Session, identity_token: str, nickname: str | None = None,
         nick, native_lang, level = _clean_profile(nickname, native_lang, level)
         user = m.User(provider="apple", provider_sub=claims["sub"], email=claims.get("email"),
                       nickname=nick, native_lang=native_lang, level=level)
+        s.add(user)
+        s.flush()
+    if user.blocked:
+        raise AccountError(403, "這個帳號已被停用")
+    return user, _issue_token(s, user)
+
+
+def check_google_claims(claims: dict, client_ids: list[str], now: float | None = None) -> dict:
+    return check_oidc_claims(claims, client_ids, GOOGLE_ISSUERS, now)
+
+
+def check_oidc_claims(claims: dict, client_ids: list[str], issuers: tuple, now: float | None = None) -> dict:
+    """The checks after the signature: issuer, audience (one of our client IDs), expiry, verified email."""
+    import time
+    if claims.get("iss") not in issuers:
+        raise ValueError("issuer")
+    if not client_ids or claims.get("aud") not in client_ids:
+        raise ValueError("audience")
+    if float(claims.get("exp", 0)) <= (time.time() if now is None else now):
+        raise ValueError("expired")
+    if not claims.get("sub"):
+        raise ValueError("no sub")
+    if claims.get("email") and claims.get("email_verified", True) not in (True, "true"):
+        raise ValueError("email not verified")
+    return claims
+
+
+def _oidc_verify(id_token: str, env: str, jwks_url: str, issuers: tuple, label: str) -> dict:
+    """Signature (RS256 via the provider's published keys) + iss / aud / exp. Client IDs come from the environment."""
+    import os
+    ids = [x.strip() for x in os.environ.get(env, "").split(",") if x.strip()]
+    if not ids:
+        raise AccountError(501, f"伺服器還沒設定 {label} 登入（{env}）")
+    try:
+        import jwt  # PyJWT[crypto]
+    except ImportError:
+        raise AccountError(501, f"伺服器缺少 PyJWT[crypto]，無法驗證 {label} 登入")
+    try:
+        key = jwt.PyJWKClient(jwks_url).get_signing_key_from_jwt(id_token).key
+        claims = jwt.decode(id_token, key, algorithms=["RS256"], options={"verify_aud": False, "verify_exp": False})
+    except Exception as e:
+        raise ValueError(f"signature: {e}")
+    return check_oidc_claims(claims, ids, issuers)
+
+
+def _default_google_verifier(id_token: str) -> dict:
+    return _oidc_verify(id_token, "LEXICON_GOOGLE_CLIENT_IDS", GOOGLE_JWKS_URL, GOOGLE_ISSUERS, "Google")
+
+
+def _default_apple_verifier(id_token: str) -> dict:
+    return _oidc_verify(id_token, "LEXICON_APPLE_CLIENT_IDS", "https://appleid.apple.com/auth/keys",
+                        ("https://appleid.apple.com",), "Sign in with Apple")
+
+
+def login_google(s: Session, id_token: str, nickname: str | None = None,
+                 native_lang: str | None = None, level: str | None = None) -> tuple[m.User, str]:
+    """Verify a Google ID token; reuse the account for the same Google sub, or the existing email
+    account with the same (verified) address, else create one."""
+    verify = google_verifier or _default_google_verifier
+    try:
+        claims = verify(id_token)
+    except ValueError as e:
+        raise AccountError(401, f"Google 登入驗證失敗：{e}")
+    sub, email = f"google:{claims['sub']}", (claims.get("email") or "").strip().lower() or None
+    user = s.scalar(select(m.User).where(m.User.provider_sub == sub))
+    if user is None and email:
+        user = s.scalar(select(m.User).where(m.User.email == email).order_by(m.User.id))
+    if user is None:
+        nick = (nickname or claims.get("name") or (email or "").split("@")[0] or "learner").strip()[:NICK_MAX]
+        nick, native_lang, level = _clean_profile(nick, native_lang, level)
+        user = m.User(provider="google", provider_sub=sub, email=email, nickname=nick,
+                      native_lang=native_lang, level=level)
         s.add(user)
         s.flush()
     if user.blocked:

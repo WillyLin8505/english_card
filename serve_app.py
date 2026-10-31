@@ -890,6 +890,10 @@ class Handler(SimpleHTTPRequestHandler):
                 user, tok = accounts.login_apple(s, body['identity_token'], body.get('nickname'),
                                                  body.get('native_lang'), body.get('level'))
                 return {'token': tok, 'user': accounts.profile(user)}
+            if method == 'POST' and rest == ['google']:
+                user, tok = accounts.login_google(s, body['id_token'], body.get('nickname'),
+                                                  body.get('native_lang'), body.get('level'))
+                return {'token': tok, 'user': accounts.profile(user)}
             user = accounts.user_from_token(s, token)
             if method == 'GET' and rest == ['me']:
                 return accounts.profile(user)

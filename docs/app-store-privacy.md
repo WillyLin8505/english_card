@@ -11,6 +11,11 @@ PostHog 的 `distinct_id` 是安裝時產生、存在 Hive 的隨機代號，每
 | Usage Data › Product Interaction | Analytics | 否 | 否 |
 | Identifiers › User ID | Analytics | 否 | 否 |
 
+| Diagnostics › Crash Data | App Functionality | 否 | 否 |
+| Diagnostics › Performance Data | App Functionality | 否 | 否 |
+
+（卡 #913）Sentry 當機回報：只有填了 `SENTRY_DSN` 的 build 才啟用，且「分享使用統計」打開才送。內容是錯誤類型、堆疊、App 版本與 build 號、OS 與裝置型號（Sentry 會附裝置型號、記憶體等，歸在 Performance Data 較保險）。不送照片、單字、email、使用者、操作軌跡、錯誤訊息文字。Sentry 不當作追蹤（不串其他 App）。沒填 DSN 的 build（含目前的 TestFlight）不用勾這兩列。
+
 Product Interaction 涵蓋：`app_opened`、`$screen`、`onboarding_completed`（學習語言、母語、程度、程度來源）、`photo_added`、`word_added`（詞性）、`card_reviewed`（評分、題型、對錯、hints、duration_ms、scheduled_days）、`review_started`／`review_finished`。
 
 Data Used to Track You：無。不需 ATT。`app/ios/Runner/PrivacyInfo.xcprivacy` 已設 `NSPrivacyTracking=false`、`NSPrivacyTrackingDomains` 空、上述兩種資料類型（Analytics、未連結、不追蹤）。Info.plist 沒有 `NSUserTrackingUsageDescription`。

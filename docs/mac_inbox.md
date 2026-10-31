@@ -4226,3 +4226,99 @@ App 畫面若和這個決定不同，請照決定改。
 
 驗證：flutter analyze 無新問題；card891、card814、onboarding_short、card877、onboarding_language、settings_ui_catalog 全過。未跑整套 flutter test。
 剩下：運動／爬山／旅行的卡片集內容（另一張補內容的卡）；推薦頁封面在真機上的樣子要 Mac 看。
+
+## M524（2026-10-31 16:31）狀態：待做（Windows 卡 #901 交給 Mac 的 App 畫面部分）
+卡：[owner] 複習單張圖 1～8 秒、照片選字卡選項要等圖載入才能按
+
+iPad 複習 20 張量載入時間；照片選字卡選項立刻可按
+
+## M525（2026-10-31 16:41）狀態：待做（Windows 卡 #895 交給 Mac 的 App 畫面部分）
+卡：[owner] 單字頁：罕見義往後排、重複翻譯合併、圖片放進第一屏
+
+apple 單字頁沒有重複翻譯、常用義在前、第一屏有圖
+
+改了什麼（app/lib/widgets/database_word_detail.dart）
+- 同一詞性內相同中文只顯示一次（_distinctNatives，保留第一個）。
+- 全部義項都是罕見／低優先的詞性排到後面（_rareOnly，穩定排序），apple 動詞「使看似蘋果」會在名詞之後。
+- 第一張資料庫圖片（高 160）放在發音鈕下、加入按鈕上，其餘圖片留在頁尾。
+- lexicon/quality/en_common_senses.json 加 apple|verb 的 low 清單（下次跑 python lexicon/tools/card381_common.py apply 或重匯出才生效；本輪沒套用，沒動 DB，無需備份）。
+
+沒做／剩下
+- flutter analyze 與 flutter test（經 heavy_lock）排隊中，本輪結束前沒有結果；請下一輪或 Mac 先跑 analyze／test，特別是 database_word_detail 相關測試（圖片位置改動可能影響既有 widget test）。
+- 沒有全庫量測重複翻譯的受影響字數，golden／QC 未跑（沒改資料，預期不變）。
+- 還要做：全庫量出「同詞性內重複中文」的字數；必要時從資料端去重。
+
+## M526（2026-10-31 16:49）狀態：待做（Windows 卡 #894 交給 Mac 的 App 畫面部分）
+卡：[owner] 複習卡的圖要配句子的義項，輪播從最好的圖開始
+
+run 的卡片圖和句子同義，輪播從第 1 張開始
+
+## M527（2026-10-31 16:57）狀態：待做（Windows 卡 #902 交給 Mac 的 App 畫面部分）
+卡：問題回報 #1173：[owner] 要不要做帳號或雲端備份？
+
+在 iPad／iPhone 驗證設定 → 資料 → 「登入雲端備份／建立帳號／備份到雲端／從雲端還原」：用同一個 email 在兩台裝置登入，A 備份、B 還原，確認單字、照片、複習紀錄都在。
+
+## M528（2026-10-31 17:03）狀態：待做（Windows 卡 #898 交給 Mac 的 App 畫面部分）
+卡：[owner] 單字本改連續捲動，空單字本不顯示「第 0 個，共 0 個」
+
+單字本連續捲動順暢（1,717 字）；空單字本畫面。
+
+## M529（2026-10-31 17:13）狀態：待做（Windows 卡 #900 交給 Mac 的 App 畫面部分）
+卡：[owner] 新使用者複習格子縮圖是空白灰底
+
+全新安裝看複習格子縮圖（綜合／今天新加／弱項應顯示漸層＋圖示，有相片後顯示真圖）。
+
+根因：`flashcard_session_views.dart` 的 _ScopeGrid，格子封面來自 repo.reviewCoverPhoto（只找「單字出現過的相片」）。新使用者只有內建單字、沒有相片，所以回傳 null，落到 ColoredBox（淺灰藍）。單字本身沒有圖片欄位，詞庫資料不受影響，故未改資料、無需備份、golden/QC 不涉及。
+修改：新增 DefaultScopeCover（漸層＋依範圍的圖示），取代純色塊；單字集封面載入失敗時也用它。
+測試：app/test/card900_default_scope_cover_test.dart（3 個範圍）。flutter analyze 該檔無問題；card417_review_scope_test 3 項通過；card900 測試因 import 路徑第一次失敗，已改成 package:photo_english_app 後重跑，3 項通過。
+剩下：（無，等 Mac 驗證）；有相片時顯示真圖的邏輯沿用原本。
+
+## M530（2026-10-31 17:21）狀態：待做（Windows 卡 #906 交給 Mac 的 App 畫面部分）
+卡：[owner] 設定頁分區加目錄，「關於」顯示 App 版本號
+
+設定頁目錄可跳區、關於有版本號
+
+## M531（2026-10-31 17:23）狀態：待做（Windows 卡 #896 交給 Mac 的 App 畫面部分）
+卡：[owner] 複習卡紅色 ✕ 改成看得懂的圖示和文字，矮螢幕評分列不蓋住意思
+
+複習卡新圖示；375×667 背面意思看得到
+
+測試：card896_learned_button、review_archive_session、review_back_detail_692_705、review_nav_numbering 全過（exit 0）；flutter analyze 與全套 flutter test 未跑。
+
+## M532（2026-10-31 17:29）狀態：待做（Windows 卡 #904 交給 Mac 的 App 畫面部分）
+卡：問題回報 #1172：[owner] 要不要做連續天數或進度頁？
+
+iPad 上看進度頁版面（長條圖、四張數字卡）。
+
+## M533（2026-10-31 17:31）狀態：待做（Windows 卡 #909 交給 Mac 的 App 畫面部分）
+卡：[owner] 上架版本機照片標籤品質差：分類詞多、沒有動詞
+
+不帶 TAGGING_URL／DEV_TOOLS 的 build，用 iPad 對同一張早餐照片與至少 10 張照片，記下本機標籤（前後）與伺服器標籤，算具體名詞比例；回報仍漏出的分類詞，補進 local_vision_rules.dart。
+- 若 iPad 實測仍不堪用，再開 [待決定]（本卡尚無足夠資料開）。
+
+## M534（2026-10-31 17:33）狀態：待做（Windows 卡 #907 交給 Mac 的 App 畫面部分）
+卡：[owner] 備份還原與 Anki 匯出補自動測試（真的產檔、真的還原）
+
+用 iPad 做一次「匯出備份 → 還原」，確認每日上限與興趣有保留。
+
+## M535（2026-10-31 17:35）狀態：待做（Windows 卡 #897 交給 Mac 的 App 畫面部分）
+卡：[owner] 分頁根頁面拿掉沒有上一層的返回箭頭
+
+三個分頁根頁面沒有返回箭頭，子頁返回正常
+
+改了哪些：
+- app/lib/screens/album_screen.dart：相片冊 AlbumTopBar 的 leading 只在 onBack != null 或 Navigator.canPop() 時顯示返回，否則放 48px 空位（標題仍置中）。
+- app/lib/screens/word_database_screen.dart：MNavBar 的 leading 在無 onBack 且 canPop() 為假時為 null（同樣保留寬度）。
+- app/lib/screens/flashcard_screen.dart：只改 s == null（起始頁）：有 _lastRun（摘要）或可 pop（從相簿推進來）才顯示返回。進行中的複習與結束畫面的返回仍保留（它們是本頁內的步驟，會回到起始頁）。
+- app/test/card897_root_back_test.dart（新增）：三個根頁無返回；推進來的相片冊／單字本有返回且能 pop；資料庫內嵌單字本的返回回到切換鈕。
+
+測試：
+- flutter analyze（4 個檔）：No issues found。
+- card897_root_back_test.dart：6/6 通過（lexicon/logs/agents/card897_flutter_test.txt）。
+- 既有相關測試 album_level / database_library / card312 / card410 / card423 / card893：29 通過、1 失敗。失敗為 database_library_test.dart「every database image has a bilingual label and opens its exact word」，單獨重跑仍失敗（第 257 行找不到「資料庫圖片（1）」，這是單字詳情的區段標題，不是返回箭頭）。我沒有動 database_word_detail.dart；它在我開始前就已有他人未提交的修改，所以我判斷是他人改動造成，但沒有實際還原比對，未確認。
+
+資料：本卡只改 UI，沒有改詞庫或資料，因此沒有備份，也沒有跑 golden／qc check --live（不適用）。
+
+剩下：
+- 查 database_library_test 那一項失敗是否由 database_word_detail.dart 的他人修改造成（需要對方或 owner 確認該檔狀態）。
+- Mac 在 iPad 上確認三個根頁無箭頭、子頁返回與各流程能離開（系統返回與底部分頁列仍可離開根頁）。
