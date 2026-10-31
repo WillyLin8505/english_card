@@ -4064,3 +4064,25 @@ serve_app 重啟後再量 api.willylinai.com/api/image?id=140&w=1024，應為 im
 卡：問題回報 #1130：[意見回饋] 拍照：相機現在有問題呀
 
 iPad 上重現「進拍照→切鏡頭→開相簿→返回」，確認預覽不黑、快門有回應。
+
+## M498（2026-10-31 11:49）狀態：待做（Windows 卡 #874 交給 Mac 的 App 畫面部分）
+卡：問題回報 #1136：[意見回饋] 拍照：相機壞了
+
+在 iPad 驗證切鏡頭、開相簿再返回後預覽正常、快門有反應。
+
+## M499（2026-10-31 11:55）狀態：待做（Windows 卡 #169 交給 Mac 的 App 畫面部分）
+卡：常態：全庫掃描中文意思缺漏與品質
+
+無。
+- 剩下：owner 回覆後改 #740 的產生端；Qwen 恢復（owner 說開始＋start_tagger.bat）後 `python lexicon/tools/card169_fill_zh.py run --limit 3 --batch 200`；photo 義項沒中文、scan_library 變慢未查。
+
+## M500（2026-10-31 11:55）狀態：待做（Windows 卡 #867 交給 Mac 的 App 畫面部分）
+卡：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
+
+無。
+
+## M501（2026-10-31 11:59）狀態：待做（Windows 卡 #855 交給 Mac 的 App 畫面部分）
+卡：照片選字卡在有框樣式下，第三個選項被「顯示答案」蓋住（問題回報 #1116）
+
+375×667 與 iPad 有框樣式（簡潔留白、活潑遊戲）各看一張照片選字卡，確認第三個選項在「顯示答案」之上。
+剩餘：待 heavy_lock 有空時重跑 `flutter test test/card779_short_screen_choice_test.dart` 與 analyze；若 Mac 仍重疊，改用 LayoutBuilder 依實際可用高度算。
