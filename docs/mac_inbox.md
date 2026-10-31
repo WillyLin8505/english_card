@@ -4494,3 +4494,8 @@ commit `df86c167`（Windows：flutter analyze 無 error、03:02 +947 ~2: All tes
   結果：全部完成（第 1 輪）：登入使用者的統計回傳＋後台「使用者」頁＋隱私文件都做完；伺服器 5 個新測試＋902 舊測試共 8 passed，flutter analyze 無問題；App 新測試 2 個＋902 的 App 測試經 heavylock 跑完，結束碼 0（通過）。
 - 卡 #921：問題回報 #1176：[Mac 注意] 2026-10-31 照片辨識時間：不帶 TAGGING_URL／DEV_TOO
   結果：全部完成：此問題已由卡 #909 處理（localvisionrules.dart 的 visionCategoryLabels 已丟掉 structure、wood processed、tableware、food、utensil 等分類詞），不需再改程式；動詞無法由 Apple Vision 取得，標不處理。
+
+## M546（2026-10-31 19:42）狀態：待做
+commit `7e4627a0`（Windows：flutter analyze 無 error、02:05 +947 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #920：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
+  結果：全部完成：flutter analyze 0 個 error（仍有 11 則 info，不擋推送），flutter test 947 通過、2 略過、0 失敗，整套 4 分 54 秒。
