@@ -2,8 +2,8 @@
 
 Run by dispatch_tick every tick, no LLM. Reads what the Mac sees (origin/main: docs/mac_inbox.md,
 docs/mac_verify_results.md, docs/releases.md) plus the cards, stores each stage, closes 問題回報
-whose App cards passed the iPad, and once a day saves a digest of what needs the owner
-(nothing needed → nothing saved).
+whose App cards passed the iPad, and once a day saves a digest of what needs the owner and
+mails it through Gmail (nothing needed → nothing saved or sent; Gmail not set up → saved only).
 
     python lexicon/tools/flow_tick.py            # once
     python lexicon/tools/flow_tick.py --dry-run  # print the changes
@@ -24,6 +24,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import flow_rules as fr
+import gmail_send
 
 ROOT = Path(__file__).resolve().parents[2]
 STATE_DIR = ROOT / "lexicon" / "state"
@@ -37,6 +38,9 @@ TAIPEI = timezone(timedelta(hours=8))
 FAIL_QUERY = "flutter test 失敗"
 RELEASE_RE = re.compile(r"(?m)^\|\s*(\d+\.\d+\.\d+\S*)\s*\|[^|]*\|\s*`?([0-9a-f]{6,40})`?\s*\|")
 DIGEST_HOUR = 9
+MAIL_TRIES = 3  # a day; a wrong password must not hammer Google every tick
+MAIL_RETRY_MINUTES = 30
+FLOW_PAGE = "http://127.0.0.1:5173/ui/#/flow"
 
 
 def log(msg: str):
@@ -130,6 +134,30 @@ def write_digest(now: datetime, lines: list[str], state: dict | None) -> bool:
     return bool(lines)
 
 
+def mail_digest(now: datetime, state: dict | None) -> bool:
+    """Mail today's saved digest once. Set up later in the day → it still goes out; a failure waits and retries."""
+    state = state or {}
+    today = now.date().isoformat()
+    tries = state.get("mail_tries") or 0
+    if state.get("date") != today or not state.get("lines") or state.get("mailed") == today or not gmail_send.ready():
+        return False
+    last = state.get("mail_at")
+    if state.get("mail_day") == today:
+        if tries >= MAIL_TRIES or (last and now - datetime.fromisoformat(last) < timedelta(minutes=MAIL_RETRY_MINUTES)):
+            return False
+    else:
+        tries = 0
+    lines = state["lines"]
+    error = gmail_send.send(f"每日摘要 {today}：{len(lines)} 件需要你",
+                            "\n".join(f"- {x}" for x in lines) + f"\n\n流程總覽：{FLOW_PAGE}\n")
+    state.update(mail_day=today, mail_tries=tries + 1, mail_at=now.isoformat(timespec="seconds"), mail_error=error)
+    if not error:
+        state["mailed"] = today
+    DIGEST.write_text(json.dumps(state, ensure_ascii=False, indent=1), encoding="utf-8")
+    log(f"daily digest mail: {error or 'sent'}")
+    return not error
+
+
 def main(argv=None) -> int:
     sys.stdout.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
@@ -164,7 +192,8 @@ def main(argv=None) -> int:
     now = datetime.now(TAIPEI)
     tmp = FACTS.with_suffix(".json.tmp")
     tmp.write_text(json.dumps({"at": now.isoformat(timespec="seconds"), "inbox_todo": fr.inbox_todo(inbox_text),
-                               "mac_last_at": int(last) if last.isdigit() else None}, ensure_ascii=False),
+                               "mac_last_at": int(last) if last.isdigit() else None,
+                               "gmail_ready": gmail_send.ready()}, ensure_ascii=False),
                    encoding="utf-8")
     os.replace(tmp, FACTS)
     state = json.loads(DIGEST.read_text(encoding="utf-8")) if DIGEST.exists() else None
@@ -172,6 +201,8 @@ def main(argv=None) -> int:
         lines = http("GET", "/flow/overview").get("needs_you") or []
         if write_digest(now, lines, state):
             log(f"daily digest: {len(lines)} item(s) for the owner")
+        state = json.loads(DIGEST.read_text(encoding="utf-8")) if DIGEST.exists() else None
+    mail_digest(now, state)
     return 0
 
 

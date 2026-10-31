@@ -12,7 +12,8 @@ type Overview = {
   release: { version: string | null; can_release: boolean; ready: number; reasons: string[] };
   needs_you: string[];
   feedback: Feedback[];
-  digest: { date?: string | null; lines?: string[] };
+  digest: { date?: string | null; lines?: string[]; mailed?: string | null; mail_error?: string | null };
+  gmail_ready?: boolean | null;
   updated_at: string | null;
 };
 
@@ -41,7 +42,13 @@ export default function Flow() {
       <div className="card">
         <h2>需要你</h2>
         {o.needs_you.length === 0 ? <Empty>現在沒有需要你的事</Empty> : <ul>{o.needs_you.map((x) => <li key={x}>{x}</li>)}</ul>}
-        {o.digest?.date && <p className="muted">每日摘要 {o.digest.date}：{o.digest.lines?.length ?? 0} 項</p>}
+        {o.digest?.date && (
+          <p className="muted">
+            每日摘要 {o.digest.date}：{o.digest.lines?.length ?? 0} 項
+            {o.digest.mailed === o.digest.date ? "，已寄 Gmail" : o.digest.mail_error ? `，${o.digest.mail_error}` : ""}
+          </p>
+        )}
+        {o.gmail_ready === false && <p className="muted">尚未設定 Gmail：摘要只放在這頁，不會寄出</p>}
       </div>
 
       <div className="card">

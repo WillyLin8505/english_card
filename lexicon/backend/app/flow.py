@@ -173,7 +173,8 @@ def overview(s: Session, q: str | None = None) -> dict:
             "issues": {k: sum(i.stage == k for i in flow_issues) for k in STAGES},
             "start": start, "stuck": stuck[:10], "release": release,
             "needs_you": needs_owner(tasks + waiting_tasks, active, release, facts, now),
-            "feedback": feedback_rows(s, q), "digest": _load(DIGEST), "updated_at": facts.get("at")}
+            "feedback": feedback_rows(s, q), "digest": _load(DIGEST), "gmail_ready": facts.get("gmail_ready"),
+            "updated_at": facts.get("at")}
 
 
 def register(app, auth):

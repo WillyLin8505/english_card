@@ -17,6 +17,7 @@ import Issues from "./pages/Issues";
 import Schedule from "./pages/Schedule";
 import Flow from "./pages/Flow";
 import ShareStats from "./pages/ShareStats";
+import Users from "./pages/Users";
 import Decks from "./pages/Decks";
 import AppPhotos from "./pages/AppPhotos";
 import ConnectQr from "./pages/ConnectQr";
@@ -36,6 +37,7 @@ const NAV = [
   ["/decks", "卡片集", "Decks"],
   ["/app-photos", "手機照片", "Phone Photos"],
   ["/share-stats", "分享統計", "Shared Decks"],
+  ["/users", "使用者", "Users"],
   ["/snapshots", "來源快照", "Source Snapshots"],
   ["/export", "匯出給 Flutter", "Export for Flutter"],
   ["/connect-qr", "連線 QR code", "Connect QR code"],
@@ -156,6 +158,7 @@ export default function App() {
   else if (route === "/decks") page = <Decks />;
   else if (route === "/app-photos") page = <AppPhotos />;
   else if (route === "/share-stats") page = <ShareStats />;
+  else if (route === "/users") page = <Users />;
   else if (route === "/schedule") page = <Schedule />;
   else if (route === "/flow") page = <Flow />;
   else if (route === "/issues") page = <Issues />;

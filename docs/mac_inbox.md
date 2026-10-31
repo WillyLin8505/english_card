@@ -4357,3 +4357,25 @@ iPad 上看進度頁版面（長條圖、四張數字卡）。
 沒動詞庫資料，無需備份；golden／QC 不受影響（未執行）。
 未驗證：真正送到 Sentry（需 DSN＋Mac）；Android／iOS 原生部分（pod install）未在 Windows 建置。同意設計：當機回報跟「分享使用統計」同一開關（預設關），所以未同意者的當機不會回報。
 剩下：owner 步驟 1–4、Mac 驗證。
+
+## M540（2026-10-31 18:17）狀態：待做（Windows 卡 #910 交給 Mac 的 App 畫面部分）
+卡：[owner] Google 登入與註冊帳號（App＋後端），上架版看得到登入入口
+
+Google、Apple、email 三種登入；登出；刪帳號（iPad 實機：設定 → 資料；引導最後一頁「已有帳號？登入（可略過）」）。
+
+## M541（2026-10-31 18:27）狀態：待做（Windows 卡 #915 交給 Mac 的 App 畫面部分）
+卡：[owner] 在好時機請使用者評分，低分導向意見回饋
+
+開發環境確認規則觸發時會呼叫評分視窗（暫把 minInstallDays 設 0、minActiveDays 設 1 在 iPad 驗證，驗完改回）。
+- 改版本號時同步 RatingPrompt.appVersion。
+
+## M541（2026-10-31 18:30）狀態：待做（設定 Mac 定時自動讀這個檔，沒有 App 卡）
+一次性設定，做完在 mac_verify_results 記一列 `Mac 定時驗證 | 通過`，並把本項改成完成。之後不再需要人叫你。
+1. 報告格式見 `docs/mac_verify.md` 最後一節（結果只有 通過／不通過／注意，新發現也寫進同一張表）。
+2. 建議做法（Windows 評估）：macOS launchd，每 10 分鐘跑一次 `~/bin/mac_verify_poll.sh`：`git fetch -q`；
+   `git show origin/main:docs/mac_inbox.md | grep -c '狀態：待做'` 為 0 就結束；有待做項才 `git pull --ff-only`，
+   再用 `claude -p "照 docs/mac_verify.md 做 mac_inbox 所有待做項，結果寫進 mac_verify_results，commit 並 push"`（headless，限定 20 分鐘 timeout）。
+   用 lockfile 避免同時跑兩份；iPad 沒接上時只做模擬器項，iPad 項保持待做。
+3. 相機、登入等要人手的項目不要硬做，寫 `注意：需要 owner 手動` 。
+4. 為什麼不在 Windows 推：Windows 沒有 Xcode；Mac 輪詢只用 git，不需要金鑰。
+

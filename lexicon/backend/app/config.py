@@ -42,6 +42,12 @@ SMITHSONIAN_API_KEY = os.environ.get("LEXICON_SMITHSONIAN_API_KEY", "DEMO_KEY")
 OPENVERSE_CLIENT_ID = os.environ.get("LEXICON_OPENVERSE_CLIENT_ID", "")
 OPENVERSE_CLIENT_SECRET = os.environ.get("LEXICON_OPENVERSE_CLIENT_SECRET", "")
 
+# Daily digest mail (card #922): tools/gmail_send.py sends it from the owner's
+# Gmail to the same address. Unset -> no mail, the 流程總覽 page says so. Google
+# shows app passwords with spaces, which are not part of the password.
+GMAIL_ADDRESS = os.environ.get("LEXICON_GMAIL_ADDRESS", "").strip()
+GMAIL_APP_PASSWORD = os.environ.get("LEXICON_GMAIL_APP_PASSWORD", "").replace(" ", "")
+
 # Wikimedia's User-Agent policy asks for a way to reach the operator
 # (問題回報 #339); LEXICON_CONTACT overrides it (a URL or an e-mail address).
 CONTACT = os.environ.get("LEXICON_CONTACT", "https://api.willylinai.com")

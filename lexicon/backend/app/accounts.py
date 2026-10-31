@@ -10,8 +10,10 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import json
 import re
 import secrets
+from datetime import datetime, timedelta, timezone
 
 from fastapi import Depends, HTTPException
 from pydantic import BaseModel
@@ -222,7 +224,10 @@ def update_profile(s: Session, user: m.User, nickname, native_lang, level) -> di
 
 def delete_account(s: Session, user: m.User) -> None:
     """App Review 5.1.1(v): in-app account deletion. Shared decks and the cloud backup go with the account."""
+    from . import account_sync   # imports this module's AccountError
     _backup_path(user).unlink(missing_ok=True)
+    account_sync.remove_user(user)
+    s.query(m.UserStat).filter(m.UserStat.user_id == user.id).delete()
     for d in s.scalars(select(m.Deck).where(m.Deck.owner_user_id == user.id)):
         s.delete(d)
     s.delete(user)
@@ -421,6 +426,76 @@ def block_author(s: Session, user: m.User, slug: str) -> None:
     s.flush()
 
 
+# ---- usage numbers (card #911) -------------------------------------------------
+# Signed-in apps report counts and album names only; the admin users page reads them.
+
+ALBUMS_MAX, ALBUM_NAME_MAX = 200, 80
+
+
+def _count(v) -> int:
+    if isinstance(v, bool) or not isinstance(v, (int, float)):
+        return 0
+    return max(0, min(int(v), 10_000_000))
+
+
+def report_stats(s: Session, user: m.User, body: dict) -> dict:
+    """Replace this user's numbers with the app's latest snapshot (idempotent, so a retry is harmless)."""
+    raw = body.get("albums")
+    albums = []
+    for name in raw if isinstance(raw, list) else []:
+        if isinstance(name, str) and name.strip() and len(albums) < ALBUMS_MAX:
+            albums.append(name.strip()[:ALBUM_NAME_MAX])
+    version = body.get("app_version")
+    row = s.get(m.UserStat, user.id) or m.UserStat(user_id=user.id)
+    row.albums = json.dumps(sorted(set(albums)), ensure_ascii=False)
+    row.reviews_total = _count(body.get("reviews_total"))
+    row.reviews_7d = min(_count(body.get("reviews_7d")), row.reviews_total)
+    row.photos_taken = _count(body.get("photos_taken"))
+    row.photos_opened = _count(body.get("photos_opened"))
+    row.app_version = str(version)[:32] if version else None
+    row.last_seen = datetime.now(timezone.utc)
+    s.add(row)
+    s.flush()
+    return {"ok": True}
+
+
+def _stat_row(user: m.User, st: m.UserStat | None) -> dict:
+    albums = json.loads(st.albums) if st else []
+    return {"id": user.id, "email": user.email, "provider": user.provider, "blocked": user.blocked,
+            "joined": user.created_at.isoformat() if user.created_at else None,
+            "albums": albums, "album_count": len(albums),
+            "reviews_total": st.reviews_total if st else 0, "reviews_7d": st.reviews_7d if st else 0,
+            "photos_taken": st.photos_taken if st else 0, "photos_opened": st.photos_opened if st else 0,
+            "app_version": st.app_version if st else None,
+            "last_seen": st.last_seen.isoformat() if st and st.last_seen else None}
+
+
+USER_SORTS = {"last_seen", "reviews_total", "reviews_7d", "photos_taken", "photos_opened", "album_count", "joined", "email"}
+
+
+def users_overview(s: Session, q: str = "", sort: str = "last_seen", desc: bool = True) -> dict:
+    """Admin only. Email is the only personal field; no nickname, no content."""
+    rows = s.execute(select(m.User, m.UserStat).join(m.UserStat, m.UserStat.user_id == m.User.id, isouter=True)).all()
+    out = [_stat_row(u, st) for u, st in rows]
+    week = datetime.now(timezone.utc) - timedelta(days=7)
+    active = sum(1 for u, st in rows if st and st.last_seen and st.last_seen >= week)
+    q = q.strip().lower()
+    if q:
+        out = [r for r in out if q in (r["email"] or "").lower() or any(q in a.lower() for a in r["albums"])]
+    key = sort if sort in USER_SORTS else "last_seen"
+    present = [r for r in out if r[key] is not None]
+    missing = [r for r in out if r[key] is None]
+    present.sort(key=lambda r: r[key], reverse=desc)
+    return {"total_users": len(rows), "active_7d": active, "matched": len(out), "users": present + missing}
+
+
+def user_detail(s: Session, user_id: int) -> dict:
+    user = s.get(m.User, user_id)
+    if user is None:
+        raise AccountError(404, "沒有這個使用者")
+    return _stat_row(user, s.get(m.UserStat, user_id))
+
+
 # ---- admin (X-API-Key) --------------------------------------------------------
 
 def stats(s: Session) -> dict:
@@ -469,6 +544,17 @@ def register(app, auth):
     @app.get("/share-stats", dependencies=[auth])
     def share_stats(s: Session = Depends(db.get_session)):
         return stats(s)
+
+    @app.get("/admin/users", dependencies=[auth])
+    def admin_users(q: str = "", sort: str = "last_seen", desc: bool = True, s: Session = Depends(db.get_session)):
+        return users_overview(s, q, sort, desc)
+
+    @app.get("/admin/users/{user_id}", dependencies=[auth])
+    def admin_user(user_id: int, s: Session = Depends(db.get_session)):
+        try:
+            return user_detail(s, user_id)
+        except AccountError as e:
+            raise HTTPException(e.status, e.message)
 
     @app.post("/share-stats/{slug}/takedown", dependencies=[auth])
     def share_takedown(slug: str, restore: bool = False, s: Session = Depends(db.get_session)):

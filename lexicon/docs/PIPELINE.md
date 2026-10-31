@@ -14,7 +14,7 @@
 | 5 | Mac 驗證 | Mac | 模擬器逐項通過，寫進 mac_verify_results | 自動開 Windows 卡，回到 2 |
 | 6 | iPad 驗證 | Mac | 實機逐項通過；相機由 owner 手動確認 | 同上 |
 | 7 | 可發布 | 系統 | 該版本的卡全部通過，沒有高嚴重度問題 | — |
-| 8 | 發布 | 見下方 | 跑發布清單，分批發布 | 停止放量 |
+| 8 | 發布 | TestFlight 系統；App Store owner | 跑發布清單；TestFlight 自動發，App Store 由 owner 按一下 | 停止放量 |
 | 9 | 上線觀察 | 系統 | 當機、留存、回饋進入第 1 階段 | — |
 
 ## 規則
@@ -30,7 +30,7 @@
 1. 產品決定（問題回報的待決定）。
 2. 帳號、付款、條款、憑證、登入。
 3. 相機等 Mac 工具驗不到的手動確認。
-4. 正式發布（等 owner 決定是否自動，問題回報待決定）。
+4. 正式發布到 App Store：owner 按一下（owner 10/31 決定，問題回報 #1174）。TestFlight 由系統自動發，但要等 Apple 開發者帳號下來後另開卡實作，現在不做。
 
 其餘事情不應該需要 owner 查看。需要時由每日摘要列出，不在對話裡零散通知。
 
@@ -62,6 +62,13 @@
 手機回饋對到卡號與階段。每日摘要在 09:00 後由 flow_tick 產生，只列「需要你」的事，存
 `lexicon/logs/daily_digest/<日期>.md` 並顯示在總覽頁；沒事就不產生。
 
+有摘要的那天寄 Gmail 給 owner 自己（owner 10/31，問題回報 #1175，`tools/gmail_send.py`）：`lexicon/.env` 的
+`LEXICON_GMAIL_ADDRESS`、`LEXICON_GMAIL_APP_PASSWORD` 由 owner 自己填，AI 不索取、不讀、不印。沒填就略過，
+總覽頁顯示「尚未設定 Gmail」，不報錯也不擋 flow_tick；當天稍晚才填，下一輪仍會補寄當天摘要。寄失敗每 30 分鐘
+重試，一天最多 3 次，原因顯示在總覽頁。
+
 ## 目前還沒自動化的部分
 
-由卡片補上，完成後刪掉這段：檢查失敗時不擋住全部卡（#917）、Mac 的注意列開卡與回報格式（#918）。
+由卡片補上，完成後刪掉這段：檢查失敗時不擋住全部卡（#917）。
+
+（#918 已做：Mac 回報格式在 docs/mac_verify.md「報告格式」；`注意` 列由 mac_results_to_issues 開 `[Mac 注意]` 低嚴重度待辦，不用卡號也行；通過列由 flow_tick 推進階段；同一項未結案不重複開；Mac 定時讀 inbox 見 mac_inbox M541。）

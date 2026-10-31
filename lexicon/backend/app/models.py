@@ -951,6 +951,20 @@ class User(Base):
     created_at: Mapped[datetime] = _now()
 
 
+class UserStat(Base):
+    """Usage numbers the signed-in app reports (card #911): counts and album names only,
+    never photo or word content. One row per user, replaced on every report."""
+    __tablename__ = "user_stats"
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    albums: Mapped[str] = mapped_column(Text, default="[]", server_default="[]")   # JSON list of album names
+    reviews_total: Mapped[int] = mapped_column(default=0, server_default="0")
+    reviews_7d: Mapped[int] = mapped_column(default=0, server_default="0")
+    photos_taken: Mapped[int] = mapped_column(default=0, server_default="0")
+    photos_opened: Mapped[int] = mapped_column(default=0, server_default="0")
+    app_version: Mapped[str | None] = mapped_column(String(32))
+    last_seen: Mapped[datetime] = _now()
+
+
 class UserToken(Base):
     """Bearer token the app keeps in the iOS Keychain; only its SHA-256 is stored."""
     __tablename__ = "user_tokens"

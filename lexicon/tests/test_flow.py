@@ -1,4 +1,5 @@
 """統一流程 (card #916): stages come from the facts; the App path passes the iPad, others skip the Mac."""
+import json
 import sys
 from pathlib import Path
 
@@ -162,6 +163,103 @@ def test_digest_is_once_a_day_and_silent_without_work(tmp_path, monkeypatch):
     assert flow_tick.write_digest(morning.replace(day=2), ["要決定 #1"], {"checked": "2026-11-01"}) is True
     assert "要決定 #1" in (tmp_path / "days" / "2026-11-02.md").read_text(encoding="utf-8")
     assert flow_tick.write_digest(morning.replace(day=2), ["又一件"], {"checked": "2026-11-02"}) is False
+
+
+def _mail_setup(tmp_path, monkeypatch, ready=True, result=None):
+    sent = []
+    monkeypatch.setattr(flow_tick, "DIGEST", tmp_path / "d.json")
+    monkeypatch.setattr(flow_tick, "LOG", tmp_path / "flow.log")
+    monkeypatch.setattr(flow_tick.gmail_send, "ready", lambda: ready)
+    monkeypatch.setattr(flow_tick.gmail_send, "send", lambda subject, body: sent.append((subject, body)) or result)
+    return sent
+
+
+def test_digest_mail_goes_out_once_and_only_on_days_with_work(tmp_path, monkeypatch):
+    from datetime import datetime
+    sent = _mail_setup(tmp_path, monkeypatch)
+    now = datetime(2026, 11, 2, 9, 5)
+    assert flow_tick.mail_digest(now, {"checked": "2026-11-02", "date": None, "lines": []}) is False
+    assert flow_tick.mail_digest(now, {"checked": "2026-11-02", "date": "2026-11-01", "lines": ["舊的"]}) is False
+    state = {"checked": "2026-11-02", "date": "2026-11-02", "lines": ["要決定 #1"]}
+    assert flow_tick.mail_digest(now, state) is True
+    assert "1 件" in sent[0][0] and "要決定 #1" in sent[0][1]
+    assert flow_tick.mail_digest(now, state) is False
+    assert len(sent) == 1
+    assert json.loads((tmp_path / "d.json").read_text(encoding="utf-8"))["mailed"] == "2026-11-02"
+
+
+def test_digest_without_gmail_skips_quietly(tmp_path, monkeypatch):
+    from datetime import datetime
+    sent = _mail_setup(tmp_path, monkeypatch, ready=False)
+    state = {"checked": "2026-11-02", "date": "2026-11-02", "lines": ["要決定 #1"]}
+    assert flow_tick.mail_digest(datetime(2026, 11, 2, 9, 5), state) is False
+    assert sent == [] and not (tmp_path / "d.json").exists()
+
+
+def test_digest_mail_failure_retries_a_few_times_then_stops(tmp_path, monkeypatch):
+    from datetime import datetime, timedelta
+    sent = _mail_setup(tmp_path, monkeypatch, result="寄送失敗（OSError）")
+    now = datetime(2026, 11, 2, 9, 5)
+    state = {"checked": "2026-11-02", "date": "2026-11-02", "lines": ["要決定 #1"]}
+    assert flow_tick.mail_digest(now, state) is False
+    assert state["mail_error"] == "寄送失敗（OSError）"
+    flow_tick.mail_digest(now + timedelta(minutes=2), state)
+    assert len(sent) == 1
+    for hour in (1, 2, 3, 4):
+        flow_tick.mail_digest(now + timedelta(hours=hour), state)
+    assert len(sent) == flow_tick.MAIL_TRIES
+
+
+def test_gmail_ready_needs_both_fields_and_failure_hides_the_server_text(monkeypatch):
+    import smtplib
+    from types import SimpleNamespace
+    gs = flow_tick.gmail_send
+    monkeypatch.setattr(gs, "_config", lambda: SimpleNamespace(GMAIL_ADDRESS="a@example.com", GMAIL_APP_PASSWORD=""))
+    assert gs.ready() is False
+    monkeypatch.setattr(gs, "_config", lambda: SimpleNamespace(GMAIL_ADDRESS="a@example.com", GMAIL_APP_PASSWORD="pw"))
+    assert gs.ready() is True
+
+    def boom():
+        raise RuntimeError("no config")
+    monkeypatch.setattr(gs, "_config", boom)
+    assert gs.ready() is False
+
+    monkeypatch.setattr(gs, "_config", lambda: SimpleNamespace(GMAIL_ADDRESS="a@example.com", GMAIL_APP_PASSWORD="pw"))
+    def refused(*a, **k):
+        raise smtplib.SMTPAuthenticationError(535, b"server said pw a@example.com")
+    monkeypatch.setattr(smtplib, "SMTP_SSL", refused)
+    reason = gs.send("s", "b")
+    assert reason and "pw" not in reason.replace("應用程式密碼", "") and "example" not in reason
+
+
+def test_gmail_send_mails_the_owner_themselves_with_chinese_text(monkeypatch):
+    import smtplib
+    from types import SimpleNamespace
+    gs = flow_tick.gmail_send
+    monkeypatch.setattr(gs, "_config", lambda: SimpleNamespace(GMAIL_ADDRESS="a@example.com", GMAIL_APP_PASSWORD="pw"))
+    seen = {}
+
+    class FakeSMTP:
+        def __init__(self, host, port, timeout):
+            seen["host"] = host, port
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+        def login(self, user, password):
+            seen["login"] = user, password
+
+        def send_message(self, msg):
+            seen["msg"] = msg
+            msg.as_bytes()
+    monkeypatch.setattr(smtplib, "SMTP_SSL", FakeSMTP)
+    assert gs.send("每日摘要：1 件需要你", "- 要決定 #1") is None
+    assert seen["host"] == ("smtp.gmail.com", 465) and seen["login"] == ("a@example.com", "pw")
+    assert seen["msg"]["From"] == seen["msg"]["To"] == "a@example.com"
+    assert "要決定 #1" in seen["msg"].get_content()
 
 
 def test_stage_lists_agree_with_the_server():

@@ -27,7 +27,7 @@ from urllib.error import HTTPError, URLError
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / 'lexicon' / 'backend'))
-from app import accounts, app_pack, catalog, config, db, decks, exporter
+from app import account_sync, accounts, app_pack, catalog, config, db, decks, exporter
 from app.meaning_labels import add_meaning_tags, meaning_index  # noqa: F401 (meaning_index: tools use serve_app.meaning_index)
 from app.label_points import anchor as point_anchor
 try:
@@ -44,7 +44,7 @@ _cache = {}
 # and downloads a pack's images/audio in bursts).
 RATE_LIMITS = {'/api/lexicon': 30, '/api/image': 600, '/api/audio': 600,
                '/api/decks': 60,
-               '/api/account': 30, '/api/shares': 60,
+               '/api/account': 30, '/api/account/sync': 300, '/api/shares': 60,
                '/api/issues': 10, '/api/issues/status': 30}   # keyless App card reports (10/23), #735 fixed-status check   # accounts + sharing (card #324)   # 卡片集: the list and one deck's content (card #323)
 RATE_HITS: dict = {}
 RATE_LOCK = threading.Lock()
@@ -506,9 +506,10 @@ class Handler(SimpleHTTPRequestHandler):
         downloads. Only the public name is limited (the LAN and loopback aren't)."""
         if path.startswith('/api/decks/'):
             path = '/api/decks'
-        for prefix in ('/api/account', '/api/shares'):
+        for prefix in ('/api/account/sync', '/api/account', '/api/shares'):
             if path.startswith(prefix + '/'):
                 path = prefix
+                break
         if not self.public_request() or path not in RATE_LIMITS:
             return True
         # The Cloudflare tunnel connects from loopback; the real client is in this header.
@@ -848,6 +849,8 @@ class Handler(SimpleHTTPRequestHandler):
         except ValueError:
             length = -1
         limit = accounts.BACKUP_MAX_BYTES if path == '/api/account/backup' else accounts.PHOTO_MAX_BYTES
+        if path.startswith('/api/account/sync/blob/'):
+            limit = account_sync.BLOB_MAX_BYTES
         if not 0 <= length <= limit + 1:
             self.send_json(413, {'detail': 'too large'})
             return
@@ -865,7 +868,17 @@ class Handler(SimpleHTTPRequestHandler):
                     self.end_headers()
                     self.wfile.write(data)
                     return
-                result = self.run_account(s, method, parts, raw, token)
+                if parts[:3] == ['account', 'sync', 'blob'] and method == 'GET' and len(parts) == 4:
+                    data = account_sync.load_blob(accounts.user_from_token(s, token), parts[3])
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'application/octet-stream')
+                    self.send_header('Cache-Control', 'no-store')
+                    self.send_header('Content-Length', str(len(data)))
+                    self.end_headers()
+                    self.wfile.write(data)
+                    return
+                query = {k: v[0] for k, v in parse_qs(urlsplit(self.path).query).items()}
+                result = self.run_account(s, method, parts, raw, token, query)
         except accounts.AccountError as e:
             self.send_json(e.status, {'detail': e.message})
             return
@@ -875,8 +888,10 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_json(200, result)
 
     @staticmethod
-    def run_account(s, method, parts, raw, token) -> dict:
-        body = {} if parts[-1:] == ['photo'] or parts[:2] == ['account', 'backup'] or not raw else json.loads(raw)
+    def run_account(s, method, parts, raw, token, query=None) -> dict:
+        query = query or {}
+        binary = parts[-1:] == ['photo'] or parts[:2] == ['account', 'backup'] or parts[:3] == ['account', 'sync', 'blob']
+        body = {} if binary or not raw else json.loads(raw)
         area, rest = parts[0], parts[1:]
         if area == 'account':
             if method == 'POST' and rest == ['register']:
@@ -895,12 +910,22 @@ class Handler(SimpleHTTPRequestHandler):
                                                   body.get('native_lang'), body.get('level'))
                 return {'token': tok, 'user': accounts.profile(user)}
             user = accounts.user_from_token(s, token)
+            if rest[:1] == ['sync']:     # 跨裝置自動同步 (card #912)
+                if rest[1:] == ['push'] and method == 'POST':
+                    return account_sync.push(user, body['device'], body['records'])
+                if rest[1:] == ['pull'] and method == 'GET':
+                    return account_sync.pull(user, int(query.get('since', 0)), int(query.get('limit', 1000)),
+                                             query.get('device'))
+                if rest[1:2] == ['blob'] and len(rest) == 3 and method == 'POST':
+                    return account_sync.put_blob(user, rest[2], raw)
             if method == 'GET' and rest == ['me']:
                 return accounts.profile(user)
             if method == 'POST' and rest == ['profile']:
                 return accounts.update_profile(s, user, body.get('nickname'), body.get('native_lang'), body.get('level'))
             if method == 'POST' and rest == ['backup']:
                 return accounts.save_backup(user, raw)
+            if method == 'POST' and rest == ['stats']:   # card #911
+                return accounts.report_stats(s, user, body)
             if method == 'GET' and rest == ['backup', 'info']:
                 return accounts.backup_info(user)
             if method == 'POST' and rest == ['logout']:
