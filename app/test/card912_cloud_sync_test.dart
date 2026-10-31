@@ -9,6 +9,8 @@ import 'package:http/testing.dart';
 import 'package:photo_english_app/models/learning_card.dart';
 import 'package:photo_english_app/models/photo.dart';
 import 'package:photo_english_app/models/word_entry.dart';
+import 'package:photo_english_app/models/vocabulary_profile.dart';
+import 'package:photo_english_app/services/app_backup.dart';
 import 'package:photo_english_app/services/app_settings.dart';
 import 'package:photo_english_app/services/cloud_sync.dart';
 import 'package:photo_english_app/services/fsrs_scheduler.dart';
@@ -24,6 +26,8 @@ class FakeAccount {
   var seq = 0;
   var pushes = 0;
   var online = true;
+  Future<void> Function()? onBlob;
+  Future<void> Function()? onFetch;
 
   http.Client client() => MockClient((req) async {
         if (!online) throw http.ClientException('offline');
@@ -64,10 +68,12 @@ class FakeAccount {
         }
         final id = path.split('/').last;
         if (req.method == 'POST') {
+          await onBlob?.call();
           blobs[id] = req.bodyBytes;
           return http.Response('{}', 200);
         }
         final b = blobs[id];
+        await onFetch?.call();
         return b == null
             ? http.Response('{}', 404)
             : http.Response.bytes(b, 200);
@@ -104,7 +110,9 @@ class Device {
   Future<void> reopen() async {
     await Future<void>.delayed(Duration.zero);
     repo = WordDatabaseRepository.fromData(store.load(),
-        language: 'en', store: store, clock: () => clock);
+        language: 'en', store: store, clock: () => clock)
+      ..onPhotoRemoved = ((p) =>
+          photoStore.remove(filePath: p.filePath, storedKey: p.storedKey));
   }
 
   Future<void> syncNow() async {
@@ -126,6 +134,23 @@ class Device {
     await store.deleteCard(repo.cardOf(entry.id)!.id);
     await store.deleteEntry(entry.id);
     await reopen();
+  }
+
+  Future<void> mark(String word, Familiarity f) async {
+    await repo.flush();
+    await store.putProfile(repo.profile.withFamiliarity(word, f, DateTime.now()));
+    await reopen();
+  }
+
+  Future<void> forget(String word) async {
+    await repo.flush();
+    await store.putProfile(repo.profile.withoutFamiliarity(word, DateTime.now()));
+    await reopen();
+  }
+
+  void edit(String word) {
+    final e = repo.entryByWord(word)!;
+    repo.editEntry(e.copyWith(meaning: '$word, edited'), const {'meaning'});
   }
 
   List<ReviewLog> logsOf(String word) =>
@@ -364,6 +389,216 @@ void main() {
     await a.syncNow();
     await b.syncNow();
     expect(b.repo.photo('p'), isNull);
+  });
+
+  test('a photo deleted on one device loses its picture on both (#1179)',
+      () async {
+    final bytes = Uint8List.fromList([1, 2, 3]);
+    final where = await a.photoStore.save('p', bytes);
+    a.repo.addPhoto(Photo(
+        id: 'p',
+        title: 'Pic',
+        takenAt: DateTime.utc(2026),
+        createdAt: DateTime.utc(2026),
+        storedKey: where.storedKey));
+    await a.syncNow();
+    await b.syncNow();
+    await b.syncNow();
+    expect(await b.photoStore.storedBytes('p'), bytes);
+
+    a.repo.removePhoto('p');
+    await a.syncNow();
+    expect(await a.photoStore.storedBytes('p'), isNull);
+    await b.syncNow();
+    expect(b.repo.photo('p'), isNull);
+    expect(await b.photoStore.storedBytes('p'), isNull);
+  });
+
+  test('a picture arriving after its photo was deleted is not kept (#1179)',
+      () async {
+    final where = await a.photoStore.save('p', Uint8List.fromList([1, 2, 3]));
+    a.repo.addPhoto(Photo(
+        id: 'p',
+        title: 'Pic',
+        takenAt: DateTime.utc(2026),
+        createdAt: DateTime.utc(2026),
+        storedKey: where.storedKey));
+    await a.syncNow();
+    b.wifi = false;
+    await b.syncNow();
+    b.wifi = true;
+    account.onFetch = () async {
+      account.onFetch = null;
+      b.repo.removePhoto('p');
+      await b.repo.flush();
+    };
+    await b.syncNow();
+    expect(b.repo.photo('p'), isNull);
+    expect(await b.photoStore.storedBytes('p'), isNull);
+  });
+
+  test('a new device takes the settings of the account, not its defaults',
+      () async {
+    a.settings.dailyNewLimit = 7;
+    await a.syncNow();
+    await b.syncNow();
+    await a.syncNow();
+    expect(b.settings.dailyNewLimit, 7);
+    expect(a.settings.dailyNewLimit, 7);
+  });
+
+  test('a newer profile does not drop what this device learned', () async {
+    a.add('apple');
+    b.add('pear');
+    await b.repo.flush();
+    await Future<void>.delayed(const Duration(milliseconds: 5));
+    await a.mark('apple', Familiarity.mastered);
+    await a.syncNow(); // the newer profile goes up first and reaches b
+    await b.syncNow();
+    await a.syncNow();
+    for (final d in [a, b]) {
+      expect(d.repo.profile.familiarity.keys,
+          containsAll(['apple', 'pear']), reason: d.name);
+      expect(d.repo.profile.familiarity['apple'], Familiarity.mastered,
+          reason: d.name);
+    }
+  });
+
+  test('a word removed on one device leaves the profile of the other',
+      () async {
+    a.add('apple');
+    a.add('pear');
+    await a.syncNow();
+    await b.syncNow();
+    await a.syncNow();
+    expect(b.repo.profile.familiarity.keys, contains('apple'));
+    await a.forget('apple');
+    await a.syncNow();
+    await b.syncNow();
+    await a.syncNow();
+    for (final d in [a, b]) {
+      expect(d.repo.profile.familiarity.keys, isNot(contains('apple')),
+          reason: d.name);
+      expect(d.repo.profile.familiarity.keys, contains('pear'), reason: d.name);
+    }
+  });
+
+  test('the stronger familiarity of a word survives either order', () async {
+    a.add('apple');
+    await a.syncNow();
+    await b.syncNow();
+    await a.mark('apple', Familiarity.mastered);
+    await Future<void>.delayed(const Duration(milliseconds: 5));
+    await b.mark('apple', Familiarity.familiar);
+    await a.syncNow();
+    await b.syncNow();
+    await a.syncNow();
+    expect(a.repo.profile.familiarity['apple'], Familiarity.mastered);
+    expect(b.repo.profile.familiarity['apple'], Familiarity.mastered);
+  });
+
+  test('an edit from the other device leaves a photo still to be uploaded',
+      () async {
+    final bytes = Uint8List.fromList([1, 2, 3]);
+    a.wifi = false;
+    final saved = await a.photoStore.save('p', bytes);
+    a.repo.addPhoto(Photo(
+        id: 'p',
+        title: 'Pic',
+        takenAt: DateTime.utc(2026),
+        createdAt: DateTime.utc(2026),
+        storedKey: saved.storedKey));
+    await a.syncNow();
+    expect(account.blobs, isEmpty);
+    await b.syncNow();
+    b.repo.updatePhoto(b.repo.photo('p')!.copyWith(title: 'Beach'));
+    await b.syncNow();
+    await a.syncNow();
+    expect(a.repo.photo('p')!.title, 'Beach');
+    a.wifi = true;
+    await a.syncNow();
+    expect(account.blobs['p'], bytes);
+  });
+
+  test('an edit made while a photo uploads is still sent', () async {
+    final bytes = Uint8List.fromList([4, 5, 6]);
+    final saved = await a.photoStore.save('p', bytes);
+    a.repo.addPhoto(Photo(
+        id: 'p',
+        title: 'Pic',
+        takenAt: DateTime.utc(2026),
+        createdAt: DateTime.utc(2026),
+        storedKey: saved.storedKey));
+    await a.repo.flush();
+    account.onBlob = () async {
+      a.repo.updatePhoto(a.repo.photo('p')!.copyWith(title: 'Beach'));
+      await a.repo.flush();
+      await Future<void>.delayed(Duration.zero);
+    };
+    await a.syncNow();
+    account.onBlob = null;
+    await a.syncNow();
+    final sent = jsonDecode(account.records['en/photos/p']!['data'] as String);
+    expect((sent as Map)['title'], 'Beach');
+  });
+
+  test('an older edit from elsewhere does not bring back a word deleted here',
+      () async {
+    a.add('apple');
+    await a.syncNow();
+    await b.syncNow();
+    b.edit('apple');
+    await b.repo.flush();
+    await Future<void>.delayed(const Duration(milliseconds: 5));
+    await a.deleteWord('apple');
+    await b.syncNow();
+    await a.syncNow();
+    await b.syncNow();
+    expect(a.repo.entryByWord('apple'), isNull);
+    expect(b.repo.entryByWord('apple'), isNull);
+  });
+
+  test('a word added again here takes later edits on its live record',
+      () async {
+    a.add('apple');
+    await a.syncNow();
+    await b.syncNow();
+    await a.deleteWord('apple');
+    await a.syncNow();
+    await b.syncNow();
+    a.add('apple');
+    await a.syncNow();
+    await b.syncNow();
+    b.edit('apple');
+    await b.syncNow();
+    await a.syncNow();
+    expect(a.store.load().entries.where((e) => e.word == 'apple'),
+        hasLength(1));
+  });
+
+  test('a restored backup still gets what the account has since', () async {
+    // boxPrefix '' is the real one: AppBackup works on it.
+    final d = await Device.make('', account);
+    d.add('apple');
+    await d.syncNow();
+    final file = <int>[];
+    await AppBackup.write(
+        settings: d.settings,
+        photoStore: d.photoStore,
+        write: (bytes) async => file.addAll(bytes));
+    a.add('pear');
+    await a.syncNow();
+    await d.syncNow();
+    expect(d.repo.entryByWord('pear'), isNotNull);
+
+    await AppBackup.restore(Stream.value(file),
+        settings: d.settings, photoStore: d.photoStore);
+    await d.reopen();
+    expect(d.repo.entryByWord('pear'), isNull);
+    await d.syncNow();
+    expect(d.repo.entryByWord('pear'), isNotNull);
+    expect(d.repo.entryByWord('apple'), isNotNull);
+    d.sync.dispose();
   });
 
   test('data from a newer App version is left alone', () async {

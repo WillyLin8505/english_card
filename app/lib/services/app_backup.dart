@@ -239,12 +239,20 @@ class AppBackup {
           if (suffix == 'photos') photos += values.length;
         }
       }
+      // Pictures no restored record points at (the old records are gone).
+      await photoStore.removeAllExcept({
+        for (final k in saved.keys) k.split('/').last,
+      });
       applySettings(settings, manifest['settings']);
       // The sync marks described what was just replaced.
       for (final language in supportedLanguages.keys) {
         final p = HiveWordDatabaseStore.prefixFor(language);
         await (await Hive.openBox<String>('${p}sync')).clear();
       }
+      // Read the account again from the start, as a new device: it holds what
+      // was changed since this backup, and it skips this device's own uploads.
+      await (await Hive.openBox<String>('sync_state'))
+          .deleteAll(const ['cursor', 'device']);
       return BackupSummary(
           words: words,
           photos: photos,

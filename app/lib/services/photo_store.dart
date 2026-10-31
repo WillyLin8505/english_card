@@ -28,6 +28,10 @@ class PhotoStore {
       : _box = null,
         _dir = null;
 
+  /// A store over [dir] — tests of the on-disk behaviour.
+  @visibleForTesting
+  PhotoStore.inDirectory(Directory dir) : this._(null, dir);
+
   final _memory = <String, Uint8List>{};
 
   static Future<PhotoStore> open() async {
@@ -51,6 +55,8 @@ class PhotoStore {
 
   static final _resolved = <String, String>{};
 
+  static String _fileName(String path) => path.split(RegExp(r'[/\\]')).last;
+
   /// Where [path] (a saved [Photo.filePath]) is on this install: the path
   /// itself when it exists, else the same file name in [photosDirectory].
   static String localPath(String path) {
@@ -61,7 +67,7 @@ class PhotoStore {
     try {
       final dir = photosDirectory;
       if (!File(path).existsSync() && dir != null) {
-        final name = path.split(RegExp(r'[/\\]')).last;
+        final name = _fileName(path);
         final here = '$dir${Platform.pathSeparator}$name';
         if (name.isNotEmpty && File(here).existsSync()) found = here;
       }
@@ -95,6 +101,92 @@ class PhotoStore {
 
   Future<Uint8List?> storedBytes(String key) async =>
       _box == null ? _memory[key] : await _box.get(key);
+
+  /// Deletes the app's own copy of a photo (問題回報 #1179). Only this folder
+  /// is touched, by file name: spec section 7 keeps the original in the
+  /// phone's system album.
+  Future<void> remove({String? filePath, String? storedKey}) async {
+    final dir = _dir;
+    if (dir != null) {
+      if (filePath == null) return;
+      _resolved.remove(filePath);
+      final name = _fileName(filePath);
+      if (name.isEmpty) return;
+      try {
+        await File('${dir.path}${Platform.pathSeparator}$name').delete();
+      } on FileSystemException catch (e) {
+        debugPrint('Photo file not deleted: $e');
+      }
+      return;
+    }
+    if (storedKey == null) return;
+    final box = _box;
+    if (box != null) {
+      await box.delete(storedKey);
+    } else {
+      _memory.remove(storedKey);
+    }
+  }
+
+  /// After a restore (問題回報 #1180): deletes every picture in the app's
+  /// folder except those of [keepIds] (the photos the backup brought back);
+  /// the records that pointed at the others were just replaced. Returns how
+  /// many files went.
+  Future<int> removeAllExcept(Set<String> keepIds) async {
+    final dir = _dir;
+    if (dir == null) return 0;
+    var removed = 0;
+    try {
+      for (final file in await dir.list().toList()) {
+        if (file is! File || !file.path.endsWith('.jpg')) continue;
+        final name = _fileName(file.path);
+        if (keepIds.contains(name.substring(0, name.length - 4))) continue;
+        await file.delete();
+        removed++;
+      }
+    } catch (e) {
+      debugPrint('Photo cleanup after restore failed: $e');
+    }
+    return removed;
+  }
+
+  static const _sweptMark = '.orphans_swept';
+
+  /// Once per install: deletes the pictures of photos removed before
+  /// [remove] existed. [savedPaths] gives every language's [Photo.filePath];
+  /// if it fails or finds no photo at all, nothing is deleted and the next
+  /// start tries again. A file from the last day stays: its record may still
+  /// be on its way. Returns how many files went.
+  Future<int> sweepOrphansOnce(
+    Future<Iterable<String?>> Function() savedPaths, {
+    DateTime? now,
+  }) async {
+    final dir = _dir;
+    if (dir == null) return 0;
+    try {
+      final mark = File('${dir.path}${Platform.pathSeparator}$_sweptMark');
+      if (await mark.exists()) return 0;
+      final keep = {
+        for (final path in await savedPaths())
+          if (path != null) _fileName(path)
+      };
+      if (keep.isEmpty) return 0;
+      final cutoff = (now ?? DateTime.now()).subtract(const Duration(days: 1));
+      var removed = 0;
+      for (final file in await dir.list().toList()) {
+        if (file is! File || !file.path.endsWith('.jpg')) continue;
+        if (keep.contains(_fileName(file.path))) continue;
+        if ((await file.stat()).modified.isAfter(cutoff)) continue;
+        await file.delete();
+        removed++;
+      }
+      await mark.writeAsString('');
+      return removed;
+    } catch (e) {
+      debugPrint('Photo sweep failed: $e');
+      return 0;
+    }
+  }
 
   /// Whether [photo]'s picture can be shown now. A photo whose original
   /// file is gone (deleted, or no permission to read it) cannot: callers

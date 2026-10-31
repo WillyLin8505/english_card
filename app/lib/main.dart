@@ -72,6 +72,8 @@ Future<void> _start() async {
   // Card #914: anonymous install / retention events (設定 → 隱私 can switch off).
   EventReport.instance.attach(settings);
 
+  final photoStore = await PhotoStore.open();
+
   Future<WordDatabaseRepository> open(String language) async {
     // The downloaded language pack for this direction (assets/lexicon/).
     // The web page doesn't wait for it (30 MB, 問題回報 #357): DictionarySync
@@ -98,14 +100,17 @@ Future<void> _start() async {
           LexiconPack.instance.detail(w) ??
           WordDetailService.instance.lookup(w),
       profile: UserVocabularyProfile.start(settings.legacyLevel ?? 'A1'),
-    )..linkLexicon(LexiconPack.instance, fold: false, refreshWords: false);
+    )
+      ..linkLexicon(LexiconPack.instance, fold: false, refreshWords: false)
+      ..onPhotoRemoved = ((p) =>
+          photoStore.remove(filePath: p.filePath, storedKey: p.storedKey));
   }
 
   final repository = await open(settings.learningLanguage);
   runApp(PhotoEnglishApp(
     repository: repository,
     settings: settings,
-    photoStore: await PhotoStore.open(),
+    photoStore: photoStore,
     lexicon: lexicon,
     openRepository: open,
   ));
@@ -185,6 +190,8 @@ class _PhotoEnglishAppState extends State<PhotoEnglishApp>
           DictionarySync.instance.start(widget.settings, () => _repository));
       _enricher.start();
       _cloudSync.start();
+      unawaited(widget.photoStore
+          .sweepOrphansOnce(HiveWordDatabaseStore.savedPhotoPaths));
       // 問題回報 #824: report when iOS memory runs low; iOS only.
       MemoryMonitor.instance.addReleaser(_releaseSpeakerMemory);
       unawaited(
@@ -246,6 +253,7 @@ class _PhotoEnglishAppState extends State<PhotoEnglishApp>
   Future<void> _reloadData() async {
     final open = widget.openRepository;
     if (open == null) return;
+    await _repository.flush();
     final next = await open(widget.settings.learningLanguage);
     setState(() => _repository = next);
     _applyRetention();

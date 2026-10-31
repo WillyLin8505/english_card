@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:hive/hive.dart';
 
 import '../models/card_template.dart';
+import 'app_settings.dart' show supportedLanguages;
 import 'fsrs_optimizer.dart';
 import 'sync_index.dart';
 import '../models/learning_card.dart';
@@ -133,6 +134,17 @@ class HiveWordDatabaseStore
         'fr' => 'wd_fr_',
         _ => 'wd_zh_',
       };
+
+  /// Every saved [Photo.filePath], of all learning languages.
+  static Future<List<String?>> savedPhotoPaths({String boxPrefix = ''}) async =>
+      [
+        for (final language in supportedLanguages.keys)
+          for (final raw in (await open(language: language, boxPrefix: boxPrefix))
+              .sync
+              .photosBox
+              .values)
+            (jsonDecode(raw) as Map)['filePath'] as String?,
+      ];
 
   /// Hive must already be initialised (Hive.initFlutter / Hive.init).
   /// [boxPrefix] keeps a second simulated device apart in tests.

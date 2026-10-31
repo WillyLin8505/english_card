@@ -8,6 +8,7 @@ import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 
 import '../models/learning_card.dart';
+import '../models/vocabulary_profile.dart';
 import 'app_backup.dart';
 import 'app_settings.dart';
 import 'cloud_backup.dart';
@@ -71,6 +72,7 @@ class CloudSync extends ChangeNotifier {
   static const _batchBytes = 3 * 1024 * 1024;
   static const _settingsLanguage = '_';
   static const _settingsCollection = 'settings';
+  static const _profile = 'profile';
   static const _deviceFields = {
     'learningLanguage',
     'nativeLanguage',
@@ -253,12 +255,17 @@ class CloudSync extends ChangeNotifier {
       await e.value.indexExisting(device);
       await _noteDecks(e.key, e.value);
     }
-    await _noteSettings(state);
+    await _noteSettings(state, newFields: false);
 
     // Mid-review the session's cards must not change under the learner:
     // uploads go on, what came down waits for the next round.
     final free = canApply?.call() ?? true;
-    if (free && await _pull(state, device, books)) _reloadDue = true;
+    if (free) {
+      if (await _pull(state, device, books)) _reloadDue = true;
+      // After the pull: a new device takes the account's settings instead of
+      // sending its defaults over them.
+      await _noteSettings(state);
+    }
     await _push(state, device, books);
     if (await _photos(books)) _reloadDue = true;
     pendingRecords = books.values.fold(0, (n, b) => n + b.pendingCount);
@@ -312,17 +319,18 @@ class CloudSync extends ChangeNotifier {
           if (!_deviceFields.contains(e.key)) e.key: e.value,
       };
 
-  Future<void> _noteSettings(Box<String> state) async {
+  Future<void> _noteSettings(Box<String> state, {bool newFields = true}) async {
     for (final e in _syncedSettings.entries) {
       final key = 'set/${e.key}';
       final raw = state.get(key);
+      if (raw == null && !newFields) continue;
       final mark = raw == null ? null : SyncMark.decode(raw);
       final value = jsonEncode(e.value);
       if (mark?.value == value) continue;
       await state.put(
           key,
           SyncMark(
-                  // Defaults a device never changed lose to a real choice.
+                  // Older than any change made on purpose.
                   stamp: mark == null ? 1 : SyncClock.next(),
                   wire: e.key,
                   pending: true,
@@ -412,16 +420,22 @@ class CloudSync extends ChangeNotifier {
   Future<bool> _applyLanguage(String language, SyncBoxes b, String device,
       Map<String, List<_Incoming>> groups) async {
     var changed = false;
-    final entryIdOf = <String, String>{
-      for (final (id, m) in b.marks(SyncBoxes.entries)) m.wire: id,
-    };
-    final cardIdOf = <String, String>{
-      for (final (id, m) in b.marks(SyncBoxes.cards)) m.wire: id,
-    };
+    // A word deleted and added again has two ids here; the live one counts.
+    Map<String, String> idsOf(String collection) {
+      final ids = <String, String>{};
+      for (final (id, m) in b.marks(collection)) {
+        if (!m.deleted || !ids.containsKey(m.wire)) ids[m.wire] = id;
+      }
+      return ids;
+    }
+
+    final entryIdOf = idsOf(SyncBoxes.entries);
+    final cardIdOf = idsOf(SyncBoxes.cards);
 
     // Records named by their own id, same on every device.
     Future<void> plain(String collection,
-        Future<void> Function(_Incoming r, SyncMark? mine)? write) async {
+        Future<void> Function(_Incoming r, SyncMark? mine)? write,
+        {Future<void> Function(String raw)? deleted}) async {
       for (final r in groups[collection] ?? const <_Incoming>[]) {
         final mine = b.mark(collection, r.id);
         if (!_replaces(mine, r, device)) {
@@ -429,8 +443,10 @@ class CloudSync extends ChangeNotifier {
         }
         changed = true;
         if (r.deleted) {
+          final raw = b.boxOf(collection)!.get(r.id);
           await b.boxOf(collection)!.delete(r.id);
           await b.setMark(collection, r.id, _applied(r, r.id, old: mine));
+          if (raw != null) await deleted?.call(raw);
         } else if (write != null) {
           await write(r, mine);
         } else {
@@ -480,11 +496,21 @@ class CloudSync extends ChangeNotifier {
           r.id,
           _applied(r, r.id,
               old: mine,
+              // Pixels held here keep their state: they may still be waiting
+              // for Wi-Fi, and the other device has none to fetch until then.
               blob: path != null || key != null
-                  ? SyncMark.blobSent
+                  ? (mine?.blob == SyncMark.blobToSend
+                      ? SyncMark.blobToSend
+                      : SyncMark.blobSent)
                   : hasBlob
                       ? SyncMark.blobToFetch
                       : SyncMark.blobNone));
+    }, deleted: (raw) async {
+      // Deleted on another device: the picture goes here too (問題回報 #1179).
+      final json = jsonDecode(raw) as Map<String, dynamic>;
+      await photoStore.remove(
+          filePath: json['filePath'] as String?,
+          storedKey: json['storedKey'] as String?);
     });
 
     await plain(SyncBoxes.occurrences, (r, mine) async {
@@ -495,7 +521,6 @@ class CloudSync extends ChangeNotifier {
       await b.setMark(SyncBoxes.occurrences, r.id, _applied(r, r.id, old: mine));
     });
 
-    final affected = <String>{};
     for (final r in groups[SyncBoxes.cards] ?? const <_Incoming>[]) {
       final known = cardIdOf[r.id];
       final mine = known == null ? null : b.mark(SyncBoxes.cards, known);
@@ -518,7 +543,6 @@ class CloudSync extends ChangeNotifier {
             ..['wordEntryId'] = entry));
       await b.setMark(SyncBoxes.cards, id, _applied(r, r.id, old: mine));
       cardIdOf[r.id] = id;
-      affected.add(id);
     }
 
     final newLogs = <String>{};
@@ -541,19 +565,24 @@ class CloudSync extends ChangeNotifier {
     // the optimizer rewrites stability without adding a log.
     await _rebuildCards(language, b, newLogs);
 
+    final myProfile = b.metaBox.get(_profile);
     await plain(SyncBoxes.meta, (r, mine) async {
       await b.metaBox.put(r.id, r.data!['raw'] as String);
       await b.setMark(SyncBoxes.meta, r.id, _applied(r, r.id, old: mine));
     });
     for (final r in groups[SyncBoxes.meta] ?? const <_Incoming>[]) {
-      if (r.id != 'profile' || r.deleted) continue;
-      final mine = b.metaBox.get(r.id);
-      if (mine == null) continue;
-      final merged = _mergeProfile(mine, r.data!['raw'] as String);
-      if (merged != mine) {
+      if (r.id != _profile || r.deleted) continue;
+      final now = b.metaBox.get(r.id);
+      if (now == null) continue;
+      final merged = myProfile == null
+          ? now
+          : _mergeProfile(
+              now, myProfile, r.data!['raw'] as String, b.profileBase);
+      if (merged != now) {
         changed = true;
         await b.put(SyncBoxes.meta, r.id, merged);
       }
+      await b.setProfileBase(merged);
     }
 
     if (await _applyDecks(language, b, device, groups[SyncBoxes.decks])) {
@@ -579,23 +608,55 @@ class CloudSync extends ChangeNotifier {
     return changed;
   }
 
-  /// Per-word familiarity is the 已學會清單: words either device marked stay,
-  /// whichever profile was written last.
-  static String _mergeProfile(String mine, String theirs) {
+  /// Per-word familiarity is the 已學會清單 and [winner] is whichever profile
+  /// was written last, so its per-word maps are worked out from both sides
+  /// against [base], the profile the two last agreed on: a word only one side
+  /// changed or removed takes that change. Both changed it: the stronger one.
+  static String _mergeProfile(
+      String winner, String mine, String theirs, String? base) {
+    final out = jsonDecode(winner) as Map<String, dynamic>;
     final a = jsonDecode(mine) as Map<String, dynamic>;
     final b = jsonDecode(theirs) as Map<String, dynamic>;
+    final o = base == null
+        ? const <String, dynamic>{}
+        : jsonDecode(base) as Map<String, dynamic>;
+    bool same(Object? x, Object? y) => jsonEncode(x) == jsonEncode(y);
     var changed = false;
     for (final f in const ['familiarity', 'exposure']) {
-      final to = a[f], from = b[f];
-      if (to is! Map || from is! Map) continue;
-      for (final e in from.entries) {
-        if (!to.containsKey(e.key)) {
-          to[e.key] = e.value;
-          changed = true;
-        }
+      final x = a[f], y = b[f], z = o[f] ?? const {}, to = out[f];
+      if (x is! Map || y is! Map || z is! Map || to is! Map) continue;
+      final merged = <String, Object?>{};
+      for (final k in {...x.keys, ...y.keys}) {
+        final v = same(x[k], z[k])
+            ? y[k]
+            : same(y[k], z[k])
+                ? x[k]
+                : _stronger(x[k], y[k]);
+        if (v != null) merged['$k'] = v;
+      }
+      if (merged.length != to.length ||
+          merged.entries.any((e) => !same(e.value, to[e.key]))) {
+        out[f] = merged;
+        changed = true;
       }
     }
-    return changed ? jsonEncode(a) : mine;
+    return changed ? jsonEncode(out) : winner;
+  }
+
+  /// A familiarity name, or an exposure: further along wins, removal loses.
+  static Object? _stronger(Object? x, Object? y) {
+    if (x == null || y == null) return x ?? y;
+    if (x is String && y is String) {
+      int rank(String n) => Familiarity.values.indexWhere((f) => f.name == n);
+      return rank(x) >= rank(y) ? x : y;
+    }
+    if (x is Map && y is Map) {
+      final t = '${x['last']}'.compareTo('${y['last']}');
+      return t > 0 || (t == 0 && (x['count'] as num) >= (y['count'] as num))
+          ? x
+          : y;
+    }
+    return x;
   }
 
   FsrsScheduler _schedulerOf(SyncBoxes b) {
@@ -793,6 +854,9 @@ class CloudSync extends ChangeNotifier {
             }
           }
 
+          final sentProfile = c == SyncBoxes.meta && id == _profile
+              ? b.metaBox.get(id)
+              : null;
           final data = m.deleted
               ? null
               : c == SyncBoxes.decks
@@ -807,7 +871,10 @@ class CloudSync extends ChangeNotifier {
             'stamp': m.stamp,
             'deleted': m.deleted,
             'data': data,
-          }, data?.length ?? 64, clear);
+          }, data == null ? 64 : utf8.encode(data).length, () async {
+            await clear();
+            if (sentProfile != null) await b.setProfileBase(sentProfile);
+          });
         }
       }
     }
@@ -821,7 +888,7 @@ class CloudSync extends ChangeNotifier {
         'stamp': m.stamp,
         'deleted': false,
         'data': data,
-      }, data.length, () async {
+      }, utf8.encode(data).length, () async {
         final raw = state.get(key);
         if (raw == null) return;
         final now = SyncMark.decode(raw);
@@ -865,12 +932,18 @@ class CloudSync extends ChangeNotifier {
     for (final (language, b, id, m) in work) {
       final raw = b.photosBox.get(id);
       if (raw == null) continue;
-      final json = jsonDecode(raw) as Map<String, dynamic>;
+      // The learner may edit or delete the photo during a transfer.
+      Future<void> settle(int blob) async {
+        final now = b.mark(SyncBoxes.photos, id);
+        if (now == null || now.deleted) return;
+        await b.setMark(SyncBoxes.photos, id, now.copyWith(blob: blob));
+      }
+
       if (m.blob == SyncMark.blobToSend) {
+        final json = jsonDecode(raw) as Map<String, dynamic>;
         final bytes = await AppBackup.photoBytes(json, photoStore);
         if (bytes == null) {
-          await b.setMark(
-              SyncBoxes.photos, id, m.copyWith(blob: SyncMark.blobNone));
+          await settle(SyncMark.blobNone);
         } else {
           final r = await _client
               .post(_uri('blob/$id'),
@@ -885,8 +958,7 @@ class CloudSync extends ChangeNotifier {
             return fetched;
           }
           if (r.statusCode != 200) _fail(r);
-          await b.setMark(
-              SyncBoxes.photos, id, m.copyWith(blob: SyncMark.blobSent));
+          await settle(SyncMark.blobSent);
         }
       } else {
         final r = await _client
@@ -895,11 +967,18 @@ class CloudSync extends ChangeNotifier {
         if (r.statusCode == 404) continue; // the other device has not sent it
         if (r.statusCode != 200) _fail(r);
         final saved = await photoStore.save(id, r.bodyBytes);
+        final current = b.photosBox.get(id);
+        if (current == null) {
+          // Deleted while it came in.
+          await photoStore.remove(
+              filePath: saved.filePath, storedKey: saved.storedKey);
+          continue;
+        }
+        final json = jsonDecode(current) as Map<String, dynamic>;
         json['filePath'] = saved.filePath;
         json['storedKey'] = saved.storedKey;
         await b.photosBox.put(id, jsonEncode(json));
-        await b.setMark(
-            SyncBoxes.photos, id, m.copyWith(blob: SyncMark.blobSent));
+        await settle(SyncMark.blobSent);
         if (language == settings.learningLanguage) fetched = true;
       }
       pendingPhotos--;

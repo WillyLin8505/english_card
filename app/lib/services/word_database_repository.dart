@@ -87,6 +87,9 @@ class WordDatabaseRepository extends ChangeNotifier {
   final _pendingWrites = <Future<void>>{};
   (Object, StackTrace)? _writeFailure;
 
+  /// Deletes the picture of a removed photo (PhotoStore.remove).
+  Future<void> Function(Photo photo)? onPhotoRemoved;
+
   /// Replaced when the learner changes 期望記憶率 (AppSettings).
   FsrsScheduler scheduler;
 
@@ -1356,8 +1359,10 @@ class WordDatabaseRepository extends ChangeNotifier {
 
   /// Takes the photo out of the app's albums (spec section 7: 照片最後一個
   /// 單字被刪除後，從 App 相片冊移除照片參照，但不刪除手機系統相簿中的原始
-  /// 照片). Its occurrences go too; cards keep their history.
+  /// 照片). Its occurrences go too; cards keep their history. The app's own
+  /// copy of the picture goes once the record is gone (問題回報 #1179).
   void removePhoto(String photoId) {
+    final removed = photo(photoId);
     final affected = {
       for (final o in occurrencesInPhoto(photoId)) o.wordEntryId
     };
@@ -1367,7 +1372,10 @@ class WordDatabaseRepository extends ChangeNotifier {
     _occurrences.removeWhere((o) => o.photoId == photoId);
     _photos.removeWhere((p) => p.id == photoId);
     _sortedPhotos = _photosByAlbum = null;
-    _persist((s) => s.deletePhoto(photoId));
+    _persist((s) async {
+      await s.deletePhoto(photoId);
+      if (removed != null) await onPhotoRemoved?.call(removed);
+    });
     for (final id in affected) {
       _dropIfUnused(id);
     }

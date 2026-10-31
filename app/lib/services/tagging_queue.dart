@@ -247,7 +247,8 @@ class TaggingQueue extends ChangeNotifier {
       }
       final offline = isOffline(e) || e is TaggingNotConfigured;
       _offline = offline;
-      if (!offline) _failed++;
+      // A photo deleted meanwhile has no file to read: not a failure.
+      if (!offline && latest != null) _failed++;
       if (latest != null) {
         repo.updatePhoto(latest.copyWith(
           taggingStatus: offline ? TaggingStatus.pending : TaggingStatus.failed,

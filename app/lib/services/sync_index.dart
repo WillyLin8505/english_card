@@ -161,6 +161,9 @@ class SyncBoxes {
         _ => null,
       };
 
+  static const _logsIndexedKey = 'logsIndexed',
+      _profileBaseKey = 'profileBase';
+
   static String _key(String collection, String id) => '$collection/$id';
 
   /// A log's id in the index. Hive keys must be ASCII and short, and a log's
@@ -312,7 +315,7 @@ class SyncBoxes {
       await setMark(meta, id,
           SyncMark(stamp: _ownDate(raw), wire: id, device: device, pending: true));
     }
-    if (index.get('logsIndexed') == '${logsBox.length}') return;
+    if (index.get(_logsIndexedKey) == '${logsBox.length}') return;
     for (final k in logsBox.keys) {
       final raw = logsBox.get(k)!;
       final wire = wireOf(logs, '', raw);
@@ -327,7 +330,7 @@ class SyncBoxes {
               pending: true,
               logKey: k as int));
     }
-    await index.put('logsIndexed', '${logsBox.length}');
+    await index.put(_logsIndexedKey, '${logsBox.length}');
   }
 
   static int _ownDate(String raw) {
@@ -345,10 +348,16 @@ class SyncBoxes {
     return 1;
   }
 
+  /// The profile both sides last agreed on: tells a word removed from a word
+  /// the other side never had.
+  String? get profileBase => index.get(_profileBaseKey);
+
+  Future<void> setProfileBase(String raw) => index.put(_profileBaseKey, raw);
+
   int get pendingCount {
     var n = 0;
     for (final k in index.keys) {
-      if (k == 'logsIndexed') continue;
+      if (k == _logsIndexedKey || k == _profileBaseKey) continue;
       if (SyncMark.decode(index.get(k)!).pending) n++;
     }
     return n;
