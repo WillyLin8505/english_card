@@ -223,7 +223,7 @@ def task_dict(t: m.AgentTask, full: bool = True) -> dict:
         "id", "title", "detail", "status", "agent", "requested_by", "progress", "issue_ids",
         "history", "created_at", "updated_at", "started_at", "finished_at", "kind",
         "interval_minutes", "next_run_at", "last_run_at", "last_result", "metric", "position",
-        "difficulty", "difficulty_reason")}
+        "difficulty", "difficulty_reason", "stage", "stage_state", "stage_note", "stage_at")}
     now = datetime.now(timezone.utc)
     d["stale"] = bool(t.status == "in_progress" and t.updated_at and now - t.updated_at > STALE_AFTER)
     d["due"] = bool(t.kind == "recurring" and t.status == "scheduled"

@@ -52,10 +52,11 @@ def require_key(x_api_key: str | None = Header(default=None)):
 
 Auth = Depends(require_key)
 DB = Depends(db.get_session)
-from . import images, issues, tasks
+from . import flow, images, issues, tasks
 images.register(app, Auth)
 issues.register(app, Auth)
 tasks.register(app, Auth)
+flow.register(app, Auth)
 from . import accounts, app_photos, card_templates, connect_qr, decks
 card_templates.register(app, Auth)
 decks.register(app, Auth)

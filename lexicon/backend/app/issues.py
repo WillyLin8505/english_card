@@ -68,7 +68,7 @@ def issue_dict(r: m.IssueReport, with_screenshot: bool = False) -> dict:
         "id", "kind", "status", "severity", "area", "title", "detail", "steps", "expected",
         "actual", "resolution", "options", "decision", "target_language", "native_language",
         "lemma", "code_ref", "spec_ref", "reporter", "history", "created_at", "updated_at",
-        "resolved_at", "difficulty", "difficulty_reason")}
+        "resolved_at", "difficulty", "difficulty_reason", "stage", "stage_state", "stage_note", "stage_at")}
     out["has_screenshot"] = bool(r.screenshot)
     if with_screenshot:
         out["screenshot"] = r.screenshot

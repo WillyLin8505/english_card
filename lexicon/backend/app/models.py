@@ -831,6 +831,11 @@ class IssueReport(Base):
     # 1 簡單 · 2 中等 · 3 困難 · 4 極難 (card #156): which AI may take it as a board card.
     difficulty: Mapped[int | None] = mapped_column(SmallInteger)
     difficulty_reason: Mapped[str | None] = mapped_column(Text)
+    # Pipeline stage (card #916, flow.py, lexicon/docs/PIPELINE.md); NULL = older than the pipeline.
+    stage: Mapped[str | None] = mapped_column(String(24))
+    stage_state: Mapped[str | None] = mapped_column(String(12))   # failed · note · None = moving normally
+    stage_note: Mapped[str | None] = mapped_column(Text)
+    stage_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     __table_args__ = (Index("ix_issue_reports_status", "status", "kind"),)
 
 
@@ -869,6 +874,11 @@ class AgentTask(Base):
     # lexicon/tools/agent_capabilities.json when dispatching.
     difficulty: Mapped[int | None] = mapped_column(SmallInteger)
     difficulty_reason: Mapped[str | None] = mapped_column(Text)
+    # Pipeline stage (card #916, flow.py, lexicon/docs/PIPELINE.md); NULL = older than the pipeline.
+    stage: Mapped[str | None] = mapped_column(String(24))
+    stage_state: Mapped[str | None] = mapped_column(String(12))   # failed · note · None = moving normally
+    stage_note: Mapped[str | None] = mapped_column(Text)
+    stage_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     __table_args__ = (Index("ix_agent_tasks_status", "status", "agent"),)
 
 
