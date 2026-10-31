@@ -30,6 +30,9 @@ in the log (read by the board's usage panel, card #157).
 import argparse, json, os, re, subprocess, sys, urllib.request
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import proc_identity  # noqa: E402
+
 ROOT = Path(__file__).resolve().parents[2]
 LOGS = ROOT / "lexicon" / "logs" / "agents"
 API = "http://127.0.0.1:5173/api"
@@ -86,54 +89,22 @@ def build_prompt(prompt_path: Path, preamble: str | None = None) -> str:
     return head + body
 
 
-def process_started(pid) -> float | None:
-    """Epoch start time of a running process, None if it is gone (Windows only; elsewhere 0.0 if alive)."""
-    if not pid:
-        return None
-    if os.name != "nt":
-        try:
-            os.kill(int(pid), 0)
-            return 0.0
-        except OSError:
-            return None
-    import ctypes
-    k = ctypes.windll.kernel32
-    h = k.OpenProcess(0x1000, False, int(pid))  # PROCESS_QUERY_LIMITED_INFORMATION
-    if not h:
-        return None
-    try:
-        code = ctypes.c_ulong()
-        if not k.GetExitCodeProcess(h, ctypes.byref(code)) or code.value != 259:  # STILL_ACTIVE
-            return None
-        t = [ctypes.c_ulonglong() for _ in range(4)]
-        if not k.GetProcessTimes(h, *(ctypes.byref(x) for x in t)):
-            return 0.0
-        return t[0].value / 1e7 - 11644473600
-    finally:
-        k.CloseHandle(h)
-
-
 def pid_file(card: int) -> Path:
     return LOGS / f"card{card}.pid.json"
 
 
 def live_run(card: int) -> dict | None:
     """The CLI last launched on this card if it is still running (card #431: never two CLIs on one
-    card). A reused pid (process started after the recorded launch) does not count."""
-    try:
-        info = json.loads(pid_file(card).read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return None
-    st = process_started(info.get("pid"))
-    if st is None or (st and st > float(info.get("at") or 0) + 30):
-        return None
-    return info
+    card). A reused pid is another program (proc_identity, card #919)."""
+    info = proc_identity.read_run(pid_file(card))
+    return info if proc_identity.run_alive(info) else None
 
 
 def record_run(card: int, agent: str, pid: int, at: float | None = None):
     import time
     LOGS.mkdir(parents=True, exist_ok=True)
-    pid_file(card).write_text(json.dumps({"pid": int(pid), "agent": agent, "at": at or time.time()}),
+    pid_file(card).write_text(json.dumps({"pid": int(pid), "agent": agent, "at": at or time.time(),
+                                          "started": proc_identity.process_started(pid)}),
                               encoding="utf-8")
 
 

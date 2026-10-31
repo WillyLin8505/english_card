@@ -20,6 +20,9 @@ import tempfile
 import time
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import proc_identity  # noqa: E402
+
 ROOT = Path(__file__).resolve().parents[2]
 STATE_FILE = ROOT / "lexicon" / "state" / "resource_guard.json"
 NO_WINDOW = 0x08000000 if os.name == "nt" else 0
@@ -192,10 +195,9 @@ def cli_roots() -> dict[int, int]:
     """pid of every dispatched CLI -> its card id (logs/agents/card<id>.pid.json)."""
     out = {}
     for f in LOGS.glob("card*.pid.json"):
-        try:
-            out[int(json.loads(f.read_text(encoding="utf-8"))["pid"])] = int(f.name[4:].split(".")[0])
-        except (OSError, ValueError, KeyError):
-            continue
+        info = proc_identity.read_run(f)
+        if proc_identity.run_alive(info):  # a reused pid is someone else's process (card #919)
+            out[int(info["pid"])] = int(f.name[4:].split(".")[0])
     return out
 
 

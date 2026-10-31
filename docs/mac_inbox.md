@@ -4379,3 +4379,9 @@ Google、Apple、email 三種登入；登出；刪帳號（iPad 實機：設定 
 3. 相機、登入等要人手的項目不要硬做，寫 `注意：需要 owner 手動` 。
 4. 為什麼不在 Windows 推：Windows 沒有 Xcode；Mac 輪詢只用 git，不需要金鑰。
 
+
+## M542（2026-10-31 18:39）狀態：待做（Windows 卡 #918 交給 Mac 的 App 畫面部分）
+卡：[owner] Mac 驗證結果全部入庫，Mac 不再靠對話傳話
+
+照 M541 設定 launchd 並回報一列。
+- 流程階段沒有因「注意」阻擋發布的自動規則（flow_rules 已把注意標為 stage_state=note）；是否阻擋發布屬產品決定，未動。

@@ -45,6 +45,7 @@ from pathlib import Path
 TOOLS = Path(__file__).resolve().parent
 sys.path.insert(0, str(TOOLS))
 import flow_rules  # noqa: E402
+import proc_identity  # noqa: E402
 ROOT = TOOLS.parents[1]
 STATE_DIR = ROOT / "lexicon" / "state"
 AG_LOGS = ROOT / "lexicon" / "logs" / "agents"
@@ -89,6 +90,7 @@ NO_WINDOW = 0x08000000
 BREAKAWAY = 0x01000000
 LOG_CAP = 1_000_000
 LOCK_STALE_S = 15 * 60
+LAUNCH_SLACK_S = 5 * 60  # launched_at is stamped when launch_agent returns; old runs have no pid file match
 NO_DECISION_RE = re.compile(r"^[：:\s]*(無|沒有|none|n/?a)(?=[\s。.，,（(；;]|$)", re.I)
 
 
@@ -528,10 +530,19 @@ class Tick:
         return self._procs
 
     # 2. running cards
+    def cli_up(self, card_id: int, run: dict) -> bool:
+        """The CLI we launched on this card still runs (not another program on a reused pid, card #919)."""
+        if not run.get("pid"):
+            return False
+        from launch_agent import pid_file
+        info = proc_identity.read_run(pid_file(card_id))
+        if info and info.get("pid") == run["pid"]:
+            return proc_identity.run_alive(info)
+        return proc_identity.same_process(run["pid"], None, run.get("launched_at"), LAUNCH_SLACK_S)
+
     def is_alive(self, card_id: int, agent: str, run: dict) -> bool | None:
-        if run.get("pid"):
-            if pid_alive(run["pid"]):
-                return True
+        if self.cli_up(card_id, run):
+            return True
         procs = self.procs()
         needles = (f"card #{card_id}.", f"card{card_id}.cursor.prompt", f"card{card_id}.prompt")
         if procs is not None and any(any(n in cl for n in needles) for _, cl in procs):
@@ -582,14 +593,14 @@ class Tick:
             # a limit line in an old log (an adopted card from hours ago) says nothing about now
             fresh_log = lg.exists() and time.time() - lg.stat().st_mtime < 5 * 3600
             limit_line = detect_limit(log_text) if alive is False and fresh_log else None
-            if alive and fresh_log and not rm and detect_limit(log_text) and run.get("pid"):
+            if alive and fresh_log and not rm and detect_limit(log_text) and self.cli_up(card_id, run):
                 # 10/24 #604: Codex printed its usage limit and then sat there for half an hour,
                 # holding the card — end it and treat it as a limit
                 subprocess.run(["taskkill", "/PID", str(run["pid"]), "/T", "/F"], capture_output=True)
                 alive, limit_line = False, detect_limit(log_text)
             # the CLI we launched is still running after writing result.md: it may be rewriting it
             # (card #431), so wait longer before collecting the card
-            pid_up = bool(run.get("pid")) and pid_alive(run["pid"])
+            pid_up = self.cli_up(card_id, run)
             grace = self.cfg["finish_grace_alive_minutes" if pid_up else "finish_grace_minutes"]
             verdict = classify_run(run["launched_at"], rm, alive, limit_line, time.time(), grace * 60)
             log(f"#{cid} {agent}: {verdict} (alive={alive}, result={'yes' if rm else 'no'})")
@@ -669,7 +680,7 @@ class Tick:
                    outcome=outcome, summary=re.sub(r"\s+", " ", text[:600]), result=rel)
         self.summary.append(f"#{card_id} 收卡→{action}")
         run = self.state["runs"].get(str(card_id)) or {}
-        if run.get("pid") and pid_alive(run["pid"]):
+        if self.cli_up(card_id, run):
             from launch_agent import live_run, record_run
             if not self.dry and not live_run(card_id):  # runs launched before card #431 had no pid file
                 record_run(card_id, run.get("agent") or agent, run["pid"], run.get("launched_at"))
