@@ -328,6 +328,34 @@ def test_timeline_skips_the_mac_for_a_card_outside_the_app(client):
     assert steps["mac_verify"]["state"] == "skipped" and steps["ready"]["state"] == "done"
 
 
+def test_items_flow_gives_one_state_per_stage_and_marks_where_it_stands(client, monkeypatch):
+    from app import console
+    t = _task(client, "改畫面", status="done")
+    client.post("/flow/stages", headers=H, json={"items": [{"type": "task", "id": t["id"], "stage": "ipad_verify"}]})
+    monkeypatch.setattr(console, "facts", lambda: {
+        "verdicts": {str(t["id"]): {"sim": {"verdict": "pass", "text": "ok"}}}})
+    r = client.get("/console/items?group=all&flow=true", headers=H).json()["items"]
+    f = next(x for x in r if x["key"] == f"t{t['id']}")["flow"]
+    assert {k: v["state"] for k, v in f["cells"].items()} == {
+        "dev": "done", "windows_check": "done", "mac_verify": "done", "ipad_verify": "current",
+        "ready": "todo", "released": "todo"}
+    assert f["here"] == "ipad_verify" and f["cells"]["ipad_verify"]["here"] is True
+    assert sum(1 for c in f["cells"].values() if c.get("here")) == 1
+    # same answer as the item panel's timeline
+    tl = {x["key"]: x["state"] for x in _one(client, f"t{t['id']}")["timeline"]}
+    assert all(tl[k] == f["cells"][k]["state"] for k in ("dev", "windows_check", "mac_verify", "ipad_verify", "ready"))
+    assert "flow" not in client.get("/console/items?group=all", headers=H).json()["items"][0]
+
+
+def test_items_flow_skips_unneeded_gates_and_has_no_here_when_finished(client):
+    t = _task(client, "後台", status="done")
+    client.post("/flow/stages", headers=H, json={"items": [{"type": "task", "id": t["id"], "stage": "done"}]})
+    f = next(x for x in client.get("/console/items?group=all&flow=true", headers=H).json()["items"]
+             if x["key"] == f"t{t['id']}")["flow"]
+    assert f["cells"]["mac_verify"]["state"] == "skipped" and f["cells"]["released"]["state"] == "skipped"
+    assert f["here"] is None
+
+
 # ── 需要你 ───────────────────────────────────────────────────────────
 
 def test_waiting_card_reaches_needs_you_even_if_its_report_says_in_progress(client):

@@ -4,6 +4,7 @@ import { Empty, ErrorBox, Loading, Modal, fmtTime, useLoad, useToast } from "../
 import { Decide, IssueForm, Screenshot, type Issue, type IssueMeta } from "./Issues";
 import ConsoleAi, { RUN_STATE } from "./ConsoleAi";
 import { TaskForm, Tag, type Meta as TaskMeta } from "./Schedule";
+import { CELL_LABEL, headline, hereKey, liveItems, type Cell } from "./flowLogic";
 
 // 控制台 (card #919): 排程, 流程總覽 and 問題回報 as one entry with three tabs. The tabs share the data, the
 // filters and the open item, so moving between them loses nothing. A card and its 問題回報 are one item.
@@ -32,6 +33,7 @@ type Row = {
   key: string; title: string; type: string; type_label: string; source: string; source_label: string; stage: string; stage_label: string;
   state: string | null; wait: string; wait_label: string; status_text: string; group: string; severity: string | null;
   cards: number[]; issues: number[]; agent: string | null; since: string | null; created_at: string;
+  flow?: { cells: Record<string, Cell>; here: string | null };
 };
 type ItemMeta = { sources: Record<string, string>; types: Record<string, string>; stages: Record<string, string>; waits: Record<string, string>; group_labels: Record<string, string> };
 type Items = { items: Row[]; total: number; groups: Record<string, number>; meta: ItemMeta };
@@ -51,6 +53,7 @@ type Detail = Row & {
 type Filters = { group: string; source: string; type: string; stage: string; wait: string; q: string };
 
 const POLL_MS = 30000;
+const FLOW_COLS = ["dev", "windows_check", "mac_verify", "ipad_verify", "ready", "released"];
 const TABS: [string, string, string][] = [["/console", "現況", "now"], ["/console/items", "全部項目", "items"], ["/console/ai", "AI 與常態檢查", "ai"]];
 const NO_FILTER: Filters = { group: "active", source: "", type: "", stage: "", wait: "", q: "" };
 const OLD_ROUTES: Record<string, string> = { "/flow": "/console", "/issues": "/console/items", "/schedule": "/console/ai" };
@@ -265,9 +268,11 @@ function NeedRow({ n, onOpen, act }: { n: Need; onOpen: (k: string) => void; act
 
 function AllItems({ filters, setFilters, onOpen }: { filters: Filters; setFilters: (f: Filters) => void; onOpen: (k: string) => void }) {
   const [limit, setLimit] = useState(200);
-  const query = new URLSearchParams(Object.entries({ ...filters, limit: String(limit) }).filter(([, v]) => v)).toString();
+  const [view, setView] = useState<"table" | "list">("table");
+  const query = new URLSearchParams(Object.entries({ ...filters, limit: String(limit), ...(view === "table" ? { flow: "true" } : {}) }).filter(([, v]) => v)).toString();
   const list = useLoad<Items>(`/console/items?${query}`, [], POLL_MS);
   const m = list.data?.meta;
+  const hasFlow = !!list.data?.items.every((r) => r.flow);
   const set = (k: keyof Filters) => (e: { target: { value: string } }) => setFilters({ ...filters, [k]: e.target.value });
   const pick = (k: keyof Filters, label: string, opts?: Record<string, string>) => (
     <select value={filters[k]} onChange={set(k)} aria-label={label}>
@@ -286,6 +291,11 @@ function AllItems({ filters, setFilters, onOpen }: { filters: Filters; setFilter
             </button>
           ))}
         </div>
+        <div className="seg" role="tablist" aria-label="顯示方式">
+          {([["table", "流程表"], ["list", "清單"]] as const).map(([k, label]) => (
+            <button key={k} role="tab" aria-selected={view === k} className={view === k ? "on" : ""} onClick={() => setView(k)}>{label}</button>
+          ))}
+        </div>
         <div className="form-inline console-filters">
           {pick("source", "來源", m?.sources)}
           {pick("type", "類型", m?.types)}
@@ -298,7 +308,8 @@ function AllItems({ filters, setFilters, onOpen }: { filters: Filters; setFilter
       {!list.data ? !list.error && <Loading /> : list.data.items.length === 0 ? <Empty>這個篩選下沒有項目。</Empty> : (
         <>
           <p className="muted">共 {list.data.total} 項</p>
-          <ul className="item-list">
+          {view === "table" && hasFlow && <FlowTable rows={list.data.items} stages={m?.stages ?? {}} onOpen={onOpen} />}
+          {!(view === "table" && hasFlow) && <ul className="item-list">
             {list.data.items.map((r) => (
               <li key={r.key}>
                 <button className={`item-row wait-${r.wait}`} onClick={() => onOpen(r.key)}>
@@ -318,12 +329,64 @@ function AllItems({ filters, setFilters, onOpen }: { filters: Filters; setFilter
                 </button>
               </li>
             ))}
-          </ul>
+          </ul>}
           {list.data.total > list.data.items.length && (
             <button className="btn" onClick={() => setLimit(limit + 200)}>再顯示 200 項</button>
           )}
         </>
       )}
+    </>
+  );
+}
+
+function FlowTable({ rows, stages, onOpen }: { rows: Row[]; stages: Record<string, string>; onOpen: (k: string) => void }) {
+  const live = liveItems(rows);
+  return (
+    <>
+      <p className="flow-headline"><strong>{headline(rows)}</strong></p>
+      {live.length > 0 && (
+        <section className="card live-panel" aria-label="現在進行中">
+          <h2>現在進行中 <span className="chip chip-info">{live.length}</span></h2>
+          <ul>
+            {live.map((x) => (
+              <li key={x.key}>
+                <button className="link-btn" onClick={() => onOpen(x.key)}>{x.title}</button>
+                <small className="muted"> · {x.doing} · {x.minutes === null ? "沒有更新時間" : `${x.minutes} 分鐘前更新`}</small>
+                {x.stale && <Tag tone="warn">可能已停止</Tag>}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      <div className="pipe-wrap">
+        <table className="pipe">
+          <thead><tr><th>項目</th>{FLOW_COLS.map((k) => <th key={k}>{stages[k] ?? k}</th>)}</tr></thead>
+          <tbody>
+            {rows.map((r) => {
+              const here = hereKey(r);
+              return (
+                <tr key={r.key} className={`pipe-row wait-${r.wait}`} onClick={() => onOpen(r.key)} tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === "Enter") onOpen(r.key); }}>
+                  <td className="pipe-title">
+                    {r.severity === "high" && <Tag tone="bad">高</Tag>}{r.title}
+                    <small>{r.status_text}{r.cards.length > 0 && ` · 卡 ${r.cards.slice(-2).map((c) => `#${c}`).join("、")}`}{r.issues.length > 0 && ` · 問題 ${r.issues.slice(0, 2).map((c) => `#${c}`).join("、")}`}</small>
+                  </td>
+                  {FLOW_COLS.map((k) => {
+                    const c = r.flow!.cells[k];
+                    return (
+                      <td key={k} className={`pipe-cell pipe-${c.state}${k === here ? " pipe-here" : ""}`} data-here={k === here ? "true" : undefined}>
+                        <span className="pipe-state">{CELL_LABEL[c.state] ?? c.state}</span>
+                        {k === here && <small className="pipe-here-tag">▶ 停在這裡</small>}
+                        {c.note && <small>{c.note}</small>}
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </>
   );
 }

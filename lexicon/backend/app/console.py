@@ -290,9 +290,39 @@ def _match(r: dict, it: Item, q: str) -> bool:
     return any(q in (x.title or "").lower() for x in (*it.cards, *it.issues))
 
 
+FLOW_COLS = ("dev", "windows_check", "mac_verify", "ipad_verify", "ready", "released")
+
+
+def flow_cells(s: Session, it: Item, fx: dict) -> dict:
+    """One state per main stage, from the same timeline() the item panel shows. state: done · current · todo · skipped
+    · failed; 'here' marks the first gate that has not passed (where the item stands)."""
+    main = it.main_card
+    full = s.get(m.AgentTask, main.id) if main else None
+    by_key = {st["key"]: st for st in timeline(it, full, fx, light=True)}
+    closed = it.stage in ("released", "done")
+    cells = {}
+    for k in FLOW_COLS:
+        st = by_key.get(k)
+        if k == "released":
+            state = "done" if it.stage == "released" else "skipped" if it.stage == "done" else "todo"
+            note = "" if state == "todo" else "已發布" if state == "done" else "不需發布"
+        else:
+            state = st["state"] if st else "todo"
+            note = next((e for e in (st or {}).get("evidence") or [] if e), "")[:60]
+        cells[k] = {"state": state, "note": note}
+    if it.stage == "cancelled":
+        for c in cells.values():
+            c["state"] = "skipped" if c["state"] == "todo" else c["state"]
+    here = None if closed or it.stage == "cancelled" else next(
+        (k for k in FLOW_COLS if cells[k]["state"] in ("todo", "current", "failed")), None)
+    if here:
+        cells[here]["here"] = True
+    return {"cells": cells, "here": here}
+
+
 def list_items(s: Session, group: str = "active", source: str | None = None, type_: str | None = None,
                stage: str | None = None, wait: str | None = None, q: str | None = None,
-               limit: int = 200, offset: int = 0) -> dict:
+               limit: int = 200, offset: int = 0, with_flow: bool = False) -> dict:
     items = load(s, facts())
     pairs = [(row(it), it) for it in items]
     wanted = [r for r, it in pairs
@@ -300,7 +330,13 @@ def list_items(s: Session, group: str = "active", source: str | None = None, typ
               and (not type_ or r["type"] == type_) and (not stage or r["stage"] == stage)
               and (not wait or r["wait"] == wait) and (not q or _match(r, it, q))]
     wanted.sort(key=_sort_key)
-    return {"items": wanted[offset:offset + limit], "total": len(wanted), "groups": group_counts(pairs), "meta": meta()}
+    page = wanted[offset:offset + limit]
+    if with_flow:
+        fx = facts()
+        by_key = {r["key"]: it for r, it in pairs}
+        for r in page:
+            r["flow"] = flow_cells(s, by_key[r["key"]], fx)
+    return {"items": page, "total": len(wanted), "groups": group_counts(pairs), "meta": meta()}
 
 
 def group_counts(pairs: list) -> dict:
@@ -342,7 +378,7 @@ def _step(key: str, label: str, state: str, at=None, by=None, evidence=None) -> 
     return {"key": key, "label": label, "state": state, "at": at, "by": by, "evidence": evidence or []}
 
 
-def timeline(it: Item, t, fx: dict) -> list[dict]:
+def timeline(it: Item, t, fx: dict, light: bool = False) -> list[dict]:
     """source → 派工 → 開發 → Windows 檢查 → Mac → iPad → 可發布. state: done · current · todo · skipped · failed."""
     source = SOURCES[_source(it.cards, it.issues)]
     first = min(x.created_at for x in (*it.cards, *it.issues))
@@ -355,7 +391,7 @@ def timeline(it: Item, t, fx: dict) -> list[dict]:
         return steps
     steps.append(_step("dispatch", "派工", "done" if t.started_at else "current", t.started_at, t.agent,
                        [f"卡 #{t.id}"] + ([f"難度 {tasks.DIFFICULTY.get(t.difficulty, t.difficulty)}"] if t.difficulty else [])))
-    path, text = result_of(t.id) if t.status != "queued" else (None, "")
+    path, text = result_of(t.id) if t.status != "queued" and not light else (None, "")
     done_dev = t.status == "done"
     run = it.runs.get(t.id) or {}
     dev_notes = result_summary(text) if text else ([t.progress[:160]] if t.progress else [])
@@ -707,6 +743,7 @@ def overview(s: Session) -> dict:
     cards_verify = sum(1 for it in items for t in it.cards if task_stage(t, fx.get("legacy") or {}) in VERIFY)
     return {"needs_you": needs_list(items, o["release"], fx, now, rows_t), "release": o["release"], "counts": counts,
             "stages": STAGES, "main_stages": [k for k in ORDER if k not in ("released", "done")] + ["released", "done"],
+            "flow_cols": FLOW_COLS,
             "stuck": stuck_list(pairs, now), "runs": runs.overview(hand), "cards_verifying": cards_verify,
             "legacy_waiting": len(fx.get("legacy") or {}), "digest": o["digest"],
             "flow_at": o["updated_at"], "now": now, "groups": group_counts(pairs)}
@@ -722,8 +759,8 @@ def register(app, auth):
     @app.get("/console/items", dependencies=[auth])
     def console_items(group: str = "active", source: str | None = None, type: str | None = None,  # noqa: A002
                       stage: str | None = None, wait: str | None = None, q: str | None = None,
-                      limit: int = 200, offset: int = 0, s: Session = DB):
-        return list_items(s, group, source, type, stage, wait, q, min(limit, 500), offset)
+                      limit: int = 200, offset: int = 0, flow: bool = False, s: Session = DB):
+        return list_items(s, group, source, type, stage, wait, q, min(limit, 500), offset, flow)
 
     @app.get("/console/items/{key}", dependencies=[auth])
     def console_item(key: str, s: Session = DB):
