@@ -35,6 +35,7 @@ ROOT = Path(__file__).resolve().parents[2]
 API = "http://127.0.0.1:5173/api"
 STATE = ROOT / "lexicon" / "state" / "card_difficulty.json"
 SEV = {"high": 0, "medium": 1, "low": 2}
+LAST_POSITION = 1_000_000  # backend/app/console.py
 TAIPEI = timezone(timedelta(hours=8))
 
 
@@ -103,6 +104,10 @@ def candidates(board: dict, agent: str, caps: dict, state: dict | None = None,
             continue
         if c.get("_assigned"):
             pile = 0
+        elif is_task and (c.get("position") or 0) < 0:
+            pile = 0.5  # 控制台「提到最前」 (card #919)
+        elif is_task and (c.get("position") or 0) >= LAST_POSITION:
+            pile = 3.5  # 控制台「排到最後」
         elif is_task and c.get("kind") != "recurring":
             pile = 1
         elif not is_task:

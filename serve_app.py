@@ -27,7 +27,7 @@ from urllib.error import HTTPError, URLError
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / 'lexicon' / 'backend'))
-from app import account_sync, accounts, app_pack, catalog, config, db, decks, exporter
+from app import account_sync, accounts, app_events, app_pack, catalog, config, db, decks, exporter
 from app.meaning_labels import add_meaning_tags, meaning_index  # noqa: F401 (meaning_index: tools use serve_app.meaning_index)
 from app.label_points import anchor as point_anchor
 try:
@@ -44,7 +44,7 @@ _cache = {}
 # and downloads a pack's images/audio in bursts).
 RATE_LIMITS = {'/api/lexicon': 30, '/api/image': 600, '/api/audio': 600,
                '/api/decks': 60,
-               '/api/account': 30, '/api/account/sync': 300, '/api/shares': 60,
+               '/api/events': 30, '/api/account': 30, '/api/account/sync': 300, '/api/shares': 60,
                '/api/issues': 10, '/api/issues/status': 30}   # keyless App card reports (10/23), #735 fixed-status check   # accounts + sharing (card #324)   # 卡片集: the list and one deck's content (card #323)
 RATE_HITS: dict = {}
 RATE_LOCK = threading.Lock()
@@ -803,6 +803,9 @@ class Handler(SimpleHTTPRequestHandler):
         if self.ISSUES_PATH.match(path):
             self.proxy_issues('POST')
             return
+        if path == '/api/events':
+            self.handle_events()
+            return
         if path.startswith(('/api/account/', '/api/shares')):
             self.handle_account('POST', path)
             return
@@ -840,6 +843,24 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_header('Content-Length', str(len(body)))
         self.end_headers()
         self.wfile.write(body)
+
+    def handle_events(self) -> None:
+        """Anonymous retention events (card #914): no token, install id + event names only."""
+        try:
+            length = int(self.headers.get('Content-Length', '0'))
+        except ValueError:
+            length = -1
+        if not 0 < length <= 4096:
+            self.send_json(413, {'detail': 'too large'})
+            return
+        try:
+            body = json.loads(self.rfile.read(length))
+            with db.session_scope() as s:
+                result = app_events.record(s, body)
+        except (ValueError, KeyError, TypeError):
+            self.send_json(400, {'detail': 'bad request'})
+            return
+        self.send_json(200, result)
 
     def handle_account(self, method: str, path: str) -> None:
         """Accounts and sharing (card #324): bearer token from the app's Keychain,

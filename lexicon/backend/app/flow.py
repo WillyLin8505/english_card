@@ -111,26 +111,48 @@ def release_gate(tasks: list, high: list, facts: dict) -> dict:
             "reasons": reasons}
 
 
+def is_decision(i) -> bool:
+    return i.status == "needs_decision" or (i.kind == "decision" and i.status == "open")
+
+
+def task_need(t) -> str | None:
+    """Why a card can only go on with the owner: reply · account · manual · None."""
+    if t.status == "waiting":
+        return "reply"
+    if t.status == "blocked" and ACCOUNT_RE.search(t.progress or ""):
+        return "account"
+    if t.stage == "ipad_verify" and t.stage_state == "note" and OWNER_CHECK_RE.search(t.stage_note or ""):
+        return "manual"
+    return None
+
+
 def needs_owner(tasks: list, issues: list, release: dict, facts: dict, now: datetime) -> list[str]:
     """PIPELINE「Owner 只介入這些事」: one line per thing only the owner can do."""
     lines = []
-    decisions = [i for i in issues if i.status == "needs_decision"]
+    decisions = [i for i in issues if is_decision(i)]
     if decisions:
         lines.append(f"有 {len(decisions)} 個待決定：" + "、".join(f"#{i.id} {i.title[:24]}" for i in decisions[:5]))
     for t in tasks:
-        if t.status == "waiting":
+        need = task_need(t)
+        if need == "reply":
             lines.append(f"卡 #{t.id} 等你回覆：{t.title[:40]}")
-        elif t.status == "blocked" and ACCOUNT_RE.search(t.progress or ""):
+        elif need == "account":
             lines.append(f"卡 #{t.id} 需要帳號／付款／憑證：{(t.progress or '')[:60]}")
-        elif t.stage == "ipad_verify" and t.stage_state == "note" and OWNER_CHECK_RE.search(t.stage_note or ""):
+        elif need == "manual":
             lines.append(f"卡 #{t.id} 要你在 iPad 手動確認：{t.title[:40]}")
     if release["can_release"]:
         lines.append(f"版本 {release['version']} 可以發布：{release['ready']} 張卡都過了 iPad 驗證")
-    pending = sum(t.stage in ("mac_verify", "ipad_verify") for t in tasks)
-    last = facts.get("mac_last_at")
-    if pending and last and (now.timestamp() - last) / 3600 > MAC_QUIET_HOURS:
+    pending = mac_silent(tasks, facts, now)
+    if pending:
         lines.append(f"Mac 超過 {MAC_QUIET_HOURS // 24} 天沒有寫驗證結果，{pending} 張卡在等：請確認 Mac 有開著")
     return lines
+
+
+def mac_silent(tasks: list, facts: dict, now: datetime) -> int:
+    """Cards waiting on a Mac that has gone quiet (0 when it is not quiet)."""
+    pending = sum(t.stage in ("mac_verify", "ipad_verify") for t in tasks)
+    last = facts.get("mac_last_at")
+    return pending if pending and last and (now.timestamp() - last) / 3600 > MAC_QUIET_HOURS else 0
 
 
 def feedback_rows(s: Session, q: str | None) -> list[dict]:
@@ -173,7 +195,7 @@ def overview(s: Session, q: str | None = None) -> dict:
             "issues": {k: sum(i.stage == k for i in flow_issues) for k in STAGES},
             "start": start, "stuck": stuck[:10], "release": release,
             "needs_you": needs_owner(tasks + waiting_tasks, active, release, facts, now),
-            "feedback": feedback_rows(s, q), "digest": _load(DIGEST), "gmail_ready": facts.get("gmail_ready"),
+            "feedback": feedback_rows(s, q), "digest": _load(DIGEST),
             "updated_at": facts.get("at")}
 
 

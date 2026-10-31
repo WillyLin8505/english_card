@@ -13,9 +13,9 @@ Two layers:
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 
-from sqlalchemy import (JSON, BigInteger, Boolean, DateTime, Float, ForeignKey, Index, Integer,
+from sqlalchemy import (JSON, BigInteger, Boolean, Date, DateTime, Float, ForeignKey, Index, Integer,
                         SmallInteger, String, Text, UniqueConstraint, column, func, literal_column)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -963,6 +963,19 @@ class UserStat(Base):
     photos_opened: Mapped[int] = mapped_column(default=0, server_default="0")
     app_version: Mapped[str | None] = mapped_column(String(32))
     last_seen: Mapped[datetime] = _now()
+
+
+class AppEvent(Base):
+    """Anonymous app events (card #914): a random install id, an event name and a day.
+    No account, no content. One row per (install, event, day)."""
+    __tablename__ = "app_events"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    install_id: Mapped[str] = mapped_column(String(40))
+    event: Mapped[str] = mapped_column(String(24))
+    day: Mapped[date] = mapped_column(Date)
+    created_at: Mapped[datetime] = _now()
+    __table_args__ = (UniqueConstraint("install_id", "event", "day", name="uq_app_event"),
+                      Index("ix_app_events_event_day", "event", "day"))
 
 
 class UserToken(Base):

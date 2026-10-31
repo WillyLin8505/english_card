@@ -65,6 +65,12 @@ def inbox_todo(text: str) -> int:
     return len(re.findall(r"(?m)^## M\d+.*狀態：待做", text))
 
 
+def todo_cards(text: str) -> set[int]:
+    """Cards in M items still marked 待做: pushed, and the Mac has not reported on them."""
+    return {int(c) for sec in re.split(r"(?m)^(?=## M\d+)", text)
+            if re.match(r"## M\d+.*狀態：待做", sec) for c in re.findall(r"(?m)^- 卡 #(\d+)[：:]", sec)}
+
+
 @dataclass
 class Row:
     cards: list[int]
@@ -170,6 +176,16 @@ def derive_card(status: str, app: bool, rows: list[Row], pushed: bool, released:
     if check_failing:
         return "windows_check", "failed", "Windows 檢查沒過，修好後才會推給 Mac"
     return "windows_check", None, None
+
+
+def legacy_stage(card: int, rows: list[Row], pushed: dict, todo: set[int], unpushed: set[int]) -> str | None:
+    """Stage to SHOW for a card older than the pipeline (it is never rewritten): only what still waits.
+    Older M items without a 待做 mark were verified by hand before the 結果 table existed."""
+    if card in unpushed and card not in pushed:
+        return "windows_check"
+    if card not in todo:
+        return None
+    return derive_card("done", True, [r for r in rows if card in r.cards], True)[0]
 
 
 def derive_issue(status: str, cards: list[dict]) -> tuple[str, str | None, str | None]:

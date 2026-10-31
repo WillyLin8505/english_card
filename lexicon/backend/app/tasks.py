@@ -34,7 +34,7 @@ from pydantic import BaseModel, Field as PField
 from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
-from . import agent_usage, config, db, issues, jobs
+from . import agent_usage, config, db, issues, jobs, runs
 from . import models as m
 
 STATUSES = {"queued": "排隊中", "in_progress": "進行中", "waiting": "等你回覆",
@@ -414,12 +414,18 @@ def board(s: Session) -> dict:
     for b in bots.values():
         doing = b["doing"]
         seen = b["last_seen"]
-        if any(d["status"] == "in_progress" and not d["stale"] for d in doing):
+        for d in doing:  # the process decides, not how long ago the card was touched (card #919)
+            d["run"] = runs.card_run(d["id"], d["status"], d["agent"], d["updated_at"], d["started_at"], d["progress"])
+            d["stale"] = d["run"]["state"] == "idle"
+        states = {d["run"]["state"] for d in doing}
+        if states & {"running", "session"}:
             b["state"] = "working"
-        elif any(d["status"] == "waiting" for d in doing):
+        elif "collecting" in states:
+            b["state"] = "collecting"
+        elif "waiting" in states:
             b["state"] = "waiting"
         elif doing:
-            b["state"] = "stale" if any(d["stale"] for d in doing) else "blocked"
+            b["state"] = "stale" if "idle" in states else "blocked"
         else:
             b["state"] = "offline" if seen and now - seen > OFFLINE_AFTER else "idle"
     # Always show the local model as a bot so the owner can pause/resume it.
@@ -458,7 +464,7 @@ def board(s: Session) -> dict:
     for b in bots.values():
         b["paused"] = b["agent"] in paused
         b["paused_at"] = paused.get(b["agent"])
-    order = {"working": 0, "waiting": 1, "blocked": 2, "stale": 3, "idle": 4, "offline": 5}
+    order = {"working": 0, "collecting": 1, "waiting": 2, "blocked": 3, "stale": 4, "idle": 5, "offline": 6}
     recurring = []
     for t in s.execute(select(m.AgentTask).where(m.AgentTask.kind == "recurring")
                        .order_by(m.AgentTask.position, m.AgentTask.id)).scalars():
@@ -501,6 +507,12 @@ def open_issues_elsewhere(s: Session, the_deck: list[dict]) -> list[dict]:
     return sorted(out, key=lambda c: (c["kind"] != "decision", sev.get(c["severity"], 9), c["issue_id"]))
 
 
+def card_for_issue(r: m.IssueReport) -> m.AgentTask:
+    return m.AgentTask(title=f"問題回報 #{r.id}：{r.title}"[:300], detail=r.detail, issue_ids=[r.id],
+                       requested_by="問題回報", kind="once", history=[],
+                       difficulty=r.difficulty, difficulty_reason=r.difficulty_reason)
+
+
 def _pile(card: dict) -> str:
     return "recurring" if card.get("card") == "task" and card.get("kind") == "recurring" else "once"
 
@@ -540,9 +552,7 @@ def claim(s: Session, agent: str, task_id: int | None = None, issue_id: int | No
             raise HTTPException(404, "找不到這筆問題回報")
         if issue_id in _taken_issue_ids(s):
             raise HTTPException(409, "這筆問題回報已經有 AI 在做")
-        t = m.AgentTask(title=f"問題回報 #{r.id}：{r.title}"[:300], detail=r.detail, issue_ids=[r.id],
-                        requested_by="問題回報", kind="once", history=[],
-                        difficulty=r.difficulty, difficulty_reason=r.difficulty_reason)
+        t = card_for_issue(r)
         s.add(t)
         _apply(t, {"status": "in_progress", "agent": agent}, f"從問題回報 #{r.id} 接手", agent)
         s.flush()
@@ -571,9 +581,7 @@ def assign(s: Session, agent: str, task_id: int | None, issue_id: int | None) ->
         if issue_id in _taken_issue_ids(s) | {i for ids in s.execute(select(m.AgentTask.issue_ids).where(
                 m.AgentTask.status == "queued")).scalars() for i in (ids or [])}:
             raise HTTPException(409, "這筆問題回報已經排給別的 AI")
-        t = m.AgentTask(title=f"問題回報 #{r.id}：{r.title}"[:300], detail=r.detail, issue_ids=[r.id],
-                        requested_by="問題回報", kind="once", history=[],
-                        difficulty=r.difficulty, difficulty_reason=r.difficulty_reason)
+        t = card_for_issue(r)
         s.add(t)
         _apply(t, {"status": "queued", "agent": agent}, f"交給 {agent}", "owner")
     else:

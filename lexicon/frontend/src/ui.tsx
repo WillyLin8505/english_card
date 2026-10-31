@@ -22,10 +22,13 @@ export function useApp() {
 
 // ── Data loading ────────────────────────────────────────────────────
 
+const ERROR_RETRY_MS = 10000;
+
 export function useLoad<T>(path: string | null, deps: unknown[] = [], pollMs?: number) {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const seq = useRef(0);
   const inflight = useRef(false);
   const load = useCallback(
@@ -40,6 +43,7 @@ export function useLoad<T>(path: string | null, deps: unknown[] = [], pollMs?: n
         if (n === seq.current) {
           setData(d);
           setError(null);
+          setUpdatedAt(new Date());
         }
       } catch (e) {
         if (n === seq.current) setError((e as Error).message);
@@ -60,7 +64,13 @@ export function useLoad<T>(path: string | null, deps: unknown[] = [], pollMs?: n
     const t = setInterval(() => load(true), pollMs);
     return () => clearInterval(t);
   }, [load, pollMs]);
-  return { data, error, loading, reload: load, setData };
+  // A page that doesn't poll must not stay on an error after the API restarts (card #919).
+  useEffect(() => {
+    if (pollMs || !error) return;
+    const t = setTimeout(() => load(true), ERROR_RETRY_MS);
+    return () => clearTimeout(t);
+  }, [load, pollMs, error]);
+  return { data, error, loading, updatedAt, reload: load, setData };
 }
 
 // ── Small components ────────────────────────────────────────────────

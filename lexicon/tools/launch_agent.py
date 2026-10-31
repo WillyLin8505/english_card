@@ -103,9 +103,10 @@ def live_run(card: int) -> dict | None:
 def record_run(card: int, agent: str, pid: int, at: float | None = None):
     import time
     LOGS.mkdir(parents=True, exist_ok=True)
+    # an older launch time (dispatch_tick re-recording a run) must not vouch for whatever has this pid now
+    started = proc_identity.process_started(pid) if at is None or proc_identity.same_process(pid, None, at) else None
     pid_file(card).write_text(json.dumps({"pid": int(pid), "agent": agent, "at": at or time.time(),
-                                          "started": proc_identity.process_started(pid)}),
-                              encoding="utf-8")
+                                          "started": started}), encoding="utf-8")
 
 
 def agent_kind(agent: str) -> str:

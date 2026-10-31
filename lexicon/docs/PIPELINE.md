@@ -62,10 +62,7 @@
 手機回饋對到卡號與階段。每日摘要在 09:00 後由 flow_tick 產生，只列「需要你」的事，存
 `lexicon/logs/daily_digest/<日期>.md` 並顯示在總覽頁；沒事就不產生。
 
-有摘要的那天寄 Gmail 給 owner 自己（owner 10/31，問題回報 #1175，`tools/gmail_send.py`）：`lexicon/.env` 的
-`LEXICON_GMAIL_ADDRESS`、`LEXICON_GMAIL_APP_PASSWORD` 由 owner 自己填，AI 不索取、不讀、不印。沒填就略過，
-總覽頁顯示「尚未設定 Gmail」，不報錯也不擋 flow_tick；當天稍晚才填，下一輪仍會補寄當天摘要。寄失敗每 30 分鐘
-重試，一天最多 3 次，原因顯示在總覽頁。
+不寄 Gmail，也不需要應用程式密碼（owner 10/31 改決定，問題回報 #1175）：摘要只放後台，顯示在流程總覽與控制台現況頁。`tools/gmail_send.py` 已移除。
 
 ## 目前還沒自動化的部分
 

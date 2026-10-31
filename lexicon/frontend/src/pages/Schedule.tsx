@@ -1,88 +1,55 @@
-import { useEffect, useMemo, useRef, useState, type DragEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { api } from "../api";
 import { layoutPins } from "../pinLayout";
-import { Empty, ErrorBox, Link, Loading, Modal, Progress, fmtDuration, fmtTime, useLoad, useToast } from "../ui";
+import { Link, Modal, Progress, fmtDuration, fmtTime } from "../ui";
 
-// 排程看板: the AIs on the left, then two piles side by side an idle AI pulls
-// from: one-off cards (the owner's requests and every open 問題回報, by status) and standing
-// cards (recurring checks with their live numbers; due ones on top). Drag a
-// card onto an AI to hand it over. Below, what runs in the background and
-// recent results.
+// The 排程 parts of the 控制台 (card #919, ConsoleAi.tsx): AI capacity, Qwen's live work, what runs in the
+// background, and the forms for a card.
 
 type HistoryEntry = { at: string; by: string; note: string | null; changes: { field: string; from: unknown; to: unknown }[] };
 type MetricValue = { value: number | null; label: string; detail?: string };
-type Task = {
+export type Task = {
   id: number; title: string; detail: string | null; status: string; agent: string | null; requested_by: string;
   progress: string | null; issue_ids: number[]; history: HistoryEntry[]; history_n?: number; created_at: string; updated_at: string;
   started_at: string | null; finished_at: string | null; kind: string; interval_minutes: number | null;
   next_run_at: string | null; last_run_at: string | null; last_result: string | null; metric: string | null;
-  position: number; stale: boolean; due: boolean; metric_value?: MetricValue;
+  position: number; stale: boolean; due: boolean; metric_value?: MetricValue; run?: { state: string; last_activity: string | null };
   difficulty?: number | null; difficulty_reason?: string | null;
 };
-type IssueCard = { card: "issue"; issue_id: number; title: string; detail: string | null; kind: string; severity: string; area: string; reporter: string; created_at: string;
-  difficulty?: number | null; difficulty_reason?: string | null };
-type DeckCard = ({ card: "task" } & Task) | IssueCard;
-type Bot = { agent: string; kind: string; last_seen: string | null; note: string | null; state: string; doing: Task[]; assigned: Task[]; paused?: boolean; paused_at?: string | null };
-type OpenIssue = IssueCard & { linked: { id: number; title: string; status: string; agent: string | null; kind: string }[] };
-type Board = { bots: Bot[]; deck: DeckCard[]; recurring: Task[]; done: Task[]; issues?: OpenIssue[] };
+export type Bot = { agent: string; kind: string; last_seen: string | null; note: string | null; state: string; doing: Task[]; assigned: Task[]; paused?: boolean; paused_at?: string | null };
+export type Board = { bots: Bot[]; recurring: Task[]; done: Task[] };
 type QwenIO = { id?: string; text?: string; out?: string; word?: string; score?: number | null; cefr?: string | null; pos?: string | null; point?: number[] | null; box?: number[] | null };
 type PictureDetail = { id: number; words: string[]; tag_status: string; safety_status: string; width: number | null; height: number | null; dropped: number;
   tags: { word: string; point?: number[] | null; box?: number[] | null; score?: number | null; cefr?: string | null; pos?: string | null }[] };
 type QwenRequest = { id: number; kind: string; what: string; seconds: number; ref?: string | null; input?: QwenIO[]; output?: QwenIO[] | null };
-type Background = {
+export type Background = {
   jobs: { id: number; mode_label: string; total: number; checkpoint: number; progress: number; current_word: string | null; eta_seconds: number | null }[];
   pictures: { pending: number; done: number; failed: number; labelled_last_hour: number; downloads_waiting: number };
   qwen: { ok: boolean; error?: string; model?: string; parallel?: number; slots?: { total: number | null; busy: number | null; error?: string } | null; requests?: QwenRequest[]; recent?: QwenRequest[] };
   pictures_detail?: Record<string, PictureDetail>;
 };
-type Meta = { statuses: Record<string, string>; kinds: Record<string, string>; metrics: Record<string, string>; stale_minutes: number; difficulties?: Record<string, string> };
+export type Meta = { statuses: Record<string, string>; kinds: Record<string, string>; metrics: Record<string, string>; stale_minutes: number; difficulties?: Record<string, string> };
 // Card #156/#157: what each AI may take (lexicon/tools/agent_capabilities.json) and its 5-hour / weekly usage.
 type Profile = { match?: string[]; max_difficulty: number; prefer_min_difficulty?: number; cost_tier?: string; strengths?: string[]; avoid?: string[]; dispatchable?: boolean };
 type UsageWindow = { used_percent: number | null; resets_at: string | null; window_minutes: number | null; exact: boolean; source: string; note: string | null; tokens: number | null };
 type AgentUsage = { five_hour?: UsageWindow; weekly?: UsageWindow; observed_at?: string | null; plan?: string | null; limit_message?: string | null; error?: string };
-type AgentsInfo = { capabilities: { levels?: Record<string, { label: string; meaning: string }>; agents?: Record<string, Profile>; error?: string };
+export type AgentsInfo = { capabilities: { levels?: Record<string, { label: string; meaning: string }>; agents?: Record<string, Profile>; error?: string };
   usage: { generated_at: string; agents: Record<string, AgentUsage> } };
 
-const STATE: Record<string, [string, string]> = {
-  working: ["工作中", "info"], waiting: ["等你回覆", "bad"], blocked: ["卡住", "warn"], stale: ["可能已停止", "warn"],
-  idle: ["閒置", "muted"], offline: ["離線", "muted"],
-};
-const STATUS_TONE: Record<string, string> = { queued: "muted", in_progress: "info", waiting: "bad", blocked: "warn", scheduled: "muted", done: "ok", cancelled: "muted" };
-const SEV: Record<string, string> = { high: "高", medium: "中", low: "低" };
-// One-off list order (card #459): 進行中 → 等你決定 → 排隊 → 卡住.
-type OneOffGroup = "doing" | "waiting" | "queued" | "blocked";
-type OneOff = { c: DeckCard | OpenIssue; group: OneOffGroup; pull?: number };
-const ONE_OFF_GROUPS: [OneOffGroup, string, string][] = [
-  ["doing", "進行中", "info"], ["waiting", "等你決定", "bad"], ["queued", "排隊", "muted"], ["blocked", "卡住", "warn"],
-];
-const issueGroup = (c: OpenIssue): OneOffGroup => {
-  const st = c.linked.map((t) => t.status);
-  if (st.includes("in_progress")) return "doing";
-  if (c.kind === "decision" || st.includes("waiting")) return "waiting";
-  if (st.length === 0 || st.some((s) => s === "queued" || s === "scheduled")) return "queued";
-  return "blocked";
-};
-const ISSUE_KIND: Record<string, string> = { decision: "待你決定", bug: "問題", todo: "未完成需求" };
+export const STATUS_TONE: Record<string, string> = { queued: "muted", in_progress: "info", waiting: "bad", blocked: "warn", scheduled: "muted", done: "ok", cancelled: "muted" };
 const QWEN_KIND: Record<string, string> = { translate: "翻譯", tag: "圖片標籤", score: "標籤評分", enrich: "單字補充" };
 const FIELD_LABEL: Record<string, string> = { status: "狀態", agent: "負責的 AI", progress: "進度", title: "內容" };
 const who = (by: string) => (by === "owner" ? "你" : by);
-const every = (min: number | null) => (!min ? "—" : min % 1440 === 0 ? `每 ${min / 1440} 天` : min % 60 === 0 ? `每 ${min / 60} 小時` : `每 ${min} 分鐘`);
-const DIFF: Record<number, [string, string]> = { 1: ["簡單", "ok"], 2: ["中等", "info"], 3: ["困難", "warn"], 4: ["極難", "bad"] };
-const profileOf = (info: AgentsInfo | null | undefined, name: string): [string, Profile] | null => {
-  const agents = info?.capabilities?.agents ?? {};
-  if (agents[name]) return [name, agents[name]];
-  const hit = Object.entries(agents).find(([, p]) => (p.match ?? []).some((m) => name.startsWith(m)));
-  return hit ?? null;
-};
+export const every = (min: number | null) => (!min ? "—" : min % 1440 === 0 ? `每 ${min / 1440} 天` : min % 60 === 0 ? `每 ${min / 60} 小時` : `每 ${min} 分鐘`);
+export const DIFF: Record<number, [string, string]> = { 1: ["簡單", "ok"], 2: ["中等", "info"], 3: ["困難", "warn"], 4: ["極難", "bad"] };
 const fmtTokens = (n: number | null | undefined) => (n == null ? "—" : n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${Math.round(n / 1e3)}k` : String(n));
-const initials = (name: string) => (name.startsWith("Codex") ? "Cx" : name.startsWith("Claude") ? "Cl" : name.slice(0, 2));
 
-function Tag({ tone, children }: { tone: string; children: ReactNode }) {
+export function Tag({ tone, children }: { tone: string; children: ReactNode }) {
   return <span className={`chip chip-${tone}`}>{children}</span>;
 }
 
 // The card's difficulty: a badge, or (editable) a small select that saves it.
-function Difficulty({ level, reason, onSet }: { level?: number | null; reason?: string | null; onSet?: (n: number | null) => void }) {
+export function Difficulty({ level, reason, onSet }: { level?: number | null; reason?: string | null; onSet?: (n: number | null) => void }) {
   const [label, tone] = level ? DIFF[level] ?? [String(level), "muted"] : ["未分級", "muted"];
   if (!onSet) return <span className={`chip chip-${tone}`} title={reason ?? undefined}>難度 {label}</span>;
   return (
@@ -113,7 +80,7 @@ function UsageBar({ label, w }: { label: string; w?: UsageWindow }) {
 }
 
 // One row per AI in agent_capabilities.json: what it may take, its cost, and its 5-hour / weekly usage.
-function AgentQuota({ info, error }: { info?: AgentsInfo | null; error?: string | null }) {
+export function AgentQuota({ info, error }: { info?: AgentsInfo | null; error?: string | null }) {
   if (error || !info) {
     return <p className="muted">{error ? "AI 能力與用量：後端重啟後才會顯示（/schedule/agents-info）。" : "讀取 AI 能力與用量…"}</p>;
   }
@@ -147,297 +114,8 @@ function AgentQuota({ info, error }: { info?: AgentsInfo | null; error?: string 
   );
 }
 
-type Drag = { task_id?: number; issue_id?: number };
-const dragKey = "application/x-schedule-card";
 
-export default function Schedule() {
-  const { toast, node } = useToast();
-  const meta = useLoad<Meta>("/tasks/meta");
-  const board = useLoad<Board>("/schedule/board", [], 8000);
-  const bg = useLoad<Background>("/schedule/background", [], 5000);
-  const info = useLoad<AgentsInfo>("/schedule/agents-info", [], 60000);
-  const [editing, setEditing] = useState<Task | "new-once" | "new-recurring" | null>(null);
-  const [viewing, setViewing] = useState<Task | null>(null);
-  const [dropOn, setDropOn] = useState<string | null>(null);
-  const [showIdle, setShowIdle] = useState(false);
-
-  const act = async (fn: () => Promise<unknown>, ok: string) => {
-    try {
-      await fn();
-      toast(ok);
-      board.reload(true);
-    } catch (e) {
-      toast((e as Error).message, "bad");
-    }
-  };
-  const setDifficulty = (d: Drag, level: number | null) => act(
-    () => api.put("/schedule/difficulty", { ...d, difficulty: level, reason: level ? "你在看板上設定" : null, by: "owner" }),
-    level ? `難度改為「${DIFF[level][0]}」` : "已清除難度");
-  const assign = (agent: string, d: Drag) => act(() => api.post("/schedule/assign", { agent, ...d }), `已交給 ${agent}`);
-  const onDrop = (agent: string) => (e: DragEvent) => {
-    e.preventDefault();
-    setDropOn(null);
-    const raw = e.dataTransfer.getData(dragKey);
-    if (raw) assign(agent, JSON.parse(raw) as Drag);
-  };
-
-  const b = board.data;
-  const m = meta.data;
-  const bots = b?.bots ?? [];
-  const online = bots.filter((x) => x.state !== "offline").length;
-  // Only bots with a card in hand (working / waiting / blocked / stale) are shown; idle ones on request.
-  const busy = bots.filter((x) => x.doing.length > 0);
-  // Paused bots always show (with 暫停中 and a 開始 button), even when idle.
-  // Qwen has its own card below; keep it out of the agent list to avoid duplicates.
-  const agentsOnly = bots.filter((x) => x.agent !== "Qwen");
-  const shown = showIdle ? agentsOnly : agentsOnly.filter((x) => x.doing.length > 0 || x.paused);
-  const togglePause = (x: Bot) => act(
-    () => api.post(`/agents/${encodeURIComponent(x.agent)}/${x.paused ? "resume" : "pause"}`, {}),
-    x.paused ? `${x.agent} 已開始` : `${x.agent} 已暫停（手上的卡做完後不再接新卡）`);
-  // Card #459: one list of one-off work — the deck's requests and untaken 問題回報 plus
-  // the open reports already on a card or waiting for the owner — grouped by status.
-  const oneOff: OneOff[] = [
-    ...(b?.deck ?? []).filter((c) => c.card === "issue" || c.kind !== "recurring")
-      .map((c, i) => ({ c, group: "queued" as const, pull: i + 1 })),
-    ...(b?.issues ?? []).map((c) => ({ c, group: issueGroup(c) })),
-  ];
-  const oneOffGroups = ONE_OFF_GROUPS.map(([g, label, tone]) => ({ g, label, tone, items: oneOff.filter((x) => x.group === g) }))
-    .filter((x) => x.items.length > 0);
-  // Due first (oldest due on top), then the ones being worked on, then by next run.
-  const rank = (t: Task) => (t.due ? 0 : t.status === "scheduled" ? 2 : 1);
-  const standing = [...(b?.recurring ?? [])].sort((x, y) => rank(x) - rank(y)
-    || (x.next_run_at ?? "").localeCompare(y.next_run_at ?? "") || x.position - y.position);
-  const dueCount = standing.filter((t) => t.due).length;
-
-  return (
-    <div className="page page-wide">
-      <header className="page-head">
-        <div>
-          <h1>排程看板（Schedule）</h1>
-          <p className="muted">
-            左邊是 AI 機器人，右邊兩堆卡：一次性卡（需求、問題回報）和常態卡（定期掃描）。閒置的 AI 會從最上面拉一張來做（<code>task.py next</code>，到期的常態卡優先）。把卡片拖到某個 AI 身上，就是交給它，它下一張會先做這張。
-            {m && ` 進行中超過 ${m.stale_minutes} 分鐘沒回報，會標成「可能已停止」。`}
-          </p>
-        </div>
-        <div className="row-actions">
-          <button className="btn" onClick={() => setEditing("new-recurring")}>新增常態卡</button>
-          <button className="btn btn-primary" onClick={() => setEditing("new-once")}>新增需求</button>
-        </div>
-      </header>
-
-      {(board.error || meta.error) && <ErrorBox error={(board.error || meta.error)!} onRetry={() => { board.reload(); meta.reload(); }} />}
-      {!b || !m ? <Loading /> : (
-        <div className="board">
-          <aside className="bots" aria-label="AI 機器人">
-            <h2>AI 機器人 <small className="muted">{busy.length} 個工作中 · {online} 個在線</small></h2>
-            <label className="muted"><input type="checkbox" checked={showIdle} onChange={(e) => setShowIdle(e.target.checked)} /> 顯示閒置／離線的機器人</label>
-            <AgentQuota info={info.data} error={info.error} />
-            {shown.length === 0 && <Empty>目前沒有機器人在工作。所有工作都要先在看板上有卡（task.py start / next）才能開始。</Empty>}
-            {false && <Empty>還沒有 AI 報到。AI 開工時會執行 task.py hello。</Empty>}
-            {shown.map((x) => {
-              const [label, tone] = STATE[x.state] ?? [x.state, "muted"];
-              return (
-                <article key={x.agent}
-                  className={`card bot bot-${x.state} ${dropOn === x.agent ? "bot-drop" : ""}`}
-                  onDragOver={(e) => { if (e.dataTransfer.types.includes(dragKey)) { e.preventDefault(); setDropOn(x.agent); } }}
-                  onDragLeave={() => setDropOn(null)}
-                  onDrop={onDrop(x.agent)}>
-                  <header className="bot-head">
-                    <span className={`bot-avatar bot-avatar-${x.agent.startsWith("Codex") ? "codex" : "claude"}`} aria-hidden>{initials(x.agent)}</span>
-                    <span className="bot-name">
-                      <strong>{x.agent.replace(/^Claude · /, "")}</strong>
-                      <small className="muted">{x.agent.startsWith("Claude") ? "Claude" : x.agent.startsWith("Codex") ? "Codex" : x.kind} · {fmtTime(x.last_seen)}</small>
-                    </span>
-                    {x.paused && <Tag tone="warn">暫停中</Tag>}
-                    <Tag tone={tone}>{label}</Tag>
-                    <button className={`btn btn-small ${x.paused ? "btn-primary" : ""}`}
-                      title={x.paused ? "讓它可以再接新卡" : "暫停：手上的卡可以做完，但不再接新卡"}
-                      onClick={() => togglePause(x)}>{x.paused ? "▶ 開始" : "⏸ 暫停"}</button>
-                  </header>
-                  {(() => {
-                    const pr = profileOf(info.data, x.agent);
-                    return pr && pr[1].dispatchable !== false ? (
-                      <small className="muted">可接難度 ≤ {DIFF[pr[1].max_difficulty]?.[0] ?? pr[1].max_difficulty} · 成本 {pr[1].cost_tier ?? "—"}</small>
-                    ) : null;
-                  })()}
-                  {x.doing.map((t) => <MiniCard key={t.id} t={t} onOpen={() => setViewing(t)} />)}
-                  {x.assigned.length > 0 && (
-                    <div className="bot-assigned">
-                      <small className="muted">待接手 {x.assigned.length} 張</small>
-                      {x.assigned.map((t) => <MiniCard key={t.id} t={t} onOpen={() => setViewing(t)} />)}
-                    </div>
-                  )}
-                  {x.doing.length === 0 && x.assigned.length === 0 && <p className="muted bot-empty">沒有卡片 · 拖一張卡過來交給它</p>}
-                </article>
-              );
-            })}
-            {(() => {
-              const qwenBot = bots.find((x) => x.agent === "Qwen");
-              return (
-                <QwenBot
-                  bg={bg.data}
-                  error={bg.error}
-                  paused={!!qwenBot?.paused}
-                  onToggle={() => togglePause({
-                    agent: "Qwen", kind: "model", last_seen: null, note: null,
-                    state: qwenBot?.state ?? "idle", doing: [], assigned: [],
-                    paused: !!qwenBot?.paused,
-                  })}
-                />
-              );
-            })()}
-          </aside>
-
-          <main className="deck" aria-label="一次性卡">
-            <h2>一次性卡 <small className="muted">{oneOff.length} 張 · 需求與問題回報，做完就結束</small></h2>
-            {oneOff.length === 0 ? <Empty>沒有排隊的需求，也沒有未處理的問題回報。</Empty> : oneOffGroups.map(({ g, label, tone, items }) => (
-              <section key={g} className="deck-group" aria-label={label}>
-                <h3><Tag tone={tone}>{label}</Tag> <small className="muted">{items.length} 張</small></h3>
-                <ol className="deck-list">
-                  {items.map(({ c, pull }) => {
-                    const d: Drag = c.card === "issue" ? { issue_id: c.issue_id } : { task_id: c.id };
-                    const key = c.card === "issue" ? `i${c.issue_id}` : `t${c.id}`;
-                    const linked = "linked" in c ? c.linked : null;  // an open report already on a card, or a decision
-                    return (
-                      <li key={key} className={`deck-card deck-${c.card === "issue" ? "issue" : c.kind} ${linked ? "deck-busy" : ""}`} draggable={!linked}
-                        onDragStart={(e) => { e.dataTransfer.setData(dragKey, JSON.stringify(d)); e.dataTransfer.effectAllowed = "move"; }}>
-                        <div className="deck-top">
-                          {pull && <span className="muted mono" title="閒置的 AI 拉卡的順序">{pull}</span>}
-                          {c.card === "issue" ? (
-                            <>
-                              <Tag tone="warn">問題回報 #{c.issue_id}</Tag>
-                              <Tag tone={c.kind === "decision" || c.severity === "high" ? "bad" : "muted"}>{ISSUE_KIND[c.kind] ?? c.kind} · {SEV[c.severity] ?? c.severity}</Tag>
-                            </>
-                          ) : (
-                            <Tag tone="muted">需求 #{c.id}</Tag>
-                          )}
-                          <Difficulty level={c.difficulty} reason={c.difficulty_reason} onSet={(n) => setDifficulty(d, n)} />
-                          {!linked && <span className="deck-handle" aria-hidden title="拖到左邊的 AI 上">⠿</span>}
-                        </div>
-                        <button className="deck-title" onClick={() => c.card === "task" ? setViewing(c) : undefined}>{c.title}</button>
-                        {c.detail && <p className="muted deck-detail">{c.detail}</p>}
-                        {c.difficulty_reason && <small className="muted diff-reason">{c.difficulty_reason}</small>}
-                        <div className="deck-foot">
-                          <small className="muted">
-                            {c.card === "task" ? `${who(c.requested_by)} 提出 · ${fmtTime(c.created_at)}` : <>
-                              {linked && (linked.length > 0
-                                ? <>處理中的卡：{linked.map((t) => `#${t.id}（${t.kind === "recurring" ? "常態" : "一次性"}·${m.statuses[t.status] ?? t.status}${t.agent ? `·${t.agent}` : ""}）`).join("、")} · </>
-                                : c.kind === "decision" ? "等你在問題回報頁決定 · " : "尚未排入任何卡 · ")}
-                              <Link to="/issues">在問題回報查看</Link>
-                            </>}
-                          </small>
-                          {!linked && bots.length > 0 && (
-                            <select aria-label="交給哪個 AI" value="" onChange={(e) => e.target.value && assign(e.target.value, d)}>
-                              <option value="">交給…</option>
-                              {bots.map((x) => <option key={x.agent} value={x.agent}>{x.agent}</option>)}
-                            </select>
-                          )}
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ol>
-              </section>
-            ))}
-          </main>
-
-          <main className="deck" aria-label="常態卡">
-            <h2>常態卡 <small className="muted">{dueCount} 張到期 · 共 {b.recurring.length} 張，定期回到最上面</small></h2>
-            {b.recurring.length === 0 ? <Empty>還沒有常態卡。</Empty> : (
-              <ol className="deck-list">
-                {standing.map((t) => {
-                  const free = t.status === "scheduled";
-                  return (
-                    <li key={t.id} className={`deck-card deck-recurring ${t.due ? "standing-due" : ""} ${free ? "" : "deck-busy"}`} draggable={free}
-                      onDragStart={(e) => { e.dataTransfer.setData(dragKey, JSON.stringify({ task_id: t.id })); e.dataTransfer.effectAllowed = "move"; }}>
-                      <div className="deck-top">
-                        <Tag tone="info">常態卡 #{t.id}</Tag>
-                        <Difficulty level={t.difficulty} reason={t.difficulty_reason} onSet={(n) => setDifficulty({ task_id: t.id }, n)} />
-                        {t.due ? <Tag tone="bad">到期</Tag> : t.status === "scheduled" ? <Tag tone="muted">等下次執行</Tag>
-                          : <Tag tone={STATUS_TONE[t.status] ?? "muted"}>{m.statuses[t.status]}{t.agent ? ` · ${t.agent.replace(/^Claude · /, "")}` : ""}</Tag>}
-                        {free && <span className="deck-handle" aria-hidden title="拖到左邊的 AI 上">⠿</span>}
-                      </div>
-                      <button className="deck-title" onClick={() => setViewing(t)}>{t.title}</button>
-                      {t.metric_value && (
-                        <div className="standing-metric">
-                          <span className="big">{t.metric_value.value ?? "—"}</span>
-                          <span>{t.metric_value.label}</span>
-                          {t.metric_value.detail && <small className="muted">{t.metric_value.detail}</small>}
-                        </div>
-                      )}
-                      {t.last_result && <p className="standing-last"><small className="muted">上次結果（{fmtTime(t.last_run_at)}）</small><br />{t.last_result}</p>}
-                      <div className="deck-foot">
-                        <small className="muted">{every(t.interval_minutes)} · 下次 {t.next_run_at && !t.due ? fmtTime(t.next_run_at) : "現在"}</small>
-                        {free && !t.due && (
-                          <button className="btn btn-small" onClick={() => act(() => api.put(`/tasks/${t.id}`, { next_run_at: new Date().toISOString(), note: "立刻排入" }), `#${t.id} 已排到最上面`)}>立刻排入</button>
-                        )}
-                        {free && bots.length > 0 && (
-                          <select aria-label="交給哪個 AI" value="" onChange={(e) => e.target.value && assign(e.target.value, { task_id: t.id })}>
-                            <option value="">交給…</option>
-                            {bots.map((x) => <option key={x.agent} value={x.agent}>{x.agent}</option>)}
-                          </select>
-                        )}
-                      </div>
-                    </li>
-                  );
-                })}
-              </ol>
-            )}
-          </main>
-        </div>
-      )}
-
-      <section>
-        <h2>背景程式</h2>
-        {bg.data && <BackgroundStrip bg={bg.data} />}
-      </section>
-
-      {b && m && b.done.length > 0 && (
-        <section>
-          <h2>最近完成</h2>
-          <ul className="done-list">
-            {b.done.map((t) => (
-              <li key={t.id}>
-                <Tag tone={STATUS_TONE[t.status]}>{m.statuses[t.status]}</Tag>{" "}
-                <button className="link-button" onClick={() => setViewing(t)}>#{t.id} {t.title}</button>
-                <small className="muted"> · {t.agent ?? "—"} · {fmtTime(t.finished_at)}</small>
-                {t.progress && <div className="muted done-result">{t.progress}</div>}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {viewing && m && (
-        <CardView t={viewing} meta={m} onClose={() => setViewing(null)} onEdit={() => { setEditing(viewing); setViewing(null); }}
-          onAct={(fn, ok) => act(async () => { await fn(); setViewing(null); }, ok)} />
-      )}
-      {editing && m && (
-        <TaskForm meta={m} task={typeof editing === "string" ? null : editing}
-          recurring={editing === "new-recurring" || (typeof editing !== "string" && editing.kind === "recurring")}
-          onClose={() => setEditing(null)}
-          onSaved={(msg) => { setEditing(null); toast(msg); board.reload(true); }}
-          onDelete={(id) => act(async () => { await api.del(`/tasks/${id}`); setEditing(null); }, `#${id} 已刪除`)} />
-      )}
-      {node}
-    </div>
-  );
-}
-
-function MiniCard({ t, onOpen }: { t: Task; onOpen: () => void }) {
-  return (
-    <button className={`mini-card mini-${t.status} ${t.kind === "recurring" ? "mini-recurring" : ""}`} onClick={onOpen}>
-      <span className="mini-title"><span className="muted mono">#{t.id}</span> {t.difficulty ? <Difficulty level={t.difficulty} reason={t.difficulty_reason} /> : null} {t.title}</span>
-      {t.progress && <span className="muted mini-progress">{t.progress}</span>}
-      <span className="mini-meta muted">
-        {t.status === "waiting" ? "等你回覆 · " : t.status === "blocked" ? "卡住 · " : t.stale ? "很久沒回報 · " : ""}
-        {fmtTime(t.updated_at)}
-      </span>
-    </button>
-  );
-}
-
-function QwenBot({ bg, error, paused, onToggle }: {
+export function QwenBot({ bg, error, paused, onToggle }: {
   bg?: Background | null; error?: string | null; paused?: boolean; onToggle?: () => void;
 }) {
   const q = bg?.qwen;
@@ -688,7 +366,7 @@ function QwenLive({ q, details }: { q: Background["qwen"]; details: Record<strin
   );
 }
 
-function BackgroundStrip({ bg }: { bg: Background }) {
+export function BackgroundStrip({ bg }: { bg: Background }) {
   return (
     <div className="bg-grid">
       <article className="card bg-qwen">
@@ -727,7 +405,7 @@ function BackgroundStrip({ bg }: { bg: Background }) {
   );
 }
 
-function CardView({ t, meta, onClose, onEdit, onAct }: {
+export function CardView({ t, meta, onClose, onEdit, onAct }: {
   t: Task; meta: Meta; onClose: () => void; onEdit: () => void; onAct: (fn: () => Promise<unknown>, ok: string) => void;
 }) {
   // The board carries only the latest history entries (card #445); load the whole record.
@@ -772,7 +450,7 @@ function CardView({ t, meta, onClose, onEdit, onAct }: {
           <span><dt>提出</dt><dd>{who(t.requested_by)} · {fmtTime(t.created_at)}</dd></span>
           {t.started_at && <span><dt>開始</dt><dd>{fmtTime(t.started_at)}</dd></span>}
           {t.finished_at && <span><dt>結束</dt><dd>{fmtTime(t.finished_at)}</dd></span>}
-          {t.issue_ids.length > 0 && <span><dt>問題回報</dt><dd>{t.issue_ids.map((n) => <Link key={n} to="/issues">#{n} </Link>)}</dd></span>}
+          {t.issue_ids.length > 0 && <span><dt>問題回報</dt><dd>{t.issue_ids.map((n) => <Link key={n} to={`/console/items?open=i${n}`}>#{n} </Link>)}</dd></span>}
         </dl>
         {history.length > 0 && (
           <details className="issue-history" open>
@@ -798,7 +476,7 @@ function CardView({ t, meta, onClose, onEdit, onAct }: {
   );
 }
 
-function TaskForm({ meta, task, recurring, onClose, onSaved, onDelete }: {
+export function TaskForm({ meta, task, recurring, onClose, onSaved, onDelete }: {
   meta: Meta; task: Task | null; recurring: boolean; onClose: () => void; onSaved: (msg: string) => void; onDelete: (id: number) => void;
 }) {
   const [f, setF] = useState({
@@ -863,7 +541,7 @@ function TaskForm({ meta, task, recurring, onClose, onSaved, onDelete }: {
         </div>
         {task && <label className="field wide"><span>這次修改的說明（寫進紀錄）</span><input className="input" value={f.note} onChange={set("note")} /></label>}
         {!task && !recurring && (
-          <p className="muted">新需求會放進右邊牌堆。閒置的 AI 拉卡時會拿到；也可以直接拖給某個 AI。</p>
+          <p className="muted">新需求會排隊，閒置的 AI 會自動接手；也可以在項目裡指定交給哪個 AI。</p>
         )}
       </div>
     </Modal>

@@ -2,8 +2,8 @@
 
 Run by dispatch_tick every tick, no LLM. Reads what the Mac sees (origin/main: docs/mac_inbox.md,
 docs/mac_verify_results.md, docs/releases.md) plus the cards, stores each stage, closes 問題回報
-whose App cards passed the iPad, and once a day saves a digest of what needs the owner and
-mails it through Gmail (nothing needed → nothing saved or sent; Gmail not set up → saved only).
+whose App cards passed the iPad, and once a day saves a digest of what needs the owner for the 後台
+(nothing needed → nothing saved). No mail is sent (owner 10/31, 問題回報 #1175).
 
     python lexicon/tools/flow_tick.py            # once
     python lexicon/tools/flow_tick.py --dry-run  # print the changes
@@ -24,7 +24,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import flow_rules as fr
-import gmail_send
+import mac_sync
 
 ROOT = Path(__file__).resolve().parents[2]
 STATE_DIR = ROOT / "lexicon" / "state"
@@ -32,15 +32,13 @@ FACTS = STATE_DIR / "flow_facts.json"
 DIGEST = STATE_DIR / "daily_digest.json"
 DIGEST_DIR = ROOT / "lexicon" / "logs" / "daily_digest"
 MAC_ISSUES = STATE_DIR / "mac_results_issues.json"
+CONFIRMED = STATE_DIR / "owner_confirmed.json"
 LOG = ROOT / "lexicon" / "logs" / "flow_tick.log"
 API = "http://127.0.0.1:5173/api"
 TAIPEI = timezone(timedelta(hours=8))
 FAIL_QUERY = "flutter test 失敗"
 RELEASE_RE = re.compile(r"(?m)^\|\s*(\d+\.\d+\.\d+\S*)\s*\|[^|]*\|\s*`?([0-9a-f]{6,40})`?\s*\|")
 DIGEST_HOUR = 9
-MAIL_TRIES = 3  # a day; a wrong password must not hammer Google every tick
-MAIL_RETRY_MINUTES = 30
-FLOW_PAGE = "http://127.0.0.1:5173/ui/#/flow"
 
 
 def log(msg: str):
@@ -91,11 +89,25 @@ def cleared_rows(rows: list[fr.Row], filed: dict, by_issue: dict[int, dict]) -> 
     return out
 
 
+def owner_confirmed_rows(rows: list[fr.Row], confirmed: dict) -> set[str]:
+    """The owner confirmed this card on the iPad by hand (控制台「手動確認」, card #919)."""
+    return {r.key for r in rows if r.device == "ipad" and any(str(c) in confirmed for c in r.cards)}
+
+
+def card_evidence(rows: list[fr.Row], pushed: dict) -> tuple[dict, dict]:
+    """What the 控制台 timeline quotes per card: hand-over and last verdict row per device."""
+    verdicts: dict[str, dict] = {}
+    for r in rows:
+        for c in r.cards:
+            verdicts.setdefault(str(c), {})[r.device] = {"verdict": r.verdict, "text": r.text[:240]}
+    return {str(c): list(v) for c, v in pushed.items()}, verdicts
+
+
 def plan(items: dict, rows: list[fr.Row], pushed: dict, released: set[int], filed: dict, check_failing: bool,
-         text_of=fr.result_text) -> tuple[list[dict], list[tuple[dict, str]]]:
+         text_of=fr.result_text, confirmed: dict | None = None) -> tuple[list[dict], list[tuple[dict, str]]]:
     """(stage changes, 問題回報 to close with the reason)."""
     issues = {i["id"]: i for i in items["issues"]}
-    cleared = cleared_rows(rows, filed, issues)
+    cleared = cleared_rows(rows, filed, issues) | owner_confirmed_rows(rows, confirmed or {})
     changes, cards_of, closes = [], {}, []
     for t in items["tasks"]:
         linked = [issues[i].get("area") for i in t.get("issue_ids") or [] if i in issues]
@@ -134,30 +146,6 @@ def write_digest(now: datetime, lines: list[str], state: dict | None) -> bool:
     return bool(lines)
 
 
-def mail_digest(now: datetime, state: dict | None) -> bool:
-    """Mail today's saved digest once. Set up later in the day → it still goes out; a failure waits and retries."""
-    state = state or {}
-    today = now.date().isoformat()
-    tries = state.get("mail_tries") or 0
-    if state.get("date") != today or not state.get("lines") or state.get("mailed") == today or not gmail_send.ready():
-        return False
-    last = state.get("mail_at")
-    if state.get("mail_day") == today:
-        if tries >= MAIL_TRIES or (last and now - datetime.fromisoformat(last) < timedelta(minutes=MAIL_RETRY_MINUTES)):
-            return False
-    else:
-        tries = 0
-    lines = state["lines"]
-    error = gmail_send.send(f"每日摘要 {today}：{len(lines)} 件需要你",
-                            "\n".join(f"- {x}" for x in lines) + f"\n\n流程總覽：{FLOW_PAGE}\n")
-    state.update(mail_day=today, mail_tries=tries + 1, mail_at=now.isoformat(timespec="seconds"), mail_error=error)
-    if not error:
-        state["mailed"] = today
-    DIGEST.write_text(json.dumps(state, ensure_ascii=False, indent=1), encoding="utf-8")
-    log(f"daily digest mail: {error or 'sent'}")
-    return not error
-
-
 def main(argv=None) -> int:
     sys.stdout.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
@@ -176,7 +164,8 @@ def main(argv=None) -> int:
     released = released_cards(pushed, on_main("docs/releases.md"))
     filed = (json.loads(MAC_ISSUES.read_text(encoding="utf-8")) if MAC_ISSUES.exists() else {}).get("filed", {})
     failing = http("GET", f"/issues?status=active&q={urllib.parse.quote(FAIL_QUERY)}").get("items", [])
-    changes, closes = plan(items, rows, pushed, released, filed, bool(failing))
+    confirmed = json.loads(CONFIRMED.read_text(encoding="utf-8")) if CONFIRMED.exists() else {}
+    changes, closes = plan(items, rows, pushed, released, filed, bool(failing), confirmed=confirmed)
     if a.dry_run:
         for c in changes:
             print("DRY", c["type"], c["id"], c["stage"], c["state"] or "")
@@ -188,12 +177,23 @@ def main(argv=None) -> int:
                       for c in changes)[:600])
     for i, why in closes:
         http("PUT", f"/issues/{i['id']}", {"status": "fixed", "by": "flow_tick", "resolution": why})
+    try:
+        http("POST", "/console/followups", {})  # 接續卡 whose first card was collected → queued
+    except (urllib.error.URLError, OSError, ValueError) as e:  # API still on older code
+        log(f"skip: /console/followups not available ({e})")
     last = git("log", "-1", "--format=%ct", "origin/main", "--", "docs/mac_verify_results.md").stdout.strip()
     now = datetime.now(TAIPEI)
+    sync_state = json.loads(mac_sync.STATE.read_text(encoding="utf-8")) if mac_sync.STATE.exists() else {}
+    unpushed = {int(e["card"]) for e in mac_sync.app_cards(sync_state.get("since"))}
+    todo = fr.todo_cards(inbox_text)
+    start = items["start"]["task"]
+    legacy = {str(c): st for c in sorted(unpushed | todo) if c < start
+              and (st := fr.legacy_stage(c, rows, pushed, todo, unpushed))}
+    handed, verdicts = card_evidence(rows, pushed)
     tmp = FACTS.with_suffix(".json.tmp")
     tmp.write_text(json.dumps({"at": now.isoformat(timespec="seconds"), "inbox_todo": fr.inbox_todo(inbox_text),
                                "mac_last_at": int(last) if last.isdigit() else None,
-                               "gmail_ready": gmail_send.ready()}, ensure_ascii=False),
+                               "legacy": legacy, "handed": handed, "verdicts": verdicts}, ensure_ascii=False),
                    encoding="utf-8")
     os.replace(tmp, FACTS)
     state = json.loads(DIGEST.read_text(encoding="utf-8")) if DIGEST.exists() else None
@@ -202,7 +202,6 @@ def main(argv=None) -> int:
         if write_digest(now, lines, state):
             log(f"daily digest: {len(lines)} item(s) for the owner")
         state = json.loads(DIGEST.read_text(encoding="utf-8")) if DIGEST.exists() else None
-    mail_digest(now, state)
     return 0
 
 

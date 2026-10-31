@@ -13,9 +13,7 @@ import Snapshots from "./pages/Snapshots";
 import Export from "./pages/Export";
 import CardWorkspace from "./pages/CardWorkspace";
 import Images from "./pages/Images";
-import Issues from "./pages/Issues";
-import Schedule from "./pages/Schedule";
-import Flow from "./pages/Flow";
+import Console, { consoleRedirect } from "./pages/Console";
 import ShareStats from "./pages/ShareStats";
 import Users from "./pages/Users";
 import Decks from "./pages/Decks";
@@ -24,9 +22,7 @@ import ConnectQr from "./pages/ConnectQr";
 
 const NAV = [
   ["/", "總覽", "Dashboard"],
-  ["/schedule", "排程", "Schedule"],
-  ["/flow", "流程總覽", "Pipeline"],
-  ["/issues", "問題回報", "Issue Reports"],
+  ["/console", "控制台", "Console"],
   ["/policies", "來源順位", "Source Policies"],
   ["/imports/new", "開始擷取", "Start Import Job"],
   ["/bulk-add", "批量加入單字", "Bulk Add Words"],
@@ -106,6 +102,19 @@ export default function App() {
     return onKeyNeeded(() => setAskKey(true));
   }, [load]);
 
+  // The API was down when the page opened: keep trying, so a restart never leaves this error up.
+  useEffect(() => {
+    if (!error || meta) return;
+    const t = setInterval(load, 5000);
+    return () => clearInterval(t);
+  }, [error, meta, load]);
+
+  // #/schedule, #/flow, #/issues → their 控制台 tab (card #919).
+  useEffect(() => {
+    const to = consoleRedirect(route);
+    if (to) window.location.replace(`#${to}`);
+  }, [route]);
+
   const setPair = useCallback((t: string, n: string) => {
     setPairState([t, n]);
     try {
@@ -159,9 +168,8 @@ export default function App() {
   else if (route === "/app-photos") page = <AppPhotos />;
   else if (route === "/share-stats") page = <ShareStats />;
   else if (route === "/users") page = <Users />;
-  else if (route === "/schedule") page = <Schedule />;
-  else if (route === "/flow") page = <Flow />;
-  else if (route === "/issues") page = <Issues />;
+  else if (route.startsWith("/console")) page = <Console route={route} />;
+  else if (consoleRedirect(route)) page = <Loading />;
   else if (route === "/snapshots") page = <Snapshots />;
   else if (route === "/export") page = <Export />;
   else if (route === "/connect-qr") page = <ConnectQr />;
@@ -208,7 +216,7 @@ export default function App() {
         ) : error && !meta ? (
           <div className="page">
             <ErrorBox error={`連不上 API：${error}`} onRetry={load} />
-            <p className="muted">請確認 API（python -m uvicorn app.main:app --app-dir backend --port 8770）與 PostgreSQL 都已啟動。</p>
+            <p className="muted">每 5 秒自動重試，後端回來就會接上。若一直連不上，請確認 API（python -m uvicorn app.main:app --app-dir backend --port 8770）與 PostgreSQL 都已啟動。</p>
           </div>
         ) : !ctx ? (
           <Loading what="連線到 API" />
