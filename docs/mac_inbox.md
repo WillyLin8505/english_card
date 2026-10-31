@@ -4590,3 +4590,8 @@ commit `0a8ad2e8`（Windows：flutter analyze 無 error、03:59 +972 ~2: All tes
 卡：[owner] 控制台加流程表：一眼看到每個項目卡在哪一關
 
 無（只改後台網頁，不碰 App）。
+
+## M563（2026-11-01 01:48）狀態：待做
+commit `572df232`（Windows：flutter analyze 無 error、03:59 +972 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #928：[owner] 控制台加流程表：一眼看到每個項目卡在哪一關
+  結果：全部完成：控制台「全部項目」預設改成流程表（70 項要處理），每列標出「▶ 停在這裡」，頁首一句話、上方「現在進行中」（超過 30 分鐘標「可能已停止」）。
