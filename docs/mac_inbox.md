@@ -4329,3 +4329,31 @@ iPad 上看進度頁版面（長條圖、四張數字卡）。
 - 第一欄先寫卡號 `#N`（問題回報編號放括號內）；結果只寫 通過／不通過／注意；裝置寫 iPad 或 模擬器。
 - iPad 列通過才算過 iPad 驗證；只在模擬器看過的卡要寫 模擬器。需要 owner 手動確認的寫 注意，並在實際欄寫「owner 手動」。
 - 每次正式發布後在 docs/releases.md 加一列（版本、日期、commit）。
+
+## M537（2026-10-31 18:01）狀態：待做（Windows 卡 #915 交給 Mac 的 App 畫面部分）
+卡：[owner] 在好時機請使用者評分，低分導向意見回饋
+
+開發環境確認規則觸發時會呼叫評分視窗（可暫時把 minInstallDays 設 0、minActiveDays 設 1 在 iPad 上驗證，驗完改回）。
+- 之後改版本號時，記得同步 RatingPrompt.appVersion。
+
+## M538（2026-10-31 18:09）狀態：待做（Windows 卡 #916 交給 Mac 的 App 畫面部分）
+卡：[owner] 統一流程：每張卡的階段狀態、總覽頁、每日摘要
+
+照 M536 的格式寫驗證結果；只有格式調整，沒有畫面要驗。
+
+## M539（2026-10-31 18:13）狀態：待做（Windows 卡 #913 交給 Mac 的 App 畫面部分）
+卡：[owner] 上架前接上當機監控
+
+用帶 DSN 的測試 build，在設定打開「分享使用統計」後觸發一次測試當機，確認 Sentry 後台收得到，且事件裡沒有照片、單字、email、user；版本與 build 號有出現。
+
+改了什麼：
+- app/pubspec.yaml：加 sentry_flutter ^10.2.0（pub get 已跑）。
+- app/lib/services/crash_reporting.dart（新）：DSN 來自 --dart-define=SENTRY_DSN；無 DSN 時 run() 直接跑 App，不碰 SDK。有 DSN 時：sendDefaultPii=false、無 breadcrumb、無截圖／view hierarchy、無效能追蹤；beforeSend 在「分享使用統計」關閉時丟棄事件，開啟時清掉 user／request／extra／message／例外訊息文字／非 app. 開頭的 tag，只留例外類型、堆疊、release（版本＋build 由 SDK 從 bundle 讀）。
+- app/lib/main.dart：main 改走 CrashReporting.run(_start)；app_settings.dart：開關同步 CrashReporting.sharing。
+- app/ios/Runner/PrivacyInfo.xcprivacy：加 CrashData、PerformanceData（AppFunctionality、未連結、不追蹤）。
+- docs/privacy.html（中英）與 docs/app-store-privacy.md：加當機回報說明與標籤列。
+- app/test/card913_crash_reporting_test.dart：4 個測試（無 DSN、關閉時丟棄、清除內容、選項）。
+
+沒動詞庫資料，無需備份；golden／QC 不受影響（未執行）。
+未驗證：真正送到 Sentry（需 DSN＋Mac）；Android／iOS 原生部分（pod install）未在 Windows 建置。同意設計：當機回報跟「分享使用統計」同一開關（預設關），所以未同意者的當機不會回報。
+剩下：owner 步驟 1–4、Mac 驗證。
