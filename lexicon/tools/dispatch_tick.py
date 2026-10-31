@@ -1196,6 +1196,7 @@ class Tick:
         self.flow()
         self.mac_sync()
         self.tag_fallback()
+        self.sentence_audio_night()
         try:
             self.serve_app_reload()
         except Exception as e:  # noqa: BLE001 — never lose the tick's state over it
@@ -1460,6 +1461,20 @@ class Tick:
         except OSError:
             subprocess.Popen(cmd, cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                              creationflags=flags)
+
+    def sentence_audio_night(self):
+        """Card #879: English sentence audio (Tatoeba human, then Piper). card879_piper_tts.py night ingests finished
+        files and, 01:00-06:30 Taipei only, fetches human audio and keeps 3 background Piper workers running."""
+        tool = TOOLS / "card879_piper_tts.py"
+        if self.dry or not tool.exists() or (TOOLS / "card879_piper_off").exists():
+            return
+        flags = NO_WINDOW if os.name == "nt" else 0
+        try:
+            subprocess.Popen([python_exe(), str(tool), "night"], cwd=ROOT, stdout=subprocess.DEVNULL,
+                             stderr=subprocess.DEVNULL, creationflags=flags | BREAKAWAY)
+        except OSError:
+            subprocess.Popen([python_exe(), str(tool), "night"], cwd=ROOT, stdout=subprocess.DEVNULL,
+                             stderr=subprocess.DEVNULL, creationflags=flags)
 
     def qwen_schedule(self):
         """owner 10/21: Qwen runs only inside qwen_schedule.windows (09:30–19:30, 00:00–06:00), paused otherwise.

@@ -31,8 +31,8 @@ from .quality import example_other_pos_only
 from .function_words import FUNCTION_WORD_RELATIONS, is_noisy_function_word_relation
 from .text import example_key, text_hash, is_column_word_list
 
-SENTENCE_VOICES = {"fr": "fr-FR-DeniseNeural", "en": "kokoro-af_heart"}  # card #807 (fr), #872 (en, local Kokoro)
-SENTENCE_SCHEME = {"en": "kokoro-tts"}  # default azure-tts
+SENTENCE_VOICES = {"fr": "fr-FR-DeniseNeural", "en": "piper-lessac-medium"}  # card #807 (fr), #879 (en: Tatoeba human recording or local Piper)
+SENTENCE_SCHEME = {"en": "piper-tts"}  # default azure-tts
 
 
 def sentence_audio_url(target: str, text_hash_: str) -> str:

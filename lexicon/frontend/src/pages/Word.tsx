@@ -237,7 +237,7 @@ export default function Word({ target, native, lemma }: { target: string; native
                   <td>{e.text} <span className="src">{sourceName(e.source)}</span></td>
                   <td>{e.translation ? <>{String(e.translation.text)} <span className="src">{String(e.translation.source)}</span>{Boolean(e.translation.ai) && <span className="ai">AI</span>}{Boolean(e.translation.converted) && <span className="pill">簡→繁</span>}</> : <span className="bad">例句 #{e.n} 缺翻譯</span>}</td>
                   <td>{e.level ?? "—"}</td>
-                  <td>{e.audio ? <><audio controls preload="none" src={`/api/audio/${e.audio.id}/file`} /> <span className="src">{e.audio.source === "azure_tts_sentence" ? `Azure 合成${e.audio.voice ? ` · ${e.audio.voice}` : ""}` : e.audio.source}</span></> : <span className="bad">缺發音</span>}</td>
+                  <td>{e.audio ? <><audio controls preload="none" src={`/api/audio/${e.audio.id}/file`} /> <span className="src">{e.audio.source === "azure_tts_sentence" ? `Azure 合成${e.audio.voice ? ` · ${e.audio.voice}` : ""}` : e.audio.source === "tatoeba_audio_sentence" ? `真人（Tatoeba，${e.audio.voice || "?"}）` : e.audio.source === "piper_tts_sentence" ? "Piper（AI 合成）" : e.audio.source}</span></> : <span className="bad">缺發音</span>}</td>
                 </tr>
               ))}
             </tbody>
