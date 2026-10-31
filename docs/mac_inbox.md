@@ -4585,3 +4585,8 @@ commit `15f37adf`（Windows：flutter analyze 無 error、01:44 +972 ~2: All tes
 commit `0a8ad2e8`（Windows：flutter analyze 無 error、03:59 +972 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #892：[owner] 補主題卡片集：運動、爬山等興趣要有真的內容
   結果：全部完成：新增 9 本主題相片冊（運動 64、爬山／戶外 62、旅行 48、工作 50、考試 40、學校 44、廚房 54、客廳 44、動物 51 字），每本都 ≥ 30 字、已發布。
+
+## M562（2026-11-01 01:41）狀態：待做（Windows 卡 #928 交給 Mac 的 App 畫面部分）
+卡：[owner] 控制台加流程表：一眼看到每個項目卡在哪一關
+
+無（只改後台網頁，不碰 App）。
