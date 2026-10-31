@@ -4499,3 +4499,19 @@ commit `df86c167`（Windows：flutter analyze 無 error、03:02 +947 ~2: All tes
 commit `7e4627a0`（Windows：flutter analyze 無 error、02:05 +947 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #920：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
   結果：全部完成：flutter analyze 0 個 error（仍有 11 則 info，不擋推送），flutter test 947 通過、2 略過、0 失敗，整套 4 分 54 秒。
+
+## M547（2026-10-31 19:55）狀態：待做（Windows 卡 #915 交給 Mac 的 App 畫面部分）
+卡：[owner] 在好時機請使用者評分，低分導向意見回饋
+
+開發環境確認規則觸發時會呼叫評分視窗（暫把 minInstallDays 設 0、minActiveDays 設 1 在 iPad 驗證，驗完改回）。
+- 改版本號時同步 RatingPrompt.appVersion。
+
+## M548（2026-10-31 20:11）狀態：待做（Windows 卡 #912 交給 Mac 的 App 畫面部分）
+卡：[owner] 跨裝置自動同步：補上 #902 只做到手動備份的部分
+
+用同一帳號在 iPad、iPhone 交替複習（含兩台都離線各複習、再連線），確認複習紀錄筆數、下次複習日、單字本、相片冊與設定兩邊一致；相片檔只在 Wi-Fi 傳；設定 → 資料的同步狀態與重試按鈕正常。App 需含本卡修改重新安裝。
+
+## M549（2026-10-31 20:15）狀態：待做
+commit `b654bde7`（Windows：flutter analyze 無 error、01:51 +947 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #914：[owner] 後台加留存與活化數字：第 1／7／30 天留存
+  結果：全部完成：後台留存已上線。假資料 4 個安裝，第 1／7／30 天是 2/4、2/3、1/2；目前真實新安裝 0。
