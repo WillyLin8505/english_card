@@ -11,6 +11,9 @@ import argparse
 import json
 import sys
 import urllib.request
+from pathlib import Path
+
+import flow_rules
 
 API = "http://127.0.0.1:5173/api"
 LIVE = {"queued", "in_progress", "waiting", "blocked", "scheduled"}
@@ -23,8 +26,14 @@ def http(method, path, body=None):
         return json.load(r)
 
 
-def plan(issues: list[dict], tasks: list[dict]) -> list[tuple[int, str, str]]:
-    """(issue id, new status, resolution) for stale in_progress issues."""
+def start_issue() -> int:
+    cfg = Path(__file__).with_name("dispatch_config.json").read_text(encoding="utf-8")
+    return int((json.loads(cfg).get("flow") or {}).get("start_issue") or 0)
+
+
+def plan(issues: list[dict], tasks: list[dict], first_flow_issue: int = 0) -> list[tuple[int, str, str]]:
+    """(issue id, new status, resolution) for stale in_progress issues. A new issue fixed by an
+    App card stays 處理中 until the iPad passed (flow_tick closes it, card #916)."""
     by_issue: dict[int, list[dict]] = {}
     for t in tasks:
         for i in t.get("issue_ids") or []:
@@ -39,6 +48,8 @@ def plan(issues: list[dict], tasks: list[dict]) -> list[tuple[int, str, str]]:
         done = [t for t in cards if t.get("status") == "done"]
         if done:
             last = max(done, key=lambda t: t.get("updated_at") or "")
+            if any(flow_rules.holds_issue(i["id"], i.get("area"), t["id"], first_flow_issue) for t in done):
+                continue
             out.append((i["id"], "fixed", f"卡 #{last['id']}：{(last.get('progress') or '已完成')[:400]}"))
         else:
             out.append((i["id"], "open", ""))
@@ -50,7 +61,8 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args(argv)
-    changes = plan(http("GET", "/issues").get("items", []), http("GET", "/tasks").get("items", []))
+    changes = plan(http("GET", "/issues").get("items", []), http("GET", "/tasks").get("items", []),
+                   start_issue())
     for iid, status, res in changes:
         if a.dry_run:
             print(f"DRY #{iid} → {status}")

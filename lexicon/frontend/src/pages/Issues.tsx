@@ -44,10 +44,13 @@ export type Issue = {
   created_at: string;
   updated_at: string;
   resolved_at: string | null;
+  stage?: string | null;
+  stage_state?: string | null;
 };
 type IssueMeta = { kinds: Record<string, string>; statuses: Record<string, string>; severities: Record<string, string>; areas: Record<string, string> };
 
 const STATUS_TONE: Record<string, string> = { open: "warn", in_progress: "info", needs_decision: "bad", fixed: "ok", wont_fix: "muted" };
+const STAGE_LABEL: Record<string, string> = { dev: "開發", windows_check: "Windows 檢查", mac_verify: "Mac 驗證", ipad_verify: "iPad 驗證", ready: "可發布", released: "已發布", done: "完成", cancelled: "取消" };
 const KIND_TONE: Record<string, string> = { bug: "bad", todo: "info", decision: "warn" };
 const SEV_TONE: Record<string, string> = { high: "bad", medium: "warn", low: "muted" };
 const FIELD_LABEL: Record<string, string> = { status: "狀態", decision: "決定", resolution: "處理方式", severity: "嚴重度", kind: "類型" };
@@ -202,6 +205,7 @@ export default function Issues() {
                   <button className="issue-title" aria-expanded={expanded}>{i.title}</button>
                   <span className="issue-meta">
                     <span className="pill">{m.areas[i.area] ?? i.area}</span>
+                    {i.stage && <span className={`pill${i.stage_state === "failed" ? " bad" : ""}`}>{STAGE_LABEL[i.stage] ?? i.stage}</span>}
                     {i.lemma && <span className="pill">{i.lemma}</span>}
                     <Tag tone={STATUS_TONE[i.status] ?? "muted"}>{m.statuses[i.status] ?? i.status}</Tag>
                     <small className="muted">{fmtTime(i.updated_at)}</small>

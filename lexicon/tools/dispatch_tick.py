@@ -44,6 +44,7 @@ from pathlib import Path
 
 TOOLS = Path(__file__).resolve().parent
 sys.path.insert(0, str(TOOLS))
+import flow_rules  # noqa: E402
 ROOT = TOOLS.parents[1]
 STATE_DIR = ROOT / "lexicon" / "state"
 AG_LOGS = ROOT / "lexicon" / "logs" / "agents"
@@ -686,6 +687,12 @@ class Tick:
                 continue
             if i.get("status") in ("fixed", "wont_fix", "needs_decision"):
                 continue
+            if flow_rules.holds_issue(int(iid), i.get("area"), task["id"],
+                                      int((self.cfg.get("flow") or {}).get("start_issue") or 0)):
+                self.write("PUT", f"/issues/{int(iid)}", {"status": "in_progress", "by": "Grokbot",
+                           "resolution": f"卡 #{task.get('id')}：{outcome}（{rel}；等 iPad 驗證）"[:600]},
+                           "issue waits for iPad")
+                continue
             self.write("PUT", f"/issues/{int(iid)}", {"status": "fixed", "by": "Grokbot",
                        "resolution": f"卡 #{task.get('id')}：{outcome}（{rel}）"[:600]}, "issue fixed")
 
@@ -1208,6 +1215,7 @@ class Tick:
             self.dispatch(board)
         self.heartbeats(board)
         self.sync_issues()
+        self.flow()
         self.mac_sync()
         self.tag_fallback()
         try:
@@ -1526,6 +1534,18 @@ class Tick:
                 log(f"issue sync: {out[-200:]}")
         except Exception as e:  # noqa: BLE001
             log(f"issue sync failed: {e}")
+
+    def flow(self):
+        """Card #916: stages from the cards, mac_inbox and mac_verify_results (flow_tick.py), daily digest."""
+        if self.dry:
+            return
+        try:
+            r = subprocess.run([python_exe(), str(TOOLS / "flow_tick.py")], cwd=ROOT, capture_output=True,
+                               timeout=120, creationflags=NO_WINDOW if os.name == "nt" else 0)
+            if r.returncode != 0:
+                log(f"flow_tick failed: {r.stderr.decode('utf-8', 'replace')[-200:]}")
+        except Exception as e:  # noqa: BLE001
+            log(f"flow_tick failed: {e}")
 
     def mac_sync(self):
         """Finished app cards → tested, pushed and listed for the Mac (mac_sync.py, own lock)."""

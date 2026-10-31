@@ -28,6 +28,7 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import flow_rules
 from flutter_check_workspace import check_workspace
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -40,7 +41,6 @@ INBOX = ROOT / "docs" / "mac_inbox.md"
 AG_LOGS = ROOT / "lexicon" / "logs" / "agents"
 API = "http://127.0.0.1:5173/api"
 TAIPEI = timezone(timedelta(hours=8))
-APP_RE = re.compile(r"app/|flutter|\.dart\b|iOS|iPhone|畫面|Widget", re.I)
 FAIL_TITLE = "[Windows] flutter test 失敗：修好才會推給 Mac 驗證"
 FLUTTER = "flutter.bat" if os.name == "nt" else "flutter"
 NO_WINDOW = 0x08000000 if os.name == "nt" else 0
@@ -137,6 +137,13 @@ def push_origin(what: str) -> bool:
     return p.returncode == 0
 
 
+def issue_areas(card: int) -> list[str]:
+    try:
+        return [http("GET", f"/issues/{i}").get("area") for i in http("GET", f"/tasks/{card}").get("issue_ids") or []]
+    except Exception:  # noqa: BLE001 — board down: an App card; the Mac checks once too often rather than never
+        return []
+
+
 def app_cards(since: str | None) -> list[dict]:
     """Finished one-off cards since `since` whose result touches the app."""
     out, seen = [], set()
@@ -153,7 +160,9 @@ def app_cards(since: str | None) -> list[dict]:
             continue
         res = ROOT / (e.get("result") or "")
         text = res.read_text(encoding="utf-8", errors="replace") if res.is_file() else e.get("summary", "")
-        if not APP_RE.search(text) or e["card"] in seen:
+        if e["card"] in seen:
+            continue
+        if not flow_rules.is_app(text, None if flow_rules.STRONG_RE.search(text) else issue_areas(e["card"])):
             continue
         seen.add(e["card"])
         out.append(e)
@@ -225,7 +234,8 @@ def inbox_item(no: int, commit: str, cards: list[dict], test_line: str) -> str:
     return (f"\n## M{no}（{datetime.now(TAIPEI):%Y-%m-%d %H:%M}）狀態：待做\n"
             f"commit `{commit}`（Windows：flutter analyze 無 error、{test_line}）。`git pull` 後在 iPhone 模擬器"
             "逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，"
-            "結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過＋原因）。"
+            "結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，"
+            "表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。"
             "不通過的開 `[Mac]` 問題回報，標題寫卡號。\n" + "\n".join(rows) + "\n")
 
 

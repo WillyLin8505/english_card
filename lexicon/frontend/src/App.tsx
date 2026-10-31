@@ -15,6 +15,7 @@ import CardWorkspace from "./pages/CardWorkspace";
 import Images from "./pages/Images";
 import Issues from "./pages/Issues";
 import Schedule from "./pages/Schedule";
+import Flow from "./pages/Flow";
 import ShareStats from "./pages/ShareStats";
 import Decks from "./pages/Decks";
 import AppPhotos from "./pages/AppPhotos";
@@ -23,6 +24,7 @@ import ConnectQr from "./pages/ConnectQr";
 const NAV = [
   ["/", "總覽", "Dashboard"],
   ["/schedule", "排程", "Schedule"],
+  ["/flow", "流程總覽", "Pipeline"],
   ["/issues", "問題回報", "Issue Reports"],
   ["/policies", "來源順位", "Source Policies"],
   ["/imports/new", "開始擷取", "Start Import Job"],
@@ -155,6 +157,7 @@ export default function App() {
   else if (route === "/app-photos") page = <AppPhotos />;
   else if (route === "/share-stats") page = <ShareStats />;
   else if (route === "/schedule") page = <Schedule />;
+  else if (route === "/flow") page = <Flow />;
   else if (route === "/issues") page = <Issues />;
   else if (route === "/snapshots") page = <Snapshots />;
   else if (route === "/export") page = <Export />;

@@ -11,4 +11,6 @@
 6. TestFlight → 內部測試 → 建一個群組（例如 owner），把自己加進去，勾「自動發佈新版本」。iPhone／iPad 安裝 TestFlight App，用同一個 Apple ID 登入。
 
 ## Mac 之後每次上傳
+發布後在 `docs/releases.md` 加一列（版本、日期、commit），已驗證的卡會自動變成「已發布」（卡 #916）。
+
 `ASC_KEY_ID=… ASC_ISSUER_ID=… app/tool/testflight.sh`：Release 版、build 號＝git commit 數（自動遞增）、上傳後 App Store Connect 處理約 10–30 分鐘，內部測試群組自動拿到，手機在 TestFlight 自動更新。
