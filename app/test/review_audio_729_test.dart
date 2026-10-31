@@ -228,8 +228,10 @@ void main() {
         (tester) async {
       for (final (word, id) in [('eye', 7), ('owl', 8)]) {
         await pumpBack(tester, _word(word, lexemeId: id));
-        expect(find.text('英式'), findsOneWidget);
-        expect(find.text('美式'), findsOneWidget);
+        // 問題回報 #1123: one recording for both accents, one button.
+        expect(find.text('英式'), findsNothing, reason: word);
+        expect(find.text('美式'), findsNothing, reason: word);
+        expect(find.byIcon(Icons.volume_up_outlined), findsOneWidget);
         expect(find.text('合成'), findsNothing, reason: word);
       }
       expect(tester.takeException(), isNull);

@@ -429,6 +429,15 @@ const uiCatalog = <String, (String, String)>{
     'Translations not yet available',
     'Traductions pas encore disponibles'
   ),
+  // Onboarding and settings: the reason under a French row (M461, 問題回報 #1117).
+  '法文目前只提供英文母語': (
+    'French is currently only available with English as the native language',
+    'Le français n’est pour l’instant proposé qu’avec l’anglais comme langue maternelle'
+  ),
+  '法文目前只提供英文母語，已切回英文': (
+    'French is currently only available with English as the native language; switched back to English',
+    'Le français n’est pour l’instant proposé qu’avec l’anglais comme langue maternelle ; retour à l’anglais'
+  ),
   '下一步': ('Next', 'Suivant'),
   '上一步': ('Previous', 'Précédent'),
   '你對英文熟悉嗎？': (
@@ -1184,8 +1193,29 @@ String translateUi(String source, String language, {String learning = 'en'}) {
     return fill(translation.replaceAllMapped(
         RegExp(r'\{(\d+)\}'), (m) => match.group(int.parse(m[1]!) + 1)!));
   }
+  // Labels built at call sites from catalog copy: 「入門（A1）（已選）」 and
+  // the Semantics label 「英文（English），第一階段尚未提供詞庫」.
+  for (final (suffix, en, fr) in _uiSuffixes) {
+    if (source.endsWith(suffix)) {
+      final head = source.substring(0, source.length - suffix.length);
+      return '${translateUi(head, language, learning: learning)} '
+          '${language == 'fr' ? fr : en}';
+    }
+  }
+  final comma = source.indexOf('，');
+  if (comma > 0 &&
+      uiCatalog.containsKey(source.substring(0, comma)) &&
+      uiCatalog.containsKey(source.substring(comma + 1))) {
+    return '${translateUi(source.substring(0, comma), language, learning: learning)}, '
+        '${translateUi(source.substring(comma + 1), language, learning: learning)}';
+  }
   return fill(_labelParts(source, language) ?? source);
 }
+
+const _uiSuffixes = <(String, String, String)>[
+  ('（已選）', '(selected)', '(sélectionné)'),
+  ('（認得）', '(known)', '(connu)'),
+];
 
 /// 「un exemple（陽性名詞）」, 「動詞・名詞」: grammar labels joined by
 /// （ ） ・ ； ： around untouched words. Only whole catalog entries are swapped.

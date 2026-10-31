@@ -2,16 +2,29 @@ part of '../screens/database_library_screen.dart';
 
 /// Pictures this entry shows, using the pack's picture_ids (the same rule
 /// as the missing-picture count and the fetch queue).
+///
+/// At most [maxEntryImages] (卡 #854, 問題回報 #1111): the first picture in
+/// the catalog stays as the representative one, the rest are picked at random
+/// each time the card opens. The catalog keeps every binding.
+const maxEntryImages = 5;
+
 List<Map<String, dynamic>> databaseEntryImages(
-    List<Map<String, dynamic>> catalog, LexEntry word) {
+    List<Map<String, dynamic>> catalog, LexEntry word,
+    {math.Random? random}) {
   if (word.pictureIds != null && word.pictureIds!.isEmpty) return const [];
   final ids = (word.pictureIds ?? [word.id]).toSet();
-  return [
+  final all = [
     for (final image in catalog)
       if (databaseImageTags(image)
           .any((tag) => ids.contains((tag['lexeme_id'] as num?)?.toInt())))
         image
   ];
+  if (all.length <= maxEntryImages) return all;
+  // Seeded per word and minute so a rebuild while the card is open keeps the
+  // same photos; opening it again later draws a new set.
+  final seed = word.id * 1000003 + DateTime.now().millisecondsSinceEpoch ~/ 60000;
+  final rest = all.sublist(1)..shuffle(random ?? math.Random(seed));
+  return [all.first, ...rest.take(maxEntryImages - 1)];
 }
 
 /// Approved tags, one per word sense: a sense remap can leave the same

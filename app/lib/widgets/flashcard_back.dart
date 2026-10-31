@@ -35,6 +35,16 @@ Future<bool> playAccent(
   return ok;
 }
 
+/// The accent buttons of the card back: both, or just British when one
+/// recording stands for both accents (問題回報 #1123).
+List<String> _accentButtons(WordEntry entry) {
+  final gb = cardAccentAudioUrl(entry, 'en-GB');
+  final us = cardAccentAudioUrl(entry, 'en-US');
+  return gb != null && gb == us
+      ? const ['en-GB']
+      : const ['en-GB', 'en-US'];
+}
+
 /// Card #251: when the card turns, the word is heard in both accents.
 /// Real recordings go first (問題回報 #607 #649: the TTS voice before an
 /// American recording sounded robotic — 67% of A1 words have no British
@@ -1027,10 +1037,17 @@ class FlashcardBack extends StatelessWidget {
                         icon: const Icon(Icons.volume_up_outlined),
                       ),
                     if (entry.language == 'en')
-                      for (final accent in const ['en-GB', 'en-US'])
+                      // 問題回報 #1123: both accents from one recording get
+                      // one button (the flip already plays it once).
+                      for (final accent in _accentButtons(entry))
                         IconButton(
-                          tooltip: ui(context,
-                              accent == 'en-GB' ? '播放英式發音' : '播放美式發音'),
+                          tooltip: ui(
+                              context,
+                              _accentButtons(entry).length == 1
+                                  ? '播放發音'
+                                  : accent == 'en-GB'
+                                      ? '播放英式發音'
+                                      : '播放美式發音'),
                           onPressed: () {
                             // 問題回報 #729: a tap replaces the flip's two
                             // accents rather than being followed by them.
@@ -1040,8 +1057,9 @@ class FlashcardBack extends StatelessWidget {
                           icon:
                               Column(mainAxisSize: MainAxisSize.min, children: [
                             const Icon(Icons.volume_up_outlined),
-                            UiText(accent == 'en-GB' ? '英式' : '美式',
-                                style: MFont.caption),
+                            if (_accentButtons(entry).length > 1)
+                              UiText(accent == 'en-GB' ? '英式' : '美式',
+                                  style: MFont.caption),
                             // 問題回報 #724: the TTS voice, or (卡 #695) an
                             // Azure synthetic file, says so, so it is not
                             // taken for a person's pronunciation.

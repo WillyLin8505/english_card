@@ -62,4 +62,36 @@ void main() {
     }
     session.dispose();
   });
+
+  // 問題回報 #1116: every card style (framed ones included), with the title
+  // wrapped to two lines by a larger text scale, on 375×667 and an iPad.
+  for (final style in CardStyle.values) {
+    for (final size in const [Size(375, 667), Size(820, 1180)]) {
+      testWidgets('photo choice: ${style.name} $size, two-line title',
+          (tester) async {
+        final session = _choice(image(1));
+        await pumpApp(tester,
+            repository: session.repo,
+            size: size,
+            home: Scaffold(
+                body: MediaQuery.withClampedTextScaling(
+                    minScaleFactor: 1.8,
+                    maxScaleFactor: 1.8,
+                    child: CardLookScope(
+                        look: CardLook.forStyle(style),
+                        child: FlashcardCardView(session: session)))));
+        await tester.pump();
+
+        final answer = tester.getRect(find.byType(PrimaryButton));
+        final options = find.byType(OutlinedButton);
+        expect(options, findsNWidgets(session.exercise!.options.length));
+        for (final option in tester.widgetList(options)) {
+          final rect = tester.getRect(find.byWidget(option));
+          expect(rect.bottom, lessThanOrEqualTo(answer.top),
+              reason: 'an option is under the 顯示答案 dock');
+        }
+        session.dispose();
+      });
+    }
+  }
 }

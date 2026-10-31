@@ -58,7 +58,19 @@ class _InteractiveExerciseState extends State<_InteractiveExercise> {
     // mode) a fixed-height photo pushed the question and options under the
     // 顯示答案 dock. Cap the photo to ~30 % of the screen height (floor 120).
     final screenHeight = MediaQuery.sizeOf(context).height;
-    final maxHeight = (screenHeight * 0.3).clamp(120.0, double.infinity);
+    // 問題回報 #1116: the photo also gives back what the rest of the card
+    // needs on the same screen: the nav header above (~220pt with the dock
+    // and the top padding), a two-line title (scaled with the text), the
+    // card frame of a framed style, and three 56pt options. Otherwise the
+    // third option lands under 顯示答案 (framed 2-line title on 375×667).
+    final scaler = MediaQuery.textScalerOf(context);
+    final titleHeight =
+        scaler.scale(look.exerciseTitle.fontSize ?? 20) * 1.3 * 2;
+    final frame = look.card == null ? 0.0 : look.cardPadding.vertical + 8;
+    final below = titleHeight + 18 + 18 + 3 * 56 + frame;
+    final budget = screenHeight - 220 - below;
+    final maxHeight = math.min(screenHeight * 0.3,
+        budget.clamp(look.card == null ? 120.0 : 88.0, double.infinity));
     final photoHeight = height ?? look.frontPhotoHeight;
     return SizedBox(
       height: photoHeight > maxHeight ? maxHeight : photoHeight,

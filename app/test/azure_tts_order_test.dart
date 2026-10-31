@@ -312,8 +312,11 @@ void main() {
       ]) {
         await pumpBack(tester, _word(word, id));
         for (final accent in const ['en-GB', 'en-US']) {
+          // 問題回報 #1123: gnu's one file stands for both accents, so it
+          // has a single (英式) button.
+          final shown = !(word == 'gnu' && accent == 'en-US');
           expect(find.byKey(ValueKey('accent-tts-$accent')),
-              marked ? findsOneWidget : findsNothing,
+              marked && shown ? findsOneWidget : findsNothing,
               reason: '$word $accent');
         }
       }

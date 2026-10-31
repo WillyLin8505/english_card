@@ -48,7 +48,13 @@ void main() {
     await tester.tap(find.text('英文（English）').last);
     await tester.pump();
     // French is now the learning language; only the 繁中 native row is shut.
-    expect(find.text(frenchNeedsEnglishNative), findsOneWidget);
+    // The UI follows the native language now, so the note is in English
+    // (問題回報 #1120).
+    expect(find.text(frenchNeedsEnglishNative), findsNothing);
+    expect(
+        find.text(
+            'French is currently only available with English as the native language'),
+        findsOneWidget);
     await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();
     expect(find.text('How well do you know French?'), findsOneWidget);

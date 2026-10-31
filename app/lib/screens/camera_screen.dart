@@ -572,132 +572,143 @@ class _FullCameraState extends State<_FullCamera> {
       backgroundColor: Colors.black,
       body: SafeArea(
         bottom: false,
-        child: Column(
-          children: [
-            SizedBox(
-              height: 32,
-              child: hint == null
-                  ? null
-                  : Center(
-                      child: Tap(
-                        onTap: widget.onHintTap,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Flexible(
-                              child: UiText(hint,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: MFont.manrope(
-                                      12, FontWeight.w700, Colors.white70)),
-                            ),
-                            if (widget.onHintTap != null)
-                              const Icon(Icons.chevron_right_rounded,
-                                  size: 14, color: Colors.white70),
-                          ],
+        child: LayoutBuilder(builder: (context, box) {
+          // iPhone Camera fills the width: the width sets the 3:4 height, and
+          // when the screen is short the hint row and bottom band shrink
+          // instead of the preview (card #857). Wide screens (iPad) stay
+          // centred, limited by the height.
+          final fullH = box.maxWidth * 4 / 3;
+          final spare = box.maxHeight - fullH;
+          final hintH = hint != null ? 32.0 : (spare >= 140 ? 32.0 : 0.0);
+          final bandH = (spare - hintH).clamp(84.0, 108.0);
+          final shutter = math.min(76.0, bandH - 16);
+          return Column(
+            children: [
+              SizedBox(
+                height: hintH,
+                child: hint == null
+                    ? null
+                    : Center(
+                        child: Tap(
+                          onTap: widget.onHintTap,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Flexible(
+                                child: UiText(hint,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: MFont.manrope(
+                                        12, FontWeight.w700, Colors.white70)),
+                              ),
+                              if (widget.onHintTap != null)
+                                const Icon(Icons.chevron_right_rounded,
+                                    size: 14, color: Colors.white70),
+                            ],
+                          ),
                         ),
                       ),
+              ),
+              Expanded(
+                child: Center(
+                  child: AspectRatio(
+                    aspectRatio: 3 / 4,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        ClipRect(child: preview),
+                        IgnorePointer(
+                          child: AnimatedOpacity(
+                            opacity: widget.flashing ? 1 : 0,
+                            duration: Duration(
+                                milliseconds: widget.flashing ? 0 : 200),
+                            child: const ColoredBox(color: Colors.white),
+                          ),
+                        ),
+                      ],
                     ),
-            ),
-            Expanded(
-              child: Center(
-                child: AspectRatio(
-                  aspectRatio: 3 / 4,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      ClipRect(child: preview),
-                      IgnorePointer(
-                        child: AnimatedOpacity(
-                          opacity: widget.flashing ? 1 : 0,
-                          duration:
-                              Duration(milliseconds: widget.flashing ? 0 : 200),
-                          child: const ColoredBox(color: Colors.white),
-                        ),
-                      ),
-                    ],
                   ),
                 ),
               ),
-            ),
-            Container(
-              key: const ValueKey('camera-bottom-band'),
-              color: Colors.black,
-              padding: const EdgeInsets.fromLTRB(
-                  MSpace.xl, MSpace.lg, MSpace.xl, MSpace.lg),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Tap(
-                    onTap: widget.onGallery,
-                    label: '最近一張照片',
-                    child: Container(
-                      key: const ValueKey('camera-last-photo'),
-                      width: 48,
-                      height: 48,
-                      clipBehavior: Clip.antiAlias,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        color: Colors.white.withValues(alpha: 0.16),
-                      ),
-                      child: widget.lastPhoto != null
-                          ? PhotoImage(widget.lastPhoto!, fit: BoxFit.cover)
-                          : const Center(
-                              child: MSvg(MIcon.gallery20,
-                                  size: 22, tint: Colors.white)),
-                    ),
-                  ),
-                  Listener(
-                    onPointerDown: (_) => setState(() => _pressed = true),
-                    onPointerUp: (_) => setState(() => _pressed = false),
-                    onPointerCancel: (_) => setState(() => _pressed = false),
-                    child: Tap(
-                      onTap: widget.onShutter,
-                      label: '拍照',
+              Container(
+                key: const ValueKey('camera-bottom-band'),
+                color: Colors.black,
+                height: bandH,
+                padding: const EdgeInsets.symmetric(horizontal: MSpace.xl),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Tap(
+                      onTap: widget.onGallery,
+                      label: '最近一張照片',
                       child: Container(
-                        key: const ValueKey('camera-shutter'),
-                        width: 76,
-                        height: 76,
+                        key: const ValueKey('camera-last-photo'),
+                        width: 48,
+                        height: 48,
+                        clipBehavior: Clip.antiAlias,
                         decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 4),
+                          borderRadius: BorderRadius.circular(10),
+                          color: Colors.white.withValues(alpha: 0.16),
                         ),
-                        padding: const EdgeInsets.all(4),
-                        child: AnimatedScale(
-                          scale: _pressed ? 0.88 : 1,
-                          duration: const Duration(milliseconds: 100),
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: widget.busy
-                                  ? Colors.white.withValues(alpha: 0.5)
-                                  : Colors.white,
+                        child: widget.lastPhoto != null
+                            ? PhotoImage(widget.lastPhoto!, fit: BoxFit.cover)
+                            : const Center(
+                                child: MSvg(MIcon.gallery20,
+                                    size: 22, tint: Colors.white)),
+                      ),
+                    ),
+                    Listener(
+                      onPointerDown: (_) => setState(() => _pressed = true),
+                      onPointerUp: (_) => setState(() => _pressed = false),
+                      onPointerCancel: (_) => setState(() => _pressed = false),
+                      child: Tap(
+                        onTap: widget.onShutter,
+                        label: '拍照',
+                        child: Container(
+                          key: const ValueKey('camera-shutter'),
+                          width: shutter,
+                          height: shutter,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 4),
+                          ),
+                          padding: const EdgeInsets.all(4),
+                          child: AnimatedScale(
+                            scale: _pressed ? 0.88 : 1,
+                            duration: const Duration(milliseconds: 100),
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: widget.busy
+                                    ? Colors.white.withValues(alpha: 0.5)
+                                    : Colors.white,
+                              ),
                             ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                  Tap(
-                    onTap: widget.onFlip,
-                    label: '切換鏡頭',
-                    child: Container(
-                      key: const ValueKey('camera-flip'),
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withValues(alpha: 0.16),
+                    Tap(
+                      onTap: widget.onFlip,
+                      label: '切換鏡頭',
+                      child: Container(
+                        key: const ValueKey('camera-flip'),
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withValues(alpha: 0.16),
+                        ),
+                        child: const Icon(Icons.flip_camera_ios_outlined,
+                            size: 24, color: Colors.white),
                       ),
-                      child: const Icon(Icons.flip_camera_ios_outlined,
-                          size: 24, color: Colors.white),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          );
+        }),
       ),
     );
   }
