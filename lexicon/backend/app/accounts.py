@@ -23,6 +23,8 @@ from . import models as m
 
 NICK_MAX = 40
 PHOTO_MAX_BYTES = 5 * 1024 * 1024
+BACKUP_MAX_BYTES = 200 * 1024 * 1024
+BACKUP_MAGIC = b"ENGLISH-CARD-BACKUP "
 PBKDF2_ROUNDS = 240_000
 EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 JPEG, PNG = b"\xff\xd8\xff", b"\x89PNG\r\n\x1a\n"
@@ -144,11 +146,48 @@ def update_profile(s: Session, user: m.User, nickname, native_lang, level) -> di
 
 
 def delete_account(s: Session, user: m.User) -> None:
-    """App Review 5.1.1(v): in-app account deletion. Shared decks go with the account."""
+    """App Review 5.1.1(v): in-app account deletion. Shared decks and the cloud backup go with the account."""
+    _backup_path(user).unlink(missing_ok=True)
     for d in s.scalars(select(m.Deck).where(m.Deck.owner_user_id == user.id)):
         s.delete(d)
     s.delete(user)
     s.flush()
+
+
+# ---- cloud backup (card #902, 問題回報 #1173: 帳號登入與跨裝置同步) -------------------
+# One backup file per account: the app's own AppBackup file (words, photos, cards, review
+# history, settings), stored as-is so a Worker can move it to an R2 object `backups/<id>`.
+
+def _backup_path(user: m.User):
+    return config.MEDIA / "user_backups" / f"{user.id}.bak"
+
+
+def save_backup(user: m.User, data: bytes) -> dict:
+    if not data.startswith(BACKUP_MAGIC):
+        raise AccountError(422, "這不是備份檔")
+    if len(data) > BACKUP_MAX_BYTES:
+        raise AccountError(413, "備份不能超過 200 MB")
+    path = _backup_path(user)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(".tmp")
+    tmp.write_bytes(data)
+    tmp.replace(path)   # a failed upload never damages the last good backup
+    return backup_info(user)
+
+
+def load_backup(user: m.User) -> bytes:
+    path = _backup_path(user)
+    if not path.exists():
+        raise AccountError(404, "雲端還沒有備份")
+    return path.read_bytes()
+
+
+def backup_info(user: m.User) -> dict:
+    path = _backup_path(user)
+    if not path.exists():
+        return {"exists": False, "size": 0, "updated_at": None}
+    st = path.stat()
+    return {"exists": True, "size": st.st_size, "updated_at": int(st.st_mtime)}
 
 
 # ---- sharing ---------------------------------------------------------------

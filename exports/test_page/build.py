@@ -39,7 +39,36 @@ def sentence_audio_layer():
             '接下來的 50 句試聽（卡 #868）做好後會放在這一層上面。', ''.join(rows))
 
 
-LAYERS = [sentence_audio_layer()]
+TRIAL = TTS / 'trial50'
+TRIAL_SOURCES = [
+    ('human', '真人', 'Tatoeba 錄音'),
+    ('kokoro_us', 'Kokoro 美式', 'af_heart'),
+    ('kokoro_uk', 'Kokoro 英式', 'bf_emma'),
+]
+CATS = {'short': '短句', 'q': '問句', 'name': '有人名／地名', 'num': '有數字或縮寫', 'mid': '中等長度', 'long': '長句'}
+
+
+def trial50_layer():
+    picked = json.load(open(TRIAL / 'picked50.json', encoding='utf-8'))
+    times = json.load(open(TRIAL / 'timing.json', encoding='utf-8'))
+    rows = []
+    for p in picked:
+        keys = ''.join(
+            f'<button class="key" type="button"><span class="k1">{name}</span><span class="k2">{html.escape(voice)}</span>'
+            f'<audio preload="none" src="{data_uri(TRIAL / folder / ("%02d.mp3" % p["n"]))}"></audio></button>'
+            for folder, name, voice in TRIAL_SOURCES)
+        author = p['author'] if p['author'] not in (None, '\\N') else '未標示'
+        credit = f'真人錄音：{author}（{p["license"] if p["license"] not in (None, chr(92) + "N") else "Tatoeba 未標示授權"}）· Tatoeba #{p["tatoeba_id"]}'
+        rows.append(f'<article class="item"><div class="word">{p["n"]}. {html.escape(CATS[p["cat"]])} · {p["cefr"]} · {html.escape(p["word"])}</div>'
+                    f'<p class="en">{html.escape(p["text"])}</p><p class="zh">{html.escape(p["zh"])}</p>'
+                    f'<p class="note">{html.escape(credit)}</p><div class="keys">{keys}</div></article>')
+    intro = (f'50 句詞庫例句（A1–B2；短句、問句、人名、數字各幾句），每句三種念法：真人、Kokoro 美式、Kokoro 英式。'
+             f'50 句中有真人錄音 {len(picked)} 句（全部挑有錄音的）。'
+             f'合成時間（本機 CPU）：美式 {times["kokoro_us"]} 秒／句、英式 {times["kokoro_uk"]} 秒／句。（卡 #868）')
+    return ('英文例句發音試聽 50 句', '2026-10-31', intro, ''.join(rows))
+
+
+LAYERS = [trial50_layer(), sentence_audio_layer()]
 
 STYLE = '''<title>單字卡測試頁</title>
 <meta name="claude:viewport-fit-sides" content="cover">

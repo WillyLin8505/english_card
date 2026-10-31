@@ -393,6 +393,21 @@
    "zh_ai": {
     "From the inside to the outside of; out of.": "從…裡面出來、向外"
    }
+  },
+  "mobile|noun": {
+   "zh_ai": {
+    "A kinetic sculpture or decorative arrangement": "吊飾（懸掛式動態裝飾）"
+   },
+   "first": [
+    "A mobile phone"
+   ]
+  },
+  "apple|verb": {
+   "low": [
+    "To make (something) appear like an apple",
+    "To become like an apple",
+    "To collect fir-cones"
+   ]
   }
  }
 }

@@ -847,7 +847,8 @@ class Handler(SimpleHTTPRequestHandler):
             length = int(self.headers.get('Content-Length', '0'))
         except ValueError:
             length = -1
-        if not 0 <= length <= accounts.PHOTO_MAX_BYTES + 1:
+        limit = accounts.BACKUP_MAX_BYTES if path == '/api/account/backup' else accounts.PHOTO_MAX_BYTES
+        if not 0 <= length <= limit + 1:
             self.send_json(413, {'detail': 'too large'})
             return
         raw = self.rfile.read(length) if length else b''
@@ -855,6 +856,15 @@ class Handler(SimpleHTTPRequestHandler):
         parts = path.strip('/').split('/')[1:]   # after "api"
         try:
             with db.session_scope() as s:
+                if parts[:2] == ['account', 'backup'] and method == 'GET' and parts[2:] == []:
+                    data = accounts.load_backup(accounts.user_from_token(s, token))
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'application/octet-stream')
+                    self.send_header('Cache-Control', 'no-store')
+                    self.send_header('Content-Length', str(len(data)))
+                    self.end_headers()
+                    self.wfile.write(data)
+                    return
                 result = self.run_account(s, method, parts, raw, token)
         except accounts.AccountError as e:
             self.send_json(e.status, {'detail': e.message})
@@ -866,7 +876,7 @@ class Handler(SimpleHTTPRequestHandler):
 
     @staticmethod
     def run_account(s, method, parts, raw, token) -> dict:
-        body = {} if parts[-1:] == ['photo'] or not raw else json.loads(raw)
+        body = {} if parts[-1:] == ['photo'] or parts[:2] == ['account', 'backup'] or not raw else json.loads(raw)
         area, rest = parts[0], parts[1:]
         if area == 'account':
             if method == 'POST' and rest == ['register']:
@@ -885,6 +895,10 @@ class Handler(SimpleHTTPRequestHandler):
                 return accounts.profile(user)
             if method == 'POST' and rest == ['profile']:
                 return accounts.update_profile(s, user, body.get('nickname'), body.get('native_lang'), body.get('level'))
+            if method == 'POST' and rest == ['backup']:
+                return accounts.save_backup(user, raw)
+            if method == 'GET' and rest == ['backup', 'info']:
+                return accounts.backup_info(user)
             if method == 'POST' and rest == ['logout']:
                 accounts.logout(s, token)
                 return {'ok': True}
