@@ -4763,3 +4763,9 @@ commit `da9e6d2a`（Windows：flutter analyze 無 error、02:03 +975 ~2: All tes
 
 無。
 - 剩下：待 owner 回覆後，`python lexicon/tools/card169_fill_zh.py backup` → `run --limit 3 --batch 200`，補完跑 golden 比對。
+
+## M591（2026-11-01 20:59）狀態：待做（Windows 卡 #738 交給 Mac 的 App 畫面部分）
+卡：[owner] 做法文→繁中詞庫（#882 B 部分）
+
+用 iPad 載入 fr×zh-TW sqlite，查 maison、le、lors、rire 是否出現。
+- owner 用過 App 後若要補更多字，再開新批次（每批 ≤ 200，先備份）。
