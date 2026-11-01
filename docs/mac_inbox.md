@@ -4689,3 +4689,9 @@ commit `cedb9236`（Windows：flutter analyze 無 error、02:45 +972 ~2: All tes
 
 用 iPad 清空後看空狀態，再匯入 1716 字量 fling。
 - 沒動資料，無備份；無 golden/QC 影響。flutter analyze 結果見下方（若無則未跑完）。
+
+## M582（2026-11-01 11:55）狀態：待做（Windows 卡 #942 交給 Mac 的 App 畫面部分）
+卡：問題回報 #1271：[Mac] 2026-11-01 M504–M545（iPad 與模擬器，Codex 執行、：#896 矮螢幕背面意思與已學會圖示
+
+在 375×667 模擬器翻 Yard 背面，確認第一屏看得到「院子、庭院」；iPad 確認大圖仍是 320。
+測試：card251_review_back_test + card227_back_active_pos_test 共 13 項全過。未新增針對矮螢幕的 widget test；全套 flutter test 未跑。
