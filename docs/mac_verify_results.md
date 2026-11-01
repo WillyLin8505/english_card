@@ -2664,3 +2664,15 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #934（#1257）空興趣頁跳過 | 注意 | Mac 看到第 4 頁仍是空的，但 main 最新 cedb9236 的 onboarding_screen.dart 沒有這張卡的改動（最後一次是 df86c167），尚未在 main 驗到修改，同步後等下一輪 | codex2/sim_fr/n07_interests.png | - | 模擬器 |
 | #935（#1258）矮螢幕興趣選項 | 注意 | 同 #934，改動尚未在 main，等下一輪 | - | - | 模擬器 |
 | #940（#1263）英法譯名 | 注意 | 推薦頁仍是 Card sets；main 的 ui_catalog 沒有這張卡的改動，尚未在 main 驗到修改，等下一輪 | codex2/sim_fr/n09_recommended.png | - | 模擬器 |
+
+## 2026-11-01 M546–M580 第二輪（Codex 執行、Mac 核對）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #925（#1179）刪照片清掉檔案 | 通過 | 模擬器以測試照片走 repository.removePhoto：照片檔 1→0，指定檔消失。沒有經畫面按鈕，跨裝置未測 | codex3/sim_813b/925_after_delete.png | - | 模擬器 |
+| #926（#1180）還原舊備份清掉備份外照片 | 通過 | 模擬器實際呼叫 AppBackup.restore：備份外照片檔 1→0。沒有經畫面按鈕 | codex3/sim_813b/926_after_restore.png | - | 模擬器 |
+| #879（#1128）英文例句發音 | 通過 | iPad 點 5 次例句：5/5 language=en，都用 api.willylinai.com 的 audio/en 音檔，沒有手機 TTS。只記錄呼叫，實際聽感 owner 手動 | codex3/ipad_run/shots/mac_log.txt | - | iPad |
+| #826（#947）英文搭配法文母語顯示中文 | 不通過 | 學英文、母語法文全新安裝（模擬器）：the 單字頁 5 句例句翻譯都是繁中，提示列是 Manquant : français意思、例句翻譯。複習卡這輪沒開到 | codex3/fr_content/826_word_fr.png | 中 | 模擬器 |
+| #813（#942）照片詳情難度起點 | 注意 | 測試照片只有 A1 一級，target=A1，分不出是否真的選最高；尚未在有多級的照片驗 | codex3/sim_813b/813_detail_bar.png | - | 模擬器 |
+| #890（#1168）同義詞一行幾個 | 注意 | log 量到 dy 相同的 2 個元件，但截圖沒拍到同義詞區，還不能確認那兩個就是同義詞；尚未在畫面確認 | codex3/ipad_run/shots/890_synonyms.png | - | iPad |
+| #894 run 圖片義項與輪播 | 注意 | 10 張複習內沒抽到 run；尚未在 iPad 驗 | - | - | iPad |
