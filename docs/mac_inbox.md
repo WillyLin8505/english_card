@@ -4769,3 +4769,12 @@ commit `da9e6d2a`（Windows：flutter analyze 無 error、02:03 +975 ~2: All tes
 
 用 iPad 載入 fr×zh-TW sqlite，查 maison、le、lors、rire 是否出現。
 - owner 用過 App 後若要補更多字，再開新批次（每批 ≤ 200，先備份）。
+
+## M592（2026-11-01 22:56）狀態：待做
+commit `0bff4f79`（Windows：flutter analyze 無 error、02:03 +975 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #12：模擬使用者・跨分頁（亂點、詞庫更新）
+  結果：第 228 輪：2/2 通過（fuzz 209 秒 round 255、packupdate 278 秒 round 256，各 30805 詞），沒有新問題。
+- 卡 #496：模擬使用者・法語（英語母語者學法語）
+  結果：第56–59輪：A1、B1、frmedia 通過；carddraw 兩次都跑滿 9 分鐘上限被終止（先前各輪 53–69 秒），原因未查明。
+- 卡 #738：[owner] 做法文→繁中詞庫（#882 B 部分）
+  結果：全部完成：owner 決定（#910 選 3）只補第一批 100 字，已完成——fr×zh-TW 173 詞，fr×en 6,326 詞；本輪沒動資料、程式，也沒呼叫 Qwen。
