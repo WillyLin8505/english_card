@@ -4740,3 +4740,10 @@ commit `59b0bb44`（Windows：flutter analyze 無 error、05:39 +973 ~2: All tes
 commit `2a51e5a8`（Windows：flutter analyze 無 error、01:45 +973 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #228：模擬使用者・設定
   結果：第 23 輪：settings 直接執行 1/1 通過、findings 0（runround.py 包裝兩次逾時/失敗，未取得 summary）；新問題無、UX 建議沿用 #474。
+
+## M587（2026-11-01 13:41）狀態：待做
+commit `2c9ad24f`（Windows：flutter analyze 無 error、02:57 +975 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #951：問題回報 #1291：[意見回饋] 照片詳情：我在拖曳的時候那個圖片也會跟著拖曳下來，我根本不好拖曳還有你
+  結果：已修：拖曳單字標籤時整頁不再跟著捲動（App 程式，無資料變動）。；- flutter analyze 兩檔：無問題。相關 photodetail／pin 測試兩次都在 heavylock 等待／執行中超過 10 分鐘被終止，未得到結果（剩餘：下一輪單獨重跑 card225pintaptest、card690、issu
+- 卡 #949：問題回報 #1285：[Mac] 2026-11-01 M546–M580 第二輪（Codex 執行、Mac 核對：#8
+  結果：第 1 輪：Mac 回報的「英文例句翻譯是繁中」未能在 Windows 重現（無模擬器）；已修「尚缺」提示的中文標籤，等 flutter analyze／test 結果。
