@@ -174,13 +174,17 @@ List<Widget> _imageInfoLines(Map<String, dynamic> image) {
   if (license != null) add(UiText('授權：$license', style: MFont.caption));
   final licenseUrl = visible(image['license_url']) ?? licenseUrlFor(license);
   if (licenseUrl != null) {
-    add(SelectableText('授權條文：$licenseUrl', style: MFont.caption));
+    add(Builder(
+        builder: (context) => SelectableText(ui(context, '授權條文：$licenseUrl'),
+            style: MFont.caption)));
   }
   final attribution = visible(image['attribution']);
   if (attribution != null) add(Text(attribution, style: MFont.caption));
   final pageUrl = visible(image['page_url']);
   if (pageUrl != null) {
-    add(SelectableText('來源頁：$pageUrl', style: MFont.caption));
+    add(Builder(
+        builder: (context) =>
+            SelectableText(ui(context, '來源頁：$pageUrl'), style: MFont.caption)));
   }
   return lines;
 }

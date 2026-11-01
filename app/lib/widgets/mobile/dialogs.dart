@@ -406,13 +406,14 @@ Future<bool?> showDuplicatePhotoDialog(
 }) {
   final album =
       existing.albumId == null ? null : repository.album(existing.albumId!);
-  final where = album == null ? '' : '相片冊「${album.name}」的';
   return showDialog<bool>(
     context: context,
     builder: (context) => AlertDialog(
       title: _title('這張照片已經加入過'),
       content: UiText(
-        '它就是$where「${existing.title}」。要打開原本的照片，還是再加入一張？',
+        album == null
+            ? '它就是「${existing.title}」。要打開原本的照片，還是再加入一張？'
+            : '它就是相片冊「${album.name}」的「${existing.title}」。要打開原本的照片，還是再加入一張？',
         style: MFont.inter(14, FontWeight.w500, MColors.gray900),
       ),
       actions: [

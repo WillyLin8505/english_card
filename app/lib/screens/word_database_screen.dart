@@ -170,7 +170,10 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
             .toList();
         final shownRows = rows.take(_shown).toList();
         final hasMore = rows.length > shownRows.length;
-        _selected.removeWhere((id) => !rows.any((r) => r.id == id));
+        if (_selected.isNotEmpty) {
+          final ids = {for (final r in rows) r.id};
+          _selected.removeWhere((id) => !ids.contains(id));
+        }
         final notice = packUpdateSummary(repo.filledByUpdate);
 
         return Scaffold(

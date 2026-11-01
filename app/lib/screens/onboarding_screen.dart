@@ -170,7 +170,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final steps = [_languages, _background, _goalsPage, _interestsPage, if (_canCheck) _check];
+    final steps = [
+      _languages,
+      _background,
+      _goalsPage,
+      _interestsPage,
+      if (_canCheck) _check
+    ];
     return UiLanguageScope(
         language: _nativeChosen ? _native : widget.uiLanguage,
         child: Scaffold(
@@ -391,7 +397,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       );
 
   /// A multi-select chip (學習目的 / 興趣主題).
-  Widget _chip(String label, IconData icon, bool selected, VoidCallback onTap) =>
+  Widget _chip(
+          String label, IconData icon, bool selected, VoidCallback onTap) =>
       Tap(
         onTap: onTap,
         label: selected ? '$label（已選）' : label,
@@ -420,7 +427,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     try {
       final decks = await (widget.loadDecks ?? DeckLibrary.instance.fetchList)(
           target: _learning, native: _native);
-      if (mounted) setState(() => _decks = decks);
+      if (!mounted) return;
+      setState(() => _decks = decks);
+      // 問題回報 #1257: a language without any matching deck (French) would
+      // show an empty interests page, so skip it.
+      if (_step == 3 && availableInterests(decks).isEmpty) {
+        _interests.clear();
+        if (_canCheck) {
+          setState(() {
+            _step = 4;
+            _checkLevel = 0;
+            _known.clear();
+          });
+        } else {
+          _finish(checked: false);
+        }
+      }
     } catch (_) {
       // Offline: the standard list stays.
     }
@@ -475,40 +497,47 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               label: _self == 'A1' ? '從基礎開始' : '開始使用',
               onTap: () => _finish(checked: false),
             ),
-            TextButton(
-                onPressed: () {
-                  _interests.clear();
-                  _finish(checked: false);
-                },
-                child: const UiText('略過')),
-            if (widget.settings != null)
-              TextButton(
-                key: const Key('onboardingSignIn'),
-                onPressed: () => showDialog<void>(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const UiText('已有帳號？登入（可略過）'),
-                    content: AccountSignInButtons(
-                        settings: widget.settings!,
-                        onSignedIn: () => Navigator.of(context).pop()),
-                    actions: [
-                      TextButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: const UiText('略過')),
-                    ],
+            // 問題回報 #1258: four stacked buttons ate a 375×667 screen; the
+            // secondary links share rows so the topic chips keep the space.
+            Wrap(
+              alignment: WrapAlignment.center,
+              children: [
+                TextButton(
+                    onPressed: () {
+                      _interests.clear();
+                      _finish(checked: false);
+                    },
+                    child: const UiText('略過')),
+                if (widget.settings != null)
+                  TextButton(
+                    key: const Key('onboardingSignIn'),
+                    onPressed: () => showDialog<void>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const UiText('已有帳號？登入（可略過）'),
+                        content: AccountSignInButtons(
+                            settings: widget.settings!,
+                            onSignedIn: () => Navigator.of(context).pop()),
+                        actions: [
+                          TextButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              child: const UiText('略過')),
+                        ],
+                      ),
+                    ),
+                    child: const UiText('已有帳號？登入（可略過）'),
                   ),
-                ),
-                child: const UiText('已有帳號？登入（可略過）'),
-              ),
-            if (_canCheck)
-              TextButton(
-                onPressed: () => setState(() {
-                  _step = 4;
-                  _checkLevel = 0;
-                  _known.clear();
-                }),
-                child: const UiText('想測看看？試試單字程度（可略過）'),
-              ),
+                if (_canCheck)
+                  TextButton(
+                    onPressed: () => setState(() {
+                      _step = 4;
+                      _checkLevel = 0;
+                      _known.clear();
+                    }),
+                    child: const UiText('想測看看？試試單字程度（可略過）'),
+                  ),
+              ],
+            ),
           ],
         ),
       );

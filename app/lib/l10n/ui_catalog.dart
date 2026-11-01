@@ -1,19 +1,112 @@
 /// Traditional Chinese source keys are stable UI identifiers, never dictionary
 /// content. Missing keys/languages deliberately retain the original copy.
 const uiCatalog = <String, (String, String)>{
+  // 卡 #932: 問題回報 #1255 — copy still Chinese in en/fr.
+  '已有帳號？登入（可略過）': (
+    'Already have an account? Sign in (optional)',
+    'Déjà un compte ? Connectez-vous (facultatif)'
+  ),
+  '還沒有可以複習的卡片': (
+    'No cards to review yet',
+    'Aucune carte à réviser pour l’instant'
+  ),
+  '一行一個字，也可用逗號、頓號或 Tab 分隔（一次最多 3000 個）。': (
+    'One word per line, or separate with commas or Tab (up to 3000 at a time).',
+    'Un mot par ligne, ou séparez par des virgules ou une tabulation (3000 maximum à la fois).'
+  ),
+  '備份到雲端': ('Back up to the cloud', 'Sauvegarder en ligne'),
+  '刪除帳號': ('Delete account', 'Supprimer le compte'),
+  '刪除帳號？': ('Delete account?', 'Supprimer le compte ?'),
+  '已存在這支手機，連上網路後會再送出': (
+    'Saved on this phone. It will be sent when you are online.',
+    'Enregistré sur ce téléphone. Il sera envoyé une fois en ligne.'
+  ),
+  '已送出回報，謝謝你': ('Report sent. Thank you!', 'Signalement envoyé. Merci !'),
+  '已登出': ('Signed out', 'Déconnecté'),
+  '帳號已刪除': ('Account deleted', 'Compte supprimé'),
+  '從雲端還原': ('Restore from the cloud', 'Restaurer depuis le cloud'),
+  '從雲端還原？': ('Restore from the cloud?', 'Restaurer depuis le cloud ?'),
+  '會刪除你的帳號和雲端備份，無法復原。這台裝置上的單字與照片不會被刪除。': (
+    'This deletes your account and cloud backup and cannot be undone. Words and photos on this device are not deleted.',
+    'Cela supprime votre compte et la sauvegarde en ligne, de façon irréversible. Les mots et photos de cet appareil ne sont pas supprimés.'
+  ),
+  '查看雲端備份': ('View cloud backup', 'Voir la sauvegarde en ligne'),
+  '構詞（字根、字首／字尾與解釋）': (
+    'Word parts (roots, prefixes/suffixes and notes)',
+    'Formation du mot (racines, préfixes/suffixes et notes)'
+  ),
+  '標籤已收起，點照片展開': (
+    'Labels hidden. Tap the photo to show them',
+    'Étiquettes masquées. Touchez la photo pour les afficher'
+  ),
+  '正在備份到雲端…': ('Backing up to the cloud…', 'Sauvegarde en ligne…'),
+  '正在刪除帳號…': ('Deleting account…', 'Suppression du compte…'),
+  '正在從雲端還原…': ('Restoring from the cloud…', 'Restauration depuis le cloud…'),
+  '正在登出…': ('Signing out…', 'Déconnexion…'),
+  '沒有分級': ('No level', 'Sans niveau'),
+  '登出': ('Sign out', 'Se déconnecter'),
+  '相關單字': ('Related words', 'Mots liés'),
+  '相關字釋義': ('Related word meaning', 'Sens du mot lié'),
+  '繼續練習': ('Keep practicing', 'Continuer à s’entraîner'),
+  '說明（一句話就好）': (
+    'Description (one sentence is enough)',
+    'Description (une phrase suffit)'
+  ),
+  '變化說明（例如：過去式）': (
+    'Form note (e.g. past tense)',
+    'Note sur la forme (p. ex. passé)'
+  ),
+  '這份 App 使用以下資料。各資料依其授權條款標示作者與來源；圖片與音檔的作者、授權與來源頁，請長按圖片或在該張卡片查看。': (
+    'This app uses the data below, credited to their authors and sources under each license. For the author, license and source page of an image or audio file, long-press the image or open its card.',
+    'Cette app utilise les données ci-dessous, avec auteur et source indiqués selon leur licence. Pour l’auteur, la licence et la page source d’une image ou d’un audio, appuyez longuement sur l’image ou ouvrez sa carte.'
+  ),
+  '選一個字，就會在照片上標 1 的位置加上標籤。': (
+    'Pick a word to label the spot marked 1 on the photo.',
+    'Choisissez un mot pour étiqueter l’emplacement 1 sur la photo.'
+  ),
+  '還原': ('Restore', 'Restaurer'),
+  '還原會用雲端備份取代這台裝置目前所有的單字、照片、相片冊、複習紀錄與設定。': (
+    'Restoring replaces all words, photos, albums, review history and settings on this device with the cloud backup.',
+    'La restauration remplace tous les mots, photos, albums, historique de révision et réglages de cet appareil par la sauvegarde en ligne.'
+  ),
+  '（設定 → 照片辨識連線）': (
+    '(Settings → Photo recognition connection)',
+    '(Réglages → Connexion de reconnaissance photo)'
+  ),
   // 卡 #912: 跨裝置自動同步.
-  '自動同步到其他裝置': ('Sync automatically to my other devices', 'Synchroniser automatiquement avec mes autres appareils'),
+  '自動同步到其他裝置': (
+    'Sync automatically to my other devices',
+    'Synchroniser automatiquement avec mes autres appareils'
+  ),
   '同步照片': ('Sync photos', 'Synchroniser les photos'),
-  '照片只用 Wi-Fi 傳': ('Send photos on Wi-Fi only', 'Envoyer les photos en Wi-Fi uniquement'),
+  '照片只用 Wi-Fi 傳': (
+    'Send photos on Wi-Fi only',
+    'Envoyer les photos en Wi-Fi uniquement'
+  ),
   '立即同步': ('Sync now', 'Synchroniser'),
   '尚未同步': ('Not synced yet', 'Pas encore synchronisé'),
-  '自動同步已關閉': ('Automatic sync is off', 'La synchronisation automatique est désactivée'),
+  '自動同步已關閉': (
+    'Automatic sync is off',
+    'La synchronisation automatique est désactivée'
+  ),
   '正在同步…': ('Syncing…', 'Synchronisation…'),
   '已同步': ('Synced', 'Synchronisé'),
-  '沒有網路，連線後會自動同步': ('No connection. Will sync when you are back online', 'Pas de connexion. La synchronisation reprendra une fois en ligne'),
-  '同步失敗，稍後會自動重試': ('Sync failed. Will try again soon', 'Échec de la synchronisation. Nouvel essai bientôt'),
-  '雲端資料來自較新版本，請先更新 App': ('Your cloud data is from a newer version. Please update the app', 'Vos données en ligne viennent d’une version plus récente. Veuillez mettre l’app à jour'),
-  '雲端照片空間已滿，照片暫停上傳': ('Cloud photo space is full. Photo upload is paused', 'L’espace photo en ligne est plein. L’envoi des photos est suspendu'),
+  '沒有網路，連線後會自動同步': (
+    'No connection. Will sync when you are back online',
+    'Pas de connexion. La synchronisation reprendra une fois en ligne'
+  ),
+  '同步失敗，稍後會自動重試': (
+    'Sync failed. Will try again soon',
+    'Échec de la synchronisation. Nouvel essai bientôt'
+  ),
+  '雲端資料來自較新版本，請先更新 App': (
+    'Your cloud data is from a newer version. Please update the app',
+    'Vos données en ligne viennent d’une version plus récente. Veuillez mettre l’app à jour'
+  ),
+  '雲端照片空間已滿，照片暫停上傳': (
+    'Cloud photo space is full. Photo upload is paused',
+    'L’espace photo en ligne est plein. L’envoi des photos est suspendu'
+  ),
   // 卡 #910: 登入入口. French and English learners must not see the Chinese.
   '用 Google 繼續': ('Continue with Google', 'Continuer avec Google'),
   '使用 Apple 登入': ('Sign in with Apple', 'Se connecter avec Apple'),
@@ -24,22 +117,16 @@ const uiCatalog = <String, (String, String)>{
     'After you sign in, your data is backed up and can be restored on a new phone or after reinstalling. The app works fully without an account.',
     'Une fois connecté, vos données sont sauvegardées et peuvent être restaurées sur un nouveau téléphone ou après réinstallation. L’app fonctionne entièrement sans compte.',
   ),
-  '密碼（至少 8 個字）': ('Password (at least 8 characters)', 'Mot de passe (8 caractères minimum)'),
+  '密碼（至少 8 個字）': (
+    'Password (at least 8 characters)',
+    'Mot de passe (8 caractères minimum)'
+  ),
   '登入': ('Sign in', 'Se connecter'),
   '建立': ('Create', 'Créer'),
   // 卡 #893: 各分頁的使用教學.
-  '相機': (
-    'Camera',
-    'Appareil photo'
-  ),
-  '使用教學': (
-    'How to use',
-    'Mode d’emploi'
-  ),
-  '全部重看': (
-    'Show all again',
-    'Tout revoir'
-  ),
+  '相機': ('Camera', 'Appareil photo'),
+  '使用教學': ('How to use', 'Mode d’emploi'),
+  '全部重看': ('Show all again', 'Tout revoir'),
   '切到各分頁時會再顯示教學': (
     'The tutorial shows again on each tab',
     'Le mode d’emploi réapparaîtra sur chaque onglet'
@@ -48,26 +135,11 @@ const uiCatalog = <String, (String, String)>{
     'Each tab shows a short tutorial the first time you open it. Pick a tab or show all again.',
     'Chaque onglet affiche un court mode d’emploi à la première ouverture. Choisissez un onglet ou tout revoir.'
   ),
-  '相機怎麼用': (
-    'How to use Camera',
-    'Utiliser l’appareil photo'
-  ),
-  '相片冊怎麼用': (
-    'How to use Albums',
-    'Utiliser les albums'
-  ),
-  '複習怎麼用': (
-    'How to use Review',
-    'Utiliser la révision'
-  ),
-  '單字本怎麼用': (
-    'How to use Words',
-    'Utiliser Mes mots'
-  ),
-  '設定怎麼用': (
-    'How to use Settings',
-    'Utiliser les réglages'
-  ),
+  '相機怎麼用': ('How to use Camera', 'Utiliser l’appareil photo'),
+  '相片冊怎麼用': ('How to use Albums', 'Utiliser les albums'),
+  '複習怎麼用': ('How to use Review', 'Utiliser la révision'),
+  '單字本怎麼用': ('How to use Words', 'Utiliser Mes mots'),
+  '設定怎麼用': ('How to use Settings', 'Utiliser les réglages'),
   '對準身邊的東西按拍照，或點左下角選一張照片。': (
     'Point at something nearby and tap the shutter, or tap the bottom-left to pick a photo.',
     'Visez un objet et appuyez sur le déclencheur, ou touchez en bas à gauche pour choisir une photo.'
@@ -351,19 +423,19 @@ const uiCatalog = <String, (String, String)>{
     'La page, la version de l’app et la langue apprise sont jointes.'
   ),
   '瀏覽並下載相片冊': (
-    'Browse and download decks',
-    'Parcourir et télécharger des paquets'
+    'Browse and download albums',
+    'Parcourir et télécharger des albums'
   ),
   '相片冊：下載別人整理好的相片冊': (
-    'Decks: download word and picture sets made by others',
-    'Paquets : télécharger des listes de mots et d’images'
+    'Albums: download word and picture sets made by others',
+    'Albums : télécharger des listes de mots et d’images'
   ),
-  '目前還沒有相片冊': ('No decks yet', 'Aucun paquet pour le moment'),
+  '目前還沒有相片冊': ('No albums yet', 'Aucun album pour le moment'),
   '加入': ('Add', 'Ajouter'),
   '移除': ('Remove', 'Retirer'),
   '集合裡的圖片與單字會從你的收藏移除；已經複習過或你編輯過的單字會保留。': (
-    'The deck’s pictures and words are removed from your collection; words you reviewed or edited are kept.',
-    'Les images et mots du paquet sont retirés de votre collection ; les mots révisés ou modifiés sont conservés.'
+    'The album’s pictures and words are removed from your collection; words you reviewed or edited are kept.',
+    'Les images et mots de l’album sont retirés de votre collection ; les mots révisés ou modifiés sont conservés.'
   ),
   '詞庫已更新': ('Dictionary updated', 'Dictionnaire mis à jour'),
   '知道了': ('Got it', 'Compris'),
@@ -637,8 +709,7 @@ const uiCatalog = <String, (String, String)>{
     'Anonymous install and retention',
     'Installation anonyme et rétention'
   ),
-  '預設打開。只送隨機安裝編號與「安裝、完成引導、第一次拍照、第一次複習、每天開啟」，不含帳號或內容；關閉後不再送出。':
-      (
+  '預設打開。只送隨機安裝編號與「安裝、完成引導、第一次拍照、第一次複習、每天開啟」，不含帳號或內容；關閉後不再送出。': (
     'On by default. Only a random install id is sent, plus install, finished the guide, first photo, first review, and one open per day. No account and no content. Turning it off stops further sends.',
     'Activé par défaut. Seul un identifiant d’installation aléatoire est envoyé, plus l’installation, le guide terminé, la première photo, la première révision et une ouverture par jour. Pas de compte ni de contenu. Le désactiver arrête tout envoi.'
   ),
@@ -653,8 +724,7 @@ const uiCatalog = <String, (String, String)>{
   ),
   '查看隱私權政策': ('View privacy policy', 'Voir la politique de confidentialité'),
   '隱私權政策': ('Privacy policy', 'Politique de confidentialité'),
-  '本政策說明「拍照學單字」如何處理資料。分享使用統計預設是關閉的。匿名安裝與留存統計預設是打開的，可在設定裡關閉。':
-      (
+  '本政策說明「拍照學單字」如何處理資料。分享使用統計預設是關閉的。匿名安裝與留存統計預設是打開的，可在設定裡關閉。': (
     'This policy explains how 拍照學單字 handles data. Sharing usage statistics is off by default. Anonymous install and retention statistics are on by default and can be turned off in Settings.',
     'Cette politique explique comment 拍照學單字 traite les données. Le partage des statistiques est désactivé par défaut. Les statistiques anonymes d’installation et de rétention sont activées par défaut et peuvent être désactivées dans Réglages.'
   ),
@@ -818,10 +888,7 @@ const uiCatalog = <String, (String, String)>{
     'Could not play the pronunciation. Check the volume or try again later.',
     'Impossible de lire la prononciation. Vérifiez le volume ou réessayez plus tard.'
   ),
-  '✕ API Key 不正確': (
-    '✕ API key is incorrect',
-    '✕ La clé API est incorrecte'
-  ),
+  '✕ API Key 不正確': ('✕ API key is incorrect', '✕ La clé API est incorrecte'),
   '✕ AI 模型沒有回應，稍後會自動重試': (
     '✕ The AI model did not respond. It will retry automatically.',
     '✕ Le modèle IA n’a pas répondu. Nouvel essai automatique.'
@@ -963,8 +1030,14 @@ const uiCatalog = <String, (String, String)>{
   '播放發音': ('Play pronunciation', 'Écouter la prononciation'),
   // Card 840 (問題回報 #969): tooltips and labels that were hard-coded Chinese.
   '播放例句': ('Play example', 'Écouter l’exemple'),
-  '播放英式發音': ('Play British pronunciation', 'Écouter la prononciation britannique'),
-  '播放美式發音': ('Play American pronunciation', 'Écouter la prononciation américaine'),
+  '播放英式發音': (
+    'Play British pronunciation',
+    'Écouter la prononciation britannique'
+  ),
+  '播放美式發音': (
+    'Play American pronunciation',
+    'Écouter la prononciation américaine'
+  ),
   '已加入我的單字本': ('Added to my word book', 'Ajouté à mon carnet de mots'),
   '聽發音': ('Listen', 'Écouter'),
   '查看更多例句': ('More examples', 'Plus d’exemples'),
@@ -1012,7 +1085,7 @@ const uiCatalog = <String, (String, String)>{
   '未收錄': ('Not listed', 'Non répertorié'),
   '有你修改過的欄位': ('Contains your edits', 'Contient vos modifications'),
   '刪除此卡片': ('Remove this card', 'Retirer cette carte'),
-  '想複習哪一本？': ('Which one to review?', 'Quel paquet réviser ?'),
+  '想複習哪一本？': ('Which one to review?', 'Quel album réviser ?'),
   // 問題回報 #534 (M214).
   '這次忘記的字': ('Forgotten this time', 'Oubliés cette fois'),
   '今天的份量已完成。想多練習可以繼續，想休息時按左上角結束。': (
@@ -1048,18 +1121,18 @@ const uiCatalog = <String, (String, String)>{
     'Les mots seront ajoutés aux révisions lorsque leur sens en {N} sera disponible.'
   ),
   '在照片詳情挑幾個單字，或下載相片冊，就會變成卡片。': (
-    'Choose words from a photo or download a deck to create cards.',
-    'Choisissez des mots sur une photo ou téléchargez un paquet pour créer des cartes.'
+    'Choose words from a photo or download an album to create cards.',
+    'Choisissez des mots sur une photo ou téléchargez un album pour créer des cartes.'
   ),
   '還沒有單字': ('No words yet', 'Pas encore de mots'),
   '去拍照，或下載相片冊，單字就會出現在這裡': (
-    'Take a photo or download a deck and your words will show up here',
-    'Prenez une photo ou téléchargez un paquet : vos mots apparaîtront ici'
+    'Take a photo or download an album and your words will show up here',
+    'Prenez une photo ou téléchargez un album : vos mots apparaîtront ici'
   ),
   '重新命名相簿': ('Rename album', "Renommer l'album"),
   '還沒有相片：去拍照，或下載相片冊': (
-    'No photos yet: take one, or download a picture deck',
-    "Pas encore de photos : prenez-en une ou téléchargez un jeu d'images"
+    'No photos yet: take one, or download an album',
+    "Pas encore de photos : prenez-en une ou téléchargez un album"
   ),
   '張': ('photos', 'photos'),
   '字': ('words', 'mots'),
@@ -1175,8 +1248,8 @@ const uiCatalog = <String, (String, String)>{
   '不要這張': ('Discard this photo', 'Ne pas garder cette photo'),
   '照片未儲存': ('Photo not saved', 'Photo non enregistrée'),
   '相機沒有回應，已重新開啟，請再按一次': (
-      'The camera stopped responding. It has been reopened, so please try again.',
-      'L’appareil photo ne répondait plus. Il a été rouvert, veuillez réessayer.',
+    'The camera stopped responding. It has been reopened, so please try again.',
+    'L’appareil photo ne répondait plus. Il a été rouvert, veuillez réessayer.',
   ),
   '存到相片冊': ('Save to album', 'Enregistrer dans un album'),
   '這張照片已經加入過': ('This photo is already added', 'Cette photo est déjà ajoutée'),
@@ -1449,10 +1522,39 @@ class _UiTemplate {
 }
 
 const _templateCopy = <String, (String, String)>{
+  // 卡 #932
+  '略過，看下一個位置（還有 {0} 個）': (
+    'Skip, see the next spot ({0} more)',
+    'Passer, voir l’emplacement suivant ({0} de plus)'
+  ),
+  '已加入「{0}」，可以開始複習': (
+    'Added “{0}”. You can start reviewing',
+    '« {0} » ajouté. Vous pouvez commencer à réviser'
+  ),
+  '超過 3000 個，後面的 {0} 個沒有檢查': (
+    'Over 3000. The last {0} were not checked',
+    'Plus de 3000. Les {0} derniers n’ont pas été vérifiés'
+  ),
+  '授權條文：{0}': ('License text: {0}', 'Texte de la licence : {0}'),
+  '來源頁：{0}': ('Source page: {0}', 'Page source : {0}'),
+  '它就是「{0}」。要打開原本的照片，還是再加入一張？': (
+    'It is “{0}”. Open the original photo, or add another copy?',
+    'C’est « {0} ». Ouvrir la photo d’origine ou en ajouter une autre ?'
+  ),
+  '它就是相片冊「{0}」的「{1}」。要打開原本的照片，還是再加入一張？': (
+    'It is “{1}” in the album “{0}”. Open the original photo, or add another copy?',
+    'C’est « {1} » dans l’album « {0} ». Ouvrir la photo d’origine ou en ajouter une autre ?'
+  ),
   // 卡 #912: 跨裝置自動同步的狀態.
-  '沒有網路，{0} 筆改動連線後補傳': ('No connection. {0} changes will be sent when you are back online', 'Pas de connexion. {0} modifications seront envoyées une fois en ligne'),
+  '沒有網路，{0} 筆改動連線後補傳': (
+    'No connection. {0} changes will be sent when you are back online',
+    'Pas de connexion. {0} modifications seront envoyées une fois en ligne'
+  ),
   '已同步 {0}': ('Synced {0}', 'Synchronisé {0}'),
-  '{0} · {1} 張照片等 Wi-Fi': ('{0} · {1} photos waiting for Wi-Fi', '{0} · {1} photos en attente du Wi-Fi'),
+  '{0} · {1} 張照片等 Wi-Fi': (
+    '{0} · {1} photos waiting for Wi-Fi',
+    '{0} · {1} photos en attente du Wi-Fi'
+  ),
   '{0} · 還有 {1} 張照片': ('{0} · {1} photos left', '{0} · {1} photos restantes'),
   // 問題回報 #1152: 設定's word/photo totals line.
   '{0} 張照片': ('{0} photos', '{0} photos'),
@@ -1841,19 +1943,22 @@ const _templateCopy = <String, (String, String)>{
     'Which topics interest you?',
     'Quels sujets vous intéressent ?'
   ),
-  '可以複選，也可以略過。': ('Pick any, or skip.', 'Plusieurs choix possibles, ou passez.'),
+  '可以複選，也可以略過。': (
+    'Pick any, or skip.',
+    'Plusieurs choix possibles, ou passez.'
+  ),
   '可以複選，也可以略過。我們會先列出符合的相片冊。': (
-    'Pick any, or skip. Matching card sets are listed first.',
-    'Plusieurs choix possibles, ou passez. Les jeux de cartes correspondants passent en premier.'
+    'Pick any, or skip. Matching albums are listed first.',
+    'Plusieurs choix possibles, ou passez. Les albums correspondants passent en premier.'
   ),
   '略過': ('Skip', 'Passer'),
   // 卡 #891: 推薦卡片集.
   '運動': ('Sports', 'Sport'),
   '爬山／戶外活動': ('Hiking / outdoor activities', 'Randonnée / plein air'),
-  '為你挑的相片冊': ('Card sets picked for you', 'Jeux de cartes choisis pour vous'),
+  '為你挑的相片冊': ('Albums picked for you', 'Albums choisis pour vous'),
   '依你的興趣和程度挑選，一下就能加入；之後也能在「相片冊」找到更多。': (
-    'Picked for your interests and level. Add one in a tap; find more later under Card sets.',
-    'Choisis selon vos centres d’intérêt et votre niveau. Ajoutez-en un d’un geste ; d’autres sont dans « Jeux de cartes ».'
+    'Picked for your interests and level. Add one in a tap; find more later under Albums.',
+    'Choisis selon vos centres d’intérêt et votre niveau. Ajoutez-en un d’un geste ; d’autres sont dans « Albums ».'
   ),
   '已加入': ('Added', 'Ajouté'),
   '加入相片冊': ('Add to albums', 'Ajouter aux albums'),
@@ -1861,7 +1966,10 @@ const _templateCopy = <String, (String, String)>{
   '工作': ('Work', 'Travail'),
   '考試': ('Exams', 'Examens'),
   '學校課業': ('School', 'École'),
-  '和家人朋友溝通': ('Talking with family and friends', 'Parler avec ma famille et mes amis'),
+  '和家人朋友溝通': (
+    'Talking with family and friends',
+    'Parler avec ma famille et mes amis'
+  ),
   '興趣／看影片': ('Hobbies / watching videos', 'Loisirs / vidéos'),
   '日常基礎': ('Everyday basics', 'Bases du quotidien'),
   '食物': ('Food', 'Nourriture'),
@@ -1872,7 +1980,7 @@ const _templateCopy = <String, (String, String)>{
   '進階單字': ('Advanced words', 'Mots avancés'),
   '學習目的與興趣': ('Goals and interests', 'Objectifs et centres d’intérêt'),
   '用來先列出符合的相片冊。': (
-    'Used to list matching card sets first.',
-    'Sert à afficher d’abord les jeux de cartes correspondants.'
+    'Used to list matching albums first.',
+    'Sert à afficher d’abord les albums correspondants.'
   ),
 };
