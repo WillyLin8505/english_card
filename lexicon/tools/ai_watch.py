@@ -1,13 +1,16 @@
-"""Owner 10/31 (the PC powered off under AI load): AI work stays under 80 % of this PC.
+"""Owner 10/31 (the PC powered off under AI load); 11/01: the whole PC stays under 50 % CPU and 50 % GPU.
 
 One long-running process (started by dispatch_tick, so nothing to install):
-- keeps a Windows Job Object that every AI process joins within 10 s: CPU hard cap 80 %, memory
-  limit JOB_MEMORY_GB, below-normal priority. Windows enforces these: over the memory limit an
+- keeps a Windows Job Object that every AI process joins within 10 s: CPU hard cap, memory limit
+  JOB_MEMORY_GB, below-normal priority. Windows enforces these: over the memory limit an
   allocation fails and that AI process stops; the PC does not.
 - Claude and Codex CLIs already sit in a job of their own and cannot join that one; each gets a
   job of its own instead (TREE_CPU_PCT, TREE_MEMORY_GB), which its child processes inherit.
-- GPU has no such cap: when it stays over the limit or too hot, the model servers are suspended
-  for GPU_REST_S at a time (they carry on afterwards; requests just wait).
+- the caps add up to more than CPU_PCT, so every 10 s all of them are scaled down while the whole PC
+  is near CPU_PCT, and back up when it is well below (cpu_scale).
+- GPU has no such cap: while it is busy the model servers run in short bursts, GPU_ON_S on and
+  GPU_OFF_S suspended (gpu_pacing, pace_gpu). Too hot suspends them for GPU_REST_S. They carry on
+  afterwards; requests just wait.
 - writes one line every 10 s to lexicon/logs/ai_watch.log, so the last line before a crash says
   what the PC was doing.
 
@@ -21,6 +24,7 @@ import json
 import os
 import subprocess
 import sys
+import threading
 import time
 from ctypes import wintypes
 from pathlib import Path
@@ -34,15 +38,20 @@ JOB_NAME = "Local\\EnglishCardAI"
 MUTEX_NAME = "Local\\EnglishCardAIWatch"
 NO_WINDOW = 0x08000000
 
-CPU_PCT = 80
+CPU_PCT = 50  # owner 11/01: the whole PC, not only the AI processes
+CPU_HIGH_PCT = 45
+CPU_LOW_PCT = 35
+MIN_SCALE = 0.1
 # 80 % of 63 GB less what stays outside the job: serve_app (~12 GB) and Windows' own use.
 JOB_MEMORY_GB = 42
 # Per CLI, not a total; resource_guard stops new CLIs at 80 % whole-PC memory.
 TREE_CPU_PCT = 12
 TREE_MEMORY_GB = 12
-GPU_PCT = 80
+GPU_HIGH_PCT = 45
+GPU_IDLE_PCT = 25  # the desktop alone is about 15 %
+GPU_ON_S = 0.4
+GPU_OFF_S = 0.6
 GPU_TEMP_C = 85
-GPU_OVER_S = 60
 GPU_REST_S = 20
 TICK_S = 10
 LOG_MAX = 5_000_000
@@ -54,6 +63,8 @@ GPU_NAMES = {"llama-server.exe"}
 OUTSIDE = ("serve_app", "uvicorn app.main", "keep_awake", "ai_watch", "vite", "dispatch_tick")
 
 kernel32 = ctypes.WinDLL("kernel32", use_last_error=True) if os.name == "nt" else None
+scale = 1.0  # share of the CPU caps in force now
+paced: list[psutil.Process] = []  # model servers pace_gpu is running in bursts
 
 
 class _IoCounters(ctypes.Structure):
@@ -106,10 +117,18 @@ def create_job(name: str | None, cpu_pct: int, memory_bytes: int):
     limits.JobMemoryLimit = memory_bytes
     if not kernel32.SetInformationJobObject(job, 9, ctypes.byref(limits), ctypes.sizeof(limits)):
         raise ctypes.WinError(ctypes.get_last_error())
+    set_cpu_cap(job, cpu_pct)
+    return job
+
+
+def set_cpu_cap(job, cpu_pct: int) -> None:
     rate = _CpuRate(1 | 4, cpu_pct * 100)  # ENABLE | HARD_CAP
     if not kernel32.SetInformationJobObject(job, 15, ctypes.byref(rate), ctypes.sizeof(rate)):
         raise ctypes.WinError(ctypes.get_last_error())
-    return job
+
+
+def scaled(cpu_pct: int) -> int:
+    return max(1, int(cpu_pct * scale))
 
 
 def assign(job, pid: int) -> bool:
@@ -138,15 +157,24 @@ def is_ai_process(name: str, exe: str, cmd: str) -> bool:
     return True
 
 
-def gpu_should_rest(util: int | None, temp: int | None, over_since: float | None, now: float
-                    ) -> tuple[bool, float | None]:
-    """Pure: (rest now, new over-since). Too hot rests at once; busy only after GPU_OVER_S."""
-    if temp is not None and temp >= GPU_TEMP_C:
-        return True, over_since
-    if util is None or util < GPU_PCT:
-        return False, None
-    since = over_since or now
-    return now - since >= GPU_OVER_S, since
+def cpu_scale(cpu: int | None, current: float) -> float:
+    """Pure: the share of the CPU caps for the next 10 s, from the whole PC's CPU %."""
+    if cpu is None:
+        return current
+    if cpu >= CPU_HIGH_PCT:
+        return max(MIN_SCALE, round(current * 0.7, 2))
+    if cpu < CPU_LOW_PCT:
+        return min(1.0, round(current + 0.1, 2))
+    return current
+
+
+def gpu_pacing(util: int | None, pacing: bool) -> bool:
+    """Pure: run the model servers in bursts? Holds between the two limits, bursts keep util near them."""
+    if util is None:
+        return pacing
+    if util >= GPU_HIGH_PCT:
+        return True
+    return False if util < GPU_IDLE_PCT else pacing
 
 
 def gpu_sample() -> tuple[int | None, int | None, int | None]:
@@ -188,7 +216,7 @@ def sweep(job, done: set[int], trees: dict[int, object]) -> tuple[int, int, int]
             added += 1
         else:
             done.add(pid)
-            tree = create_job(None, TREE_CPU_PCT, TREE_MEMORY_GB * 2**30)
+            tree = create_job(None, scaled(TREE_CPU_PCT), TREE_MEMORY_GB * 2**30)
             if assign(tree, pid):
                 trees[pid] = tree
                 own += 1
@@ -205,25 +233,62 @@ def gpu_processes() -> list[psutil.Process]:
     return [p for p in psutil.process_iter(["name"]) if (p.info["name"] or "").lower() in GPU_NAMES]
 
 
-def rest_gpu() -> int:
-    procs = gpu_processes()
-    STATE_REST = [p.pid for p in procs]
-    _write_state({"resting": STATE_REST})
+def _suspend(procs: list[psutil.Process]) -> None:
     for p in procs:
         try:
             p.suspend()
         except psutil.Error:
             pass
+
+
+def _resume(procs: list[psutil.Process]) -> None:
+    for p in procs:
+        try:
+            p.resume()
+        except psutil.Error:
+            pass
+
+
+def rest_gpu() -> int:
+    procs = gpu_processes()
+    _write_state({"resting": [p.pid for p in procs]})
+    _suspend(procs)
     try:
         time.sleep(GPU_REST_S)
     finally:
-        for p in procs:
-            try:
-                p.resume()
-            except psutil.Error:
-                pass
-        _write_state({"resting": []})
+        _resume(procs)
+        _write_state({"resting": [p.pid for p in paced]})
     return len(procs)
+
+
+def pace_gpu() -> None:
+    """The thread behind gpu_pacing; a second is short enough for GPU % to read as the average."""
+    while True:
+        procs = list(paced)
+        if not procs:
+            time.sleep(GPU_ON_S)
+            continue
+        _suspend(procs)
+        try:
+            time.sleep(GPU_OFF_S)
+        finally:
+            _resume(procs)
+        time.sleep(GPU_ON_S)
+
+
+def steer(job, trees: dict[int, object], s: dict) -> None:
+    """Moves the CPU caps and the GPU bursts to what the last sample asks for."""
+    global scale, paced
+    new = cpu_scale(s["cpu"], scale)
+    if new != scale:
+        scale = new
+        set_cpu_cap(job, scaled(CPU_PCT))
+        for tree in trees.values():
+            set_cpu_cap(tree, scaled(TREE_CPU_PCT))
+    pacing = gpu_pacing(s["gpu"], bool(paced))
+    paced = gpu_processes() if pacing else []
+    if pacing != s["pacing"]:
+        _write_state({"resting": [p.pid for p in paced]})
 
 
 def resume_left_over() -> None:
@@ -261,13 +326,14 @@ def sample(job, done: set[int], trees: dict[int, object]) -> dict:
     added, own, refused = sweep(job, done, trees)
     return {"cpu": round(psutil.cpu_percent(interval=1)), "mem": round(psutil.virtual_memory().percent),
             "gpu": util, "gpu_c": temp, "vram_mb": vram, "c_disk": disk_pct("C:\\"), "d_disk": disk_pct("D:\\"),
-            "job_peak_gb": round(peak_job_gb(job), 1), "added": added, "own": own, "refused": refused}
+            "job_peak_gb": round(peak_job_gb(job), 1), "added": added, "own": own, "refused": refused,
+            "cap": scaled(CPU_PCT), "pacing": bool(paced)}
 
 
 def line(s: dict) -> str:
     return (f"{time.strftime('%Y-%m-%d %H:%M:%S')} cpu {s['cpu']}% mem {s['mem']}% gpu {s['gpu']}% {s['gpu_c']}C "
             f"vram {s['vram_mb']}MB C: {s['c_disk']}% D: {s['d_disk']}% job_peak {s['job_peak_gb']}GB "
-            f"+{s['added']} own +{s['own']} refused {s['refused']}")
+            f"+{s['added']} own +{s['own']} refused {s['refused']} cap {s['cap']}%{' gpu-bursts' if s['pacing'] else ''}")
 
 
 def running() -> bool:
@@ -304,14 +370,13 @@ def main(argv=None) -> int:
     write_log(f"{time.strftime('%Y-%m-%d %H:%M:%S')} start: job cpu {CPU_PCT}% memory {JOB_MEMORY_GB}GB")
     done: set[int] = set()
     trees: dict[int, object] = {}
-    over_since = None
+    threading.Thread(target=pace_gpu, daemon=True).start()
     while True:
         s = sample(job, done, trees)
         write_log(line(s))
-        rest, over_since = gpu_should_rest(s["gpu"], s["gpu_c"], over_since, time.time())
-        if rest:
+        steer(job, trees, s)
+        if s["gpu_c"] is not None and s["gpu_c"] >= GPU_TEMP_C:
             write_log(f"{time.strftime('%Y-%m-%d %H:%M:%S')} gpu rest: {rest_gpu()} server(s) for {GPU_REST_S}s")
-            over_since = None
         time.sleep(TICK_S)
 
 

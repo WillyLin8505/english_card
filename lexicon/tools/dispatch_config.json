@@ -148,10 +148,10 @@
   "qwen_schedule": {
     "enabled": true,
     "windows": [
-      "01:00-07:00"
+      "00:00-24:00"
     ]
   },
-  "_qwen_schedule_note": "owner 10/31：Qwen 只在晚上 01:00–07:00 開工（配合夜間補資料卡），白天暫停。",
+  "_qwen_schedule_note": "owner 11/01：Qwen 全天運作，靠 ai_watch 把 CPU、GPU 壓在 50%。先前（10/31）只在 01:00–07:00。",
   "qwen_wait_tasks": [
     4,
     396,

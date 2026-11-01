@@ -1,4 +1,4 @@
-"""Owner 10/31: AI work stays under 80 % of the PC (lexicon/tools/ai_watch.py)."""
+"""Owner 10/31, 11/01: the PC stays under 50 % CPU and GPU (lexicon/tools/ai_watch.py)."""
 import subprocess
 import sys
 import time
@@ -21,13 +21,23 @@ def test_what_joins_the_job():
     assert not w.is_ai_process("chrome.exe", "x", "")
 
 
-def test_gpu_rests_when_busy_for_a_while_or_too_hot():
-    assert w.gpu_should_rest(95, 70, None, 100.0) == (False, 100.0)
-    assert w.gpu_should_rest(95, 70, 100.0, 159.0) == (False, 100.0)
-    assert w.gpu_should_rest(95, 70, 100.0, 160.0) == (True, 100.0)
-    assert w.gpu_should_rest(40, 70, 100.0, 160.0) == (False, None)
-    assert w.gpu_should_rest(40, 85, None, 100.0) == (True, None)
-    assert w.gpu_should_rest(None, None, 100.0, 160.0) == (False, None)
+def test_cpu_caps_shrink_near_the_limit_and_recover_slowly():
+    assert w.cpu_scale(60, 1.0) == 0.7
+    assert w.cpu_scale(45, 0.7) == 0.49
+    assert w.cpu_scale(90, 0.11) == w.MIN_SCALE
+    assert w.cpu_scale(40, 0.5) == 0.5
+    assert w.cpu_scale(20, 0.5) == 0.6
+    assert w.cpu_scale(20, 1.0) == 1.0
+    assert w.cpu_scale(None, 0.5) == 0.5
+
+
+def test_gpu_runs_in_bursts_while_busy():
+    assert w.gpu_pacing(95, False)
+    assert w.gpu_pacing(45, False)
+    assert not w.gpu_pacing(35, False)
+    assert w.gpu_pacing(35, True)  # bursts hold GPU here, that is not idle
+    assert not w.gpu_pacing(15, True)
+    assert w.gpu_pacing(None, True)
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Job Objects are Windows only")
