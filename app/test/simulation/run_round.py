@@ -33,6 +33,7 @@ Prints one line per simulation and the summary; exit code 1 when any failed.
 """
 import argparse
 import gzip
+import shutil
 import json
 import os
 import subprocess
@@ -100,12 +101,23 @@ def fetch_pack(dest: Path, lang="en") -> int:
     target, native = LANGS[lang]
     url = PACK_URL.format(target=target, native=native)
     request = urllib.request.Request(url, headers={"Accept-Encoding": "gzip"})
-    with urllib.request.urlopen(request, timeout=300) as response:
-        body = response.read()
-        if response.headers.get("Content-Encoding") == "gzip":
-            body = gzip.decompress(body)
-    dest.write_bytes(body)
-    return len(json.loads(body).get("lexemes", []))
+    # Stream to disk: the pack is ~1 GB, json.loads of it hit MemoryError (card 225 r238).
+    with urllib.request.urlopen(request, timeout=300) as response, dest.open("wb") as out:
+        src = gzip.GzipFile(fileobj=response) if response.headers.get("Content-Encoding") == "gzip" else response
+        shutil.copyfileobj(src, out, 1 << 20)
+    return count_lexemes(dest)
+
+
+def count_lexemes(pack: Path) -> int:
+    """Lexeme count without loading the pack: every lexeme has one "lemma" key."""
+    n, tail = 0, b""
+    needle = b'"lemma":'
+    with pack.open("rb") as f:
+        while chunk := f.read(1 << 22):
+            data = tail + chunk
+            n += data.count(needle)
+            tail = data[-(len(needle) - 1):]
+    return n
 
 
 def fr_pack_checks(pack: Path) -> dict:
@@ -197,7 +209,7 @@ def main():
     # Re-running part of a round keeps that round's pack (same data as its
     # other results) and merges into its summary.
     if pack.exists() and a.round:
-        words = len(json.loads(pack.read_text(encoding="utf-8")).get("lexemes", []))
+        words = count_lexemes(pack)
         print(f"round {n}: reusing its pack ({words} lexemes)")
     else:
         words = fetch_pack(pack, a.lang)
