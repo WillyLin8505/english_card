@@ -4757,3 +4757,9 @@ commit `2c9ad24f`（Windows：flutter analyze 無 error、02:57 +975 ~2: All tes
 commit `da9e6d2a`（Windows：flutter analyze 無 error、02:03 +975 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #224：模擬使用者・拍照
   結果：本輪（第 253 輪）0/2 通過，是環境資源問題，沒有看到畫面錯誤：photoui 跑滿 540 秒被擋，pins 因為 Dart 開不了執行緒而當掉；這一輪沒有產生 UX 評估。
+
+## M590（2026-11-01 16:45）狀態：待做（Windows 卡 #169 交給 Mac 的 App 畫面部分）
+卡：常態：全庫掃描中文意思缺漏與品質
+
+無。
+- 剩下：待 owner 回覆後，`python lexicon/tools/card169_fill_zh.py backup` → `run --limit 3 --batch 200`，補完跑 golden 比對。
