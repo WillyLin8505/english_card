@@ -2594,3 +2594,20 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 |----|----|----|----|----|
 | 本機辨識單張時間 | 通過 | 不帶 dart-define 的 build：usesLocalRecognition＝true、developerTools＝false。內建早餐照片（1152×928）單張約 0.1 秒（process 124ms），狀態 done，14 個標籤；量了 2 次。#847 的 49 秒是走伺服器（開發版帶 TAGGING_URL），不代表新使用者 |  |  |
 | 本機辨識的標籤品質 | 注意 | Apple Vision 標籤偏分類詞：structure、wood processed、tableware、food、utensil，混著 plate、cutting board、spoon、apple；同張照片伺服器給 apple、bread、cup、plate、saucepan、table、cut、serve。上架版使用者看到的是前者，學習價值較低，也沒有動詞；請評估 |  | 中 |
+
+## 2026-11-01 M502、M503＋新使用者模擬（模擬器 375×667，全新安裝）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #877（#1147）矮螢幕新手引導 | 通過 | iPhone SE 模擬器 375×667，英、法、繁中三語：語言、程度、目的頁，文字都沒有貼近或蓋到按鈕（按鈕頂 606／606／558，貼近的文字 0 行） | - | - | 模擬器 |
+| #876（#1147）新手引導底部漸層 | 通過 | 同上三語，捲動中切口有漸層 | - | - | 模擬器 |
+| #856（#1117）選學法文的中文句 | 通過 | 英文介面顯示 French is currently only available with English as the native language；法文介面第一頁也沒有中文 | - | - | 模擬器 |
+| 英法介面仍有中文 | 不通過 | 實測看到：引導最後一頁「已有帳號？登入（可略過）」、複習空畫面「還沒有可以複習的卡片」。Codex 掃程式並由 Mac 抽查 catalog：另有 onboarding_screen.dart:490/501、flashcard_session_views.dart:190、settings_screen.dart:675「匿名安裝與留存統計」、photo_detail_screen.dart:531/1247、recommended_decks_screen.dart:89、cloud_backup_buttons.dart 的備份／還原／登出／刪帳號字串、bulk_add_dialog.dart:104/136（3000 版）、dialogs.dart:414、data_sources_screen.dart:86；寫死未走 ui()：database_image_views.dart:177/183 | nu_en_fr n07、n15 | 中 | 模擬器 |
+| 推薦頁相片冊標題是中文 | 不通過 | 法文介面（學英文）第一張標題「廚房相片冊」，封面空白。伺服器 title 直接顯示（deck_library.dart:47、recommended_decks_screen.dart:215），catalog 只有「廚房」 | nu_fr n09 | 中 | 模擬器 |
+| 法文學習者興趣頁是空的 | 注意 | 英文母語學法文：興趣頁沒有任何選項，只有標題和按鈕；建議沒有選項時跳過這頁 | nu_en_fr n07 | 低 | 模擬器 |
+| 矮螢幕興趣頁選項被切掉 | 注意 | 375×667 法文介面：底部四個按鈕占掉空間，Randonnée、Voyage 兩顆在第一屏外，需要捲動才看得到 | nu_fr n07 | 低 | 模擬器 |
+| 設定根頁還有返回箭頭 | 注意 | #897 只處理相片冊、複習、單字本；設定分頁根頁左上仍有 ← | nu_en_fr n25 | 低 | 模擬器 |
+| 推薦封面不適合初學者 | 注意 | 基礎單字（先行版）是《人間樂園》畫作、基礎 3000 字・A1 是黑底 The Evolution Creation Things 文字圖、基礎 3000 字是老婦人臉部版畫，看不出和主題的關係 | nu_zh 前一輪 n09 | 低 | 模擬器 |
+| 推薦給零基礎法文的是 B1 | 注意 | 選 New to the language 後，兩張推薦都標 B1（French Basic 3000／2000 Words）；名稱是 Basic 但等級標 B1，新手看到會困惑 | nu_en_fr n09 | 低 | 模擬器 |
+| 推薦頁載入超過 5 秒一次 | 注意 | 三輪全新安裝有一輪進頁 5 秒還在轉，其他輪 5 秒內出現；下一輪量實際秒數 | nu_zh n09 | 低 | 模擬器 |
+| 英法譯名未統一成相片冊 | 注意 | owner #1170 全部叫相片冊、分頁是 Albums，但推薦頁等處英文仍是 Card sets／deck／picture deck，法文 Jeux de cartes：ui_catalog.dart:353、357、361、1031、1036、1041、1826、1834、1835、1855 | nu_en_fr n09 | 低 | 模擬器 |
