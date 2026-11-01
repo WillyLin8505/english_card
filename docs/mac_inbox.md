@@ -4631,3 +4631,8 @@ commit `82943bf3`（Windows：flutter analyze 無 error、03:59 +972 ~2: All tes
 commit `7a7d7a7a`（Windows：flutter analyze 無 error、03:59 +972 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #496：模擬使用者・法語（英語母語者學法語）
   結果：第54輪：B1 通過（複習頁頂列溢位修正已驗證）；A1 被 10 分鐘上限砍掉沒結果，抽卡／媒體本輪未跑。
+
+## M571（2026-11-01 10:27）狀態：待做（Windows 卡 #225 交給 Mac 的 App 畫面部分）
+卡：模擬使用者・相片冊
+
+無新增。
