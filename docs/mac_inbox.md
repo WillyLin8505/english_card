@@ -4683,3 +4683,9 @@ iPad 看推薦頁、相片冊瀏覽頁英/法顯示即可。
 commit `cedb9236`（Windows：flutter analyze 無 error、02:45 +972 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #225：模擬使用者・相片冊
   結果：第 247 輪：相片冊模擬 1/1 通過（85 秒）、新問題 無、UX 建議 無新增（本輪只做 widget 流程，未做畫面評分）。
+
+## M581（2026-11-01 11:35）狀態：待做（Windows 卡 #945 交給 Mac 的 App 畫面部分）
+卡：問題回報 #1273：[Mac 注意] 2026-11-01 M504–M545（iPad 與模擬器，Codex 執行、：#898 單字本連續捲動與空狀態
+
+用 iPad 清空後看空狀態，再匯入 1716 字量 fling。
+- 沒動資料，無備份；無 golden/QC 影響。flutter analyze 結果見下方（若無則未跑完）。
