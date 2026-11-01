@@ -29,7 +29,9 @@ void main() {
     final f = Findings();
     final original = FlutterError.onError;
     var current = '';
-    FlutterError.onError = (d) => f.add('版面錯誤', '$current：${d.exceptionAsString().split('\n').first}');
+    FlutterError.onError = (d) {
+      f.add('版面錯誤', '$current：${d.exceptionAsString().split('\n').first}');
+    };
     addTearDown(() => FlutterError.onError = original);
 
     // A tall viewport (like screens_test's 設定 group) so every card,
@@ -116,8 +118,13 @@ void main() {
     current = '商店版照片辨識說明';
     if (!settings.showsTaggingServer) {
       // 設定 grew: this card is now below the lazily built area.
-      await tester.dragUntilVisible(find.text('照片辨識'),
-          find.byType(Scrollable).first, const Offset(0, -400));
+      try {
+        await tester.dragUntilVisible(
+            find.text('照片辨識'),
+            find.byWidgetPredicate(
+                (w) => w is Scrollable && w.axis == Axis.vertical).first,
+            const Offset(0, -400));
+      } catch (_) {}
       await tester.pump();
       if (find.text('照片辨識').evaluate().isEmpty) {
         f.add('商店版找不到照片辨識說明', current);
