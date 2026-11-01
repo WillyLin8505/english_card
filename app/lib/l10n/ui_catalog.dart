@@ -1063,6 +1063,10 @@ const uiCatalog = <String, (String, String)>{
   '詞性與意思': ('Parts of speech and meanings', 'Catégories et sens'),
   '詞性': ('Part of speech', 'Catégorie grammaticale'),
   '例句': ('Examples', 'Exemples'),
+  '真人發音': ('Human recording', 'Enregistrement humain'),
+  '這個字還沒有例句，詞庫更新後會自動補上。': (
+      'No example for this word yet; it will be added when the word list updates.',
+      "Pas encore d'exemple pour ce mot ; il sera ajouté à la mise à jour."),
   '近義詞': ('Synonyms', 'Synonymes'),
   '反義詞': ('Antonyms', 'Antonymes'),
   '同音詞': ('Homophones', 'Homophones'),

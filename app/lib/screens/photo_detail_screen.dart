@@ -89,6 +89,8 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
   bool _pinsHidden = false;
   final _photoKey = GlobalKey();
   final _trayKey = GlobalKey();
+  // 卡 #951: a finger is on a label — the page must not scroll with it.
+  bool _pinHeld = false;
 
   /// 問題回報：Mac 實機量測照片詳情開啟 114ms（M-PERF）: the whole page in its
   /// first frame took up to 96 ms to build. Frame 0 is the photo and the
@@ -125,8 +127,9 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     // Card #911: counted for the signed-in usage report (a number, no content).
-    WidgetsBinding.instance.addPostFrameCallback(
-        (_) => mounted ? AppScope.of(context).settings.bumpUsage('photosOpened') : null);
+    WidgetsBinding.instance.addPostFrameCallback((_) => mounted
+        ? AppScope.of(context).settings.bumpUsage('photosOpened')
+        : null);
     _advanceAfterFrame();
   }
 
@@ -628,6 +631,8 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                 ),
                 Expanded(
                   child: SingleChildScrollView(
+                    physics:
+                        _pinHeld ? const NeverScrollableScrollPhysics() : null,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -767,6 +772,9 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
         if (w != null) _pinActions(w);
       },
       // 卡 #835: a label let go over the 單字收集區 is collected, not moved.
+      onPinHeld: (v) {
+        if (v != _pinHeld && mounted) setState(() => _pinHeld = v);
+      },
       onPinDropped: (p, global) {
         final w = wordOf(p);
         final box = _trayKey.currentContext?.findRenderObject();

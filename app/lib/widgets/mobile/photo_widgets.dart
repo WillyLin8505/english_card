@@ -552,6 +552,10 @@ class PinnedPhoto extends StatefulWidget {
   /// stays where it was.
   final bool Function(PinData pin, Offset globalPosition)? onPinDropped;
 
+  /// 卡 #951: true while a finger is down on a movable label, so the page
+  /// around the photo does not scroll along with the drag.
+  final ValueChanged<bool>? onPinHeld;
+
   /// A tap on the photo itself (not a label): where, as a fraction of the
   /// original image — used to place a word the learner added by hand.
   final ValueChanged<LabelPoint>? onPhotoTap;
@@ -640,6 +644,7 @@ class PinnedPhoto extends StatefulWidget {
     this.onPinLongPress,
     this.onPinMoved,
     this.onPinDropped,
+    this.onPinHeld,
     this.onPhotoTap,
     this.onPhotoLongPress,
     this.onPhotoLongPressAt,
@@ -974,78 +979,90 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
                               top: pl.badge.top,
                               child: _popIn(
                                   pl.id,
-                                  GestureDetector(
-                                    onPanStart: widget.onPinMoved == null ||
-                                            byId[pl.id]!.muted
-                                        ? null
-                                        : (_) => setState(() {
-                                              _dragging = pl.id;
-                                              _dragBy = Offset.zero;
-                                            }),
-                                    onPanUpdate: widget.onPinMoved == null ||
-                                            byId[pl.id]!.muted
-                                        ? null
-                                        : (d) => setState(() {
-                                              final base = placed
-                                                  .firstWhere(
-                                                      (x) => x.id == pl.id)
-                                                  .anchor;
-                                              _dragBy = clampToBox(base +
-                                                      _dragBy +
-                                                      d.delta) -
-                                                  base;
-                                            }),
-                                    onPanEnd: widget.onPinMoved == null ||
-                                            byId[pl.id]!.muted
-                                        ? null
-                                        : (d) {
-                                            if (widget.onPinDropped?.call(
-                                                    byId[pl.id]!,
-                                                    d.globalPosition) ==
-                                                true) {
-                                              setState(() {
-                                                _dragging = null;
-                                                _dragBy = Offset.zero;
-                                              });
-                                              return;
-                                            }
-                                            final base = placed
-                                                .firstWhere(
-                                                    (x) => x.id == pl.id)
-                                                .anchor;
-                                            final to = base + _dragBy;
-                                            setState(() {
-                                              _dragging = null;
-                                              _dragBy = Offset.zero;
-                                            });
-                                            widget.onPinMoved!(
-                                                byId[pl.id]!, geo.fromBox(to));
-                                          },
-                                    onLongPress: widget.onPinLongPress == null
-                                        ? null
-                                        : () => widget
-                                            .onPinLongPress!(byId[pl.id]!),
-                                    child: Tap(
-                                      onTap: widget.onPinTap == null
+                                  Listener(
+                                      onPointerDown: widget.onPinMoved ==
+                                                  null ||
+                                              byId[pl.id]!.muted
                                           ? null
-                                          : () =>
-                                              widget.onPinTap!(byId[pl.id]!),
-                                      label:
-                                          '${byId[pl.id]!.word} ${byId[pl.id]!.zh}',
-                                      child: WordPin(
-                                        word: byId[pl.id]!.word,
-                                        zh: byId[pl.id]!.zh,
-                                        entryType: byId[pl.id]!.entryType,
-                                        large: widget.largePins,
-                                        muted: byId[pl.id]!.muted,
-                                        lifted: _dragging == pl.id,
-                                        linked: byId[pl.id]!.linked,
-                                        accent: posAccent(byId[pl.id]!.pos,
-                                            byId[pl.id]!.word),
-                                        maxWidth: pl.badge.width,
-                                      ),
-                                    ),
-                                  )),
+                                          : (_) => widget.onPinHeld?.call(true),
+                                      onPointerUp: (_) =>
+                                          widget.onPinHeld?.call(false),
+                                      onPointerCancel: (_) =>
+                                          widget.onPinHeld?.call(false),
+                                      child: GestureDetector(
+                                        onPanStart: widget.onPinMoved == null ||
+                                                byId[pl.id]!.muted
+                                            ? null
+                                            : (_) => setState(() {
+                                                  _dragging = pl.id;
+                                                  _dragBy = Offset.zero;
+                                                }),
+                                        onPanUpdate: widget.onPinMoved ==
+                                                    null ||
+                                                byId[pl.id]!.muted
+                                            ? null
+                                            : (d) => setState(() {
+                                                  final base = placed
+                                                      .firstWhere(
+                                                          (x) => x.id == pl.id)
+                                                      .anchor;
+                                                  _dragBy = clampToBox(base +
+                                                          _dragBy +
+                                                          d.delta) -
+                                                      base;
+                                                }),
+                                        onPanEnd: widget.onPinMoved == null ||
+                                                byId[pl.id]!.muted
+                                            ? null
+                                            : (d) {
+                                                if (widget.onPinDropped?.call(
+                                                        byId[pl.id]!,
+                                                        d.globalPosition) ==
+                                                    true) {
+                                                  setState(() {
+                                                    _dragging = null;
+                                                    _dragBy = Offset.zero;
+                                                  });
+                                                  return;
+                                                }
+                                                final base = placed
+                                                    .firstWhere(
+                                                        (x) => x.id == pl.id)
+                                                    .anchor;
+                                                final to = base + _dragBy;
+                                                setState(() {
+                                                  _dragging = null;
+                                                  _dragBy = Offset.zero;
+                                                });
+                                                widget.onPinMoved!(byId[pl.id]!,
+                                                    geo.fromBox(to));
+                                              },
+                                        onLongPress: widget.onPinLongPress ==
+                                                null
+                                            ? null
+                                            : () => widget
+                                                .onPinLongPress!(byId[pl.id]!),
+                                        child: Tap(
+                                          onTap: widget.onPinTap == null
+                                              ? null
+                                              : () => widget
+                                                  .onPinTap!(byId[pl.id]!),
+                                          label:
+                                              '${byId[pl.id]!.word} ${byId[pl.id]!.zh}',
+                                          child: WordPin(
+                                            word: byId[pl.id]!.word,
+                                            zh: byId[pl.id]!.zh,
+                                            entryType: byId[pl.id]!.entryType,
+                                            large: widget.largePins,
+                                            muted: byId[pl.id]!.muted,
+                                            lifted: _dragging == pl.id,
+                                            linked: byId[pl.id]!.linked,
+                                            accent: posAccent(byId[pl.id]!.pos,
+                                                byId[pl.id]!.word),
+                                            maxWidth: pl.badge.width,
+                                          ),
+                                        ),
+                                      ))),
                             ),
                         for (final e in _leaving.entries)
                           if (_lastPlaced[e.key] case final pl?)

@@ -631,7 +631,9 @@ class _DataStatus extends StatelessWidget {
               failed
                   ? (missingFieldNames(entry).isEmpty
                       ? '部分內容尚未補齊，詞庫更新後會自動補上。'
-                      : '尚缺：${missingFieldNames(entry).join('、')}。詞庫更新後會自動補上。')
+                      // 問題回報 #1285: translate each label first; the
+                      // template would otherwise copy 「{N}意思」 verbatim.
+                      : '尚缺：${[for (final n in missingFieldNames(entry)) ui(context, n)].join('、')}。詞庫更新後會自動補上。')
                   : '正在整理單字內容…',
               style: MFont.manrope(12, FontWeight.w700,
                   failed ? MColors.hardFg : MColors.primary),
