@@ -283,8 +283,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 MNavBar(
                   title: '設定',
-                  leading: BackNavButton(
-                      onTap: () => scope.navigator.selectTab(AppTab.camera)),
+                  // 卡 #936: the tab's root has nothing above it, so no 返回
+                  // (same rule as 卡 #897; the tab bar still leaves the tab).
+                  leading: Navigator.of(context).canPop()
+                      ? BackNavButton(
+                          onTap: () =>
+                              scope.navigator.selectTab(AppTab.camera))
+                      : const SizedBox(width: 48),
                 ),
                 Expanded(
                   child: ListView(
