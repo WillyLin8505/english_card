@@ -6,8 +6,9 @@ One long-running process (started by dispatch_tick, so nothing to install):
   allocation fails and that AI process stops; the PC does not.
 - Claude and Codex CLIs already sit in a job of their own and cannot join that one; each gets a
   job of its own instead (TREE_CPU_PCT, TREE_MEMORY_GB), which its child processes inherit.
-- the caps add up to more than CPU_PCT, so every 10 s all of them are scaled down while the whole PC
-  is near CPU_PCT, and back up when it is well below (cpu_scale).
+- the caps add up to AI_BUDGET_PCT at most: half for the shared job, half split among the CLI jobs
+  (tree_cap). Every 10 s all of them are scaled down while the whole PC is near CPU_PCT, and back up
+  when it is well below (cpu_scale).
 - GPU has no such cap: while it is busy the model servers run in short bursts, GPU_ON_S on and
   GPU_OFF_S suspended (gpu_pacing, pace_gpu). Too hot suspends them for GPU_REST_S. They carry on
   afterwards; requests just wait.
@@ -39,13 +40,17 @@ MUTEX_NAME = "Local\\EnglishCardAIWatch"
 NO_WINDOW = 0x08000000
 
 CPU_PCT = 50  # owner 11/01: the whole PC, not only the AI processes
-CPU_HIGH_PCT = 45
-CPU_LOW_PCT = 35
+AI_BUDGET_PCT = 44  # every AI cap together; the rest of CPU_PCT is for the owner's own programs
+CPU_HIGH_PCT = 40
+CPU_LOW_PCT = 30
 MIN_SCALE = 0.1
 # 80 % of 63 GB less what stays outside the job: serve_app (~12 GB) and Windows' own use.
 JOB_MEMORY_GB = 42
-# Per CLI, not a total; resource_guard stops new CLIs at 80 % whole-PC memory.
+# Per CLI at most; tree_cap splits half of AI_BUDGET_PCT among the CLIs running, but never below
+# TREE_MIN_PCT: an even split among 49 jobs (0.45 % each) made a test run take 7 minutes instead of 24 s.
+# Above the budget, cpu_scale pulls every cap down while the PC is actually busy.
 TREE_CPU_PCT = 12
+TREE_MIN_PCT = 2
 TREE_MEMORY_GB = 12
 GPU_HIGH_PCT = 45
 GPU_IDLE_PCT = 25  # the desktop alone is about 15 %
@@ -106,7 +111,7 @@ def _setup_api():
     k.OpenMutexW.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.LPCWSTR]
 
 
-def create_job(name: str | None, cpu_pct: int, memory_bytes: int):
+def create_job(name: str | None, cpu_pct: float, memory_bytes: int):
     """A job with a hard CPU cap, a total memory limit and below-normal priority."""
     job = kernel32.CreateJobObjectW(None, name)
     if not job:
@@ -121,14 +126,25 @@ def create_job(name: str | None, cpu_pct: int, memory_bytes: int):
     return job
 
 
-def set_cpu_cap(job, cpu_pct: int) -> None:
-    rate = _CpuRate(1 | 4, cpu_pct * 100)  # ENABLE | HARD_CAP
+def set_cpu_cap(job, cpu_pct: float) -> None:
+    rate = _CpuRate(1 | 4, max(1, int(cpu_pct * 100)))  # ENABLE | HARD_CAP, in 1/100 of a percent
     if not kernel32.SetInformationJobObject(job, 15, ctypes.byref(rate), ctypes.sizeof(rate)):
         raise ctypes.WinError(ctypes.get_last_error())
 
 
-def scaled(cpu_pct: int) -> int:
-    return max(1, int(cpu_pct * scale))
+def scaled(cpu_pct: float) -> float:
+    return max(0.01, round(cpu_pct * scale, 2))
+
+
+def shared_cap() -> float:
+    return scaled(AI_BUDGET_PCT / 2)
+
+
+def tree_cap(clis: int) -> float:
+    """Pure but for scale: one CLI job's share, so that all of them together stay within half the budget.
+    A CLI's processes that were running before this watcher each get a job of their own, so there are
+    more jobs than CLIs."""
+    return scaled(min(TREE_CPU_PCT, max(TREE_MIN_PCT, AI_BUDGET_PCT / 2 / max(1, clis))))
 
 
 def assign(job, pid: int) -> bool:
@@ -216,7 +232,7 @@ def sweep(job, done: set[int], trees: dict[int, object]) -> tuple[int, int, int]
             added += 1
         else:
             done.add(pid)
-            tree = create_job(None, scaled(TREE_CPU_PCT), TREE_MEMORY_GB * 2**30)
+            tree = create_job(None, tree_cap(len(trees) + 1), TREE_MEMORY_GB * 2**30)
             if assign(tree, pid):
                 trees[pid] = tree
                 own += 1
@@ -279,12 +295,10 @@ def pace_gpu() -> None:
 def steer(job, trees: dict[int, object], s: dict) -> None:
     """Moves the CPU caps and the GPU bursts to what the last sample asks for."""
     global scale, paced
-    new = cpu_scale(s["cpu"], scale)
-    if new != scale:
-        scale = new
-        set_cpu_cap(job, scaled(CPU_PCT))
-        for tree in trees.values():
-            set_cpu_cap(tree, scaled(TREE_CPU_PCT))
+    scale = cpu_scale(s["cpu"], scale)
+    set_cpu_cap(job, shared_cap())
+    for tree in trees.values():  # the share changes with the number of CLIs too
+        set_cpu_cap(tree, tree_cap(len(trees)))
     pacing = gpu_pacing(s["gpu"], bool(paced))
     paced = gpu_processes() if pacing else []
     if pacing != s["pacing"]:
@@ -327,7 +341,7 @@ def sample(job, done: set[int], trees: dict[int, object]) -> dict:
     return {"cpu": round(psutil.cpu_percent(interval=1)), "mem": round(psutil.virtual_memory().percent),
             "gpu": util, "gpu_c": temp, "vram_mb": vram, "c_disk": disk_pct("C:\\"), "d_disk": disk_pct("D:\\"),
             "job_peak_gb": round(peak_job_gb(job), 1), "added": added, "own": own, "refused": refused,
-            "cap": scaled(CPU_PCT), "pacing": bool(paced)}
+            "cap": round(shared_cap() + tree_cap(len(trees)) * len(trees)), "pacing": bool(paced)}
 
 
 def line(s: dict) -> str:
@@ -366,8 +380,8 @@ def main(argv=None) -> int:
     if not mutex or ctypes.get_last_error() == 183:  # ERROR_ALREADY_EXISTS
         return 0
     resume_left_over()
-    job = create_job(JOB_NAME, CPU_PCT, JOB_MEMORY_GB * 2**30)
-    write_log(f"{time.strftime('%Y-%m-%d %H:%M:%S')} start: job cpu {CPU_PCT}% memory {JOB_MEMORY_GB}GB")
+    job = create_job(JOB_NAME, shared_cap(), JOB_MEMORY_GB * 2**30)
+    write_log(f"{time.strftime('%Y-%m-%d %H:%M:%S')} start: AI cpu {AI_BUDGET_PCT}% in all, memory {JOB_MEMORY_GB}GB")
     done: set[int] = set()
     trees: dict[int, object] = {}
     threading.Thread(target=pace_gpu, daemon=True).start()

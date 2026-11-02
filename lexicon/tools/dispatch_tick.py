@@ -465,6 +465,7 @@ def python_exe() -> str:
 class Tick:
     def __init__(self, dry: bool):
         self.dry = dry
+        self.launched = 0  # CLIs started this tick
         self.now = now_tp()
         self.cfg = load_config()
         self.state = load_json(STATE_FILE, {})
@@ -1044,6 +1045,10 @@ class Tick:
 
     def launch(self, agent: str, c: dict):
         label =f"#{c['task_id']}" if c.get("task_id") else f"問題回報 #{c['issue_id']}"
+        # owner 11/01 (CPU ≤ 50 %): CLIs start a few per tick; 17 at once took the PC to 68 %
+        if self.launched >= int(self.cfg.get("max_launches_per_tick", 4)):
+            log(f"{agent}: {label} waits for the next tick (max_launches_per_tick)")
+            return
         log(f"{agent}: pick {label} d{c['difficulty']} {(c.get('title') or '')[:50]}")
         if self.dry:
             log(f"DRY claim+launch {label} → {agent}")
@@ -1056,6 +1061,7 @@ class Tick:
             log(f"claim {label} → {agent} refused: HTTP {e.code}")
             return
         cid = int(t["id"])
+        self.launched += 1
         res = AG_LOGS / f"card{cid}.result.md"
         if res.exists():  # an old round's result must not look like this run's finish
             res.rename(next_round_path(cid))

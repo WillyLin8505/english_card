@@ -23,12 +23,23 @@ def test_what_joins_the_job():
 
 def test_cpu_caps_shrink_near_the_limit_and_recover_slowly():
     assert w.cpu_scale(60, 1.0) == 0.7
-    assert w.cpu_scale(45, 0.7) == 0.49
+    assert w.cpu_scale(40, 0.7) == 0.49
     assert w.cpu_scale(90, 0.11) == w.MIN_SCALE
-    assert w.cpu_scale(40, 0.5) == 0.5
+    assert w.cpu_scale(35, 0.5) == 0.5
     assert w.cpu_scale(20, 0.5) == 0.6
     assert w.cpu_scale(20, 1.0) == 1.0
     assert w.cpu_scale(None, 0.5) == 0.5
+
+
+def test_all_ai_caps_together_stay_within_the_budget():
+    w.scale = 1.0
+    for clis in (1, 2, 5, 11):
+        assert w.shared_cap() + w.tree_cap(clis) * clis <= w.AI_BUDGET_PCT + 0.01 * clis
+    assert w.tree_cap(1) == w.TREE_CPU_PCT
+    assert w.tree_cap(49) == w.TREE_MIN_PCT  # more CLIs than the budget holds: cpu_scale takes over
+    w.scale = 0.5
+    assert w.shared_cap() == 11.0
+    w.scale = 1.0
 
 
 def test_gpu_runs_in_bursts_while_busy():
