@@ -2676,3 +2676,27 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #813（#942）照片詳情難度起點 | 注意 | 測試照片只有 A1 一級，target=A1，分不出是否真的選最高；尚未在有多級的照片驗 | codex3/sim_813b/813_detail_bar.png | - | 模擬器 |
 | #890（#1168）同義詞一行幾個 | 注意 | log 量到 dy 相同的 2 個元件，但截圖沒拍到同義詞區，還不能確認那兩個就是同義詞；尚未在畫面確認 | codex3/ipad_run/shots/890_synonyms.png | - | iPad |
 | #894 run 圖片義項與輪播 | 注意 | 10 張複習內沒抽到 run；尚未在 iPad 驗 | - | - | iPad |
+
+## 2026-11-02 M578–M596 第一部分（Codex 執行、Mac 核對，HEAD 3aeb500a）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #934（#1257）空興趣頁跳過 | 通過 | HEAD 3aeb500a，英文母語學法文全新安裝：目的頁之後直接到 Which words do you recognise?，沒有空的興趣頁 | codex4/sim_en_fr/n07_interests.png | - | 模擬器 |
+| #932（#1255）英法介面仍有中文 | 不通過 | 英文介面學法文、加入推薦的 French Basic 3000 Words 後：相片冊分頁篩選鈕「下載的相片冊」（photo.dart:339 deckAlbumGroup 常數）；相片冊與複習格子的相片冊名稱「法語基礎 3000 字」（推薦頁同一本是英文名）；單字本提示列「Dictionary updated: English意思、音標、真人發音、例句 added for 2999 words」。法文介面學英文這輪沒看到中文 | codex4/sim_en_fr/n13_tab_相片冊.png、n17_tab_複習.png、n26_words_empty.png | 中 | 模擬器 |
+| #940（#1263）英法譯名 | 通過 | 英文介面：推薦頁、分頁、按鈕都是 Album(s)，沒有 Card sets／deck；法文介面是 Albums，沒有 Jeux de cartes／paquet。同一本相片冊的中文名稱另列在 #932 | codex4/sim_en_fr/n09_recommended.png | - | 模擬器 |
+| #935（#1258）矮螢幕法文興趣選項 | 注意 | 法文介面學英文 375×667：第一屏看得到 5 顆（Bases du quotidien、Nourriture、Cuisine、Salon、Extérieur），Animaux（y=451）和 Mots avancés 在漸層下，要捲動。Sport、Randonnée、Voyage 這輪沒出現在選項裡（繁中有 運動、爬山、旅行），可能是那幾本沒有法文母語版本 | codex4/sim_fr_en/n07_interests.png | 低 | 模擬器 |
+| #939（#1262）推薦頁載入 | 注意 | 法文介面學英文這輪，進推薦頁 5 秒後仍只有轉圈和 Passer。累計全新安裝 6 次中 3 次超過 5 秒（6.2、7.4 秒和這次），不只一次 | codex4/sim_fr_en/n09_recommended.png | 低 | 模擬器 |
+
+## 2026-11-02 M578–M596 第二部分（Mac，iPad 與模擬器，HEAD 3aeb500a）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #943（#1270）apple 單字頁 | 不通過 | HEAD 3aeb500a 新裝到 iPad：名詞下仍是「蘋果／蘋果／圓形果實」兩次蘋果，第一屏（到「標為已學會」）沒有圖片 | r5/943_apple_0.png | 中 | iPad |
+| #949（#1285）／#826 法文母語看到中文 | 不通過 | 根因：伺服器 en-fr 包是空的。api/lexicon?target=en&native=fr&format=sqlite 下載 688 KB，lexemes 0 筆；模擬器裡的 en-fr.server sqlite 也是 0 筆。App 查不到時改用 lookupDetail 的 WordDetailService（assets/word_db.json，繁中），所以例句翻譯是中文。只修提示列文字不夠 | - | 中 | 模擬器 |
+| #738 法文→繁中詞庫 | 注意 | fr×zh-TW 包 173 筆：maison 房子、le 那、lors 有，rire 沒有。lors 譯「因此，當時」，「因此」意思不對（lors 是那時）。App 引導仍寫法文只提供英文母語，所以畫面上選不到這個組合，只核對資料 | - | 低 | 模擬器 |
+| #890（#1168）同義詞一行幾個 | 通過 | iPad frame 背面同義詞區一行 2 個（form／human body、figure／physical body），中文在英文下方 | r5/890_syn_frame.png | - | iPad |
+| #951（#1291）拖標籤頁面不捲 | 通過 | 照片詳情拖 Ice-cream 往下 360 px：頁面捲動位置前 0、拖曳中 0、放開後 0。收集區在第一屏下方，拖到收集區這段尚未在本輪驗到 | r5/951_dragging.png | - | iPad |
+| #945（#898）單字本後段捲動 | 注意 | iPad 1,714 字 fling 30 次：中位 29.4 ms、最長 485 ms、超過 16.7 ms 383/724 幀（上輪 33.7／558）。前 12 次中位 4.8 ms。後段仍明顯掉幀 | r5/mac_log.txt | 低 | iPad |
+| #950（#1290）沒有例句的卡 | 注意 | cream 單字頁開的是名詞，形容詞義在「顯示更多」裡，尚未在本輪看到形容詞那張卡 | r5/950_cream_0.png | - | iPad |
+| #894 run 圖片義項 | 注意 | run 單字頁第一屏沒有圖片；12 張複習沒抽到 run，尚未在本輪驗到背面輪播 | r5/894_run_0.png | - | iPad |
+| 照片詳情顯示 AI 打標籤等待服務恢復 | 注意 | iPad 開照片詳情時底部顯示「AI 打標籤：已處理 0/1 張・等待 AI 服務恢復」，其他頁顯示「第 1/1 張・大約剩 50 秒」一直沒完成。上架版應該用本機辨識，請查這張為何在等伺服器 | r5/951_after.png | 低 | iPad |
