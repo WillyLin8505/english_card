@@ -366,3 +366,14 @@ def test_french_labels_resolve_against_pack_index():
     assert pack_resolve("lit", "adjective", index) == ("lit", "noun")
     assert pack_resolve("apple", "noun", index) is None
     assert "Every word must be a real French word" in build_prompt("A2", "fr", "en")
+
+
+def test_english_label_pos_corrected_to_dictionary_card968():
+    from tagging_server import to_candidates
+    raw = [{"word": "expose", "pos": "adjective", "point": [100, 100]},
+           {"word": "undulating", "pos": "adverb", "point": [200, 200]},
+           {"word": "serve", "pos": "verb", "point": [300, 300]}]
+    got = {c["word"]: c["pos"] for c in to_candidates(raw)}
+    assert got["expose"] in ("verb", "noun")
+    assert got["undulating"] == "adjective"
+    assert got["serve"] == "verb"

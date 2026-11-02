@@ -576,6 +576,12 @@ def to_candidates(raw: list[dict], lexicon: 'Lexicon | None' = None,
                'd': 'adverb', 'p': 'phrase'}.get(pos, pos)
         if pos not in POS:
             pos = 'phrase' if ' ' in word else 'noun'
+        # Card #968: an English label's part of speech must be one the dictionary has for the
+        # word (expose is never an adjective); the word stays, only the pos is corrected.
+        if lang == 'en':
+            en_pos = ((pack_index('en') or {}).get('words') or {}).get(word)
+            if en_pos and pos not in en_pos:
+                pos = en_pos[0]
         item = {
             'word': word,
             'lemma': word,
