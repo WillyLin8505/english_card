@@ -1,4 +1,5 @@
-"""Owner 10/31 (the PC powered off under AI load); 11/01: the whole PC stays under 50 % CPU and 50 % GPU.
+"""Owner 10/31 (the PC powered off under AI load); 11/02: the whole PC stays under 80 % CPU and 80 % GPU
+(11/01 tried 50 %: work crawled).
 
 One long-running process (started by dispatch_tick, so nothing to install):
 - keeps a Windows Job Object that every AI process joins within 10 s: CPU hard cap, memory limit
