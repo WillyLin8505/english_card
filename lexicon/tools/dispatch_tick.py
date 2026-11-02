@@ -272,6 +272,18 @@ def in_cooldown(card: dict, now: datetime, hours: float, agent_names=()) -> bool
     return True
 
 
+def cooldown_hours(task_id, cfg: dict, now: datetime, default: float) -> float:
+    """owner 11/03: the PC is free at night, so the user simulations run back to back there
+    (night_simulation: window, tasks, cooldown_hours); every other card keeps `default`."""
+    ns = cfg.get("night_simulation") or {}
+    if not ns.get("enabled") or task_id not in set(ns.get("tasks") or []):
+        return default
+    start, end = (ns.get("window") or "01:00-07:00").split("-")
+    hm = now.astimezone(TAIPEI).strftime("%H:%M")
+    inside = (hm >= start or hm < end) if start > end else (start <= hm < end)
+    return float(ns.get("cooldown_hours", 1)) if inside else default
+
+
 def night_launch_ok(task_id, night_tasks, now: datetime, last_launch: str) -> bool:
     """Night-only cards are not started after `last_launch` (they must stop before ~06:45)."""
     if task_id not in set(night_tasks or []):
@@ -361,7 +373,7 @@ def order_candidates(cands: list[dict], agent: str, cfg: dict, now: datetime, ta
             if not night_launch_ok(tid, night_tasks, now, cfg["night_last_launch"]):
                 continue
             card = full_cards.get(tid) or {}
-            if in_cooldown(card, now, cfg["cooldown_hours"]):
+            if in_cooldown(card, now, cooldown_hours(tid, cfg, now, cfg["cooldown_hours"])):
                 continue
         out.append(c)
     out.sort(key=lambda c: prefer.index(c["task_id"]) if c.get("task_id") in prefer else len(prefer))
@@ -965,7 +977,7 @@ class Tick:
                 if (card.get("card", "task") != "task" or not tid or f"t{tid}" in keys or tid in skip_t
                         or card.get("agent") or card.get("status") not in ("scheduled", "queued")
                         or not night_launch_ok(tid, self.night_tasks, self.now, self.cfg["night_last_launch"])
-                        or in_cooldown(card, self.now, idle_h)):
+                        or in_cooldown(card, self.now, cooldown_hours(tid, self.cfg, self.now, idle_h))):
                     continue
                 keys.add(f"t{tid}")
                 issues.append({"key": f"t{tid}", "task_id": tid, "issue_id": None, "kind": "recurring",

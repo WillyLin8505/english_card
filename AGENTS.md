@@ -84,6 +84,9 @@ launches a card for each idle AI (pick_card rules + `lexicon/tools/dispatch_conf
   `lexicon_transport.py` only at start-up; the tick restarts it when that code changed, has been quiet 15 min, the CLIs
   running at the change are done (≤ 6 h) and no `busy_tasks` card (simulation) runs (`serve_app_reload` in dispatch_config.json;
   check by hand: `python lexicon/tools/serve_app_stale.py`).
+- Night simulation (owner, 2026-11-03: the PC is free at night): inside `night_simulation.window` (01:00–07:00) the
+  user-simulation cards (#12, #224–#228, #496) rerun every `cooldown_hours` (1 h) instead of 12 h; what they find becomes
+  問題回報 and the swarm opens cards. The Mac does the same on the iPad (docs/mac_inbox.md M611).
 - Dry run: `python lexicon/tools/dispatch_tick.py --dry-run`. Tests: `lexicon/tests/test_dispatch_tick.py`.
 
 ## AI 資源上限 (owner, 2026-10-31: PC powered off under load; 11-02: CPU and GPU 80 %, Qwen and gap-fill cards run all day)

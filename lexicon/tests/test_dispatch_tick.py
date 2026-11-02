@@ -99,6 +99,18 @@ def test_once_card_never_in_cooldown():
     assert not dt.in_cooldown({"kind": "once", "last_run_at": NOW.isoformat()}, NOW, 12)
 
 
+def test_simulations_run_back_to_back_at_night_only():
+    cfg = {"night_simulation": {"enabled": True, "window": "01:00-07:00", "tasks": [224], "cooldown_hours": 1}}
+    night = datetime(2026, 11, 3, 2, 0, tzinfo=TP)
+    day = datetime(2026, 11, 3, 14, 0, tzinfo=TP)
+    assert dt.cooldown_hours(224, cfg, night, 12) == 1
+    assert dt.cooldown_hours(224, cfg, day, 12) == 12
+    assert dt.cooldown_hours(38, cfg, night, 12) == 12
+    assert dt.cooldown_hours(224, {}, night, 12) == 12
+    ran = {"kind": "recurring", "last_run_at": (night - timedelta(hours=2)).isoformat()}
+    assert not dt.in_cooldown(ran, night, dt.cooldown_hours(224, cfg, night, 12))
+
+
 # night window
 def test_night_card_not_started_after_last_launch():
     late = datetime(2026, 10, 18, 6, 20, tzinfo=TP)
