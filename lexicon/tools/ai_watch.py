@@ -35,6 +35,7 @@ import psutil
 ROOT = Path(__file__).resolve().parents[2]
 LOG = ROOT / "lexicon" / "logs" / "ai_watch.log"
 STATE = ROOT / "lexicon" / "state" / "ai_watch.json"
+HANDLED = ROOT / "lexicon" / "state" / "ai_watch_handled.json"
 JOB_NAME = "Local\\EnglishCardAI"
 MUTEX_NAME = "Local\\EnglishCardAIWatch"
 NO_WINDOW = 0x08000000
@@ -212,10 +213,41 @@ def disk_pct(path: str) -> float | None:
         return None
 
 
+def dispatched_pids() -> set[int]:
+    """The CLIs launch_agent started (card*.pid.json)."""
+    pids = set()
+    for f in (ROOT / "lexicon" / "logs" / "agents").glob("card*.pid.json"):
+        try:
+            pids.add(int(json.loads(f.read_text(encoding="utf-8"))["pid"]))
+        except (OSError, ValueError, KeyError, TypeError):
+            pass
+    return pids
+
+
+def in_session(p: psutil.Process, dispatched: set[int]) -> bool:
+    """11/02: an interactive Claude session and what it runs are the owner's, never capped. Capping them
+    left the manager session at 1 % CPU, a minute per command. Dispatched CLIs are capped as before."""
+    try:
+        chain = [p] + p.parents()
+    except psutil.Error:
+        return False
+    for q in chain:
+        if q.pid in dispatched:
+            return False
+        try:
+            exe = q.exe().lower().replace("\\", "/")
+        except (psutil.Error, OSError):
+            continue
+        if q.name().lower() == "claude.exe" and "/claude-code/" in exe:
+            return True
+    return False
+
+
 def sweep(job, done: set[int], trees: dict[int, object]) -> tuple[int, int, int]:
     """Puts AI processes that are not in a job yet into one; (shared job, own job, refused)."""
     added = own = refused = 0
     alive = set()
+    dispatched = dispatched_pids()
     for p in psutil.process_iter(["pid", "name"]):
         pid, name = p.info["pid"], p.info["name"] or ""
         alive.add(pid)
@@ -225,7 +257,7 @@ def sweep(job, done: set[int], trees: dict[int, object]) -> tuple[int, int, int]
             exe, cmd = p.exe(), " ".join(p.cmdline())
         except (psutil.Error, OSError):
             continue
-        if not is_ai_process(name, exe, cmd):
+        if not is_ai_process(name, exe, cmd) or in_session(p, dispatched):
             done.add(pid)
         elif assign(job, pid):
             done.add(pid)
@@ -242,7 +274,37 @@ def sweep(job, done: set[int], trees: dict[int, object]) -> tuple[int, int, int]
     done &= alive
     for pid in set(trees) - alive:
         kernel32.CloseHandle(trees.pop(pid))
+    save_handled(done)
     return added, own, refused
+
+
+def save_handled(done: set[int]) -> None:
+    """A restarted watcher must not put these into another job: limits of nested jobs only add up."""
+    rows = {}
+    for pid in done:
+        try:
+            rows[str(pid)] = psutil.Process(pid).create_time()
+        except psutil.Error:
+            pass
+    try:
+        HANDLED.write_text(json.dumps(rows), encoding="utf-8")
+    except OSError:
+        pass
+
+
+def load_handled() -> set[int]:
+    try:
+        rows = json.loads(HANDLED.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return set()
+    kept = set()
+    for pid, created in rows.items():
+        try:
+            if abs(psutil.Process(int(pid)).create_time() - created) < 1:  # pids get reused
+                kept.add(int(pid))
+        except (psutil.Error, ValueError):
+            pass
+    return kept
 
 
 def gpu_processes() -> list[psutil.Process]:
