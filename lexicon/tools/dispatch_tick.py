@@ -92,6 +92,19 @@ BREAKAWAY = 0x01000000
 LOG_CAP = 1_000_000
 LOCK_STALE_S = 15 * 60
 LAUNCH_SLACK_S = 5 * 60  # launched_at is stamped when launch_agent returns; old runs have no pid file match
+
+def decision_card(issue: dict) -> int | None:
+    """Only generated decision titles identify their originating card."""
+    m = re.match(r"^\[(?:待決定|owner)\]\s*卡 #(\d+)[：:]", str(issue.get("title") or ""))
+    return int(m.group(1)) if m else None
+
+
+def decision_key(issue: dict) -> str:
+    """Ignore the result-file footer, but retain all options and recommendation."""
+    block = str(issue.get("detail") or "").split("\n\n完整結果：", 1)[0]
+    return re.sub(r"\s+", " ", block).strip()
+
+
 NO_DECISION_RE = re.compile(r"^[：:\s]*(無|沒有|none|n/?a)(?=[\s。.，,（(；;]|$)", re.I)
 
 
@@ -623,9 +636,9 @@ class Tick:
         if fresh.get("status") != "in_progress" or fresh.get("agent") != agent:
             action = f"已由 {fresh.get('agent') or 'owner'} 改成 {fresh.get('status')}"
         elif real_decision(text):
-            action = "waiting"
-            self.write("PUT", f"/tasks/{card_id}", {"by": "Grokbot", "status": "waiting", "progress": progress}, "decision")
-            self.ask_owner(card_id, fresh, text, rel)
+            action, decision_note = self.ask_owner(card_id, fresh, text, rel)
+            self.write("PUT", f"/tasks/{card_id}", {"by": "Grokbot", "status": action,
+                       "progress": f"{decision_note}；{progress}"[:600]}, "decision")
         elif BLOCKER_RE.search(text[:800]):
             action = "blocked"
             self.write("PUT", f"/tasks/{card_id}", {"by": "Grokbot", "status": "blocked", "progress": progress}, "blocker")
@@ -691,7 +704,7 @@ class Tick:
     def ask_owner(self, card_id: int, task: dict, text: str, rel: str):
         """owner 10/21: every 「需要你決定」 is a decision issue on the 問題回報 page, where the owner answers."""
         if self.dry:
-            return
+            return "waiting", "等待 owner 決定"
         q = DECISION_RE.split(text, maxsplit=1)[-1].lstrip("：: ").split("\n")[0].strip()[:200]
         # owner 10/23: 「要我決定的問題 長話短說 最多300字 並且需要付上你的建議」 — only the card's
         # decision paragraph (question, options, 建議), cut at 300 characters; the rest stays in result.md
@@ -706,16 +719,50 @@ class Tick:
                     "title": f"[待決定] 卡 #{card_id}：{q}"[:300], "detail": detail, "reporter": "派工程式"}
             if decision_options(block):
                 body["options"] = decision_options(block)
-            i = http("POST", "/issues", body)
+            # #973: match the entire displayed question/options, scoped to this card.
+            # A result path or whitespace change does not make a new decision. Closed
+            # source issues say nothing about an independent new request in this block.
+            key = decision_key(body)
+            matches = [i for i in http("GET", "/issues").get("items", [])
+                       if decision_card(i) == card_id and decision_key(i) == key]
+            pending = [i for i in matches if not i.get("decision")
+                       and i.get("status") in ("open", "needs_decision", "in_progress")]
+            answered = [i for i in matches if i.get("decision")]
+            i = max(answered or pending or matches, key=lambda i: int(i["id"])) if matches else None
+            if i and (answered or not pending):
+                # Old prune_decisions discarded independent questions solely because
+                # their source issues were closed. Recover that same issue, once.
+                if (not i.get("decision") and i.get("status") == "wont_fix"
+                        and str(i.get("resolution") or "").startswith(
+                            "不用你決定了：相關問題都已修好")):
+                    self.write("PUT", f"/issues/{i['id']}",
+                               {"by": "Grokbot", "status": "needs_decision",
+                                "resolution": "原問題結案不代表這項新需求已決定；保留原提問"},
+                               "recover independent decision")
+                else:
+                    # Do not manufacture completion or endlessly relaunch a CLI that
+                    # keeps asking an answered/declined question. Keep evidence visible.
+                    self.state.get("asks", {}).pop(str(i["id"]), None)
+                    return "blocked", f"重複提出已處理的決策 #{i['id']}，停止重派；請依既有決定修正結果"
+            if not i:
+                i = http("POST", "/issues", body)
             asks = self.state.setdefault("asks", {})
+            # Only the current question may resume this card; an obsolete closed ask
+            # must not queue it while the new question is still awaiting an answer.
+            for iid, cid in list(asks.items()):
+                if cid == card_id:
+                    asks.pop(iid)
             asks[str(i["id"])] = card_id
-            log(f"#{card_id}: decision asked as issue #{i['id']}")
+            log(f"#{card_id}: decision linked to issue #{i['id']}")
+            return "waiting", f"等待問題回報 #{i['id']} 的決定"
         except Exception as e:  # noqa: BLE001
             log(f"ask_owner #{card_id}: {e}")
+            return "blocked", "無法確認或建立決策問題，保留結果待重試"
 
     def prune_decisions(self) -> bool:
         """owner 10/26: 「已經修好的，就不要出現在等待我決定那個地方了」. A waiting decision whose card
-        is finished (done／cancelled) or whose issues are all fixed, or that only says 「無」, is closed."""
+        is finished (done／cancelled), or that only says 「無」, is closed.
+        Closed source issues do not settle an independent follow-up decision (#973)."""
         if self.dry:
             return False
         try:
@@ -724,7 +771,6 @@ class Tick:
         except Exception as e:  # noqa: BLE001
             log(f"prune_decisions: {e}")
             return False
-        status = {i["id"]: i.get("status") for i in items}
         changed = False
         asks = self.state.get("asks") or {}
         for i in items:
@@ -743,13 +789,10 @@ class Tick:
                 continue
             m = re.search(r"卡 #(\d+)", title)
             card = tasks.get(int(m.group(1))) if m else None
-            linked = [status.get(n) for n in (card or {}).get("issue_ids") or []]
             question = re.sub(r"^\[待決定\]\s*卡 #\d+[：:]", "", title)
             why = None
             if card and card.get("status") in ("done", "cancelled"):
                 why = f"卡 #{card['id']} 已結束"
-            elif linked and all(s in ("fixed", "wont_fix") for s in linked):
-                why = "相關問題都已修好"
             elif NO_DECISION_RE.match(question):
                 why = "卡片寫「無」，不需決定"
             if not why:
