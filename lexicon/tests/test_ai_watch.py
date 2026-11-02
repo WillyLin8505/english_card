@@ -13,7 +13,7 @@ import ai_watch as w  # noqa: E402
 
 def test_what_joins_the_job():
     assert w.is_ai_process("python.exe", r"C:\py\python.exe", r"python worker\worker.py --lane text")
-    assert w.is_ai_process("llama-server.exe", "x", "--port 8790")
+    assert not w.is_ai_process("llama-server.exe", "x", "--port 8790")  # model servers stall in a job
     assert w.is_ai_process("claude.exe", r"C:\Users\u\.local\bin\claude.exe", "claude -p")
     assert not w.is_ai_process("python.exe", "x", r"python D:\x\serve_app.py --port 8123")
     assert not w.is_ai_process("python.exe", "x", "python -m uvicorn app.main:app --port 8770")

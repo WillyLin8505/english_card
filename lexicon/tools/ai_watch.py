@@ -63,7 +63,9 @@ GPU_REST_S = 20
 TICK_S = 10
 LOG_MAX = 5_000_000
 
-AI_NAMES = {"claude.exe", "codex.exe", "cursor-agent.exe", "cursor.cmd", "llama-server.exe", "ollama.exe",
+# 11/02: no model servers. In a capped job llama-server stalled while loading and made about 1 token/s
+# (card #931); outside one the same model loads in 15 s. GPU bursts keep the GPU in check instead.
+AI_NAMES = {"claude.exe", "codex.exe", "cursor-agent.exe", "cursor.cmd",
             "dart.exe", "dartaotruntime.exe", "flutter_tester.exe", "node.exe", "python.exe", "pythonw.exe"}
 GPU_NAMES = {"llama-server.exe"}
 # Services the App and board need, the desktop app itself, and this watcher.
