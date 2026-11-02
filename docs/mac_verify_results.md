@@ -2700,3 +2700,15 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #950（#1290）沒有例句的卡 | 注意 | cream 單字頁開的是名詞，形容詞義在「顯示更多」裡，尚未在本輪看到形容詞那張卡 | r5/950_cream_0.png | - | iPad |
 | #894 run 圖片義項 | 注意 | run 單字頁第一屏沒有圖片；12 張複習沒抽到 run，尚未在本輪驗到背面輪播 | r5/894_run_0.png | - | iPad |
 | 照片詳情顯示 AI 打標籤等待服務恢復 | 注意 | iPad 開照片詳情時底部顯示「AI 打標籤：已處理 0/1 張・等待 AI 服務恢復」，其他頁顯示「第 1/1 張・大約剩 50 秒」一直沒完成。上架版應該用本機辨識，請查這張為何在等伺服器 | r5/951_after.png | 低 | iPad |
+
+## 2026-11-02 法語驗證（英文母語學法文、法文→繁中詞庫）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #496 英文母語學法文：單字頁與複習 | 通過 | 375×667 模擬器全新安裝、加入 French Basic 3000（3,000 字）：maison、dire、alors、le、pomme、rire、chat、manger 8 個單字頁與 15 張複習卡正反面都沒有中文；15 次發音全是 api.willylinai.com 的 audio/fr 真人錄音，機器人 0 次 | fr2/word_*.png、card*_back.png | - | 模擬器 |
+| 法文學習者有網路卻顯示離線 | 注意 | 模擬器有網路，dire、alors、le 單字頁頂端紅條「Offline · using saved dictionary; retrying later」；和 owner 回報「有網路卻說等連上網路」的現象相同，可能同一原因 | fr2/word_dire.png | 中 | 模擬器 |
+| 法文複習題型太單一 | 注意 | 15 張裡 sentenceCloze 12、similarMatch 2、photoChoice 1；只有 1 張有圖。基礎字大多是 pour、et、en、du 這類虛詞，一直在填空 | fr2/mac_log.txt | 低 | 模擬器 |
+| 法文 ce 對到錯的詞條 | 注意 | 複習卡 ce 背面顯示「le ce /se.ø/ Noun：a part of the primary school」，但例句是 ce livre、ce téléphone（這個）；應該是指示詞 ce | fr2/mac_log.txt | 低 | 模擬器 |
+| 法文例句英譯不對 | 注意 | que 例句「Comment est-ce que tu t'appelles ?」譯成 What do we call you?，應是 What's your name? | fr2/mac_log.txt | 低 | 模擬器 |
+| 法文相片冊封面 | 注意 | French Basic 3000 封面仍是政策循環圖（#937 只換了英文 5 本基礎字庫）；複習格子名稱是「法語基礎 3000 字」已列在 #932 | fr2/review_grid.png | 低 | 模擬器 |
+| #738 法文→繁中詞庫 | 注意 | fr×zh-TW 包 173 筆，158 筆有繁中：maison 房子、le 那、alors 那時／因此所以、dire 說、lors 有；rire 沒有。lors 譯「因此，當時」意思不對。App 的 frenchNativeLanguages 只有 en，畫面選不到法文＋繁中，所以 M444–M472 要的 iPad 查詢做不到，只核對資料 | dl_frzh/pack.sqlite | 低 | 模擬器 |
