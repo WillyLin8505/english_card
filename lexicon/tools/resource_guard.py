@@ -27,7 +27,7 @@ ROOT = Path(__file__).resolve().parents[2]
 STATE_FILE = ROOT / "lexicon" / "state" / "resource_guard.json"
 NO_WINDOW = 0x08000000 if os.name == "nt" else 0
 LIMIT = 80.0
-DEFAULTS = {"limit_pct": LIMIT, "release_pct": 75.0, "cpu_gpu_pct": 50.0, "temp_max_age_min": 120,
+DEFAULTS = {"limit_pct": LIMIT, "release_pct": 75.0, "cpu_gpu_pct": 80.0, "temp_max_age_min": 120,
             # owner 10/28 「硬碟不用管」: no disk checks, cleaning or alerts.
             "alert_after_min": 10, "disks": []}
 
@@ -138,7 +138,7 @@ def decide(m: dict, cfg: dict, prev: dict) -> dict:
     mem = m.get("mem")
     hold = held if mem is None else (mem > lim or (held and mem > rel))
     cpu = m.get("cpu")
-    busy = cfg["cpu_gpu_pct"]  # owner 11/01: no new CLIs while CPU is at the limit
+    busy = cfg["cpu_gpu_pct"]  # owner 11/02: no new CLIs while CPU is at the limit
     if cpu is not None and (cpu > busy or (held and cpu > busy - 10)):
         hold = True
     low = bool(prev.get("low_priority")) if cpu is None else (cpu > busy or (prev.get("low_priority") and cpu > busy - 5))

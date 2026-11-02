@@ -41,10 +41,10 @@ JOB_NAME = "Local\\EnglishCardAI"
 MUTEX_NAME = "Local\\EnglishCardAIWatch"
 NO_WINDOW = 0x08000000
 
-CPU_PCT = 50  # owner 11/01: the whole PC, not only the AI processes
-AI_BUDGET_PCT = 44  # every AI cap together; the rest of CPU_PCT is for the owner's own programs
-CPU_HIGH_PCT = 40
-CPU_LOW_PCT = 30
+CPU_PCT = 80  # owner 11/02: the whole PC, not only the AI processes
+AI_BUDGET_PCT = 76  # every AI cap together; the rest of CPU_PCT is for the owner's own programs
+CPU_HIGH_PCT = 72
+CPU_LOW_PCT = 60
 MIN_SCALE = 0.1
 # 80 % of 63 GB less what stays outside the job: serve_app (~12 GB) and Windows' own use.
 JOB_MEMORY_GB = 42
@@ -54,10 +54,10 @@ JOB_MEMORY_GB = 42
 TREE_CPU_PCT = 12
 TREE_MIN_PCT = 2
 TREE_MEMORY_GB = 12
-GPU_HIGH_PCT = 45
+GPU_HIGH_PCT = 75
 GPU_IDLE_PCT = 25  # the desktop alone is about 15 %
-GPU_ON_S = 0.4
-GPU_OFF_S = 0.6
+GPU_ON_S = 0.7
+GPU_OFF_S = 0.3
 GPU_TEMP_C = 85
 GPU_REST_S = 20
 TICK_S = 10
@@ -445,7 +445,7 @@ def main(argv=None) -> int:
     resume_left_over()
     job = create_job(JOB_NAME, shared_cap(), JOB_MEMORY_GB * 2**30)
     write_log(f"{time.strftime('%Y-%m-%d %H:%M:%S')} start: AI cpu {AI_BUDGET_PCT}% in all, memory {JOB_MEMORY_GB}GB")
-    done: set[int] = set()
+    done: set[int] = load_handled()
     trees: dict[int, object] = {}
     threading.Thread(target=pace_gpu, daemon=True).start()
     while True:

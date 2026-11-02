@@ -86,12 +86,14 @@ launches a card for each idle AI (pick_card rules + `lexicon/tools/dispatch_conf
   check by hand: `python lexicon/tools/serve_app_stale.py`).
 - Dry run: `python lexicon/tools/dispatch_tick.py --dry-run`. Tests: `lexicon/tests/test_dispatch_tick.py`.
 
-## AI 資源上限 (owner, 2026-10-31: PC powered off under load; 11-01: CPU and GPU 50 %, Qwen and gap-fill cards run all day)
+## AI 資源上限 (owner, 2026-10-31: PC powered off under load; 11-02: CPU and GPU 80 %, Qwen and gap-fill cards run all day)
 
-`lexicon/tools/ai_watch.py` (kept running by dispatch_tick) holds the whole PC to 50 % CPU and 50 % GPU: shared Job
-Object (CPU hard cap 50 %, 42 GB, below-normal), own job per Claude/Codex CLI (12 % CPU, 12 GB), all caps scaled down
-every 10 s while the PC is at 45 % CPU; a busy GPU runs the model servers in bursts (0.4 s on, 0.6 s suspended), ≥ 85 °C
-suspends them 20 s. No new CLIs while CPU is over 50 % (resource_guard). A process over its memory limit gets out-of-memory errors:
+`lexicon/tools/ai_watch.py` (kept running by dispatch_tick) holds the whole PC to 80 % CPU and 80 % GPU: AI caps add up to
+76 % (half for the shared Job Object, half split among the dispatched CLIs' own jobs, at least 2 % each), all scaled down
+every 10 s while the PC is at 72 %; a busy GPU runs the model servers in bursts (0.7 s on, 0.3 s suspended), ≥ 85 °C
+suspends them 20 s. Interactive Claude sessions and what they run are never capped. No new CLIs while CPU is over 80 %,
+at most 4 new CLIs per tick. Limits of nested jobs only add up and a job keeps its limit after its handle closes, so a
+restarted watcher skips processes already handled (lexicon/state/ai_watch_handled.json). A process over its memory limit gets out-of-memory errors:
 split the work, don't work around it. Log: `lexicon/logs/ai_watch.log` (one line every 10 s).
 
 ## Standing preamble (auto-attached on every launch)
