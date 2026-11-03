@@ -1278,6 +1278,8 @@ class LocalCalc(SourceAdapter):
                     continue
                 # Otherwise the main usage's first common sense: the part of
                 # speech the sentence shows, else the CEFR-J listed one.
+                if use not in by_pos and ctx.target == "fr" and len(by_pos) > 1:
+                    use = _fr_guess_pos(item.get("text", ""), forms, set(by_pos))
                 usage = use if use in by_pos else main_pos
                 common = [x for x in by_pos.get(usage, []) if not _rare_sense(x)]
                 first = common[0] if common else (by_pos.get(usage) or [None])[0]
@@ -1458,6 +1460,54 @@ def _fr_tokens(text: str) -> tuple[list[str], list[str]]:
     raw = [p for t in re.split(r"[^A-Za-zÀ-ÿœæŒÆ'’]+", (text or "").replace("’", "'"))
            for p in t.strip("'").split("'") if p]
     return [t.lower() for t in raw], raw
+
+
+_FR_BE = {"est", "sont", "était", "étaient", "suis", "es", "êtes", "sommes", "sera", "serait",
+          "soit", "reste", "restent", "semble", "devient", "paraît", "rend"}
+_FR_SUBJ = {"je", "j", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles", "ne", "n", "y", "en"}
+
+
+def _fr_guess_pos(text: str, forms, avail) -> str | None:
+    """Card #987 (問題回報 #1507): which of the headword's parts of speech
+    ``avail`` a French sentence shows, when _usage_pos_fr cannot say. Only
+    clear patterns answer (None = unclear): a determiner before it → noun;
+    after être / a degree adverb → adjective; a determiner word (ce livre)
+    vs pronoun (c'est, ce qui); preposition before a noun phrase vs adverb
+    at the end of the clause; interjection when the word is a whole clause
+    (« Attention ! »); conjunction before a clause."""
+    toks, cased = _fr_tokens(text)
+    idx = [i for i, t in enumerate(toks) if t in forms]
+    if not idx:
+        return None
+    i = idx[0]
+    prev = toks[i - 1] if i else ""
+    nxt = toks[i + 1] if i + 1 < len(toks) else ""
+    last = i == len(toks) - 1
+    # The noun phrase ends here (la maison est…, un abonné de…); «une grande
+    # victoire» goes on, so grande is the adjective, and «façon de parler» is the verb.
+    if "noun" in avail and "pron" not in avail and (last or nxt in FR_PHRASE_END) and prev not in ("de", "d")             and _fr_det_led(toks, cased, i):
+        return "noun"
+    stripped = (text or "").strip()
+    if "intj" in avail and (len(toks) == 1 or (i == 0 and re.match(r"^\W*\w[\w'’-]*\s*!", stripped))):
+        return "intj"
+    if "adj" in avail and (prev in _FR_BE or prev in _FR_DEGREE) and (last or nxt in FR_PHRASE_END):
+        return "adj"
+    if "det" in avail and "pron" in avail:
+        verbal = nxt in FR_PHRASE_END or nxt in _FR_BE or nxt in {"qui", "que", "qu", "n"} or last
+        return "pron" if verbal else "det"
+    if "det" in avail and not last and nxt not in _FR_BE:
+        return "det"
+    if "pron" in avail and (last or nxt in FR_PHRASE_END or prev in _FR_SUBJ):
+        return "pron"
+    if "prep" in avail and "adv" in avail:
+        return "adv" if last or nxt in {"que", "qu"} else "prep"
+    if "prep" in avail and not last:
+        return "prep"
+    if "conj" in avail and "adv" in avail:
+        # «Non, tu…» is not a conjunction: the clause follows with no comma
+        glued = re.search(re.escape(cased[i]) + r"\s+\w", stripped, re.I)
+        return "conj" if glued and (nxt in _FR_SUBJ or nxt in FR_DETERMINERS) else None
+    return None
 
 
 def _usage_pos_fr(text: str, forms, verb_only) -> str | None:
