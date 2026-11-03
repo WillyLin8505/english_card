@@ -4978,3 +4978,9 @@ iPad 開引導與設定，確認法文母語＋學英文為灰色「尚未提供
 卡：問題回報 #1500：AI 譯文用港式「侍應生」（bus、waitress 兩個義項）；台灣用語應為「服務生」
 
 無。
+
+## M630（2026-11-03 12:13）狀態：待做（Windows 卡 #169 交給 Mac 的 App 畫面部分）
+卡：常態：全庫掃描中文意思缺漏與品質
+
+無。
+- 剩下：Qwen 恢復後 `python lexicon/tools/card169_fill_zh.py run --batch 100`（前景，每次 <10 分鐘），補完 `card169_snap.py save afterN` 後 `diff before afterN`，再跑 golden。
