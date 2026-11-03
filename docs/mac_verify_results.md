@@ -2712,3 +2712,10 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 法文例句英譯不對 | 注意 | que 例句「Comment est-ce que tu t'appelles ?」譯成 What do we call you?，應是 What's your name? | fr2/mac_log.txt | 低 | 模擬器 |
 | 法文相片冊封面 | 注意 | French Basic 3000 封面仍是政策循環圖（#937 只換了英文 5 本基礎字庫）；複習格子名稱是「法語基礎 3000 字」已列在 #932 | fr2/review_grid.png | 低 | 模擬器 |
 | #738 法文→繁中詞庫 | 注意 | fr×zh-TW 包 173 筆，158 筆有繁中：maison 房子、le 那、alors 那時／因此所以、dire 說、lors 有；rire 沒有。lors 譯「因此，當時」意思不對。App 的 frenchNativeLanguages 只有 en，畫面選不到法文＋繁中，所以 M444–M472 要的 iPad 查詢做不到，只核對資料 | dl_frzh/pack.sqlite | 低 | 模擬器 |
+
+## 2026-11-03 owner 回報與伺服器發現（補記，原本只用訊息通知 Windows）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| owner：iPad 問題回報一直送不出去 | 不通過 | owner 有網路，App 卻一直說「等連上網路再回傳」。CardReportService.flush() 只要回應不是 2xx 就留在佇列，畫面一律說成網路問題。Mac 測 POST /api/issues 不帶 key 回 401（0.7 秒），GET /api/issues/status 回 200，伺服器是通的。推測 iPad 存的 settings.apiKey 被拒（Mac 不讀金鑰，未證實）。請查伺服器 log 的 401／403，App 依狀態碼分開提示，修好後佇列自動補送 | - | 高 | iPad |
+| lexicon format=manifest 回整包 | 注意 | Mac 打 api/lexicon?target=en&native=zh-TW&format=manifest，20 秒內收到 105 MB 還沒結束（已中斷），看起來 manifest 參數沒作用、回了整包 | - | 低 | 模擬器 |
