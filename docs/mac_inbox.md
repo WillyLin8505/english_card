@@ -4984,3 +4984,9 @@ iPad 開引導與設定，確認法文母語＋學英文為灰色「尚未提供
 
 無。
 - 剩下：Qwen 恢復後 `python lexicon/tools/card169_fill_zh.py run --batch 100`（前景，每次 <10 分鐘），補完 `card169_snap.py save afterN` 後 `diff before afterN`，再跑 golden。
+
+## M631（2026-11-03 16:33）狀態：待做（Windows 卡 #226 交給 Mac 的 App 畫面部分）
+卡：模擬使用者・複習
+
+無。
+- 剩餘：夜間窗口重跑本卡。
