@@ -124,7 +124,10 @@ def main() -> int:
                '--host', '127.0.0.1', '--port', str(args.port),
                '-c', str(args.ctx * args.slots), '-np', str(args.slots), '-ngl', '999',
                # As Ollama runs it: flash attention, 8-bit KV cache.
-               '--flash-attn', 'on', '--cache-type-k', 'q8_0', '--cache-type-v', 'q8_0',
+               # card #931: flash-attn+q8_0 KV decoded ~2 tok/s on RTX 5060, off+f16 ~60. LLM_FLASH_ATTN / LLM_KV_TYPE override these for experiments.
+               '--flash-attn', os.environ.get('LLM_FLASH_ATTN', 'off'),
+               '--cache-type-k', os.environ.get('LLM_KV_TYPE', 'f16'),
+               '--cache-type-v', os.environ.get('LLM_KV_TYPE', 'f16'),
                '--jinja', '--no-webui']
     print(f'llama-server: {args.model} ({blob.name[:19]}…), {args.slots} slots × {args.ctx} ctx, '
           f'{cuda.name}, http://127.0.0.1:{args.port}', flush=True)

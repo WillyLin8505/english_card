@@ -459,6 +459,22 @@ def resolve_field(s: Session, ctx: Context, field_key: str, policy, steps, *, mo
             continue
         if sources is not None and st.source not in sources:
             step.reason = "此工作未選這個來源"
+            # Card #981: what the source stored earlier still counts (not asked
+            # again). An AI-only Chinese run (card827_fill_zh) used to drop the
+            # dictionaries' 女服務生 for the main sense and adopt the AI's.
+            got = stored_candidates(s, ctx, field_key, st.source) if mode != "dry_run" else None
+            if got is not None:
+                kept = list(got[0])
+                if field_key in catalog.LEVELED:
+                    level_candidates(kept, field_key, ctx)
+                pos_exclusions.drop_candidates(kept, ctx.target, ctx.lemma, field_key)
+                kept = [c for c in kept if c.valid and c.confidence >= st.min_confidence]
+                if st.max_results:
+                    kept = kept[: st.max_results]
+                if kept:
+                    step.count, step.candidates = len(kept), kept
+                    step.adopted = res.add(st.position, st.source, kept)
+                    step.status, step.reason = "succeeded", "此工作未選這個來源（沿用已存的候選）"
             continue
         ok, why = catalog.supports(st.source, ctx.target, ctx.native, field_key)
         if not ok:
