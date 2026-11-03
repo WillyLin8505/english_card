@@ -243,6 +243,30 @@ def test_reresolve_asks_again_only_for_slots_nothing_answered(session, fakes):
     assert asked == ["ex2"], "ex1 is translated already: never sent to AI again"
 
 
+def test_ai_only_run_keeps_the_dictionary_translation(session, fakes):
+    """Card #981: a Chinese gap-fill run with sources=["ai_translate"] (card827_fill_zh)
+    asked the model for every sense and adopted its text over Kaikki's 蘋果."""
+    apple_data(fakes)
+    non_ai = [k for k in fakes if k != "ai_translate"]
+    pipeline.process_word(session, "en", "zh-TW", "apple", None, "fill_missing", sources=non_ai)
+    nd = session.execute(select(m.FieldValue).where(
+        m.FieldValue.field == "native_definition")).scalar_one()
+    assert nd.status == "partial" and [i["slot"] for i in nd.items] == ["s1"]
+    asked = []
+
+    def ai(ctx):
+        wanted = sorted(ctx.memo.get(("missing_slots", "native_definition")) or [])
+        asked.extend(wanted)
+        return [({"sense_key": s, "text": "AI 蘋果", "ai": True}, s, s) for s in wanted]
+    fakes["ai_translate"].data["native_definition"] = ai
+    reports = {r.field: r for r in pipeline.process_word(
+        session, "en", "zh-TW", "apple", ["native_definition"], "fill_missing",
+        sources=["ai_translate"])}
+    nd = reports["native_definition"]
+    assert {i["slot"]: i["source"] for i in nd.items} == {"s1": "kaikki", "s2": "ai_translate"}
+    assert asked == ["s2"], "s1 has Kaikki's 蘋果: never sent to AI"
+
+
 def test_batched_reresolve_preserves_stored_ai_translations(session, fakes, monkeypatch):
     """Regression for #155: an empty batch may not replace paid AI rows."""
     from app.adapters import ADAPTERS

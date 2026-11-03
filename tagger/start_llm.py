@@ -128,6 +128,9 @@ def main() -> int:
                '--flash-attn', os.environ.get('LLM_FLASH_ATTN', 'off'),
                '--cache-type-k', os.environ.get('LLM_KV_TYPE', 'f16'),
                '--cache-type-v', os.environ.get('LLM_KV_TYPE', 'f16'),
+               # card #941: thinking off by default, so a caller that forgets enable_thinking=False no longer
+               # spends its whole token budget in reasoning_content (content ''). LLM_REASONING=auto restores it.
+               '--reasoning', os.environ.get('LLM_REASONING', 'off'),
                '--jinja', '--no-webui']
     print(f'llama-server: {args.model} ({blob.name[:19]}…), {args.slots} slots × {args.ctx} ctx, '
           f'{cuda.name}, http://127.0.0.1:{args.port}', flush=True)
