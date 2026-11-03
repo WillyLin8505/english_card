@@ -27,7 +27,7 @@ OPTION_RE = re.compile(r"^\s*(?:選項\s*)?([A-Ca-c1-3])\s*[\.、：:．)）]\s*
 def decision_options(block: str) -> list[str]:
     """owner 10/26: 問題回報頁上的決定要一眼看懂、最多三個選項可以點選，另有「其他」欄位。
     The card's lines 「A：…」／「1. …」 become at most 3 buttons; the one its 「建議：X」 names is
-    marked （建議）."""
+    marked （建議） and comes first (owner 11/03)."""
     opts, keys = [], []
     for line in block.splitlines():
         m = OPTION_RE.match(line)
@@ -37,7 +37,7 @@ def decision_options(block: str) -> list[str]:
     rec = re.search(r"建議[：:]\s*(?:選項\s*)?([A-Ca-c1-3])", block)
     if rec and rec.group(1).upper() in keys:
         k = keys.index(rec.group(1).upper())
-        opts[k] = opts[k] + "（建議）"
+        opts.insert(0, opts.pop(k) + "（建議）")
     return [f"{n + 1}. {o}" for n, o in enumerate(opts)]
 
 

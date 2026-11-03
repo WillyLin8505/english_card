@@ -392,7 +392,7 @@ def test_waiting_card_can_be_answered_in_one_click(client, tmp_path):
     (tmp_path / f"card{asks['id']}.result.md").write_text("需要你決定：要哪個？\nA：甲\nB：乙\n建議：B，因為快\n\n細節\nC：不是選項\n", encoding="utf-8")
     options = {n["key"]: n["options"] for n in client.get("/console/overview", headers=H).json()["needs_you"]}
     assert options[f"t{plain['id']}"] == ["已處理好，繼續"]
-    assert options[f"t{asks['id']}"] == ["1. 甲", "2. 乙（建議）"]
+    assert options[f"t{asks['id']}"] == ["1. 乙（建議）", "2. 甲"]
 
 
 def test_answering_a_waiting_card_sends_it_back_with_the_answer(client):
