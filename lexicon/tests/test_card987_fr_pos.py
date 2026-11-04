@@ -7,7 +7,7 @@ from app.adapters.base import Context
     ('Ce qui compte.', {'ce'}, {'noun','det','pron'}, 'pron'),
     ('Il est grand.', {'grand'}, {'noun','adj'}, 'adj'),
     ('Avec vous.', {'avec'}, {'adv','prep'}, 'prep'),
-    ("Je veux que vous veniez.", {'que'}, {'conj','pron','adv'}, None),
+    ("Je veux que vous veniez.", {'que'}, {'conj','pron','adv'}, 'conj'),
     ('Si tu viens.', {'si'}, {'conj','pron','adv'}, 'conj'),
 ])
 def test_context(sentence, forms, poses, expected):
