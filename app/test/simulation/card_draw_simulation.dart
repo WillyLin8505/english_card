@@ -54,7 +54,7 @@ Map<String, Object> _run(_Profile p, int seed, {LexiconPack? pack}) {
   final lemmas = <String>{};
   if (pack != null) {
     for (final word in pack.catalogWords) {
-      if (word.full && word.learnerMeaning != null && lemmas.add(word.lemma)) {
+      if (word.full && word.learnerMeaning != null && lemmas.add(word.lemma.trim().toLowerCase())) {
         pool.add(word);
       }
     }

@@ -48,15 +48,19 @@ void main() {
     addTearDown(() => FlutterError.onError = original);
 
     final photos = <String>[];
+    final sw = Stopwatch()..start();
+    final lexicon = testLexicon();
+    var scanned = 0;
     for (final file in replies) {
       if (photos.length >= int.parse(env['SIM_PHOTOS'] ?? '25')) break;
+      scanned++;
       final Object? raw;
       try {
         raw = jsonDecode(file.readAsStringSync());
       } catch (_) {
         continue;
       }
-      final cands = pack.linkAll(parseCandidates(raw, lexicon: testLexicon()));
+      final cands = pack.linkAll(parseCandidates(raw, lexicon: lexicon));
       if (cands.length < 3) continue;
       final id = 'sim-${photos.length}';
       repo.addPhoto(Photo(
@@ -66,6 +70,8 @@ void main() {
           taggingStatus: TaggingStatus.done, candidates: cands));
       photos.add(id);
     }
+    // ignore: avoid_print
+    print('photos ${photos.length} ready after ${sw.elapsed} (scanned $scanned replies)');
 
     final app = await pumpApp(tester, initialTab: AppTab.album, repository: repo,
         size: const Size(390, 844));
