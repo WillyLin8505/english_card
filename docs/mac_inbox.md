@@ -5100,3 +5100,14 @@ commit `95742a2f`（Windows：flutter analyze 無 error、flutter test 全過（
   結果：第一輪完成程式與測試：法文複習新增不需圖片的文字選擇題（看英文意思選 4 個法文詞）；待 iPad 驗證。
 - 卡 #988：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
   結果：全部完成：flutter test 984 過、0 失敗（原本 4 個測試失敗），flutter analyze 0 error（12 個 info）。
+
+## M639（2026-11-05 00:55）狀態：待做（Windows 卡 #169 交給 Mac 的 App 畫面部分）
+卡：常態：全庫掃描中文意思缺漏與品質
+
+無。
+- 剩下：Qwen 恢復後 `python lexicon/tools/card169_fill_zh.py run --batch 100`（前景），補完 `card169_snap.py save afterN` 後 diff，再跑 golden。
+
+## M640（2026-11-05 00:59）狀態：待做
+commit `cfa6f691`（Windows：flutter analyze 無 error、03:03 +981 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #169：常態：全庫掃描中文意思缺漏與品質
+  結果：第 19 輪：沒補成詞——Qwen llama-server :8790 仍連不上（/health 逾時），無中文意思的詞維持約 4,731（未變）。
