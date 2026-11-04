@@ -14,6 +14,8 @@ Line counts as of 2026-10-17. **Big files: search first, then read a range** (se
 | DB | PostgreSQL 17, `lexicon` + `lexicon_test`; migrations `lexicon/migrations/versions/00NN_*.py` | 5432 |
 
 ## Backend (`lexicon/backend/app/`)
+- API output → `lexicon/logs/api.log` (`run_api.bat`; never the console: a stalled terminal tab froze the API, #990).
+  `hang_dump.py`: event loop or thread pool stalled → stacks + requests in flight in `logs/api_hang/`; requests ≥ 10 s → `logs/api_slow.log`.
 - `images.py` **2151 lines** — picture fetch, tagging queue (`tag_pending`, `_tag_asset`), CEFR tag levels. Never read whole.
 - `models.py` 877 — all SQLAlchemy tables (`AgentTask`, `IssueReport`, `ImageAsset`, `Lexeme`, `Sense`…).
 - `pipeline.py` 805, `exporter.py` 700 (app pack export), `materialize.py` 460, `jobs.py` 577 (import jobs).
