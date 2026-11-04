@@ -62,3 +62,8 @@ def test_job_limit_struct_and_heavy_lock(tmp_path, monkeypatch):
     monkeypatch.setattr(heavy_lock, "_FH", None)
     monkeypatch.delenv(heavy_lock.ENV, raising=False)
     assert heavy_lock.slot(1)
+
+
+def test_full_vram_alone_is_not_gpu_over():
+    m = {"ts": 1000.0, "mem": 50.0, "cpu": 10.0, "gpu": 5.0, "gpu_mem": 95.0, "disks": {"C:": 50.0}}
+    assert "gpu" not in rg.decide(m, CFG, {})["over"]

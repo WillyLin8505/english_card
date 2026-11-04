@@ -147,7 +147,8 @@ def decide(m: dict, cfg: dict, prev: dict) -> dict:
         over.append("memory")
     if cpu is not None and cpu > busy:
         over.append("cpu")
-    if (m.get("gpu") or 0) > busy or (m.get("gpu_mem") or 0) > lim:
+    # card #991 (issue #1510): VRAM held by the resident llama-server (~93 %) is not load; alert on utilisation only
+    if (m.get("gpu") or 0) > busy:
         over.append("gpu")
     for d, v in (m.get("disks") or {}).items():
         if v > lim:
