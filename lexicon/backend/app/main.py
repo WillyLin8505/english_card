@@ -22,7 +22,7 @@ from sqlalchemy import func, select, text
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
 
-from . import adapters, bulk_add, catalog, code_watch, config, db, exporter, jobs, pipeline, policies, snapshots, views
+from . import adapters, bulk_add, catalog, code_watch, config, db, exporter, hang_dump, jobs, pipeline, policies, snapshots, views
 from . import models as m
 from .adapters import Context
 from .adapters.base import ARPABET
@@ -39,6 +39,7 @@ async def _api_prefix(request: Request, call_next):
     return await call_next(request)
 
 
+hang_dump.install(app)   # card #990: stacks + requests in flight when the API stops answering
 app.add_middleware(CORSMiddleware, allow_origins=["http://127.0.0.1:5173", "http://localhost:5173"],
                    allow_methods=["*"], allow_headers=["*"])
 
