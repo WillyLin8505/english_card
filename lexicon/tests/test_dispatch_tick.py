@@ -70,6 +70,25 @@ def test_dispatch_skips_card_whose_previous_cli_runs(tmp_path, monkeypatch):
     assert tick.prior_busy(None) is False
 
 
+def test_no_launch_past_max_running_clis(tmp_path, monkeypatch):
+    """owner 11/04: the PC shut down with 20+ CLIs; never more than max_running_clis at once."""
+    import launch_agent as la
+    monkeypatch.setattr(la, "LOGS", tmp_path)
+    monkeypatch.setattr(dt, "AG_LOGS", tmp_path)
+    for card in (1, 2):
+        la.record_run(card, "Claude CLI 1", os.getpid())
+    tick = dt.Tick.__new__(dt.Tick)
+    tick.cfg, tick.dry, tick.events, tick.summary = dict(dt.DEFAULT_CFG), True, [], []
+    tick.cfg.update(max_running_clis=3, max_launches_per_tick=5)
+    tick.launched, tick._running = 0, None
+    card = {"task_id": 9, "difficulty": 2, "title": "x"}
+    tick.launch("Claude CLI 3", card)
+    assert tick.summary == ["(dry) Claude CLI 3→#9"]  # 2 running + this one = 3
+    tick.launched = 1
+    tick.launch("Claude CLI 4", card)
+    assert len(tick.summary) == 1  # a fourth waits
+
+
 # cooldown
 def _rec(last_hours_ago, history=()):
     return {"kind": "recurring", "last_run_at": (NOW - timedelta(hours=last_hours_ago)).isoformat(),

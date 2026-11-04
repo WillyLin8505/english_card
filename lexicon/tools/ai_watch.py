@@ -2,6 +2,8 @@
 (11/01 tried 50 %: work crawled).
 
 One long-running process (started by dispatch_tick, so nothing to install):
+- 11/04 (the PC shut down again): the limits are set through Process Governor (procgov, PgJob) when it is
+  installed; Process Lasso trims memory once RAM passes 80 %. Without procgov it falls back to its own jobs.
 - keeps a Windows Job Object that every AI process joins within 10 s: CPU hard cap, memory limit
   JOB_MEMORY_GB, below-normal priority. Windows enforces these: over the memory limit an
   allocation fails and that AI process stops; the PC does not.
@@ -24,6 +26,7 @@ from __future__ import annotations
 import ctypes
 import json
 import os
+import shutil
 import subprocess
 import sys
 import threading
@@ -54,10 +57,11 @@ JOB_MEMORY_GB = 42
 TREE_CPU_PCT = 12
 TREE_MIN_PCT = 2
 TREE_MEMORY_GB = 12
-GPU_HIGH_PCT = 75
+GPU_HIGH_PCT = 70
 GPU_IDLE_PCT = 25  # the desktop alone is about 15 %
-GPU_ON_S = 0.7
-GPU_OFF_S = 0.3
+# 11/04: the PC shut down at GPU 100 % with 0.7 s on / 0.3 s off; half the time off now.
+GPU_ON_S = 0.5
+GPU_OFF_S = 0.5
 GPU_TEMP_C = 85
 GPU_REST_S = 20
 TICK_S = 10
@@ -70,6 +74,14 @@ AI_NAMES = {"claude.exe", "codex.exe", "cursor-agent.exe", "cursor.cmd",
 GPU_NAMES = {"llama-server.exe"}
 # Services the App and board need, the desktop app itself, and this watcher.
 OUTSIDE = ("serve_app", "uvicorn app.main", "keep_awake", "ai_watch", "vite", "dispatch_tick")
+
+PG_JOB_NAME = "EnglishCardAI-procgov"
+_WINGET_PG = Path.home() / "AppData/Local/Microsoft/WinGet/Packages" / \
+    "LowLevelDesign.ProcessGovernor_Microsoft.Winget.Source_8wekyb3d8bbwe" / "procgov.exe"
+# owner 11/04: limits through Process Governor (winget LowLevelDesign.ProcessGovernor); without it, our own jobs.
+# Never `procgov --install`: its service would take the name of Process Lasso's core service, ProcessGovernor.
+PROCGOV = shutil.which("procgov") or (str(_WINGET_PG) if _WINGET_PG.exists() else None)
+_jobs = 0
 
 kernel32 = ctypes.WinDLL("kernel32", use_last_error=True) if os.name == "nt" else None
 scale = 1.0  # share of the CPU caps in force now
@@ -115,8 +127,56 @@ def _setup_api():
     k.OpenMutexW.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.LPCWSTR]
 
 
+class PgJob:
+    """owner 11/04: Process Governor (procgov) sets the limits. Its first call starts a monitor process
+    that keeps the job; a later call with the same --job-name adds a process or changes the cap."""
+
+    def __init__(self, name: str, cpu_pct: float, memory_bytes: int):
+        self.name, self.cpu, self.memory, self.pids = name, max(1, round(cpu_pct)), memory_bytes, []
+
+    def _run(self, pid: int, *limits: str) -> bool:
+        try:
+            # No pipes: the monitor procgov leaves running would hold them open.
+            return subprocess.run([PROCGOV, "--nowait", "-q", "--job-name", self.name, *limits, "-p", str(pid)],
+                                  stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                  timeout=30, creationflags=NO_WINDOW).returncode == 0
+        except (OSError, subprocess.SubprocessError):
+            return False
+
+    def add(self, pid: int) -> bool:
+        ok = self._run(pid, "--cpurate", str(self.cpu), "--maxjobmem", f"{self.memory // 2**20}M",
+                       "--priority", "BelowNormal")
+        if ok:
+            self.pids.append(pid)
+        return ok
+
+    def set_cpu(self, cpu_pct: float) -> None:
+        cpu = max(1, round(cpu_pct))
+        self.pids = [p for p in self.pids if psutil.pid_exists(p)]
+        if cpu != self.cpu and self.pids and self._run(self.pids[0], "--cpurate", str(cpu)):
+            self.cpu = cpu
+
+    def memory_gb(self) -> float:
+        total = 0
+        for pid in self.pids:
+            try:
+                total += psutil.Process(pid).memory_info().private
+            except psutil.Error:
+                pass
+        return total / 2**30
+
+
+def close(job) -> None:
+    if not isinstance(job, PgJob):
+        kernel32.CloseHandle(job)
+
+
 def create_job(name: str | None, cpu_pct: float, memory_bytes: int):
     """A job with a hard CPU cap, a total memory limit and below-normal priority."""
+    if PROCGOV:
+        global _jobs
+        _jobs += 1
+        return PgJob(f"{PG_JOB_NAME}-{os.getpid()}-{_jobs}" if name is None else PG_JOB_NAME, cpu_pct, memory_bytes)
     job = kernel32.CreateJobObjectW(None, name)
     if not job:
         raise ctypes.WinError(ctypes.get_last_error())
@@ -131,6 +191,9 @@ def create_job(name: str | None, cpu_pct: float, memory_bytes: int):
 
 
 def set_cpu_cap(job, cpu_pct: float) -> None:
+    if isinstance(job, PgJob):
+        job.set_cpu(cpu_pct)
+        return
     rate = _CpuRate(1 | 4, max(1, int(cpu_pct * 100)))  # ENABLE | HARD_CAP, in 1/100 of a percent
     if not kernel32.SetInformationJobObject(job, 15, ctypes.byref(rate), ctypes.sizeof(rate)):
         raise ctypes.WinError(ctypes.get_last_error())
@@ -152,7 +215,9 @@ def tree_cap(clis: int) -> float:
 
 
 def assign(job, pid: int) -> bool:
-    h = kernel32.OpenProcess(0x0100 | 0x0001, False, pid)  # SET_QUOTA | TERMINATE
+    if isinstance(job, PgJob):
+        return job.add(pid)
+    h =kernel32.OpenProcess(0x0100 | 0x0001, False, pid)  # SET_QUOTA | TERMINATE
     if not h:
         return False
     try:
@@ -162,6 +227,8 @@ def assign(job, pid: int) -> bool:
 
 
 def peak_job_gb(job) -> float:
+    if isinstance(job, PgJob):
+        return job.memory_gb()  # now, not the peak: procgov keeps the job handle
     info = _ExtendedLimit()
     kernel32.QueryInformationJobObject(job, 9, ctypes.byref(info), ctypes.sizeof(info), None)
     return info.PeakJobMemoryUsed / 2**30
@@ -272,11 +339,11 @@ def sweep(job, done: set[int], trees: dict[int, object]) -> tuple[int, int, int]
                 trees[pid] = tree
                 own += 1
             else:
-                kernel32.CloseHandle(tree)
+                close(tree)
                 refused += 1
     done &= alive
     for pid in set(trees) - alive:
-        kernel32.CloseHandle(trees.pop(pid))
+        close(trees.pop(pid))
     save_handled(done)
     return added, own, refused
 

@@ -94,8 +94,11 @@ launches a card for each idle AI (pick_card rules + `lexicon/tools/dispatch_conf
 `lexicon/tools/ai_watch.py` (kept running by dispatch_tick) holds the whole PC to 80 % CPU and 80 % GPU: AI caps add up to
 76 % (half for the shared Job Object, half split among the dispatched CLIs' own jobs, at least 2 % each), all scaled down
 every 10 s while the PC is at 72 %; a busy GPU runs the model servers in bursts (0.7 s on, 0.3 s suspended), ≥ 85 °C
-suspends them 20 s. Interactive Claude sessions and what they run are never capped. No new CLIs while CPU is over 80 %,
-at most 4 new CLIs per tick. Limits of nested jobs only add up and a job keeps its limit after its handle closes, so a
+suspends them 20 s. Interactive Claude sessions and what they run are never capped. No new CLIs while CPU is over 80 %.
+**11/04 (the PC shut down twice with 20+ CLIs): at most `max_running_clis` CLIs at once (2 while testing) and
+`max_launches_per_tick` 1, whatever the swarm slots allow; raise one step at a time after watching ai_watch.log.**
+The limits are set through Process Governor (`procgov`, winget LowLevelDesign.ProcessGovernor; ai_watch `PgJob`).
+Never `procgov --install`: its service would clash with Process Lasso's core service, also named ProcessGovernor. Limits of nested jobs only add up and a job keeps its limit after its handle closes, so a
 restarted watcher skips processes already handled (lexicon/state/ai_watch_handled.json). A process over its memory limit gets out-of-memory errors:
 split the work, don't work around it. Log: `lexicon/logs/ai_watch.log` (one line every 10 s).
 

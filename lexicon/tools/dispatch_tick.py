@@ -491,6 +491,7 @@ class Tick:
     def __init__(self, dry: bool):
         self.dry = dry
         self.launched = 0  # CLIs started this tick
+        self._running = None  # CLIs already running, see running_clis
         self.now = now_tp()
         self.cfg = load_config()
         self.state = load_json(STATE_FILE, {})
@@ -550,6 +551,7 @@ class Tick:
     def check_running(self, board: dict) -> bool:
         from launch_agent import agent_kind, detect_limit
         changed = False
+        self._running = 0
         running = {}
         for b in board.get("bots", []):
             if b.get("agent") in AGENTS or is_swarm(b.get("agent")) or is_card_alias(b.get("agent")):
@@ -595,6 +597,8 @@ class Tick:
             grace = self.cfg["finish_grace_alive_minutes" if pid_up else "finish_grace_minutes"]
             verdict = classify_run(run["launched_at"], rm, alive, limit_line, time.time(), grace * 60)
             log(f"#{cid} {agent}: {verdict} (alive={alive}, result={'yes' if rm else 'no'})")
+            if verdict in ("running", "unknown"):
+                self._running = (self._running or 0) + 1  # max_running_clis counts these
             if verdict == "finished":
                 self.finish(card_id, agent, t, res)
                 changed = True
@@ -1098,11 +1102,24 @@ class Tick:
         cache[card_id] = busy
         return busy
 
+    def running_clis(self) -> int:
+        """Cards whose CLI still runs: check_running counts them (a Codex CLI's recorded pid is often a wrapper
+        that has exited); without that, the CLIs launch_agent recorded that still run."""
+        if self._running is None:
+            from launch_agent import live_run
+            self._running = sum(1 for f in AG_LOGS.glob("card*.pid.json")
+                                if (m := re.fullmatch(r"card(\d+)\.pid\.json", f.name)) and live_run(int(m.group(1))))
+        return self._running
+
     def launch(self, agent: str, c: dict):
         label =f"#{c['task_id']}" if c.get("task_id") else f"問題回報 #{c['issue_id']}"
         # owner 11/01 (CPU ≤ 50 %): CLIs start a few per tick; 17 at once took the PC to 68 %
-        if self.launched >= int(self.cfg.get("max_launches_per_tick", 4)):
+        if self.launched >= int(self.cfg.get("max_launches_per_tick", 1)):
             log(f"{agent}: {label} waits for the next tick (max_launches_per_tick)")
+            return
+        # owner 11/04 (the PC shut down twice with 20+ CLIs): only a few CLIs at once, whatever the slots allow
+        if self.running_clis() + self.launched >= int(self.cfg.get("max_running_clis", 3)):
+            log(f"{agent}: {label} waits, {self.running_clis()} CLIs running (max_running_clis)")
             return
         log(f"{agent}: pick {label} d{c['difficulty']} {(c.get('title') or '')[:50]}")
         if self.dry:
