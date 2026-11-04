@@ -1364,7 +1364,8 @@ class Tick:
             if asked.get("key") != key:
                 try:
                     top = "、".join(f"{t['name']}×{t['count']} {t['mb']}MB" for t in st.get("top", []))
-                    i = http("POST", "/issues", {"kind": "bug", "severity": "high", "area": "backend",
+                    # area must be one of issues.AREAS: "backend" was refused with 422 every tick (#990)
+                    i = http("POST", "/issues", {"kind": "bug", "severity": "high", "area": "other",
                              "title": f"[owner] Windows PC 資源超過 80% 超過 10 分鐘：{key}"[:300],
                              "detail": f"{line}\n最大程序：{top}\n自動處理（停派新 CLI、降優先權、清 TEMP）沒有降下來。",
                              "reporter": "派工程式"})
