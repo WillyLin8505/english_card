@@ -1497,7 +1497,10 @@ def _fr_guess_pos(text: str, forms, avail) -> str | None:
         return "pron" if verbal else "det"
     if "det" in avail and not last and nxt not in _FR_BE:
         return "det"
-    if "pron" in avail and (last or nxt in FR_PHRASE_END or prev in _FR_SUBJ):
+    # A following subject starts a subordinate clause, not evidence for a
+    # pronoun: ?je veux que vous veniez?, ?si tu viens?. With conjunction /
+    # pronoun homographs, defer ambiguous clauses to the dictionary fallback.
+    if "pron" in avail and "conj" not in avail and (last or nxt in _FR_BE):
         return "pron"
     if "prep" in avail and "adv" in avail:
         return "adv" if last or nxt in {"que", "qu"} else "prep"
