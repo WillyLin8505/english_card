@@ -5121,3 +5121,8 @@ commit `cfa6f691`（Windows：flutter analyze 無 error、03:03 +981 ~2: All tes
 commit `2e7fb509`（Windows：flutter analyze 無 error、02:41 +981 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #224：模擬使用者・拍照
   結果：第 285 輪：photoui 1/1 通過、pins 全數通過（整批 225 秒；改分段後 6 段 366 秒）；新問題 0；runround.py 的 pins 已改成分段執行。
+
+## M643（2026-11-05 01:33）狀態：待做（Windows 卡 #225 交給 Mac 的 App 畫面部分）
+卡：模擬使用者・相片冊
+
+無新增。
