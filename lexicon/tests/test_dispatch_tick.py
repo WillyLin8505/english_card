@@ -89,6 +89,35 @@ def test_no_launch_past_max_running_clis(tmp_path, monkeypatch):
     assert len(tick.summary) == 1  # a fourth waits
 
 
+def test_hung_board_restart_schedule():
+    """owner 11/04: the API hung 12 h with its port open; restart it after 3 failed ticks, then every 15."""
+    assert [n for n in range(1, 40) if dt.hang_restart_due(n)] == [3, 18, 33]
+
+
+def test_restart_hung_restarts_only_what_hangs(monkeypatch):
+    import watchdog as wd
+    killed, started = [], []
+    monkeypatch.setattr(wd, "port_up", lambda port: True)
+    monkeypatch.setattr(wd, "http_ok", lambda url, timeout=15: "5173" in url)  # API hangs, UI answers
+    monkeypatch.setattr(wd, "kill_matching", killed.append)
+    monkeypatch.setattr(wd, "console", lambda title, cmd, cwd: started.append(title))
+    assert wd.restart_hung(lambda *_: None) == ["lexicon API (8770 hung)"]
+    assert started == ["lexicon API"] and "run_api" in killed[0]
+    monkeypatch.setattr(wd, "http_ok", lambda url, timeout=15: True)
+    assert wd.restart_hung(lambda *_: None) == []  # healthy → nothing touched
+
+
+def test_ui_kill_pattern_spares_other_projects():
+    import re
+    import watchdog as wd
+    import inspect
+    pat = re.search(r'kill_matching\(r"([^"]*5173[^"]*)"\)', inspect.getsource(wd.restart_hung)).group(1)
+    ours = r'"node" "D:\vibe_coding\english_card\lexicon\frontend\node_modules\.bin\..\vite\bin\vite.js" --host 127.0.0.1 --port 5173 --strictPort'
+    other = r'"node" "D:\vibe_coding\photo_tidy_up\dashboard\frontend\node_modules\.bin\..\vite\bin\vite.js" --host 0.0.0.0 --port 5180 --strictPort'
+    other_npm = r'npm-cli.js --prefix dashboard/frontend run dev'
+    assert re.search(pat, ours) and not re.search(pat, other) and not re.search(pat, other_npm)
+
+
 # cooldown
 def _rec(last_hours_ago, history=()):
     return {"kind": "recurring", "last_run_at": (NOW - timedelta(hours=last_hours_ago)).isoformat(),
