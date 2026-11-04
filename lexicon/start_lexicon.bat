@@ -5,6 +5,7 @@ rem Workers run in lanes so network, model and picture work overlap: four
 rem text workers and three picture labellers share the model server's four
 rem slots (tagger\start_tagger.bat); two download pictures from Wikimedia.
 rem run_worker.bat / run_api.bat restart a worker / the API when backend code changes (#285, #335).
+rem Worker, API and UI output goes to lexicon\logs (card #992): the windows only show the log path.
 cd /d "%~dp0"
 python -m alembic upgrade head || goto :error
 start "lexicon API" cmd /k run_api.bat
@@ -17,7 +18,7 @@ start "lexicon images 2" cmd /k worker\run_worker.bat images
 start "lexicon picture labels 1" cmd /k worker\run_worker.bat tags
 start "lexicon picture labels 2" cmd /k worker\run_worker.bat tags
 start "lexicon picture labels 3" cmd /k worker\run_worker.bat tags
-start "lexicon UI" cmd /k npm --prefix frontend run dev
+start "lexicon UI" cmd /k "npm --prefix frontend run dev >> logs\ui.log 2>&1"
 timeout /t 4 >nul
 start "" http://127.0.0.1:5173/ui/
 goto :eof
