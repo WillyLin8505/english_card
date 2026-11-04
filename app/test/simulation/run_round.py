@@ -83,6 +83,23 @@ FR_SIMS = {
 AI_SIMS = {"photo": ("photo_simulation.dart", {})}
 
 
+PIN_CHUNK = 6000
+
+
+def pin_slices(out: Path) -> list:
+    """Env per slice of the tagger cache for pin_simulation; a fixed manifest keeps
+    slice boundaries stable while the tagger adds files."""
+    cache = APP.parent / "tagger" / "cache"
+    if not cache.is_dir():
+        return [{}]  # the simulation skips itself without a cache
+    files = sorted(str(f.resolve()) for f in cache.iterdir()
+                   if f.is_file() and not f.name.startswith("score-"))
+    manifest = out / "pin_files.json"
+    manifest.write_text(json.dumps(files), encoding="utf-8")
+    return [{"SIM_PIN_FILES": str(manifest), "SIM_PIN_START": str(i), "SIM_PIN_COUNT": str(PIN_CHUNK)}
+            for i in range(0, max(len(files), 1), PIN_CHUNK)]
+
+
 def next_round(rounds=ROUNDS) -> int:
     """The next free round, claimed by creating its folder: several cards
     (one per app tab) may start rounds at the same time."""
@@ -236,13 +253,23 @@ def main():
                "SIM_OUT": str(out / f"{name}.json"),
                "SIM_EVENTS": str(out / f"{name}.events.jsonl"), **extra}
         started = time.time()
+        # pins over the whole tagger cache (34k photos) in one process died silently
+        # after ~70 s (card 224 r267): run it in slices over a fixed manifest.
+        slices = pin_slices(out) if name == "pins" else [{}]
+        code = 0
         with open(out / f"{name}.log", "w", encoding="utf-8") as log:
-            try:
-                code = subprocess.call([flutter, "test", f"test/simulation/{file}"], cwd=APP, env=env,
-                                       stdout=log, stderr=subprocess.STDOUT, timeout=540)
-            except subprocess.TimeoutExpired:
-                code = 124
-                log.write("\nSimulation exceeded the 9-minute foreground limit.\n")
+            for i, sl in enumerate(slices):
+                if sl:
+                    log.write(f"\n--- pins slice {i + 1}/{len(slices)} ---\n")
+                    log.flush()
+                try:
+                    c = subprocess.call([flutter, "test", f"test/simulation/{file}"], cwd=APP,
+                                        env={**env, **sl, **({"SIM_OUT": str(out / f"{name}.{i}.json")} if sl else {})},
+                                        stdout=log, stderr=subprocess.STDOUT, timeout=540)
+                except subprocess.TimeoutExpired:
+                    c = 124
+                    log.write("\nSimulation exceeded the 9-minute foreground limit.\n")
+                code = code or c
         tail = (out / f"{name}.log").read_text(encoding="utf-8", errors="replace").strip().splitlines()[-1:]
         results[name] = {"ok": code == 0, "seconds": round(time.time() - started), "last": tail[0] if tail else ""}
         print(f"  {'通過' if code == 0 else '失敗'} {name} ({results[name]['seconds']} 秒) {results[name]['last'][:120]}")
