@@ -22,6 +22,7 @@ typedef CardPhoto = (Photo, LabelPoint?, String?);
 enum ReviewExerciseType {
   sentenceCloze,
   photoChoice,
+  textChoice,
   similarMatch,
   photoRecall,
   imageDrag,
@@ -289,6 +290,7 @@ class FlashcardSession extends ChangeNotifier {
 
   Rating _effectiveRating(Rating rating) {
     final recognition = _exercise?.type == ReviewExerciseType.photoChoice ||
+        _exercise?.type == ReviewExerciseType.textChoice ||
         _exercise?.type == ReviewExerciseType.similarMatch;
     return recognition && _correct == true && rating.value > 2
         ? Rating.values[rating.index - 1]
@@ -564,6 +566,9 @@ class FlashcardSession extends ChangeNotifier {
       () => _cloze(entry),
       () => _photoChoice(entry),
       () => _similarMatch(entry),
+      // 問題回報 #1508: French cards mostly have no picture, so this
+      // picture-free question keeps the rotation from collapsing to cloze.
+      if (repo.language == 'fr') () => _textChoice(entry),
       () => _photoRecall(entry),
       () => _imageDrag(entry),
     ];
@@ -664,6 +669,38 @@ class FlashcardSession extends ChangeNotifier {
     return ReviewExercise(
         type: ReviewExerciseType.photoChoice,
         prompt: '哪個單字最適合這張照片？',
+        answer: entry.word,
+        options: options);
+  }
+
+  /// Shows the native meaning and asks for the French word out of four.
+  /// Wrong options are other owned words of the same part of speech whose
+  /// meaning does not overlap the answer's (no synonyms).
+  ReviewExercise? _textChoice(WordEntry entry) {
+    if (repo.language != 'fr' || entry.meaning.trim().isEmpty) return null;
+    final answer = LexiconPack.normalize(entry.word);
+    final picked = <WordEntry>[];
+    final pool = _ownedExerciseEntries()
+        .values
+        .where((e) =>
+            LexiconPack.normalize(e.word) != answer &&
+            e.meaning.trim().isNotEmpty &&
+            shortPos(e.pos) == shortPos(entry.pos) &&
+            !nativeGlossesOverlap(entry.meaning, e.meaning))
+        .toList()
+      ..shuffle(_random);
+    for (final e in pool) {
+      if (picked.every((p) => !nativeGlossesOverlap(p.meaning, e.meaning))) {
+        picked.add(e);
+      }
+      if (picked.length == 3) break;
+    }
+    if (picked.length < 3) return null;
+    final options = [entry.word, ...picked.map((e) => e.word)]
+      ..shuffle(_random);
+    return ReviewExercise(
+        type: ReviewExerciseType.textChoice,
+        prompt: entry.meaning,
         answer: entry.word,
         options: options);
   }

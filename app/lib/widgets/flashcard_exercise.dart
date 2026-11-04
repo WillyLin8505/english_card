@@ -197,6 +197,19 @@ class _InteractiveExerciseState extends State<_InteractiveExercise> {
                       option, AppScope.of(context).repository.language))),
             ),
         ],
+        if (x.type == ReviewExerciseType.textChoice) ...[
+          _title(x.prompt),
+          for (final option in x.options)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: OutlinedButton(
+                  onPressed: widget.session.canAnswer
+                      ? () => widget.session.submitAnswer(option)
+                      : null,
+                  child: Text(shownWord(
+                      option, AppScope.of(context).repository.language))),
+            ),
+        ],
         if (x.type == ReviewExerciseType.similarMatch) ...[
           _title(x.prompt),
           Wrap(

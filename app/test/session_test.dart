@@ -271,7 +271,11 @@ void main() {
         session.showAnswer();
         session.rate(Rating.good);
       }
-      expect(types, containsAll(ReviewExerciseType.values));
+      // textChoice is French-only (問題回報 #1508).
+      expect(
+          types,
+          containsAll(ReviewExerciseType.values
+              .where((t) => t != ReviewExerciseType.textChoice)));
       final logs = [
         for (final entry in repo.entries)
           if (repo.cardOf(entry.id) case final card?) ...repo.logsOf(card.id),
