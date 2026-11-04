@@ -12,7 +12,7 @@ void main() {
     expect(languagePairAvailable('fr', 'zh-TW'), isFalse);
     expect(languagePairAvailable('fr', 'en'), isTrue);
     expect(languagePairAvailable('en', 'zh-TW'), isTrue);
-    expect(languagePairAvailable('en', 'fr'), isTrue);
+    expect(languagePairAvailable('en', 'fr'), isFalse); // closed, card #957
   });
 
   test('pair rule opens when the 法→繁中 pack is added (#738)', () {

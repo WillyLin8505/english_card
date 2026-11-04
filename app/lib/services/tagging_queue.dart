@@ -82,6 +82,13 @@ class TaggingQueue extends ChangeNotifier {
           settings.taggingConfigured ? '等待 AI 服務恢復，會自動重試' : '這台裝置沒有照片辨識';
       return '已處理 $_completed/${_completed + pending} 張 · $reason';
     }
+    final average = _samples == 0 ? 60000 : _sampleMilliseconds ~/ _samples;
+    final elapsed = _photoWatch.elapsedMilliseconds;
+    if (elapsed > average) {
+      // 問題回報 #1417: past the estimate, a fixed 「大約剩 10 秒」 looked
+      // frozen; show that it is still working and for how long.
+      return '第 $position/$_total 張 · 比預期久，仍在處理（已 ${elapsed ~/ 1000} 秒）';
+    }
     final seconds = estimatedRemaining.inSeconds;
     final time = seconds < 60
         ? '${((seconds + 9) ~/ 10) * 10} 秒'

@@ -231,7 +231,10 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
             photo,
             scope.photoStore,
             photoPagerPageBox(
-                Size(contentWidth, look.photoHeight), index, count),
+                Size(contentWidth,
+                    look.backPhotoHeight(MediaQuery.sizeOf(context).height)),
+                index,
+                count),
             dpr,
             fit: PinnedPhoto.fitFor(photo, BoxFit.cover),
             thumbnail: true));

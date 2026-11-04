@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import 'mobile_theme.dart';
@@ -144,6 +146,13 @@ class CardLook {
 
   static BoxDecoration? _noPanel(int _) => null;
   static IconData? _noIcon(String _) => null;
+
+  /// 問題回報 #1271: on a short screen (375×667) a 320 pt photo pushed the
+  /// meaning below the first screen; the back photo takes at most 36 % of the
+  /// screen height (never below 180), so tall screens keep [photoHeight].
+  double backPhotoHeight(double screenHeight) => photoHeight < 180
+      ? photoHeight
+      : math.min(photoHeight, math.max(180.0, screenHeight * 0.36));
 
   static CardLook of(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<CardLookScope>()?.look ??

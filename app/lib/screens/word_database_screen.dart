@@ -185,12 +185,12 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
                 MNavBar(
                   title: '我的單字本',
                   // 卡 #897: the tab's root has nothing above it, so no 返回.
-                  leading: widget.onBack == null &&
-                          !Navigator.of(context).canPop()
-                      ? null
-                      : BackNavButton(
-                          onTap: widget.onBack ??
-                              (() => Navigator.of(context).pop())),
+                  leading:
+                      widget.onBack == null && !Navigator.of(context).canPop()
+                          ? null
+                          : BackNavButton(
+                              onTap: widget.onBack ??
+                                  (() => Navigator.of(context).pop())),
                   trailing: ShareNavButton(onTap: () => _share(rows)),
                 ),
                 Expanded(
@@ -205,193 +205,213 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
                       }
                       return false;
                     },
-                    child: SingleChildScrollView(
+                    child: CustomScrollView(
                       controller: _scroll,
-                      padding: const EdgeInsets.all(MSpace.md),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (notice != null) ...[
-                            _PackUpdateNotice(
-                              summary: notice,
-                              onOpen: () => _showFilled(repo.filledByUpdate),
-                              onClose: repo.dismissPackUpdateNotice,
-                            ),
-                            const SizedBox(height: MSpace.sm),
-                          ],
-                          SdsSearchField(
-                            controller: _search,
-                            onChanged: (t) =>
-                                _setFilter(_filter.copyWith(search: t)),
-                          ),
-                          const SizedBox(height: MSpace.sm),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Tap(
-                                  onTap: _addWord,
-                                  label: '新增單字',
-                                  child: Container(
-                                    height: 48,
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: MSpace.md),
-                                    decoration:
-                                        MDecor.primaryPill(radius: MRadii.md),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        const Icon(Icons.add_rounded,
-                                            color: Colors.white, size: 18),
-                                        const SizedBox(width: MSpace.xxs),
-                                        Flexible(
-                                            child: UiText('新增單字',
-                                                textAlign: TextAlign.center,
-                                                maxLines: 2,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: MFont.manrope(
-                                                    14,
-                                                    FontWeight.w700,
-                                                    Colors.white))),
-                                      ],
-                                    ),
+                      slivers: [
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(
+                              MSpace.md, MSpace.md, MSpace.md, 0),
+                          sliver: SliverToBoxAdapter(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (notice != null) ...[
+                                  _PackUpdateNotice(
+                                    summary: notice,
+                                    onOpen: () =>
+                                        _showFilled(repo.filledByUpdate),
+                                    onClose: repo.dismissPackUpdateNotice,
                                   ),
+                                  const SizedBox(height: MSpace.sm),
+                                ],
+                                SdsSearchField(
+                                  controller: _search,
+                                  onChanged: (t) =>
+                                      _setFilter(_filter.copyWith(search: t)),
                                 ),
-                              ),
-                              const SizedBox(width: MSpace.xs),
-                              Expanded(
-                                child: Tap(
-                                  onTap: _addMany,
-                                  label: '一次加入多個',
-                                  child: Container(
-                                    height: 48,
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: MSpace.sm),
-                                    decoration: MDecor.card(radius: MRadii.md),
-                                    alignment: Alignment.center,
-                                    child: UiText('一次加入多個',
-                                        textAlign: TextAlign.center,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: MFont.manrope(
-                                            14, FontWeight.w700, MColors.ink)),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: MSpace.xs),
-                              Expanded(
-                                child: Tap(
-                                  onTap: () =>
-                                      scope.navigator.selectTab(AppTab.review),
-                                  label: '開始複習',
-                                  child: Container(
-                                    height: 48,
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: MSpace.md),
-                                    decoration: MDecor.card(
-                                      color: MColors.surface,
-                                      borderColor: MColors.border,
-                                      radius: MRadii.md,
-                                      shadow: MShadows.soft,
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        const Icon(Icons.school_rounded,
-                                            color: MColors.primary, size: 18),
-                                        const SizedBox(width: MSpace.xxs),
-                                        Flexible(
-                                            child: UiText('開始複習',
-                                                textAlign: TextAlign.center,
-                                                maxLines: 2,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: MFont.manrope(
-                                                    14,
-                                                    FontWeight.w700,
-                                                    MColors.primary))),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: MSpace.xxs),
-                          Wrap(
-                            spacing: MSpace.xs,
-                            runSpacing: MSpace.xs,
-                            children: [
-                              for (final label in ['全部', '還在學', '已學會'])
-                                (() {
-                                  final isSelected = label == '還在學'
-                                      ? _onlyLearning
-                                      : !_onlyLearning &&
-                                          (label == '全部'
-                                              ? _filter.status == null
-                                              : _filter.status ==
-                                                  StudyStatus.learned);
-                                  return Tap(
-                                    onTap: () {
-                                      setState(() {
-                                        _onlyLearning = label == '還在學';
-                                        _filter = _filter.copyWith(
-                                            status: () => label == '已學會'
-                                                ? StudyStatus.learned
-                                                : null);
-                                        _shown = _batch;
-                                      });
-                                    },
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: MSpace.md,
-                                          vertical: MSpace.xs),
-                                      decoration: MDecor.chipSurface(
-                                          active: isSelected),
-                                      child: UiText(
-                                        label,
-                                        style: MFont.manrope(
-                                          13,
-                                          FontWeight.w700,
-                                          isSelected
-                                              ? MColors.primaryDeep
-                                              : MColors.ink,
+                                const SizedBox(height: MSpace.sm),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Tap(
+                                        onTap: _addWord,
+                                        label: '新增單字',
+                                        child: Container(
+                                          height: 48,
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: MSpace.md),
+                                          decoration: MDecor.primaryPill(
+                                              radius: MRadii.md),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              const Icon(Icons.add_rounded,
+                                                  color: Colors.white,
+                                                  size: 18),
+                                              const SizedBox(width: MSpace.xxs),
+                                              Flexible(
+                                                  child: UiText('新增單字',
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      maxLines: 2,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      style: MFont.manrope(
+                                                          14,
+                                                          FontWeight.w700,
+                                                          Colors.white))),
+                                            ],
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  );
-                                })(),
-                            ],
-                          ),
-                          const SizedBox(height: MSpace.sm),
-                          Container(
-                            decoration: MDecor.softPanel(
-                              color: MColors.surfaceSoft,
-                              radius: MRadii.md,
-                            ),
-                            clipBehavior: Clip.antiAlias,
-                            child: Material(
-                              color: Colors.transparent,
-                              child: ExpansionTile(
-                                  title: UiText('進階篩選與排序',
-                                      style: MFont.manrope(
-                                          14, FontWeight.w700, MColors.ink)),
-                                  collapsedBackgroundColor: Colors.transparent,
-                                  backgroundColor: MColors.surface,
-                                  shape: const Border(),
-                                  collapsedShape: const Border(),
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.all(MSpace.md),
-                                      child: _buildFilters(repo.partsOfSpeech),
+                                    const SizedBox(width: MSpace.xs),
+                                    Expanded(
+                                      child: Tap(
+                                        onTap: _addMany,
+                                        label: '一次加入多個',
+                                        child: Container(
+                                          height: 48,
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: MSpace.sm),
+                                          decoration:
+                                              MDecor.card(radius: MRadii.md),
+                                          alignment: Alignment.center,
+                                          child: UiText('一次加入多個',
+                                              textAlign: TextAlign.center,
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: MFont.manrope(
+                                                  14,
+                                                  FontWeight.w700,
+                                                  MColors.ink)),
+                                        ),
+                                      ),
                                     ),
-                                  ]),
+                                    const SizedBox(width: MSpace.xs),
+                                    Expanded(
+                                      child: Tap(
+                                        onTap: () => scope.navigator
+                                            .selectTab(AppTab.review),
+                                        label: '開始複習',
+                                        child: Container(
+                                          height: 48,
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: MSpace.md),
+                                          decoration: MDecor.card(
+                                            color: MColors.surface,
+                                            borderColor: MColors.border,
+                                            radius: MRadii.md,
+                                            shadow: MShadows.soft,
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              const Icon(Icons.school_rounded,
+                                                  color: MColors.primary,
+                                                  size: 18),
+                                              const SizedBox(width: MSpace.xxs),
+                                              Flexible(
+                                                  child: UiText('開始複習',
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      maxLines: 2,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      style: MFont.manrope(
+                                                          14,
+                                                          FontWeight.w700,
+                                                          MColors.primary))),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: MSpace.xxs),
+                                Wrap(
+                                  spacing: MSpace.xs,
+                                  runSpacing: MSpace.xs,
+                                  children: [
+                                    for (final label in ['全部', '還在學', '已學會'])
+                                      (() {
+                                        final isSelected = label == '還在學'
+                                            ? _onlyLearning
+                                            : !_onlyLearning &&
+                                                (label == '全部'
+                                                    ? _filter.status == null
+                                                    : _filter.status ==
+                                                        StudyStatus.learned);
+                                        return Tap(
+                                          onTap: () {
+                                            setState(() {
+                                              _onlyLearning = label == '還在學';
+                                              _filter = _filter.copyWith(
+                                                  status: () => label == '已學會'
+                                                      ? StudyStatus.learned
+                                                      : null);
+                                              _shown = _batch;
+                                            });
+                                          },
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: MSpace.md,
+                                                vertical: MSpace.xs),
+                                            decoration: MDecor.chipSurface(
+                                                active: isSelected),
+                                            child: UiText(
+                                              label,
+                                              style: MFont.manrope(
+                                                13,
+                                                FontWeight.w700,
+                                                isSelected
+                                                    ? MColors.primaryDeep
+                                                    : MColors.ink,
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      })(),
+                                  ],
+                                ),
+                                const SizedBox(height: MSpace.sm),
+                                Container(
+                                  decoration: MDecor.softPanel(
+                                    color: MColors.surfaceSoft,
+                                    radius: MRadii.md,
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: ExpansionTile(
+                                        title: UiText('進階篩選與排序',
+                                            style: MFont.manrope(14,
+                                                FontWeight.w700, MColors.ink)),
+                                        collapsedBackgroundColor:
+                                            Colors.transparent,
+                                        backgroundColor: MColors.surface,
+                                        shape: const Border(),
+                                        collapsedShape: const Border(),
+                                        children: [
+                                          Padding(
+                                            padding:
+                                                const EdgeInsets.all(MSpace.md),
+                                            child: _buildFilters(
+                                                repo.partsOfSpeech),
+                                          ),
+                                        ]),
+                                  ),
+                                ),
+                                const SizedBox(height: MSpace.md),
+                              ],
                             ),
                           ),
-                          const SizedBox(height: MSpace.md),
-                          _buildTable(shownRows, rows.length),
-                        ],
-                      ),
+                        ),
+                        ..._buildTable(shownRows, rows.length),
+                      ],
                     ),
                   ),
                 ),
@@ -462,75 +482,96 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
     );
   }
 
-  Widget _buildTable(List<DatabaseRow> items, int total) {
+  List<Widget> _buildTable(List<DatabaseRow> items, int total) {
     final scope = AppScope.of(context);
     // Whether the learner owns any word at all (else the empty state tells
     // them where words come from, 問題回報 #404).
     final owned = scope.repository.query(const WordDatabaseFilter()).isNotEmpty;
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: MDecor.card(radius: MRadii.lg),
-      child: Column(
-        children: [
-          if (items.isEmpty)
-            Container(
-              padding: const EdgeInsets.symmetric(
-                  vertical: MSpace.xxl * 1.5, horizontal: MSpace.lg),
-              alignment: Alignment.center,
-              decoration: MDecor.emptyStateCard(),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(MSpace.md),
-                    decoration: const BoxDecoration(
-                      color: MColors.primarySoft,
-                      shape: BoxShape.circle,
+    // 卡 #960: rows are built lazily (SliverList) so a long list only lays out
+    // what is on screen; a Column of every loaded row got slower per batch.
+    const side = EdgeInsets.symmetric(horizontal: MSpace.md);
+    if (items.isEmpty) {
+      return [
+        SliverPadding(
+          padding: side.copyWith(bottom: MSpace.md),
+          sliver: SliverToBoxAdapter(
+            child: Container(
+              clipBehavior: Clip.antiAlias,
+              decoration: MDecor.card(radius: MRadii.lg),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    vertical: MSpace.xxl * 1.5, horizontal: MSpace.lg),
+                alignment: Alignment.center,
+                decoration: MDecor.emptyStateCard(),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(MSpace.md),
+                      decoration: const BoxDecoration(
+                        color: MColors.primarySoft,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.search_off_rounded,
+                          size: 32, color: MColors.primary),
                     ),
-                    child: const Icon(Icons.search_off_rounded,
-                        size: 32, color: MColors.primary),
-                  ),
-                  const SizedBox(height: MSpace.md),
-                  UiText(owned ? '沒有符合條件的單字' : '還沒有單字',
-                      style: MFont.titleSm.copyWith(color: MColors.ink)),
-                  const SizedBox(height: MSpace.xxs),
-                  UiText(
-                      owned ? '請嘗試調整搜尋關鍵字或進階篩選條件' : '去拍照，或下載相片冊，單字就會出現在這裡',
-                      textAlign: TextAlign.center,
-                      style: MFont.bodyMuted),
-                ],
+                    const SizedBox(height: MSpace.md),
+                    UiText(owned ? '沒有符合條件的單字' : '還沒有單字',
+                        style: MFont.titleSm.copyWith(color: MColors.ink)),
+                    const SizedBox(height: MSpace.xxs),
+                    UiText(owned ? '請嘗試調整搜尋關鍵字或進階篩選條件' : '去拍照，或下載相片冊，單字就會出現在這裡',
+                        textAlign: TextAlign.center, style: MFont.bodyMuted),
+                  ],
+                ),
               ),
             ),
-          for (final row in items)
-            _WordRow(
-              key: ValueKey(row.id),
-              word: row.entry.word,
-              meaning: row.entry.meaning,
-              usageBadge: {
-                if (row.entry.entryType != 'word')
-                  entryTypeLabel(row.entry.entryType),
-                ...row.entry.partsOfSpeech.map(posLabel)
-              }.join('・'),
-              level: row.entry.level,
-              learned: row.status == StudyStatus.learned,
-              dataFailed: row.entry.dataStatus == WordDataStatus.failed,
-              missing: missingFieldNames(row.entry),
-              selected: _selected.contains(row.id),
-              onTap: () {
-                setState(() {
-                  _selected
-                    ..clear()
-                    ..add(row.id);
-                });
-                scope.navigator.openWord(row.entry.id);
-              },
-              onToggle: () => scope.speakEntry(context, row.entry,
-                  language: scope.repository.language),
-            ),
-          if (items.isNotEmpty) _buildFooter(items.length, total),
-        ],
+          ),
+        ),
+      ];
+    }
+    return [
+      SliverPadding(
+        padding: side,
+        sliver: DecoratedSliver(
+          decoration: MDecor.card(radius: MRadii.lg),
+          sliver: SliverList.builder(
+            itemCount: items.length,
+            itemBuilder: (context, i) {
+              final row = items[i];
+              return _WordRow(
+                key: ValueKey(row.id),
+                word: row.entry.word,
+                meaning: row.entry.meaning,
+                usageBadge: {
+                  if (row.entry.entryType != 'word')
+                    entryTypeLabel(row.entry.entryType),
+                  ...row.entry.partsOfSpeech.map(posLabel)
+                }.join('・'),
+                level: row.entry.level,
+                learned: row.status == StudyStatus.learned,
+                dataFailed: row.entry.dataStatus == WordDataStatus.failed,
+                missing: missingFieldNames(row.entry),
+                selected: _selected.contains(row.id),
+                onTap: () {
+                  setState(() {
+                    _selected
+                      ..clear()
+                      ..add(row.id);
+                  });
+                  scope.navigator.openWord(row.entry.id);
+                },
+                onToggle: () => scope.speakEntry(context, row.entry,
+                    language: scope.repository.language),
+              );
+            },
+          ),
+        ),
       ),
-    );
+      SliverPadding(
+        padding: side.copyWith(bottom: MSpace.md),
+        sliver: SliverToBoxAdapter(child: _buildFooter(items.length, total)),
+      ),
+    ];
   }
 
   Widget _buildFooter(int shown, int total) {

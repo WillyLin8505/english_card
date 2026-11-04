@@ -95,7 +95,11 @@ Future<bool?> showFeedbackDialog(BuildContext context,
     if (sent == null) return null;
     messenger?.removeCurrentSnackBar();
     messenger?.showSnackBar(
-        SnackBar(content: UiText(sent ? '已送出，謝謝你的意見' : '已存在這支手機，連上網路後會再送出')));
+        SnackBar(content: UiText(sent
+            ? '已送出，謝謝你的意見'
+            : sink.lastStatus == null
+                ? '已存在這支手機，連上網路後會再送出'
+                : '已存在這支手機，伺服器暫時沒收（${sink.lastStatus}），之後會再試')));
     return sent;
   });
 }

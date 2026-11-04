@@ -362,8 +362,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                         : (_) {
                                             if (!languagePairAvailable(e.key,
                                                 settings.nativeLanguage)) {
-                                              showToast(context,
-                                                  frenchNeedsEnglishNative);
+                                              showToast(
+                                                  context,
+                                                  pairUnavailableNote(e.key,
+                                                      settings.nativeLanguage));
                                               return;
                                             }
                                             _switchLanguage(e.key);
@@ -395,7 +397,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                       if (!languagePairAvailable(
                                           settings.learningLanguage, e.key)) {
                                         showToast(
-                                            context, frenchNeedsEnglishNative);
+                                            context,
+                                            pairUnavailableNote(
+                                                settings.learningLanguage,
+                                                e.key));
                                         return;
                                       }
                                       settings.nativeLanguage = e.key;

@@ -59,6 +59,12 @@ Widget _back(String level, {String language = 'en'}) => Scaffold(
         meaning: '巨人',
         definition:
             language == 'fr' ? 'une personne très grande' : 'a very big person',
+        // 問題回報 #1290: with no example the definition starts open, so the
+        // fold tests need one example sentence.
+        examples: const [
+          WordExample(
+              text: 'The giant is tall.', translation: '巨人很高。', difficulty: 'A1'),
+        ],
         createdAt: testNow,
         updatedAt: testNow,
       ),

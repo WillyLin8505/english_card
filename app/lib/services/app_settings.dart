@@ -41,10 +41,24 @@ final frenchNativeLanguages = {'en'};
 
 /// Whether the [learning]/[native] pair has a dictionary (not just each
 /// language on its own).
+///
+/// Owner 2026-11-02 (問題回報 #1416, card #957): English with a French native
+/// language stays closed until the en→fr dictionary exists (the server pack
+/// is empty, so the App used to fall back to Chinese translations).
+final closedLanguagePairs = {'en-fr'};
+
 bool languagePairAvailable(String learning, String native) =>
-    learning != 'fr' || frenchNativeLanguages.contains(native);
+    !closedLanguagePairs.contains('$learning-$native') &&
+    (learning != 'fr' || frenchNativeLanguages.contains(native));
 
 const frenchNeedsEnglishNative = '法文目前只提供英文母語';
+const englishFrenchClosed = '學英文、母語法文的詞庫尚未開放';
+
+/// Why [learning]/[native] is not offered.
+String pairUnavailableNote(String learning, String native) =>
+    learning == 'en' && native == 'fr'
+        ? englishFrenchClosed
+        : frenchNeedsEnglishNative;
 
 bool learningLanguageAvailable(String language) =>
     availableLearningLanguages.contains(language);
@@ -148,6 +162,8 @@ class AppSettings extends ChangeNotifier {
   /// Set when start-up found a stored pair without a dictionary (繁中母語＋
   /// 法文) and went back to English; the app shows it once ([takePairReset]).
   bool _pairReset = false;
+  String _pairResetNote = '$frenchNeedsEnglishNative，已切回英文';
+  String get pairResetNote => _pairResetNote;
 
   bool takePairReset() {
     final v = _pairReset;
@@ -251,7 +267,12 @@ class AppSettings extends ChangeNotifier {
     await settings._loadCloudToken(tokenStore ?? const KeychainTokenStore());
     if (!languagePairAvailable(
         settings.learningLanguage, settings.nativeLanguage)) {
-      settings._learningLanguage = 'en';
+      if (settings.learningLanguage == 'en') {
+        settings._pairResetNote = '$englishFrenchClosed，已改回繁體中文母語';
+        settings._nativeLanguage = 'zh-TW';
+      } else {
+        settings._learningLanguage = 'en';
+      }
       settings._pairReset = true;
     }
     if (box.get('learningLanguage') != settings.learningLanguage) {
@@ -423,6 +444,7 @@ class AppSettings extends ChangeNotifier {
   bool get anonymousEvents => _usageGet('anonEvents') != 'false';
   set anonymousEvents(bool v) {
     _usagePut('anonEvents', '$v');
+    if (!v && _usageGet('evt_queue') != null) _usagePut('evt_queue', '[]');
     notifyListeners();
   }
 

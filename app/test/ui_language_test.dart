@@ -19,11 +19,13 @@ void main() {
     final app = await pumpApp(tester,
         initialTab: AppTab.settings, size: const Size(360, 800));
     expect(find.text('設定'), findsWidgets);
-    // French is also a learning language now (#700): the native chip is
-    // the second one.
+    // English with a French native language is closed (card #957): the chip
+    // only toasts, so the French UI is set directly.
     await tester.tap(find.widgetWithText(ChoiceChip, '法文（Français）').last);
     await tester.pumpAndSettle();
-    expect(app.settings.nativeLanguage, 'fr');
+    expect(app.settings.nativeLanguage, 'zh-TW');
+    app.settings.nativeLanguage = 'fr';
+    await tester.pumpAndSettle();
     expect(find.text('Langue maternelle'), findsOneWidget);
     expect(find.text('Réglages'), findsWidgets);
     expect(find.bySemanticsLabel('Révision'), findsOneWidget);
@@ -132,13 +134,14 @@ void main() {
     addTearDown(tester.view.reset);
     await tester.pumpWidget(MaterialApp(
         home: OnboardingScreen(lexicon: testLexicon(), onDone: (_) {})));
-    // The second 法文 option is the native-language one (#700).
-    await tester.tap(find.text('法文（Français）').last);
+    // Learning English with a French native language is closed (card #957):
+    // choosing English as native moves learning to French instead.
+    await tester.tap(find.text('英文（English）').last);
     await tester.pumpAndSettle();
-    expect(find.text('Suivant'), findsOneWidget);
-    await tester.tap(find.text('Suivant'));
+    expect(find.text('Next'), findsOneWidget);
+    await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();
-    expect(find.text('Quel est votre niveau d’anglais ?'), findsOneWidget);
+    expect(find.text('How well do you know French?'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

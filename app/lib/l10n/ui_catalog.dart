@@ -457,6 +457,7 @@ const uiCatalog = <String, (String, String)>{
   '第一次學這張卡': ('First time learning this card', 'Première étude de cette carte'),
   '學習資訊': ('Learning information', 'Informations d’apprentissage'),
   '音標': ('Pronunciation', 'Prononciation'),
+  '下載的相片冊': ('Downloaded albums', 'Albums téléchargés'),
   '例句翻譯': ('Example translation', 'Traduction de l’exemple'),
   '相關字': ('Related words', 'Mots associés'),
   '構詞與詞源': ('Word formation and etymology', 'Formation et étymologie'),
@@ -559,6 +560,10 @@ const uiCatalog = <String, (String, String)>{
     'Offline · using saved dictionary; retrying later',
     'Hors ligne · dictionnaire enregistré utilisé ; nouvel essai plus tard'
   ),
+  '詞庫暫時無法更新，稍後重試': (
+    'Dictionary update paused; retrying later',
+    'Mise à jour du dictionnaire en pause ; nouvel essai plus tard'
+  ),
   '字母 A–Z': ('Alphabetical A–Z', 'Ordre alphabétique A–Z'),
   '最近更新': ('Recently updated', 'Mise à jour récente'),
   '下次出現': ('Next review', 'Prochaine révision'),
@@ -639,6 +644,14 @@ const uiCatalog = <String, (String, String)>{
   '法文目前只提供英文母語，已切回英文': (
     'French is currently only available with English as the native language; switched back to English',
     'Le français n’est pour l’instant proposé qu’avec l’anglais comme langue maternelle ; retour à l’anglais'
+  ),
+  '學英文、母語法文的詞庫尚未開放': (
+    'English with French as the native language is not available yet',
+    'L’anglais avec le français comme langue maternelle n’est pas encore disponible'
+  ),
+  '學英文、母語法文的詞庫尚未開放，已改回繁體中文母語': (
+    'English with French as the native language is not available yet; native language set back to Traditional Chinese',
+    'L’anglais avec le français comme langue maternelle n’est pas encore disponible ; langue maternelle remise en chinois traditionnel'
   ),
   '下一步': ('Next', 'Suivant'),
   '上一步': ('Previous', 'Précédent'),
@@ -1462,8 +1475,8 @@ String translateUi(String source, String language, {String learning = 'en'}) {
     final match = template.pattern.firstMatch(source);
     if (match == null) continue;
     final translation = language == 'fr' ? template.fr : template.en;
-    return fill(translation.replaceAllMapped(
-        RegExp(r'\{(\d+)\}'), (m) => match.group(int.parse(m[1]!) + 1)!));
+    return fill(translation.replaceAllMapped(RegExp(r'\{(\d+)\}'),
+        (m) => _listParts(match.group(int.parse(m[1]!) + 1)!, language, learning)));
   }
   // Labels built at call sites from catalog copy: 「入門（A1）（已選）」 and
   // the Semantics label 「英文（English），第一階段尚未提供詞庫」.
@@ -1482,6 +1495,17 @@ String translateUi(String source, String language, {String learning = 'en'}) {
         '${translateUi(source.substring(comma + 1), language, learning: learning)}';
   }
   return fill(_labelParts(source, language) ?? source);
+}
+
+/// A template capture like 「意思、音標、例句」: each catalog name is swapped.
+String _listParts(String text, String language, String learning) {
+  if (!text.contains('、')) return text;
+  return text.split('、').map((part) {
+    final entry = uiCatalog[part];
+    return entry == null || !RegExp(r'[一-鿿]').hasMatch(part)
+        ? part
+        : translateUi(part, language, learning: learning);
+  }).join(', ');
 }
 
 const _uiSuffixes = <(String, String, String)>[

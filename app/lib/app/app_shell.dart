@@ -13,7 +13,6 @@ import '../screens/photo_grid_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/word_database_screen.dart';
 import '../screens/word_detail_screen.dart';
-import '../services/app_settings.dart';
 import '../widgets/mobile/common.dart';
 import '../widgets/mobile/tab_bar.dart';
 import '../widgets/tab_tutorial.dart';
@@ -82,8 +81,9 @@ class AppShellState extends State<AppShell> implements AppNavigator {
     // 卡 #737: a stored 繁中母語＋法文 went back to English at start-up.
     SchedulerBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      if (AppScope.of(context).settings.takePairReset()) {
-        showToast(context, '$frenchNeedsEnglishNative，已切回英文');
+      final settings = AppScope.of(context).settings;
+      if (settings.takePairReset()) {
+        showToast(context, settings.pairResetNote);
       }
     });
   }

@@ -52,8 +52,13 @@ void main() {
       final app = await pumpApp(tester, initialTab: AppTab.words);
       expect(find.text('我的單字本'), findsOneWidget);
       expect(find.text('apple'), findsOneWidget);
+      // The list is lazy now: the footer is built once scrolled to.
+      await tester.scrollUntilVisible(find.text('共 21 個'), 300,
+          scrollable: find.byType(Scrollable).first);
       expect(find.text('共 21 個'), findsOneWidget);
       expect(find.text('›'), findsNothing);
+      await tester.scrollUntilVisible(find.text('apple'), -300,
+          scrollable: find.byType(Scrollable).first);
 
       // A failed background fetch is marked in the list.
       app.repository.applyWordData(app.repository.entryByWord('apple')!.id,

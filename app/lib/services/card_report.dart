@@ -415,6 +415,10 @@ class CardReportService extends ChangeNotifier {
     return left == 0 || !_memory.any((e) => e.$1 == id);
   }
 
+  /// The HTTP status the server last refused a report with (401 = key
+  /// rejected), null when the last [flush] had no refusal or was offline.
+  int? lastStatus;
+
   /// Sends the queued reports in order; returns how many are still queued.
   Future<int> flush({String apiKey = ''}) async {
     await _load();
@@ -424,20 +428,34 @@ class CardReportService extends ChangeNotifier {
       if (apiKey.trim().isNotEmpty) 'X-API-Key': apiKey.trim(),
     };
     var changed = false;
-    while (_memory.isNotEmpty) {
-      final (id, body) = _memory.first;
+    lastStatus = null;
+    // 問題回報 #1493: a report the server refuses for itself (401/403/400/413)
+    // must not hold up the ones behind it, so it is skipped and stays queued;
+    // only a network error or a 5xx/429 ends the round.
+    var skip = 0;
+    while (_memory.length > skip) {
+      final (id, body) = _memory[skip];
       int? no;
       try {
         final response = await client
             .post(endpoint, headers: headers, body: body)
             .timeout(const Duration(seconds: 20));
-        if (response.statusCode < 200 || response.statusCode >= 300) break;
+        if (response.statusCode < 200 || response.statusCode >= 300) {
+          lastStatus = response.statusCode;
+          final code = response.statusCode;
+          if (code >= 400 && code < 500 && code != 408 && code != 429) {
+            skip++;
+            continue;
+          }
+          break;
+        }
         no = _issueNo(response.body);
       } catch (e) {
         debugPrint('CardReportService: send failed: $e');
+        lastStatus = null;
         break;
       }
-      _memory.removeAt(0);
+      _memory.removeAt(skip);
       final i = _history.indexWhere((r) => r.id == id);
       if (i >= 0) _history[i] = _history[i].sent(no);
       changed = true;

@@ -326,6 +326,9 @@ class DictionarySync extends ChangeNotifier {
     // the first seconds (card #790, 問題回報 #926). Linking the pack that is
     // open is skipped when it was already linked (same version).
     var linkOwed = false;
+    // True once the server answered (any status). Lets the catch below tell a
+    // dead network from a busy server or a cut-off download (問題回報 #1435).
+    var reachedServer = false;
     try {
       if (_activePair != pair) {
         String? saved;
@@ -401,6 +404,7 @@ class DictionarySync extends ChangeNotifier {
         });
       final response =
           await client.send(request).timeout(const Duration(seconds: 60));
+      reachedServer = true;
       if (!current()) {
         unawaited(response.stream.drain<void>().catchError((_) {}));
         return;
@@ -487,7 +491,14 @@ class DictionarySync extends ChangeNotifier {
         } catch (_) {}
       }
       if (current()) {
-        status = '暫時無法連線 · 使用已儲存的詞庫，稍後自動重試';
+        // Only "no network at all" says offline. A 503 (server warming or
+        // busy), a timeout or a download cut off midway means the server is
+        // there, so the dictionary just can't update right now.
+        final offline = !reachedServer &&
+            (e is SocketException || e is http.ClientException);
+        status = offline
+            ? '暫時無法連線 · 使用已儲存的詞庫，稍後自動重試'
+            : '詞庫暫時無法更新，稍後重試';
         hasError = true;
         BackgroundErrors.instance.report(this, status, retry: refresh);
       }

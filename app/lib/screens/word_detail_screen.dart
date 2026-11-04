@@ -377,6 +377,28 @@ class _WordBody extends StatelessWidget {
       ),
       if (entry.dataStatus != WordDataStatus.complete)
         _DataStatus(entry: entry),
+      // 問題回報 #617: a word with no photo of the learner's own (added from
+      // the database or by hand) still shows the database pictures that tag
+      // it, with their word labels. 問題回報 #1411 (卡 #958): above the
+      // meanings so the first screen has a picture (apple on an iPad).
+      if (contexts.isEmpty && databaseImages.isNotEmpty)
+        _Section(
+          label: '資料庫圖片（${databaseImages.length}）',
+          child: Column(
+            children: [
+              for (final (i, image) in databaseImages.take(3).indexed)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: MSpace.sm),
+                  child: SizedBox(
+                      key: i == 0
+                          ? const ValueKey('word-detail-first-image')
+                          : null,
+                      height: i == 0 ? 160 : 240,
+                      child: DatabaseImageTile(image: image)),
+                ),
+            ],
+          ),
+        ),
       if (entry.effectiveUsages.length > 1 && meaningUsages.isNotEmpty)
         _Section(
           label: '詞性與意思',
@@ -389,19 +411,22 @@ class _WordBody extends StatelessWidget {
                 TagChip(posLabel(usage.pos)),
                 const SizedBox(height: MSpace.xxs),
                 _MoreList(
-                  initial: initialShown([
-                    for (final s in usage.senses)
-                      if (s.meaning.trim().isNotEmpty) s.meaning
-                  ], 3, floor: 1),
+                  initial: initialShown(
+                      {
+                        for (final s in usage.senses)
+                          if (s.meaning.trim().isNotEmpty) s.meaning
+                      },
+                      3,
+                      floor: 1),
                   children: [
-                    for (final sense in orderedSenses(usage))
-                      if (sense.meaning.trim().isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: MSpace.xxs),
-                          child: Text(sense.meaning,
-                              style: MFont.manrope(
-                                  17, FontWeight.w700, MColors.ink)),
-                        ),
+                    // 問題回報 #1411: the same Chinese twice (蘋果／蘋果) shows once.
+                    for (final sense in _distinctMeanings(orderedSenses(usage)))
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: MSpace.xxs),
+                        child: Text(sense.meaning,
+                            style: MFont.manrope(
+                                17, FontWeight.w700, MColors.ink)),
+                      ),
                   ],
                 ),
                 const SizedBox(height: MSpace.xs),
@@ -500,23 +525,6 @@ class _WordBody extends StatelessWidget {
                 );
               },
             ),
-          ),
-        ),
-      // 問題回報 #617: a word with no photo of the learner's own (added from
-      // the database or by hand) still shows the database pictures that tag
-      // it, with their word labels.
-      if (contexts.isEmpty && databaseImages.isNotEmpty)
-        _Section(
-          label: '資料庫圖片（${databaseImages.length}）',
-          child: Column(
-            children: [
-              for (final image in databaseImages.take(3))
-                Padding(
-                  padding: const EdgeInsets.only(bottom: MSpace.sm),
-                  child: SizedBox(
-                      height: 240, child: DatabaseImageTile(image: image)),
-                ),
-            ],
           ),
         ),
       if (entry.tags.isNotEmpty)
@@ -633,7 +641,10 @@ class _DataStatus extends StatelessWidget {
                       ? '部分內容尚未補齊，詞庫更新後會自動補上。'
                       // 問題回報 #1285: translate each label first; the
                       // template would otherwise copy 「{N}意思」 verbatim.
-                      : '尚缺：${[for (final n in missingFieldNames(entry)) ui(context, n)].join('、')}。詞庫更新後會自動補上。')
+                      : '尚缺：${[
+                          for (final n in missingFieldNames(entry))
+                            ui(context, n)
+                        ].join('、')}。詞庫更新後會自動補上。')
                   : '正在整理單字內容…',
               style: MFont.manrope(12, FontWeight.w700,
                   failed ? MColors.hardFg : MColors.primary),
@@ -829,4 +840,13 @@ class _ArchiveButton extends StatelessWidget {
       ),
     );
   }
+}
+
+/// [senses] without a repeated meaning text (first one wins), blanks dropped.
+List<WordSense> _distinctMeanings(List<WordSense> senses) {
+  final seen = <String>{};
+  return [
+    for (final s in senses)
+      if (s.meaning.trim().isNotEmpty && seen.add(s.meaning.trim())) s,
+  ];
 }

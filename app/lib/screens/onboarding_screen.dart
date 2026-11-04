@@ -334,7 +334,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ? '第一階段尚未提供詞庫'
                   : languagePairAvailable(e.key, _native) || _native == e.key
                       ? null
-                      : frenchNeedsEnglishNative,
+                      : pairUnavailableNote(e.key, _native),
               selected: _learning == e.key,
               onTap: learningLanguageAvailable(e.key) &&
                       (languagePairAvailable(e.key, _native) ||
@@ -358,7 +358,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   : languagePairAvailable(_learning, e.key) ||
                           _learning == e.key
                       ? null
-                      : frenchNeedsEnglishNative,
+                      : pairUnavailableNote(_learning, e.key),
               selected: _native == e.key,
               onTap: nativeLanguageAvailable(e.key) &&
                       languagePairAvailable(_learning, e.key) &&

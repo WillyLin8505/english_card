@@ -98,7 +98,11 @@ Future<void> _start() async {
       // The downloaded language pack first, then the older bundled data.
       lookupDetail: (w) =>
           LexiconPack.instance.detail(w) ??
-          WordDetailService.instance.lookup(w),
+          // Card #957: the bundled word_db.json is Traditional Chinese only;
+          // for any other native language it would show Chinese examples.
+          (settings.nativeLanguage == 'zh-TW'
+              ? WordDetailService.instance.lookup(w)
+              : null),
       profile: UserVocabularyProfile.start(settings.legacyLevel ?? 'A1'),
     )
       ..linkLexicon(LexiconPack.instance, fold: false, refreshWords: false)

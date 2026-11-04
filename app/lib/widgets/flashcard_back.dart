@@ -694,6 +694,9 @@ class FlashcardBack extends StatelessWidget {
                 // definition (English, or French for French) folded away;
                 // tapping the meaning opens and closes it. B2 and up as before.
                 _FoldedDefinition(
+                    // 問題回報 #1290: with no example the card would show only
+                    // a meaning and a chevron — open the definition.
+                    initiallyOpen: _examples().isEmpty,
                     meaning: meaningText,
                     definition: definitionText(definition))
               else ...[
@@ -726,7 +729,7 @@ class FlashcardBack extends StatelessWidget {
                 }
               }
             },
-            height: look.photoHeight,
+            height: look.backPhotoHeight(MediaQuery.sizeOf(context).height),
             radius: look.photoRadius,
             // 圖片沉浸 (#317): the word is written on the photo — the same
             // headword as without a photo (French lowercase + article, #499).
@@ -745,7 +748,15 @@ class FlashcardBack extends StatelessWidget {
       case CardBackField.example:
         // Spec sections 4 and 7: 3–5 examples at the learner's level.
         final recommended = _examples();
-        if (recommended.isEmpty) return null;
+        if (recommended.isEmpty) {
+          // 問題回報 #1290: say so instead of leaving the card bare.
+          return _Block(
+            '例句與翻譯',
+            UiText('這個字還沒有例句，詞庫更新後會自動補上。',
+                style: MFont.manrope(13, FontWeight.w600, MColors.muted)),
+            showTitle: false,
+          );
+        }
         return _Block(
           '例句與翻譯',
           _numbered(
@@ -1465,14 +1476,19 @@ class _FoldedDefinition extends StatefulWidget {
   final Widget meaning;
   final Widget definition;
 
-  const _FoldedDefinition({required this.meaning, required this.definition});
+  final bool initiallyOpen;
+
+  const _FoldedDefinition(
+      {required this.meaning,
+      required this.definition,
+      this.initiallyOpen = false});
 
   @override
   State<_FoldedDefinition> createState() => _FoldedDefinitionState();
 }
 
 class _FoldedDefinitionState extends State<_FoldedDefinition> {
-  bool _open = false;
+  late bool _open = widget.initiallyOpen;
 
   @override
   Widget build(BuildContext context) => Column(

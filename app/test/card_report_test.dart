@@ -58,6 +58,25 @@ void main() {
     expect(jsonDecode(seen.last.body)['reporter'], 'App 使用者');
   });
 
+  test('a report the server refuses (401) does not block the ones behind it',
+      () async {
+    final sent = <String>[];
+    final service = CardReportService(
+        remote: true,
+        persist: false,
+        client: MockClient((r) async {
+          final title = jsonDecode(r.body)['title'] as String;
+          if (title.startsWith('[記憶體]')) return http.Response('no', 401);
+          sent.add(title);
+          return http.Response('{"id": 7}', 200);
+        }));
+    await service.submitIssue({'title': '[記憶體] a', 'reporter': 'App 使用者'});
+    expect(service.lastStatus, 401);
+    expect(await service.submit(report), true);
+    expect(sent.single, startsWith('[卡片回報]'));
+    expect(service.pendingCount, 1);
+  });
+
   testWidgets('review card has a report button that opens the dialog',
       (tester) async {
     await pumpApp(tester,
