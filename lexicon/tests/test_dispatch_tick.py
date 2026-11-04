@@ -118,6 +118,26 @@ def test_ui_kill_pattern_spares_other_projects():
     assert re.search(pat, ours) and not re.search(pat, other) and not re.search(pat, other_npm)
 
 
+def test_priority_task_goes_first_in_swarm(monkeypatch):
+    """owner 11/04 「法文優先」: a priority_tasks card takes the next CLI before owner issues."""
+    import pick_card
+    owner_issue = {"key": "i1", "issue_id": 1, "task_id": None, "difficulty": 3, "title": "[owner] x"}
+    french = {"key": "t833", "issue_id": None, "task_id": 833, "difficulty": 3, "title": "[owner] 補齊法文詞條"}
+    monkeypatch.setattr(pick_card, "candidates", lambda *a, **k: [owner_issue, french])
+    monkeypatch.setattr(dt, "http", lambda *a, **k: {"items": []})
+    tick = dt.Tick.__new__(dt.Tick)
+    tick.cfg = dict(dt.DEFAULT_CFG, priority_tasks=[833],
+                    issue_swarm={"enabled": True, "max_parallel": 3, "codex_parallel": 0})
+    tick.dry, tick.events, tick.summary, tick.caps, tick.now = True, [], [], {}, NOW
+    tick.state, tick.night_tasks = {"runs": {}}, []
+    tick.limited = lambda agent: False
+    tick.prior_busy = lambda tid: False
+    launched = []
+    tick.launch = lambda agent, c: launched.append(c["key"])
+    tick.swarm({"bots": [], "deck": [], "recurring": []})
+    assert launched[0] == "t833"
+
+
 # cooldown
 def _rec(last_hours_ago, history=()):
     return {"kind": "recurring", "last_run_at": (NOW - timedelta(hours=last_hours_ago)).isoformat(),

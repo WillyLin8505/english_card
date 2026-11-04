@@ -87,6 +87,8 @@ launches a card for each idle AI (pick_card rules + `lexicon/tools/dispatch_conf
 - Night simulation (owner, 2026-11-03: the PC is free at night): inside `night_simulation.window` (01:00–07:00) the
   user-simulation cards (#12, #224–#228, #496) rerun every `cooldown_hours` (1 h) instead of 12 h; what they find becomes
   問題回報 and the swarm opens cards. The Mac does the same on the iPad (docs/mac_inbox.md M611).
+- `priority_tasks` in dispatch_config.json (owner 11/04 「法文優先」, now #833): those cards take the next free CLI
+  before every issue; take a card out when it is done.
 - Hung services (owner, 2026-11-04: the API hung 12 h with its port open and nothing ran): after
   `api_hang_restart_after` (3) failed board reads in a row, then every 15 more, the tick runs `watchdog.restart_hung`:
   the API (8770 `/health`) or admin UI (5173) whose port is open but doesn't answer within 15 s is stopped and started again.

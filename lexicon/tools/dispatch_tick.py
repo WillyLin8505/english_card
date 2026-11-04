@@ -1052,7 +1052,15 @@ class Tick:
             ids = [c["issue_id"]] if c.get("issue_id") else task_issues.get(c.get("task_id"), [])
             return any(reporters.get(i, "").startswith(("owner", "App 使用者")) for i in ids)
 
-        issues.sort(key=lambda c: not from_owner(c))
+        # owner 11/04 「法文優先」: priority_tasks take the next free CLI before anything else
+        prio = [int(t) for t in self.cfg.get("priority_tasks") or []]
+        have = {c.get("task_id") for c in issues}
+        for c in cands:
+            if c.get("task_id") in prio and c["task_id"] not in have and not self.prior_busy(c["task_id"]):
+                issues.append(c)
+                have.add(c["task_id"])
+        issues.sort(key=lambda c: (c.get("task_id") not in prio, not from_owner(c),
+                                   prio.index(c["task_id"]) if c.get("task_id") in prio else 0))
         if owner_only:
             issues = [c for c in issues if from_owner(c)]
         extra = int(cfg.get("owner_extra", 5))
