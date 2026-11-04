@@ -181,9 +181,11 @@ def restart_llama_server():
     """Restarts only our llama-server (child of tagger/start_llm.py, port 8790) — never Ollama's own runner,
     also named llama-server.exe — and starts start_llm.py again (it refuses if one already answers)."""
     subprocess.run(["powershell", "-NoProfile", "-Command",
-                    "$py = Get-CimInstance Win32_Process | Where-Object { $_.ProcessId -ne $PID -and $_.CommandLine -match 'start_llm\\.py' };"
-                    " $ids = @($py.ProcessId) + @($py.ParentProcessId) + @(Get-CimInstance Win32_Process -Filter \"Name='llama-server.exe'\""
-                    " | Where-Object { $py.ProcessId -contains $_.ParentProcessId } | ForEach-Object { $_.ProcessId });"
+                    # the python running start_llm.py, its cmd /k window (only a cmd.exe parent) and its llama-server child
+                    "$all = Get-CimInstance Win32_Process;"
+                    " $py = $all | Where-Object { $_.Name -like 'python*' -and $_.CommandLine -match 'start_llm\\.py' };"
+                    " $ids = @($py.ProcessId) + @($all | Where-Object { $_.Name -eq 'cmd.exe' -and $py.ParentProcessId -contains $_.ProcessId } | ForEach-Object { $_.ProcessId })"
+                    " + @($all | Where-Object { $_.Name -eq 'llama-server.exe' -and $py.ProcessId -contains $_.ParentProcessId } | ForEach-Object { $_.ProcessId });"
                     " $ids | Where-Object { $_ } | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }"],
                    capture_output=True, timeout=60, creationflags=NO_WINDOW)
     console("LLM server", f'python "{ROOT / "tagger" / "start_llm.py"}"', ROOT / "tagger")

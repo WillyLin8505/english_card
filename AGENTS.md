@@ -92,6 +92,10 @@ launches a card for each idle AI (pick_card rules + `lexicon/tools/dispatch_conf
 - Hung services (owner, 2026-11-04: the API hung 12 h with its port open and nothing ran): after
   `api_hang_restart_after` (3) failed board reads in a row, then every 15 more, the tick runs `watchdog.restart_hung`:
   the API (8770 `/health`) or admin UI (5173) whose port is open but doesn't answer within 15 s is stopped and started again.
+- Qwen GPU guard (owner 11/05 「好，卸載它」): photo_tidy_up's Ollama keeps qwen3-vl in the shared 8 GB GPU forever and
+  stalled our llama-server 23:11–04:46. Each tick checks `:8790/health`: 2 failures in a row → unload any Ollama model idle
+  ≥ 5 min (it reloads on demand); 4 → restart only our llama-server (start_llm.py's child, never Ollama's runner).
+  `qwen_gpu_guard: false` in dispatch_config.json turns it off.
 - Dry run: `python lexicon/tools/dispatch_tick.py --dry-run`. Tests: `lexicon/tests/test_dispatch_tick.py`.
 
 ## AI 資源上限 (owner, 2026-10-31: PC powered off under load; 11-02: CPU and GPU 80 %, Qwen and gap-fill cards run all day)
