@@ -90,15 +90,50 @@ def ensure_all(log=print) -> list[str]:
         started.append("tagger + llama-server")
     elif port_up(8765) and not port_up(8790) and not running(procs, "llama-server") and not running(procs, "start_llm.py"):
         # llama-server died under a live tagger (#445): restart the pair the one allowed way
-        subprocess.run(["powershell", "-NoProfile", "-Command",
-                        "Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -match 'tagging_server.py' }"
-                        " | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }"],
-                       capture_output=True, timeout=60, creationflags=NO_WINDOW)
+        kill_matching(r"tagging_server\.py")
         console("tagger", r"tagger\start_tagger.bat", ROOT)
         started.append("tagger + llama-server (llama-server had stopped)")
     if started:
         log(f"watchdog: started {', '.join(started)}")
     return started
+
+
+def http_ok(url: str, timeout: float = 15) -> bool:
+    import urllib.request
+    try:
+        with urllib.request.urlopen(url, timeout=timeout) as r:
+            return r.status == 200
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def kill_matching(pattern: str):
+    """Stops every process whose command line matches `pattern` (PowerShell -match), and its cmd /k window."""
+    subprocess.run(["powershell", "-NoProfile", "-Command",
+                    # $PID: this PowerShell's own command line contains the pattern too
+                    f"Get-CimInstance Win32_Process | Where-Object {{ $_.ProcessId -ne $PID -and $_.CommandLine -match '{pattern}' }}"
+                    " | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"],
+                   capture_output=True, timeout=60, creationflags=NO_WINDOW)
+
+
+def restart_hung(log=print) -> list[str]:
+    """Owner 11/04: the API sat hung from 09:17 to 22:00 (port open, nothing answered), so ensure_all,
+    which only restarts stopped services, never acted and dispatch stood still for 12 hours.
+    dispatch_tick calls this after the board has failed several ticks in a row: a service whose port
+    is open but whose HTTP check fails is stopped and started again the usual way."""
+    restarted = []
+    if port_up(8770) and not http_ok("http://127.0.0.1:8770/health"):
+        kill_matching(r"uvicorn app\.main:app|run_api\.bat")
+        console("lexicon API", f'"{LEX / "run_api.bat"}"', LEX)
+        restarted.append("lexicon API (8770 hung)")
+    if port_up(5173) and not http_ok("http://127.0.0.1:5173/"):
+        # only lexicon's UI: other projects run their own vite / npm run dev (photo_tidy_up on 5180)
+        kill_matching(r"english_card\\lexicon\\frontend.*vite|--port 5173 --strictPort|--prefix frontend run dev")
+        console("lexicon UI", "npm --prefix frontend run dev", LEX)
+        restarted.append("admin UI (5173 hung)")
+    if restarted:
+        log(f"watchdog: restarted {', '.join(restarted)}")
+    return restarted
 
 
 if __name__ == "__main__":

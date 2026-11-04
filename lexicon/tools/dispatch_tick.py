@@ -244,6 +244,11 @@ def release_lock(path: Path = LOCK_FILE):
 
 # ── pure decision logic (tested) ─────────────────────────────────────
 
+def hang_restart_due(fails: int, after: int = 3, every: int = 15) -> bool:
+    """After `after` failed board reads in a row (6 min), then every `every` more (30 min): restart what hangs."""
+    return fails >= after and (fails - after) % every == 0
+
+
 def classify_run(launched_at: float, result_mtime: float | None, alive: bool | None,
                  limit_line: str | None, now: float, grace_s: float = 600) -> str:
     """'finished' | 'running' | 'limit' | 'failed' | 'unknown'."""
@@ -1262,6 +1267,15 @@ class Tick:
             log(f"board unreachable ({e}); consecutive={n}")
             if n == 3:
                 self.event("error", outcome=f"看板 API 連不上（連續 {n} 次）：{str(e)[:120]}")
+            # owner 11/04: the API hung 12 h with its port open, so the watchdog (stopped services only)
+            # never acted. After `api_hang_restart_after` failed ticks, and then every 15 more, restart what hangs.
+            if not self.dry and os.name == "nt" and hang_restart_due(n, int(self.cfg.get("api_hang_restart_after", 3))):
+                try:
+                    from watchdog import restart_hung
+                    if done := restart_hung(log):
+                        self.event("recovered", outcome=f"看板卡住，已重新啟動：{', '.join(done)}")
+                except Exception as e2:  # noqa: BLE001
+                    log(f"restart_hung failed: {e2}")
             self.save()
             return 2
         if self.state.pop("api_fail", 0) >= 3:
