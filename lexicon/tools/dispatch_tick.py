@@ -1293,6 +1293,7 @@ class Tick:
             self.save()
             return 0
         self.qwen_schedule()
+        self.qwen_health()
         changed = self.check_running(board)
         changed |= self.unblock(board)
         changed |= self.answered()
@@ -1614,6 +1615,28 @@ class Tick:
         except OSError:
             subprocess.Popen([python_exe(), str(tool), "night"], cwd=ROOT, stdout=subprocess.DEVNULL,
                              stderr=subprocess.DEVNULL, creationflags=flags)
+
+    def qwen_health(self):
+        """Owner 11/05: Qwen stalled 23:11–04:46 under photo_tidy_up's Ollama model and the fill cards
+        ran 100+ empty rounds. Counts failed /health checks of a running llama-server (port open);
+        watchdog.free_gpu_for_qwen unloads the stray model at 2, restarts our llama-server at 4."""
+        if self.dry or os.name != "nt" or not self.cfg.get("qwen_gpu_guard", True):
+            return
+        import watchdog
+        if not watchdog.port_up(8790):
+            self.state.pop("qwen_fail", None)  # not running at all: the hourly ensure_all handles that
+            return
+        if watchdog.http_ok("http://127.0.0.1:8790/health", timeout=10):
+            if self.state.pop("qwen_fail", 0) >= 2:
+                self.event("recovered", outcome="Qwen 恢復回應")
+            return
+        n = self.state["qwen_fail"] = self.state.get("qwen_fail", 0) + 1
+        log(f"Qwen /health failed; consecutive={n}")
+        try:
+            if done := watchdog.free_gpu_for_qwen(n, log):
+                self.event("recovered", outcome=f"Qwen 卡住：{'；'.join(done)}")
+        except Exception as e:  # noqa: BLE001
+            log(f"free_gpu_for_qwen failed: {e}")
 
     def qwen_schedule(self):
         """owner 10/21: Qwen runs only inside qwen_schedule.windows (09:30–19:30, 00:00–06:00), paused otherwise.

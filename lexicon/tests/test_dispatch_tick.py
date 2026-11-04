@@ -138,6 +138,35 @@ def test_priority_task_goes_first_in_swarm(monkeypatch):
     assert launched[0] == "t833"
 
 
+def test_free_gpu_for_qwen_steps(monkeypatch):
+    """owner 11/05: unload photo_tidy_up's idle Ollama model at 2 failed checks, restart llama at 4."""
+    import watchdog as wd
+    unloaded, restarts = [], []
+    monkeypatch.setattr(wd, "ollama_resident", lambda: ["qwen3-vl:4b-instruct-q4_K_M"])
+    monkeypatch.setattr(wd, "ollama_unload", unloaded.append)
+    monkeypatch.setattr(wd, "restart_llama_server", lambda: restarts.append(1))
+    monkeypatch.setattr(wd, "port_up", lambda port: True)
+    quiet = lambda *_: None  # noqa: E731
+    monkeypatch.setattr(wd, "ollama_idle_minutes", lambda: 1.0)  # photo_tidy_up busy right now
+    assert wd.free_gpu_for_qwen(2, quiet) == [] and unloaded == []
+    monkeypatch.setattr(wd, "ollama_idle_minutes", lambda: 30.0)
+    assert wd.free_gpu_for_qwen(1, quiet) == []
+    assert wd.free_gpu_for_qwen(2, quiet) and unloaded == ["qwen3-vl:4b-instruct-q4_K_M"]
+    assert wd.free_gpu_for_qwen(3, quiet) == [] and restarts == []
+    assert wd.free_gpu_for_qwen(4, quiet) == ["restarted llama-server"] and restarts == [1]
+
+
+def test_ollama_idle_minutes_reads_last_post(tmp_path):
+    import watchdog as wd
+    from datetime import datetime, timedelta
+    at = (datetime.now() - timedelta(minutes=12)).strftime("%Y/%m/%d - %H:%M:%S")
+    log = tmp_path / "server.log"
+    log.write_text(f'[GIN] {at} | 200 | 1.2s | 127.0.0.1 | POST     "/api/chat"\n'
+                   '[GIN] 2099/01/01 - 00:00:00 | 200 | 1ms | 127.0.0.1 | GET      "/api/tags"\n', encoding="utf-8")
+    assert 11.5 < wd.ollama_idle_minutes(log) < 12.5
+    assert wd.ollama_idle_minutes(tmp_path / "none.log") == float("inf")
+
+
 # cooldown
 def _rec(last_hours_ago, history=()):
     return {"kind": "recurring", "last_run_at": (NOW - timedelta(hours=last_hours_ago)).isoformat(),
