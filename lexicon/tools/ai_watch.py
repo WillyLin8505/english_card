@@ -68,6 +68,10 @@ GPU_IDLE_PCT = 25  # the desktop alone is about 15 %
 # owner 11/05: the PC powered off again after 8 min at GPU 100 % ??bursts are now 40 % on
 GPU_ON_S = 0.4
 GPU_OFF_S = 0.6
+# owner 11/05: all three power-offs were bug check 0x116 VIDEO_TDR_FAILURE (the NVIDIA driver timed out and could not
+# recover), each while the bursts were suspending llama-server mid-GPU-work. Suspending a process with GPU work in
+# flight is a known TDR trigger, so the model servers are no longer suspended (bursts and rests off).
+GPU_SUSPEND = False
 GPU_STUCK_PCT = 90  # this high for GPU_STUCK_SAMPLES samples while bursting = the bursts don't work
 GPU_STUCK_SAMPLES = 3
 GPU_TEMP_C = 85
@@ -512,7 +516,7 @@ def steer(job, trees: dict[int, object], s: dict) -> None:
     set_cpu_cap(job, shared_cap())
     for tree in trees.values():  # the share changes with the number of CLIs too
         set_cpu_cap(tree, tree_cap(len(trees)))
-    pacing = gpu_pacing(s["gpu"], bool(paced))
+    pacing = GPU_SUSPEND and gpu_pacing(s["gpu"], bool(paced))
     paced = gpu_processes() if pacing else []
     write_pace([p.pid for p in paced])
     if pacing != s["pacing"]:
@@ -619,7 +623,9 @@ def main(argv=None) -> int:
             write_log(f"{now} pacer not running ??started")
             start_pacer()
         stuck = stuck + 1 if paced and (s["gpu"] or 0) >= GPU_STUCK_PCT else 0
-        if s["gpu_c"] is not None and s["gpu_c"] >= GPU_TEMP_C:
+        if not GPU_SUSPEND:
+            pass
+        elif s["gpu_c"] is not None and s["gpu_c"] >= GPU_TEMP_C:
             write_log(f"{now} gpu rest: {rest_gpu()} server(s) for {GPU_REST_S}s")
         elif stuck >= GPU_STUCK_SAMPLES:
             write_log(f"{now} gpu still {s['gpu']}% with bursts ({stuck} samples) ??rest: "
