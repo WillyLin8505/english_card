@@ -1233,6 +1233,10 @@ class LocalCalc(SourceAdapter):
             homograph = bool(first_ipa and other_ipa - {first_ipa}) and any(
                 str(l).startswith("etymology-") for x in senses
                 if x.get("pos") in main for l in (x.get("labels") or []))
+            agreement = set()
+            if ctx.target == "fr":
+                from .kaikki import fr_agreement_form_pos
+                agreement = set(fr_agreement_form_pos(ctx.lemma)) - set(by_pos)
             for item in ctx.items("example_sentences"):
                 k = item.get("key") or example_key(item.get("text", ""))
                 if item.get("sense_key") and any(s.get("sense_key") == item["sense_key"]
@@ -1247,6 +1251,9 @@ class LocalCalc(SourceAdapter):
                     use = _usage_pos_fr(item.get("text", ""), forms, verb_only)
                 if use == "other":
                     continue  # 「the wound」: a verb form used as a noun is another word
+                if agreement and fr_agreement_use(item.get("text", ""), forms, verb_only,
+                                                  set(by_pos), agreement):
+                    continue  # «la ville»: le's article, not la the note A (卡 #993)
                 # A French sentence shares no words with an English gloss:
                 # its sense is the part of speech it shows (card #329).
                 words = (set(tokens(item.get("text", "")))
@@ -1493,7 +1500,10 @@ def _fr_guess_pos(text: str, forms, avail) -> str | None:
     if "adj" in avail and (prev in _FR_BE or prev in _FR_DEGREE) and (last or nxt in FR_PHRASE_END):
         return "adj"
     if "det" in avail and "pron" in avail:
-        verbal = nxt in FR_PHRASE_END or nxt in _FR_BE or nxt in {"qui", "que", "qu", "n"} or last
+        # «Je ne la vois pas», «il le dit»: after a subject or clitic it is
+        # the object pronoun (卡 #993).
+        verbal = nxt in FR_PHRASE_END or nxt in _FR_BE or nxt in {"qui", "que", "qu", "n"} or last \
+            or prev in _FR_CLITIC_HOSTS
         return "pron" if verbal else "det"
     if "det" in avail and not last and nxt not in _FR_BE:
         return "det"
@@ -1511,6 +1521,22 @@ def _fr_guess_pos(text: str, forms, avail) -> str | None:
         glued = re.search(re.escape(cased[i]) + r"\s+\w", stripped, re.I)
         return "conj" if glued and (nxt in _FR_SUBJ or nxt in FR_DETERMINERS) else None
     return None
+
+
+def fr_agreement_use(text: str, forms, verb_only, own_pos, form_pos) -> bool:
+    """The sentence uses the headword as another word's gender / number form
+    (卡 #993, 問題回報 #1514): «Florence est la ville…» is le's article, not
+    la the note A; «Cette veste est trop fine» is fin's adjective, not the
+    noun fine. ``form_pos`` = kaikki.fr_agreement_form_pos minus ``own_pos``.
+    Such a sentence gets no sense here (unbound: kept for review, never in a
+    card, like an unresolved usage)."""
+    if not form_pos:
+        return False
+    avail = set(own_pos) | set(form_pos)
+    use = _usage_pos_fr(text, forms, verb_only)
+    if use not in avail:
+        use = _fr_guess_pos(text, forms, avail)
+    return use in form_pos
 
 
 def _usage_pos_fr(text: str, forms, verb_only) -> str | None:

@@ -21,7 +21,9 @@ from ..quality import example_flags
 from ..text import CJK, example_key, fold, looks_simplified, opencc
 from . import http
 from .base import Candidate, Context, SourceAdapter
-from .local import LEVELS, _usage_pos, _usage_pos_fr, _verb_only_forms, sentence_level, word_forms
+from .kaikki import fr_agreement_form_pos
+from .local import (LEVELS, _usage_pos, _usage_pos_fr, _verb_only_forms, fr_agreement_use,
+                    sentence_level, word_forms)
 
 CODE3 = {"en": "eng", "fr": "fra", "zh-TW": "cmn"}
 EXPORTS = "https://downloads.tatoeba.org/exports/per_language"
@@ -186,6 +188,9 @@ class Tatoeba(SourceAdapter):
             forms = word_forms(ctx)
             form_list = list(forms)
             verb_only = _verb_only_forms(ctx) if ctx.target == "fr" else frozenset()
+            own_pos = {i.get("pos") for i in ctx.items("pos") if i.get("pos")}
+            agreement = set(fr_agreement_form_pos(ctx.lemma)) - own_pos \
+                if ctx.target == "fr" and own_pos else set()
             for s in sentences:
                 if ctx.target != "zh-TW" and len(s["text"].split()) > catalog.MAX_EXAMPLE_WORDS:
                     continue
@@ -211,6 +216,9 @@ class Tatoeba(SourceAdapter):
                     # 「la place」 on placer, 「un masque」 on masquer: a verb form
                     # after a determiner is a noun, another word (問題回報 #575).
                     continue
+                elif ctx.target == "fr" and agreement and fr_agreement_use(
+                        s["text"], forms, verb_only, own_pos, agreement):
+                    continue  # «la ville» is le's article, not la the note A (卡 #993)
                 level = sentence_level(s["text"], forms) if ctx.target == "en" \
                     else length_level(s["text"])
                 buckets[level].append({**s, "_odd": "odd_name" in flags,

@@ -226,6 +226,35 @@ def dropped_pos(entries) -> set[str]:
     return inflection_only_pos(entries) | out_of_use_pos(entries)
 
 
+NOT_AGREEMENT_TAGS = {"alt-of", "alternative", "abbreviation", "dialectal", "misspelling",
+                      "obsolete", "archaic"}
+
+
+def agreement_form_pos(entries) -> set[str]:
+    """Determiner / adjective uses dropped as another word's gender or number
+    form while the headword keeps a homograph (卡 #993, 問題回報 #1514): la
+    the article is 「feminine of le」 beside la the note A, une 「feminine of
+    un」 beside la une, fine 「feminine of fin」 beside the noun fine. A
+    sentence showing that use belongs to le / un / fin, not to the homograph.
+    Not a dialect spelling (maire 「alternative form of maigre」)."""
+    out = set()
+    for p in inflection_only_pos(entries) & {"det", "adj"}:
+        senses = [s for e in entries if _pos(e) == p for s in e.get("senses", []) if _gloss(s)]
+        if senses and all(form_bases(s) and not (NOT_AGREEMENT_TAGS & set(s.get("tags", [])))
+                          for s in senses):
+            out.add(p)
+    return out
+
+
+def fr_agreement_form_pos(word: str) -> frozenset[str]:
+    """agreement_form_pos of a French headword from the local index (no
+    network; empty without the index)."""
+    w = normalize_lemma(word, "fr")
+    entries = [e for e in kaikki_index.lookup("fr", w) or []
+               if e.get("lang_code") == "fr" and normalize_lemma(e.get("word", ""), "fr") == w]
+    return frozenset(agreement_form_pos(entries))
+
+
 # Recording file names say the accent when the tags don't
 # (en-uk-London-bottle.ogg, EN-AU ck1 bench.ogg, en-us-bird.ogg).
 FILE_ACCENTS = {"uk": "UK", "gb": "UK", "us": "US", "au": "AU", "ca": "CA", "nz": "NZ",
