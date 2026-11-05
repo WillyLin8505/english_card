@@ -48,6 +48,43 @@ class PrioritySlots:
                 self.condition.notify_all()
 
 
+class GpuDuty:
+    """Keeps the GPU idle part of the time (owner 11/06: 「GPU 已經百分百快爆了」).
+
+    Any model call keeps the GPU at ~92-100 %. After a call that ran T seconds, no
+    background call starts for T * (1 - duty) / duty seconds, so under steady
+    import load the GPU is busy about ``duty`` of the time. Interactive calls (a
+    learner's photo) never wait but still count. Cooperative: nothing is suspended
+    (suspending llama-server preceded three VIDEO_TDR_FAILURE crashes)."""
+
+    def __init__(self, duty, clock=time.monotonic, sleep=time.sleep):
+        self.duty = min(1.0, max(0.05, float(duty)))
+        self.clock, self.sleep = clock, sleep
+        self.quiet_until = 0.0
+        self.lock = threading.Lock()
+
+    def wait_s(self):
+        with self.lock:
+            return max(0.0, self.quiet_until - self.clock())
+
+    @contextlib.contextmanager
+    def run(self, wait=True):
+        while wait and self.duty < 1:
+            delay = self.wait_s()
+            if delay <= 0:
+                break
+            self.sleep(min(delay, 1.0))
+        started = self.clock()
+        try:
+            yield
+        finally:
+            if self.duty < 1:
+                ran = self.clock() - started
+                with self.lock:
+                    self.quiet_until = max(self.quiet_until,
+                                           self.clock() + ran * (1 - self.duty) / self.duty)
+
+
 def is_background(path, headers):
     # Existing workers already send image:<id>, including their /score rounds.
     # Explicit priority also covers standalone import tools. Unmarked App

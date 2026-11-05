@@ -62,7 +62,7 @@ from email.parser import BytesParser
 from email.policy import default as email_policy
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, unquote, urlparse
-from inference_control import PrioritySlots, is_background, is_qwen_paused
+from inference_control import GpuDuty, PrioritySlots, is_background, is_qwen_paused
 from repetition_guard import read_cefr_stream
 import tagger_config
 tagger_config.apply_defaults()  # card #70: bare start == start_tagger.bat
@@ -81,6 +81,9 @@ TRANSLATE_MAX_TOKENS = int(os.environ.get('TAGGER_TRANSLATE_NUM_PREDICT', '2400'
 # Model requests sent to Ollama at once. Match OLLAMA_NUM_PARALLEL: Ollama then
 # decodes them together, which raises total throughput on one GPU. 1 = serial.
 INFERENCE_PARALLEL = max(1, int(os.environ.get('TAGGER_PARALLEL', '1')))
+# Share of time background model calls may keep the GPU busy (owner 11/06: GPU at 100 %).
+# 1 = no pacing. See inference_control.GpuDuty.
+GPU_DUTY = GpuDuty(float(os.environ.get('TAGGER_GPU_DUTY', '0.6')))
 # 'ollama' (default) or 'llamacpp'. Ollama 0.35 runs qwen3.5 one request at a
 # time ("architecture does not currently support parallel requests"); the
 # llama-server it ships, started with -np N (start_llm.bat), decodes N at once.
@@ -1168,7 +1171,8 @@ class Tagger:
             data=json.dumps(body).encode(),
             headers={'Content-Type': 'application/json'},
         )
-        with urllib.request.urlopen(req, timeout=300) as resp:
+        background = getattr(self._admission.local, 'background', False)
+        with GPU_DUTY.run(wait=background), urllib.request.urlopen(req, timeout=300) as resp:
             if stream_cefr:
                 return loads_salvaging(read_cefr_stream(resp, on_timings=note_llama_timings))
             reply = json.loads(resp.read())
