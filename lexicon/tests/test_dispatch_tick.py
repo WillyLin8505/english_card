@@ -167,6 +167,26 @@ def test_ollama_idle_minutes_reads_last_post(tmp_path):
     assert wd.ollama_idle_minutes(tmp_path / "none.log") == float("inf")
 
 
+def test_hung_tagger_restarted_after_two_ticks(monkeypatch):
+    """owner 11/05: :8765 open but refusing → the French card ran 200 empty rounds."""
+    import watchdog as wd
+    restarts = []
+    monkeypatch.setattr(wd, "port_up", lambda port: True)
+    monkeypatch.setattr(wd, "http_ok", lambda url, timeout=15: "8790" in url)  # Qwen fine, tagger hung
+    monkeypatch.setattr(wd, "restart_tagger", lambda log=print: restarts.append(1))
+    monkeypatch.setattr(dt.os, "name", "nt")
+    tick = dt.Tick.__new__(dt.Tick)
+    tick.cfg, tick.dry, tick.events, tick.state = dict(dt.DEFAULT_CFG), False, [], {}
+    tick.event = lambda *a, **k: None
+    tick.qwen_health()
+    assert restarts == []
+    tick.qwen_health()
+    assert restarts == [1]
+    monkeypatch.setattr(wd, "http_ok", lambda url, timeout=15: True)
+    tick.qwen_health()
+    assert "tagger_fail" not in tick.state
+
+
 # cooldown
 def _rec(last_hours_ago, history=()):
     return {"kind": "recurring", "last_run_at": (NOW - timedelta(hours=last_hours_ago)).isoformat(),

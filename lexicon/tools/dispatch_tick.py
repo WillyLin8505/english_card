@@ -1623,6 +1623,15 @@ class Tick:
         if self.dry or os.name != "nt" or not self.cfg.get("qwen_gpu_guard", True):
             return
         import watchdog
+        # the tagger (:8765) the fill cards call: open but not answering for 2 ticks → restart it
+        if watchdog.port_up(8765) and not watchdog.http_ok("http://127.0.0.1:8765/health", timeout=10):
+            t = self.state["tagger_fail"] = self.state.get("tagger_fail", 0) + 1
+            log(f"tagger /health failed; consecutive={t}")
+            if t == 2 and watchdog.port_up(8790):
+                watchdog.restart_tagger(log)
+                self.event("recovered", outcome="tagger 卡住，已用 start_tagger.bat 重新啟動")
+        else:
+            self.state.pop("tagger_fail", None)
         if not watchdog.port_up(8790):
             self.state.pop("qwen_fail", None)  # not running at all: the hourly ensure_all handles that
             return

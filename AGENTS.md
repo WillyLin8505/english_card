@@ -95,7 +95,9 @@ launches a card for each idle AI (pick_card rules + `lexicon/tools/dispatch_conf
 - Qwen GPU guard (owner 11/05 「好，卸載它」): photo_tidy_up's Ollama keeps qwen3-vl in the shared 8 GB GPU forever and
   stalled our llama-server 23:11–04:46. Each tick checks `:8790/health`: 2 failures in a row → unload any Ollama model idle
   ≥ 5 min (it reloads on demand); 4 → restart only our llama-server (start_llm.py's child, never Ollama's runner).
-  `qwen_gpu_guard: false` in dispatch_config.json turns it off.
+  `qwen_gpu_guard: false` in dispatch_config.json turns it off. The same check restarts the tagger (`:8765` open but
+  `/health` failing 2 ticks, owner 11/05) via `start_tagger.bat`, and the hourly watchdog starts a missing tagger even
+  while llama-server runs (start_llm.py then starts no second one).
 - Dry run: `python lexicon/tools/dispatch_tick.py --dry-run`. Tests: `lexicon/tests/test_dispatch_tick.py`.
 
 ## AI 資源上限 (owner, 2026-10-31: PC powered off under load; 11-02: CPU and GPU 80 %, Qwen and gap-fill cards run all day)

@@ -93,6 +93,11 @@ def ensure_all(log=print) -> list[str]:
         kill_matching(r"tagging_server\.py")
         console("tagger", r"tagger\start_tagger.bat", ROOT)
         started.append("tagger + llama-server (llama-server had stopped)")
+    elif not port_up(8765) and not running(procs, "tagging_server.py") and port_up(8790):
+        # owner 11/05: the tagger was down all day under a live llama-server and nothing started it;
+        # start_tagger.bat is still the one way, its start_llm.py sees :8790 answer and starts no second one
+        console("tagger", r"tagger\start_tagger.bat", ROOT)
+        started.append("tagger (llama-server already up)")
     if started:
         log(f"watchdog: started {', '.join(started)}")
     return started
@@ -189,6 +194,15 @@ def restart_llama_server():
                     " $ids | Where-Object { $_ } | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }"],
                    capture_output=True, timeout=60, creationflags=NO_WINDOW)
     console("LLM server", f'python "{ROOT / "tagger" / "start_llm.py"}"', ROOT / "tagger")
+
+
+def restart_tagger(log=print):
+    """Owner 11/05: tagging_server sat with :8765 open but refusing every connection, so the French
+    gap-fill card ran 200 empty rounds. Stops it and its start_tagger.bat window and runs start_tagger.bat
+    again (its start_llm.py finds :8790 answering and starts no second llama-server)."""
+    kill_matching(r"tagging_server\.py|start_tagger\.bat")
+    console("tagger", r"tagger\start_tagger.bat", ROOT)
+    log("watchdog: restarted tagger (8765 hung)")
 
 
 def free_gpu_for_qwen(fails: int, log=print, idle_min: float = 5) -> list[str]:
