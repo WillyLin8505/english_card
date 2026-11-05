@@ -160,13 +160,28 @@ def _form_entry_bases(e: dict, word: str) -> list[str]:
     return []
 
 
+# Form-only parts of speech the owner keeps as an entry of their own, with the
+# gloss shown instead of 「feminine of le」 (問題回報 #1516 A, 卡 #993): a
+# learner looking up la / une must find the article, not only 「the note A」 /
+# 「front page」. lang_code → word → part of speech → gloss.
+KEPT_FORM_POS = {"fr": {
+    "la": {"det": "the (feminine singular definite article)"},
+    "une": {"det": "a, an (feminine singular indefinite article)"}}}
+
+
+def kept_form_pos(entries) -> dict[str, str]:
+    e0 = entries[0] if entries else {}
+    return KEPT_FORM_POS.get(e0.get("lang_code") or "", {}).get(e0.get("word") or "", {})
+
+
 def inflection_only_pos(entries) -> set[str]:
     """Parts of speech that are only another word's form (lying the verb:
     lie's participle) while the word means something of its own elsewhere
     (lying 說謊的). They get no entry: the app finds lie through its forms
     (問題回報 #51). Empty when every part of speech is a form (runs: the
-    whole word is run's, see adapters.base.inflection_bases)."""
-    real, form = set(), set()
+    whole word is run's, see adapters.base.inflection_bases). KEPT_FORM_POS
+    are never dropped."""
+    real, form, kept = set(), set(), set(kept_form_pos(entries))
     for e in entries:
         p = _pos(e)
         if not p or p == "name":
@@ -175,7 +190,7 @@ def inflection_only_pos(entries) -> set[str]:
             real.add(p)
         else:
             form.add(p)
-    return form - real if real else set()
+    return form - real - kept if real else set()
 
 
 OUT_OF_USE_TAGS = {"obsolete", "archaic"}
@@ -524,6 +539,7 @@ class Kaikki(SourceAdapter):
     def senses(self, entries, ctx) -> list[dict]:
         out, seen = [], set()
         forms_only = dropped_pos(entries)
+        kept = kept_form_pos(entries)
         # Homographs can occupy separate entries. A fallback is needed only
         # when the entire part of speech lacks independent meanings.
         real_pos = {_pos(e) for e in entries
@@ -537,14 +553,15 @@ class Kaikki(SourceAdapter):
             selected = real if pos in real_pos else [
                 s for s in e.get("senses", []) if _gloss(s)][:1]
             for s in selected:
-                g = _gloss(s)
+                g = kept.get(pos) or _gloss(s)
                 k = sense_key(pos, g)
                 if k in seen:
                     continue
                 seen.add(k)
                 tags = set(s.get("tags", []))
                 out.append({"pos": pos, "gloss": g, "sense_key": k, "sense": s, "entry": e,
-                            "low": bool(tags & LOW_TAGS), "form_of": _is_form_of(s)})
+                            "low": bool(tags & LOW_TAGS),
+                            "form_of": _is_form_of(s) and pos not in kept})
         return out
 
     def normalize(self, f: str, entries, ctx: Context) -> list[Candidate]:
