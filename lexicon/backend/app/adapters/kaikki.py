@@ -238,7 +238,7 @@ def agreement_form_pos(entries) -> set[str]:
     sentence showing that use belongs to le / un / fin, not to the homograph.
     Not a dialect spelling (maire 「alternative form of maigre」)."""
     out = set()
-    for p in inflection_only_pos(entries) & {"det", "adj"}:
+    for p in inflection_only_pos(entries) & {"det", "adj", "verb"}:
         senses = [s for e in entries if _pos(e) == p for s in e.get("senses", []) if _gloss(s)]
         if senses and all(form_bases(s) and not (NOT_AGREEMENT_TAGS & set(s.get("tags", [])))
                           for s in senses):

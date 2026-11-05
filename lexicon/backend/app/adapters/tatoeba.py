@@ -217,7 +217,7 @@ class Tatoeba(SourceAdapter):
                     # after a determiner is a noun, another word (問題回報 #575).
                     continue
                 elif ctx.target == "fr" and agreement and fr_agreement_use(
-                        s["text"], forms, verb_only, own_pos, agreement):
+                        s["text"], forms, verb_only, own_pos, agreement, ctx.lemma):
                     continue  # «la ville» is le's article, not la the note A (卡 #993)
                 level = sentence_level(s["text"], forms) if ctx.target == "en" \
                     else length_level(s["text"])

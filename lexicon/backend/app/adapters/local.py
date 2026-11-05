@@ -4,6 +4,7 @@ the lexicon's own entries, and the device TTS marker."""
 from __future__ import annotations
 
 import json
+import functools
 import re
 import unicodedata
 from functools import lru_cache
@@ -1252,7 +1253,7 @@ class LocalCalc(SourceAdapter):
                 if use == "other":
                     continue  # 「the wound」: a verb form used as a noun is another word
                 if agreement and fr_agreement_use(item.get("text", ""), forms, verb_only,
-                                                  set(by_pos), agreement):
+                                                  set(by_pos), agreement, ctx.lemma):
                     continue  # «la ville»: le's article, not la the note A (卡 #993)
                 # A French sentence shares no words with an English gloss:
                 # its sense is the part of speech it shows (card #329).
@@ -1523,20 +1524,92 @@ def _fr_guess_pos(text: str, forms, avail) -> str | None:
     return None
 
 
-def fr_agreement_use(text: str, forms, verb_only, own_pos, form_pos) -> bool:
+_FR_SUBJ_CLITICS = {"je", "j", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles", "qui",
+                    "se", "s", "me", "m", "te", "t"}
+_FR_NOUN_OPENERS = {"le", "la", "l", "les", "un", "une", "des", "du", "de", "d", "au", "aux", "ce",
+                    "cet", "cette", "ces", "mon", "ma", "mes", "ton", "ta", "tes", "son", "sa",
+                    "ses", "notre", "nos", "votre", "vos", "leur", "leurs", "quel", "quelle",
+                    "quelques", "plusieurs", "chaque", "tout", "toute", "tous", "toutes", "à",
+                    "en", "par", "pour", "dans", "sur", "avec", "sans", "sous", "à"}
+_FR_NOT_NOUN = {"de", "d", "du", "des", "à", "au", "aux", "et", "ou", "qui", "que", "qu", "pour",
+                "dans", "en", "sur", "avec", "par", "sans", "sous", "mais", "ne", "n", "se", "s",
+                "pas", "plus", "très", "est", "sont", "a", "ont", "y", "ni", "car", "donc"}
+
+
+@functools.lru_cache(maxsize=20000)
+def _fr_noun_only(word: str) -> bool:
+    """The local dictionary lists ``word`` as a noun and never an adjective."""
+    from .. import kaikki_index
+    pos = {e.get("pos") for e in kaikki_index.lookup("fr", word) or []
+           if e.get("lang_code") == "fr" and e.get("word") == word}
+    return "noun" in pos and "adj" not in pos
+
+
+def _fr_foreign_occurrence(toks, cased, i, own_surface, form_pos, own_surface_strict, text="") -> bool:
+    """One use of a form in a sentence is another word's (卡 #994, 問題回報
+    #1515): a surface the headword never takes (fins is fin's plural, not
+    fine's; présents, vifs), the verb of the same spelling (je vous présente,
+    qu'elle vive, Vive la république), a participle / adjective after être
+    (j'ai été surprise), or a prenominal / postnominal adjective (une fine
+    couche, une pointe fine)."""
+    t = toks[i]
+    prev = toks[i - 1] if i else ""
+    prev2 = toks[i - 2] if i > 1 else ""
+    nxt = toks[i + 1] if i + 1 < len(toks) else ""
+    last = i == len(toks) - 1
+    if t not in own_surface and own_surface_strict:
+        return True
+    if "verb" in form_pos:
+        inverted = re.search(r"-\s*" + re.escape(prev) + r"\b", (text or "").lower().replace("’", "'"))
+        clitic = t in _FR_SUBJ_CLITICS | {"lui", "le", "la", "les", "leur", "y", "en"}
+        if prev in _FR_SUBJ_CLITICS and not inverted and not clitic:
+            return True  # «je vous présente», «qu'elle vive»; not «avez-vous arrêté»
+        if i == 0 and nxt in {"le", "la", "l", "les", "mon", "ma", "notre"} \
+                and not re.match(r"^\W*" + re.escape(cased[0]) + r"\s*[,;:.]", text or ""):
+            return True  # «Vive la république !», not «Désolé, la ligne…»
+    if "adj" in form_pos:
+        if prev in _FR_BE or prev in _FR_DEGREE:
+            return True
+        if prev in {"un", "une", "le", "la", "l", "des", "les", "de", "d", "cette", "ce", "cet",
+                    "ma", "ta", "sa", "mon", "ton", "son"} and nxt \
+                and nxt not in _FR_NOT_NOUN and nxt not in FR_PHRASE_END and not last \
+                and _fr_noun_only(nxt):
+            return True  # «une fine couche»: an adjective before its noun
+        if (prev and prev not in _FR_NOUN_OPENERS and prev not in _FR_SUBJ_CLITICS and prev not in _FR_NOT_NOUN
+                and (last or nxt in FR_PHRASE_END) and re.match(r"[a-zà-ÿ]", prev)
+                and prev2 in _FR_NOUN_OPENERS | {""} | _FR_PRENOMINAL and _fr_noun_only(prev)):
+            return True  # «une pointe fine», «une croûte fine»: after a noun
+    return False
+
+
+def fr_agreement_use(text: str, forms, verb_only, own_pos, form_pos, lemma: str = "") -> bool:
     """The sentence uses the headword as another word's gender / number form
     (卡 #993, 問題回報 #1514): «Florence est la ville…» is le's article, not
     la the note A; «Cette veste est trop fine» is fin's adjective, not the
     noun fine. ``form_pos`` = kaikki.fr_agreement_form_pos minus ``own_pos``.
     Such a sentence gets no sense here (unbound: kept for review, never in a
-    card, like an unresolved usage)."""
+    card, like an unresolved usage).
+
+    With ``lemma`` (卡 #994, 問題回報 #1515) every use of the word in the
+    sentence is also checked one by one: a sentence is another word's when
+    none of its uses can be the headword's own."""
     if not form_pos:
         return False
     avail = set(own_pos) | set(form_pos)
     use = _usage_pos_fr(text, forms, verb_only)
     if use not in avail:
         use = _fr_guess_pos(text, forms, avail)
-    return use in form_pos
+    if use in form_pos:
+        return True
+    if not lemma or "verb" in own_pos:
+        return False
+    toks, cased = _fr_tokens(text)
+    lw = lemma.lower()
+    own_surface = {lw, lw + "s", lw + "x"}
+    strict = set(own_pos) == {"noun"} and "adj" in form_pos
+    idx = [i for i, t in enumerate(toks) if t in forms]
+    return bool(idx) and all(_fr_foreign_occurrence(toks, cased, i, own_surface, form_pos, strict, text)
+                             for i in idx)
 
 
 def _usage_pos_fr(text: str, forms, verb_only) -> str | None:
