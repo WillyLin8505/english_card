@@ -11,9 +11,18 @@ LA = [{"pos": "article", "lang_code": "fr", "word": "la", "senses": [
       {"pos": "noun", "lang_code": "fr", "word": "la", "senses": [{"glosses": ["the note A"]}]}]
 
 
-def test_article_form_is_an_agreement_pos():
-    assert kaikki.agreement_form_pos(LA) == {"det"}
-    alt = [{"pos": "adj", "word": "maire", "senses": [{"glosses": ["alternative form of maigre"],
+FINE = [{"pos": "adj", "lang_code": "fr", "word": "fine", "senses": [
+            {"glosses": ["feminine singular of fin"], "tags": ["feminine", "form-of", "singular"],
+             "form_of": [{"word": "fin"}]}]},
+        {"pos": "noun", "lang_code": "fr", "word": "fine", "senses": [{"glosses": ["brandy"]}]}]
+
+
+def test_gender_form_is_an_agreement_pos():
+    assert kaikki.agreement_form_pos(FINE) == {"adj"}
+    # la / une keep their article (問題回報 #1516 A): not dropped, not an agreement use
+    assert kaikki.agreement_form_pos(LA) == set()
+    assert kaikki.dropped_pos(LA) == set()
+    alt =[{"pos": "adj", "word": "maire", "senses": [{"glosses": ["alternative form of maigre"],
             "tags": ["alt-of", "alternative", "dialectal"], "alt_of": [{"word": "maigre"}]}]},
            {"pos": "noun", "word": "maire", "senses": [{"glosses": ["mayor"]}]}]
     assert kaikki.agreement_form_pos(alt) == set()
@@ -43,3 +52,26 @@ def test_adjective_form_after_etre():
     forms = frozenset({"fine"})
     assert fr_agreement_use("Cette veste est trop fine.", forms, frozenset(), {"noun"}, {"adj"})
     assert not fr_agreement_use("La fine est arrivée.", forms, frozenset(), {"noun"}, set())
+
+
+def test_kept_article_gets_its_own_entry():
+    # 問題回報 #1516 A: la the article is an entry with a learner gloss, first like le's
+    k = kaikki.Kaikki()
+    ctx = Context("fr", "en", "la")
+    assert [c.value["pos"] for c in k.normalize("pos", LA, ctx)] == ["det", "pron", "noun"]
+    det = [c for c in k.normalize("definition", LA, ctx) if c.value["pos"] == "det"]
+    assert [c.value["gloss"] for c in det] == ["the (feminine singular definite article)"]
+    assert det[0].confidence == 1.0
+
+
+def test_article_sentence_binds_to_the_kept_article():
+    article = "Florence est la ville la plus belle d'Italie."
+    pronoun = "Où est Judith ? Je ne la vois pas."
+    ctx = Context("fr", "en", "la", resolved={
+        "definition": [{"pos": "det", "sense_key": "det"}, {"pos": "pron", "sense_key": "pron"},
+                       {"pos": "noun", "sense_key": "noun"}],
+        "example_sentences": [{"text": article, "key": "a"}, {"text": pronoun, "key": "p"}],
+    })
+    got = {c.value["example_key"]: c.value["sense_key"]
+           for c in LocalCalc().normalize("example_sense", None, ctx)}
+    assert got == {"a": "det", "p": "pron"}
