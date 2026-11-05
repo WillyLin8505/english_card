@@ -13,7 +13,7 @@ One long-running process (started by dispatch_tick, so nothing to install):
   (tree_cap). Every 10 s all of them are scaled down while the whole PC is near CPU_PCT, and back up
   when it is well below (cpu_scale).
 - GPU has no such cap: while it is busy the model servers run in short bursts, GPU_ON_S on and
-  GPU_OFF_S suspended (gpu_pacing, pace_gpu). Too hot suspends them for GPU_REST_S. They carry on
+  GPU_OFF_S suspended (gpu_pacing; the `--pace` process, owner 11/05). Too hot suspends them for GPU_REST_S. They carry on
   afterwards; requests just wait.
 - writes one line every 10 s to lexicon/logs/ai_watch.log, so the last line before a crash says
   what the PC was doing.
@@ -40,6 +40,11 @@ ROOT = Path(__file__).resolve().parents[2]
 LOG = ROOT / "lexicon" / "logs" / "ai_watch.log"
 STATE = ROOT / "lexicon" / "state" / "ai_watch.json"
 HANDLED = ROOT / "lexicon" / "state" / "ai_watch_handled.json"
+# owner 11/05: the bursts ran as a thread of this watcher and lost the GIL to its process sweeps (3 CLIs ??# hundreds of processes), so the GPU sat at 100 % while the log said gpu-bursts. They now run in their own
+# process (`ai_watch.py --pace`): PACE lists the pids to pace and until when, PACE_BEAT is its heartbeat.
+PACE = ROOT / "lexicon" / "state" / "ai_watch_pace.json"
+PACE_BEAT = ROOT / "lexicon" / "state" / "ai_watch_pace.beat"
+PACE_HOLD_S = 30  # a watcher that stops writing PACE stops the pacing within this time
 JOB_NAME = "Local\\EnglishCardAI"
 MUTEX_NAME = "Local\\EnglishCardAIWatch"
 NO_WINDOW = 0x08000000
@@ -60,8 +65,11 @@ TREE_MEMORY_GB = 12
 GPU_HIGH_PCT = 70
 GPU_IDLE_PCT = 25  # the desktop alone is about 15 %
 # 11/04: the PC shut down at GPU 100 % with 0.7 s on / 0.3 s off; half the time off now.
-GPU_ON_S = 0.5
-GPU_OFF_S = 0.5
+# owner 11/05: the PC powered off again after 8 min at GPU 100 % ??bursts are now 40 % on
+GPU_ON_S = 0.4
+GPU_OFF_S = 0.6
+GPU_STUCK_PCT = 90  # this high for GPU_STUCK_SAMPLES samples while bursting = the bursts don't work
+GPU_STUCK_SAMPLES = 3
 GPU_TEMP_C = 85
 GPU_REST_S = 20
 TICK_S = 10
@@ -85,7 +93,7 @@ _jobs = 0
 
 kernel32 = ctypes.WinDLL("kernel32", use_last_error=True) if os.name == "nt" else None
 scale = 1.0  # share of the CPU caps in force now
-paced: list[psutil.Process] = []  # model servers pace_gpu is running in bursts
+paced: list[psutil.Process] = []  # model servers the --pace process runs in bursts
 
 
 class _IoCounters(ctypes.Structure):
@@ -377,6 +385,30 @@ def load_handled() -> set[int]:
     return kept
 
 
+def gpu_users(top: int = 4) -> str:
+    """Which processes use the GPU now (Windows GPU Engine counters), e.g. 'llama-server 88% dwm 12%'."""
+    try:
+        out = subprocess.run(["powershell", "-NoProfile", "-Command",
+                              "(Get-Counter '\\GPU Engine(*)\\Utilization Percentage' -ErrorAction SilentlyContinue).CounterSamples"
+                              " | Where-Object CookedValue -gt 1 | ForEach-Object { $_.InstanceName + '=' + [int]$_.CookedValue }"],
+                             capture_output=True, text=True, timeout=20, creationflags=NO_WINDOW).stdout
+    except (OSError, subprocess.SubprocessError):
+        return "?"
+    by_pid: dict[int, int] = {}
+    for row in out.split():
+        pid, _, pct = row.partition("=")
+        if "pid_" in pid and pct.isdigit():
+            n = int(pid.split("pid_")[1].split("_")[0])
+            by_pid[n] = by_pid.get(n, 0) + int(pct)
+    names = []
+    for pid, pct in sorted(by_pid.items(), key=lambda kv: -kv[1])[:top]:
+        try:
+            names.append(f"{psutil.Process(pid).name().removesuffix('.exe')} {pct}%")
+        except psutil.Error:
+            names.append(f"pid{pid} {pct}%")
+    return " ".join(names) or "-"
+
+
 def gpu_processes() -> list[psutil.Process]:
     return [p for p in psutil.process_iter(["name"]) if (p.info["name"] or "").lower() in GPU_NAMES]
 
@@ -409,19 +441,68 @@ def rest_gpu() -> int:
     return len(procs)
 
 
-def pace_gpu() -> None:
-    """The thread behind gpu_pacing; a second is short enough for GPU % to read as the average."""
+def read_pace(now: float | None = None) -> list[int]:
+    """Pids the watcher wants paced, [] when PACE is missing, unreadable or out of date."""
+    try:
+        d = json.loads(PACE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    return [int(p) for p in d.get("pids") or []] if (now or time.time()) < float(d.get("until") or 0) else []
+
+
+def write_pace(pids: list[int]) -> None:
+    try:
+        PACE.write_text(json.dumps({"pids": pids, "until": time.time() + PACE_HOLD_S}), encoding="utf-8")
+    except OSError:
+        pass
+
+
+def pace_main() -> int:
+    """`ai_watch.py --pace`: its own process, so nothing else in the watcher can delay a burst.
+    A second is short enough for GPU % to read as the average."""
+    _setup_api()
+    mutex = kernel32.CreateMutexW(None, True, MUTEX_NAME + "-pace")
+    if not mutex or ctypes.get_last_error() == 183:
+        return 0
+    procs: dict[int, psutil.Process] = {}
     while True:
-        procs = list(paced)
+        try:
+            PACE_BEAT.write_text(str(time.time()), encoding="utf-8")
+        except OSError:
+            pass
+        want = read_pace()
+        for pid in [p for p in procs if p not in want]:
+            del procs[pid]
+        for pid in want:
+            if pid not in procs:
+                try:
+                    procs[pid] = psutil.Process(pid)
+                except psutil.Error:
+                    pass
         if not procs:
-            time.sleep(GPU_ON_S)
+            time.sleep(0.2)
             continue
-        _suspend(procs)
+        group = list(procs.values())
+        _suspend(group)
         try:
             time.sleep(GPU_OFF_S)
         finally:
-            _resume(procs)
+            _resume(group)
         time.sleep(GPU_ON_S)
+
+
+def pace_alive() -> bool:
+    try:
+        return time.time() - float(PACE_BEAT.read_text(encoding="utf-8")) < 5
+    except (OSError, ValueError):
+        return False
+
+
+def start_pacer() -> None:
+    exe = Path(sys.executable).with_name("pythonw.exe")
+    subprocess.Popen([str(exe), str(Path(__file__).resolve()), "--pace"], cwd=str(ROOT),
+                     creationflags=0x00000008 | 0x00000200,  # DETACHED_PROCESS | NEW_PROCESS_GROUP
+                     stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
 def steer(job, trees: dict[int, object], s: dict) -> None:
@@ -433,6 +514,7 @@ def steer(job, trees: dict[int, object], s: dict) -> None:
         set_cpu_cap(tree, tree_cap(len(trees)))
     pacing = gpu_pacing(s["gpu"], bool(paced))
     paced = gpu_processes() if pacing else []
+    write_pace([p.pid for p in paced])
     if pacing != s["pacing"]:
         _write_state({"resting": [p.pid for p in paced]})
 
@@ -504,6 +586,8 @@ def ensure_running() -> bool:
 def main(argv=None) -> int:
     argv = sys.argv[1:] if argv is None else argv
     _setup_api()
+    if "--pace" in argv:
+        return pace_main()
     if "--once" in argv:
         job = create_job(JOB_NAME, CPU_PCT, JOB_MEMORY_GB * 2**30)
         print(line(sample(job, set(), {})))
@@ -516,13 +600,31 @@ def main(argv=None) -> int:
     write_log(f"{time.strftime('%Y-%m-%d %H:%M:%S')} start: AI cpu {AI_BUDGET_PCT}% in all, memory {JOB_MEMORY_GB}GB")
     done: set[int] = load_handled()
     trees: dict[int, object] = {}
-    threading.Thread(target=pace_gpu, daemon=True).start()
+    write_pace([])
+    stuck = 0
     while True:
         s = sample(job, done, trees)
-        write_log(line(s))
+        write_log(line(s) + (f" gpu-users {gpu_users()}" if (s["gpu"] or 0) >= 80 else ""))
         steer(job, trees, s)
+        now = time.strftime('%Y-%m-%d %H:%M:%S')
+        # owner 11/05: on 11/04 08:00 and 11/05 21:40 the log said gpu-bursts while the GPU sat at 90-100 %
+        # for minutes, then the PC powered off. Never trust the bursts: check the thread and the result.
+        if not pace_alive():
+            # a pacer that died mid-burst must not leave a model server frozen
+            for p in gpu_processes():
+                try:
+                    p.resume()
+                except psutil.Error:
+                    pass
+            write_log(f"{now} pacer not running ??started")
+            start_pacer()
+        stuck = stuck + 1 if paced and (s["gpu"] or 0) >= GPU_STUCK_PCT else 0
         if s["gpu_c"] is not None and s["gpu_c"] >= GPU_TEMP_C:
-            write_log(f"{time.strftime('%Y-%m-%d %H:%M:%S')} gpu rest: {rest_gpu()} server(s) for {GPU_REST_S}s")
+            write_log(f"{now} gpu rest: {rest_gpu()} server(s) for {GPU_REST_S}s")
+        elif stuck >= GPU_STUCK_SAMPLES:
+            write_log(f"{now} gpu still {s['gpu']}% with bursts ({stuck} samples) ??rest: "
+                      f"{rest_gpu()} server(s) for {GPU_REST_S}s; gpu-users {gpu_users()}")
+            stuck = 0
         time.sleep(TICK_S)
 
 

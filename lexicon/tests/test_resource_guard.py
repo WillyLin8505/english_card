@@ -21,6 +21,14 @@ def test_memory_over_holds_then_releases_with_hysteresis():
     assert not rg.decide(m(mem=70), CFG, a)["hold_launches"]
 
 
+def test_gpu_over_holds_new_clis():
+    """owner 11/05: the PC powered off after 8 min at GPU 100 % while CLIs kept starting."""
+    a = rg.decide(m(gpu=100), CFG, {})
+    assert a["hold_launches"] and "gpu" in a["over"]
+    assert rg.decide(m(gpu=75), CFG, a)["hold_launches"]       # 70–80 while held: still held
+    assert not rg.decide(m(gpu=50), CFG, a)["hold_launches"]
+
+
 def test_alert_only_after_ten_minutes():
     a = rg.decide(m(ts=1000, disks={"C:": 95}), CFG, {})
     assert a["over"] == ["disk C:"] and a["alert"] == []

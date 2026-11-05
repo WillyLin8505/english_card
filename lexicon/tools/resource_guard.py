@@ -141,6 +141,10 @@ def decide(m: dict, cfg: dict, prev: dict) -> dict:
     busy = cfg["cpu_gpu_pct"]  # owner 11/02: no new CLIs while CPU is at the limit
     if cpu is not None and (cpu > busy or (held and cpu > busy - 10)):
         hold = True
+    # owner 11/05: the PC powered off after 8 min at GPU 100 % while new CLIs kept starting; GPU holds them too
+    gpu = m.get("gpu")
+    if gpu is not None and (gpu > busy or (held and gpu > busy - 10)):
+        hold = True
     low = bool(prev.get("low_priority")) if cpu is None else (cpu > busy or (prev.get("low_priority") and cpu > busy - 5))
     over = []
     if mem is not None and mem > lim:

@@ -104,8 +104,11 @@ launches a card for each idle AI (pick_card rules + `lexicon/tools/dispatch_conf
 
 `lexicon/tools/ai_watch.py` (kept running by dispatch_tick) holds the whole PC to 80 % CPU and 80 % GPU: AI caps add up to
 76 % (half for the shared Job Object, half split among the dispatched CLIs' own jobs, at least 2 % each), all scaled down
-every 10 s while the PC is at 72 %; a busy GPU runs the model servers in bursts (0.7 s on, 0.3 s suspended), ≥ 85 °C
-suspends them 20 s. Interactive Claude sessions and what they run are never capped. No new CLIs while CPU is over 80 %.
+every 10 s while the PC is at 72 %; a busy GPU runs the model servers in bursts (0.4 s on, 0.6 s suspended), ≥ 85 °C
+suspends them 20 s. **11/05 (the PC powered off again after 8 min at GPU 100 % while the log said gpu-bursts):** the
+bursts run in their own process (`ai_watch.py --pace`, heartbeat `lexicon/state/ai_watch_pace.beat`; the watcher restarts
+it), because as a thread they lost the GIL to the process sweeps; GPU ≥ 90 % for 3 samples while bursting → 20 s rest and
+the log names the GPU users; resource_guard holds new CLIs while the GPU is over 80 %. Interactive Claude sessions and what they run are never capped. No new CLIs while CPU is over 80 %.
 **11/04 (the PC shut down twice with 20+ CLIs): at most `max_running_clis` CLIs at once (2 while testing) and
 `max_launches_per_tick` 1, whatever the swarm slots allow; raise one step at a time after watching ai_watch.log.**
 The limits are set through Process Governor (`procgov`, winget LowLevelDesign.ProcessGovernor; ai_watch `PgJob`).
