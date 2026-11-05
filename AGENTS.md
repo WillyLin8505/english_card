@@ -111,7 +111,9 @@ it), because as a thread they lost the GIL to the process sweeps; GPU ≥ 90 % f
 the log names the GPU users; resource_guard holds new CLIs while the GPU is over 80 %.
 **Later 11/05: all three power-offs were bug check 0x116 VIDEO_TDR_FAILURE (NVIDIA driver 2025-08 timing out; nvlddmkm
 errors since 10/22), each while llama-server was being suspended. `GPU_SUSPEND = False`: model servers are never suspended
-any more (no bursts, no rests). Don't turn it back on; limit GPU load by sending Qwen less work instead.** Interactive Claude sessions and what they run are never capped. No new CLIs while CPU is over 80 %.
+any more (no bursts, no rests). Don't turn it back on; limit GPU load by sending Qwen less work instead.** 11/06 (owner 「GPU 百分百」): the tagger
+paces background calls itself (`TAGGER_GPU_DUTY`, default 0.6: after a T-second call no background call starts for
+T·(1-d)/d s; App photo calls never wait) — measured 54 % average instead of ~95 %. Interactive Claude sessions and what they run are never capped. No new CLIs while CPU is over 80 %.
 **11/04 (the PC shut down twice with 20+ CLIs): at most `max_running_clis` CLIs at once (2 while testing) and
 `max_launches_per_tick` 1, whatever the swarm slots allow; raise one step at a time after watching ai_watch.log.**
 The limits are set through Process Governor (`procgov`, winget LowLevelDesign.ProcessGovernor; ai_watch `PgJob`).
