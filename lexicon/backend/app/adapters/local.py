@@ -1536,8 +1536,10 @@ def _usage_pos_fr(text: str, forms, verb_only) -> str | None:
                 continue
             return "verb"
         own = True  # «la place pour placer…»: the infinitive is this word
-        near_det = i > 0 and (toks[i - 1] in FR_DETERMINERS
-                              or (i > 1 and toks[i - 2] in FR_DETERMINERS))
+        # A repeated headword is not independent determiner evidence:
+        # ?est-ce que ce sont...? must not turn the second ce into a noun.
+        near_det = i > 0 and (toks[i - 1] in FR_DETERMINERS - forms
+                              or (i > 1 and toks[i - 2] in FR_DETERMINERS - forms))
         ends = i == len(toks) - 1 or toks[i + 1] in FR_PHRASE_END
         if near_det and ends:
             return "noun"
