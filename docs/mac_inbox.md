@@ -5203,3 +5203,8 @@ commit `25559b41`（Windows：flutter analyze 無 error、02:37 +981 ~2: All tes
 卡：掃描還沒打完的圖片標籤
 
 無。
+
+## M659（2026-11-05 16:01）狀態：待做
+commit `75c3922a`（Windows：flutter analyze 無 error、02:37 +981 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #4：掃描還沒打完的圖片標籤
+  結果：結論：tags worker 已在跑（3 個），但 failed 從 38 暴增到 4245，根因是 11/04 00:32–00:38 一次性「圖檔找不到」（FileNotFoundError），檔案現在都在，已把 4206 張重設為 pending 讓 worker 重標。
