@@ -5193,3 +5193,8 @@ commit `0389671b`（Windows：flutter analyze 無 error、02:37 +981 ~2: All tes
 commit `58addfee`（Windows：flutter analyze 無 error、02:37 +981 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #224：模擬使用者・拍照
   結果：第 294 輪：photoui 1/1 通過（35 秒，第 293 輪）、pins 1/1 通過（399 秒，第 294 輪，分段執行無中斷）；新問題 0；UX 建議 0（本輪只跑測試，沒有逐畫面截圖評估）。
+
+## M657（2026-11-05 15:47）狀態：待做
+commit `25559b41`（Windows：flutter analyze 無 error、02:37 +981 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #228：模擬使用者・設定
+  結果：第 295 輪：settings 1/1 通過（新下載 pack 28024 詞，9 秒）、新問題無、UX 建議無新增。
