@@ -113,7 +113,12 @@ the log names the GPU users; resource_guard holds new CLIs while the GPU is over
 errors since 10/22), each while llama-server was being suspended. `GPU_SUSPEND = False`: model servers are never suspended
 any more (no bursts, no rests). Don't turn it back on; limit GPU load by sending Qwen less work instead.** 11/06 (owner 「GPU 百分百」): the tagger
 paces background calls itself (`TAGGER_GPU_DUTY`, default 0.6: after a T-second call no background call starts for
-T·(1-d)/d s; App photo calls never wait) — measured 54 % average instead of ~95 %. Interactive Claude sessions and what they run are never capped. No new CLIs while CPU is over 80 %.
+T·(1-d)/d s; App photo calls never wait) — measured 54 % average instead of ~95 %.
+**11/06 08:30, 4th 0x116 on the new driver 621.14: the cause is GPU memory, not load.** llama-server held 7.4 GB of the
+8 GB card plus 2 GB spilled into shared RAM (its vision buffer sized for the model's largest image), and photo_tidy_up's
+Ollama had loaded qwen3-vl 5 min earlier. Now `--image-max-tokens 1024` (5.4 GB, photos ≤ 768 px ≈ 576 tokens) and
+photo_tidy_up's laptop_ai sends `num_gpu: 0` (its models on the CPU, owner's choice). Check per-process GPU memory with
+`Get-Counter '\GPU Process Memory(*)\Dedicated Usage','\GPU Process Memory(*)\Shared Usage'`; keep ≥ 1.5 GB free. Interactive Claude sessions and what they run are never capped. No new CLIs while CPU is over 80 %.
 **11/04 (the PC shut down twice with 20+ CLIs): at most `max_running_clis` CLIs at once (2 while testing) and
 `max_launches_per_tick` 1, whatever the swarm slots allow; raise one step at a time after watching ai_watch.log.**
 The limits are set through Process Governor (`procgov`, winget LowLevelDesign.ProcessGovernor; ai_watch `PgJob`).
