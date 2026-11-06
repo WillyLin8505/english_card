@@ -134,6 +134,9 @@ def main() -> int:
                # owner 11/04: the host prompt cache defaults to 8 GB of RAM and grew llama-server from
                # 11 to 19 GB private over a day; 1 GB keeps prompt reuse without the growth. LLM_CACHE_RAM overrides.
                '--cache-ram', os.environ.get('LLM_CACHE_RAM', '1024'),
+               # owner 11/06 (4th 0x116 crash): the vision buffer was sized for the model's largest image and
+               # filled the 8 GB GPU (7.4 GB + 2 GB spilled to RAM). Tagger photos are ≤ 768 px ≈ 576 tokens.
+               '--image-max-tokens', os.environ.get('LLM_IMAGE_MAX_TOKENS', '1024'),
                '--jinja', '--no-webui']
     print(f'llama-server: {args.model} ({blob.name[:19]}…), {args.slots} slots × {args.ctx} ctx, '
           f'{cuda.name}, http://127.0.0.1:{args.port}', flush=True)
