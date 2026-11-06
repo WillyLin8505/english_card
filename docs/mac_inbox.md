@@ -5376,3 +5376,14 @@ commit `0e5d8ebf`（Windows：flutter analyze 無 error、02:37 +981 ~2: All tes
 commit `e0716b0a`（Windows：flutter analyze 無 error、02:37 +981 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #496：模擬使用者・法語（英語母語者學法語）
   結果：第32輪（round 77）程式 4/4 通過，但 chineseinenglishui 不是 0：英文介面詳情出現「[片語]」，已開問題回報 #1519。
+
+## M693（2026-11-07 05:11）狀態：待做（Windows 卡 #997 交給 Mac 的 App 畫面部分）
+卡：問題回報 #1519：[卡片回報] 英文介面的詞條標籤仍顯示中文「[片語]」（typedMeaning 寫死中文）
+
+在 iPad 用 native=en 開法語照片詳情，確認標籤為 [Phrase] 而非 [片語]。
+未做 golden／QC（只改 App 畫面，沒動詞庫）。
+
+## M694（2026-11-07 05:22）狀態：待做
+commit `dc6fa34c`（Windows：flutter analyze 無 error、01:40 +982 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #997：問題回報 #1519：[卡片回報] 英文介面的詞條標籤仍顯示中文「[片語]」（typedMeaning 寫死中文）
+  結果：全部完成：英文／法文介面的詞條標籤不再顯示中文「[片語]」；flutter analyze 無 error，flutter test 985 全過。
