@@ -282,7 +282,8 @@ def gpu_sample() -> tuple[int | None, int | None, int | None]:
         r = subprocess.run(["nvidia-smi", "--query-gpu=utilization.gpu,temperature.gpu,memory.used",
                             "--format=csv,noheader,nounits"], capture_output=True, text=True, timeout=8,
                            creationflags=NO_WINDOW)
-        a, b, c = (int(x) for x in r.stdout.split("\n")[0].split(","))
+        # driver 621 prints the temperature with decimals ("63.47"): int(float(...))
+        a, b, c = (int(float(x)) for x in r.stdout.split("\n")[0].split(","))
         return a, b, c
     except (OSError, ValueError, subprocess.SubprocessError):
         return None, None, None
