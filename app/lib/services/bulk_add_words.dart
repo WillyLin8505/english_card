@@ -134,10 +134,7 @@ BulkParse checkBulkWords(
     for (final i in items)
       if (i.status == BulkStatus.variant && !taken.add(i.word))
         BulkItem(
-            typed: i.typed,
-            status: BulkStatus.merged,
-            word: i.word,
-            pos: i.pos)
+            typed: i.typed, status: BulkStatus.merged, word: i.word, pos: i.pos)
       else
         i
   ], over);
@@ -153,8 +150,9 @@ BulkItem classifyBulkWord(
   }
   final hit = pack.isEmpty ? null : pack.lookup(w);
   if (hit == null) {
-    final near =
-        pack.isEmpty || phrase || !suggest ? const <String>[] : pack.similarTo(w);
+    final near = pack.isEmpty || phrase || !suggest
+        ? const <String>[]
+        : pack.similarTo(w);
     return BulkItem(
         typed: w,
         status: near.isEmpty ? BulkStatus.unknown : BulkStatus.typo,
@@ -211,9 +209,8 @@ String _appPos(String packPos, String fallback) => switch (packPos) {
       repo.addWord(
           word: i.target,
           pos: i.pos,
-          meaning: i.status == BulkStatus.variant && i.keepTyped
-              ? ''
-              : i.meaning,
+          meaning:
+              i.status == BulkStatus.variant && i.keepTyped ? '' : i.meaning,
           // The level stays the dictionary's (a given level is marked "user").
           level: null);
       added++;

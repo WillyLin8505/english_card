@@ -1,11 +1,12 @@
 import '../models/word_entry.dart';
+import '../l10n/ui_catalog.dart';
 import 'lexicon_pack.dart';
 
 /// Stable dictionary codes; unknown non-word types remain visibly classified.
-String entryTypeLabel(String value) {
+String entryTypeLabel(String value, {String lang = 'zh-TW'}) {
   if (value == 'word') return '';
   final labels = LexiconPack.instance.labels;
-  return labels['entry_type:$value'] ??
+  final zh = labels['entry_type:$value'] ??
       labels['entry_type.$value'] ??
       labels[value] ??
       switch (value) {
@@ -15,10 +16,11 @@ String entryTypeLabel(String value) {
         'fixed_expression' => '固定表達',
         _ => '片語',
       };
+  return translateUi(zh, lang);
 }
 
-String typedMeaning(String meaning, String entryType) {
-  final label = entryTypeLabel(entryType);
+String typedMeaning(String meaning, String entryType, {String lang = 'zh-TW'}) {
+  final label = entryTypeLabel(entryType, lang: lang);
   return label.isEmpty
       ? meaning
       : '[$label]${meaning.isEmpty ? '' : ' $meaning'}';

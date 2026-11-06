@@ -496,9 +496,7 @@ class DictionarySync extends ChangeNotifier {
         // there, so the dictionary just can't update right now.
         final offline = !reachedServer &&
             (e is SocketException || e is http.ClientException);
-        status = offline
-            ? '暫時無法連線 · 使用已儲存的詞庫，稍後自動重試'
-            : '詞庫暫時無法更新，稍後重試';
+        status = offline ? '暫時無法連線 · 使用已儲存的詞庫，稍後自動重試' : '詞庫暫時無法更新，稍後重試';
         hasError = true;
         BackgroundErrors.instance.report(this, status, retry: refresh);
       }

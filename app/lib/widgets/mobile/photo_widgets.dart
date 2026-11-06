@@ -296,8 +296,9 @@ class WordPin extends StatelessWidget {
       {bool linked = true,
       double? maxWidth,
       TextStyle? base,
+      String lang = 'zh-TW',
       String entryType = 'word'}) {
-    final second = secondLine(typedMeaning(zh, entryType), linked);
+    final second = secondLine(typedMeaning(zh, entryType, lang: lang), linked);
     final line = _measure(word, second, large, scaler, null, base);
     if (maxWidth == null || line.width <= maxWidth) return line;
     return _measure(word, second, large, scaler, maxWidth, base);
@@ -314,6 +315,7 @@ class WordPin extends StatelessWidget {
     bool,
     double?,
     TextStyle?,
+    String,
     String
   ),
       Size>{};
@@ -324,6 +326,7 @@ class WordPin extends StatelessWidget {
       {bool linked = true,
       double? maxWidth,
       TextStyle? base,
+      String lang = 'zh-TW',
       String entryType = 'word'}) {
     if (!_watchingFonts) {
       _watchingFonts = true;
@@ -331,11 +334,12 @@ class WordPin extends StatelessWidget {
     }
     if (_sizes.length > 500) _sizes.clear();
     return _sizes.putIfAbsent(
-        (word, zh, large, scaler, linked, maxWidth, base, entryType),
+        (word, zh, large, scaler, linked, maxWidth, base, entryType, lang),
         () => badgeSize(word, zh, large, scaler,
             linked: linked,
             maxWidth: maxWidth,
             base: base,
+            lang: lang,
             entryType: entryType));
   }
 
@@ -372,7 +376,8 @@ class WordPin extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final second = secondLine(typedMeaning(zh, entryType), linked);
+    final second = secondLine(
+        typedMeaning(zh, entryType, lang: uiLanguage(context)), linked);
     final zhText = zh.isEmpty && !linked
         ? zhStyle(large).copyWith(fontStyle: FontStyle.italic)
         : zhStyle(large);
@@ -380,6 +385,7 @@ class WordPin extends StatelessWidget {
         _sizeOf(word, zh, large, MediaQuery.textScalerOf(context),
                     linked: linked,
                     entryType: entryType,
+                    lang: uiLanguage(context),
                     base: DefaultTextStyle.of(context).style)
                 .width >
             maxWidth!;
@@ -886,6 +892,7 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
                   geo.dotIn(box, p.anchor),
                   WordPin._sizeOf(p.word, p.zh, widget.largePins, scaler,
                       entryType: p.entryType,
+                      lang: uiLanguage(context),
                       linked: p.linked,
                       // layoutPins' margin: a long label wraps in full.
                       maxWidth: area.width - 12,

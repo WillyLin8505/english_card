@@ -92,6 +92,7 @@ class LexiconPack extends ChangeNotifier {
     _indexCatalog();
     return _approvedByLexeme[lexemeId] ?? const [];
   }
+
   List<LexEntry> get catalogWords => _byId.values.toList(growable: false);
   final Map<int, LexEntry> _byId = {};
   final Map<String, List<LexEntry>> _byLemma = {};
@@ -125,8 +126,7 @@ class LexiconPack extends ChangeNotifier {
     final limit = w.length >= 7 ? 2 : 1;
     // Swapped neighbouring letters (recieve → receive) are the usual typo.
     for (var i = 0; i + 1 < w.length; i++) {
-      final swapped =
-          w.substring(0, i) + w[i + 1] + w[i] + w.substring(i + 2);
+      final swapped = w.substring(0, i) + w[i + 1] + w[i] + w.substring(i + 2);
       if (swapped != w && _byLemma.containsKey(swapped)) return [swapped];
     }
     final found = <(int, String)>[];
@@ -160,6 +160,7 @@ class LexiconPack extends ChangeNotifier {
     }
     return prev[b.length];
   }
+
   int get size => _byId.values.where((e) => e.full).length;
 
   static String assetFor(String target, String native) =>

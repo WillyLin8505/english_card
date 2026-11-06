@@ -814,10 +814,10 @@ class WordDatabaseRepository extends ChangeNotifier {
       meaning: dropStale && free(WordField.meaning)
           ? ''
           : free(WordField.meaning) &&
-              (replace || e.meaning.isEmpty) &&
-              (meaning ?? '').isNotEmpty
-          ? meaning
-          : null,
+                  (replace || e.meaning.isEmpty) &&
+                  (meaning ?? '').isNotEmpty
+              ? meaning
+              : null,
       definition: free(WordField.definition) &&
               (replace || e.definition == null) &&
               definition != null
@@ -2028,10 +2028,7 @@ class WordDatabaseRepository extends ChangeNotifier {
     return List.of(out);
   }
 
-  (
-    (int, int, int, int, bool, int?, int?),
-    List<LearningCard>
-  )? _eligibleCache;
+  ((int, int, int, int, bool, int?, int?), List<LearningCard>)? _eligibleCache;
 
   List<LearningCard> _eligibleCards(DateTime now,
       {required bool includeFuture, int? newLimit, int? reviewLimit}) {

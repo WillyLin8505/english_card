@@ -607,6 +607,10 @@ const uiCatalog = <String, (String, String)>{
   '限定詞': ('Determiner', 'Déterminant'),
   '數詞': ('Numeral', 'Numéral'),
   '片語': ('Phrase', 'Expression'),
+  '片語動詞': ('Phrasal verb', 'Verbe à particule'),
+  '慣用語': ('Idiom', 'Idiome'),
+  '搭配詞': ('Collocation', 'Collocation'),
+  '固定表達': ('Fixed expression', 'Expression figée'),
   '專有名詞': ('Proper noun', 'Nom propre'),
   '其他詞性': ('Other', 'Autre'),
   '入門（A1）': ('Beginner (A1)', 'Débutant (A1)'),
@@ -1078,8 +1082,9 @@ const uiCatalog = <String, (String, String)>{
   '例句': ('Examples', 'Exemples'),
   '真人發音': ('Human recording', 'Enregistrement humain'),
   '這個字還沒有例句，詞庫更新後會自動補上。': (
-      'No example for this word yet; it will be added when the word list updates.',
-      "Pas encore d'exemple pour ce mot ; il sera ajouté à la mise à jour."),
+    'No example for this word yet; it will be added when the word list updates.',
+    "Pas encore d'exemple pour ce mot ; il sera ajouté à la mise à jour."
+  ),
   '近義詞': ('Synonyms', 'Synonymes'),
   '反義詞': ('Antonyms', 'Antonymes'),
   '同音詞': ('Homophones', 'Homophones'),
@@ -1475,8 +1480,10 @@ String translateUi(String source, String language, {String learning = 'en'}) {
     final match = template.pattern.firstMatch(source);
     if (match == null) continue;
     final translation = language == 'fr' ? template.fr : template.en;
-    return fill(translation.replaceAllMapped(RegExp(r'\{(\d+)\}'),
-        (m) => _listParts(match.group(int.parse(m[1]!) + 1)!, language, learning)));
+    return fill(translation.replaceAllMapped(
+        RegExp(r'\{(\d+)\}'),
+        (m) => _listParts(
+            match.group(int.parse(m[1]!) + 1)!, language, learning)));
   }
   // Labels built at call sites from catalog copy: 「入門（A1）（已選）」 and
   // the Semantics label 「英文（English），第一階段尚未提供詞庫」.

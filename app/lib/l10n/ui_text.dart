@@ -13,6 +13,15 @@ String ui(BuildContext context, String source) {
       learning: scope?.settings.learningLanguage ?? 'en');
 }
 
+/// The UI language [ui] would translate into.
+String uiLanguage(BuildContext context) =>
+    context.dependOnInheritedWidgetOfExactType<UiLanguageScope>()?.language ??
+    context
+        .dependOnInheritedWidgetOfExactType<AppScope>()
+        ?.settings
+        .nativeLanguage ??
+    'zh-TW';
+
 /// First-run language preview, without persisting an unfinished onboarding.
 class UiLanguageScope extends InheritedWidget {
   final String language;
