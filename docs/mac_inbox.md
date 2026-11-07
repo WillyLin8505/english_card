@@ -5504,3 +5504,13 @@ commit `c7960f35`（Windows：flutter analyze 無 error、01:29 +982 ~2: All tes
 commit `159362fe`（Windows：flutter analyze 無 error、01:29 +982 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #225：模擬使用者・相片冊
   結果：第 277 輪：相片冊模擬 1/1 通過（round 322，38 秒，894 筆事件已上傳），新問題 無、UX 建議 無（本輪未看畫面，不評分）。
+
+## M718（2026-11-08 01:23）狀態：待做（Windows 卡 #224 交給 Mac 的 App 畫面部分）
+卡：模擬使用者・拍照
+
+無。
+
+## M719（2026-11-08 01:23）狀態：待做
+commit `dd1868f6`（Windows：flutter analyze 無 error、01:29 +982 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #224：模擬使用者・拍照
+  結果：第 322 輪：photoui 通過（32 秒）、pins 通過（436 秒）；新問題 0；UX 建議 0（本輪只跑測試，沒有逐畫面截圖評估）。
