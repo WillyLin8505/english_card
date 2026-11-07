@@ -1103,6 +1103,7 @@ const uiCatalog = <String, (String, String)>{
   '口語': ('Informal', 'Familier'),
   '書面語': ('Formal', 'Soutenu'),
   '俚語': ('Slang', 'Argot'),
+  '粗俗': ('Vulgar', 'Vulgaire'),
   '未分級': ('Unrated', 'Sans niveau'),
   '未收錄': ('Not listed', 'Non répertorié'),
   '有你修改過的欄位': ('Contains your edits', 'Contient vos modifications'),

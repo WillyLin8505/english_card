@@ -339,7 +339,8 @@ class _WordBody extends StatelessWidget {
                   runSpacing: MSpace.xxs + 2,
                   children: [
                     if (entry.entryType != 'word')
-                      TagChip(entryTypeLabel(entry.entryType)),
+                      TagChip(entryTypeLabel(entry.entryType,
+                          lang: uiLanguage(context))),
                     // The 詞性與意思 section below labels each part of speech,
                     // so the header shows none (#421); with no meaning yet
                     // that section is absent and the header keeps it (#469).
@@ -351,7 +352,7 @@ class _WordBody extends StatelessWidget {
                     if (entry.level != null) LevelBadge(entry.level!),
                     // Neutral register is the default: only label the rest (#421).
                     if (_registerLabel(entry.register) case final label?)
-                      TagChip(label),
+                      TagChip(ui(context, label)),
                   ],
                 ),
               ],
@@ -411,13 +412,10 @@ class _WordBody extends StatelessWidget {
                 TagChip(posLabel(usage.pos)),
                 const SizedBox(height: MSpace.xxs),
                 _MoreList(
-                  initial: initialShown(
-                      {
-                        for (final s in usage.senses)
-                          if (s.meaning.trim().isNotEmpty) s.meaning
-                      },
-                      3,
-                      floor: 1),
+                  initial: initialShown({
+                    for (final s in usage.senses)
+                      if (s.meaning.trim().isNotEmpty) s.meaning
+                  }, 3, floor: 1),
                   children: [
                     // 問題回報 #1411: the same Chinese twice (蘋果／蘋果) shows once.
                     for (final sense in _distinctMeanings(orderedSenses(usage)))
