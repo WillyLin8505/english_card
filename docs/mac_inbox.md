@@ -5519,3 +5519,8 @@ commit `dd1868f6`（Windows：flutter analyze 無 error、01:29 +982 ~2: All tes
 卡：掃描還沒打完的圖片標籤
 
 無。剩下：新圖進來時再看 pending 是否消化。
+
+## M721（2026-11-08 01:37）狀態：待做
+commit `949e7d87`（Windows：flutter analyze 無 error、01:29 +982 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #4：掃描還沒打完的圖片標籤
+  結果：結論：圖片標籤已全部消化完：pending 0，done 33353，failed 56；過去 1 小時沒有新標完是因為沒有待標的圖（最後標完 11/07 23:28）。
