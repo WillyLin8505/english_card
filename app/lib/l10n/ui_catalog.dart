@@ -1999,6 +1999,9 @@ const _templateCopy = <String, (String, String)>{
   '已加入': ('Added', 'Ajouté'),
   '加入相片冊': ('Add to albums', 'Ajouter aux albums'),
   '旅行': ('Travel', 'Voyage'),
+  // 問題回報 #1520: the goal and the topic no longer share one name.
+  '出國旅行': ('Traveling abroad', 'Voyager à l’étranger'),
+  '旅遊景點': ('Places to visit', 'Lieux à visiter'),
   '工作': ('Work', 'Travail'),
   '考試': ('Exams', 'Examens'),
   '學校課業': ('School', 'École'),

@@ -5,7 +5,8 @@ import 'deck_library.dart';
 
 /// 新手引導「你為什麼想學？」(卡 #814). The key is what AppSettings stores.
 const learningGoalOptions = <(String key, String label, IconData icon)>[
-  ('travel', '旅行', Icons.flight_takeoff),
+  // 問題回報 #1520: worded as a purpose so it isn't read as the 旅遊景點 topic.
+  ('travel', '出國旅行', Icons.flight_takeoff),
   ('work', '工作', Icons.work_outline),
   ('exam', '考試', Icons.edit_note),
   ('school', '學校課業', Icons.school_outlined),
@@ -17,7 +18,8 @@ const learningGoalOptions = <(String key, String label, IconData icon)>[
 /// (/api/decks `topic`) and the scenes the 相片冊 groups photos by
 /// ([albumSceneWords]) — no invented categories. [match] are the deck
 /// topic / title words that put a deck under the interest.
-const interestOptions = <(String key, String label, IconData icon, List<String> match)>[
+const interestOptions =
+    <(String key, String label, IconData icon, List<String> match)>[
   ('daily', '日常基礎', Icons.wb_sunny_outlined, ['日常基礎', '基礎單字', '基礎 3000']),
   ('food', '食物', Icons.restaurant, ['食物', '水果', '蔬菜']),
   ('kitchen', '廚房', Icons.kitchen, ['廚房']),
@@ -28,7 +30,7 @@ const interestOptions = <(String key, String label, IconData icon, List<String> 
   // 卡 #891: shown only once a deck with these words exists ([availableInterests]).
   ('sports', '運動', Icons.sports_soccer, ['運動']),
   ('hiking', '爬山／戶外活動', Icons.terrain, ['爬山', '登山', '戶外活動']),
-  ('travel', '旅行', Icons.flight_takeoff, ['旅行', '旅遊']),
+  ('travel', '旅遊景點', Icons.flight_takeoff, ['旅行', '旅遊']),
 ];
 
 /// The interests that have at least one deck in [decks] (卡 #891): a topic
@@ -78,7 +80,8 @@ List<DeckInfo> recommendDecks(
   }
 
   final ranked = [...decks]..sort((a, b) {
-      final c = interestScore(b, interests).compareTo(interestScore(a, interests));
+      final c =
+          interestScore(b, interests).compareTo(interestScore(a, interests));
       if (c != 0) return c;
       final g = goalScore(b).compareTo(goalScore(a));
       if (g != 0) return g;
@@ -103,7 +106,8 @@ int interestScore(DeckInfo info, Iterable<String> interests) {
 
 /// [decks] with the ones matching [interests] first; otherwise the original
 /// order is kept.
-List<DeckInfo> sortByInterests(List<DeckInfo> decks, Iterable<String> interests) {
+List<DeckInfo> sortByInterests(
+    List<DeckInfo> decks, Iterable<String> interests) {
   if (interests.isEmpty) return decks;
   final scored = [for (final d in decks) (d, interestScore(d, interests))];
   final order = {for (var i = 0; i < scored.length; i++) scored[i].$1: i};

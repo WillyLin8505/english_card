@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:photo_english_app/l10n/ui_catalog.dart';
 import 'package:photo_english_app/screens/onboarding_screen.dart';
 import 'package:photo_english_app/services/deck_library.dart';
 import 'package:photo_english_app/services/interest_topics.dart';
@@ -24,7 +25,7 @@ void main() {
     await tester.pump();
     await tester.tap(find.text('下一步'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('旅行'));
+    await tester.tap(find.text('出國旅行'));
     await tester.tap(find.text('工作'));
     await tester.pump();
     await tester.tap(find.text('下一步'));
@@ -50,5 +51,22 @@ void main() {
     expect(sortByInterests(decks, const ['advanced']).map((d) => d.slug),
         ['c', 'a', 'b']);
     expect(sortByInterests(decks, const []).map((d) => d.slug), ['a', 'b', 'c']);
+  });
+
+  // 問題回報 #1520: a goal and a topic with one name read as the same choice.
+  test('goal and interest labels never share a name in any language', () {
+    final goals = [for (final o in learningGoalOptions) o.$2];
+    final topics = [for (final o in interestOptions) o.$2];
+    for (final g in goals) {
+      for (final lang in ['en', 'fr']) {
+        expect(translateUi(g, lang), isNot(g), reason: '$g untranslated');
+      }
+      for (final t in topics) {
+        for (final lang in ['zh', 'en', 'fr']) {
+          expect(translateUi(g, lang), isNot(translateUi(t, lang)),
+              reason: '$g / $t ($lang)');
+        }
+      }
+    }
   });
 }
