@@ -5474,3 +5474,13 @@ commit `7a04d133`（Windows：flutter analyze 無 error、01:41 +982 ~2: All tes
 commit `f180369b`（Windows：flutter analyze 無 error、01:41 +982 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #227：模擬使用者・單字本
   結果：第 319 輪：2/2 通過（database 106 秒、detail 112 秒）；新問題 0、UX 建議 0。
+
+## M712（2026-11-07 19:17）狀態：待做（Windows 卡 #496 交給 Mac 的 App 畫面部分）
+卡：模擬使用者・法語（英語母語者學法語）
+
+在英文 iPad 開一個粗俗詞的詳情頁，確認標籤顯示 Vulgar。
+
+## M713（2026-11-07 19:19）狀態：待做
+commit `67881695`（Windows：flutter analyze 無 error、01:31 +982 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #496：模擬使用者・法語（英語母語者學法語）
+  結果：第34輪（round 79–81）程式 4/4 通過；A1 出現 1 筆中文殘留「粗俗」（單字詳情語氣標籤），已修，重跑 round 82 為 0。
