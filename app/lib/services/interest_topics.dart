@@ -29,7 +29,7 @@ const interestOptions =
   ('advanced', '進階單字', Icons.trending_up, ['進階單字']),
   // 卡 #891: shown only once a deck with these words exists ([availableInterests]).
   ('sports', '運動', Icons.sports_soccer, ['運動']),
-  ('hiking', '爬山／戶外活動', Icons.terrain, ['爬山', '登山', '戶外活動']),
+  ('hiking', '爬山健行', Icons.terrain, ['爬山', '登山', '戶外活動']),
   ('travel', '旅遊景點', Icons.flight_takeoff, ['旅行', '旅遊']),
 ];
 

@@ -1990,7 +1990,7 @@ const _templateCopy = <String, (String, String)>{
   '略過': ('Skip', 'Passer'),
   // 卡 #891: 推薦卡片集.
   '運動': ('Sports', 'Sport'),
-  '爬山／戶外活動': ('Hiking / outdoor activities', 'Randonnée / plein air'),
+  '爬山健行': ('Hiking', 'Randonnée'),
   '為你挑的相片冊': ('Albums picked for you', 'Albums choisis pour vous'),
   '依你的興趣和程度挑選，一下就能加入；之後也能在「相片冊」找到更多。': (
     'Picked for your interests and level. Add one in a tap; find more later under Albums.',

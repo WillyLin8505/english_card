@@ -72,7 +72,7 @@ void main() {
     await tester.tap(find.text('下一步'));
     await tester.pumpAndSettle();
     expect(find.text('運動'), findsOneWidget);
-    expect(find.text('爬山／戶外活動'), findsNothing);
+    expect(find.text('爬山健行'), findsNothing);
     expect(find.text('廚房'), findsNothing);
   });
 
