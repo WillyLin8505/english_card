@@ -421,3 +421,18 @@ def test_serve_app_stale_revision_matches_serve_app():
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
     import serve_app
     assert serve_app.snapshot_directory().name == sas.revision()
+
+
+def test_adopt_round_result_written_by_the_cli(tmp_path):
+    """11/08 #38: the CLI wrote card38.r31.result.md itself; a round file newer than the launch is the result."""
+    old = tmp_path / "card38.r30.result.md"
+    old.write_text("old", encoding="utf-8")
+    os.utime(old, (1000, 1000))
+    assert dt.adopt_round_result(38, 2000, tmp_path) is None          # only an older round: nothing
+    new = tmp_path / "card38.r31.result.md"
+    new.write_text("new", encoding="utf-8")
+    os.utime(new, (3000, 3000))
+    res = dt.adopt_round_result(38, 2000, tmp_path)
+    assert res.name == "card38.result.md" and res.read_text(encoding="utf-8") == "new" and not new.exists()
+    (tmp_path / "card38.r32.result.md").write_text("x", encoding="utf-8")
+    assert dt.adopt_round_result(38, 2000, tmp_path) is None          # result.md already there: leave it

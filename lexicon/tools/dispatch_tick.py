@@ -434,6 +434,17 @@ def latest_round_path(card_id: int, logs: Path = AG_LOGS) -> Path | None:
     return best[1] if best else None
 
 
+def adopt_round_result(card_id: int, launched_at: float, logs: Path = AG_LOGS) -> Path | None:
+    """11/08 #38: a repeat card's CLI wrote card<id>.rN.result.md itself instead of card<id>.result.md,
+    so the card was blocked as 'no result.md' twice. A round file written after this launch is the result."""
+    res = logs / f"card{card_id}.result.md"
+    newest = latest_round_path(card_id, logs)
+    if res.exists() or newest is None or newest.stat().st_mtime <= launched_at:
+        return None
+    newest.replace(res)
+    return res
+
+
 def render_prompt(task: dict, cfg: dict, night_tasks, template: str, prev: Path | None) -> str:
     kind = "常態卡（定期檢查）" if task.get("kind") == "recurring" else "一次性卡"
     prev_line = (f"上一輪結果：`{prev.relative_to(ROOT).as_posix()}`（只讀這一份，沿用上一輪的腳本）。"
@@ -584,6 +595,7 @@ class Tick:
                 log(f"#{cid}: adopted running card of {agent} (started {hm(st)})")
             card_id = int(cid)
             res = AG_LOGS / f"card{card_id}.result.md"
+            adopt_round_result(card_id, run["launched_at"])
             rm = res.stat().st_mtime if res.exists() else None
             lg = AG_LOGS / f"card{card_id}_{agent_kind(agent)}.log"
             log_text = lg.read_text(encoding="utf-8", errors="replace") if lg.exists() else ""
