@@ -21,6 +21,7 @@ DEVICE=$(xcrun simctl list devices booted | grep -m1 iPhone | sed -E 's/.*\(([0-
 [ -n "$DEVICE" ] || { echo "沒有開機中的 iPhone 模擬器：在 Simulator 選單 File → Open Simulator 選一台"; exit 1; }
 
 flutter pub get
+source tool/google_config.sh
 DEFINES=(--dart-define-from-file=iphone.json)
 [ -f posthog.local.json ] && DEFINES+=(--dart-define-from-file=posthog.local.json)
-flutter run -d "$DEVICE" ${DEFINES[@]+"${DEFINES[@]}"} "$@"
+flutter run -d "$DEVICE" ${DEFINES[@]+"${DEFINES[@]}"} ${GOOGLE_DEFINES[@]+"${GOOGLE_DEFINES[@]}"} "$@"

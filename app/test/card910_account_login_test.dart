@@ -22,6 +22,11 @@ class _Social implements SocialSignIn {
   Future<SocialCredential?> apple() async => null; // learner closed the sheet
 }
 
+class _CancelGoogle extends _Social {
+  @override
+  Future<SocialCredential?> google() async => null;
+}
+
 void main() {
   test('the account server is fixed and not the tagging URL', () {
     final cloud = CloudBackup(AppSettings.inMemory(taggingUrl: 'http://dev'));
@@ -112,5 +117,19 @@ void main() {
     expect(find.byKey(const Key('signInGoogle')), findsNothing);
     expect(find.byKey(const Key('signInApple')), findsNothing);
     expect(find.byKey(const Key('signInEmail')), findsOneWidget);
+  });
+
+  testWidgets('card1001: cancelling Google sign-in shows no error and stays out',
+      (tester) async {
+    final settings = AppSettings.inMemory();
+    await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+            body: AccountSignInButtons(
+                settings: settings, social: _CancelGoogle()))));
+    await tester.tap(find.byKey(const Key('signInGoogle')));
+    await tester.pumpAndSettle();
+    expect(settings.cloudSignedIn, isFalse);
+    expect(tester.takeException(), isNull);
+    expect(find.byType(SnackBar), findsNothing);
   });
 }

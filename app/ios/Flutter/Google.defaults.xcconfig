@@ -1,0 +1,3 @@
+// Placeholder URL scheme used when no Google client ID is configured; the
+// build scripts override it via Google.local.xcconfig (tool/google_config.sh).
+GOOGLE_REVERSED_CLIENT_ID=com.willylinai.photoflashcard.google-unconfigured

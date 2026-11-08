@@ -14,8 +14,9 @@ cd "${0:A:h}/.."
 : "${ASC_KEY_ID:?set ASC_KEY_ID (App Store Connect API key id)}"
 : "${ASC_ISSUER_ID:?set ASC_ISSUER_ID (App Store Connect issuer id)}"
 BUILD=$(git rev-list --count HEAD)
+source tool/google_config.sh  # Google client IDs (google.local.json), see that file
 flutter build ipa --release --build-number="$BUILD" \
-  --dart-define-from-file=iphone.json \
+  --dart-define-from-file=iphone.json ${GOOGLE_DEFINES[@]+"${GOOGLE_DEFINES[@]}"} \
   --export-options-plist=ios/ExportOptions.plist
 IPA=$(ls build/ios/ipa/*.ipa | head -1)
 xcrun altool --upload-app --type ios --file "$IPA" \
