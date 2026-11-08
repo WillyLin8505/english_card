@@ -150,9 +150,6 @@ def check_oidc_claims(claims: dict, client_ids: list[str], issuers: tuple, now: 
 def _oidc_verify(id_token: str, env: str, jwks_url: str, issuers: tuple, label: str) -> dict:
     """Signature (RS256 via the provider's published keys) + iss / aud / exp. Client IDs come from the environment."""
     import os
-    ids = [x.strip() for x in os.environ.get(env, "").split(",") if x.strip()]
-    if not ids:
-        raise AccountError(501, f"伺服器還沒設定 {label} 登入（{env}）")
     try:
         import jwt  # PyJWT[crypto]
     except ImportError:
@@ -162,7 +159,23 @@ def _oidc_verify(id_token: str, env: str, jwks_url: str, issuers: tuple, label: 
         claims = jwt.decode(id_token, key, algorithms=["RS256"], options={"verify_aud": False, "verify_exp": False})
     except Exception as e:
         raise ValueError(f"signature: {e}")
+    ids = [x.strip() for x in os.environ.get(env, "").split(",") if x.strip()]
+    if not ids:
+        raise AccountError(501, f"伺服器還沒設定 {label} 登入（{env}）")
     return check_oidc_claims(claims, ids, issuers)
+
+
+def login_config_warnings() -> list[str]:
+    """Start-up check (card #1000): what is missing for Google / Apple sign-in. Never includes values."""
+    import importlib.util
+    import os
+    out = []
+    if importlib.util.find_spec("jwt") is None or importlib.util.find_spec("cryptography") is None:
+        out.append("Google/Apple 登入無法使用：缺少 PyJWT[crypto]（pip install \"PyJWT[crypto]\"）")
+    for env, label in (("LEXICON_GOOGLE_CLIENT_IDS", "Google"), ("LEXICON_APPLE_CLIENT_IDS", "Apple")):
+        if not os.environ.get(env, "").strip():
+            out.append(f"{label} 登入尚未設定：環境變數 {env} 為空（/api/account 會回 501）")
+    return out
 
 
 def _default_google_verifier(id_token: str) -> dict:

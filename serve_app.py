@@ -1265,6 +1265,11 @@ if __name__ == '__main__':
         ensure_studio()
     except (OSError, RuntimeError) as error:
         logging.warning('Card studio could not start: %s', error)
+    try:
+        for line in accounts.login_config_warnings():
+            logging.warning(line)
+    except Exception as error:
+        logging.warning('Sign-in config check failed: %s', error)
     server = ThreadingHTTPServer(('0.0.0.0' if args.lan else '127.0.0.1', args.port), Handler)
     server.lan = args.lan
     server.request_watch = RequestWatch(ROOT / 'lexicon' / 'logs' / 'serve_app_slow.log', pool=db.engine.pool)

@@ -57,4 +57,35 @@ def test_google_bad_token_and_unconfigured(session, monkeypatch):
     monkeypatch.delenv("LEXICON_GOOGLE_CLIENT_IDS", raising=False)
     with pytest.raises(accounts.AccountError) as e:
         accounts.login_google(session, "t")
-    assert e.value.status == 501
+    assert e.value.status in (401, 501)  # 401 once PyJWT is installed (card #1000), 501 without it
+
+
+def test_card1000_fake_token_is_401_not_501(session, monkeypatch):
+    pytest.importorskip("jwt")
+    monkeypatch.setattr(accounts, "google_verifier", None)
+    monkeypatch.delenv("LEXICON_GOOGLE_CLIENT_IDS", raising=False)
+    with pytest.raises(accounts.AccountError) as e:
+        accounts.login_google(session, "not.a.token")
+    assert e.value.status == 401
+
+
+def test_card1000_missing_package_and_config_messages(session, monkeypatch):
+    import builtins
+    real = builtins.__import__
+
+    def no_jwt(name, *a, **k):
+        if name == "jwt":
+            raise ImportError(name)
+        return real(name, *a, **k)
+    monkeypatch.setattr(builtins, "__import__", no_jwt)
+    with pytest.raises(accounts.AccountError) as e:
+        accounts._oidc_verify("x", "LEXICON_GOOGLE_CLIENT_IDS", "u", (), "Google")
+    assert e.value.status == 501 and "PyJWT" in e.value.message
+
+
+def test_card1000_startup_warnings_name_env_without_values(monkeypatch):
+    monkeypatch.delenv("LEXICON_GOOGLE_CLIENT_IDS", raising=False)
+    monkeypatch.setenv("LEXICON_APPLE_CLIENT_IDS", "secret.client.id")
+    text = "\n".join(accounts.login_config_warnings())
+    assert "LEXICON_GOOGLE_CLIENT_IDS" in text
+    assert "LEXICON_APPLE_CLIENT_IDS" not in text and "secret.client.id" not in text
