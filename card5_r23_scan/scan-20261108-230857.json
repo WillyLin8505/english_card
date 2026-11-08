@@ -1,0 +1,156 @@
+{
+ "groups": {
+  "B": {
+   "title": "CEFR 估算離群",
+   "checks": {
+    "full_cefr_estimated": {
+     "n": 17286,
+     "samples": []
+    },
+    "est_C1C2_on_photos": {
+     "n": 3949,
+     "samples": [
+      "breadstick(noun,C2)",
+      "loaf(verb,C2)",
+      "breadcrumb(noun,C2)",
+      "gull(noun,C1)",
+      "exterior(adj,C2)",
+      "interior(adj,C2)",
+      "outdoors(noun,C2)",
+      "mezzanine(noun,C2)",
+      "sunburst(noun,C2)",
+      "dappled(adj,C2)",
+      "overlook(noun,C2)",
+      "neglect(verb,C1)",
+      "potted(adj,C2)",
+      "wet(noun,C1)",
+      "sprinkle(verb,C1)",
+      "sodden(adj,C2)",
+      "brick(adj,C2)",
+      "chill(adj,C2)",
+      "clinker(noun,C2)",
+      "brickwork(noun,C2)",
+      "shade(verb,C1)",
+      "tint(noun,C1)",
+      "parasol(noun,C2)",
+      "sun visor(noun,C1)",
+      "crosshatch(verb,C2)",
+      "lampshade(noun,C2)",
+      "terracotta(noun,C2)",
+      "umber(noun,C2)",
+      "cappuccino(noun,C2)",
+      "street(adj,C2)"
+     ]
+    },
+    "est_C1C2_nouns_on_photos": {
+     "n": 2695,
+     "samples": [
+      "breadstick",
+      "breadcrumb",
+      "gull",
+      "outdoors",
+      "mezzanine",
+      "sunburst",
+      "overlook",
+      "wet",
+      "clinker",
+      "brickwork",
+      "tint",
+      "parasol",
+      "sun visor",
+      "lampshade",
+      "terracotta",
+      "umber",
+      "cappuccino",
+      "thoroughfare",
+      "abode",
+      "streetlight",
+      "baffle",
+      "escutcheon",
+      "boilerplate",
+      "breastplate",
+      "nameplate",
+      "chopping board",
+      "chop",
+      "spoonful",
+      "cutlery",
+      "spindrift"
+     ]
+    },
+    "estimate_2plus_above_listed_base": {
+     "n": 303,
+     "samples": [
+      "outdoors(C2) base outdoor",
+      "potted(C2) base pot",
+      "richness(C1) base rich",
+      "spoonful(C2) base spoon",
+      "caller(C2) base call",
+      "fruitful(C1) base fruit",
+      "winding(C2) base wind",
+      "winder(C2) base wind",
+      "dirty(C1) base dirt",
+      "meaning(C2) base mean",
+      "flower(C2) base flow",
+      "treeless(C2) base tree",
+      "grassy(C1) base grass",
+      "carry(C2) base car",
+      "doggy(C1) base dog",
+      "dogged(C1) base dog",
+      "tender(C2) base tend",
+      "looker(C2) base look",
+      "leafy(C1) base leaf",
+      "leafless(C2) base leaf",
+      "skier(C1) base ski",
+      "swimming(C2) base swim",
+      "darkly(C1) base dark",
+      "frameless(C2) base frame",
+      "starry(C1) base star",
+      "bearer(C1) base bear",
+      "center(C2) base cent",
+      "center(B2) base cent",
+      "clothed(C1) base cloth",
+      "advisory(C1) base advisor"
+     ]
+    }
+   }
+  }
+ },
+ "pack": {
+  "lexemes": 28024,
+  "full": 27475,
+  "catalog_images": 13229,
+  "cefr_source": {
+   "cefr-j": 9973,
+   "frequency_estimate": 17257,
+   "quality_redirect": 96,
+   "quality_excluded": 120,
+   "quality_rule": 28,
+   "null": 1
+  }
+ },
+ "delta": {
+  "B.full_cefr_estimated": {
+   "n": 17286,
+   "prev": null,
+   "diff": null
+  },
+  "B.est_C1C2_on_photos": {
+   "n": 3949,
+   "prev": null,
+   "diff": null
+  },
+  "B.est_C1C2_nouns_on_photos": {
+   "n": 2695,
+   "prev": null,
+   "diff": null
+  },
+  "B.estimate_2plus_above_listed_base": {
+   "n": 303,
+   "prev": null,
+   "diff": null
+  }
+ },
+ "generated_at": "2026-11-08T23:08:57+08:00",
+ "seconds": 432.1,
+ "read_only": true
+}
