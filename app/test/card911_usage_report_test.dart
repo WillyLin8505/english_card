@@ -37,6 +37,11 @@ void main() {
     expect(await report.sendIfDue(), isFalse); // sent today
     expect(bodies.length, 2);
     expect(bodies.last.keys,
-        containsAll(['albums', 'reviews_total', 'reviews_7d', 'photos_taken', 'photos_opened', 'app_version']));
+        containsAll(['albums', 'decks', 'languages', 'reviews_total', 'reviews_7d', 'photos_taken', 'photos_opened', 'app_version']));
+    // Card #1002: names and counts only, no words or photo content.
+    expect(bodies.last['decks'], isA<List>());
+    expect(bodies.last['languages'], containsPair('learning', settings.learningLanguage));
+    expect(bodies.last['languages'], containsPair('native', settings.nativeLanguage));
+    expect(bodies.last['languages'], containsPair('words', isA<int>()));
   });
 }

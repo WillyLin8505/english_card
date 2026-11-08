@@ -30,6 +30,8 @@ class UsageReport {
         _now = now ?? DateTime.now;
 
   /// The numbers only. Review counts come from the ReviewLog timestamps.
+  /// [decks] lists every installed word deck and photo album by name (card #1002),
+  /// [languages] the learning/native pair the app is set to and its word count.
   Map<String, Object?> snapshot() {
     final now = _now();
     final weekAgo = now.subtract(const Duration(days: 7));
@@ -39,6 +41,15 @@ class UsageReport {
         for (final d in DeckLibrary.instance.installed)
           if (d.info.kind == 'photos') d.info.title
       ],
+      'decks': [
+        for (final d in DeckLibrary.instance.installed)
+          {'slug': d.info.slug, 'kind': d.info.kind, 'title': d.info.title},
+      ],
+      'languages': {
+        'learning': settings.learningLanguage,
+        'native': settings.nativeLanguage,
+        'words': repository.wordCount,
+      },
       'reviews_total': logs.length,
       'reviews_7d': logs.where((l) => l.reviewedAt.isAfter(weekAgo)).length,
       'photos_taken': repository.allPhotos.length,
