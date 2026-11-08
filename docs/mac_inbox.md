@@ -5683,3 +5683,13 @@ iPad 看一眼興趣主題頁兩個選項是否清楚。
 commit `b7f8493a`（Windows：flutter analyze 無 error、01:13 +983 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #999：問題回報 #1521：[UX] 興趣主題「戶外」與「爬山／戶外活動」字面重疊，容易混淆
   結果：已完成：興趣主題「爬山／戶外活動」改名「爬山健行」，不再與「戶外」字面重疊（只改標籤，無資料變動）。；- 改動：app/lib/services/interesttopics.dart（標籤）、app/lib/l10n/uicatalog.dart（英 Hiking／法 Randonnée）、app/test/card
+
+## M753（2026-11-08 14:35）狀態：待做（Windows 卡 #4 交給 Mac 的 App 畫面部分）
+卡：掃描還沒打完的圖片標籤
+
+無。剩下：新圖進來時再看 pending 是否消化。
+
+## M754（2026-11-08 14:45）狀態：待做
+commit `8f2fe44c`（Windows：flutter analyze 無 error、01:15 +983 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #4：掃描還沒打完的圖片標籤
+  結果：結論：圖片標籤仍全部消化完：pending 0，failed 56（與上輪相同，無新增）；Qwen :8790 與 tagger :8765 health 皆 ok。
