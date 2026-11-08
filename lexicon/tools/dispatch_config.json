@@ -89,7 +89,15 @@
   "night_simulation": {
     "enabled": true,
     "window": "01:00-07:00",
-    "tasks": [12, 224, 225, 226, 227, 228, 496],
+    "tasks": [
+      12,
+      224,
+      225,
+      226,
+      227,
+      228,
+      496
+    ],
     "cooldown_hours": 1
   },
   "_night_simulation_note": "owner 11/03：晚上沒在用電腦，夜間一直模擬使用者、發現問題就開卡。模擬卡在 window 內每張最多每 cooldown_hours 小時跑一次（白天仍 12 小時），發現的問題照常變成問題回報、由 issue swarm 開卡修。Mac 在 iPad 上的夜間模擬見 docs/mac_inbox.md。",
@@ -132,9 +140,11 @@
   },
   "_probe_note": "????????????? log ?? LIMIT ?????????????????????????",
   "probe_interval_minutes": 60,
-  "max_running_clis": 2,
+  "max_running_clis": 3,
   "max_launches_per_tick": 1,
-  "priority_tasks": [833],
+  "priority_tasks": [
+    828
+  ],
   "_priority_note": "owner 11/04「法文優先」：這些卡在 issue swarm 排第一，有空的 CLI 就先派（#833 補齊法文詞條）。做完或不需要了就從這裡拿掉。",
   "_max_running_note": "owner 11/04：電腦連續兩次因為一次派太多 CLI（20 幾個）而當機。不管有幾個空位，同時最多 max_running_clis 個 CLI、每輪最多開 max_launches_per_tick 個；要加之前先少量測試。",
   "issue_swarm": {
