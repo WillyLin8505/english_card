@@ -5744,3 +5744,15 @@ commit `e9ce0519`（Windows：flutter analyze 無 error、01:15 +983 ~2: All tes
 commit `50a07fcd`（Windows：flutter analyze 無 error、01:15 +983 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #228：模擬使用者・設定
   結果：第 346 輪：settings 1/1 通過（pack 28024 詞，11 秒）、新問題無、UX 建議 0 項新增。
+
+## M765（2026-11-08 22:51）狀態：待做（Windows 卡 #1001 交給 Mac 的 App 畫面部分）
+卡：問題回報 #1523：[owner] App 的 Google 登入沒接上：建置沒傳 GOOGLE_IOS_CLIENT_ID，Info.plist 缺 URL
+
+用 ./run_ios_sim.sh 或 testflight.sh 建置，在 iPad 驗證 Google 按鈕出現、登入成功、取消不閃退，並確認 Info.plist 的 scheme 為 com.googleusercontent.apps.<id>。
+3. 未在 Windows 驗證 xcodebuild 的 plist 取代（無 Mac）；flutter analyze 的 lib 檔無改動。
+未做資料變更，故無備份、golden/QC 不適用。
+
+## M766（2026-11-08 22:59）狀態：待做
+commit `1e3eb018`（Windows：flutter analyze 無 error、01:38 +984 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1001：問題回報 #1523：[owner] App 的 Google 登入沒接上：建置沒傳 GOOGLE_IOS_CLIENT
+  結果：第一輪完成：建置腳本與 Info.plist 已接好 Google 登入；Client ID 要 owner 放進 app/google.local.json 才會生效，之後交 Mac 在 iPad 驗證。
