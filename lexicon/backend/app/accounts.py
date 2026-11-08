@@ -443,12 +443,39 @@ def block_author(s: Session, user: m.User, slug: str) -> None:
 # Signed-in apps report counts and album names only; the admin users page reads them.
 
 ALBUMS_MAX, ALBUM_NAME_MAX = 200, 80
+DECKS_MAX, DECK_KINDS = 500, {"words", "photos"}
 
 
 def _count(v) -> int:
     if isinstance(v, bool) or not isinstance(v, (int, float)):
         return 0
     return max(0, min(int(v), 10_000_000))
+
+
+def _decks(raw) -> list[dict]:
+    """Installed decks as {slug, kind, title} (card #1002). Old apps send no list: an empty one."""
+    out, seen = [], set()
+    for d in raw if isinstance(raw, list) else []:
+        if not isinstance(d, dict) or len(out) >= DECKS_MAX:
+            continue
+        slug = d.get("slug")
+        if not isinstance(slug, str) or not slug.strip() or slug in seen:
+            continue
+        kind = d.get("kind") if d.get("kind") in DECK_KINDS else "words"
+        title = d.get("title") if isinstance(d.get("title"), str) else slug
+        seen.add(slug)
+        out.append({"slug": slug.strip()[:120], "kind": kind, "title": title.strip()[:ALBUM_NAME_MAX]})
+    return out
+
+
+def _languages(raw) -> dict:
+    """Learning/native pair the app is set to and its word count (card #1002)."""
+    if not isinstance(raw, dict):
+        return {}
+    def code(v):
+        return v.strip()[:16] if isinstance(v, str) and v.strip() else None
+    return {"learning": code(raw.get("learning")), "native": code(raw.get("native")),
+            "words": _count(raw.get("words"))}
 
 
 def report_stats(s: Session, user: m.User, body: dict) -> dict:
@@ -461,6 +488,8 @@ def report_stats(s: Session, user: m.User, body: dict) -> dict:
     version = body.get("app_version")
     row = s.get(m.UserStat, user.id) or m.UserStat(user_id=user.id)
     row.albums = json.dumps(sorted(set(albums)), ensure_ascii=False)
+    row.decks = json.dumps(_decks(body.get("decks")), ensure_ascii=False)
+    row.languages = json.dumps(_languages(body.get("languages")), ensure_ascii=False)
     row.reviews_total = _count(body.get("reviews_total"))
     row.reviews_7d = min(_count(body.get("reviews_7d")), row.reviews_total)
     row.photos_taken = _count(body.get("photos_taken"))
@@ -474,9 +503,12 @@ def report_stats(s: Session, user: m.User, body: dict) -> dict:
 
 def _stat_row(user: m.User, st: m.UserStat | None) -> dict:
     albums = json.loads(st.albums) if st else []
+    decks = json.loads(st.decks or "[]") if st else []
     return {"id": user.id, "email": user.email, "provider": user.provider, "blocked": user.blocked,
             "joined": user.created_at.isoformat() if user.created_at else None,
             "albums": albums, "album_count": len(albums),
+            "decks": decks, "deck_count": len(decks),
+            "languages": json.loads(st.languages or "{}") if st else {},
             "reviews_total": st.reviews_total if st else 0, "reviews_7d": st.reviews_7d if st else 0,
             "photos_taken": st.photos_taken if st else 0, "photos_opened": st.photos_opened if st else 0,
             "app_version": st.app_version if st else None,
@@ -486,20 +518,33 @@ def _stat_row(user: m.User, st: m.UserStat | None) -> dict:
 USER_SORTS = {"last_seen", "reviews_total", "reviews_7d", "photos_taken", "photos_opened", "album_count", "joined", "email"}
 
 
-def users_overview(s: Session, q: str = "", sort: str = "last_seen", desc: bool = True) -> dict:
-    """Admin only. Email is the only personal field; no nickname, no content."""
+def users_overview(s: Session, q: str = "", sort: str = "last_seen", desc: bool = True, deck: str = "") -> dict:
+    """Admin only. Email is the only personal field; no nickname, no content.
+    `q` matches email, album names and deck titles/slugs; `deck` keeps only users with that deck slug."""
     rows = s.execute(select(m.User, m.UserStat).join(m.UserStat, m.UserStat.user_id == m.User.id, isouter=True)).all()
     out = [_stat_row(u, st) for u, st in rows]
     week = datetime.now(timezone.utc) - timedelta(days=7)
     active = sum(1 for u, st in rows if st and st.last_seen and st.last_seen >= week)
+    # How many members use each database (card #1002), counted over all users, not the filter.
+    usage: dict[str, dict] = {}
+    for r in out:
+        for d in r["decks"]:
+            entry = usage.setdefault(d["slug"], {"slug": d["slug"], "kind": d["kind"], "title": d["title"], "users": 0})
+            entry["users"] += 1
+    deck_usage = sorted(usage.values(), key=lambda e: (-e["users"], e["slug"]))
     q = q.strip().lower()
     if q:
-        out = [r for r in out if q in (r["email"] or "").lower() or any(q in a.lower() for a in r["albums"])]
+        out = [r for r in out if q in (r["email"] or "").lower() or any(q in a.lower() for a in r["albums"])
+               or any(q in d["title"].lower() or q in d["slug"].lower() for d in r["decks"])]
+    deck = deck.strip()
+    if deck:
+        out = [r for r in out if any(d["slug"] == deck for d in r["decks"])]
     key = sort if sort in USER_SORTS else "last_seen"
     present = [r for r in out if r[key] is not None]
     missing = [r for r in out if r[key] is None]
     present.sort(key=lambda r: r[key], reverse=desc)
-    return {"total_users": len(rows), "active_7d": active, "matched": len(out), "users": present + missing}
+    return {"total_users": len(rows), "active_7d": active, "matched": len(out), "users": present + missing,
+            "deck_usage": deck_usage}
 
 
 def user_detail(s: Session, user_id: int) -> dict:
@@ -559,8 +604,9 @@ def register(app, auth):
         return stats(s)
 
     @app.get("/admin/users", dependencies=[auth])
-    def admin_users(q: str = "", sort: str = "last_seen", desc: bool = True, s: Session = Depends(db.get_session)):
-        return users_overview(s, q, sort, desc)
+    def admin_users(q: str = "", sort: str = "last_seen", desc: bool = True, deck: str = "",
+                    s: Session = Depends(db.get_session)):
+        return users_overview(s, q, sort, desc, deck)
 
     @app.get("/admin/users/{user_id}", dependencies=[auth])
     def admin_user(user_id: int, s: Session = Depends(db.get_session)):

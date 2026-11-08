@@ -962,6 +962,8 @@ class UserStat(Base):
     photos_taken: Mapped[int] = mapped_column(default=0, server_default="0")
     photos_opened: Mapped[int] = mapped_column(default=0, server_default="0")
     app_version: Mapped[str | None] = mapped_column(String(32))
+    decks: Mapped[str] = mapped_column(Text, default="[]", server_default="[]")     # JSON [{slug, kind, title}] (card #1002)
+    languages: Mapped[str] = mapped_column(Text, default="{}", server_default="{}")  # JSON {learning, native, words} (card #1002)
     last_seen: Mapped[datetime] = _now()
 
 

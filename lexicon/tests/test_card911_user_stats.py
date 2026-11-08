@@ -39,6 +39,31 @@ def test_overview_search_sort_active_and_no_personal_fields(session):
     assert accounts.users_overview(session, sort="bogus")["total_users"] == 3
 
 
+def test_decks_and_languages_are_stored_and_filterable(session):
+    """Card #1002: installed databases and the language pair; old apps send neither."""
+    a, b, c = _user(session, "ann@x.com"), _user(session, "ben@x.com"), _user(session, "cat@x.com")
+    accounts.report_stats(session, a, {"decks": [{"slug": "food-en", "kind": "words", "title": "Food"},
+                                                 {"slug": "p1", "kind": "photos", "title": "Trip"},
+                                                 {"slug": "food-en", "kind": "words", "title": "dup"}],
+                                       "languages": {"learning": "fr", "native": "en", "words": 12}})
+    accounts.report_stats(session, b, {"decks": [{"slug": "food-en", "kind": "words", "title": "Food"}],
+                                       "languages": {"learning": "en", "native": "zh-TW", "words": 3}})
+    accounts.report_stats(session, c, {"albums": ["Old"]})  # old app: no decks, no languages
+    d = accounts.user_detail(session, a.id)
+    assert [x["slug"] for x in d["decks"]] == ["food-en", "p1"] and d["deck_count"] == 2
+    assert d["languages"] == {"learning": "fr", "native": "en", "words": 12}
+    assert accounts.user_detail(session, c.id)["decks"] == [] and accounts.user_detail(session, c.id)["languages"] == {}
+    o = accounts.users_overview(session, deck="food-en")
+    assert o["matched"] == 2 and {r["email"] for r in o["users"]} == {"ann@x.com", "ben@x.com"}
+    assert accounts.users_overview(session, q="trip")["matched"] == 1
+    assert accounts.users_overview(session, deck="p1")["matched"] == 1
+    assert accounts.users_overview(session, deck="nope")["matched"] == 0
+    assert o["deck_usage"][0] == {"slug": "food-en", "kind": "words", "title": "Food", "users": 2}
+    assert {u["slug"]: u["users"] for u in o["deck_usage"]} == {"food-en": 2, "p1": 1}
+    both = accounts.users_overview(session, q="trip", deck="food-en")
+    assert [r["email"] for r in both["users"]] == ["ann@x.com"]  # q and deck filters combine
+
+
 def test_delete_account_removes_stats(session):
     u = _user(session, "d@x.com")
     accounts.report_stats(session, u, {"reviews_total": 1})

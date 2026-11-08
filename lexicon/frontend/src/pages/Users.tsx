@@ -9,6 +9,9 @@ type U = {
   joined: string | null;
   albums: string[];
   album_count: number;
+  decks: Deck[];
+  deck_count: number;
+  languages: { learning?: string | null; native?: string | null; words?: number };
   reviews_total: number;
   reviews_7d: number;
   photos_taken: number;
@@ -16,7 +19,9 @@ type U = {
   app_version: string | null;
   last_seen: string | null;
 };
-type Overview = { total_users: number; active_7d: number; matched: number; users: U[] };
+type Deck = { slug: string; kind: string; title: string };
+type DeckUsage = Deck & { users: number };
+type Overview = { total_users: number; active_7d: number; matched: number; users: U[]; deck_usage: DeckUsage[] };
 
 type Ret = { eligible: number; returned: number; rate: number | null };
 type Block = {
@@ -86,6 +91,40 @@ function RetentionBox() {
   );
 }
 
+const kindLabel = (k: string) => (k === "photos" ? "相片冊" : "單字牌組");
+const pair = (l: U["languages"]) => (l.learning ? `${l.learning}→${l.native ?? "?"}` : "—");
+
+/** How many members use each database (card #1002); click one to filter the list by it. */
+function DeckUsageBox({ usage, onPick }: { usage: DeckUsage[]; onPick: (slug: string) => void }) {
+  return (
+    <section className="card">
+      <h2>每個資料庫有幾位會員在用</h2>
+      {usage.length === 0 ? (
+        <Empty>還沒有會員回報資料庫</Empty>
+      ) : (
+        <table className="table">
+          <thead>
+            <tr>
+              <th>資料庫</th>
+              <th>類型</th>
+              <th>會員數</th>
+            </tr>
+          </thead>
+          <tbody>
+            {usage.map((d) => (
+              <tr key={d.slug} style={{ cursor: "pointer" }} onClick={() => onPick(d.slug)}>
+                <td>{d.title}</td>
+                <td>{kindLabel(d.kind)}</td>
+                <td>{d.users}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </section>
+  );
+}
+
 const COLS: [string, string][] = [
   ["email", "Email"],
   ["album_count", "相片冊"],
@@ -93,6 +132,7 @@ const COLS: [string, string][] = [
   ["reviews_7d", "近 7 天複習"],
   ["photos_taken", "拍攝照片"],
   ["photos_opened", "打開照片"],
+  ["deck_count", "資料庫"],
   ["last_seen", "最後使用"],
 ];
 
@@ -100,8 +140,13 @@ export default function Users() {
   const [q, setQ] = useState("");
   const [sort, setSort] = useState("last_seen");
   const [desc, setDesc] = useState(true);
+  const [deck, setDeck] = useState("");
   const [open, setOpen] = useState<number | null>(null);
-  const data = useLoad<Overview>(`/admin/users?q=${encodeURIComponent(q)}&sort=${sort}&desc=${desc}`, [q, sort, desc], 15000);
+  const data = useLoad<Overview>(
+    `/admin/users?q=${encodeURIComponent(q)}&sort=${sort}&desc=${desc}&deck=${encodeURIComponent(deck)}`,
+    [q, sort, desc, deck],
+    15000,
+  );
 
   const pick = (k: string) => {
     if (k === sort) setDesc(!desc);
@@ -117,7 +162,7 @@ export default function Users() {
         <div>
           <h1>使用者（Users）</h1>
           <p className="muted">
-            只有登入雲端帳號的使用者會回傳數字（相片冊名稱、複習／照片次數），沒登入的人這裡看不到。不含照片與單字內容；除了 email 沒有其他個資。
+            只有登入雲端帳號的使用者會回傳數字（資料庫名稱、學習語言、複習／照片次數），沒登入的人這裡看不到。不含照片與單字內容；除了 email 沒有其他個資。
           </p>
         </div>
       </header>
@@ -130,8 +175,18 @@ export default function Users() {
           <section className="card form-inline">
             <span>總人數 <b>{data.data.total_users}</b></span>
             <span>近 7 天活躍 <b>{data.data.active_7d}</b></span>
-            <input placeholder="搜尋 email 或相片冊名稱" value={q} onChange={(e) => setQ(e.target.value)} />
+            <input placeholder="搜尋 email 或資料庫名稱" value={q} onChange={(e) => setQ(e.target.value)} />
+            <select value={deck} onChange={(e) => setDeck(e.target.value)}>
+              <option value="">所有資料庫</option>
+              {data.data.deck_usage.map((d) => (
+                <option key={d.slug} value={d.slug}>
+                  {d.title}（{d.users}）
+                </option>
+              ))}
+            </select>
+            {deck && <button onClick={() => setDeck("")}>清除篩選</button>}
           </section>
+          <DeckUsageBox usage={data.data.deck_usage} onPick={setDeck} />
           {data.data.users.length === 0 ? (
             <Empty>沒有符合的使用者</Empty>
           ) : (
@@ -156,13 +211,18 @@ export default function Users() {
                       <td>{u.reviews_7d}</td>
                       <td>{u.photos_taken}</td>
                       <td>{u.photos_opened}</td>
+                      <td>{u.deck_count}</td>
                       <td>{u.last_seen ? fmtTime(u.last_seen) : "—"}</td>
                       <td>{u.app_version ?? "—"}</td>
                     </tr>
                     {open === u.id && (
                       <tr>
-                        <td colSpan={8}>
-                          <div>註冊：{fmtTime(u.joined)}　登入方式：{u.provider}</div>
+                        <td colSpan={9}>
+                          <div>註冊：{fmtTime(u.joined)}　登入方式：{u.provider}　學習組合：{pair(u.languages)}　單字數：{u.languages.words ?? "—"}</div>
+                          <div>
+                            使用的資料庫（{u.deck_count}）：
+                            {u.decks.length ? u.decks.map((d) => `${d.title}［${kindLabel(d.kind)}］`).join("、") : "—"}
+                          </div>
                           <div>下載的相片冊（{u.album_count}）：{u.albums.length ? u.albums.join("、") : "—"}</div>
                         </td>
                       </tr>
