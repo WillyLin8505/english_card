@@ -5761,3 +5761,13 @@ commit `1e3eb018`（Windows：flutter analyze 無 error、01:38 +984 ~2: All tes
 commit `15aa5747`（Windows：flutter analyze 無 error、01:34 +984 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #1002：問題回報 #1524：[owner] 後台使用者頁要看到每位會員用了哪些資料庫（目前只有照片相簿）
   結果：後台使用者頁現在會顯示每位會員的資料庫清單與語言組合，並有「每個資料庫有幾位會員在用」統計與資料庫篩選；後端測試 6/6、Flutter 測試 3/3、flutter analyze 與 tsc 都通過，App 端還需 Mac iPad 驗證。
+
+## M768（2026-11-09 01:25）狀態：待做（Windows 卡 #224 交給 Mac 的 App 畫面部分）
+卡：模擬使用者・拍照
+
+無。
+
+## M769（2026-11-09 01:29）狀態：待做
+commit `6d14147f`（Windows：flutter analyze 無 error、01:20 +984 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #224：模擬使用者・拍照
+  結果：第 347 輪：photoui 通過（40 秒）、pins 通過（472 秒），2/2 通過；新問題 0；UX 建議 0（本輪只跑測試，沒有逐畫面截圖評估）。
