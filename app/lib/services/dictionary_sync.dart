@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 
@@ -94,6 +95,38 @@ class DictionarySync extends ChangeNotifier {
   int downloadedBytes = 0;
   int? downloadTotalBytes;
   String? _activePair;
+
+  /// 審查 4.2.3(ii) (card #1015): a full pack on mobile data waits for the
+  /// user's say-so. [mobileWaitBytes] is the size to announce (null = nothing
+  /// waits); [allowMobileDownload] lets it through, a Wi-Fi connection does
+  /// so by itself on the next 30 s poll.
+  int? mobileWaitBytes;
+  bool _mobileAllowed = false;
+  static const mobileAskBytes = 5 * 1000 * 1000;
+  static const defaultPackBytes = 62 * 1000 * 1000;
+
+  /// True on cellular only (no Wi-Fi/ethernet). Tests replace it.
+  Future<bool> Function() onMobileOnly = _mobileOnlyNow;
+  static Future<bool> _mobileOnlyNow() async {
+    if (kIsWeb) return false;
+    try {
+      final now = await Connectivity().checkConnectivity();
+      return now.contains(ConnectivityResult.mobile) &&
+          !now.contains(ConnectivityResult.wifi) &&
+          !now.contains(ConnectivityResult.ethernet);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// 「現在下載」: downloads over mobile data this session.
+  Future<void> allowMobileDownload() async {
+    _mobileAllowed = true;
+    mobileWaitBytes = null;
+    if (!_disposed) notifyListeners();
+    await refresh();
+  }
+
   final _forceFull = <String>{};
 
   Uri endpoint(String target, String native) {
@@ -418,6 +451,20 @@ class DictionarySync extends ChangeNotifier {
       if (response.statusCode != 200) {
         unawaited(response.stream.drain<void>().catchError((_) {}));
         throw StateError('Dictionary unavailable');
+      }
+      final packSize = response.contentLength ?? defaultPackBytes;
+      if (!canReuse &&
+          !_mobileAllowed &&
+          packSize >= mobileAskBytes &&
+          await onMobileOnly()) {
+        await response.stream.listen((_) {}).cancel();
+        mobileWaitBytes = packSize;
+        if (!_disposed) notifyListeners();
+        return;
+      }
+      if (mobileWaitBytes != null) {
+        mobileWaitBytes = null;
+        if (!_disposed) notifyListeners();
       }
       final contentType = response.headers['content-type'] ?? '';
       final body = trackDownload(response.stream, response.contentLength);
