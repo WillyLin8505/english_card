@@ -5990,3 +5990,21 @@ commit `6b02c12f`（Windows：flutter analyze 無 error、01:20 +984 ~2: All tes
 卡：問題回報 #1528：[owner] 上架版建置會帶 TAGGING_URL：照片改走伺服器又沒金鑰（每張 401 辨識失敗），設定還露出網址／金鑰欄
 
 用 store.json 跑 tool/testflight.sh（或同一組 define 建 Release），在 iPhone／iPad 驗證：拍照在手機上辨識出單字、設定→進階設定沒有服務網址／API Key／QR／測試連線欄。
+
+## M813（2026-11-09 18:49）狀態：待做（Windows 卡 #226 交給 Mac 的 App 畫面部分）
+卡：模擬使用者・複習
+
+無。
+- 剩餘：下一個夜間窗口（01:00–07:00）照常重跑。
+
+## M814（2026-11-09 18:51）狀態：待做（Windows 卡 #1007 交給 Mac 的 App 畫面部分）
+卡：問題回報 #1529：[owner] Sign in with Apple 還不能用：iOS 缺 entitlements、伺服器沒設 Apple Client
+
+實機（iPad/iPhone）驗證 Apple 登入→建立帳號（含隱藏 email）→刪除帳號；確認按鈕外觀與 Google 同大小。
+
+## M815（2026-11-09 18:58）狀態：待做
+commit `8ebcbd8e`（Windows：flutter analyze 無 error、01:24 +985 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1006：問題回報 #1528：[owner] 上架版建置會帶 TAGGING_URL：照片改走伺服器又沒金鑰（每張 401 辨識
+  結果：已完成 Windows 端：上架用 app/store.json（只有 DICTIONARYURL），testflight.sh 改用它並擋下含 TAGGINGURL／TAGGINGAPIKEY／DEVTOOLS 的 define 檔。；- 改：app/tool/testflight.sh（預設 store.json；
+- 卡 #226：模擬使用者・複習
+  結果：第 43 輪（round 371）：2/2 通過——learner 72 秒、restart 40 秒；新問題：無；UX 建議：無新增（沿用既有 #485／#515）。
