@@ -783,6 +783,9 @@ class Handler(SimpleHTTPRequestHandler):
         # key-only (proxy_issues answers 401 without X-API-Key), single /api/issues/<id> only.
         if not self.allowed_request():
             return
+        if urlsplit(self.path).path == '/api/account/stats':   # card #1009
+            self.handle_account('DELETE', '/api/account/stats')
+            return
         if not re.match(r'^/api/issues/\d+$', urlsplit(self.path).path):
             self.send_error(404)
             return
@@ -950,6 +953,8 @@ class Handler(SimpleHTTPRequestHandler):
                 return accounts.save_backup(user, raw)
             if method == 'POST' and rest == ['stats']:   # card #911
                 return accounts.report_stats(s, user, body)
+            if method == 'DELETE' and rest == ['stats']:   # card #1009: consent withdrawn
+                return accounts.delete_stats(s, user)
             if method == 'GET' and rest == ['backup', 'info']:
                 return accounts.backup_info(user)
             if method == 'POST' and rest == ['logout']:

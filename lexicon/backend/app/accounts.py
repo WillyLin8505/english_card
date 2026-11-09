@@ -601,6 +601,13 @@ def report_stats(s: Session, user: m.User, body: dict) -> dict:
     return {"ok": True}
 
 
+def delete_stats(s: Session, user: m.User) -> dict:
+    """Card #1009: the user switched 'send my usage numbers' off; forget the row (idempotent)."""
+    n = s.query(m.UserStat).filter(m.UserStat.user_id == user.id).delete()
+    s.flush()
+    return {"ok": True, "deleted": n}
+
+
 def _stat_row(user: m.User, st: m.UserStat | None) -> dict:
     albums = json.loads(st.albums) if st else []
     decks = json.loads(st.decks or "[]") if st else []

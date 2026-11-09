@@ -91,3 +91,14 @@ def test_public_server_does_not_expose_admin_users():
     import re, pathlib
     src = pathlib.Path(__file__).resolve().parents[2].joinpath("serve_app.py").read_text(encoding="utf-8")
     assert not re.search(r"admin/users", src)
+
+
+def test_delete_stats_forgets_only_that_users_row(session):
+    """Card #1009: switching 'send my usage numbers' off removes the row; repeat is harmless."""
+    u = _user(session, "e@x.com")
+    other = _user(session, "f@x.com")
+    accounts.report_stats(session, u, {"reviews_total": 1})
+    accounts.report_stats(session, other, {"reviews_total": 2})
+    assert accounts.delete_stats(session, u)["deleted"] == 1
+    assert accounts.delete_stats(session, u)["deleted"] == 0
+    assert session.query(m.UserStat).count() == 1
