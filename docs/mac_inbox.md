@@ -6170,3 +6170,8 @@ commit `d54037e6`（Windows：flutter analyze 無 error、02:31 +986 ~2: All tes
 在 app/ios/Flutter/ 建 Signing.local.xcconfig（git-ignored），內容一行：
   APP_ENTITLEMENTS=Runner/RunnerFree.entitlements
 然後用免費帳號 flutter build ios --release --dart-define-from-file=store.json 並裝到 iPad，確認簽章通過；Apple 按鈕點了失敗是預期。上傳 TestFlight 前要刪掉此檔。若 Google.local.xcconfig 上輪加過同一行，請刪除。
+
+## M836（2026-11-09 23:33）狀態：待做
+commit `8b6b41ca`（Windows：flutter analyze 無 error、02:33 +986 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1020：問題回報 #1544：[Mac] 2026-11-09 M831（iPad）：#1007（#1529）Sign in w
+  結果：結論：免費帳號覆寫改放獨立的 Signing.local.xcconfig（不會被 googleconfig.sh 刪掉），testflight.sh 偵測到覆寫就擋上傳；商店版預設不變。；需要你決定：無（owner 已決定 A，付費帳號列 #1540 第 0 項，上架前辦）。
