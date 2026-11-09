@@ -1161,8 +1161,9 @@ class Handler(SimpleHTTPRequestHandler):
                             (parse_qs(url.query).get('target', [''])[0] or None),
                             (parse_qs(url.query).get('native', [''])[0] or None))
             return
-        if url.path in ('/privacy', '/privacy.html'):
-            body = (ROOT / 'docs' / 'privacy.html').read_bytes()
+        if url.path in ('/privacy', '/privacy.html', '/support', '/support.html'):
+            page = 'support.html' if 'support' in url.path else 'privacy.html'
+            body = (ROOT / 'docs' / page).read_bytes()
             self.send_response(200)
             self.send_header('Content-Type', 'text/html; charset=utf-8')
             self.send_header('Content-Length', str(len(body)))
