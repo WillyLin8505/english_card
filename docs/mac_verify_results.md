@@ -2719,3 +2719,15 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 |----|----|----|----|----|----|
 | owner：iPad 問題回報一直送不出去 | 不通過 | owner 有網路，App 卻一直說「等連上網路再回傳」。CardReportService.flush() 只要回應不是 2xx 就留在佇列，畫面一律說成網路問題。Mac 測 POST /api/issues 不帶 key 回 401（0.7 秒），GET /api/issues/status 回 200，伺服器是通的。推測 iPad 存的 settings.apiKey 被拒（Mac 不讀金鑰，未證實）。請查伺服器 log 的 401／403，App 依狀態碼分開提示，修好後佇列自動補送 | - | 高 | iPad |
 | lexicon format=manifest 回整包 | 注意 | Mac 打 api/lexicon?target=en&native=zh-TW&format=manifest，20 秒內收到 105 MB 還沒結束（已中斷），看起來 manifest 參數沒作用、回了整包 | - | 低 | 模擬器 |
+
+## 2026-11-09 M831（iPad）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1007（#1529）Sign in with Apple 簽章 | 不通過 | 不通過：簽章缺 Sign in with Apple 能力。flutter build ios --release --dart-define-from-file=store.json 自動簽章失敗：Personal development teams, including "Kuan hung Lin", do not support the Sign In with Apple capability（team 96BVT4TDQ4）。要 owner 在付費 Apple Developer 開這個能力（#1540 第 6 項）。目前 main 的版本無法用免費帳號裝到 iPad | - | 高 | iPad |
+| #1006（#1528）上架版在手機上辨識 | 通過 | store.json 建 Release（Mac 本機暫時移除 applesignin entitlement 才簽得過，未提交）裝到 iPad：build 內建伺服器網址空、App 存的網址空、本機辨識可用、走本機。用 App 內建範例照片在 iPad 本機辨識：photo_breakfast 136 ms 6 字（plate、spoon、cutting board、apple、coffee、cup），photo_kitchen 14 ms 6 字。沒經過「拍照／選照片」畫面，那段要 owner 手動 | mac_tools/m831/shots/mac_log.txt | - | iPad |
+| #1001（#1523）沒有 Google Client ID | 通過 | store.json 版 googleConfigured=false，設定 → 資料只顯示「使用 Apple 登入、用 Email 登入、建立帳號」，沒有 Google 按鈕，例外 0 | mac_tools/m831/shots/m831_data.png | - | iPad |
+| #1014（#1533）權限說明英文、法文 | 注意 | 已建好的 Runner.app 有 en.lproj、fr.lproj、zh-Hant.lproj InfoPlist.strings：相機、相簿說明各有英文和法文。實際權限視窗要刪 App 重裝，iPad 不能刪 App，尚未在本輪看到視窗；另外英文說明寫「the English words」，學法文的人看到會不對；en、fr 沒有 CFBundleDisplayName，英文、法文使用者主畫面 App 名稱是「拍照學單字」 | - | 低 | iPad |
+| 上架版仍要求區域網路權限 | 注意 | store 版 Info.plist 仍有 NSLocalNetworkUsageDescription（連區域網路的詞庫或辨識服務）；上架版不連區域網路的話，審查可能會問，建議 store 版拿掉 | - | 低 | iPad |
+| #1012（#1532）Privacy Report | 注意 | 要 Xcode Archive，和 #1007 同樣卡在免費帳號簽不了 Sign in with Apple，尚未在本輪做 | - | - | iPad |
+| #1002（#1524）後台會員用的資料庫 | 注意 | 要 owner 在 iPad 登入後打開資料庫，等 owner，尚未在本輪做 | - | - | iPad |
