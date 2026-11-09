@@ -47,9 +47,9 @@ def test_validation(session):
 
 
 def test_apple_login_uses_verifier(session, monkeypatch):
-    with pytest.raises(accounts.AccountError) as e:
+    with pytest.raises(accounts.AccountError) as e:   # fake token, real verifier: 401 (card #1007)
         accounts.login_apple(session, "tok", "Bo")
-    assert e.value.status == 501
+    assert e.value.status == 401
     monkeypatch.setattr(accounts, "apple_verifier", lambda t: {"sub": "apple-1", "email": "p@relay.com"})
     u1, _ = accounts.login_apple(session, "tok", "Bo", "ja", "A2")
     u2, _ = accounts.login_apple(session, "tok")

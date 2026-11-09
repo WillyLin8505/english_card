@@ -160,6 +160,8 @@ def _oidc_verify(id_token: str, env: str, jwks_url: str, issuers: tuple, label: 
     except Exception as e:
         raise ValueError(f"signature: {e}")
     ids = [x.strip() for x in os.environ.get(env, "").split(",") if x.strip()]
+    if not ids and env == "LEXICON_APPLE_CLIENT_IDS":
+        ids = [APPLE_BUNDLE_ID]
     if not ids:
         raise AccountError(501, f"伺服器還沒設定 {label} 登入（{env}）")
     return check_oidc_claims(claims, ids, issuers)
@@ -172,14 +174,110 @@ def login_config_warnings() -> list[str]:
     out = []
     if importlib.util.find_spec("jwt") is None or importlib.util.find_spec("cryptography") is None:
         out.append("Google/Apple 登入無法使用：缺少 PyJWT[crypto]（pip install \"PyJWT[crypto]\"）")
-    for env, label in (("LEXICON_GOOGLE_CLIENT_IDS", "Google"), ("LEXICON_APPLE_CLIENT_IDS", "Apple")):
+    for env, label in (("LEXICON_GOOGLE_CLIENT_IDS", "Google"),):
         if not os.environ.get(env, "").strip():
             out.append(f"{label} 登入尚未設定：環境變數 {env} 為空（/api/account 會回 501）")
+    if not _apple_key():
+        out.append("Apple 刪帳號時無法撤銷授權：LEXICON_APPLE_KEY_ID / TEAM_ID / KEY_PATH（.p8）未設定，刪帳號仍會成功")
     return out
+
+
+def _apple_key() -> dict | None:
+    """Sign in with Apple REST key (.p8) from the environment; None until the owner provides it."""
+    import os
+    kid, team, path = (os.environ.get(k, "").strip() for k in
+                       ("LEXICON_APPLE_KEY_ID", "LEXICON_APPLE_TEAM_ID", "LEXICON_APPLE_KEY_PATH"))
+    if not (kid and team and path):
+        return None
+    return {"kid": kid, "team": team, "path": path}
+
+
+def _apple_client_secret(key: dict) -> str:
+    import time
+    import jwt
+    now = int(time.time())
+    pem = open(key["path"], encoding="utf-8").read()
+    return jwt.encode({"iss": key["team"], "iat": now, "exp": now + 300, "aud": "https://appleid.apple.com",
+                       "sub": APPLE_BUNDLE_ID}, pem, algorithm="ES256", headers={"kid": key["kid"]})
+
+
+def _apple_post(url: str, form: dict) -> tuple[int, dict]:
+    if apple_http:
+        return apple_http(url, form)
+    import urllib.error
+    import urllib.parse
+    import urllib.request
+    req = urllib.request.Request(url, data=urllib.parse.urlencode(form).encode(), method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=15) as r:
+            raw = r.read()
+            return r.status, (json.loads(raw) if raw else {})
+    except urllib.error.HTTPError as e:
+        return e.code, {}
+
+
+def _apple_token_path(user: m.User):
+    return config.MEDIA / "apple_tokens" / f"{user.id}.txt"
+
+
+def store_apple_authorization(user: m.User, authorization_code: str | None) -> bool:
+    """After Apple login: swap the one-time authorizationCode for a refresh token and keep it so
+    delete_account can revoke it. Without the .p8 key (or on any failure) it does nothing."""
+    import logging
+    key = _apple_key()
+    if not key or not authorization_code:
+        return False
+    try:
+        status, data = _apple_post(APPLE_TOKEN_URL, {
+            "client_id": APPLE_BUNDLE_ID, "client_secret": _apple_client_secret(key),
+            "code": authorization_code, "grant_type": "authorization_code"})
+        refresh = data.get("refresh_token")
+        if status != 200 or not refresh:
+            raise ValueError(f"token endpoint {status}")
+        path = _apple_token_path(user)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(refresh, encoding="utf-8")
+        return True
+    except Exception as e:   # sign-in must still work
+        logging.getLogger(__name__).warning("Apple token exchange failed for user %s: %s", user.id, e)
+        return False
+
+
+def revoke_apple_authorization(user: m.User) -> bool:
+    """Account deletion: revoke the stored Apple refresh token. Never blocks the deletion."""
+    import logging
+    log = logging.getLogger(__name__)
+    path = _apple_token_path(user)
+    try:
+        key = _apple_key()
+        if not path.exists():
+            if user.provider == "apple":
+                log.warning("Apple account %s deleted without a stored token; nothing revoked", user.id)
+            return False
+        if not key:
+            log.warning("Apple key not configured; authorization of user %s not revoked", user.id)
+            return False
+        status, _ = _apple_post(APPLE_REVOKE_URL, {
+            "client_id": APPLE_BUNDLE_ID, "client_secret": _apple_client_secret(key),
+            "token": path.read_text(encoding="utf-8"), "token_type_hint": "refresh_token"})
+        if status != 200:
+            raise ValueError(f"revoke endpoint {status}")
+        path.unlink(missing_ok=True)
+        return True
+    except Exception as e:
+        log.warning("Apple revoke failed for user %s: %s", user.id, e)
+        return False
 
 
 def _default_google_verifier(id_token: str) -> dict:
     return _oidc_verify(id_token, "LEXICON_GOOGLE_CLIENT_IDS", GOOGLE_JWKS_URL, GOOGLE_ISSUERS, "Google")
+
+
+APPLE_BUNDLE_ID = "com.willylinai.photoflashcard"   # the ID token's aud; public, not a secret (card #1007)
+APPLE_TOKEN_URL = "https://appleid.apple.com/auth/token"
+APPLE_REVOKE_URL = "https://appleid.apple.com/auth/revoke"
+# (url, form dict) -> (status, json body); swapped in tests so nothing touches Apple.
+apple_http = None
 
 
 def _default_apple_verifier(id_token: str) -> dict:
@@ -238,6 +336,8 @@ def update_profile(s: Session, user: m.User, nickname, native_lang, level) -> di
 def delete_account(s: Session, user: m.User) -> None:
     """App Review 5.1.1(v): in-app account deletion. Shared decks and the cloud backup go with the account."""
     from . import account_sync   # imports this module's AccountError
+    revoke_apple_authorization(user)
+    _apple_token_path(user).unlink(missing_ok=True)
     _backup_path(user).unlink(missing_ok=True)
     account_sync.remove_user(user)
     s.query(m.UserStat).filter(m.UserStat.user_id == user.id).delete()

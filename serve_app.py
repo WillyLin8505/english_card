@@ -927,6 +927,7 @@ class Handler(SimpleHTTPRequestHandler):
             if method == 'POST' and rest == ['apple']:
                 user, tok = accounts.login_apple(s, body['identity_token'], body.get('nickname'),
                                                  body.get('native_lang'), body.get('level'))
+                accounts.store_apple_authorization(user, body.get('authorization_code'))
                 return {'token': tok, 'user': accounts.profile(user)}
             if method == 'POST' and rest == ['google']:
                 user, tok = accounts.login_google(s, body['id_token'], body.get('nickname'),
