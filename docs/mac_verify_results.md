@@ -2731,3 +2731,25 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 上架版仍要求區域網路權限 | 注意 | store 版 Info.plist 仍有 NSLocalNetworkUsageDescription（連區域網路的詞庫或辨識服務）；上架版不連區域網路的話，審查可能會問，建議 store 版拿掉 | - | 低 | iPad |
 | #1012（#1532）Privacy Report | 注意 | 要 Xcode Archive，和 #1007 同樣卡在免費帳號簽不了 Sign in with Apple，尚未在本輪做 | - | - | iPad |
 | #1002（#1524）後台會員用的資料庫 | 注意 | 要 owner 在 iPad 登入後打開資料庫，等 owner，尚未在本輪做 | - | - | iPad |
+
+## 2026-11-09 收件匣 M597–M836（Mac，iPad 與模擬器）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1020（#1544）免費帳號簽章開關 | 不通過 | HEAD 63c2510b：照 M835 建 ios/Flutter/Signing.local.xcconfig（APP_ENTITLEMENTS=Runner/RunnerFree.entitlements）後建 store Release，仍然 Personal team 不支援 Sign In with Apple。原因：main 的 project.pbxproj 三個 config 仍寫死 CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements，沒有用 $(APP_ENTITLEMENTS)，xcconfig 變數沒有作用；testflight.sh 第 29 行檢查的 "$(APP_ENTITLEMENTS)" 在 pbxproj 也找不到。Mac 已刪掉 Signing.local.xcconfig，改用本機移除 entitlement 繼續驗證（未提交） | - | 高 | iPad |
+| #954（#1408）英文介面相片冊名稱 | 不通過 | HEAD 63c2510b，英文介面學法文、加入 French Basic 3000 Words：篩選鈕已改成 Downloaded albums，但相片冊卡片和複習格子名稱仍是「法語基礎 3000 字」（推薦頁同一本是英文名） | mac_tools/b1/en_fr/b02_albums.png | 中 | 模擬器 |
+| 新手引導頂端錯誤列沒翻譯 | 不通過 | HEAD 63c2510b，系統語言法文全新安裝：還沒選母語的新手引導每頁頂端都是中文「詞庫暫時無法更新，稍後重試｜重試」（伺服器 530 時出現）；進主畫面後才變成法文 Mise à jour du dictionnaire en pause。英文同理應檢查 | mac_tools/b1/fr_ob/n01_lang_before.png | 中 | 模擬器 |
+| 伺服器 api.willylinai.com 連不上 | 不通過 | 11/09 23:56 從 Mac 測 /api/issues/status、/api/decks、/api/image 都回 530（Cloudflare 連不到原站）；模擬器推薦頁顯示「相片冊暫時無法使用（502）」等 38 秒沒有任何相片冊，每頁頂端「詞庫暫時無法更新」。App 問題回報、詞庫、圖片都受影響 | mac_tools/b1/zh_ob/n09_recommended.png | 高 | 模擬器 |
+| #957（#1412）法文母語＋學英文 | 通過 | HEAD 63c2510b：繁中介面引導母語「法文」標「學英文、母語法文的詞庫尚未開放」不能選；法文介面顯示 L’anglais avec le français comme langue maternelle n’est pas encore disponible。舊設定（學英文、母語 fr）重開 App 後母語回到繁中。改回時的提示這輪沒看到，尚未在畫面上確認 | mac_tools/b1/after_fr/b04_settings_lang.png | - | 模擬器 |
+| #998（#1520）學習目的與興趣的旅行 | 通過 | HEAD 63c2510b：新手引導目的頁「出國旅行」、興趣頁「旅遊景點」；英文介面 Traveling abroad。設定頁那張卡這輪沒捲到，只看引導 | mac_tools/b1/zh_ob/n06_goals.png | - | 模擬器 |
+| #999（#1521）戶外與爬山 | 通過 | HEAD 63c2510b：興趣頁兩個選項是「戶外」和「爬山健行」，字面不再重疊 | mac_tools/b1/zh_ob/n07_interests.png | - | 模擬器 |
+| #989（#1508）法文沒有圖的文字選擇題 | 通過 | HEAD 63c2510b，英文母語學法文：出現 textChoice 題，例如題目 with、選項 parce／avec／selon／durant 4 個，沒有同義詞 | mac_tools/b1/en_fr/b07_front_textChoice.png | - | 模擬器 |
+| #950（#1290）沒有例句的卡 | 通過 | HEAD 63c2510b：模擬器法文 un 背面定義已展開，下方「No example for this word yet; it will be added when the word list updates.」；iPad 12 張裡也出現 1 張中文提示 | mac_tools/b1/en_fr/b06_no_example_un.png | - | 模擬器 |
+| #960（#1414）／#945 單字本捲動 | 通過 | store 版 iPad 1,717 字 fling：前 12 次中位 2.5 ms、最長 59 ms；後 30 次中位 2.2 ms、最長 57 ms（上輪後段 29.4／485）。列表首尾圓角這輪沒看 | mac_tools/b1/ipad/shots/mac_log.txt | - | iPad |
+| #958（#1411）我的單字本 apple 頁 | 通過 | store 版 iPad：名詞下「蘋果／圓形果實／笑臉蘋果」，蘋果只出現一次。第一屏沒有圖片區，但測試時伺服器 530 圖片載不到，圖片這部分尚未在本輪驗完 | mac_tools/b1/ipad/shots/w_apple.png | - | iPad |
+| #1006（#1528）進階設定沒有伺服器欄位 | 通過 | store 版 iPad 進階設定只有複習安排、每日上限等，沒有服務網址、API Key、QR、測試連線；走本機辨識=true | mac_tools/b1/ipad/shots/advanced.png | - | iPad |
+| #942（#1271）背面大圖意思 | 通過 | store 版 iPad 12 張與模擬器法文 5 張：找得到意思文字的背面都在評分列上方（照片題 socket「插座」y=395、révolution y=317） | mac_tools/b1/ipad/shots/mac_log.txt | - | iPad |
+| #1021（#1545）上架版區域網路權限 | 注意 | testflight.sh 會在打包前刪 NSLocalNetworkUsageDescription，結束時用 trap 放回 Info.plist，看起來正確；真正的 .ipa 要等 owner 上傳 TestFlight 才能看，尚未在本輪驗完 | - | - | iPad |
+| #496 粗俗詞標籤 | 注意 | 英文介面法文 merde、foutre、cul 單字頁都沒有 Vulgar（foutre 顯示 Slang）；不確定哪個字在資料裡標 vulgar，尚未在本輪驗完 | mac_tools/b1/en_fr/mac_log.txt | - | 模擬器 |
+| #1009 #1010 #1011 #1015 #1016 #1017 上架審查卡 | 注意 | HEAD 63c2510b 的 app/lib 還沒有這幾張的改動（例如找不到「幫助改善 App」「顯示最近照片」），尚未在 main，同步後再驗 | - | - | 模擬器 |
+| 模擬使用者常態卡 #225 #226 #227 #228 #12 | 通過 | HEAD 63c2510b，375×667 模擬器英文／繁中／法文全新安裝各一次：引導、推薦、五個分頁教學與重看、相片冊、單字本、設定、複習（法文 5 張、iPad 12 張）都走完，例外 0。#224 相機要 owner 手動 | mac_tools/b1/ | - | 模擬器 |
