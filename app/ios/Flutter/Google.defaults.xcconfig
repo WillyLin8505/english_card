@@ -1,3 +1,12 @@
 // Placeholder URL scheme used when no Google client ID is configured; the
 // build scripts override it via Google.local.xcconfig (tool/google_config.sh).
 GOOGLE_REVERSED_CLIENT_ID=com.willylinai.photoflashcard.google-unconfigured
+
+// Entitlements file. Default = store build (Sign in with Apple, needs the paid
+// Apple Developer team). A free "Personal Team" cannot sign that capability
+// (card #1020 / issue #1544): put this line in ios/Flutter/Signing.local.xcconfig (git-ignored; NOT
+// Google.local.xcconfig, which tool/google_config.sh deletes on every run)
+// to install on a device with a free account; the Apple button then can't sign in.
+// testflight.sh refuses to upload while that override exists.
+//   APP_ENTITLEMENTS=Runner/RunnerFree.entitlements
+APP_ENTITLEMENTS=Runner/Runner.entitlements

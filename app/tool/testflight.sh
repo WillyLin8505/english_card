@@ -26,10 +26,16 @@ BUILD=$(git rev-list --count HEAD)
 source tool/google_config.sh  # Google client IDs (google.local.json), see that file
 # Card #1007 (App Review 4.8): a build with Google sign-in must also carry Sign in with Apple.
 if [ ${#GOOGLE_DEFINES[@]} -gt 0 ]; then
-  if ! grep -q 'com.apple.developer.applesignin' ios/Runner/Runner.entitlements 2>/dev/null      || [ "$(grep -c 'CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements' ios/Runner.xcodeproj/project.pbxproj)" -lt 3 ]; then
+  if ! grep -q 'com.apple.developer.applesignin' ios/Runner/Runner.entitlements 2>/dev/null      || [ "$(grep -c 'CODE_SIGN_ENTITLEMENTS = "$(APP_ENTITLEMENTS)"' ios/Runner.xcodeproj/project.pbxproj)" -lt 3 ]; then
     echo "ABORT: Google sign-in is configured but Sign in with Apple is not (ios/Runner/Runner.entitlements + CODE_SIGN_ENTITLEMENTS in all 3 configs)." >&2
     exit 1
   fi
+fi
+# Card #1020 / issue #1544: Signing.local.xcconfig may point APP_ENTITLEMENTS at RunnerFree (free account, no
+# Sign in with Apple). Such a build must never be uploaded.
+if grep -Eq '^[[:space:]]*APP_ENTITLEMENTS[[:space:]]*=' ios/Flutter/Signing.local.xcconfig 2>/dev/null; then
+  echo "ABORT: ios/Flutter/Signing.local.xcconfig overrides APP_ENTITLEMENTS (free-account build). Delete it before uploading; the upload must carry Sign in with Apple." >&2
+  exit 1
 fi
 # Card #1021 / issue #1545 (Mac M831): the store build never talks to a LAN server (no TAGGING_URL,
 # on-device recognition, dictionary over https), so App Review should not see
