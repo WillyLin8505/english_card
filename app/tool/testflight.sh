@@ -13,10 +13,26 @@ export LANG=en_US.UTF-8
 cd "${0:A:h}/.."
 : "${ASC_KEY_ID:?set ASC_KEY_ID (App Store Connect API key id)}"
 : "${ASC_ISSUER_ID:?set ASC_ISSUER_ID (App Store Connect issuer id)}"
+# Card #1006 / issue #1528 (owner #265, #910): the store build recognizes photos
+# on the device and shows no server fields. A define file with TAGGING_URL,
+# TAGGING_API_KEY or DEV_TOOLS would send photos to /tag, which answers 401
+# without a key (tested 11/08), and expose URL/key fields in 設定.
+DEFINES=${TESTFLIGHT_DEFINES:-store.json}
+if grep -Eq 'TAGGING_URL|TAGGING_API_KEY|DEV_TOOLS' "$DEFINES"; then
+  echo "ABORT: $DEFINES contains TAGGING_URL/TAGGING_API_KEY/DEV_TOOLS; the store build must not (use store.json, not iphone.json)." >&2
+  exit 1
+fi
 BUILD=$(git rev-list --count HEAD)
 source tool/google_config.sh  # Google client IDs (google.local.json), see that file
+# Card #1007 (App Review 4.8): a build with Google sign-in must also carry Sign in with Apple.
+if [ ${#GOOGLE_DEFINES[@]} -gt 0 ]; then
+  if ! grep -q 'com.apple.developer.applesignin' ios/Runner/Runner.entitlements 2>/dev/null      || [ "$(grep -c 'CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements' ios/Runner.xcodeproj/project.pbxproj)" -lt 3 ]; then
+    echo "ABORT: Google sign-in is configured but Sign in with Apple is not (ios/Runner/Runner.entitlements + CODE_SIGN_ENTITLEMENTS in all 3 configs)." >&2
+    exit 1
+  fi
+fi
 flutter build ipa --release --build-number="$BUILD" \
-  --dart-define-from-file=iphone.json ${GOOGLE_DEFINES[@]+"${GOOGLE_DEFINES[@]}"} \
+  --dart-define-from-file="$DEFINES" ${GOOGLE_DEFINES[@]+"${GOOGLE_DEFINES[@]}"} \
   --export-options-plist=ios/ExportOptions.plist
 IPA=$(ls build/ios/ipa/*.ipa | head -1)
 xcrun altool --upload-app --type ios --file "$IPA" \
