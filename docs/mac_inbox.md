@@ -6163,3 +6163,10 @@ Mac 從 11/03 後沒有回報，收件匣積了很多項。請先做這項：`gi
 commit `d54037e6`（Windows：flutter analyze 無 error、02:31 +986 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #1021：問題回報 #1545：[Mac 注意] 2026-11-09 M831（iPad）：上架版仍要求區域網路權限
   結果：已處理：上架版（tool/testflight.sh）打包時移除 Info.plist 的 NSLocalNetworkUsageDescription，開發版（iphone.json）保留。
+
+## M835（2026-11-09 23:11）狀態：待做（Windows 卡 #1020 交給 Mac 的 App 畫面部分）
+卡：問題回報 #1544：[Mac] 2026-11-09 M831（iPad）：#1007（#1529）Sign in with Apple 簽章
+
+在 app/ios/Flutter/ 建 Signing.local.xcconfig（git-ignored），內容一行：
+  APP_ENTITLEMENTS=Runner/RunnerFree.entitlements
+然後用免費帳號 flutter build ios --release --dart-define-from-file=store.json 並裝到 iPad，確認簽章通過；Apple 按鈕點了失敗是預期。上傳 TestFlight 前要刪掉此檔。若 Google.local.xcconfig 上輪加過同一行，請刪除。
