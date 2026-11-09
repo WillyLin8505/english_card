@@ -121,6 +121,9 @@ photo_tidy_up's laptop_ai sends `num_gpu: 0` (its models on the CPU, owner's cho
 `Get-Counter '\GPU Process Memory(*)\Dedicated Usage','\GPU Process Memory(*)\Shared Usage'`; keep ≥ 1.5 GB free. Interactive Claude sessions and what they run are never capped. No new CLIs while CPU is over 80 %.
 **11/04 (the PC shut down twice with 20+ CLIs): at most `max_running_clis` CLIs at once (2 while testing) and
 `max_launches_per_tick` 1, whatever the swarm slots allow; raise one step at a time after watching ai_watch.log.**
+**11/09 owner 「所有的問題都開卡做，卡片沒有上限」 (those power-offs turned out to be the GPU 0x116, fixed above): `max_running_clis`
+and `issue_swarm.max_parallel` are 40 (no practical cap), `max_launches_per_tick` 2 so load builds up gradually; the limit is
+resource_guard (memory / CPU / GPU over 80 % → no new CLIs) plus ai_watch's CPU caps. Don't lower the count again unless those fail.**
 The limits are set through Process Governor (`procgov`, winget LowLevelDesign.ProcessGovernor; ai_watch `PgJob`).
 Never `procgov --install`: its service would clash with Process Lasso's core service, also named ProcessGovernor. Limits of nested jobs only add up and a job keeps its limit after its handle closes, so a
 restarted watcher skips processes already handled (lexicon/state/ai_watch_handled.json). A process over its memory limit gets out-of-memory errors:
