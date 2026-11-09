@@ -6021,3 +6021,19 @@ commit `8ebcbd8e`（Windows：flutter analyze 無 error、01:24 +985 ~2: All tes
 - 舊文件 docs/app_store_privacy_labels.md、app-store-privacy.md 仍是舊版（含 Crash/Performance），以新檔為準。
 - 沒動資料與詞庫，golden/QC 不適用。未跑 flutter analyze／test（只改 plist 與文件）。
 - 還剩：Mac 的 Privacy Report 驗證。
+
+## M817（2026-11-09 19:10）狀態：待做（Windows 卡 #1014 交給 Mac 的實機部分）
+卡：問題回報 #1533：[owner] 相機／相簿權限說明只有中文（審查 5.1.1(ii)）
+
+Windows 已完成：新增 app/ios/Runner/en.lproj/InfoPlist.strings、fr.lproj/InfoPlist.strings（相機、相簿、區域網路三句用途說明），project.pbxproj 加入兩個 variant、knownRegions 加 fr。en／fr 文字由 Claude 撰寫（AI 產生，請母語者看過再上架）。flutter analyze 通過（13 個既有 info，無新增）；card826／card1006 測試通過。
+
+請 Mac 在 iPad（或 iPhone）實機驗證：
+- 把系統語言切到 English，刪掉 App 後重裝，第一次拍照、從相簿選照片時，權限視窗應為英文且說明為「…English words…」。
+- 切到 Français，同樣檢查，說明應為法文。
+- 繁體中文仍顯示原來的中文說明。
+- 結果寫回 docs/mac_verify_results.md。
+
+## M818（2026-11-09 19:03）狀態：待做（Windows 卡 #1011 交給 Mac 的 App 畫面部分）
+卡：問題回報 #1535：[owner] 缺支援網址（審查 1.5，App Store Connect 必填）：https://api.willylinai.com
+
+在 iPhone／iPad 看設定→關於的聯絡區塊與複製按鈕。
