@@ -6008,3 +6008,16 @@ commit `8ebcbd8e`（Windows：flutter analyze 無 error、01:24 +985 ~2: All tes
   結果：已完成 Windows 端：上架用 app/store.json（只有 DICTIONARYURL），testflight.sh 改用它並擋下含 TAGGINGURL／TAGGINGAPIKEY／DEVTOOLS 的 define 檔。；- 改：app/tool/testflight.sh（預設 store.json；
 - 卡 #226：模擬使用者・複習
   結果：第 43 輪（round 371）：2/2 通過——learner 72 秒、restart 40 秒；新問題：無；UX 建議：無新增（沿用既有 #485／#515）。
+
+## M816（2026-11-09 18:59）狀態：待做（Windows 卡 #1012 交給 Mac 的 App 畫面部分）
+卡：問題回報 #1532：[owner] 隱私資訊清單（PrivacyInfo）與 App Store 隱私標籤要對齊實際資料，並產出 App Store Conn
+
+用 Xcode 產生 Privacy Report 確認沒有警告（見 docs/app_store_privacy_answers.md 最後一節）。
+
+卡 #1012 第 1 輪完成 Windows 部分：PrivacyInfo.xcprivacy 由 4 項（全未連結）改為 8 項（全 Linked、Tracking=false）並加 FileTimestamp C617.1；新增 docs/app_store_privacy_answers.md 逐題答案。
+
+- 上架版查證：store.json 無 SENTRY_DSN／POSTHOG_API_KEY，所以移除 CrashData、PerformanceData；PostHog 與 Sentry 都不送。
+- Swift 檢查：AppDelegate／SceneDelegate 無 required-reason API；Dart `File.stat().modified` 用 C617.1。
+- 舊文件 docs/app_store_privacy_labels.md、app-store-privacy.md 仍是舊版（含 Crash/Performance），以新檔為準。
+- 沒動資料與詞庫，golden/QC 不適用。未跑 flutter analyze／test（只改 plist 與文件）。
+- 還剩：Mac 的 Privacy Report 驗證。
