@@ -6091,3 +6091,8 @@ iPad/iPhone 實機驗證 Apple 登入→建立帳號（含隱藏 email）→刪�
 commit `78123ffc`（Windows：flutter analyze 無 error、01:24 +985 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #1012：問題回報 #1532：[owner] 隱私資訊清單（PrivacyInfo）與 App Store 隱私標籤要對齊實際資
   結果：需要 Mac：用 Xcode 產生 Privacy Report 確認沒有警告（見 docs/appstoreprivacyanswers.md 最後一節）。；卡 #1012 第 1 輪完成 Windows 部分：PrivacyInfo.xcprivacy 由 4 項（全未連結）改為 8 項（全 Linked、Trac
+
+## M825（2026-11-09 19:25）狀態：待做（Windows 卡 #1015 交給 Mac 的 App 畫面部分）
+卡：問題回報 #1537：[owner] 新安裝會自動下載約 62 MB 詞庫，行動網路下沒先告知大小（審查 4.2.3(ii)）
+
+在 iPhone／iPad 用行動網路（關 Wi-Fi）全新安裝，確認出現詢問卡、按「現在下載」開始、改連 Wi-Fi 會自動下載。「允許」只在本次執行有效，重開 App 會再問（若 owner 要永久記住再開卡）。
