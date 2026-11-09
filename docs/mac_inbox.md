@@ -6037,3 +6037,57 @@ Windows 已完成：新增 app/ios/Runner/en.lproj/InfoPlist.strings、fr.lproj/
 卡：問題回報 #1535：[owner] 缺支援網址（審查 1.5，App Store Connect 必填）：https://api.willylinai.com
 
 在 iPhone／iPad 看設定→關於的聯絡區塊與複製按鈕。
+
+## M819（2026-11-09 19:11）狀態：待做（Windows 卡 #1007 交給 Mac 的 App 畫面部分）
+卡：問題回報 #1529：[owner] Sign in with Apple 還不能用：iOS 缺 entitlements、伺服器沒設 Apple Client
+
+iPad/iPhone 實機驗證 Apple 登入→建立帳號（含隱藏 email）→刪除帳號；確認按鈕外觀與 Google 同大小。
+
+## M820（2026-11-09 19:13）狀態：待做（Windows 卡 #227 交給 Mac 的 App 畫面部分）
+卡：模擬使用者・單字本
+
+無。
+
+## M821（2026-11-09 19:13）狀態：待做（Windows 卡 #1009 交給 Mac 的 App 畫面部分）
+卡：問題回報 #1530：[owner] 沒問就送統計（審查 5.1.1(ii)）：「匿名安裝與留存統計」預設打開，登入後的使用數字也沒問過
+
+用 iPad 驗證 (1) 全新安裝：引導第一頁「幫助改善 App」，選之前不送任何事件、選「允許」後才記 install；(2) 登入後跳出「把使用數字送到我的帳號？」一次；(3) 設定→隱私 兩個開關（登入後才看得到第二個）；(4) 舊使用者（已存過匿名統計值）更新後引導不重問。
+
+改了什麼
+- app_settings.dart：anonymousEvents 預設改為「沒回答＝不送」（anonymousEventsChoice 為 null/true/false，舊的 'true'/'false' 沿用）；新增 accountStats／accountStatsChoice（'acctStats'），關閉時重設 statsSentAt。
+- onboarding_screen.dart：沒有存過選擇的人，第一步加「幫助改善 App」頁（允許／不要，無預設）；選完才記 install。
+- account_sign_in.dart：登入成功後問一次（askAccountStats）。
+- usage_report.dart：沒同意不送；新增 deleteRemote()（DELETE /api/account/stats），失敗標 pending，下次啟動重試。
+- settings_screen.dart：隱私區加「把使用數字送到我的帳號」開關（關掉就呼叫刪除）；匿名統計說明改成「只有你同意才會送」。
+- 後端：accounts.delete_stats + serve_app.py 的 DELETE /api/account/stats（do_DELETE 轉到 handle_account）。
+- 隱私權政策（privacy_policy_screen.dart、docs/privacy.html、docs/app-store-privacy.md）與 ui_catalog 三語文字同步（與「隱私權政策缺漏」那張的新文字合併，改的是目前版本）。
+- 測試：app/test/card1009_consent_test.dart（未同意不送、撤銷後不送並刪除、刪除失敗重試、引導會問／舊使用者不重問）；card911／card914 測試改成先同意；lexicon/tests/test_card911_user_stats.py 加 delete_stats。
+
+注意
+- 已 onboarded 但從沒存過匿名統計值的舊使用者：不重問，也不再送（保守處理，以前是預設送）；他們可在設定→隱私 自己打開。
+- serve_app.py 改了 DELETE 路由，等派工程式的 serve_app reload 才生效。
+- 沒動資料，不需備份；golden／QC 與本卡無關（未跑）。
+- 輔助腳本 lexicon/tools/_card1009_text.py 是一次性的文字替換，可刪。
+
+
+剩餘：Flutter 全套 flutter test 未跑（只跑相關 5 個檔，因 heavy_lock 排隊很久）；iPad 驗證。
+
+## M822（2026-11-09 19:13）狀態：待做（Windows 卡 #1010 交給 Mac 的 App 畫面部分）
+卡：問題回報 #1531：[owner] 隱私權政策缺漏（審查 5.1.1(i)、5.1.2(i)）：沒寫帳號與雲端備份、意見回饋會給 AI 服務處理、照片辨識寫錯
+
+在 iPhone／iPad 看設定→隱私權政策 14 段（三語）、意見回饋對話框新增的同意句、字型外觀；部署後確認 https://api.willylinai.com/privacy。
+- 「沒問就送統計」那張的開關名稱目前沿用「分享使用統計」「匿名安裝與留存統計」。
+
+## M823（2026-11-09 19:15）狀態：待做（Windows 卡 #1016 交給 Mac 的 App 畫面部分）
+卡：問題回報 #1538：[owner] 資料來源與授權頁缺法文資料來源（審查 5.2 智慧財產）
+
+在 iPhone／iPad 看「關於→資料來源與授權」三語顯示與長度。
+- 無資料改動，不需備份／golden／QC。
+
+補充：flutter test 全部 992 過、3 個失敗（card1015_mobile_download ×2、card910_account_login ×1，單獨重跑仍失敗）。
+這 3 個測的是登入按鈕與行動網路下載，與資料來源頁／ui_catalog 無關，疑為工作樹中其他卡尚在修改的檔案（card910／1015）。本卡未動這些檔案。
+
+## M824（2026-11-09 19:20）狀態：待做
+commit `78123ffc`（Windows：flutter analyze 無 error、01:24 +985 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1012：問題回報 #1532：[owner] 隱私資訊清單（PrivacyInfo）與 App Store 隱私標籤要對齊實際資
+  結果：需要 Mac：用 Xcode 產生 Privacy Report 確認沒有警告（見 docs/appstoreprivacyanswers.md 最後一節）。；卡 #1012 第 1 輪完成 Windows 部分：PrivacyInfo.xcprivacy 由 4 項（全未連結）改為 8 項（全 Linked、Trac
