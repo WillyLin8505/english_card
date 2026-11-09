@@ -72,3 +72,4 @@ tagger/ab-*.json
 # agent scratch (packs can be >100 MB, GitHub refuses them)
 lexicon/tmp/
 app/ios/Flutter/Google.local.xcconfig
+app/ios/Flutter/Signing.local.xcconfig
