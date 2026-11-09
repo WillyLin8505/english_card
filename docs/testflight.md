@@ -14,3 +14,8 @@
 發布後在 `docs/releases.md` 加一列（版本、日期、commit），已驗證的卡會自動變成「已發布」（卡 #916）。
 
 `ASC_KEY_ID=… ASC_ISSUER_ID=… app/tool/testflight.sh`：Release 版、build 號＝git commit 數（自動遞增）、上傳後 App Store Connect 處理約 10–30 分鐘，內部測試群組自動拿到，手機在 TestFlight 自動更新。
+
+## 上架版 define 檔（卡 #1006，問題回報 #1528）
+`testflight.sh` 一律用 `app/store.json`（只有 DICTIONARY_URL；Google ID 另由 `tool/google_config.sh` 加）。`iphone.json` 帶 TAGGING_URL，只給開發機。
+腳本開頭會檢查 define 檔：出現 TAGGING_URL、TAGGING_API_KEY 或 DEV_TOOLS 就中止（外網 POST /tag 不帶金鑰回 401，且設定會露出網址／金鑰欄）。`TESTFLIGHT_DEFINES=iphone.json` 會被擋下。
+Mac 驗證：用同一組 define 建 Release，在 iPhone／iPad 拍照應在手機上辨識出單字，設定→進階設定沒有服務網址／API Key／QR code 欄。
