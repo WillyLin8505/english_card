@@ -6127,3 +6127,23 @@ commit `6f5818b0`（Windows：flutter analyze 無 error、01:18 +986 ~2: All tes
 commit `5f24608a`（Windows：flutter analyze 無 error、01:18 +986 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #38：常態：檢查相似詞比較只從使用者已有的單字挑選
   結果：第 33 輪通過：重播審計 6,358 詞、178,992 次出題嘗試，使用者沒有的選項 0、標籤不符 0、格式錯誤 0，違規 0。
+
+## M831（2026-11-09 22:18）狀態：待做（owner 11/09「在 Mac 驗證、iPad 驗證」：App 審查卡，先做這項）
+Mac 從 11/03 後沒有回報，收件匣積了很多項。請先做這項：`git pull` 到 origin/main 最新，建置一次裝到 owner 的 iPad，逐張驗證下面 6 張。
+結果照 docs/mac_verify.md「報告格式」寫進 docs/mac_verify_results.md：標題 `## 2026-11-09 M831（iPad）`，每張卡一列，第一格寫卡號，「裝置」欄寫 iPad，截圖附上。這項包含 M765、M767、M812、M814–M817、M819、M824、M828 裡同一批卡，做完一起寫「狀態：完成」。
+
+不要做：
+- 不上傳 TestFlight／App Store（發布是 owner 的事）。
+- 登入、Face ID、密碼、Apple ID 都由 owner 在 iPad 上操作，AI 不輸入密碼。需要 owner 的那步沒做到，就在「實際」欄寫「等 owner」，不寫通過。
+- 不改整台 iPad 的系統語言：用「設定 → 本 App → 語言」或 Xcode scheme 的 App Language。
+- 只驗證、不改程式；要改的寫進結果表。
+
+1. 卡 #1006（問題回報 #1528，上架版不帶伺服器設定）：用 app/store.json 的 define 建 Release（testflight.sh 用的同一組，只建不上傳）裝到 iPad。拍照或選照片 → 在手機上辨識出單字（不是 401、不是辨識失敗）；設定 → 進階設定沒有服務網址、API Key、QR、測試連線欄。
+2. 卡 #1007（#1529，Sign in with Apple）：Xcode 自動簽章要帶得進 Sign in with Apple 能力；簽不過就寫「不通過：簽章缺 Sign in with Apple 能力」，那是 owner 要在 Apple Developer 開的（#1540 第 6 項）。裝得上：Apple 按鈕和 Google 按鈕一樣大；owner 按 Apple 登入（可選隱藏 email）→ 建立帳號 → 設定裡刪除帳號，都不閃退、刪完回到未登入。刪帳號時撤銷 Apple 授權要等 owner 放 .p8 金鑰，這次不驗。
+3. 卡 #1014（#1533，權限說明英文、法文）：App 語言設 English，刪掉 App 重裝，第一次拍照、選照片時的權限視窗是英文；Français 同樣是法文；繁體中文仍是原本的中文。
+4. 卡 #1012（#1532，PrivacyInfo）：Xcode Archive 後產生 Privacy Report，確認沒有警告，內容和 docs/app_store_privacy_answers.md 一致。
+5. 卡 #1002（#1524，後台看會員用了哪些資料庫）：owner 在 iPad 登入後下載或打開一個資料庫；「實際」欄寫時間和資料庫名稱。通過只代表 App 端正常，Windows 會對照後台使用者頁，對不上另開問題。
+6. 卡 #1001（#1523，Google 登入）：Client ID 還沒給（#1525）。這次只確認沒有 Client ID 時 App 正常、不閃退；壞了才寫「不通過」列，沒壞就不寫列，等 owner 給 Client ID 後再驗登入。
+
+接下來會到（程式還在 Windows 檢查或開發，mac_sync 推了之後收件匣會出現有 commit 的 M 項，到時同樣在 iPad 驗）：
+卡 #1009（#1530 統計先問同意，M821）、#1010（#1531 隱私權政策，M822）、#1011（#1535 支援網址）、#1015（#1537 行動網路下載先問，M825）、#1016（#1538 法文資料來源，M823）、#1017（#1536 選照片不先要整個相簿權限，M826）。
