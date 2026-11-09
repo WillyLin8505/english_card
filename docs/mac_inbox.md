@@ -6147,3 +6147,14 @@ Mac 從 11/03 後沒有回報，收件匣積了很多項。請先做這項：`gi
 
 接下來會到（程式還在 Windows 檢查或開發，mac_sync 推了之後收件匣會出現有 commit 的 M 項，到時同樣在 iPad 驗）：
 卡 #1009（#1530 統計先問同意，M821）、#1010（#1531 隱私權政策，M822）、#1011（#1535 支援網址）、#1015（#1537 行動網路下載先問，M825）、#1016（#1538 法文資料來源，M823）、#1017（#1536 選照片不先要整個相簿權限，M826）。
+
+## M832（2026-11-09 22:55）狀態：待做（Windows 卡 #1020 交給 Mac 的 App 畫面部分）
+卡：問題回報 #1544：[Mac] 2026-11-09 M831（iPad）：#1007（#1529）Sign in with Apple 簽章
+
+在 Google.local.xcconfig 加上述一行後重跑 flutter build ios --release --dart-define-from-file=store.json 並裝到 iPad，確認簽章通過；免費版 Apple 按鈕點了會失敗（預期）。
+- 未跑 flutter analyze/test（未改 Dart）；無資料變動，golden/QC 不適用。
+
+## M833（2026-11-09 22:55）狀態：待做（Windows 卡 #1021 交給 Mac 的 App 畫面部分）
+卡：問題回報 #1545：[Mac 注意] 2026-11-09 M831（iPad）：上架版仍要求區域網路權限
+
+下次 TestFlight 上傳後，確認 .ipa 內 Info.plist 沒有該鍵，且 git status 中 Info.plist 沒被改動。
