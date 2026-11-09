@@ -141,6 +141,79 @@ def restart_hung(log=print) -> list[str]:
     return restarted
 
 
+PUBLIC_URL = "https://api.willylinai.com/"
+# one service per tick (card #1013): (name, port, starter-process needles that mean "still warming up")
+CORE_PORTS = (("serve_app", 8123), ("API", 8770), ("admin UI", 5173), ("tagger", 8765))
+
+
+def public_ok(url: str = PUBLIC_URL, timeout: float = 15) -> bool:
+    """Key-free outside check of the tunnel: any answer below 500 means serve_app is reachable
+    (401/404 included); Cloudflare's own 502/530/1033 pages or no answer mean the tunnel is down."""
+    import urllib.error
+    import urllib.request
+    try:
+        with urllib.request.urlopen(url, timeout=timeout) as r:
+            return r.status < 500
+    except urllib.error.HTTPError as e:
+        return e.code < 500
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def restart_cloudflared():
+    kill_matching(r"cloudflared.*english-card")
+    if CLOUDFLARED.exists():
+        subprocess.Popen([str(CLOUDFLARED), "tunnel", "--config", str(TUNNEL_CFG), "run", "english-card"],
+                         cwd=ROOT, creationflags=DETACHED | NO_WINDOW)
+
+
+def ensure_core(log=print, public_fails: int = 0, public_fail_limit: int = 2) -> tuple[list[str], int]:
+    """Card #1013 (11/08 21:59 every port closed for 36 min, the hourly ensure_all came too late).
+    Called every tick: starts the first core service whose port is closed (serve_app 8123, API 8770,
+    admin UI 5173, tagger 8765 via start_tagger.bat only) or a missing cloudflared — one per tick —
+    then checks the public URL; `public_fail_limit` failures in a row restart cloudflared.
+    Returns (what was started, new public-failure count). Never stops a running CLI."""
+    procs = cmdlines()
+    if not procs:
+        return [], public_fails
+    started: list[str] = []
+    if not running(procs, "cloudflared", "english-card") and CLOUDFLARED.exists():
+        restart_cloudflared()
+        started.append("cloudflared tunnel")
+    else:
+        for name, port in CORE_PORTS:
+            if port_up(port):
+                continue
+            if name == "serve_app" and not running(procs, "start_services.py"):
+                subprocess.Popen([sys.executable, str(ROOT / "start_services.py")], cwd=ROOT,
+                                 stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                 creationflags=NO_WINDOW)
+            elif name == "API" and not running(procs, "uvicorn", "app.main:app") and not running(procs, "run_api.bat"):
+                console("lexicon API", f'"{LEX / "run_api.bat"}"', LEX)
+            elif name == "admin UI" and not running(procs, "vite", "5173"):
+                console("lexicon UI", "npm --prefix frontend run dev", LEX)
+            elif (name == "tagger" and not running(procs, "tagging_server.py")
+                  and not running(procs, "start_tagger.bat") and not running(procs, "start_llm.py")):
+                # never a second llama-server: start_llm.py inside start_tagger.bat sees :8790 answering
+                console("tagger", r"tagger\start_tagger.bat", ROOT)
+            else:
+                continue  # its starter is still warming up
+            started.append(f"{name} (port {port} closed)")
+            break
+    if started:
+        log(f"watchdog: core check started {', '.join(started)}")
+        return started, 0
+    if public_ok():
+        return [], 0
+    public_fails += 1
+    log(f"watchdog: {PUBLIC_URL} not answering ({public_fails} in a row)")
+    if public_fails >= public_fail_limit and port_up(8123):
+        restart_cloudflared()
+        log("watchdog: restarted cloudflared (public URL down)")
+        return ["cloudflared tunnel (public URL down)"], 0
+    return [], public_fails
+
+
 OLLAMA = os.environ.get("OLLAMA_URL", "http://127.0.0.1:11434")
 OLLAMA_LOG = Path(os.environ.get("LOCALAPPDATA", "")) / "Ollama" / "server.log"
 

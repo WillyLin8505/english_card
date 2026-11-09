@@ -1279,6 +1279,7 @@ class Tick:
                     self.event("recovered", outcome="watchdog 重新啟動了停掉的服務（見 dispatch_tick.log）")
             except Exception as e:  # noqa: BLE001
                 log(f"watchdog failed: {e}")
+        self.core_check()
         try:
             board = http("GET", "/schedule/board")
         except Exception as e:  # noqa: BLE001
@@ -1389,6 +1390,20 @@ class Tick:
         elif not st.get("alert"):
             asked.pop("key", None)
         return bool(st.get("hold_launches"))
+
+    def core_check(self):
+        """Card #1013 / issue #1534: every tick, a closed core port or a dead tunnel is started again at once
+        (the hourly ensure_all left the site down 36 min on 11/08). One service per tick."""
+        if self.dry or os.name != "nt" or not self.cfg.get("core_check", True):
+            return
+        try:
+            from watchdog import ensure_core
+            done, fails = ensure_core(log, int(self.state.get("public_fail", 0)))
+            self.state["public_fail"] = fails
+            if done:
+                self.event("recovered", outcome=f"服務 port 沒開／對外連不上，已重新啟動：{', '.join(done)}")
+        except Exception as e:  # noqa: BLE001
+            log(f"core_check failed: {e}")
 
     def serve_app_reload(self):
         """Card #522 (owner decision #553 = A): serve_app hashes serve_app.py, lexicon_transport.py,

@@ -18,7 +18,7 @@ PostHog 的 `distinct_id` 是安裝時產生、存在 Hive 的隨機代號，每
 
 Product Interaction 涵蓋：`app_opened`、`$screen`、`onboarding_completed`（學習語言、母語、程度、程度來源）、`photo_added`、`word_added`（詞性）、`card_reviewed`（評分、題型、對錯、hints、duration_ms、scheduled_days）、`review_started`／`review_finished`。
 
-（卡 #914）另外有一組送到我們自己伺服器的匿名事件，跟 PostHog 分開，而且預設打開（設定 → 匿名安裝與留存統計可關），所以不能用「使用者明確打開才收集」的豁免。事件只有：`install`、`onboarded`、`first_photo`、`first_review`、每天一次 `open`，外加隨機安裝編號。沒有照片、單字、帳號、Email，也不跟登入帳號合併。同一組 Product Interaction／User ID（Analytics、未連結、不追蹤）已涵蓋；因為登入後的使用數字會對到 Email，App Store 上 Product Interaction 與 User ID 仍答「連結到使用者：是」。
+（卡 #914）另外有一組送到我們自己伺服器的匿名事件，跟 PostHog 分開，（卡 #1009：引導第一次會問「允許／不要」，沒選之前什麼都不送，設定 → 隱私可改；登入後的使用數字也要登入後同意，關掉會請伺服器刪除）。事件只有：`install`、`onboarded`、`first_photo`、`first_review`、每天一次 `open`，外加隨機安裝編號。沒有照片、單字、帳號、Email，也不跟登入帳號合併。同一組 Product Interaction／User ID（Analytics、未連結、不追蹤）已涵蓋；因為登入後的使用數字會對到 Email，App Store 上 Product Interaction 與 User ID 仍答「連結到使用者：是」。
 
 Data Used to Track You：無。不需 ATT。`app/ios/Runner/PrivacyInfo.xcprivacy` 已設 `NSPrivacyTracking=false`、`NSPrivacyTrackingDomains` 空、上述兩種資料類型（Analytics、未連結、不追蹤）。Info.plist 沒有 `NSUserTrackingUsageDescription`。
 
