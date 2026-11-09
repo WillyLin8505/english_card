@@ -6158,3 +6158,8 @@ Mac 從 11/03 後沒有回報，收件匣積了很多項。請先做這項：`gi
 卡：問題回報 #1545：[Mac 注意] 2026-11-09 M831（iPad）：上架版仍要求區域網路權限
 
 下次 TestFlight 上傳後，確認 .ipa 內 Info.plist 沒有該鍵，且 git status 中 Info.plist 沒被改動。
+
+## M834（2026-11-09 23:09）狀態：待做
+commit `d54037e6`（Windows：flutter analyze 無 error、02:31 +986 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1021：問題回報 #1545：[Mac 注意] 2026-11-09 M831（iPad）：上架版仍要求區域網路權限
+  結果：已處理：上架版（tool/testflight.sh）打包時移除 Info.plist 的 NSLocalNetworkUsageDescription，開發版（iphone.json）保留。
