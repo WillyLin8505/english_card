@@ -5960,3 +5960,13 @@ commit `d1872987`（Windows：flutter analyze 無 error、01:20 +984 ~2: All tes
 commit `10cc88eb`（Windows：flutter analyze 無 error、01:20 +984 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #224：模擬使用者・拍照
   結果：第 368 輪：photoui 通過（40 秒）、pins 通過（471 秒），2/2 通過；新問題 0；UX 建議 0（本輪只跑測試，沒有逐畫面截圖評估）。
+
+## M807（2026-11-09 15:07）狀態：待做（Windows 卡 #4 交給 Mac 的 App 畫面部分）
+卡：掃描還沒打完的圖片標籤
+
+無。剩下：新圖進來時再看 pending 是否消化。
+
+## M808（2026-11-09 15:08）狀態：待做
+commit `449afcd5`（Windows：flutter analyze 無 error、01:20 +984 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #4：掃描還沒打完的圖片標籤
+  結果：結論：圖片標籤無待標：pending 0（done 33491，上輪 33399，+92）、failed 56（與上輪相同）；Qwen :8790 與 tagger :8765 health 皆 ok。
