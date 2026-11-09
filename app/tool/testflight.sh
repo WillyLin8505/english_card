@@ -31,6 +31,14 @@ if [ ${#GOOGLE_DEFINES[@]} -gt 0 ]; then
     exit 1
   fi
 fi
+# Card #1021 / issue #1545 (Mac M831): the store build never talks to a LAN server (no TAGGING_URL,
+# on-device recognition, dictionary over https), so App Review should not see
+# NSLocalNetworkUsageDescription. Dev builds (iphone.json) keep it in Info.plist; strip it here
+# for this build only and put the file back afterwards.
+PLIST=ios/Runner/Info.plist
+cp "$PLIST" "$PLIST.store-bak"
+trap 'mv -f "$PLIST.store-bak" "$PLIST"' EXIT
+/usr/libexec/PlistBuddy -c "Delete :NSLocalNetworkUsageDescription" "$PLIST" || true
 flutter build ipa --release --build-number="$BUILD" \
   --dart-define-from-file="$DEFINES" ${GOOGLE_DEFINES[@]+"${GOOGLE_DEFINES[@]}"} \
   --export-options-plist=ios/ExportOptions.plist

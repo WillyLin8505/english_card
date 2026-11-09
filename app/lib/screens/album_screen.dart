@@ -107,15 +107,15 @@ class _AlbumScreenState extends State<AlbumScreen> {
                   title: '相片冊',
                   // 卡 #897: the tab's root has nothing above it, so no 返回
                   // (the system back and the tab bar still leave the tab).
-                  leading: widget.onBack != null ||
-                          Navigator.of(context).canPop()
-                      ? RoundIconButton(
-                          label: '返回',
-                          icon: const MSvg(MIcon.arrowLeft, size: 20),
-                          onTap: widget.onBack ??
-                              () => Navigator.of(context).pop(),
-                        )
-                      : const SizedBox(width: 48),
+                  leading:
+                      widget.onBack != null || Navigator.of(context).canPop()
+                          ? RoundIconButton(
+                              label: '返回',
+                              icon: const MSvg(MIcon.arrowLeft, size: 20),
+                              onTap: widget.onBack ??
+                                  () => Navigator.of(context).pop(),
+                            )
+                          : const SizedBox(width: 48),
                   trailing: RoundIconButton(
                     label: '搜尋照片',
                     icon: const MSvg(MIcon.search20, size: 20),

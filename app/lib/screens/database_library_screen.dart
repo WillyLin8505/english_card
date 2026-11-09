@@ -423,7 +423,8 @@ class _DatabaseLibraryScreenState extends State<DatabaseLibraryScreen> {
                                                                         '${word.learnerMeaning ?? ui(context, '{N}意思待補齊')}\n${[
                                                                           if (word.entryType !=
                                                                               'word')
-                                                                            entryTypeLabel(word.entryType),
+                                                                            entryTypeLabel(word.entryType,
+                                                                                lang: uiLanguage(context)),
                                                                           posLabel(
                                                                               word.pos)
                                                                         ].join(' / ')}'

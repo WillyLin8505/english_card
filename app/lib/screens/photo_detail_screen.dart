@@ -117,7 +117,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
   /// Meanings with their 片語/… tag and IPA from the word list, kept until
   /// the repository or the pack changes (M-PERF: they were looked up for
   /// every label on every rebuild, e.g. each step of the difficulty bar).
-  final Map<(String, String, String), String> _zhCache = {};
+  final Map<(String, String, String, String), String> _zhCache = {};
   final Map<String, String?> _ipaCache = {};
   Listenable? _cacheSource;
   WordDatabaseRepository? _cacheRepo;
@@ -180,12 +180,16 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
   }
 
   /// [meaning] with its entry type from the pack, as labels show it.
-  String _zh(String word, String pos, String meaning) => _zhCache.putIfAbsent(
-      (word, pos, meaning),
-      () => typedMeaning(
-          meaning,
-          LexiconPack.instance.lookup(word, pos: pos)?.entry.entryType ??
-              'word'));
+  String _zh(String word, String pos, String meaning) {
+    final lang = uiLanguage(context);
+    return _zhCache.putIfAbsent(
+        (word, pos, meaning, lang),
+        () => typedMeaning(
+            meaning,
+            LexiconPack.instance.lookup(word, pos: pos)?.entry.entryType ??
+                'word',
+            lang: lang));
+  }
 
   String? _ipa(WordDatabaseRepository repo, String word) =>
       _ipaCache.putIfAbsent(word, () => repo.entryByWord(word)?.ipa);

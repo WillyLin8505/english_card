@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:google_fonts/google_fonts.dart';
 import 'l10n/ui_text.dart';
 import 'services/deck_library.dart';
 import 'services/dictionary_sync.dart';
@@ -111,6 +112,7 @@ Future<void> _start() async {
   }
 
   final repository = await open(settings.learningLanguage);
+  GoogleFonts.config.allowRuntimeFetching = false;
   runApp(PhotoEnglishApp(
     repository: repository,
     settings: settings,

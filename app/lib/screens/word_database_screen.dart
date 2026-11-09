@@ -544,7 +544,8 @@ class _WordDatabaseScreenState extends State<WordDatabaseScreen> {
                 meaning: row.entry.meaning,
                 usageBadge: {
                   if (row.entry.entryType != 'word')
-                    entryTypeLabel(row.entry.entryType),
+                    entryTypeLabel(row.entry.entryType,
+                        lang: uiLanguage(context)),
                   ...row.entry.partsOfSpeech.map(posLabel)
                 }.join('・'),
                 level: row.entry.level,

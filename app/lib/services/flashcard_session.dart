@@ -1051,9 +1051,7 @@ class FlashcardSession extends ChangeNotifier {
   /// stay are listed best first (a dot and box on the word, then pack order).
   List<CardPhoto> _photosForSense(String wordId, String? senseId) {
     final all = _photosOf(wordId);
-    final want = senseId == null
-        ? null
-        : int.tryParse(senseId.split(':').last);
+    final want = senseId == null ? null : int.tryParse(senseId.split(':').last);
     final kept = [
       for (final o in all)
         if (want == null ||
@@ -1062,12 +1060,10 @@ class FlashcardSession extends ChangeNotifier {
             _photoSenses[o.$1.id]!.contains(want))
           o,
     ];
-    int rank(CardPhoto o) =>
-        repo.isOwnPhoto(o.$1)
-            ? 0
-            : (o.$2 != null ? 0 : 2) + (_boxes.containsKey(o.$1.id) ? 0 : 1);
-    final ranked = [for (final (i, o) in kept.indexed) (i, o)]
-      ..sort((a, b) {
+    int rank(CardPhoto o) => repo.isOwnPhoto(o.$1)
+        ? 0
+        : (o.$2 != null ? 0 : 2) + (_boxes.containsKey(o.$1.id) ? 0 : 1);
+    final ranked = [for (final (i, o) in kept.indexed) (i, o)]..sort((a, b) {
         final r = rank(a.$2).compareTo(rank(b.$2));
         return r != 0 ? r : a.$1.compareTo(b.$1);
       });
@@ -1089,7 +1085,10 @@ class FlashcardSession extends ChangeNotifier {
     final usages = common.isEmpty ? all : common;
     if (usages.isEmpty) return null;
     final usage = usages[_step % usages.length];
-    return usage.senses.where((s) => s.meaning.trim().isNotEmpty).firstOrNull?.id;
+    return usage.senses
+        .where((s) => s.meaning.trim().isNotEmpty)
+        .firstOrNull
+        ?.id;
   }
 
   CardPhoto _plannedPhoto(String wordId, List<CardPhoto> options) {

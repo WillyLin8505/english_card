@@ -76,11 +76,21 @@ void main() {
     final app = await pumpApp(tester, initialTab: AppTab.album, repository: repo,
         size: const Size(390, 844));
     var opened = 0;
+    final learnerViews = <Map<String, Object?>>[];
     for (final id in photos) {
       current = id;
       app.navigator.openPhoto(id);
       await tester.pumpAndSettle();
       opened++;
+      if (learnerViews.length < 3) {
+        learnerViews.add({
+          'photo': id,
+          'texts': [
+            for (final text in tester.widgetList<Text>(find.byType(Text)))
+              text.data ?? text.textSpan?.toPlainText() ?? '',
+          ],
+        });
+      }
       final cards = find.byWidgetPredicate(
           (w) => w.key is ValueKey<String> && (w.key as ValueKey<String>).value.startsWith('word:'));
       final listed = cards.evaluate().length;
@@ -145,7 +155,15 @@ void main() {
         f.add('離開照片頁沒有保存', id);
       }
     }
-    final report = {'opened': opened, 'findings': f.toJson()};
+    final report = {
+      'opened': opened,
+      'findings': f.toJson(),
+      'learner_views': learnerViews,
+    };
+    final output = env['SIM_OUT'] ?? 'build/photo_ui_simulation.json';
+    File(output)
+      ..createSync(recursive: true)
+      ..writeAsStringSync(const JsonEncoder.withIndent(' ').convert(report));
     File('build/photo_ui_simulation.json')
       ..createSync(recursive: true)
       ..writeAsStringSync(const JsonEncoder.withIndent(' ').convert(report));
