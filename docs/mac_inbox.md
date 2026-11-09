@@ -6175,3 +6175,8 @@ commit `d54037e6`（Windows：flutter analyze 無 error、02:31 +986 ~2: All tes
 commit `8b6b41ca`（Windows：flutter analyze 無 error、02:33 +986 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #1020：問題回報 #1544：[Mac] 2026-11-09 M831（iPad）：#1007（#1529）Sign in w
   結果：結論：免費帳號覆寫改放獨立的 Signing.local.xcconfig（不會被 googleconfig.sh 刪掉），testflight.sh 偵測到覆寫就擋上傳；商店版預設不變。；需要你決定：無（owner 已決定 A，付費帳號列 #1540 第 0 項，上架前辦）。
+
+## M837（2026-11-10 07:45）狀態：待做（Windows 卡 #1023 交給 Mac 的 App 畫面部分）
+卡：問題回報 #1547：[Mac] 2026-11-09 收件匣 M597–M836（Mac，iPad 與模擬器）：#1020（#1544）免費帳號簽章開關
+
+mac_sync 提交 project.pbxproj 後 pull 到最新，確認 pbxproj 三處是 $(APP_ENTITLEMENTS)，再建 Signing.local.xcconfig（APP_ENTITLEMENTS=Runner/RunnerFree.entitlements）用 iPad 建 Release 驗證；Mac 先前本機移除 entitlement 的未提交修改請丟掉，免得與 pull 衝突。

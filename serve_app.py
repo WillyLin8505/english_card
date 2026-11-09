@@ -64,6 +64,11 @@ def snapshot_directory():
 
 _http_snapshots = None
 _http_snapshots_lock = threading.Lock()
+# Card 1024 (Mac saw Cloudflare 530 on 11/09): a live pack rebuild takes 5+ min, and with the
+# 120 s default each pair rebuilt back to back: 8–12 GB RSS, CPU fighting the request threads,
+# /api/decks answering in 27 s. Packs now re-check every 30 min (the data changes only when
+# cards write it, so the app is at most 30 min behind).
+LIVE_PACK_REFRESH_S = 1800
 
 
 def http_snapshot(target, native, wait=False):
@@ -76,7 +81,7 @@ def http_snapshot(target, native, wait=False):
             # revision's snapshot while this revision's pack builds (5+ min).
             directory = snapshot_directory()
             _http_snapshots = SnapshotStore(live_pack, directory, stale_root=directory.parent,
-                                            wait_first=wait)
+                                            wait_first=wait, interval=LIVE_PACK_REFRESH_S)
     return _http_snapshots.get(target, native)
 
 
