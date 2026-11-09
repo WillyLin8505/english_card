@@ -436,3 +436,9 @@ def test_adopt_round_result_written_by_the_cli(tmp_path):
     assert res.name == "card38.result.md" and res.read_text(encoding="utf-8") == "new" and not new.exists()
     (tmp_path / "card38.r32.result.md").write_text("x", encoding="utf-8")
     assert dt.adopt_round_result(38, 2000, tmp_path) is None          # result.md already there: leave it
+
+
+def test_decision_card_ignores_card_numbers_mentioned_in_title():
+    # #1543: owner's 送審清單 mentions 卡 #1005 but is not that card's generated question
+    assert dt.decision_card({"title": "[待決定][owner] 送審前要你做的事（App 審查規範檢視，卡 #1005）"}) is None
+    assert dt.decision_card({"title": "[待決定] 卡 #77：要不要換？"}) == 77

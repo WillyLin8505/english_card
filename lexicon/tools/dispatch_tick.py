@@ -808,8 +808,10 @@ class Tick:
             if (i.get("status") not in ("open", "needs_decision") or i.get("decision")
                     or not (i.get("kind") == "decision" or "[待決定]" in title)):
                 continue
-            m = re.search(r"卡 #(\d+)", title)
-            card = tasks.get(int(m.group(1))) if m else None
+            # #1543: only generated titles 「[待決定] 卡 #N：…」 belong to card N; a card number
+            # merely mentioned in an owner-written title (e.g. 「…（卡 #1005）」) must not close it.
+            cid = decision_card(i)
+            card = tasks.get(cid) if cid else None
             question = re.sub(r"^\[待決定\]\s*卡 #\d+[：:]", "", title)
             why = None
             if card and card.get("status") in ("done", "cancelled"):
