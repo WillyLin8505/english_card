@@ -97,11 +97,12 @@
       226,
       227,
       228,
-      496
+      496,
+      1065
     ],
     "cooldown_hours": 1
   },
-  "_night_simulation_note": "owner 11/03：晚上沒在用電腦，夜間一直模擬使用者、發現問題就開卡。模擬卡在 window 內每張最多每 cooldown_hours 小時跑一次（白天仍 12 小時），發現的問題照常變成問題回報、由 issue swarm 開卡修。Mac 在 iPad 上的夜間模擬見 docs/mac_inbox.md。",
+  "_night_simulation_note": "owner 11/03：晚上沒在用電腦，夜間一直模擬使用者、發現問題就開卡。模擬卡在 window 內每張最多每 cooldown_hours 小時跑一次（白天仍 12 小時），發現的問題照常變成問題回報、由 issue swarm 開卡修。Mac 在 iPad 上的夜間模擬見 docs/mac_inbox.md。owner 11/10：#1065（夜間 Qwen 抓圖補缺）也照這個規則，夜裡每小時一輪。",
   "night_safe_stop": "06:45",
   "goals": {
     "fr_en": {"enabled": true, "every_hours": 3, "stuck_hours": 12, "card": 1035}

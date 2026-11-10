@@ -120,8 +120,8 @@
       "dispatchable": false
     }
   },
-  "night_only_tasks": [],
-  "_night_only_note": "owner 11/01：補缺漏卡與 Qwen 全天跑，CPU、GPU 上限 50% 由 ai_watch 管。要再限夜間時把卡號加回來。",
+  "night_only_tasks": [1065],
+  "_night_only_note": "owner 11/01：補缺漏卡與 Qwen 全天跑，CPU、GPU 上限 50% 由 ai_watch 管。要再限夜間時把卡號加回來。owner 11/10：#1065 夜間 Qwen 抓圖補缺只在夜間派。",
   "_night_722_note": "manager 10/28 23:15：#722 Qwen 貼題量測、#738 法→繁中、#747 翻譯樣本、#748 Vision 對 Qwen 都要 Qwen，白天跑只會「Qwen 暫停」空轉，改夜間派。",
   "_night_166_note": "owner 10/18 晚：Qwen 暫停期間 #166 改由 Claude 直接寫例句，不再限夜間。",
   "night_window": {

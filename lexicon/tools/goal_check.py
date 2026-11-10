@@ -141,6 +141,20 @@ def basic_words() -> dict[str, str]:
     return out
 
 
+NO_PICTURE_FILES = ("card830_no_picture.json", "card1048_no_picture.json")
+
+
+def no_picture_ids(state: Path | None = None) -> list[int]:
+    """Lexeme ids marked "no_picture" (#951/#1566): abstract nouns that get no picture, so D8 leaves them out."""
+    ids: set[int] = set()
+    for name in NO_PICTURE_FILES:
+        try:
+            ids.update(int(i) for i in json.loads(((state or ROOT / "lexicon" / "state") / name).read_text(encoding="utf-8"))["lexemes"])
+        except (OSError, ValueError, KeyError, TypeError):
+            pass
+    return sorted(ids)
+
+
 def measure_db(words: list[str]) -> dict:
     sys.path.insert(0, str(ROOT / "lexicon" / "backend"))
     from sqlalchemy import text  # noqa: PLC0415
@@ -165,15 +179,16 @@ def measure_db(words: list[str]) -> dict:
         "nouns": f"SELECT count(*) FROM lexemes l WHERE {L} AND l.pos='noun'",
         "nouns_gender": f"SELECT count(*) FROM lexemes l WHERE {L} AND l.pos='noun' AND EXISTS (SELECT 1 FROM forms f "
                         f"WHERE f.lexeme_id=l.id AND f.field='fr_gender')",
-        "a12_nouns": f"SELECT count(*) FROM lexemes l WHERE {L} AND l.pos='noun' AND l.cefr IN ('A1','A2')",
-        "a12_nouns_img": f"SELECT count(*) FROM lexemes l WHERE {L} AND l.pos='noun' AND l.cefr IN ('A1','A2') AND {has_img}",
+        "a12_nouns": f"SELECT count(*) FROM lexemes l WHERE {L} AND l.pos='noun' AND l.cefr IN ('A1','A2') AND l.id <> ALL(:np)",
+        "a12_nouns_img": f"SELECT count(*) FROM lexemes l WHERE {L} AND l.pos='noun' AND l.cefr IN ('A1','A2') AND l.id <> ALL(:np) AND {has_img}",
     }
     decks_sql = ("SELECT d.slug, d.cefr, d.topic, count(i.id) FROM decks d LEFT JOIN deck_items i ON i.deck_id=d.id "
                  "WHERE d.target_language='fr' AND d.published GROUP BY d.id")
     out: dict = {}
+    np = no_picture_ids() or [0]
     with db.SessionLocal() as s:
         for k, sql in q.items():
-            out[k] = int(s.execute(text(sql), {"w": words}).scalar() or 0)
+            out[k] = int(s.execute(text(sql), {"w": words, "np": np}).scalar() or 0)
         out["decks"] = [tuple(r) for r in s.execute(text(decks_sql)).all()]
     return out
 

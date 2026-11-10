@@ -54,8 +54,8 @@ Qwen/Grokbot take no cards), shown in the board's AI 機器人 panel with each A
   and the skip lists in the capabilities file. Exit 3 = nothing fits, 4 = paused.
 - New cards: `python lexicon/tools/grade_cards.py` grades ungraded cards (heuristic + one-line reason);
   `--set t89=3:理由` overrides. A grade set on the board is kept.
-- **Night-only cards** (owner, 2026-10-17): Qwen-heavy cards listed in `night_only_tasks` (now #166, #167)
-  are dispatched only 01:00–07:00 Asia/Taipei (`night_window`). `pick_card.py` skips them outside the window;
+- **Night-only cards** (owner, 2026-10-17): Qwen-heavy cards listed in `night_only_tasks` (now #1065: owner 11/10
+  「晚上開 Qwen 去抓、補單字缺漏」, also in `night_simulation.tasks` so it reruns hourly at night) are dispatched only 01:00–07:00 Asia/Taipei (`night_window`). `pick_card.py` skips them outside the window;
   before launching a card by id, run `pick_card.py --agent X --check-task <id>` (exit 6 = not now).
 - `launch_agent.py` picks the model by difficulty when `--model` is not given (Cursor grok-4.7-low/medium/high,
   Codex reasoning effort low/medium/high) — cheap models for easy cards.

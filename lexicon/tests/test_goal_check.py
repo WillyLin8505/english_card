@@ -135,3 +135,11 @@ def test_card_text_lists_failures_and_owner_items():
     text = g.card_text(NOW, results, {"D4": "#1555"}, [831])
     assert text.startswith("11/10 09:00 通過 2/3。")
     assert "D4 A1／A2 音檔 缺 7 條（#1555）" in text and "#831" in text and "#1540" in text
+
+
+def test_no_picture_ids_read_both_marker_files(tmp_path):
+    import json
+    (tmp_path / "card830_no_picture.json").write_text(json.dumps({"lexemes": [5, 3]}), encoding="utf-8")
+    (tmp_path / "card1048_no_picture.json").write_text(json.dumps({"lexemes": [3, 9]}), encoding="utf-8")
+    assert g.no_picture_ids(tmp_path) == [3, 5, 9]
+    assert g.no_picture_ids(tmp_path / "missing") == []
