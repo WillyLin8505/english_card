@@ -6216,3 +6216,31 @@ commit `c8c20cfc`（Windows：flutter analyze 無 error、flutter test 全過（
   結果：第 1 輪：新手引導頂端錯誤列（詞庫暫時無法更新）已改成跟系統語言走；flutter analyze lib/main.dart 無問題，flutter test 未跑。
 - 卡 #1029：問題回報 #1551：[owner] serve_app（App 伺服器 8123／api.willylinai.com
   結果：第 1 輪：已移除 serveapp 最大的常駐來源（永久快取的解析後 slim 詞庫包，數 GB），尚未實測是否達 2 GB 內。
+
+## M844（2026-11-10 08:59）狀態：待做（Windows 卡 #1034 交給 Mac 的 App 畫面部分）
+卡：問題回報 #1556：[owner] 法文主題相片冊與分級相片冊（打標籤）：法文只有基礎 2000／3000 兩本，英文有 20 本
+
+iPad 選學法文→新手引導興趣頁應出現 動物／廚房／客廳／戶外／運動／旅遊（學校、工作、考試不在興趣選項裡，只出現在卡片集）；確認推薦頁不跳過。
+
+| deck (fr) | 字數 | 英文本字數 |
+|---|---|---|
+| fr-animals-photos | 31 | 51 |
+| fr-kitchen-photos | 34 | 54 |
+| fr-living-room-photos | 37 | 44 |
+| fr-outdoors-photos | 44 | 62 |
+| fr-school-photos | 35 | 44 |
+| fr-sports-photos | 36 | 64 |
+| fr-travel-photos | 38 | 48 |
+| fr-work-photos | 39 | 50 |
+| fr-exam-photos | 23 | 40 |
+全部 >= 20，沒有不上架的；未對上的英文字列在 card1034_report.json。
+
+做法：lexicon/tools/card1034_fr_photo_decks.py（--report／--write，可重跑）。英文主題本的字經 meaning_index(fr) 對到法文主義項，去掉抽查發現的錯義字（fourchette、tribunal、ascenseur、capture…，EXCL 清單）。分級本由 fr-basic-3000 依詞條 cefr 切，deck.cefr 留空（#938）。topic 沿用英文本的中文主題字，所以 App 的 interest_topics.dart 不用改就比對得到。標題／說明的 en／fr 翻譯用 card933_deck_i18n.py 由 Qwen 補（AI 標記）。
+備份：lexicon/logs/agents/card1034_decks_backup.json（decks 22 本、deck_items 14783 筆）；還原＝刪除 slug 以 fr-photos／fr-*-photos、fr-basic-3000-a1/a2/b1 的 deck（DELETE /api/decks/<slug>）。
+QC：qc.py check --live --target fr --native en 跑 300 秒逾時沒有結果（可能在等 heavy lock）；本卡只動 decks／deck_items，不碰詞條與 pack，golden 沒有動到。QC 未驗證，剩下請下一輪補跑。
+剩下：缺的 4 個變化形字（aimez 等）未處理；主題本字義抽查只看了 3 本的前 25 字，其餘未逐字審。
+
+## M845（2026-11-10 09:16）狀態：待做
+commit `ea0997a7`（Windows：flutter analyze 無 error、09:50 +986 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1010：問題回報 #1531：[owner] 隱私權政策缺漏（審查 5.1.1(i)、5.1.2(i)）：沒寫帳號與雲端備份、意
+  結果：全部完成：owner 選 A，隱私權政策的期限（存取紀錄 30 天、匿名統計 24 個月）現在由程式自動刪除，成為事實；政策文字不用改。
