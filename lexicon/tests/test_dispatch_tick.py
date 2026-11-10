@@ -386,6 +386,22 @@ def test_multi_round_card_hands_mac_part_only_when_all_done(tmp_path, monkeypatc
     assert "## M2" in inbox.read_text(encoding="utf-8") and "## M3" in inbox.read_text(encoding="utf-8")
 
 
+def test_app_card_mac_part_waits_for_mac_sync_push(tmp_path, monkeypatch):
+    import datetime
+    monkeypatch.setattr(dt, "ROOT", tmp_path)
+    (tmp_path / "docs").mkdir()
+    inbox = tmp_path / "docs" / "mac_inbox.md"
+    inbox.write_text("## M1\n", encoding="utf-8")
+    tick = dt.Tick.__new__(dt.Tick)
+    tick.dry, tick.now = False, datetime.datetime(2026, 11, 10)
+    tick.cfg = {"multi_round_tasks": [], "mac_sync": {"enabled": True}}
+    tick.hand_to_mac(1020, {}, "已修好 app/ios/Runner.xcodeproj/project.pbxproj\n需要 Mac：建置")
+    assert "M2" not in inbox.read_text(encoding="utf-8")
+    tick.cfg["mac_sync"]["enabled"] = False
+    tick.hand_to_mac(1020, {}, "已修好 app/ios/Runner.xcodeproj/project.pbxproj\n需要 Mac：建置")
+    assert "## M2" in inbox.read_text(encoding="utf-8")
+
+
 def test_tag_fallback_starts_run_only_when_enabled(tmp_path, monkeypatch):
     calls = []
     monkeypatch.setattr(dt.subprocess, "Popen", lambda cmd, **kw: calls.append(cmd))
