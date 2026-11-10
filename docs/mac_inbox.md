@@ -6280,3 +6280,13 @@ commit `733e6277`（Windows：flutter analyze 無 error、09:50 +986 ~2: All tes
 commit `026db55e`（Windows：flutter analyze 無 error、09:50 +986 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #1044：問題回報 #1552：CLI 結束後留下的背景程式抓著 heavy_lock 6 小時，所有 flutter test／
   結果：卡 #1044（問題回報 #1552）：heavylock 不知道誰握著它，CLI 結束後留下的程序樹不會被收，現在每輪 tick 會結束「卡的 CLI 已不在、且安靜 15 分鐘」的鎖持有者。
+
+## M852（2026-11-10 09:48）狀態：待做
+commit `4109f2d5`（Windows：flutter analyze 無 error、09:50 +986 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1045：問題回報 #1554：Mac 交接項比程式先到：Mac 照 M835 做時 project.pbxproj 還沒推，#1
+  結果：已修好：含 app/ 程式的卡，「需要 Mac」不再於收卡時提前寫進 macinbox，改隨 macsync 推 app 程式時一起交接。；dispatchtick.finish → handtomac 在收卡當下就寫 macinbox 並隨收件匣 commit 推出；app/ 程式卻要等 macsync 檢查通過才推
+  需要 Mac：…」段（≤1500 字），與程式同一次 commit 推出。
+    - lexicon/tests/test_dispatch_tick.py：新增 test_app_card_mac_part_waits_for_mac_sync_push；dispatch_tick 測試 75 項通過。
+- 卡 #4：掃描還沒打完的圖片標籤
+  結果：結論：圖片標籤無待標：pending 0（done 33541，上輪 33491，+50）、failed 56（與上輪相同）；Qwen :8790 與 tagger :8765 health 皆 ok。
+  需要 Mac：無。剩下：新圖進來時再看 pending 是否消化。
