@@ -6,13 +6,18 @@ exports, card*_measure scans). The OS lock dies with the process, so a crash nev
 """
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 import sys
 import time
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import proc_identity  # noqa: E402
+
 LOCK = Path(__file__).resolve().parents[1] / "state" / "heavy.lock"
+HOLDER = LOCK.with_name("heavy.holder.json")  # who holds the lock (card #1044): dispatch_tick ends an orphan
 ENV = "HEAVY_LOCK_HELD"  # children of a holder skip the lock (else qc inside `run` would deadlock)
 _FH = None
 
@@ -46,7 +51,26 @@ def slot(timeout_s: float = 3000.0) -> bool:
             return False
         time.sleep(5)
     os.environ[ENV] = "1"
+    _write_holder()
     return True
+
+
+def _write_holder():
+    """Record this process as the holder; LEXICON_CARD / LEXICON_AGENT come from launch_agent."""
+    pid = os.getpid()
+    card = os.environ.get("LEXICON_CARD")
+    info = {"pid": pid, "started": proc_identity.process_started(pid), "at": time.time(),
+            "card": int(card) if card and card.isdigit() else None, "agent": os.environ.get("LEXICON_AGENT")}
+    HOLDER.write_text(json.dumps(info), encoding="utf-8")
+
+
+def holder() -> dict | None:
+    """The recorded lock holder (may be stale: check proc_identity.run_alive before acting on it)."""
+    try:
+        info = json.loads(HOLDER.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return info if isinstance(info, dict) else None
 
 
 def release():

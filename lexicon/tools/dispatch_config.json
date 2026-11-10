@@ -110,6 +110,7 @@
   "finish_grace_minutes": 10,
   "finish_grace_alive_minutes": 45,
   "lingering_kill_minutes": 90,
+  "orphan_heavy_quiet_minutes": 15,
   "alive_log_minutes": 45,
   "limit_fallback_hours": {
     "Claude Code": 5,

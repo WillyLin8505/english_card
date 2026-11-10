@@ -314,14 +314,16 @@ def main():
     except Exception:  # noqa: BLE001
         pass
     out = open(log, "w", encoding="utf-8")
+    # card #1044: the CLI's children tag their heavy_lock holder with the card (heavy_lock.slot)
+    CLI_ENV = dict(os.environ, LEXICON_CARD=str(a.card), LEXICON_AGENT=a.agent)
     if kind == "cursor":
         prompt_file.write_text(text, encoding="utf-8")
         p = subprocess.Popen(cmd, cwd=ROOT, stdin=subprocess.DEVNULL,
-                             stdout=out, stderr=subprocess.STDOUT,
+                             stdout=out, stderr=subprocess.STDOUT, env=CLI_ENV,
                              creationflags=0x00000200 | 0x08000000)
     else:
         p = subprocess.Popen(cmd, cwd=ROOT, stdin=subprocess.PIPE,
-                             stdout=out, stderr=subprocess.STDOUT,
+                             stdout=out, stderr=subprocess.STDOUT, env=CLI_ENV,
                              creationflags=0x00000200 | 0x08000000)
         # prompt always via stdin: --allowedTools is variadic and cmd.exe cuts argv at newlines
         p.stdin.write(text.encode("utf-8")); p.stdin.close()

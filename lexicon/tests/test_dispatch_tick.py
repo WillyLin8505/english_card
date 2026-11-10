@@ -442,3 +442,18 @@ def test_decision_card_ignores_card_numbers_mentioned_in_title():
     # #1543: owner's 送審清單 mentions 卡 #1005 but is not that card's generated question
     assert dt.decision_card({"title": "[待決定][owner] 送審前要你做的事（App 審查規範檢視，卡 #1005）"}) is None
     assert dt.decision_card({"title": "[待決定] 卡 #77：要不要換？"}) == 77
+
+
+# orphan heavy_lock holder (card #1044, issue #1552)
+def test_orphan_heavy_holder_of_ended_cli_is_killed_after_quiet():
+    holder = {"pid": 1, "started": None, "at": 1000.0, "card": 5, "agent": "Claude CLI 2"}
+    # run_alive needs a live process; with an unknown process state it is False, so force the check
+    orig = dt.proc_identity.run_alive
+    dt.proc_identity.run_alive = lambda info: True
+    try:
+        assert dt.orphan_heavy_action(holder, False, 1000.0, 1000.0 + 16 * 60, 15 * 60) == "kill"
+        assert dt.orphan_heavy_action(holder, False, 1000.0, 1000.0 + 5 * 60, 15 * 60) == "none"
+        assert dt.orphan_heavy_action(holder, True, 1000.0, 1000.0 + 60 * 60, 15 * 60) == "none"
+        assert dt.orphan_heavy_action(dict(holder, card=None), False, 0.0, 1e9, 900) == "none"
+    finally:
+        dt.proc_identity.run_alive = orig

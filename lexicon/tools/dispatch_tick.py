@@ -273,6 +273,19 @@ def prior_cli_action(alive: bool, last_activity: float | None, now: float, kill_
     return "wait"
 
 
+def orphan_heavy_action(holder: dict | None, card_cli_alive: bool, last_activity: float | None,
+                        now: float, quiet_s: float) -> str:
+    """'none' | 'kill' for the heavy_lock holder (card #1044, issue #1552): a holder whose card's CLI has
+    ended and that has been quiet for quiet_s is an orphan of that CLI; its tree keeps the lock for hours.
+    A Codex wrapper pid can exit while Codex still runs, so quiet time is required, not just "no CLI"."""
+    if not holder or not holder.get("card") or card_cli_alive:
+        return "none"
+    if not proc_identity.run_alive(holder):
+        return "none"
+    last = max([float(holder.get("at") or 0)] + ([last_activity] if last_activity else []))
+    return "kill" if now - last > quiet_s else "none"
+
+
 def in_cooldown(card: dict, now: datetime, hours: float, agent_names=()) -> bool:
     """A standing card that ran less than `hours` ago and nothing changed since (owner edits or a
     detail change count as a change) is skipped."""
@@ -1129,6 +1142,29 @@ class Tick:
         cache[card_id] = busy
         return busy
 
+    def release_orphan_heavy(self):
+        """card #1044 / issue #1552: a CLI that ended can leave its children (bash → heavy_lock → scan) holding
+        the heavy_lock for hours, so every flutter test and simulation queues behind it. End that tree."""
+        from launch_agent import agent_kind, live_run
+        import heavy_lock
+        info = heavy_lock.holder()
+        if not info or not info.get("card"):
+            return
+        card = int(info["card"])
+        logf = AG_LOGS / f"card{card}_{agent_kind(info.get('agent') or '')}.log"
+        last = logf.stat().st_mtime if logf.exists() else None
+        act = orphan_heavy_action(info, live_run(card) is not None, last, time.time(),
+                                  self.cfg.get("orphan_heavy_quiet_minutes", 15) * 60)
+        if act != "kill":
+            return
+        quiet = int((time.time() - max([float(info.get("at") or 0)] + ([last] if last else []))) / 60)
+        log(f"#{card}: heavy_lock held by pid {info['pid']} after its CLI ended ({quiet} min quiet) → ending it")
+        if self.dry:
+            return
+        proc_identity.kill_tree(info)
+        self.event("error", card=card, agent=info.get("agent"),
+                   outcome=f"收卡後的背景程式（pid {info['pid']}）握著重工作鎖 {quiet} 分鐘，已結束它，鎖已釋放")
+
     def running_clis(self) -> int:
         """Cards whose CLI still runs: check_running counts them (a Codex CLI's recorded pid is often a wrapper
         that has exited); without that, the CLIs launch_agent recorded that still run."""
@@ -1337,6 +1373,7 @@ class Tick:
                     board = http("GET", "/schedule/board")
             except Exception as e:  # noqa: BLE001
                 log(f"mac_results_to_issues failed: {e}")
+        self.release_orphan_heavy()
         self.route_app_reports()
         guard_hold = self.resource_guard()
         if guard_hold:
@@ -1535,6 +1572,12 @@ class Tick:
         # hands its Mac part once, with the round that says 全部完成.
         if card_id in set(self.cfg["multi_round_tasks"]) and not ALL_DONE_RE.search(text[:200]):
             log(f"#{card_id}: Mac part held until the card is 全部完成")
+            return
+        # Card #1045 (#1554): a card that changes app/ is handed by mac_sync together with its
+        # code push (inbox_item carries this 「需要 Mac」 part); handing it here sent the Mac
+        # off before project.pbxproj etc. reached origin.
+        if (self.cfg.get("mac_sync") or {}).get("enabled") and flow_rules.STRONG_RE.search(text):
+            log(f"#{card_id}: Mac part waits for mac_sync's app push")
             return
         part = text[m.end():].split("\n\n## ")[0].strip()[:1500]
         inbox = ROOT / "docs" / "mac_inbox.md"

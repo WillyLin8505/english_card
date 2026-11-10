@@ -623,7 +623,12 @@ def clean_title(c: dict) -> str:
 def inbox_item(no: int, commit: str, cards: list[dict], test_line: str) -> str:
     rows = []
     for c in cards:
-        rows.append(f"- 卡 #{c['card']}：{clean_title(c)[:70]}\n  結果：{clean_outcome(c.get('outcome') or '')[:160]}")
+        row = f"- 卡 #{c['card']}：{clean_title(c)[:70]}\n  結果：{clean_outcome(c.get('outcome') or '')[:160]}"
+        m = re.search(r"需要 ?Mac[：:]", result_of(c))
+        if m:  # card #1045: dispatch_tick leaves this part to the push, so it arrives with the code
+            part = result_of(c)[m.end():].split("\n\n## ")[0].strip()[:1500]
+            row += "\n  需要 Mac：" + part.replace("\n", "\n    ")
+        rows.append(row)
     return (f"\n## M{no}（{datetime.now(TAIPEI):%Y-%m-%d %H:%M}）狀態：待做\n"
             f"commit `{commit}`（Windows：flutter analyze 無 error、{test_line}）。`git pull` 後在 iPhone 模擬器"
             "逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，"
