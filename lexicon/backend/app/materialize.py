@@ -221,6 +221,19 @@ def sibling_recordings(pos: str | None, audio_assets: list, ipa: dict[str, set[s
     return out
 
 
+_POS_ALIAS = {"name": "noun"}
+
+
+def ipa_fallback(items: list, pos: str | None) -> list:
+    """Card #1058 / issue #1572: Kaikki files a sound under one part of speech
+    (january = name, taxi = noun) while the lexeme is another (noun / verb),
+    so 1,240 full lexemes showed no IPA. A lexeme with no IPA of its own pos
+    takes the headword's: first the aliased pos (name -> noun), else the rest."""
+    ipa = [it for it in items if (it.get("ipa") or "").strip()]
+    same = [it for it in ipa if _POS_ALIAS.get(it.get("pos") or "", it.get("pos")) == pos]
+    return same or ipa
+
+
 def materialize_pronunciations(s: Session, target: str, values: dict[str, dict[str, list]],
                                lexemes: dict[str, m.Lexeme],
                                audio_fetched: dict[str, dict] | None = None) -> None:
@@ -249,7 +262,10 @@ def materialize_pronunciations(s: Session, target: str, values: dict[str, dict[s
         for kind, f in (("ipa", "ipa"), ("phonemes", "phonemes"), ("syllables", "syllables"),
                         ("stress", "stress")):
             rows = [it for it in u(f) if not it.get("pos") or it.get("pos") == lx.pos]
-            rows = british_first(rows) if f == "ipa" else rows
+            if f == "ipa":
+                if not any(it.get("ipa") for it in rows):
+                    rows = ipa_fallback(u(f), lx.pos)
+                rows = british_first(rows)
             for i, it in enumerate(rows):
                 val = (it.get("ipa") or it.get("phonemes")
                        or "·".join(it.get("syllables") or []) or str(it.get("count") or "")
