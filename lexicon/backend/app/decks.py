@@ -59,6 +59,24 @@ def _credit(a) -> dict:
             "author": a.author, "page_url": a.page_url}
 
 
+def _with_translations(s: Session, examples: list) -> list:
+    """Card #1051: each Tatoeba sentence with its linked English sentence as
+    `translation` (the app only shows translated examples); unchanged when none."""
+    ids = [e["tatoeba_id"] for e in examples if isinstance(e, dict) and e.get("tatoeba_id")]
+    if not ids:
+        return examples
+    rows = s.execute(select(m.TatoebaLink.a, m.TatoebaSentence.text)
+                     .join(m.TatoebaSentence, m.TatoebaSentence.id == m.TatoebaLink.b)
+                     .where(m.TatoebaLink.a.in_(ids), m.TatoebaSentence.lang == "eng")
+                     .order_by(m.TatoebaSentence.id)).all()
+    en: dict[int, str] = {}
+    for a, t in rows:
+        en.setdefault(a, t)
+    return [{**e, "translation": en[e["tatoeba_id"]]}
+            if isinstance(e, dict) and e.get("tatoeba_id") in en and not e.get("translation") else e
+            for e in examples]
+
+
 def public_deck(s: Session, slug: str) -> dict | None:
     """The deck with everything the app needs to add it offline: words as
     (word, pos, cefr); pictures as asset ids (fetched from /api/image) with labels."""
@@ -70,7 +88,8 @@ def public_deck(s: Session, slug: str) -> dict | None:
     if deck.kind == "words":
         rows = [{"word": i.lemma, "pos": i.pos or "", "cefr": i.cefr,
                  # situation albums (card #1041): Tatoeba sentences picked for the situation, with author
-                 **({"examples": i.labels["examples"]} if isinstance(i.labels, dict) and i.labels.get("examples") else {})}
+                 **({"examples": _with_translations(s, i.labels["examples"])}
+                    if isinstance(i.labels, dict) and i.labels.get("examples") else {})}
                 for i in items]
     else:
         assets = {a.id: a for a in s.scalars(select(m.ImageAsset).where(
