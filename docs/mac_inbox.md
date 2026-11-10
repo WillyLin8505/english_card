@@ -6324,3 +6324,12 @@ commit `de933e8a`（Windows：flutter analyze 無 error、09:50 +986 ~2: All tes
 commit `333b7ef4`（Windows：flutter analyze 無 error、09:50 +986 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #12：模擬使用者・跨分頁（亂點、詞庫更新）
   結果：第 244 輪（重用 round 279 的 pack）：2/2 通過——fuzz 1500 步無 findings（377 秒）、packupdate 282 秒無 findings，pack 30854 詞。
+
+## M858（2026-11-10 21:46）狀態：待做
+commit `66d25bcb`（Windows：flutter analyze 無 error、09:50 +986 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1053：問題回報 #1570：[owner] 英文旅遊與生活情境相片冊（8 本）：在餐廳、在咖啡館、在旅館、在車站與機場、問路、
+  結果：全部完成：8 本英文情境相片冊上架（topic 與法文同名，targetlanguage=en），每本 36–40 個詞，共 236 句 Tatoeba 例句（272 個附例句位置）全部有 AI 翻的 zh-TW 中文（標 zhai）。
+  需要 Mac：iPad 驗 8 本英文相片冊在 卡片集 可以下載，英文相片冊 topic 顯示正確。
+    - 詞卡尚未顯示 examples／zh（App 顯示是另一張問題回報，同 #1041）。
+    - 候選詞仍有非 full 的 stub（menu、waiter、reservation、towel、elevator、suitcase、wifi、hello、hi 等）沒有進相片冊；可用 card350_import.py --words 匯入後重跑 --write（同 #1042）。
+    - 例句偏短、有些偏泛（例：Speak English.），只抽看 14 句。
