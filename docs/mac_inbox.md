@@ -6358,3 +6358,10 @@ commit `015c1057`（Windows：flutter analyze 無 error、09:50 +986 ~2: All tes
 - 卡 #227：模擬使用者・單字本
   結果：第 379 輪：database、detail 2/2 通過；新問題 0、UX 建議 0。
   需要 Mac：無。
+
+## M863（2026-11-10 22:53）狀態：待做
+commit `036259a4`（Windows：flutter analyze 無 error、09:50 +986 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #226：模擬使用者・複習
+  結果：第 45 輪：未執行——等 heavy lock 約 10 分鐘（22:30 起）仍排不到（0/2，不是失敗）；新問題：無；UX 建議：無。
+  需要 Mac：無。
+    - 剩餘：learner,restart 本輪沒跑；連兩輪被鎖擋住（第 44、45 輪），建議派工程式在 01:00–07:00 夜間窗口再派一次。上一輪有結果的是第 43 輪（2/2 通過）。
