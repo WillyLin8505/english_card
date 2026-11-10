@@ -366,7 +366,8 @@ void main() {
         f.add('找不到「$label」', current);
         continue;
       }
-      await tester.ensureVisible(btn.first);
+      await Scrollable.ensureVisible(tester.element(btn.first), alignment: 0.5);
+      await tester.pumpAndSettle();
       await tester.tap(btn.first);
       await tester.pump(const Duration(milliseconds: 500));
       checkNoNull();
