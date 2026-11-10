@@ -6275,3 +6275,8 @@ App 尚未顯示 examples（卡片翻面仍用原例句）；要在詞卡顯示�
 commit `733e6277`（Windows：flutter analyze 無 error、09:50 +986 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #1041：問題回報 #1563：[owner] 法文旅遊與生活情境相片冊（8 本）：在餐廳、在咖啡館、在旅館、在車站與機場、問路、
   結果：全部完成：8 本法文情境相片冊上架（goalcheck A4：0/8 → 8/8 本），每本 27–40 個詞，其中 20–35 個詞附 Tatoeba 例句。
+
+## M851（2026-11-10 09:44）狀態：待做
+commit `026db55e`（Windows：flutter analyze 無 error、09:50 +986 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1044：問題回報 #1552：CLI 結束後留下的背景程式抓著 heavy_lock 6 小時，所有 flutter test／
+  結果：卡 #1044（問題回報 #1552）：heavylock 不知道誰握著它，CLI 結束後留下的程序樹不會被收，現在每輪 tick 會結束「卡的 CLI 已不在、且安靜 15 分鐘」的鎖持有者。
