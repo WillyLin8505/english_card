@@ -6254,3 +6254,12 @@ commit `ea0997a7`（Windows：flutter analyze 無 error、09:50 +986 ~2: All tes
 卡：問題回報 #1555：[owner] 法文 14 個詞條沒有任何音檔（une、si、petit、porter、cent…，A1 有 7 個）
 
 iPad 抽驗 petit／si／cent(名詞) 翻卡能播。
+
+## M848（2026-11-10 09:28）狀態：待做
+commit `98983907`（Windows：flutter analyze 無 error、09:50 +986 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1034：問題回報 #1556：[owner] 法文主題相片冊與分級相片冊（打標籤）：法文只有基礎 2000／3000 兩本，英文
+  結果：全部完成（資料部分）：法文新增 9 本主題相片冊（各 23–44 字）＋ 3 本分級本 A1 641／A2 779／B1 1402 字；App 未改，需 Mac 在 iPad 驗興趣頁。
+- 卡 #1039：問題回報 #1540：[owner] 送審前要你在 App Store Connect／Apple Developer
+  結果：這張卡全是只能 owner 本人登入做的事，AI 沒有可改的程式或資料；owner 已決定（#1540）：相關卡都完成後照清單填，有不懂再問。
+- 卡 #1038：問題回報 #1555：[owner] 法文 14 個詞條沒有任何音檔（une、si、petit、porter、cent…
+  結果：全部完成：法文 full 詞條沒有任何音檔 14 → 0（量測 card1038fix.py report：left 0）。QC --live 前後比對見最下面。
