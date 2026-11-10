@@ -135,7 +135,9 @@ Owner: 「設定一個目標，你自動去偵測還有什麼沒做，而不要�
 `lexicon/docs/goals/` that `lexicon/tools/goal_check.py` measures without an LLM. dispatch_tick calls `goal_check.py run`
 every tick; it works only when due (`goals.<name>.every_hours` in dispatch_config.json, now 3 h) and then:
 - opens a `[目標 法文] <code> …` 問題回報 for each failing data/album item with no open issue (the swarm dispatches it;
-  a closed issue whose item still fails is re-filed after a day, twice at most, then listed for the owner);
+  a closed issue whose item still fails gets its next round at the next run if the card moved the number — work done
+  in batches, e.g. D8 images 52.6 → 56.8 % — up to 10 rounds; if nothing moved, after a day, twice at most, then
+  listed for the owner);
 - requeues `[owner]` or French cards blocked for `stuck_hours` (12) — once a day each, three times in all;
 - writes the score on the goal card (#1035, in `skip_tasks`, never given to a CLI); two all-pass runs mark it done.
 Goal now: **fr_en** — an English native learning French can use the App (`lexicon/docs/goals/fr_en_usable.md`).

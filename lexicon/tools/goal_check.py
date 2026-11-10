@@ -4,7 +4,8 @@ Goal fr_en = an English native learning French can use the App; the checklist is
 lexicon/docs/goals/fr_en_usable.md. dispatch_tick runs `goal_check.py run` every tick; it measures only when due
 (dispatch_config goals.fr_en.every_hours) and then, without any LLM:
   · opens a 「[目標 法文] <code> …」 issue for every failing data/album item that has no open issue
-    (the issue swarm dispatches it); a closed issue whose item still fails is re-filed after a day, twice at most;
+    (the issue swarm dispatches it); a closed issue whose item still fails gets its next round at once if the card
+    moved the number (D8 52.6 → 56.8 %: work done in batches; ROUND_LIMIT rounds), else after a day, twice at most;
   · requeues goal-related or [owner] cards blocked for stuck_hours (once a day each, three times in all);
   · writes the score on the goal card (skip_tasks keeps CLIs off it); all items passing twice marks it done.
 
@@ -40,7 +41,8 @@ SEED_ISSUES = {"D4": 1555, "A1": 1556, "A2": 1556, "A3": 1562, "A4": 1563}
 THEME_TOPICS = ("季節", "月份與星期", "時間", "方位", "交通", "用餐", "居家生活", "購物", "天氣", "家庭", "身體", "衣服",
                 "數字", "顏色", "問候與禮貌")
 SITUATION_TOPICS = ("在餐廳", "在咖啡館", "在旅館", "在車站與機場", "問路", "在市場與商店", "看醫生與藥局", "自我介紹")
-REFILE_LIMIT = 2
+REFILE_LIMIT = 2   # re-files of an item whose last card did not move its number
+ROUND_LIMIT = 10   # further rounds of an item whose cards keep moving it (owner 11/10: don't stop halfway)
 REQUEUE_LIMIT = 3
 
 # code, name, target text, area, severity, what the issue asks for
@@ -291,10 +293,24 @@ def issue_title(code: str, shown: str) -> str:
     return f"[目標 法文] {code} {name}：現在 {shown}，目標 {target}"[:300]
 
 
+def filed_value(filed: str | None, title: str) -> str | None:
+    """The item's value when its issue was filed: stored by this script, or, for an issue filed before that was
+    stored, read back from its title 「…：現在 <value>，目標 …」 (owner-written issues have neither)."""
+    if filed is not None:
+        return filed
+    m = re.search(r"：現在 (.+?)，目標 ", title or "")
+    return m[1] if m else None
+
+
 def ensure_issue(code: str, shown: str, state: dict, open_by_title: dict[str, dict], now: datetime, dry: bool) -> str:
-    """Keep exactly one open issue per failing item. Returns a short note for the card."""
+    """Keep exactly one open issue per failing item. Returns a short note for the card.
+
+    A closed issue whose item still fails: when its card moved the number (work done in batches, D8 52.6 → 56.8 %)
+    the next round is filed at once, ROUND_LIMIT rounds at most; when nothing moved, a day later, REFILE_LIMIT times."""
     links = state.setdefault("issues", {})
+    filed = state.setdefault("filed", {})
     linked = links.get(code)
+    again = was = None
     if linked:
         try:
             it = http("GET", f"/issues/{linked}")
@@ -302,31 +318,45 @@ def ensure_issue(code: str, shown: str, state: dict, open_by_title: dict[str, di
             it = None
         if it and it.get("status") in OPEN:
             return f"#{linked}"
-        closed = parse_iso((it or {}).get("resolved_at") or (it or {}).get("updated_at"))
-        if closed and now - closed < timedelta(hours=24):
-            return f"#{linked} 剛結案，明天再量"
-        if state.setdefault("refiled", {}).get(code, 0) >= REFILE_LIMIT:
-            return f"#{linked} 結案兩次還沒過，請看"
+        was = filed_value(filed.get(code), (it or {}).get("title") or "")
+        if it and was is not None and was != shown:
+            if state.setdefault("rounds", {}).get(code, 0) >= ROUND_LIMIT:
+                return f"#{linked} 已接著做 {ROUND_LIMIT} 輪還沒過，請看"
+            again = "rounds"
+        else:
+            closed = parse_iso((it or {}).get("resolved_at") or (it or {}).get("updated_at"))
+            if closed and now - closed < timedelta(hours=24):
+                return f"#{linked} 剛結案，明天再量"
+            if state.setdefault("refiled", {}).get(code, 0) >= REFILE_LIMIT:
+                return f"#{linked} 結案兩次還沒過，請看"
+            again = "refiled"
     for title, it in open_by_title.items():
         if title.startswith(f"[目標 法文] {code} "):
             links[code] = it["id"]
+            filed.pop(code, None)
             return f"#{it['id']}"
     if dry:
-        return "會開新卡"
+        return "會接著開下一輪" if again == "rounds" else "會開新卡"
     name, target, area, severity, todo = ITEMS[code]
+    before = ""
+    if linked:
+        before = (f"\n上一張：#{linked}（開卡時 {was or '?'}，現在 {shown}）。接著做還沒做的部分，不要重做；"
+                  f"上一輪的做法和剩下的清單在看板上「問題回報 #{linked}」那張卡的 result.md。")
     body = {
         "kind": "todo", "area": area, "severity": severity, "title": issue_title(code, shown),
         "detail": (f"owner 11/10 目標「英文母語者學法文達到可以用」（lexicon/docs/goals/fr_en_usable.md）的 {code} {name} 沒過。\n"
                    f"現在：{shown}；目標：{target}。\n要做：{todo}\n"
                    "量測：python lexicon/tools/goal_check.py report。照 PIPELINE.md：改資料先備份，golden 與 QC"
-                   "（qc.py check --live --target fr --native en）不退步；App 有改動要交 Mac 在 iPad 驗。"),
+                   "（qc.py check --live --target fr --native en）不退步；App 有改動要交 Mac 在 iPad 驗。" + before),
         "reporter": "目標檢查",
     }
     it = http("POST", "/issues", body)
-    if linked:
-        state["refiled"][code] = state["refiled"].get(code, 0) + 1
+    if again:
+        counts = state.setdefault(again, {})
+        counts[code] = counts.get(code, 0) + 1
     links[code] = it["id"]
-    return f"新開 #{it['id']}"
+    filed[code] = shown
+    return f"新開 #{it['id']}" + ("（接著上一輪）" if again == "rounds" else "")
 
 
 def card_text(now: datetime, results: dict[str, tuple[bool, str]], notes: dict[str, str], requeued: list[int]) -> str:

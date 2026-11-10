@@ -87,6 +87,49 @@ def test_mac_item_flags_a_silent_mac_only_when_cards_wait():
     assert not g.mac_item(None, 3, NOW)[0]
 
 
+D8_OLD = "[目標 法文] D8 A1／A2 名詞配圖：現在 52.6%（512／974），目標 A1、A2 名詞 ≥ 70% 有核准圖片"
+
+
+def fake_issues(monkeypatch, linked: dict):
+    posted = []
+
+    def http(method, path, body=None):
+        if method == "GET":
+            return linked
+        posted.append(body)
+        return {"id": 1600 + len(posted)}
+    monkeypatch.setattr(g, "http", http)
+    return posted
+
+
+def test_a_batch_item_gets_its_next_round_at_once_when_the_card_moved_it(monkeypatch):
+    # 11/10: card #1046 took D8 from 52.6 % to 56.8 % and #1559 was marked fixed; waiting a day stalls the goal.
+    posted = fake_issues(monkeypatch, {"id": 1559, "status": "fixed", "title": D8_OLD, "resolved_at": iso(2)})
+    state = {"issues": {"D8": 1559}}
+    assert g.ensure_issue("D8", "56.8%（553／974）", state, {}, NOW, dry=False) == "新開 #1601（接著上一輪）"
+    assert state["issues"]["D8"] == 1601 and state["filed"]["D8"] == "56.8%（553／974）"
+    assert state["rounds"] == {"D8": 1} and "refiled" not in state
+    assert "上一張：#1559（開卡時 52.6%（512／974），現在 56.8%（553／974））" in posted[0]["detail"]
+    assert posted[0]["title"].startswith("[目標 法文] D8 A1／A2 名詞配圖：現在 56.8%（553／974），目標 ")
+    state["rounds"]["D8"] = g.ROUND_LIMIT                                  # endless rounds go to the owner
+    fake_issues(monkeypatch, {"id": 1601, "status": "fixed", "title": posted[0]["title"], "resolved_at": iso(2)})
+    assert "請看" in g.ensure_issue("D8", "60.0%（584／974）", state, {}, NOW, dry=False)
+
+
+def test_a_card_that_moved_nothing_waits_a_day_and_twice_at_most(monkeypatch):
+    posted = fake_issues(monkeypatch, {"id": 1559, "status": "fixed", "title": D8_OLD, "resolved_at": iso(2)})
+    state = {"issues": {"D8": 1559}}
+    assert g.ensure_issue("D8", "52.6%（512／974）", state, {}, NOW, dry=False) == "#1559 剛結案，明天再量"
+    fake_issues(monkeypatch, {"id": 1559, "status": "fixed", "title": D8_OLD, "resolved_at": iso(30)})
+    assert g.ensure_issue("D8", "52.6%（512／974）", state, {}, NOW, dry=False) == "新開 #1601"
+    assert state["refiled"] == {"D8": 1} and "rounds" not in state
+    # an owner-written issue has no 「現在 …」 in its title: same rule, never treated as progress
+    state = {"issues": {"D4": 1555}}
+    fake_issues(monkeypatch, {"id": 1555, "status": "fixed", "title": "[owner] 法文 14 個詞條沒有任何音檔", "resolved_at": iso(2)})
+    assert g.ensure_issue("D4", "缺 3 條", state, {}, NOW, dry=False) == "#1555 剛結案，明天再量"
+    assert not posted
+
+
 def test_card_text_lists_failures_and_owner_items():
     results = {"D1": (True, "99.9%"), "D4": (False, "缺 7 條"), "P3": (True, "新問題 0")}
     text = g.card_text(NOW, results, {"D4": "#1555"}, [831])
