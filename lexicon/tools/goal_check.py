@@ -35,7 +35,11 @@ VERIFIED = {"ready", "released", "done", "cancelled"}
 BASIC_TOPICS = {"法語基礎字", "基礎單字", "日常基礎", "進階單字"}
 SIMULATION_CARD = 496
 OWNER_ITEMS = "付費 Apple Developer 帳號（上 TestFlight 前要有，#1540 第 0 項）、Google Client ID（#1525）"
-SEED_ISSUES = {"D4": 1555, "A1": 1556, "A2": 1556}
+SEED_ISSUES = {"D4": 1555, "A1": 1556, "A2": 1556, "A3": 1562, "A4": 1563}
+# owner 11/10 「春夏秋冬、年月、上下左右、交通、吃飯、生活……生活情境、旅遊情境」: album topics, matched exactly
+THEME_TOPICS = ("季節", "月份與星期", "時間", "方位", "交通", "用餐", "居家生活", "購物", "天氣", "家庭", "身體", "衣服",
+                "數字", "顏色", "問候與禮貌")
+SITUATION_TOPICS = ("在餐廳", "在咖啡館", "在旅館", "在車站與機場", "問路", "在市場與商店", "看醫生與藥局", "自我介紹")
 REFILE_LIMIT = 2
 REQUEUE_LIMIT = 3
 
@@ -55,13 +59,17 @@ ITEMS = {
            "圖庫真的沒有的照 #830 標不配圖並列出。"),
     "A1": ("主題相片冊", "≥ 6 本法文主題相片冊上架、每本 ≥ 20 個詞", "data", "medium", "做法文主題相片冊（見 #1556）。"),
     "A2": ("分級相片冊", "A1、A2、B1 各一本上架", "data", "medium", "做 A1／A2／B1 分級相片冊（見 #1556）。"),
+    "A3": ("生活主題相片冊", f"{len(THEME_TOPICS)} 本（{'、'.join(THEME_TOPICS)}）各 ≥ 15 詞", "data", "medium",
+           "做法文生活主題相片冊（見 #1562）。"),
+    "A4": ("旅遊與生活情境相片冊", f"{len(SITUATION_TOPICS)} 本（{'、'.join(SITUATION_TOPICS)}）各 ≥ 15 詞", "data", "medium",
+           "做法文情境相片冊（見 #1563）。"),
     "P1": ("法文高嚴重度問題", "沒有還開著的", "app", "high", None),
     "P2": ("法文卡過 iPad 驗證", "全部到 ready 以後", "app", "medium", None),
     "P3": ("法文學習者模擬 #496", "最近一輪（24 小時內）沒有新問題", "app", "medium", None),
     "S1": ("卡住的卡", "沒有排回三次還卡住的", "other", "medium", None),
     "M1": ("Mac 驗證有在跑", "有卡等 iPad 驗證時，Mac 24 小時內有回報", "other", "high", None),
 }
-FILED = ("D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "A1", "A2")
+FILED = ("D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "A1", "A2", "A3", "A4")
 
 
 def now_tw() -> datetime:
@@ -185,6 +193,12 @@ def data_items(words: dict[str, str], m: dict) -> dict[str, tuple[bool, str]]:
         lv = cefr if cefr in ("A1", "A2", "B1") else (re.search(r"-(a1|a2|b1)$", slug or "") or [None, ""])[1].upper()
         if lv in ("A1", "A2", "B1") and (topic or "") in BASIC_TOPICS and size >= 20:
             levels.add(lv)
+    topics = {topic for _, _, topic, size in m["decks"] if size >= 15}
+
+    def albums(wanted: tuple[str, ...]) -> tuple[bool, str]:
+        missing = [t for t in wanted if t not in topics]
+        shown = f"{len(wanted) - len(missing)}/{len(wanted)} 本" + (f"，缺 {'、'.join(missing)}" if missing else "")
+        return not missing, shown
     return {
         "D1": (ratio(m["present"], n) >= 0.995, pct(m["present"], n)),
         "D2": (e > 0 and m["en"] == e, pct(m["en"], e)),
@@ -196,6 +210,8 @@ def data_items(words: dict[str, str], m: dict) -> dict[str, tuple[bool, str]]:
         "D8": (ratio(m["a12_nouns_img"], m["a12_nouns"]) >= 0.70, pct(m["a12_nouns_img"], m["a12_nouns"])),
         "A1": (len(theme) >= 6, f"{len(theme)} 本"),
         "A2": (levels >= {"A1", "A2", "B1"}, f"有 {'、'.join(sorted(levels)) or '0 本'}"),
+        "A3": albums(THEME_TOPICS),
+        "A4": albums(SITUATION_TOPICS),
     }
 
 

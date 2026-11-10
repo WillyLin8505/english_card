@@ -67,6 +67,18 @@ def test_data_items_counts_theme_and_level_albums():
     assert r["D1"][1] == "100.0%（100／100）"                 # the album loop must not touch the word count
 
 
+def test_theme_and_situation_albums_match_topic_names():
+    words = {"w": "A1"}
+    base = {"present": 1, "entries": 1, "en": 1, "ipa": 1, "a12": 1, "a12_audio": 1, "example_en": 1, "cefr": 1,
+            "nouns": 1, "nouns_gender": 1, "a12_nouns": 1, "a12_nouns_img": 1}
+    themes = [(f"fr-t{i}", None, t, 15) for i, t in enumerate(g.THEME_TOPICS)]
+    r = g.data_items(words, {**base, "decks": themes})
+    assert r["A3"] == (True, f"{len(g.THEME_TOPICS)}/{len(g.THEME_TOPICS)} 本")
+    assert not r["A4"][0] and r["A4"][1].startswith("0/8 本，缺 在餐廳")
+    themes[0] = ("fr-t0", None, "季節", 14)                          # too small to count
+    assert g.data_items(words, {**base, "decks": themes})["A3"][1].endswith("缺 季節")
+
+
 def test_mac_item_flags_a_silent_mac_only_when_cards_wait():
     assert g.mac_item(NOW - timedelta(days=6), 0, NOW)[0]            # nothing waiting: silence is fine
     assert g.mac_item(NOW - timedelta(hours=5), 7, NOW)[0]
