@@ -66,7 +66,7 @@ void main() {
       f.add('提示後母語被誤改', settings.nativeLanguage);
     }
 
-    // --- 語言：切母語為法文（介面語言，不受已發布詞庫限制）生效 ---
+    // --- 語言：學英文時母語法文已關閉（#1416／卡 #957）：點了要被擋下並說明 ---
     current = '切母語為法文';
     // French is available in both groups; scope to the native-language row.
     final nativeOptions = find.ancestor(
@@ -80,7 +80,13 @@ void main() {
     } else {
       await tester.tap(frChip.first);
       await tester.pump();
-      if (settings.nativeLanguage != 'fr') f.add('切母語沒有生效', current);
+      if (settings.nativeLanguage != 'zh-TW') {
+        f.add('已關閉的母語組合被切換', current);
+      }
+      if (find.textContaining('尚未開放').evaluate().isEmpty) {
+        f.add('已關閉的母語組合沒有提示', current);
+      }
+      await tester.pump(const Duration(seconds: 4));
       settings.nativeLanguage = 'zh-TW'; // 還原，之後的檢查都用中文介面比對
       await tester.pump();
     }
@@ -338,7 +344,9 @@ void main() {
         f.add('找不到卡片樣式「${style.label}」', current);
         continue;
       }
-      await tester.ensureVisible(chip.first);
+      // 置中再點：貼在視窗頂端時會被上方固定的標題列蓋住（第 380 輪）。
+      await Scrollable.ensureVisible(tester.element(chip.first), alignment: 0.5);
+      await tester.pumpAndSettle();
       await tester.tap(chip.first);
       await tester.pumpAndSettle();
       if (settings.cardStyle != style) {
