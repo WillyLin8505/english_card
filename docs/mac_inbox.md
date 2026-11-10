@@ -6198,3 +6198,21 @@ commit 後用全新安裝（英文介面學法文，加入 French Basic 3000 Wor
 commit `9b211592`（Windows：flutter analyze 無 error、flutter test 全過（2 檔在全部一起跑時失敗、單獨重跑通過））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #1023：問題回報 #1547：[Mac] 2026-11-09 收件匣 M597–M836（Mac，iPad 與模擬器）：#10
   結果：根因：修法早已寫好但 project.pbxproj 還沒進 git（工作樹有、HEAD 63c2510b 沒有），Mac 拉到的是舊檔；不需再改程式。
+
+## M841（2026-11-10 08:19）狀態：待做（Windows 卡 #1029 交給 Mac 的 App 畫面部分）
+卡：問題回報 #1551：[owner] serve_app（App 伺服器 8123／api.willylinai.com）啟動 8 分鐘就佔 10 GB 記憶體
+
+無。
+
+## M842（2026-11-10 08:21）狀態：待做（Windows 卡 #1010 交給 Mac 的 App 畫面部分）
+卡：問題回報 #1531：[owner] 隱私權政策缺漏（審查 5.1.1(i)、5.1.2(i)）：沒寫帳號與雲端備份、意見回饋會給 AI 服務處理、照片辨識寫錯
+
+在 iPhone／iPad 看設定→隱私權政策 14 段（三語）、意見回饋同意句；部署後確認 https://api.willylinai.com/privacy。
+- 沒動詞庫資料，golden／QC 不適用。
+
+## M843（2026-11-10 08:42）狀態：待做
+commit `c8c20cfc`（Windows：flutter analyze 無 error、flutter test 全過（1 檔在全部一起跑時失敗、單獨重跑通過）；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1026：問題回報 #1549：[Mac] 2026-11-09 收件匣 M597–M836（Mac，iPad 與模擬器）：新手引
+  結果：第 1 輪：新手引導頂端錯誤列（詞庫暫時無法更新）已改成跟系統語言走；flutter analyze lib/main.dart 無問題，flutter test 未跑。
+- 卡 #1029：問題回報 #1551：[owner] serve_app（App 伺服器 8123／api.willylinai.com
+  結果：第 1 輪：已移除 serveapp 最大的常駐來源（永久快取的解析後 slim 詞庫包，數 GB），尚未實測是否達 2 GB 內。
