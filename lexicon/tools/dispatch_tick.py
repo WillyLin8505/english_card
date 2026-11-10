@@ -1281,6 +1281,14 @@ class Tick:
                     self.event("recovered", outcome="watchdog 重新啟動了停掉的服務（見 dispatch_tick.log）")
             except Exception as e:  # noqa: BLE001
                 log(f"watchdog failed: {e}")
+        if not self.dry and time.time() - self.state.get("retention_at", 0) >= 86400:
+            # card #1010: privacy policy says access logs 30 days, anonymous statistics 24 months
+            self.state["retention_at"] = time.time()
+            try:
+                import retention_purge
+                log(f"retention_purge: logs {retention_purge.purge_logs()}, events {retention_purge.purge_events()}")
+            except Exception as e:  # noqa: BLE001
+                log(f"retention_purge failed: {e}")
         self.core_check()
         try:
             board = http("GET", "/schedule/board")

@@ -84,3 +84,10 @@ def test_public_server_has_events_but_not_retention():
     import pathlib, re
     src = pathlib.Path(__file__).resolve().parents[2].joinpath("serve_app.py").read_text(encoding="utf-8")
     assert "/api/events" in src and not re.search(r"admin/retention", src)
+
+
+def test_purge_old_events_keeps_24_months(session):
+    _ev(session, 1, "open", TODAY - timedelta(days=731))
+    _ev(session, 2, "open", TODAY - timedelta(days=700))
+    assert app_events.purge_old(session, TODAY) == 1
+    assert session.query(m.AppEvent).count() == 1

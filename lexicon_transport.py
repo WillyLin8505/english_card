@@ -114,9 +114,9 @@ class Snapshot:
 
     @property
     def slim(self):
-        if self._slim is None:
-            self._slim = pack_sqlite.slim_pack(self.pack)
-        return self._slim
+        # Card #1029: never cached. The parsed slim pack is several GB and was
+        # kept for the life of the process (serve_app sat at 10 GB).
+        return pack_sqlite.slim_pack(self.pack)
 
     def sqlite(self):
         """The SQLite pack bytes: reused from `sqlite_path` when that file is
@@ -221,15 +221,21 @@ class SnapshotStore:
         snapshot = Snapshot(body)
         if snapshot.languages != pair:
             raise ValueError('Exporter returned the wrong dictionary language pair')
+        del body
         if previous:
-            patch = encode(delta(previous.pack, snapshot.pack))
+            # Card #1029: one parsed pack pair at a time, freed before the next.
+            old, new = previous.pack, snapshot.pack
+            patch = encode(delta(old, new))
+            del old, new
             compressed = gzip.compress(patch, compresslevel=6, mtime=0)
-            if len(compressed) < len(snapshot.gzip) and len(patch) < len(body):
+            if len(compressed) < len(snapshot.gzip) and len(patch) < int.from_bytes(snapshot.gzip[-4:], 'little'):
                 snapshot.delta_from = previous.version
                 snapshot.delta_body, snapshot.delta_gzip = patch, compressed
             # Phones hold the slim pack (card #428): their delta is between
             # slim packs, and always smaller than the SQLite file.
-            patch = encode(delta(previous.slim, snapshot.slim))
+            old, new = previous.slim, snapshot.slim
+            patch = encode(delta(old, new))
+            del old, new
             snapshot.sqlite_delta_from = previous.version
             snapshot.sqlite_delta_body = patch
             snapshot.sqlite_delta_gzip = gzip.compress(patch, compresslevel=6, mtime=0)

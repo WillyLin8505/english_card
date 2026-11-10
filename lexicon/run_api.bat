@@ -14,6 +14,7 @@ if not exist logs mkdir logs
 echo API output: %~dp0logs\api.log
 :loop
 for %%F in (logs\api.log) do if %%~zF GTR 50000000 move /y logs\api.log logs\api.log.1 >nul
+python toolsetention_purge.py >> logsetention_purge.log 2>&1
 python -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8770 >> logs\api.log 2>&1
 set code=%errorlevel%
 if "%code%"=="0" goto :eof

@@ -10,7 +10,7 @@ import re
 from datetime import date, datetime, timedelta, timezone
 
 from fastapi import Depends
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
 
@@ -52,6 +52,17 @@ def record(s: Session, body: dict, today: date | None = None) -> dict:
                         .returning(m.AppEvent.id))
         stored += len(res.fetchall())
     return {"ok": True, "stored": stored}
+
+
+KEEP_DAYS = 730   # privacy policy: anonymous statistics kept no longer than 24 months (card #1010)
+
+
+def purge_old(s: Session, today: date | None = None) -> int:
+    """Delete events older than 24 months; returns the number of rows removed."""
+    today = today or _today()
+    n = s.execute(delete(m.AppEvent).where(m.AppEvent.day < today - timedelta(days=KEEP_DAYS))).rowcount
+    s.flush()
+    return n or 0
 
 
 def _rate(n: int, d: int) -> float | None:
