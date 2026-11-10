@@ -6249,3 +6249,8 @@ commit `ea0997a7`（Windows：flutter analyze 無 error、09:50 +986 ~2: All tes
 卡：問題回報 #1540：[owner] 送審前要你在 App Store Connect／Apple Developer 做的事（App 審查規範檢視）
 
 付費團隊換好後，在 iPad 驗證 Apple 登入 → 建帳號 → 刪帳號（#1529 尚未在實機驗過）。
+
+## M847（2026-11-10 09:25）狀態：待做（Windows 卡 #1038 交給 Mac 的 App 畫面部分）
+卡：問題回報 #1555：[owner] 法文 14 個詞條沒有任何音檔（une、si、petit、porter、cent…，A1 有 7 個）
+
+iPad 抽驗 petit／si／cent(名詞) 翻卡能播。
