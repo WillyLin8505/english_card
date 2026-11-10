@@ -6339,3 +6339,11 @@ commit `5e5f5be0`（Windows：flutter analyze 無 error、09:50 +986 ~2: All tes
 - 卡 #4：掃描還沒打完的圖片標籤
   結果：結論：圖片標籤無待標：pending 0、done 33541（與上輪相同，無新圖進來）、failed 56（相同）；Qwen :8790 與 tagger :8765 health 皆 ok。
   需要 Mac：無。剩下：新圖進來時再看 pending 是否消化。
+
+## M860（2026-11-10 22:09）狀態：待做
+commit `42d6c215`（Windows：flutter analyze 無 error、09:50 +986 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1056：問題回報 #1525：[owner] [owner] Google 登入需要你建立 OAuth Client ID（Go
+  結果：卡 #1056 無法自行完成：Google OAuth Client ID 必須由 owner 本人登入 Google Cloud Console 建立，AI 無法代為登入或同意條款，本輪沒有任何可做的步驟。
+- 卡 #225：模擬使用者・相片冊
+  結果：第 293 輪：相片冊模擬 1/1 通過（round 378，47 秒，931 筆事件已上傳），新問題 無、UX 建議 無（本輪未看畫面，不評分）。
+  需要 Mac：無新增。
