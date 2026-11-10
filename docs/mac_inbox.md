@@ -6244,3 +6244,8 @@ QC：qc.py check --live --target fr --native en 跑 300 秒逾時沒有結果（
 commit `ea0997a7`（Windows：flutter analyze 無 error、09:50 +986 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #1010：問題回報 #1531：[owner] 隱私權政策缺漏（審查 5.1.1(i)、5.1.2(i)）：沒寫帳號與雲端備份、意
   結果：全部完成：owner 選 A，隱私權政策的期限（存取紀錄 30 天、匿名統計 24 個月）現在由程式自動刪除，成為事實；政策文字不用改。
+
+## M846（2026-11-10 09:23）狀態：待做（Windows 卡 #1039 交給 Mac 的 App 畫面部分）
+卡：問題回報 #1540：[owner] 送審前要你在 App Store Connect／Apple Developer 做的事（App 審查規範檢視）
+
+付費團隊換好後，在 iPad 驗證 Apple 登入 → 建帳號 → 刪帳號（#1529 尚未在實機驗過）。
