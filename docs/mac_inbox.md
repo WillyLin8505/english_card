@@ -6263,3 +6263,15 @@ commit `98983907`（Windows：flutter analyze 無 error、09:50 +986 ~2: All tes
   結果：這張卡全是只能 owner 本人登入做的事，AI 沒有可改的程式或資料；owner 已決定（#1540）：相關卡都完成後照清單填，有不懂再問。
 - 卡 #1038：問題回報 #1555：[owner] 法文 14 個詞條沒有任何音檔（une、si、petit、porter、cent…
   結果：全部完成：法文 full 詞條沒有任何音檔 14 → 0（量測 card1038fix.py report：left 0）。QC --live 前後比對見最下面。
+
+## M849（2026-11-10 09:31）狀態：待做（Windows 卡 #1041 交給 Mac 的 App 畫面部分）
+卡：問題回報 #1563：[owner] 法文旅遊與生活情境相片冊（8 本）：在餐廳、在咖啡館、在旅館、在車站與機場、問路、在市場與商店、看醫生與藥局、自我介紹
+
+App 尚未顯示 examples（卡片翻面仍用原例句）；要在詞卡顯示情境例句與 Tatoeba 作者，需改 app/lib（下載 deck 時讀 examples）。我沒擴大範圍，建議另開問題回報。iPad 驗證 8 本相片冊能在 卡片集 下載。
+- 例句我只抽看 ~15 句，有些偏泛（如「Père et frère.」）；詞庫有 Tatoeba 英譯，但本輪沒附。
+- serve_app 需重啟載入 decks.py 變更（派工程式會自動做）。
+
+## M850（2026-11-10 09:32）狀態：待做
+commit `733e6277`（Windows：flutter analyze 無 error、09:50 +986 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1041：問題回報 #1563：[owner] 法文旅遊與生活情境相片冊（8 本）：在餐廳、在咖啡館、在旅館、在車站與機場、問路、
+  結果：全部完成：8 本法文情境相片冊上架（goalcheck A4：0/8 → 8/8 本），每本 27–40 個詞，其中 20–35 個詞附 Tatoeba 例句。
