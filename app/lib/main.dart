@@ -292,6 +292,16 @@ class _PhotoEnglishAppState extends State<PhotoEnglishApp>
     });
   }
 
+  /// 問題回報 #1549: the strip sits above the navigator, outside the
+  /// onboarding page's own language preview, so before a native language is
+  /// chosen it showed the 中文 source. Use the device language until then.
+  Widget _bannerLanguage(Widget child) => widget.settings.onboarded
+      ? child
+      : UiLanguageScope(
+          language: deviceLanguage(
+              WidgetsBinding.instance.platformDispatcher.locale),
+          child: child);
+
   @override
   Widget build(BuildContext context) {
     return AppScope(
@@ -329,10 +339,12 @@ class _PhotoEnglishAppState extends State<PhotoEnglishApp>
               context,
               FeedbackOverlay(
                 navigatorKey: _rootNavigator,
-                child: BackgroundErrorBanner(
-                  errors: BackgroundErrors.instance,
-                  child: TaggingProgress(
-                      queue: _queue, child: child ?? const SizedBox.shrink()),
+                child: _bannerLanguage(
+                  BackgroundErrorBanner(
+                    errors: BackgroundErrors.instance,
+                    child: TaggingProgress(
+                        queue: _queue, child: child ?? const SizedBox.shrink()),
+                  ),
                 ),
               )),
           home: ListenableBuilder(
