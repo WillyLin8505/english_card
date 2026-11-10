@@ -62,19 +62,33 @@ def _credit(a) -> dict:
 def _with_translations(s: Session, examples: list) -> list:
     """Card #1051: each Tatoeba sentence with its linked English sentence as
     `translation` (the app only shows translated examples); unchanged when none."""
-    ids = [e["tatoeba_id"] for e in examples if isinstance(e, dict) and e.get("tatoeba_id")]
-    if not ids:
-        return examples
-    rows = s.execute(select(m.TatoebaLink.a, m.TatoebaSentence.text)
-                     .join(m.TatoebaSentence, m.TatoebaSentence.id == m.TatoebaLink.b)
-                     .where(m.TatoebaLink.a.in_(ids), m.TatoebaSentence.lang == "eng")
-                     .order_by(m.TatoebaSentence.id)).all()
+    # Card #1061: English albums keep the Chinese in zh / zh_ai (AI flag); the app
+    # reads translation / aiTranslated, so those are filled from them (old keys stay).
+    def own(e):
+        return (e.get("translation") or e.get("zh") or "").strip()
+    need = [e["tatoeba_id"] for e in examples
+            if isinstance(e, dict) and e.get("tatoeba_id") and not own(e)]
     en: dict[int, str] = {}
-    for a, t in rows:
-        en.setdefault(a, t)
-    return [{**e, "translation": en[e["tatoeba_id"]]}
-            if isinstance(e, dict) and e.get("tatoeba_id") in en and not e.get("translation") else e
-            for e in examples]
+    if need:
+        rows = s.execute(select(m.TatoebaLink.a, m.TatoebaSentence.text)
+                         .join(m.TatoebaSentence, m.TatoebaSentence.id == m.TatoebaLink.b)
+                         .where(m.TatoebaLink.a.in_(need), m.TatoebaSentence.lang == "eng")
+                         .order_by(m.TatoebaSentence.id)).all()
+        for a, t in rows:
+            en.setdefault(a, t)
+    out = []
+    for e in examples:
+        if not isinstance(e, dict):
+            out.append(e)
+            continue
+        e = dict(e)
+        tr = own(e) or en.get(e.get("tatoeba_id"))
+        if tr:
+            e["translation"] = tr
+        if e.get("translation_ai") or e.get("zh_ai"):
+            e["aiTranslated"] = True
+        out.append(e)
+    return out
 
 
 def public_deck(s: Session, slug: str) -> dict | None:
