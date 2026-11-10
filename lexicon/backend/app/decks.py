@@ -68,7 +68,10 @@ def public_deck(s: Session, slug: str) -> dict | None:
     items = s.scalars(select(m.DeckItem).where(m.DeckItem.deck_id == deck.id)
                       .order_by(m.DeckItem.position, m.DeckItem.id)).all()
     if deck.kind == "words":
-        rows = [{"word": i.lemma, "pos": i.pos or "", "cefr": i.cefr} for i in items]
+        rows = [{"word": i.lemma, "pos": i.pos or "", "cefr": i.cefr,
+                 # situation albums (card #1041): Tatoeba sentences picked for the situation, with author
+                 **({"examples": i.labels["examples"]} if isinstance(i.labels, dict) and i.labels.get("examples") else {})}
+                for i in items]
     else:
         assets = {a.id: a for a in s.scalars(select(m.ImageAsset).where(
             m.ImageAsset.id.in_([i.asset_id for i in items if i.asset_id])))}
