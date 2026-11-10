@@ -6535,3 +6535,10 @@ commit `7ecfa972`（Windows：flutter analyze 無 error、flutter test 全過（
 commit `d8ae3e71`（Windows：flutter analyze 無 error、flutter test 全過（1 檔在全部一起跑時失敗、單獨重跑通過））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #12：模擬使用者・跨分頁（亂點、詞庫更新）
   結果：第 248 輪（重用 round 279 的 pack）：fuzz 通過（350 秒，All tests passed）；packupdate 的測試本身全過、findings 為空，但跑了 560 秒超過 9 分鐘前景上限，被腳本判失敗（超時，不是資料問題）。
+
+## M889（2026-11-11 06:00）狀態：待做
+commit `b080b4da`（Windows：flutter analyze 無 error、flutter test 全過（1 檔在全部一起跑時失敗、單獨重跑通過））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #228：模擬使用者・設定
+  結果：第 402 輪：settings 1/1 通過（11 秒）；新問題 無；UX 建議 無新增（皆已有問題回報）。
+  需要 Mac：無。
+    - 剩下：無。
