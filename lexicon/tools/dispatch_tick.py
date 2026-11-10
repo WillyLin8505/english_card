@@ -1356,6 +1356,7 @@ class Tick:
         self.heartbeats(board)
         self.sync_issues()
         self.flow()
+        self.goals()
         self.mac_sync()
         self.tag_fallback()
         self.sentence_audio_night()
@@ -1747,6 +1748,19 @@ class Tick:
                 log(f"flow_tick failed: {r.stderr.decode('utf-8', 'replace')[-200:]}")
         except Exception as e:  # noqa: BLE001
             log(f"flow_tick failed: {e}")
+
+    def goals(self):
+        """owner 11/10: goals the system pursues without being told (lexicon/docs/goals/). goal_check.py measures
+        when due (goals.<name>.every_hours), files gap issues and requeues stuck cards; not due → exits at once."""
+        if self.dry or not any((g or {}).get("enabled") for g in (self.cfg.get("goals") or {}).values()):
+            return
+        try:
+            r = subprocess.run([python_exe(), str(TOOLS / "goal_check.py"), "run"], cwd=ROOT, capture_output=True,
+                               timeout=240, creationflags=NO_WINDOW if os.name == "nt" else 0)
+            if r.returncode != 0:
+                log(f"goal_check failed: {r.stderr.decode('utf-8', 'replace')[-200:]}")
+        except Exception as e:  # noqa: BLE001
+            log(f"goal_check failed: {e}")
 
     def mac_sync(self):
         """Finished app cards → tested, pushed and listed for the Mac (mac_sync.py, own lock)."""

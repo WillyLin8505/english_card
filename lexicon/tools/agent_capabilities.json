@@ -132,7 +132,8 @@
   "_night_note": "使用者 10/17 決定：吃 Qwen 的卡（#166 例句重寫、#167 照片標籤綁定）只在夜間 01:00–07:00（台北）派；其他時間 pick_card.py 跳過，手動派工前用 pick_card.py --check-task <id> 確認（卡 #172）。",
   "skip_tasks": [
     13,
-    27
+    27,
+    1035
   ],
   "skip_issues": [
     192,
@@ -142,7 +143,7 @@
     205,
     206
   ],
-  "_skip_note": "#13 是 Grokbot 自己的派工巡檢；#27 很吃 Ollama，先跳過；問題回報 #192、#202–206 依使用者決定跳過。",
+  "_skip_note": "#13 是 Grokbot 自己的派工巡檢；#27 很吃 Ollama，先跳過；#1035 是目標卡，由 goal_check.py 自己更新（owner 11/10）；問題回報 #192、#202–206 依使用者決定跳過。",
   "fable_cards": [],
   "_fable_note": "owner 10/23 省 token：極難卡預設用 Opus；只有列在 fable_cards 的卡用 Fable。",
   "_models_note": "owner 10/23 省 token：簡單→Haiku、中等與困難→Sonnet、極難→Opus；Fable 只給 fable_cards。困難卡大多由 Codex 先接。卡片做不好可在看板把難度調高一級。"

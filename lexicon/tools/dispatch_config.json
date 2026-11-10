@@ -103,6 +103,10 @@
   },
   "_night_simulation_note": "owner 11/03：晚上沒在用電腦，夜間一直模擬使用者、發現問題就開卡。模擬卡在 window 內每張最多每 cooldown_hours 小時跑一次（白天仍 12 小時），發現的問題照常變成問題回報、由 issue swarm 開卡修。Mac 在 iPad 上的夜間模擬見 docs/mac_inbox.md。",
   "night_safe_stop": "06:45",
+  "goals": {
+    "fr_en": {"enabled": true, "every_hours": 3, "stuck_hours": 12, "card": 1035}
+  },
+  "_goals_note": "owner 11/10：「設定目標，自動偵測還有什麼沒做，而不要每次都是我下指令」。dispatch_tick 每輪叫 lexicon/tools/goal_check.py run，到時間（every_hours）才量：清單 lexicon/docs/goals/fr_en_usable.md；沒過的資料／相片冊項目開 [目標 法文] 問題回報，[owner]／法文卡卡住 stuck_hours 以上排回待辦（每張每天一次、最多三次），分數寫在卡 card（skip_tasks 裡，不派 CLI）。",
   "finish_grace_minutes": 10,
   "finish_grace_alive_minutes": 45,
   "lingering_kill_minutes": 90,
