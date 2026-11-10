@@ -6333,3 +6333,9 @@ commit `66d25bcb`（Windows：flutter analyze 無 error、09:50 +986 ~2: All tes
     - 詞卡尚未顯示 examples／zh（App 顯示是另一張問題回報，同 #1041）。
     - 候選詞仍有非 full 的 stub（menu、waiter、reservation、towel、elevator、suitcase、wifi、hello、hi 等）沒有進相片冊；可用 card350_import.py --words 匯入後重跑 --write（同 #1042）。
     - 例句偏短、有些偏泛（例：Speak English.），只抽看 14 句。
+
+## M859（2026-11-10 22:03）狀態：待做
+commit `5e5f5be0`（Windows：flutter analyze 無 error、09:50 +986 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #4：掃描還沒打完的圖片標籤
+  結果：結論：圖片標籤無待標：pending 0、done 33541（與上輪相同，無新圖進來）、failed 56（相同）；Qwen :8790 與 tagger :8765 health 皆 ok。
+  需要 Mac：無。剩下：新圖進來時再看 pending 是否消化。
