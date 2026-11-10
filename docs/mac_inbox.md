@@ -6424,3 +6424,11 @@ commit `12af98c4`（Windows：flutter analyze 無 error、flutter test 全過（
 - 卡 #224：模擬使用者・拍照
   結果：第 386 輪：photoui 通過（36 秒）、pins 通過（491 秒），2/2 通過；新問題 0；UX 建議 0（本輪只跑測試，沒有逐畫面截圖評估）。
   需要 Mac：無。
+
+## M871（2026-11-11 02:12）狀態：待做
+commit `bfbf631e`（Windows：flutter analyze 無 error、flutter test 全過（1 檔在全部一起跑時失敗、單獨重跑通過））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1065：常態（夜間）：Qwen 抓圖、補單字缺漏（法文優先，再英文）
+  結果：第 2 輪：法文 D8 A1／A2 名詞配圖 72.8%（582／800）→ 73.5%（588／800）；24 個具體名詞沿用英文對應字已核准的圖（新增 24 列 senseimages）。
+  需要 Mac：在 iPad 抽看 fantôme、coude、joue、ferme、affiche 的圖是否對（ferme 可能是 farm 與 firm 義項混淆；affiche 是海報）。
+    
+    剩下：D8 仍有約 210 個沒圖（多為形容詞轉名詞、國籍、人物、抽象字），可再歸入 no_picture 或等下一輪抓圖；D5 缺口是無來源例句的字。下一輪：量 goal_check，若無新缺口就只做英文 QC 檢查。
