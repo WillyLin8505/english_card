@@ -59,6 +59,7 @@ ITEMS = {
     "P2": ("法文卡過 iPad 驗證", "全部到 ready 以後", "app", "medium", None),
     "P3": ("法文學習者模擬 #496", "最近一輪（24 小時內）沒有新問題", "app", "medium", None),
     "S1": ("卡住的卡", "沒有排回三次還卡住的", "other", "medium", None),
+    "M1": ("Mac 驗證有在跑", "有卡等 iPad 驗證時，Mac 24 小時內有回報", "other", "high", None),
 }
 FILED = ("D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "A1", "A2")
 
@@ -219,6 +220,30 @@ def board_items(issues: list[dict], tasks: list[dict], now: datetime, stuck_left
     }
 
 
+def last_mac_report() -> datetime | None:
+    """When the Mac last pushed docs/mac_verify_results.md (11/03–11/09 it was offline six days and nothing said so).
+    Fetches into a private ref without FETCH_HEAD so mac_sync's own fetch/merge is not disturbed."""
+    import subprocess  # noqa: PLC0415
+    try:
+        subprocess.run(["git", "fetch", "-q", "--no-write-fetch-head", "origin", "+refs/heads/main:refs/goal/main"],
+                       cwd=ROOT, capture_output=True, timeout=60)
+        r = subprocess.run(["git", "log", "refs/goal/main", "-1", "--format=%ct", "--", "docs/mac_verify_results.md"],
+                           cwd=ROOT, capture_output=True, text=True, timeout=30)
+        ts = int((r.stdout or "").strip() or 0)
+    except (OSError, ValueError, subprocess.SubprocessError):
+        return None
+    return datetime.fromtimestamp(ts, TAIPEI) if ts else None
+
+
+def mac_item(last: datetime | None, waiting: int, now: datetime) -> tuple[bool, str]:
+    shown = f"最後一次回報 {last.astimezone(TAIPEI):%m/%d %H:%M}" if last else "找不到 Mac 的回報"
+    if waiting == 0:
+        return True, shown + "（沒有卡在等）"
+    if last is not None and now - last <= timedelta(hours=24):
+        return True, shown
+    return False, shown + f"，{waiting} 張在等 → 請打開 Mac 的 english_card 工作階段（Remote Control）"
+
+
 def stuck_cards(tasks: list[dict], state: dict, now: datetime, hours: float, skip: set[int]) -> tuple[list[dict], list[int]]:
     """Blocked cards to requeue now, and the ones given up on (requeued REQUEUE_LIMIT times already)."""
     requeue, given_up = [], []
@@ -337,6 +362,8 @@ def main() -> int:
 
     results = data_items(words, m)
     results.update(board_items(issues, tasks, now, given_up))
+    waiting = sum(1 for i in issues if i.get("status") == "in_progress" and i.get("stage") in ("mac_verify", "ipad_verify"))
+    results["M1"] = mac_item(last_mac_report(), waiting, now)
     open_by_title = {i.get("title") or "": i for i in issues if i.get("status") in OPEN}
     notes = {}
     for code in FILED:

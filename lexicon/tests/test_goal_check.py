@@ -67,6 +67,14 @@ def test_data_items_counts_theme_and_level_albums():
     assert r["D1"][1] == "100.0%（100／100）"                 # the album loop must not touch the word count
 
 
+def test_mac_item_flags_a_silent_mac_only_when_cards_wait():
+    assert g.mac_item(NOW - timedelta(days=6), 0, NOW)[0]            # nothing waiting: silence is fine
+    assert g.mac_item(NOW - timedelta(hours=5), 7, NOW)[0]
+    ok, shown = g.mac_item(NOW - timedelta(days=6), 7, NOW)          # 11/03–11/09: offline with cards waiting
+    assert not ok and "7 張在等" in shown and "Mac" in shown
+    assert not g.mac_item(None, 3, NOW)[0]
+
+
 def test_card_text_lists_failures_and_owner_items():
     results = {"D1": (True, "99.9%"), "D4": (False, "缺 7 條"), "P3": (True, "新問題 0")}
     text = g.card_text(NOW, results, {"D4": "#1555"}, [831])
