@@ -6554,3 +6554,8 @@ commit `6eab7dfc`（Windows：flutter analyze 無 error、flutter test 全過（
 - 卡 #224：模擬使用者・拍照
   結果：第 403 輪：photoui 通過（66 秒）、pins 未完成（兩次都撞到我 10 分鐘的前景上限被中止），1/2 通過；新問題 0；UX 建議 0（本輪只跑測試，沒有逐畫面截圖評估）。
   需要 Mac：無。
+
+## M892（2026-11-11 06:48）狀態：待做
+commit `1695c3a3`（Windows：flutter analyze 無 error、flutter test 全過（1 檔在全部一起跑時失敗、單獨重跑通過））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #496：模擬使用者・法語（英語母語者學法語）
+  結果：第48輪（round 136–138）4 項法語模擬全部通過，chineseinenglishui 皆為 0；pack 指標與上輪相同，未改程式或資料。
