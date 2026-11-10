@@ -40,7 +40,8 @@ owner 11/10：「我想要讓母語是英文、想學法語的使用者這個階
 
 ## 要 owner 做的（不開卡，只列在目標卡上）
 
-- 付費 Apple Developer 帳號：上 TestFlight 給真的使用者安裝之前一定要有（#1540 第 0 項）。
+- owner 11/10：「先只在我的 iPad 用」——現階段「可以用」指 owner 自己的 iPad（Mac 用免費 team 簽名安裝，約 7 天要重裝一次）。
+- 付費 Apple Developer 帳號：要給別人裝（TestFlight）時才需要（#1540 第 0 項），目標卡不催。
 - Google 登入的 Client ID（#1525）。
 
 ## 判斷力的部分

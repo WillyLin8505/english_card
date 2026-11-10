@@ -35,7 +35,9 @@ OPEN = ("open", "in_progress", "needs_decision")
 VERIFIED = {"ready", "released", "done", "cancelled"}
 BASIC_TOPICS = {"法語基礎字", "基礎單字", "日常基礎", "進階單字"}
 SIMULATION_CARD = 496
-OWNER_ITEMS = "付費 Apple Developer 帳號（上 TestFlight 前要有，#1540 第 0 項）、Google Client ID（#1525）"
+# owner 11/10 「先只在我的 iPad 用」: nothing blocks the goal on the owner's side for now
+OWNER_ITEMS = ("暫時沒有（owner 11/10：先只在自己的 iPad 用；要給別人安裝時再辦付費 Apple Developer 帳號 #1540 第 0 項、"
+               "Google Client ID #1525）")
 SEED_ISSUES = {"D4": 1555, "A1": 1556, "A2": 1556, "A3": 1562, "A4": 1563}
 # owner 11/10 「春夏秋冬、年月、上下左右、交通、吃飯、生活……生活情境、旅遊情境」: album topics, matched exactly
 THEME_TOPICS = ("季節", "月份與星期", "時間", "方位", "交通", "用餐", "居家生活", "購物", "天氣", "家庭", "身體", "衣服",
