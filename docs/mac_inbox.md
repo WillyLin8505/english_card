@@ -6180,3 +6180,21 @@ commit `8b6b41ca`（Windows：flutter analyze 無 error、02:33 +986 ~2: All tes
 卡：問題回報 #1547：[Mac] 2026-11-09 收件匣 M597–M836（Mac，iPad 與模擬器）：#1020（#1544）免費帳號簽章開關
 
 mac_sync 提交 project.pbxproj 後 pull 到最新，確認 pbxproj 三處是 $(APP_ENTITLEMENTS)，再建 Signing.local.xcconfig（APP_ENTITLEMENTS=Runner/RunnerFree.entitlements）用 iPad 建 Release 驗證；Mac 先前本機移除 entitlement 的未提交修改請丟掉，免得與 pull 衝突。
+
+## M838（2026-11-10 07:55）狀態：待做（Windows 卡 #1025 交給 Mac 的 App 畫面部分）
+卡：問題回報 #1548：[Mac] 2026-11-09 收件匣 M597–M836（Mac，iPad 與模擬器）：#954（#1408）英文介面相片冊名稱
+
+commit 後用全新安裝（英文介面學法文，加入 French Basic 3000 Words）確認相片冊卡片與複習格子是英文名。
+
+剩餘：fillDeckWords 仍呼叫 fetchDeck(slug) 無 listed，但只更新單字清單，不動名稱，不影響。已用舊版安裝的相片冊名稱仍是中文，需刪除重加（尚未做遷移）。
+
+## M839（2026-11-10 08:07）狀態：待做（Windows 卡 #1026 交給 Mac 的 App 畫面部分）
+卡：問題回報 #1549：[Mac] 2026-11-09 收件匣 M597–M836（Mac，iPad 與模擬器）：新手引導頂端錯誤列沒翻譯
+
+在法文／英文系統語言全新安裝、伺服器 530 時看新手引導頂端列是否為法文／英文。
+剩餘：可加 widget test；Mac 驗證。
+
+## M840（2026-11-10 08:10）狀態：待做
+commit `9b211592`（Windows：flutter analyze 無 error、flutter test 全過（2 檔在全部一起跑時失敗、單獨重跑通過））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1023：問題回報 #1547：[Mac] 2026-11-09 收件匣 M597–M836（Mac，iPad 與模擬器）：#10
+  結果：根因：修法早已寫好但 project.pbxproj 還沒進 git（工作樹有、HEAD 63c2510b 沒有），Mac 拉到的是舊檔；不需再改程式。
