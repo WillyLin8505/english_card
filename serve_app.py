@@ -38,6 +38,7 @@ from lexicon_transport import RequestWatch, SnapshotStore, Warming, accepts_gzip
 
 _lock = threading.Lock()
 _cache = {}
+THUMB_SLOTS = threading.BoundedSemaphore(2)  # card #1076: concurrent photo resizes
 
 
 # Requests per minute per client on the public name (the app polls every ~30 s
@@ -588,7 +589,7 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_header('Access-Control-Expose-Headers', 'ETag')
             self.send_header('Access-Control-Allow-Private-Network', 'true')
 
-    def proxy_tagger(self, body=None):
+    def proxy_tagger(self, body=None, timeout=115):
         try:
             key = os.environ.get('TAGGER_API_KEY', '').strip()
             if not key:
@@ -597,7 +598,7 @@ class Handler(SimpleHTTPRequestHandler):
                               headers={'X-API-Key': key,
                                        'Content-Type': self.headers.get('Content-Type', 'image/jpeg')})
             try:
-                upstream = urlopen(request, timeout=115)
+                upstream = urlopen(request, timeout=timeout)
             except HTTPError as error:
                 upstream = error
             with upstream:
@@ -1077,39 +1078,42 @@ class Handler(SimpleHTTPRequestHandler):
             cached = folder / f'{asset_id}_{width}{ext}'
             if cached.is_file():
                 return cached
-        try:
-            from PIL import Image
-            with Image.open(source) as img:
-                small = max(img.size) <= width
-                has_alpha = suffix == '.png' and (
-                    img.mode in ('RGBA', 'LA', 'PA') or (img.mode == 'P' and 'transparency' in img.info)
-                    or (img.mode == 'RGB' and 'transparency' in img.info))
-                if has_alpha:
-                    img = img.convert('RGBA')
-                    if img.getchannel('A').getextrema()[0] == 255:
-                        has_alpha = False
-                if suffix == '.png' and not has_alpha:
-                    ext, fmt, opts = '.webp', 'WEBP', {'quality': 85}
-                elif suffix == '.png':
-                    ext, fmt, opts = '.png', 'PNG', {}
-                elif small:
-                    return None
-                else:
-                    ext, fmt, opts = '.jpg', 'JPEG', {'quality': 85}
-                if small and fmt == 'PNG':
-                    return None
-                if not small:
-                    img.thumbnail((width, width), Image.LANCZOS)
-                if fmt != 'PNG':
-                    img = img.convert('RGB')
-                target = folder / f'{asset_id}_{width}{ext}'
-                target.parent.mkdir(parents=True, exist_ok=True)
-                tmp = target.with_suffix(target.suffix + f'.{threading.get_ident()}.tmp')
-                img.save(tmp, fmt, **opts)
-            os.replace(tmp, target)
-            return target
-        except Exception:
-            return None
+        # Card #1076: decoding and resizing photos is CPU-heavy; two at a time, so
+        # /health, audio and dictionary requests keep getting threads and GIL time.
+        with THUMB_SLOTS:
+            try:
+                from PIL import Image
+                with Image.open(source) as img:
+                    small = max(img.size) <= width
+                    has_alpha = suffix == '.png' and (
+                        img.mode in ('RGBA', 'LA', 'PA') or (img.mode == 'P' and 'transparency' in img.info)
+                        or (img.mode == 'RGB' and 'transparency' in img.info))
+                    if has_alpha:
+                        img = img.convert('RGBA')
+                        if img.getchannel('A').getextrema()[0] == 255:
+                            has_alpha = False
+                    if suffix == '.png' and not has_alpha:
+                        ext, fmt, opts = '.webp', 'WEBP', {'quality': 85}
+                    elif suffix == '.png':
+                        ext, fmt, opts = '.png', 'PNG', {}
+                    elif small:
+                        return None
+                    else:
+                        ext, fmt, opts = '.jpg', 'JPEG', {'quality': 85}
+                    if small and fmt == 'PNG':
+                        return None
+                    if not small:
+                        img.thumbnail((width, width), Image.LANCZOS)
+                    if fmt != 'PNG':
+                        img = img.convert('RGB')
+                    target = folder / f'{asset_id}_{width}{ext}'
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    tmp = target.with_suffix(target.suffix + f'.{threading.get_ident()}.tmp')
+                    img.save(tmp, fmt, **opts)
+                os.replace(tmp, target)
+                return target
+            except Exception:
+                return None
 
     def do_GET(self, head_only=False):
         if not self.allowed_request():
@@ -1130,33 +1134,37 @@ class Handler(SimpleHTTPRequestHandler):
             except ValueError:
                 self.send_error(400)
                 return
+            # Card #1076: read the row and give the pooled connection back before
+            # any resize or file copy; holding it through those starved the pool.
             with db.SessionLocal() as session:
                 asset = session.get(m.ImageAsset, asset_id)
-                path = (config.MEDIA / (asset.path or '')).resolve() if asset else None
-                if (not asset or asset.status != 'ready' or not path
-                        or not path.is_relative_to(config.MEDIA.resolve() / 'images')
-                        or not path.is_file()
-                        or path.suffix.lower() not in {'.jpg', '.jpeg', '.png', '.webp', '.gif', '.avif'}):
-                    self.send_error(404)
-                    return
-                query = parse_qs(url.query)
-                width = 0
-                for key in ('w', 'max', 'size'):
-                    try:
-                        width = int(query.get(key, [''])[0])
-                        break
-                    except ValueError:
-                        continue
-                if width > 0:
-                    path = self.thumbnail_path(asset_id, path, max(64, min(width, 2048))) or path
-                self.send_response(200)
-                self.send_header('Content-Type', mimetypes.guess_type(path)[0] or 'application/octet-stream')
-                self.send_header('Content-Length', str(path.stat().st_size))
-                self.send_header('X-Content-Type-Options', 'nosniff')
-                self.send_header('Cache-Control', 'public, max-age=604800')  # an asset id's file never changes
-                self.end_headers()
-                with path.open('rb') as image_file:
-                    self.copyfile(image_file, self.wfile)
+                asset_rel = (asset.path or '') if asset else None
+                asset_ready = bool(asset) and asset.status == 'ready'
+            path = (config.MEDIA / asset_rel).resolve() if asset_rel is not None else None
+            if (not asset_ready or not path
+                    or not path.is_relative_to(config.MEDIA.resolve() / 'images')
+                    or not path.is_file()
+                    or path.suffix.lower() not in {'.jpg', '.jpeg', '.png', '.webp', '.gif', '.avif'}):
+                self.send_error(404)
+                return
+            query = parse_qs(url.query)
+            width = 0
+            for key in ('w', 'max', 'size'):
+                try:
+                    width = int(query.get(key, [''])[0])
+                    break
+                except ValueError:
+                    continue
+            if width > 0:
+                path = self.thumbnail_path(asset_id, path, max(64, min(width, 2048))) or path
+            self.send_response(200)
+            self.send_header('Content-Type', mimetypes.guess_type(path)[0] or 'application/octet-stream')
+            self.send_header('Content-Length', str(path.stat().st_size))
+            self.send_header('X-Content-Type-Options', 'nosniff')
+            self.send_header('Cache-Control', 'public, max-age=604800')  # an asset id's file never changes
+            self.end_headers()
+            with path.open('rb') as image_file:
+                self.copyfile(image_file, self.wfile)
             return
         if url.path.startswith(('/api/account/', '/api/shares/')):
             self.handle_account('GET', url.path)
@@ -1179,7 +1187,8 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_error(401, 'X-API-Key required from another device')
             return
         if url.path == '/health':
-            self.proxy_tagger()
+            # Card #1076: the App's health check must not wait on a busy tagger (115 s).
+            self.proxy_tagger(timeout=0.8)
             return
         if url.path == '/api/audio':
             relative = parse_qs(url.query).get('path', [''])[0]
@@ -1256,6 +1265,12 @@ class Handler(SimpleHTTPRequestHandler):
             self.wfile.write(body)
 
 
+class AppServer(ThreadingHTTPServer):
+    # Card #1076: the default listen backlog (5) refused connections when the App
+    # opened several picture and audio requests at once.
+    request_queue_size = 128
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--port', type=int, default=8123)
@@ -1282,7 +1297,7 @@ if __name__ == '__main__':
             logging.warning(line)
     except Exception as error:
         logging.warning('Sign-in config check failed: %s', error)
-    server = ThreadingHTTPServer(('0.0.0.0' if args.lan else '127.0.0.1', args.port), Handler)
+    server = AppServer(('0.0.0.0' if args.lan else '127.0.0.1', args.port), Handler)
     server.lan = args.lan
     server.request_watch = RequestWatch(ROOT / 'lexicon' / 'logs' / 'serve_app_slow.log', pool=db.engine.pool)
     server.request_watch.start()
