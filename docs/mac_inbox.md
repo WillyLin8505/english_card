@@ -6685,3 +6685,10 @@ commit `b704de54`（Windows：flutter analyze 無 error、03:52 +981 ~2: All tes
 commit `491853d5`（Windows：flutter analyze 無 error、03:52 +981 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #12：模擬使用者・跨分頁（亂點、詞庫更新）
   結果：第 251 輪：未完成（0/2），fuzz 與 packupdate 都因環境被其他工作佔用而失敗，不是 App 錯誤；下一輪重跑。
+
+## M907（2026-11-12 07:18）狀態：待做
+commit `402ce440`（Windows：flutter analyze 無 error、03:52 +981 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #226：模擬使用者・複習
+  結果：第 54 輪（模擬輪次 420）：2/2 通過 — learner 214 秒、restart 51 秒；新問題：無；UX 建議：無（本輪只跑文字模擬，沒看截圖，不重複上一輪記錄）。
+  需要 Mac：無。
+    - 剩餘：無；夜間排程維持。
