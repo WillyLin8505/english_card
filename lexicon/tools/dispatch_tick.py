@@ -538,12 +538,15 @@ def python_exe() -> str:
 
 
 class Tick:
+    launch_open = True  # __init__ sets it from launch_schedule
+
     def __init__(self, dry: bool):
         self.dry = dry
         self.launched = 0  # CLIs started this tick
         self._running = None  # CLIs already running, see running_clis
         self.now = now_tp()
         self.cfg = load_config()
+        self.launch_open = launch_window_open(self.now, self.cfg.get("launch_schedule"))
         self.state = load_json(STATE_FILE, {})
         for k in ("runs", "limits", "failures", "seen_limits"):
             self.state.setdefault(k, {})

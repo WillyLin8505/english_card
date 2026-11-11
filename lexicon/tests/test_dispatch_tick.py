@@ -473,3 +473,30 @@ def test_orphan_heavy_holder_of_ended_cli_is_killed_after_quiet():
         assert dt.orphan_heavy_action(dict(holder, card=None), False, 0.0, 1e9, 900) == "none"
     finally:
         dt.proc_identity.run_alive = orig
+
+
+# owner 11/11: new CLIs only weekdays 09:30–19:30 and every day 01:00–07:00
+SCHED = {"enabled": True, "windows": [{"days": "mon-fri", "from": "09:30", "to": "19:30"},
+                                      {"days": "all", "from": "01:00", "to": "07:00"}]}
+
+
+def test_launch_window_weekday_day_and_every_night():
+    wed = lambda h, m=0: datetime(2026, 11, 11, h, m, tzinfo=TP)   # Wednesday
+    sat = lambda h, m=0: datetime(2026, 11, 14, h, m, tzinfo=TP)   # Saturday
+    assert not dt.launch_window_open(wed(9, 29), SCHED)
+    assert dt.launch_window_open(wed(9, 30), SCHED)
+    assert dt.launch_window_open(wed(19, 29), SCHED)
+    assert not dt.launch_window_open(wed(19, 30), SCHED)
+    assert not dt.launch_window_open(wed(0, 59), SCHED) and not dt.launch_window_open(wed(23, 0), SCHED)
+    assert dt.launch_window_open(wed(1, 0), SCHED) and not dt.launch_window_open(wed(7, 0), SCHED)
+    assert dt.launch_window_open(sat(3, 0), SCHED)                 # nights include the weekend
+    assert not dt.launch_window_open(sat(10, 0), SCHED)            # weekend days do not
+    assert dt.launch_window_open(sat(10, 0), None)                 # no schedule = always open
+    assert dt.launch_window_open(sat(10, 0), {**SCHED, "enabled": False})
+
+
+def test_launch_window_across_midnight():
+    s = {"windows": [{"days": "mon-fri", "from": "22:00", "to": "02:00"}]}
+    assert dt.launch_window_open(datetime(2026, 11, 13, 23, 0, tzinfo=TP), s)      # Fri 23:00
+    assert dt.launch_window_open(datetime(2026, 11, 14, 1, 0, tzinfo=TP), s)       # Sat 01:00, Fri's night
+    assert not dt.launch_window_open(datetime(2026, 11, 16, 1, 0, tzinfo=TP), s)   # Mon 01:00, Sun's night

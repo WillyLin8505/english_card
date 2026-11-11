@@ -212,5 +212,13 @@
   },
   "_serve_app_reload_note": "卡 #522／owner 決定 #553＝A：serve_app 只在啟動時載入 lexicon/backend/app、lexicon/quality、serve_app.py、lexicon_transport.py。每 10 分鐘查一次，程式內容變了且 15 分鐘沒再改、改程式時就在跑的 CLI 都做完（最多等 6 小時）、沒有用 8123 的卡（busy_tasks＝模擬使用者）在跑，就重啟 serve_app；等超過 3 小時在 digest 出 ⚠。",
   "hold_new_launches": false,
-  "hold_allow_owner": true
+  "hold_allow_owner": true,
+  "launch_schedule": {
+    "enabled": true,
+    "windows": [
+      {"days": "mon-fri", "from": "09:30", "to": "19:30"},
+      {"days": "all", "from": "01:00", "to": "07:00"}
+    ]
+  },
+  "_launch_schedule_note": "owner 11/11 「開卡的時間是平日早上九點半到晚上七點半，再從凌晨一點開到早上七點」：只在這兩個時段（台北）派新的 CLI（卡片、問題回報、tag_fallback 的 Codex/Cursor）。時段外照常收卡、量目標、開問題回報，已在跑的 CLI 做完為止。days：all／mon-fri／sat-sun。夜間時段每天都開（週末也開）；夜間卡另外照 night_last_launch。"
 }

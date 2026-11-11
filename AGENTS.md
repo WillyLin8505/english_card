@@ -72,6 +72,10 @@ launches a card for each idle AI (pick_card rules + `lexicon/tools/dispatch_conf
 `lexicon/tools/dispatch_prompt_template.md`; heartbeats; one line on #13. No per-run log cards.
 - Grokbot reads only `python lexicon/tools/dispatch_digest.py` (unread notable events, ≤ 15 lines) and acts
   on ❓/⚠/✖ lines; it does not re-run heartbeats, quota checks or pick_card by hand.
+- **Launch hours** (owner 11/11 「開卡的時間是平日早上九點半到晚上七點半，再從凌晨一點開到早上七點」): new CLIs (cards,
+  問題回報 swarm, tag_fallback) start only inside `launch_schedule` in dispatch_config.json — weekdays 09:30–19:30 and every
+  day 01:00–07:00 (Taipei). Outside them the tick still collects finished cards, measures goals and files issues; running
+  CLIs finish. Check: dry run logs `outside launch_schedule`. Tests: `test_launch_window_*`.
 - Pause: board Grokbot ⏸, or `schtasks /change /tn EnglishCard_DispatchTick /disable` (`/enable` to resume).
 - **Issue swarm** (owner, 2026-10-18): every new 問題回報 card (and every decision the owner has answered) gets its
   own new Claude CLI (`Claude CLI 1..N`, `issue_swarm.max_parallel` in dispatch_config.json, Claude Code's quota);
