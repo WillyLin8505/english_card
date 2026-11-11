@@ -55,5 +55,5 @@ result.md、progress 和所有中文檔案，都用 Python 寫：`open(path, 'w'
 
 ## Heavy jobs one at a time (card #731)
 - Memory-heavy commands (`flutter test`, full exports / pack builds, `card*_measure` / whole-library scans) must run as
-  `python lexicon/tools/heavy_lock.py run -- <command>` (waits for its turn; `qc.py check --live` already does). Each CLI is capped at 6 GB
+  `python lexicon/tools/heavy_lock.py run -- <command>` (waits for its turn; `qc.py check --live` already does). **Not** for steps that mostly wait on Qwen (translate / examples / fill scripts calling the tagger): the GPU sits idle while they hold the lock (issue #1580); `heavy_lock.py run` routes the known Qwen scripts to a light `qwen_slot` lock, and only the DB-heavy scan/apply step of a card gets the heavy lock. Each CLI is capped at 6 GB
   and BelowNormal; above 90 % memory for 2 min the guard ends your biggest child process ("資源不足，稍後重跑") — rerun it later.

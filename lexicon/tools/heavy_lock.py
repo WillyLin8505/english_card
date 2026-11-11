@@ -2,6 +2,7 @@
 exports, card*_measure scans). The OS lock dies with the process, so a crash never blocks the next.
 
     python lexicon/tools/heavy_lock.py run -- flutter test      # waits for its turn, then runs it
+    (Qwen scripts such as card828_translate.py are routed to the light qwen_slot lock instead, card #1071)
     from heavy_lock import slot; slot()                         # inside a script: wait, hold until exit
 """
 from __future__ import annotations
@@ -90,7 +91,11 @@ def main(argv: list[str]) -> int:
     cmd = argv[1:]
     if cmd and cmd[0] == "--":
         cmd = cmd[1:]
-    slot()
+    import qwen_slot
+    if qwen_slot.is_qwen_command(cmd):
+        qwen_slot.slot()    # card #1071: waiting on Qwen's GPU is not heavy CPU / memory work; don't block qc / flutter test
+    else:
+        slot()
     return subprocess.call(cmd, shell=(os.name == "nt"))
 
 
