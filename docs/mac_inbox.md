@@ -6680,3 +6680,8 @@ commit `b704de54`（Windows：flutter analyze 無 error、03:52 +981 ~2: All tes
   需要 Mac：無新增。
 - 卡 #1095：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
   結果：全部完成：flutter analyze 0 error（12 個 info，無 error）、flutter test 1007 項全過（~2 skipped），未改任何程式。
+
+## M906（2026-11-12 06:57）狀態：待做
+commit `491853d5`（Windows：flutter analyze 無 error、03:52 +981 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #12：模擬使用者・跨分頁（亂點、詞庫更新）
+  結果：第 251 輪：未完成（0/2），fuzz 與 packupdate 都因環境被其他工作佔用而失敗，不是 App 錯誤；下一輪重跑。
