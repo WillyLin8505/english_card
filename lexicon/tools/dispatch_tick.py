@@ -322,6 +322,27 @@ def night_launch_ok(task_id, night_tasks, now: datetime, last_launch: str) -> bo
     return now.astimezone(TAIPEI).strftime("%H:%M") < last_launch
 
 
+DAY_SETS = {"all": set(range(7)), "mon-fri": set(range(5)), "sat-sun": {5, 6}}
+
+
+def launch_window_open(now: datetime, sched: dict | None) -> bool:
+    """Owner 11/11 「開卡的時間是平日早上九點半到晚上七點半，再從凌晨一點開到早上七點」: new CLIs start only
+    inside launch_schedule.windows ([{days, from, to}], Taipei). Running CLIs finish; no config = always open."""
+    if not sched or sched.get("enabled") is False:
+        return True
+    t = now.astimezone(TAIPEI)
+    hm, day = t.strftime("%H:%M"), t.weekday()
+    for w in sched.get("windows") or []:
+        days = DAY_SETS.get(str(w.get("days", "all")), set(range(7)))
+        start, end = w.get("from", "00:00"), w.get("to", "24:00")
+        if start <= end:
+            if day in days and start <= hm < end:
+                return True
+        elif (day in days and hm >= start) or ((day - 1) % 7 in days and hm < end):  # crosses midnight
+            return True
+    return False
+
+
 def rest_until(agent: str, usage: dict, now: datetime) -> datetime | None:
     """Latest future reset among windows at >= 100 %, from /schedule/agents-info usage."""
     a = (usage.get("agents") or {}).get(agent) or {}
@@ -1176,6 +1197,9 @@ class Tick:
 
     def launch(self, agent: str, c: dict):
         label =f"#{c['task_id']}" if c.get("task_id") else f"問題回報 #{c['issue_id']}"
+        if not self.launch_open:  # owner 11/11 launch_schedule; run() already skips, this guards other callers
+            log(f"{agent}: {label} waits for the launch window (launch_schedule)")
+            return
         # owner 11/01 (CPU ≤ 50 %): CLIs start a few per tick; 17 at once took the PC to 68 %
         if self.launched >= int(self.cfg.get("max_launches_per_tick", 1)):
             log(f"{agent}: {label} waits for the next tick (max_launches_per_tick)")
@@ -1378,6 +1402,9 @@ class Tick:
         guard_hold = self.resource_guard()
         if guard_hold:
             log("resource_guard: memory over limit → collecting only, no new CLIs")
+        elif not self.launch_open:
+            # owner 11/11: new cards only weekdays 09:30–19:30 and every day 01:00–07:00
+            log("outside launch_schedule → collecting only, no new CLIs")
         elif self.cfg.get("hold_new_launches"):
             # owner 10/23 「現有的事情做完就先不要再派新的」: finish and collect, launch nothing
             log("hold_new_launches: collecting only, no new CLIs"
@@ -1672,8 +1699,8 @@ class Tick:
     def tag_fallback(self):
         """問題回報 #327: Codex/Cursor photo tagging when Qwen is paused or ≥ threshold photos wait.
         tag_fallback.py run checks that itself, holds its own lock and stops at a usage limit."""
-        if self.dry or not load_json(TOOLS / "tag_fallback_config.json", {}).get("enabled"):
-            return
+        if self.dry or not self.launch_open or not load_json(TOOLS / "tag_fallback_config.json", {}).get("enabled"):
+            return  # tag_fallback starts Codex/Cursor: same launch hours as cards (owner 11/11)
         flags = NO_WINDOW if os.name == "nt" else 0
         cmd = [python_exe(), str(TOOLS / "tag_fallback.py"), "run"]
         try:
