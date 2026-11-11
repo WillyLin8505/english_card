@@ -40,7 +40,8 @@ def sentence_audio_url(target: str, text_hash_: str) -> str:
     return f"{SENTENCE_SCHEME.get(target, 'azure-tts')}://{SENTENCE_VOICES.get(target, '')}/s/{text_hash_}"
 
 
-SCHEMA_VERSION = 5  # 5: per-sense register (neutral / written / spoken / slang)
+SCHEMA_VERSION = 6  # 5: per-sense register (neutral / written / spoken / slang)
+# 6: a picture's photo tags are stored once in image_tags; sense_images points at it (card #1092)
 
 DDL = """
 CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
@@ -106,8 +107,10 @@ CREATE TABLE sense_images (
   id INTEGER PRIMARY KEY, sense_id INTEGER NOT NULL REFERENCES senses(id), role TEXT NOT NULL,
   ordinal INTEGER NOT NULL, path TEXT NOT NULL, width INTEGER, height INTEGER, sha256 TEXT,
   license TEXT NOT NULL, license_url TEXT, author TEXT, attribution TEXT, page_url TEXT,
-  semantic_score REAL, tags TEXT NOT NULL DEFAULT '[]');
+  semantic_score REAL, tags TEXT NOT NULL DEFAULT '[]', image_id INTEGER REFERENCES image_tags(image_id));
 CREATE INDEX ix_sense_images_sense ON sense_images(sense_id, ordinal);
+CREATE TABLE image_tags (
+  image_id INTEGER PRIMARY KEY, path TEXT NOT NULL UNIQUE, tags TEXT NOT NULL DEFAULT '[]');
 CREATE TABLE field_status (
   lexeme_id INTEGER NOT NULL REFERENCES lexemes(id), field TEXT NOT NULL,
   status TEXT NOT NULL, missing TEXT NOT NULL DEFAULT '[]', PRIMARY KEY (lexeme_id, field));
@@ -884,6 +887,9 @@ def _images(s, con, tmp_dir: Path, counts, copy_media=True) -> list[dict]:
     app shows, each picture's licence and author, and its AI labels.
     copy_media=False (the live HTTP pack) lists them without copying files."""
     files = []
+    # Card #1092: a picture's tags are the same on every sense it shows, so they go
+    # into image_tags once per picture (was ~11 copies each, 436 MB of 874 MB).
+    image_ids: dict[str, int] = {}
     for r in s.execute(sql_text("""
             SELECT si.id, si.sense_id, si.role, si.ordinal, si.semantic_score, a.path,
                    a.thumbnail_path, a.width, a.height, a.license_code, a.license_url, a.author,
@@ -903,11 +909,17 @@ def _images(s, con, tmp_dir: Path, counts, copy_media=True) -> list[dict]:
             dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(src, dst)
         sha = _media_sha256(src)
-        con.execute("INSERT INTO sense_images VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                    (r["id"], r["sense_id"], r["role"], r["ordinal"], rel.replace("\\", "/"),
+        rel = rel.replace("\\", "/")
+        if rel not in image_ids:
+            image_ids[rel] = len(image_ids) + 1
+            con.execute("INSERT INTO image_tags (image_id, path, tags) VALUES (?,?,?)",
+                        (image_ids[rel], rel, json.dumps(r["tags"] or [], ensure_ascii=False)))
+        con.execute("INSERT INTO sense_images (id, sense_id, role, ordinal, path, width, height, sha256,"
+                    " license, license_url, author, attribution, page_url, semantic_score, image_id)"
+                    " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                    (r["id"], r["sense_id"], r["role"], r["ordinal"], rel,
                      r["width"], r["height"], sha, r["license_code"], r["license_url"], r["author"],
-                     r["attribution"], r["page_url"], r["semantic_score"],
-                     json.dumps(r["tags"] or [], ensure_ascii=False)))
+                     r["attribution"], r["page_url"], r["semantic_score"], image_ids[rel]))
         counts["images"] += 1
         files.append({"kind": "image", "id": r["id"], "path": rel.replace("\\", "/"),
                       "sha256": sha, "license": r["license_code"], "author": r["author"],

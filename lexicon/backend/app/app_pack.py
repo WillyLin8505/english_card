@@ -74,12 +74,19 @@ def build(db_path: Path) -> dict:
     # Approved sense pictures (schema 4), under the sense they show.
     senses = {sn["id"]: sn for lx in by_lex.values() for sn in lx["senses"]}
     has_images = q("SELECT name FROM sqlite_master WHERE name = 'sense_images'")
+    # Card #1092: packs from schema 6 keep each picture's tags once in image_tags;
+    # older packs carry them on every sense_images row.
+    has_image_tags = q("SELECT name FROM sqlite_master WHERE name = 'image_tags'")
+    tags_by_image = {r["image_id"]: json.loads(r["tags"] or "[]")
+                     for r in q("SELECT image_id, tags FROM image_tags")} if has_image_tags else {}
     for r in (q("SELECT * FROM sense_images ORDER BY sense_id, ordinal, id") if has_images else []):
         if r["sense_id"] in senses:
+            tags = (list(tags_by_image.get(r["image_id"], [])) if "image_id" in r.keys()
+                    else json.loads(r["tags"] or "[]"))
             senses[r["sense_id"]].setdefault("images", []).append({
                 "path": r["path"], "role": r["role"], "width": r["width"], "height": r["height"],
                 "license": r["license"], "author": r["author"], "attribution": r["attribution"],
-                "page_url": r["page_url"], "tags": json.loads(r["tags"] or "[]")})
+                "page_url": r["page_url"], "tags": tags})
     for r in q("SELECT * FROM morphemes ORDER BY lexeme_id, ordinal"):
         by_lex[r["lexeme_id"]]["morphemes"].append({
             "part": r["part"], "kind": r["kind"], "meaning": r["meaning"], "free": bool(r["free"]),

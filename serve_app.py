@@ -289,12 +289,15 @@ def merge_catalog(exported: dict, word_metadata: list[dict]) -> list[dict]:
     return out
 
 
-def live_pack(target: str, native: str):
+def live_pack(target: str, native: str, as_object: bool = False):
+    """Build the live pack. `as_object=True` returns the pack dict itself (no JSON
+    body, no cache): qc checks use it so a 1.2 GB pack is not serialized and parsed
+    again (issue #1601)."""
     if target not in catalog.LANGUAGES or native not in catalog.LANGUAGES or target == native:
         raise ValueError('Unsupported language pair')
     with _lock:
         cached = _cache.get((target, native))
-        if cached and time.monotonic() - cached[0] < 120:
+        if cached and not as_object and time.monotonic() - cached[0] < 120:
             return cached[1:3]
         with tempfile.TemporaryDirectory(prefix='dictionary-live-') as folder:
             path = Path(folder) / 'dictionary.sqlite'
@@ -323,7 +326,7 @@ def live_pack(target: str, native: str):
                         f"::bit(60)::bigint), 0) FROM {table} t"
                     )).one()))
                 fingerprint = tuple(signatures)
-                if cached and cached[3] == fingerprint:
+                if cached and not as_object and cached[3] == fingerprint:
                     _cache[(target, native)] = (time.monotonic(), cached[1], cached[2], fingerprint)
                     return cached[1:3]
                 exporter._build(session, path, target, native, None, False, Path(folder),
@@ -361,6 +364,8 @@ def live_pack(target: str, native: str):
             from app import qc_hook
             qc_hook.record_pack_metrics(pack)
             pack['catalog_version'] = 1
+        if as_object:
+            return pack
         # Export time is not content. Stable versions avoid needless local writes.
         pack.pop('created_at', None)
         pack['media_base'] = '/api/audio'

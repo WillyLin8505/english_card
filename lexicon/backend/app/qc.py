@@ -192,6 +192,13 @@ def _levels_under(tags: list | None, need: int) -> list[str]:
     return [level for level in CEFR_LEVELS if counts[level] < need]
 
 
+def _json_bytes(pack: dict) -> int:
+    """Byte length of json.dumps(pack, ensure_ascii=False).encode(), counted chunk by
+    chunk: the same number without building a 1.2 GB string (issue #1601)."""
+    encoder = json.JSONEncoder(ensure_ascii=False)
+    return sum(len(chunk.encode()) for chunk in encoder.iterencode(pack))
+
+
 def metrics(pack: dict, violations: dict | None = None) -> dict:
     violations = validate(pack) if violations is None else violations
     lexemes = pack.get("lexemes") or []
@@ -209,7 +216,7 @@ def metrics(pack: dict, violations: dict | None = None) -> dict:
         # Card #448 standard (5 per CEFR level). Informational only: not a v.* rule,
         # so compare() does not gate on it until the owner decides to switch.
         "photos_level_under_5": sum(1 for im in images if _levels_under(im.get("tags"), 5)),
-        "pack_mb": round(len(json.dumps(pack, ensure_ascii=False).encode()) / 1e6, 1),
+        "pack_mb": round(_json_bytes(pack) / 1e6, 1),
     }
     out.update({f"v.{k}": len(x) for k, x in sorted(violations.items())})
     return out

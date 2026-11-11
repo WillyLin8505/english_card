@@ -34,10 +34,10 @@ ISSUES = os.environ.get("QC_ISSUES_URL", "http://127.0.0.1:5173/api/issues")
 
 
 def build_pack(target: str = "en", native: str = "zh-TW") -> dict:
+    # The pack dict itself: no JSON body built and parsed again (issue #1601, 9 GiB peak).
     import serve_app
     serve_app._cache.clear()
-    body, _ = serve_app.live_pack(target, native)
-    return json.loads(body)
+    return serve_app.live_pack(target, native, as_object=True)
 
 
 def _req(method, url, body=None):
