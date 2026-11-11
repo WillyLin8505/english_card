@@ -52,11 +52,12 @@ void main() {
       }
     }
 
-    // --- 語言：不列出衝突的組合（#431：母語不列正在學的英文，學習語言不列
-    // 自己的母語「繁體中文」，所以整頁只有學習語言那一個「英文」chip）---
+    // --- 語言：不列出衝突的組合（學習語言不列自己的母語「繁體中文」；母語列
+    // 可用的語言含英文，點到正在學的語言會連學習語言一起換，所以整頁有學習語
+    // 言與母語各一個「英文」chip，共 2 個）---
     current = '語言不列衝突選項';
     final enChips = find.widgetWithText(ChoiceChip, '英文（English）');
-    if (enChips.evaluate().length != 1) {
+    if (enChips.evaluate().length != 2) {
       f.add('語言選項列出衝突組合', '$current（英文 chip ${enChips.evaluate().length} 個）');
     }
     if (find.textContaining('繁體中文 · 即將推出').evaluate().isNotEmpty) {

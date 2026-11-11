@@ -108,14 +108,25 @@ class AppShellState extends State<AppShell> implements AppNavigator {
   }
 
   void _pushInAlbumTab(Widget screen, String name, String subject) {
+    // 問題回報 #1595: remember the tab the screen was opened from, so a back
+    // swipe returns there and not to the album's own first screen.
+    final origin = _tab;
     FeedbackContext.instance.tab = AppTab.album;
     setState(() => _show(AppTab.album));
     // The album navigator may not have built yet if the tab was never
     // shown; push after this frame.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _nav(AppTab.album)?.push(MaterialPageRoute<void>(
-          settings: RouteSettings(name: name, arguments: subject),
-          builder: (_) => screen));
+      _nav(AppTab.album)
+          ?.push(MaterialPageRoute<void>(
+              settings: RouteSettings(name: name, arguments: subject),
+              builder: (_) => screen))
+          .then((_) {
+        // Only when the album tab is still showing: a save already moved on
+        // to 拍照, and a manual tab switch must stay.
+        if (mounted && origin != AppTab.album && _tab == AppTab.album) {
+          selectTab(origin);
+        }
+      });
     });
   }
 
