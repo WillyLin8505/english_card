@@ -2809,3 +2809,12 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #932（#1255）英文介面不再出現中文 | 通過 | HEAD 82c7bd4d，375×667 模擬器全新安裝，母語英文學法文：引導、推薦、五個分頁教學、相片冊、單字本、設定、複習走完，畫面上唯一的中文是相片冊名稱「法語基礎 3000 字」，那是 #954 已另外記錄的項目；其他介面文字都是英文。法文介面因 #957 擋掉母語法文的組合，這輪沒看 | mac_tools/m932a/n13_tab_相片冊.png | - | 模擬器 |
 | #933（#1256）推薦頁相片冊標題翻譯 | 通過 | 同一輪英文介面推薦頁：French Basic 3000 Words、French Basic 2000 Words、French Basic 3000 Words – B1、– A2，分類 French Basic Words，都是英文。法文介面到不了，尚未在本輪驗完法文標題 | mac_tools/m932a/n09_recommended.png | - | 模擬器 |
 | #967（#1423）法文相片冊封面 | 不通過 | 同一輪推薦頁：French Basic 3000 Words 封面是深色立體派抽象畫，看不出主題；French Basic 2000 Words 是老插畫的村莊（還可以）；French Basic 3000 Words – B1、– A2 封面是空白淺藍色塊，沒有圖 | mac_tools/m932a/n09_recommended.png、n10_recommended_added.png | 低 | 模擬器 |
+
+## 2026-11-12 M908 #1100 #1102 #1107 #1109（Mac，iPad）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1102（#1610）基礎 3000 字・A2 新封面 | 不通過 | HEAD a1bccb5d，iPad 推薦頁（興趣 運動＋爬山、A2）：基礎 3000 字・A2 新封面是一個男人臉上和脖子滿是血的近照（像萬聖節化妝），比原本起火的船更不適合初學者入口，要再換 | mac_tools/m892b/shots/892_recommended_0.png | 高 | iPad |
+| #1107（#1615）基礎單字、基礎 3000 字新封面 | 通過 | 同一輪 iPad 下載相片冊頁：基礎單字（先行版）封面是一間木造平房，基礎 3000 字是黑白老照片裡一對夫妻站在房子前，都是一般生活實景，合適。basic-3000-a1／b1、法文集封面這輪沒看 | mac_tools/m892b/shots/892_download_0.png、892_download_1.png | - | iPad |
+| #1100（#1608）run 詞形變化 | 注意 | iPad 10:55 已下載新的 en-zh-TW 包，但 run 背面仍是 rins、rinning；Mac 另外下載伺服器目前的 sqlite（etag 17cfa95d…），run 動詞 forms 仍含 rins、rinning，伺服器包還沒重建，等重建後再驗，尚未在本輪驗完 | mac_tools/m894b/shots/894_run_back.png | - | iPad |
+| #1109（#1617）lors 中文 | 注意 | 11/12 12:0x 下載伺服器 fr×zh-TW sqlite，lors 仍是「因此，當時」，伺服器包還沒重新匯出，等匯出後再驗，尚未在本輪驗完 | - | - | iPad |
