@@ -2769,3 +2769,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #894 複習圖片配句子義項、輪播從最好的圖開始 | 不通過 | HEAD 63787671，iPad 用 App 的「複習這些卡」直接開 bank、light 的卡。bank：題目 He's at the bank exchanging money（義項 銀行），背面第 1/16 張是湖邊樹林（河岸），標籤寫 Bank 銀行。light：題目 All plants need water and light（義項 明亮的、光明的），第 1/13 張是一條魚的黑白插圖。圖片沒有依句子的義項挑，第一張也不是最好的圖 | mac_tools/m894/shots/894_bank_back.png、894_light_back.png | 中 | iPad |
 | #894 run 卡 | 注意 | run 卡題目 Better run away immediately!（義項 跑、奔跑、走），這張卡 0 張圖片，背面沒有圖片區；run 沒有圖可以比對義項，尚未在本輪驗完 | mac_tools/m894/shots/894_run_back.png | - | iPad |
 | run 詞形變化 | 不通過 | iPad run 複習卡背面詞形變化：第三人稱單數 rins、現在分詞 rinning，應為 runs、running（過去式 ran 正確） | mac_tools/m894/shots/mac_log.txt | 中 | iPad |
+
+## 2026-11-12 #779／#920 小螢幕照片選字卡（Mac，iPad）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #779／#920 小螢幕照片選字卡（有框的卡片樣式） | 通過 | HEAD 5e510e3c，iPad 複習 11 張中抽到 2 張照片選字卡（glow、transparent）：題目兩行，三個選項全部在卡片框內，最下面的選項底約 666pt，「顯示答案」頂 743pt，沒有被蓋住。注意這次 iPad 上 App 的畫面是 375×820（之前是 375×667），所以 667 高的情況這輪沒量到，尚未在本輪驗完 | mac_tools/m920/shots/920_photoChoice_glow.png | - | iPad |
