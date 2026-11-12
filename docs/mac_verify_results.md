@@ -2837,3 +2837,12 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #984（#1500）侍應生改服務生 | 通過 | 11/12 下載伺服器 en-zh-TW sqlite（iPad 用的同一包）解開全部 senses 與 body：「侍應生」0 筆，「服務生」30 筆。iPad 畫面這輪沒開 waitress 單字頁 | - | - | Mac |
 | #953／#988／#948 flutter test | 注意 | HEAD 0ee77ed3 在 Mac 跑 flutter test：980 通過、3 略過、1 個不過——test/screens_test.dart「#815: the fix-it hint also shows at the top and opens 進階設定」第 549 行找不到「測試連線」，單獨重跑也一樣。Windows 回報全過，可能是 Mac 的環境差異（Mac 本機有未提交的 pubspec／iOS 簽章改動），需要 Windows 看是不是測試依賴字型或畫面高度，尚未在本輪驗完 | mac_tools/ftest.log | - | Mac |
 | #1110／#1100 包重建（複查） | 注意 | 12:5x 伺服器 en-zh-TW 包 etag 897d21d3…：catalog_images 仍沒有 rank、run 仍含 rins／rinning，伺服器包還沒用新規則重建，尚未在本輪驗完 | - | - | Mac |
+
+## 2026-11-12 收件匣較舊項目 #997 #970 #962 #961（Mac）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #970（#1419）伺服器忙時不再說離線 | 通過 | 11/09 伺服器回 530 時，模擬器全新安裝每頁頂端顯示詞庫暫停更新、稍後重試的提示（附「重試」），法文介面是 Mise à jour du dictionnaire en pause，都沒有說「離線」，符合本卡（引導頁那行還沒翻譯是另一列） | mac_tools/b1/fr_ob/n01_lang_before.png | - | 模擬器 |
+| #997（#1519）英文介面詞條標籤「[片語]」 | 注意 | HEAD 70d6b854 程式：typedMeaning 的標籤經 translateUi，片語／片語動詞／慣用語／搭配詞／固定表達五個在 ui_catalog 都有英法文；目前英文包 1,547 個 phrase，pack 的 labels 沒有 entry_type 覆寫。畫面上這輪沒看到片語標籤（英文介面學法文的照片沒有片語釘），尚未在本輪驗完 | - | - | 模擬器 |
+| #962（#1417）辨識超過 1 分鐘時文字每秒更新 | 注意 | iPad 裝的是上架版，照片走本機辨識（11/09 量到 136 ms），不會出現超過 1 分鐘的辨識等待，這個畫面要開發版（iphone.json，連 Windows 辨識服務）加上慢回應才看得到，而拍照要 owner 手動，尚未在本輪驗完 | - | - | iPad |
+| #961（#1415）照片詳情「等待 AI 服務恢復」 | 通過 | Windows 決定不修：只發生在開發版。上架版 iPad 11/09 進階設定沒有服務網址、走本機辨識=true，照片詳情不會等 AI 服務，和決定一致 | mac_tools/b1/ipad/shots/advanced.png | - | iPad |
