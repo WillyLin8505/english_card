@@ -6692,3 +6692,21 @@ commit `402ce440`（Windows：flutter analyze 無 error、03:52 +981 ~2: All tes
   結果：第 54 輪（模擬輪次 420）：2/2 通過 — learner 214 秒、restart 51 秒；新問題：無；UX 建議：無（本輪只跑文字模擬，沒看截圖，不重複上一輪記錄）。
   需要 Mac：無。
     - 剩餘：無；夜間排程維持。
+
+## M908（2026-11-12 11:22）狀態：待做
+commit `c785cb10`（Windows：flutter analyze 無 error、03:52 +981 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1100：問題回報 #1608：[Mac] 2026-11-12 #894 複習圖片配句子義項（Mac，iPad）：run 詞形變
+  結果：全部完成（資料層）：run 的錯誤詞形 rins／rinning 的根因已修，全庫共 7 筆錯誤詞形已刪（run 2、butted 1、overbid 4）。
+  需要 Mac：pack 重建後在 iPad 重驗 run 背面詞形（應為 runs、running、ran）。
+- 卡 #1102：問題回報 #1610：[Mac 注意] 2026-11-12 收件匣最舊項目 #892 #826 #912 #925 #
+  結果：全部完成：基礎 3000 字・A2（basic-3000-a2）封面由起火冒煙的船（asset 6754）換成 asset 4377（命中 7 字）；全庫 42 本英文單字集檢查，只有這 1 本封面帶危險類標籤。
+  需要 Mac：在 iPad 推薦頁確認 basic-3000-a2 新封面貼切。法文集 fr-* 封面沿用 #967，未動。
+- 卡 #1107：問題回報 #1615：[Mac] 2026-11-12 收件匣最舊項目 #937 #935（Mac，iPad 與模：#9
+  結果：全部完成：基礎單字(basic-core)封面 20663→22564、基礎 3000(basic-3000)封面 14454→24132；A2 起火船已由 #1102 換成 4377，三本初學者入口封面都已更換。
+  需要 Mac：在 iPad 推薦頁與下載頁確認 basic-core、basic-3000 新封面貼切（我只看標籤，沒看圖）。basic-3000-a1/b1/c2 封面仍偏抽象（標籤 shape/abstract），未動；fr-basic-3000 同。
+- 卡 #1109：問題回報 #1617：[Mac] 2026-11-12 收件匣最舊項目 #943 #738（Mac，iPad）：#738
+  結果：全部完成：#738 的 173 筆是 owner 決定（#910 選 3，只補第一批 100 字）的預期數量，rire 不在批次內所以沒有；唯一真錯誤 lors「因此，當時」已改成「當時」（英文釋義 then, at that time）。
+  需要 Mac：下次下載 fr×zh-TW sqlite 確認 lors 顯示「當時」（伺服器包需重新匯出才會更新）。
+    - rire 等更多字：owner 若要擴充，另開批次（每批 ≤ 200）。
+- 卡 #1111：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
+  結果：全部完成：目前 flutter analyze 0 error（僅 12 個 info），flutter test 1010 項全過（2 skipped），無需改程式。
