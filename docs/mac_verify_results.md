@@ -2855,3 +2855,44 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #1109（#1617）lors 中文（複驗） | 通過 | 13:3x 下載伺服器 fr×zh-TW sqlite：lors 的中文已是「當時」（英文釋義 then, at that time），不再有「因此」。iPad 畫面沒開 | - | - | Mac |
 | #1110／#1100 包重建（複查） | 注意 | 13:3x 伺服器 en-zh-TW 包 etag 97e07ac3…：catalog_images 仍沒有 rank、run 動詞 forms 仍含 rins、rinning，尚未用新規則重建，尚未在本輪驗完 | - | - | Mac |
 | #1075 精簡字典 | 注意 | M912 提到 card1075_compact_dictionary_test，但 main 的 app/test、app/lib 都還沒有 1075 的檔案，收件匣也還沒有 #1075 的卡，等同步後再驗，尚未在本輪驗完 | - | - | iPad |
+
+## 2026-11-12 M913 owner 決定 App 不內建圖片（現況量測，Mac）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1091／#1602 App 內建圖片（owner 11/12 決定 0 張） | 注意 | Mac 量目前 main 的 iOS build（HEAD e58a7d2d 前一輪建出的 Runner.app）：flutter_assets/assets/lexicon/media/images 有 3,235 張 webp、62 MB，另有 sample 15 張；整個 flutter_assets 310 MB。和 owner「App 內建 0 張圖片」的決定不同，等 #1602 改完重新同步後再量，尚未在本輪驗完 | - | - | Mac |
+| #1110／#1100 包重建（複查） | 注意 | 14:0x 伺服器 en-zh-TW 包 etag 仍是 97e07ac3…，和上一輪相同，尚未重建，尚未在本輪驗完 | - | - | Mac |
+
+## 2026-11-12 14:4x 複查 #1110 #1100（Mac）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1110／#1100 包重建（複查） | 注意 | 14:42 伺服器 en-zh-TW 包換成新的（etag 3941ea41…，79.5 MB），但 catalog_images 13,229 張的綁定仍沒有 rank，house 詞條裡也沒有 rank；run 動詞 forms 仍含 rins、rinning。這次重建沒帶到 #1110、#1100 的修改，iPad 不用重驗，尚未在本輪驗完 | - | - | Mac |
+
+## 2026-11-12 15:2x #1110 house 圖片順序、#1100 複查（Mac，iPad）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1110（#1618）house 第一張資料庫圖片 | 通過 | HEAD de6b220a，伺服器新包（etag 6f976cf3…，綁定共 183,988 個 rank）iPad 15:14 下載後重開 App：house 資料庫圖片第一張是雪地裡的房子（標籤 house 房屋），第二張是石造大房子，電話那張不再排第一。包裡 house 最佳圖 18238 rank -1、電話圖 636 rank 384。dog 第一張也換成有狗的圖 | mac_tools/m909c/shots/1110_house.png | - | iPad |
+| 新包下載當下的圖片順序 | 注意 | 第一次跑時 iPad 在 App 開著的 15:14 下載新包，同一次執行打開 house 仍是舊順序（電話第一），重開 App 才換成新順序；下載新包後已打開的畫面要重開才更新，影響小 | mac_tools/m909b0/shots/1110_house.png | 低 | iPad |
+| #1100（#1608）run 詞形變化（複查） | 注意 | 同一個新包，run 背面詞形仍是 rins、rinning，包裡 run 動詞 forms 仍含 rins、rinning，這次重建只帶到 #1110，尚未在本輪驗完 | mac_tools/m909c/shots/1100_run_back.png | - | iPad |
+
+## 2026-11-12 收件匣 #1023 #1025 #1026、複查 #1100（Mac，iPad 與模擬器）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1023（#1547）免費帳號簽章開關 | 通過 | HEAD a023dc51：main 的 project.pbxproj 三處都是 CODE_SIGN_ENTITLEMENTS = "$(APP_ENTITLEMENTS)"，Google.defaults.xcconfig 預設 Runner/Runner.entitlements。Mac 把 Runner.entitlements 還原成 main（含 Sign in with Apple），只加 ios/Flutter/Signing.local.xcconfig（APP_ENTITLEMENTS=Runner/RunnerFree.entitlements），用免費帳號建 store Release 成功，簽好的 App 沒有 applesignin，裝到 iPad 並打開正常。Mac 先前本機移除 entitlement 的改動已丟掉 | mac_tools/rel1023.log | - | iPad |
+| #1025（#1548）英文介面相片冊名稱 | 不通過 | 11/12 13:3x 模擬器全新安裝（母語英文學法文，引導中加入 French Basic 3000 Words，HEAD 459ae9a3）：推薦頁是英文名，但加入後相片冊分頁卡片仍是「法語基礎 3000 字」，整輪 log 出現 18 次 | mac_tools/m1117/n13_tab_相片冊.png | 中 | 模擬器 |
+| #1026（#1549）新手引導頂端錯誤列翻譯 | 注意 | 要在伺服器 530（連不上）時全新安裝才會出現那一行，現在伺服器正常，看不到，尚未在本輪驗完 | - | - | 模擬器 |
+| #1100（#1608）run 詞形（複查） | 注意 | 15:5x 伺服器 en-zh-TW 包 etag 88556bd5…：run 動詞 forms 仍含 rins、rinning；overbid 也仍是 overbided、overbiding、overbides。#1100 說刪掉的 7 筆詞形還在包裡，尚未在本輪驗完 | - | - | Mac |
+
+## 2026-11-12 上架審查卡 #1009 #1010 #1011 #1015 #1016 #1017 現況（Mac 查 main）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1010（#1531）App 內隱私權政策 | 注意 | HEAD ecb44379 的 privacy_policy_screen.dart 只有 7 段（M822 說 14 段），內容仍是舊版：寫「匿名安裝與留存統計預設是打開的」、照片「會傳到你設定的辨識伺服器」，沒有帳號、雲端備份、意見回饋給 AI 處理。網頁 https://api.willylinai.com/privacy 已是 11/09 新版（預設要先同意、有帳號與雲端備份段落），App 內和網頁對不上。App 的改動看起來還沒同步到 main，尚未在本輪驗完 | - | - | iPad |
+| #1009（#1530）引導「幫助改善 App」 | 注意 | main 的 app/lib 找不到「幫助改善」，改動還沒同步，尚未在本輪驗完 | - | - | iPad |
+| #1017（#1536）選照片「顯示最近照片」 | 注意 | main 的 app/lib 找不到「顯示最近照片」，改動還沒同步，尚未在本輪驗完 | - | - | iPad |
+| #1011（#1535）設定→關於的聯絡區塊 | 注意 | main 的設定「關於」只有版本與「資料來源與授權」按鈕，沒有支援網址或聯絡區塊與複製按鈕，尚未在本輪驗完 | - | - | iPad |
+| #1016（#1538）資料來源與授權的法文來源 | 注意 | main 的 data_sources_screen.dart 9 項來源都是英文詞庫（kaikki、Tatoeba、WordNet、CMU、ECDICT、NGSL、CEFR-J、圖片、音檔），沒有法文詞庫來源，最後修改是 15aa5747，尚未在本輪驗完 | - | - | iPad |
+| #1015（#1537）行動網路下先問再下載詞庫 | 注意 | main 的 dictionary_sync.dart 有 allowMobileDownload／mobileWaitBytes，但 app/lib 沒有任何畫面呼叫它，詢問卡還沒同步；行動網路情境也要 owner 的裝置關 Wi-Fi 才測得到，尚未在本輪驗完 | - | - | iPad |
