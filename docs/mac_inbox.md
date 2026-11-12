@@ -6742,3 +6742,9 @@ commit `77692af1`（Windows：flutter analyze 無 error、03:33 +982 ~2: All tes
   需要 Mac：在模擬器看法文推薦頁 A2、B1 新封面是否合適。
 - 卡 #1118：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
   結果：全部完成：flutter analyze 0 error（12 條 info）；card496frenchuitest、card1075compactdictionarytest 與 screenstest 單獨重跑全過。
+
+## M913（2026-11-12 13:45）狀態：參考（owner 的決定）
+卡：問題回報 #1593：[意見回饋] 複習：為什麼有一些卡片上沒有圖片？是不是要開卡？全部去掃描？到底還
+問題：[待決定] 卡 #1091：要不要把 App 內建的圖片數量從 2600 張提高？
+**owner 決定**：owner 11/12 回覆：「App 都不要有圖片，等使用者下載相片庫」→ 同 #1602：App 內建 0 張圖片，圖片只隨下載的相片冊來。照 #1602 的做法處理，不要兩張卡重複改同一份資料。
+App 畫面若和這個決定不同，請照決定改。

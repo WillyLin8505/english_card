@@ -545,7 +545,9 @@ def check_and_push(c: Candidate, cards: list[dict], state: dict, head: str, chec
             if not ok:
                 raise CheckStopped(why)
             if all(c.unready(x) for x in cards):
-                log("no card can go yet: " + "; ".join(f"{p}: {w}" for p, w in list(c.out.items())[:5]))
+                mine = [(p, w) for p, w in c.out.items() if p not in c.scan.held]      # the held ones are known already
+                log("no card can go yet: " + "; ".join(f"{p}: {w}" for p, w in (mine or list(c.out.items()))[:6]))
+                log_waiting(c, cards)
                 return 1
             mark = c.fingerprint()
             if mark == state.get("passed"):

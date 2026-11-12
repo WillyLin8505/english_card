@@ -19,6 +19,8 @@ def test_what_joins_the_job():
     assert not w.is_ai_process("python.exe", "x", "python -m uvicorn app.main:app --port 8770")
     assert not w.is_ai_process("claude.exe", r"C:\Users\u\AppData\Local\AnthropicClaude\app-4\claude.exe", "")
     assert not w.is_ai_process("chrome.exe", "x", "")
+    assert w.is_ai_process("ollama.exe", r"C:\o\ollama.exe", "ollama.exe runner --model x --port 5")  # card #1037
+    assert not w.is_ai_process("ollama.exe", r"C:\o\ollama.exe", "ollama.exe serve")
 
 
 def test_cpu_caps_shrink_near_the_limit_and_recover_slowly():

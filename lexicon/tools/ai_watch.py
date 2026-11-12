@@ -82,7 +82,11 @@ LOG_MAX = 5_000_000
 # 11/02: no model servers. In a capped job llama-server stalled while loading and made about 1 token/s
 # (card #931); outside one the same model loads in 15 s. GPU bursts keep the GPU in check instead.
 AI_NAMES = {"claude.exe", "codex.exe", "cursor-agent.exe", "cursor.cmd",
-            "dart.exe", "dartaotruntime.exe", "flutter_tester.exe", "node.exe", "python.exe", "pythonw.exe"}
+            "dart.exe", "dartaotruntime.exe", "flutter_tester.exe", "node.exe", "python.exe", "pythonw.exe",
+            "ollama.exe", "ollama_llama_server.exe"}
+# 11/12 (card #1037, owner A): photo_tidy_up's Ollama runner (CPU model, ~17 cores) is not ours but counts toward the
+# PC's 80 %; only the model runner is capped, never `ollama serve` or the tray app.
+OLLAMA_RUNNERS = {"ollama.exe", "ollama_llama_server.exe"}
 GPU_NAMES = {"llama-server.exe"}
 # Services the App and board need, the desktop app itself, and this watcher.
 OUTSIDE = ("serve_app", "uvicorn app.main", "keep_awake", "ai_watch", "vite", "dispatch_tick")
@@ -250,6 +254,8 @@ def is_ai_process(name: str, exe: str, cmd: str) -> bool:
     """Pure: does this process belong in the job?"""
     name, low = name.lower(), f"{exe} {cmd}".lower().replace("\\", "/")
     if name not in AI_NAMES or any(w in low for w in OUTSIDE):
+        return False
+    if name in OLLAMA_RUNNERS and name == "ollama.exe" and " runner" not in f" {cmd.lower()}":
         return False
     if name == "claude.exe" and "/anthropicclaude/" in low:
         return False  # the desktop app window, not an AI worker
