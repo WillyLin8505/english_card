@@ -6732,3 +6732,13 @@ commit `815f306e`（Windows：flutter analyze 無 error、03:33 +982 ~2: All tes
 - 卡 #1115：問題回報 #1621：[Mac] 2026-11-12 M908 #1100 #1102 #1107 #1109（：#1
   結果：全部完成：basic-3000-a2 封面由「傷口臉部特寫」(asset 4377, 標題 gash) 換成水果照 (asset 32916)；全庫 42 本英文單字集不良封面 5 → 0。
   需要 Mac：iPad 推薦頁確認 basic-3000-a2 新封面（水果）貼切。
+
+## M912（2026-11-12 13:22）狀態：待做
+commit `77692af1`（Windows：flutter analyze 無 error、03:33 +982 ~2: All tests passed!；另有 7 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1116：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
+  結果：全部完成：flutter analyze 0 error（只剩 12 個 info）、flutter test 1011 項全過（2 個 skip），未改任何程式或資料。
+- 卡 #1117：問題回報 #1622：[Mac] 2026-11-12 M909 #1077 #1110 #1113 與複驗 #1：#1
+  結果：全部完成：法文 A2 封面由街頭抗議照（32663）換成 18214，B1（26172，塗鴉黑白街景）換成 16581；2000 與 3000 維持 owner 認可的原封面。
+  需要 Mac：在模擬器看法文推薦頁 A2、B1 新封面是否合適。
+- 卡 #1118：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
+  結果：全部完成：flutter analyze 0 error（12 條 info）；card496frenchuitest、card1075compactdictionarytest 與 screenstest 單獨重跑全過。
