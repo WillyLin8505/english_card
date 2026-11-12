@@ -362,7 +362,9 @@ def analyze(c: Candidate) -> tuple[bool, str]:
                 suspects |= {p for p in c.included if c.bytes.get(p) is None}
             if not suspects:
                 continue
-            if len(suspects) > 1 and not narrowed:
+            if len(suspects) > 1 and narrowed:
+                continue    # one search per round; the next analyze shows whether this one is still wrong
+            if len(suspects) > 1:
                 # card #1112: a file left at HEAD that no longer compiles against the changes it
                 # imports. Taking out its whole import closure held 33 of 36 ready cards back.
                 narrowed = True

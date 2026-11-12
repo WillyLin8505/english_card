@@ -170,6 +170,31 @@ def test_compile_error_blocks_only_that_card(repo, monkeypatch):
     assert state["waiting"]["2"]
 
 
+def test_error_in_an_untouched_file_takes_out_only_the_change_that_caused_it(repo, monkeypatch):
+    """card #1112: a file left at HEAD that imports a.dart and c.dart no longer compiles because of
+    a.dart alone; card 3 (c.dart) must still go."""
+    root, sessions, _ = repo
+    (root / "app/lib/d.dart").write_text("import 'a.dart';\nimport 'c.dart';\n", encoding="utf-8")
+    (root / "app/lib/c.dart").write_text("// c v1\n", encoding="utf-8")
+    _git(root, "add", "-A")
+    _git(root, "commit", "-qm", "d")
+    (root / "app/lib/a.dart").write_text("// a breaks d\n", encoding="utf-8")
+    (root / "app/lib/c.dart").write_text("// c ok\n", encoding="utf-8")
+    _session(sessions, "s1", 1, [("app/lib/a.dart", "2026-10-31T10:00:00Z")])
+    _session(sessions, "s3", 3, [("app/lib/c.dart", "2026-10-31T10:00:00Z")])
+
+    def rule(app, args):
+        if args[0] == "analyze" and "breaks" in (app / "lib" / "a.dart").read_text(encoding="utf-8"):
+            return 1, "  error - nope - lib/d.dart:1:1 - nope"
+        return 0, "ok"
+    FakeFlutter(monkeypatch, rule)
+    state = {}
+    assert mac_sync.sync_app(_cards(1, 3), state) == 0
+    assert _shown(root, "app/lib/c.dart") == "// c ok"
+    assert _shown(root, "app/lib/a.dart") == "// a v1"
+    assert list(state["waiting"]) == ["1"]
+
+
 def test_failing_test_finds_the_card_that_broke_it(repo, monkeypatch):
     root, sessions, _ = repo
     (root / "app/lib/a.dart").write_text("// a bad\n", encoding="utf-8")
