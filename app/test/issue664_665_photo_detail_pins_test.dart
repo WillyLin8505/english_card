@@ -66,10 +66,11 @@ void main() {
 
   group('#664 the whole photo, every label on it', () {
     test('the frame takes the photo\'s shape, capped', () {
-      // 358 wide: 358 × 1280 / 720 ≈ 636, capped at 520.
-      expect(PinnedPhoto.frameHeight(photo, 358, maxHeight: 520), 520);
+      // 358 wide: 358 × 1280 / 720 ≈ 636, capped at 3:4 (問題回報 #1581).
+      expect(PinnedPhoto.frameHeight(photo, 358, maxHeight: 520),
+          closeTo(477.3, 0.1));
       expect(PinnedPhoto.frameHeight(photo, 200, maxHeight: 520),
-          closeTo(355.6, 0.1));
+          closeTo(266.7, 0.1));
       final landscape = Photo(
           id: 'l',
           title: '',

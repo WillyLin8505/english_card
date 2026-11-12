@@ -31,4 +31,21 @@ void main() {
     final catalog = [for (var i = 0; i < 3; i++) img(i)];
     expect(databaseEntryImages(catalog, tree).map((i) => i['id']), [0, 1, 2]);
   });
+
+  test('card 1110: the best-ranked picture comes first, not the lowest id', () {
+    Map<String, dynamic> ranked(int n, int rank) => {
+          'id': n,
+          'tags': [
+            {
+              'lexeme_id': 7,
+              'sense_id': 1,
+              'review_status': 'approved',
+              'rank': rank
+            }
+          ]
+        };
+    final catalog = [ranked(1, 384), ranked(2, 3), ranked(3, -1), ranked(4, 3)];
+    expect(
+        databaseEntryImages(catalog, tree).map((i) => i['id']), [3, 2, 4, 1]);
+  });
 }

@@ -19,10 +19,30 @@ List<Map<String, dynamic>> databaseEntryImages(
           .any((tag) => ids.contains((tag['lexeme_id'] as num?)?.toInt())))
         image
   ];
+  // Card #1110 (問題回報 #1618): best-ranked picture first (the catalog is in
+  // file order, which put a pile of telephones before house's own photos).
+  // Packs without 'rank' keep catalog order (stable sort).
+  int rankOf(Map<String, dynamic> image) {
+    var best = 1 << 30;
+    for (final tag in databaseImageTags(image)) {
+      if (!ids.contains((tag['lexeme_id'] as num?)?.toInt())) continue;
+      final r = (tag['rank'] as num?)?.toInt();
+      if (r != null && r < best) best = r;
+    }
+    return best;
+  }
+
+  final ranked = [
+    for (final (i, image) in all.indexed) (i, rankOf(image), image)
+  ]..sort((a, b) => a.$2 != b.$2 ? a.$2.compareTo(b.$2) : a.$1.compareTo(b.$1));
+  all
+    ..clear()
+    ..addAll(ranked.map((e) => e.$3));
   if (all.length <= maxEntryImages) return all;
   // Seeded per word and minute so a rebuild while the card is open keeps the
   // same photos; opening it again later draws a new set.
-  final seed = word.id * 1000003 + DateTime.now().millisecondsSinceEpoch ~/ 60000;
+  final seed =
+      word.id * 1000003 + DateTime.now().millisecondsSinceEpoch ~/ 60000;
   final rest = all.sublist(1)..shuffle(random ?? math.Random(seed));
   return [all.first, ...rest.take(maxEntryImages - 1)];
 }

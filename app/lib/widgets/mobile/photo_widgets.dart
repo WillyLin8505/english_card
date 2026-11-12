@@ -637,7 +637,10 @@ class PinnedPhoto extends StatefulWidget {
     final natural = fitFor(photo, BoxFit.contain) == BoxFit.contain
         ? width * h! / w!
         : fallback;
-    return natural.clamp(math.min(minHeight, maxHeight), maxHeight).toDouble();
+    // 問題回報 #1581: never taller than an iPhone photo (3:4); a taller
+    // photo is shown whole with [BoxFit.contain], bars beside it.
+    final cap = math.min(maxHeight, width * 4 / 3);
+    return natural.clamp(math.min(minHeight, cap), cap).toDouble();
   }
 
   const PinnedPhoto({
