@@ -2943,3 +2943,12 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 |----|----|----|----|----|----|
 | #1142 flutter test | 注意 | HEAD dfd331cb 在 Mac 跑 flutter test：981 過、3 略過、1 個不過，和下午同一個：screens_test.dart「#815: the fix-it hint also shows at the top and opens 進階設定」，前面「提示出現在頂端」那段過了，按提示之後找不到「測試連線」（第 549 行）。Mac 本機對 app/ 的未提交改動只有 pubspec 加 integration_test 和 iOS 簽章設定，和這個測試無關；Windows 回報全過，可能是按提示後捲動／展開在 Mac 的字型尺寸下沒點到，尚未在本輪驗完 | mac_tools/ftest2.log | - | Mac |
 | #1100（#1608）run 詞形（複查） | 注意 | 19:5x 伺服器 en-zh-TW 包 etag 3e118d82…：run 仍含 rins、rinning，overbid 仍有 overbided、overbiding、overbides，尚未在本輪驗完 | - | - | Mac |
+
+## 2026-11-12 22:4x M920 #1075 精簡字典、#1098 台灣用語（Mac，iPad）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1075（#1598）精簡字典英→中查字 | 通過 | HEAD c39f0c36 store 版裝到 iPad，用 App 的批次加字檢查（checkBulkWords，沒有按加入）查卡上 10 個英文字，共 10 ms：serendipity、pernicious、obfuscate、quixotic、sycophant、mellifluous、perspicacious 7 個標「基本資料」並有中文（如 serendipity「偶然發現珍寶的運氣/才能」），ephemeral、ubiquitous、laconic 3 個完整詞庫本來就有；精簡字典查 serendipity 有音標 serənˈdipiti、詞性 noun；went 查到原形 go、標為變化形。精簡字典是 App 內的 sqlite（25 MB），查字不走網路 | mac_tools/m1075/shots/mac_log.txt | - | iPad |
+| #1075（#1598）精簡字典法→英查字 | 通過 | 同一輪 iPad 直接查法→英精簡字典（28 MB）：10 個全部查得到並有英文釋義和音標，例如 flâner「to wander around；to loiter」fla.ne、cauchemar「nightmare」kɔʃ.maʁ；mangeons、mangé 都回原形 manger 並標變化形，retrouvailles 回 retrouvaille。小問題：manger 的釋義重複成「to eat；to eat」，go 的音標是 ECDICT 舊式「gou」 | mac_tools/m1075/shots/mac_log.txt | 低 | iPad |
+| #1075 飛航模式、批次加字畫面與加入後單字頁 | 注意 | 飛航模式是 owner iPad 的系統設定，Mac 不改；精簡字典本來就在 App 內查，不靠網路。批次加字對話框的截圖這輪沒成功（測試輸入的文字沒進輸入框，檢查結果是空的），加入後單字頁「基本資料（精簡字典）」要實際加字，不在 owner 的 iPad 加，下一輪改在模擬器做，尚未在本輪驗完 | mac_tools/m1075/shots/1075_check_0.png | - | iPad |
+| #1098（#1605）精簡字典台灣用語與詞性 | 通過 | 同一輪 iPad：精簡字典 bus 是「公車」、詞性 noun（App 值，不再是 ECDICT 縮寫）。taxi、software 在完整詞庫已有，批次加字顯示「已在單字本」，不會走精簡字典，所以這兩個沒看到精簡字典的中文 | mac_tools/m1075/shots/mac_log.txt | - | iPad |
