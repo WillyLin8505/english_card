@@ -6721,3 +6721,8 @@ commit `827f39ef`（Windows：flutter analyze 無 error、03:37 +982 ~2: All tes
 - 卡 #1113：問題回報 #1620：[Mac] 2026-11-12 收件匣最舊項目 #932 #933 #967（Mac，模擬：#9
   結果：全部完成：法文基礎 5 本字庫封面已換成具體日常 Flickr 實景照片（fr-basic-3000-a1/a2/b1 原本沒有封面，fr-basic-3000 原為立體派抽象畫）。
   需要 Mac：在 iPad／模擬器看法文推薦字庫畫面，確認 5 個新封面主題合適（我沒有看圖，只依標籤挑選）。
+
+## M910（2026-11-12 12:07）狀態：待做
+commit `4279162e`（Windows：flutter analyze 無 error、03:33 +982 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1114：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
+  結果：全部完成：flutter analyze 0 error（剩 12 個 info），flutter test 1011 通過、2 略過、0 失敗。
