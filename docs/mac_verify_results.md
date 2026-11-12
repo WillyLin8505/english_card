@@ -2862,3 +2862,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 |----|----|----|----|----|----|
 | #1091／#1602 App 內建圖片（owner 11/12 決定 0 張） | 注意 | Mac 量目前 main 的 iOS build（HEAD e58a7d2d 前一輪建出的 Runner.app）：flutter_assets/assets/lexicon/media/images 有 3,235 張 webp、62 MB，另有 sample 15 張；整個 flutter_assets 310 MB。和 owner「App 內建 0 張圖片」的決定不同，等 #1602 改完重新同步後再量，尚未在本輪驗完 | - | - | Mac |
 | #1110／#1100 包重建（複查） | 注意 | 14:0x 伺服器 en-zh-TW 包 etag 仍是 97e07ac3…，和上一輪相同，尚未重建，尚未在本輪驗完 | - | - | Mac |
+
+## 2026-11-12 14:4x 複查 #1110 #1100（Mac）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1110／#1100 包重建（複查） | 注意 | 14:42 伺服器 en-zh-TW 包換成新的（etag 3941ea41…，79.5 MB），但 catalog_images 13,229 張的綁定仍沒有 rank，house 詞條裡也沒有 rank；run 動詞 forms 仍含 rins、rinning。這次重建沒帶到 #1110、#1100 的修改，iPad 不用重驗，尚未在本輪驗完 | - | - | Mac |
