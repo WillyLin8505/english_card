@@ -2753,3 +2753,11 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #496 粗俗詞標籤 | 注意 | 英文介面法文 merde、foutre、cul 單字頁都沒有 Vulgar（foutre 顯示 Slang）；不確定哪個字在資料裡標 vulgar，尚未在本輪驗完 | mac_tools/b1/en_fr/mac_log.txt | - | 模擬器 |
 | #1009 #1010 #1011 #1015 #1016 #1017 上架審查卡 | 注意 | HEAD 63c2510b 的 app/lib 還沒有這幾張的改動（例如找不到「幫助改善 App」「顯示最近照片」），尚未在 main，同步後再驗 | - | - | 模擬器 |
 | 模擬使用者常態卡 #225 #226 #227 #228 #12 | 通過 | HEAD 63c2510b，375×667 模擬器英文／繁中／法文全新安裝各一次：引導、推薦、五個分頁教學與重看、相片冊、單字本、設定、複習（法文 5 張、iPad 12 張）都走完，例外 0。#224 相機要 owner 手動 | mac_tools/b1/ | - | 模擬器 |
+
+## 2026-11-12 #1092 詞庫包瘦身（Mac，iPad）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1092（#1599）手機詞庫包瘦身 | 通過 | HEAD e7c0cbed，iPad 現有 App 打開後 20 秒內下載新的 en-zh-TW.server.1794442893136.sqlite（75.8 MB），App 持續執行正常。伺服器 format=sqlite 回 79,462,400 bytes。與 iPad 11/09 的包比：表只有 meta、lexemes，lexemes 28,020→28,023，meta 的 labels、media_base 等相同，catalog_images 51.66 MB 幾乎一樣，只是詞條內容的正常更新。手機收到的 sqlite 包本來就沒有每張圖複製 11 次的照片標籤，所以 916→384 MB 的縮小是 Windows 端檔案，Mac 看不到前後數字；照片標籤在單字頁的顯示這輪沒在畫面上看，尚未在本輪驗完 | - | - | iPad |
+| 伺服器 api.willylinai.com | 通過 | 11/12 08:20 從 Mac 打 /api/issues/status 和 /api/lexicon 都回 200，11/09 的 530 已恢復 | - | - | iPad |
+| #1075 精簡字典、#1074 照片只在手機辨識與 Qwen 50 張對照 | 注意 | owner 指定優先驗，但 docs/mac_inbox.md 和 git log 都還沒有這兩張卡（/api/issues 的 1074、1075 是別的問題回報編號），等 Windows 同步後再驗，尚未在本輪驗完 | - | - | iPad |
