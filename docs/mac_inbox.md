@@ -6748,3 +6748,8 @@ commit `77692af1`（Windows：flutter analyze 無 error、03:33 +982 ~2: All tes
 問題：[待決定] 卡 #1091：要不要把 App 內建的圖片數量從 2600 張提高？
 **owner 決定**：owner 11/12 回覆：「App 都不要有圖片，等使用者下載相片庫」→ 同 #1602：App 內建 0 張圖片，圖片只隨下載的相片冊來。照 #1602 的做法處理，不要兩張卡重複改同一份資料。
 App 畫面若和這個決定不同，請照決定改。
+
+## M914（2026-11-12 16:47）狀態：待做
+commit `c5ebd4d2`（Windows：flutter analyze 無 error、flutter test 全過；另有 2 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1119：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
+  結果：全部完成：目前工作樹上 flutter test 全過（+1011，2 略過，0 失敗），flutter analyze 無 error（12 個 info/warning）。
