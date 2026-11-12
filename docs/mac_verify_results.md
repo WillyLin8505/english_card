@@ -2896,3 +2896,11 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #1011（#1535）設定→關於的聯絡區塊 | 注意 | main 的設定「關於」只有版本與「資料來源與授權」按鈕，沒有支援網址或聯絡區塊與複製按鈕，尚未在本輪驗完 | - | - | iPad |
 | #1016（#1538）資料來源與授權的法文來源 | 注意 | main 的 data_sources_screen.dart 9 項來源都是英文詞庫（kaikki、Tatoeba、WordNet、CMU、ECDICT、NGSL、CEFR-J、圖片、音檔），沒有法文詞庫來源，最後修改是 15aa5747，尚未在本輪驗完 | - | - | iPad |
 | #1015（#1537）行動網路下先問再下載詞庫 | 注意 | main 的 dictionary_sync.dart 有 allowMobileDownload／mobileWaitBytes，但 app/lib 沒有任何畫面呼叫它，詢問卡還沒同步；行動網路情境也要 owner 的裝置關 Wi-Fi 才測得到，尚未在本輪驗完 | - | - | iPad |
+
+## 2026-11-12 M914 #1119 App 不內建圖片（Mac，iPad 與模擬器）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1119／#1602 App 內建圖片改成 0 張 | 通過 | HEAD e1d3111f（9af86891 刪了 11,008 個圖檔）建 store Release：flutter_assets 裡 webp 0 張（上一版 3,235 張），flutter_assets 310→247 MB，Runner.app 286 MB。另外還有 assets/sample 15 張 jpg（photo_kitchen、album_fruit、recent_1…6 等範例照片），是否也要拿掉請 owner 決定。裝到 iPad 後 apple、dog、house 單字頁照片都正常顯示（iPad 先前可能已快取過） | mac_tools/rel1119.log、mac_tools/m1119/shots/943_house.png | - | iPad |
+| #1119 全新安裝後單字圖片 | 注意 | 模擬器全新安裝（繁中學英文）兩次：第一次推薦頁加入基礎單字後按「開始使用」20 秒內沒進主畫面（測試結束後畫面仍停在推薦頁），第二次馬上進主畫面但推薦頁還在轉圈就被略過、沒加入相片冊，所以全新安裝時單字和複習圖片從伺服器下載的情況這輪沒看到，尚未在本輪驗完 | mac_tools/m1119s/n09_recommended.png | - | 模擬器 |
+| 基礎 3000 字・A1 封面 | 注意 | 同一輪推薦頁：基礎 3000 字・A1 封面是一整排百事可樂紙箱，主體是商標品牌，不太適合當基礎單字相片冊的封面，建議換 | mac_tools/m1119s_extra/now.png | 低 | 模擬器 |
