@@ -2801,3 +2801,11 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #943（#1270）apple 單字頁 | 通過 | HEAD 4cbd1897，iPad：名詞下「蘋果／圓形果實／笑臉蘋果」，蘋果只出現一次；第一屏底部看得到「出現這個單字的照片（3）」兩張照片。apple 沒有「資料庫圖片」區，dog、house 都有，原因這輪沒查 | mac_tools/m943/shots/943_apple.png | - | iPad |
 | house 單字頁第一張資料庫圖片 | 注意 | 同一輪 iPad：house 單字頁「資料庫圖片（5）」第一張是一堆電話（標籤 transparent、telephone、translucent、coiled），第二張山景裡的房子很小；第一張不是房子，和 #894 一樣是圖片排序問題 | mac_tools/m943/shots/943_house.png | 中 | iPad |
 | #738 法文→繁中詞庫 maison、le、lors、rire | 不通過 | 11/12 從 Mac 下載伺服器 fr×zh-TW sqlite（App 用的同一包，426 KB）：lexemes 仍 173 筆，和 11/03 一樣。maison（房子／自製的）、le、lors 有；rire 沒有；lors 的中文是「因此，當時」，lors 是「當時」的意思，「因此」是錯的。這次沒裝到 iPad 上看 | - | 中 | Mac |
+
+## 2026-11-12 收件匣最舊項目 #932 #933 #967（Mac，模擬器）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #932（#1255）英文介面不再出現中文 | 通過 | HEAD 82c7bd4d，375×667 模擬器全新安裝，母語英文學法文：引導、推薦、五個分頁教學、相片冊、單字本、設定、複習走完，畫面上唯一的中文是相片冊名稱「法語基礎 3000 字」，那是 #954 已另外記錄的項目；其他介面文字都是英文。法文介面因 #957 擋掉母語法文的組合，這輪沒看 | mac_tools/m932a/n13_tab_相片冊.png | - | 模擬器 |
+| #933（#1256）推薦頁相片冊標題翻譯 | 通過 | 同一輪英文介面推薦頁：French Basic 3000 Words、French Basic 2000 Words、French Basic 3000 Words – B1、– A2，分類 French Basic Words，都是英文。法文介面到不了，尚未在本輪驗完法文標題 | mac_tools/m932a/n09_recommended.png | - | 模擬器 |
+| #967（#1423）法文相片冊封面 | 不通過 | 同一輪推薦頁：French Basic 3000 Words 封面是深色立體派抽象畫，看不出主題；French Basic 2000 Words 是老插畫的村莊（還可以）；French Basic 3000 Words – B1、– A2 封面是空白淺藍色塊，沒有圖 | mac_tools/m932a/n09_recommended.png、n10_recommended_added.png | 低 | 模擬器 |
