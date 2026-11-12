@@ -132,12 +132,19 @@ void main() {
     expect(remoteCalls, 0);
   });
 
-  test('a server address still wins over the device (developer build)', () {
+  test('a server address still wins over the device (tests only)', () {
     AppSettings.localRecognition = true;
     final s = AppSettings.inMemory(taggingUrl: 'http://x/tag');
     expect(s.usesLocalRecognition, isFalse);
     expect(s.showsTaggingServer, isTrue);
     expect(s.taggingConfigured, isTrue);
+  });
+
+  test('a stored or typed address never reaches a phone (card #1074)', () {
+    final s = AppSettings.inMemory();
+    expect(s.taggingUrl, isEmpty);
+    expect(s.showsTaggingServer, isFalse);
+    expect(AppSettings.defaultTaggingUrl, isEmpty);
   });
 
   test('a platform failure shows a plain sentence, not the English error',
@@ -171,7 +178,7 @@ void main() {
   testWidgets('設定 shows no address or key on the phone', (tester) async {
     AppSettings.localRecognition = true;
     await pumpApp(tester,
-        initialTab: AppTab.settings, size: const Size(402, 2400));
+        initialTab: AppTab.settings, size: const Size(402, 4000));
     expect(find.text('照片在這支手機上辨識，不會上傳到任何伺服器。'), findsOneWidget);
     expect(find.text('服務網址'), findsNothing);
     expect(find.text('連線金鑰（API Key）'), findsNothing);
@@ -188,7 +195,8 @@ void main() {
     expect(json['media_base'], isNull);
     expect(pack.size, greaterThan(4500));
     expect(pack.hasCatalog, isTrue);
-    expect(pack.catalogImages.length, greaterThan(1500));
+    // Owner 11/12: the App bundles no pictures; they come only from
+    // downloaded albums. Any image entry that remains must be a bundled path.
     expect(
         pack.catalogImages
             .every((i) => (i['url'] as String).startsWith('assets/lexicon/')),
