@@ -679,7 +679,11 @@ class Kaikki(SourceAdapter):
                 else:
                     sources.append((e, word, False))
             for base, pos in dict.fromkeys(bases):
-                sources += [(be, base, True) for be in self.other(ctx, base) if _pos(be) == pos]
+                # Not a dialect / old verb's table either: run's past participle
+                # "of rin" (Scots "To run") would add rins / rinning (card #1100).
+                sources += [(be, base, True) for be in self.other(ctx, base) if _pos(be) == pos
+                            and not (be.get("senses") and all(
+                                RARE_FORM_TAGS & set(s.get("tags", [])) for s in be["senses"]))]
             for e, owner, shared in sources:
                 pos = _pos(e)
                 for fo in e.get("forms", []):
@@ -764,7 +768,7 @@ class Kaikki(SourceAdapter):
         elif f == "etymology_text":
             for e in entries:
                 text = _clean_etymology(e.get("etymology_text", ""))
-                if text:
+                if text and not is_junk_etymology(text):
                     # How many affix templates: 0 means Wiktionary saw no English
                     # word formation here (used by 本機構詞分析).
                     add({"text": text, "affix_templates": len(_affix_templates(e))},
@@ -1266,6 +1270,18 @@ def _native_word(tr: dict, native: str) -> str | None:
 
 
 _TREE_TAG = re.compile(r"(?:der|bor|inh|lbor|slbor|cal|uder)\.\??$")
+
+
+_JUNK_ETYMOLOGY = re.compile(
+    r"^(?:abbreviations?\.?|pie word|\]|etymology tree|various origins:?|non-lemma form\.?)$"
+    r"|^[A-Z][\w\- ]*? [\*\-][^ ]*?(?:influ|nom|redup)\.$|^\w+ \w+redup\.$", re.I)
+
+
+def is_junk_etymology(text: str) -> bool:
+    """card #1104: a section heading or leftover tree node, not an etymology
+    (par's first item was 「Abbreviations」; 「Latin -ereinflu.」 is a tree label)."""
+    t = (text or "").strip()
+    return not t or bool(_JUNK_ETYMOLOGY.match(t))
 
 
 def _clean_etymology(text: str) -> str:

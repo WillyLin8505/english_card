@@ -9,3 +9,9 @@ def test_bare_roots_are_parenthesised():
 
 def test_existing_parens_untouched():
     assert _paren_foreign_roots("源自法語（fruit）") == "源自法語（fruit）"
+
+
+def test_accented_roots_stay_whole():
+    out = _paren_foreign_roots("源自拉丁語 pĕrvé 與 perméabilité")
+    assert "（pĕrvé）" in out and "（perméabilité）" in out
+    assert native_latin_issue(out) is None

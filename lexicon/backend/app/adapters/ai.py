@@ -42,7 +42,11 @@ def _activity(ctx: Context, kind: str, items: list[dict]) -> str:
 
 
 
-_FOREIGN_ROOT = re.compile(r"[A-Za-z][A-Za-z'’\-]*(?:[ 	][A-Za-z][A-Za-z'’\-]*)*")
+# Latin letters incl. accented/combining ones (pĕrvé, abílit): the validator's A-Z run would
+# otherwise split a root around the accent and leave "（p）ĕ（rv）é" (card #1103).
+_LATIN_L = "A-Za-zÀ-ÖØ-öø-ɏ̀-ͯḀ-ỿ"
+_FOREIGN_ROOT = re.compile(
+    rf"[{_LATIN_L}][{_LATIN_L}'’\-]*(?:[ 	][{_LATIN_L}][{_LATIN_L}'’\-]*)*")
 _NOTE_SPAN = re.compile(r"[（(][^）)]*[）)]")
 
 
@@ -142,7 +146,9 @@ class AITranslate(SourceAdapter):
                             for i in ctx.items(rel)
                             if i.get("word") and want(i["word"].lower())][:30]
         if f == "etymology_native":
-            ety = ctx.items("etymology_text")
+            from .kaikki import is_junk_etymology
+            # The first real note: items[0] was a heading for par (card #1104).
+            ety = [i for i in ctx.items("etymology_text") if not is_junk_etymology(i.get("text"))]
             return "etymology", ([{"id": "e", "text": ety[0]["text"]}] if ety else [])
         if f == "morphemes_native":
             from .morph import part_slot
