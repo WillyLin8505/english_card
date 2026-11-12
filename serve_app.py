@@ -173,7 +173,10 @@ def catalog_snapshot(session, target):
         if binding.review_status == 'approved' and word_id in full_words:
             tags.setdefault(binding.image_asset_id, []).append({
                 'lexeme_id': word_id, 'sense_id': binding.sense_id,
-                'review_status': binding.review_status, 'origin': 'binding'})
+                'review_status': binding.review_status, 'origin': 'binding',
+                # Card #1110 (問題回報 #1618): the fetch rank, so the App shows a
+                # word's best picture first (representative = -1, then ordinal).
+                'rank': -1 if binding.role == 'representative' else binding.ordinal})
     # Vision labels are English words (#331). In another language's pack a
     # picture shared by meaning (#336) is bound to one word only, so it also
     # names the target words whose main sense means one of the picture's
