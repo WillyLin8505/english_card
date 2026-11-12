@@ -78,7 +78,7 @@ class _DeckBrowserScreenState extends State<DeckBrowserScreen> {
       _progress = '';
     });
     try {
-      final deck = await _library.fetchDeck(info.slug);
+      final deck = await _library.fetchDeck(info.slug, listed: info);
       final created = await _library.install(deck,
           repository: scope.repository,
           intake: scope.intake, onProgress: (done, total) {

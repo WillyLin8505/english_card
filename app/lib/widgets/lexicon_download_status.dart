@@ -41,6 +41,8 @@ class LexiconDownloadCard extends StatelessWidget {
     final failed = lexiconDownloadFailed(sync);
     final progress = lexiconProgressText(sync);
     final total = sync.downloadTotalBytes;
+    final wait = sync.mobileWaitBytes;
+    if (wait != null) return _MobileAsk(sync: sync, bytes: wait);
     return Container(
       padding: const EdgeInsets.all(MSpace.lg),
       decoration: MDecor.emptyStateCard(),
@@ -73,6 +75,42 @@ class LexiconDownloadCard extends StatelessWidget {
       ]),
     );
   }
+}
+
+/// 審查 4.2.3(ii): on mobile data the full pack waits until the user picks.
+class _MobileAsk extends StatelessWidget {
+  final DictionarySync sync;
+  final int bytes;
+  const _MobileAsk({required this.sync, required this.bytes});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        key: const ValueKey('lexicon-mobile-ask'),
+        padding: const EdgeInsets.all(MSpace.lg),
+        decoration: MDecor.emptyStateCard(),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          const Icon(Icons.network_cell_rounded,
+              size: 36, color: MColors.muted),
+          const SizedBox(height: MSpace.md),
+          UiText('下載完整詞庫，建議使用 Wi-Fi',
+              textAlign: TextAlign.center, style: MFont.titleSm),
+          const SizedBox(height: MSpace.xs),
+          Text('≈ ${(bytes / 1000000).round()} MB',
+              key: const ValueKey('lexicon-mobile-size'),
+              textAlign: TextAlign.center,
+              style: MFont.bodyMuted),
+          const SizedBox(height: MSpace.xs),
+          UiText('連上 Wi-Fi 後會自動下載；也可以現在用行動網路下載',
+              textAlign: TextAlign.center, style: MFont.bodyMuted),
+          const SizedBox(height: MSpace.md),
+          ElevatedButton(
+              key: const ValueKey('lexicon-mobile-download-now'),
+              onPressed: sync.allowMobileDownload,
+              child: const UiText('現在下載')),
+          const SizedBox(height: MSpace.xs),
+          UiText('連上 Wi-Fi 再下載', style: MFont.caption),
+        ]),
+      );
 }
 
 /// Grey tiles where the lexicon pictures will be, with the note that they

@@ -24,8 +24,11 @@ void main() {
         final list = find.byType(ListView);
         final scroll = tester.state<ScrollableState>(
             find.descendant(of: list, matching: find.byType(Scrollable)));
-        scroll.position.jumpTo(scroll.position.maxScrollExtent);
-        await tester.pump();
+        // The extent of a lazy list is an estimate until the end is built.
+        for (var i = 0; i < 2; i++) {
+          scroll.position.jumpTo(scroll.position.maxScrollExtent);
+          await tester.pump();
+        }
         final button = tester.getTopLeft(find.byType(PrimaryButton).first).dy;
         double lowest = 0;
         for (final t in tester.widgetList<RichText>(

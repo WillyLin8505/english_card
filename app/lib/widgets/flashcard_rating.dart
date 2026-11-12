@@ -36,7 +36,8 @@ class ExampleText extends StatelessWidget {
                 IconButton(
                   tooltip: ui(context, '播放例句'),
                   visualDensity: VisualDensity.compact,
-                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                  constraints:
+                      const BoxConstraints(minWidth: 36, minHeight: 36),
                   onPressed: () => AppScope.of(context).speak(
                       context, example.text,
                       language: AppScope.of(context).repository.language,
@@ -57,6 +58,10 @@ class ExampleText extends StatelessWidget {
                   text: example.translation,
                   style: MFont.manrope(13, FontWeight.w700, MColors.muted)),
             ])),
+          ],
+          if (example.credit case final credit?) ...[
+            const SizedBox(height: 2),
+            Text(credit, style: MFont.caption),
           ],
         ],
       );

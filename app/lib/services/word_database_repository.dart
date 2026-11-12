@@ -666,6 +666,7 @@ class WordDatabaseRepository extends ChangeNotifier {
     String? ipaSource,
     double? frequency,
     WordDataStatus dataStatus = WordDataStatus.complete,
+    bool basic = false,
     int? lexemeId,
   }) {
     final normalized = word.trim().toLowerCase();
@@ -683,6 +684,7 @@ class WordDatabaseRepository extends ChangeNotifier {
       frequency: frequency,
       detail: language == 'en' ? lookupDetail?.call(normalized) : null,
       dataStatus: dataStatus,
+      basic: basic,
       lexemeId: lexemeId,
       now: clock(),
     ).copyWith(
@@ -723,6 +725,7 @@ class WordDatabaseRepository extends ChangeNotifier {
     required String pos,
     required String meaning,
     String? level,
+    bool basic = false,
   }) {
     final normalized = word.trim().toLowerCase();
     final existing = _entries.where((e) => e.word == normalized).firstOrNull;
@@ -734,6 +737,7 @@ class WordDatabaseRepository extends ChangeNotifier {
       level: level,
       levelSource: level == null ? null : 'user',
       dataStatus: WordDataStatus.pending,
+      basic: basic,
     );
     _ensureCard(entry.id);
     _attachOwnPhotos([entry]);
@@ -832,6 +836,7 @@ class WordDatabaseRepository extends ChangeNotifier {
           : null,
       examples: examples,
       dataStatus: status,
+      basic: status == WordDataStatus.complete ? false : e.basic,
       dataError: () => error,
       dataAttempts:
           status == WordDataStatus.failed ? e.dataAttempts + 1 : e.dataAttempts,

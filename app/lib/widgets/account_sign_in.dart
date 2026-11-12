@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../l10n/ui_text.dart';
 import '../services/app_settings.dart';
@@ -29,6 +30,7 @@ class AccountSignInButtons extends StatefulWidget {
 }
 
 class _AccountSignInButtonsState extends State<AccountSignInButtons> {
+  static const _buttonHeight = 44.0;
   bool _busy = false;
 
   CloudBackup get _cloud => widget.cloud ?? CloudBackup(widget.settings);
@@ -39,6 +41,8 @@ class _AccountSignInButtonsState extends State<AccountSignInButtons> {
       await job();
       if (mounted && widget.settings.cloudSignedIn) {
         showToast(context, '已登入 ${widget.settings.cloudEmail}');
+        await askAccountStats(context, widget.settings);
+        if (!mounted) return;
         widget.onSignedIn?.call();
       }
     } on CloudBackupException catch (e) {
@@ -57,7 +61,10 @@ class _AccountSignInButtonsState extends State<AccountSignInButtons> {
 
   Future<void> _apple() => _run(() async {
         final c = await widget.social.apple();
-        if (c != null) await _cloud.loginWithApple(c.token, name: c.name);
+        if (c != null) {
+          await _cloud.loginWithApple(c.token,
+              name: c.name, authorizationCode: c.authorizationCode);
+        }
       });
 
   Future<void> _email({required bool create}) async {
@@ -100,15 +107,21 @@ class _AccountSignInButtonsState extends State<AccountSignInButtons> {
       children: [
         Wrap(spacing: 8, children: [
           if (widget.social.googleConfigured)
-            OutlinedButton(
-                key: const Key('signInGoogle'),
-                onPressed: _busy ? null : _google,
-                child: const UiText('用 Google 繼續')),
+            SizedBox(
+                height: _buttonHeight,
+                child: OutlinedButton(
+                    key: const Key('signInGoogle'),
+                    onPressed: _busy ? null : _google,
+                    child: const UiText('用 Google 繼續'))),
+          // Apple's official button (HIG / App Review 4.8): same height as Google's.
           if (widget.social.appleAvailable)
-            OutlinedButton(
+            SignInWithAppleButton(
                 key: const Key('signInApple'),
-                onPressed: _busy ? null : _apple,
-                child: const UiText('使用 Apple 登入')),
+                height: _buttonHeight,
+                text: ui(context, '使用 Apple 登入'),
+                onPressed: () {
+                  if (!_busy) _apple();
+                }),
           TextButton(
               key: const Key('signInEmail'),
               onPressed: _busy ? null : () => _email(create: false),
@@ -123,4 +136,31 @@ class _AccountSignInButtonsState extends State<AccountSignInButtons> {
       ],
     );
   }
+}
+
+/// 卡 #1009: the first sign-in asks once whether the daily usage numbers may go to
+/// the account. Nothing is sent before a yes; an earlier answer is kept.
+Future<void> askAccountStats(BuildContext context, AppSettings settings) async {
+  if (settings.accountStatsChoice != null) return;
+  final allow = await showDialog<bool>(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => AlertDialog(
+      title: const UiText('把使用數字送到我的帳號？'),
+      content: const UiText(
+          '每天最多一次，把已安裝的單字牌組與相片冊名稱、學習語言、單字數，以及複習與拍照的次數送到你的帳號。管理者會看到你用了哪些資料庫；不含單字內容、照片或位置。可以隨時在「設定 → 隱私」關閉，關閉後伺服器上的這筆數字會被刪除。'),
+      actions: [
+        TextButton(
+            key: const ValueKey('account-stats-deny'),
+            onPressed: () => Navigator.pop(context, false),
+            child: const UiText('不要')),
+        TextButton(
+            key: const ValueKey('account-stats-allow'),
+            onPressed: () => Navigator.pop(context, true),
+            child: const UiText('允許')),
+      ],
+    ),
+  );
+  // The first report goes out at the next start (UsageReport.sendIfDue).
+  settings.accountStats = allow == true;
 }

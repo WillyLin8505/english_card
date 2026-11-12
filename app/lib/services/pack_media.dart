@@ -54,6 +54,6 @@ String thumbServerImage(String url, {int side = 480}) {
   final uri = Uri.tryParse(url);
   if (uri == null || !uri.path.endsWith('/api/image')) return url;
   if (uri.queryParameters['w'] != '$servedImageSide') return url;
-  return uri.replace(queryParameters: {...uri.queryParameters, 'w': '$side'})
-      .toString();
+  return uri.replace(
+      queryParameters: {...uri.queryParameters, 'w': '$side'}).toString();
 }

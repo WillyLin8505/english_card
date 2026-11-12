@@ -42,7 +42,7 @@ void main() {
         tester.widget<TextField>(find.byType(TextField)).decoration?.hintText,
         isNull);
     await tester.enterText(find.byType(TextField), 'mug');
-    await tester.tap(find.byTooltip('送出答案'));
+    await tester.tap(find.text('顯示答案'));
     await tester.pumpAndSettle();
 
     expect(find.text('答錯了'), findsOneWidget);

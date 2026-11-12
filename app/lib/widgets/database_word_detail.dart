@@ -125,7 +125,8 @@ class DatabaseWordScreen extends StatelessWidget {
         final stub = !word.full;
         final noMeaning = (word.learnerMeaning ?? '').trim().isEmpty;
         final headerLabel = '${[
-          if (word.entryType != 'word') entryTypeLabel(word.entryType),
+          if (word.entryType != 'word')
+            entryTypeLabel(word.entryType, lang: uiLanguage(context)),
           if (word.pos != 'unknown') posLabel(word.pos)
         ].join(' / ')}'
             // 問題回報 #705: the level is the badge beside this line only,
@@ -359,9 +360,7 @@ class DatabaseWordScreen extends StatelessWidget {
                 if (!stub) ...[
                   const SizedBox(height: MSpace.lg),
                   UiText(
-                      sharesNounPicture
-                          ? '這個拼法沒有名詞，所以沒有圖片'
-                          : '資料庫尚未加入這個單字的圖片',
+                      sharesNounPicture ? '這個拼法沒有名詞，所以沒有圖片' : '資料庫尚未加入這個單字的圖片',
                       style: MFont.caption),
                 ],
               ] else ...[

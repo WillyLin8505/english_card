@@ -58,10 +58,34 @@ class UsageReport {
     };
   }
 
+  /// Consent withdrawn (card #1009): asks the server to forget this account's row.
+  /// Returns whether it is gone; a failure is retried by [forgetIfPending].
+  Future<bool> deleteRemote() async {
+    if (!settings.cloudSignedIn || baseUrl.trim().isEmpty) return false;
+    try {
+      final r = await _client
+          .delete(Uri.parse(baseUrl).resolve('/api/account/stats'),
+              headers: {'Authorization': 'Bearer ${settings.cloudToken}'})
+          .timeout(const Duration(seconds: 15));
+      final ok = r.statusCode == 200;
+      settings.setUsageValue('acctStatsDelete', ok ? 'done' : 'pending');
+      return ok;
+    } catch (_) {
+      settings.setUsageValue('acctStatsDelete', 'pending');
+      return false;
+    }
+  }
+
   /// Sends when signed in and the last success is older than [minGap] (or [force]).
   /// Returns whether the server took it.
   Future<bool> sendIfDue({bool force = false}) async {
-    if (!settings.cloudSignedIn || baseUrl.trim().isEmpty) return false;
+    if (settings.accountStatsChoice == false &&
+        settings.usageValue('acctStatsDelete') == 'pending') {
+      await deleteRemote();
+    }
+    if (!settings.cloudSignedIn || !settings.accountStats || baseUrl.trim().isEmpty) {
+      return false;
+    }
     final nowMs = _now().millisecondsSinceEpoch;
     if (!force && nowMs - settings.statsSentAt < minGap.inMilliseconds) {
       return false;

@@ -161,14 +161,14 @@ class SyncBoxes {
         _ => null,
       };
 
-  static const _logsIndexedKey = 'logsIndexed',
-      _profileBaseKey = 'profileBase';
+  static const _logsIndexedKey = 'logsIndexed', _profileBaseKey = 'profileBase';
 
   static String _key(String collection, String id) => '$collection/$id';
 
   /// A log's id in the index. Hive keys must be ASCII and short, and a log's
   /// wire name holds the word (école, 蘋果).
-  static String logId(String wire) => sha1.convert(utf8.encode(wire)).toString();
+  static String logId(String wire) =>
+      sha1.convert(utf8.encode(wire)).toString();
 
   SyncMark? mark(String collection, String id) {
     final raw = index.get(_key(collection, id));
@@ -195,7 +195,9 @@ class SyncBoxes {
   /// The word of an entry id; null when the entry is gone.
   String? wordOf(String entryId) {
     final raw = entriesBox.get(entryId);
-    return raw == null ? mark(entries, entryId)?.wire : _decode(raw)['word'] as String?;
+    return raw == null
+        ? mark(entries, entryId)?.wire
+        : _decode(raw)['word'] as String?;
   }
 
   static Map<String, dynamic> _decode(String raw) =>
@@ -312,8 +314,11 @@ class SyncBoxes {
     for (final id in metaKeys) {
       final raw = metaBox.get(id);
       if (raw == null || mark(meta, id) != null) continue;
-      await setMark(meta, id,
-          SyncMark(stamp: _ownDate(raw), wire: id, device: device, pending: true));
+      await setMark(
+          meta,
+          id,
+          SyncMark(
+              stamp: _ownDate(raw), wire: id, device: device, pending: true));
     }
     if (index.get(_logsIndexedKey) == '${logsBox.length}') return;
     for (final k in logsBox.keys) {
@@ -337,7 +342,12 @@ class SyncBoxes {
     try {
       final j = jsonDecode(raw);
       if (j is Map) {
-        for (final f in const ['updatedAt', 'reviewedAt', 'createdAt', 'takenAt']) {
+        for (final f in const [
+          'updatedAt',
+          'reviewedAt',
+          'createdAt',
+          'takenAt'
+        ]) {
           final at = DateTime.tryParse('${j[f]}');
           if (at != null) return at.millisecondsSinceEpoch;
         }

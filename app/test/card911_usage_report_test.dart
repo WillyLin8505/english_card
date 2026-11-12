@@ -23,7 +23,8 @@ void main() {
   test('signed in: sends numbers once, failure is retried', () async {
     final bodies = <Map>[];
     var ok = false;
-    final settings = AppSettings.inMemory(taggingUrl: 'https://x.test')..setCloudAccount('tok', 'a@x.com');
+    final settings = AppSettings.inMemory(taggingUrl: 'https://x.test')..setCloudAccount('tok', 'a@x.com')
+      ..accountStats = true; // card #1009: consent first
     final report = UsageReport(settings, WordDatabaseRepository(),
         client: MockClient((r) async {
           expect(r.headers['Authorization'], 'Bearer tok');

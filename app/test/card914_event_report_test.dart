@@ -13,7 +13,8 @@ void main() {
   late DateTime now;
 
   setUp(() {
-    settings = AppSettings.inMemory();
+    settings = AppSettings.inMemory(onboarded: false)
+      ..anonymousEvents = true; // card #1009: only after a yes
     bodies = [];
     status = 200;
     now = DateTime(2026, 10, 31, 9);
@@ -61,6 +62,31 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     expect(bodies, isEmpty);
     expect(settings.usageValue('evt_queue'), isNull);
+  });
+
+  test('someone who already finished the guide is not a new install', () async {
+    settings.onboarded = true;
+    EventReport.instance.appStarted();
+    await Future<void>.delayed(Duration.zero);
+    expect(bodies, isEmpty);
+    expect(settings.usageValue('evt_install'), 'existing');
+    now = DateTime(2026, 11, 1, 8);
+    EventReport.instance.appStarted();
+    await Future<void>.delayed(Duration.zero);
+    expect(bodies, isEmpty);
+  });
+
+  test('turning the switch off drops events that have not been sent', () async {
+    status = 500;
+    EventReport.instance.once('first_photo');
+    await Future<void>.delayed(Duration.zero);
+    expect(jsonDecode(settings.usageValue('evt_queue')!), isNotEmpty);
+    final sent = bodies.length;
+    settings.anonymousEvents = false;
+    expect(jsonDecode(settings.usageValue('evt_queue')!), isEmpty);
+    status = 200;
+    expect(await EventReport.instance.flush(), isFalse);
+    expect(bodies.length, sent);
   });
 
   test('server error keeps the queue for the next try', () async {

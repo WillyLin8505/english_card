@@ -152,6 +152,10 @@ class WordExample {
   /// 2026-10-29); null means no play button.
   final String? audioUrl;
 
+  /// Who wrote the sentence and under which licence, shown under it (card
+  /// #1051: Tatoeba's CC BY 2.0 FR needs the author named); null for none.
+  final String? credit;
+
   const WordExample({
     required this.text,
     this.senseId,
@@ -161,6 +165,7 @@ class WordExample {
     this.aiGenerated = false,
     this.aiTranslated = false,
     this.audioUrl,
+    this.credit,
   });
 
   WordExample copyWith({String? translation, bool? aiTranslated}) =>
@@ -173,6 +178,7 @@ class WordExample {
         aiGenerated: aiGenerated,
         aiTranslated: aiTranslated ?? this.aiTranslated,
         audioUrl: audioUrl,
+        credit: credit,
       );
 
   factory WordExample.fromJson(Map<String, dynamic> j) => WordExample(
@@ -184,10 +190,12 @@ class WordExample {
         aiGenerated: j['aiGenerated'] as bool? ?? false,
         aiTranslated: j['aiTranslated'] as bool? ?? false,
         audioUrl: j['audioUrl'] as String?,
+        credit: j['credit'] as String?,
       );
 
   Map<String, dynamic> toJson() => {
         'text': text,
+        if (credit != null) 'credit': credit,
         if (senseId != null) 'sense_id': senseId,
         'translation': translation,
         'source': source,
@@ -399,6 +407,11 @@ class WordEntry {
 
   final WordDataStatus dataStatus;
 
+  /// Card #1075: the data came from the compact offline dictionary only
+  /// (spelling, part of speech, meaning, IPA); the full entry is filled in
+  /// when the device is online.
+  final bool basic;
+
   /// Why the last background fetch failed, and how many times it has.
   final String? dataError;
   final int dataAttempts;
@@ -446,6 +459,7 @@ class WordEntry {
     this.morphology,
     this.etymology,
     this.dataStatus = WordDataStatus.complete,
+    this.basic = false,
     this.dataError,
     this.dataAttempts = 0,
     this.userEdited = const {},
@@ -475,6 +489,7 @@ class WordEntry {
     double? frequency,
     WordDetail? detail,
     WordDataStatus dataStatus = WordDataStatus.complete,
+    bool basic = false,
     int? lexemeId,
     required DateTime now,
   }) {
@@ -537,6 +552,7 @@ class WordEntry {
       morphology: detail?.morphology,
       etymology: detail?.etymology,
       dataStatus: dataStatus,
+      basic: basic,
       lexemeId: lexemeId,
       createdAt: now,
       updatedAt: now,
@@ -602,6 +618,7 @@ class WordEntry {
     String? Function()? morphology,
     String? Function()? etymology,
     WordDataStatus? dataStatus,
+    bool? basic,
     String? Function()? dataError,
     int? dataAttempts,
     Set<String>? userEdited,
@@ -636,6 +653,7 @@ class WordEntry {
         morphology: morphology != null ? morphology() : this.morphology,
         etymology: etymology != null ? etymology() : this.etymology,
         dataStatus: dataStatus ?? this.dataStatus,
+        basic: basic ?? this.basic,
         dataError: dataError != null ? dataError() : this.dataError,
         dataAttempts: dataAttempts ?? this.dataAttempts,
         userEdited: userEdited ?? this.userEdited,
@@ -680,6 +698,7 @@ class WordEntry {
       etymology: j['etymology'] as String?,
       dataStatus: WordDataStatus.values.asNameMap()[j['dataStatus']] ??
           WordDataStatus.complete,
+      basic: j['basic'] == true,
       dataError: j['dataError'] as String?,
       dataAttempts: j['dataAttempts'] as int? ?? 0,
       userEdited: strings('userEdited').toSet(),
@@ -717,6 +736,7 @@ class WordEntry {
         'morphology': morphology,
         'etymology': etymology,
         'dataStatus': dataStatus.name,
+        if (basic) 'basic': true,
         'dataError': dataError,
         'dataAttempts': dataAttempts,
         'userEdited': userEdited.toList(),

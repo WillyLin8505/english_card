@@ -20,6 +20,8 @@ class _Social implements SocialSignIn {
       const SocialCredential('g-token', 'Gina');
   @override
   Future<SocialCredential?> apple() async => null; // learner closed the sheet
+  @override
+  Future<void> googleDisconnect() async {}
 }
 
 class _CancelGoogle extends _Social {
@@ -59,6 +61,8 @@ void main() {
     await cloud.loginWithApple('a-token');
     expect(seen.last, contains('/api/account/apple'));
     expect(seen.last, contains('"identity_token":"a-token"'));
+    await cloud.loginWithApple('a-token', authorizationCode: 'code-1');
+    expect(seen.last, contains('"authorization_code":"code-1"'));
     await cloud.deleteAccount();
     expect(seen.last, startsWith('POST /api/account/delete'));
     expect(settings.cloudSignedIn, isFalse);
@@ -102,6 +106,11 @@ void main() {
     await tester.tap(find.byKey(const Key('signInGoogle')));
     await tester.pumpAndSettle();
     expect(settings.cloudSignedIn, isTrue);
+    // 卡 #1009: the first sign-in asks about usage numbers before finishing.
+    expect(signedIn, 0);
+    await tester.tap(find.byKey(const ValueKey('account-stats-deny')));
+    await tester.pumpAndSettle();
+    expect(settings.accountStats, isFalse);
     expect(signedIn, 1);
   });
 

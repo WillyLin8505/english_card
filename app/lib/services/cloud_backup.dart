@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 
 import 'app_settings.dart';
+import 'social_sign_in.dart';
 
 /// Thrown with a message the learner can read as is.
 class CloudBackupException implements Exception {
@@ -30,8 +31,8 @@ class CloudBackupInfo {
 /// the store build can sign in); the token lives in the Keychain via [AppSettings].
 class CloudBackup {
   /// Production account API; `--dart-define=ACCOUNT_URL=` points a dev build at another.
-  static const accountUrl =
-      String.fromEnvironment('ACCOUNT_URL', defaultValue: 'https://api.willylinai.com');
+  static const accountUrl = String.fromEnvironment('ACCOUNT_URL',
+      defaultValue: 'https://api.willylinai.com');
 
   final AppSettings settings;
   final String baseUrl;
@@ -74,12 +75,14 @@ class CloudBackup {
     settings.setCloudAccount('${data['token']}', label);
   }
 
-  Future<void> _sign(String path, String email, String password) =>
-      _post(path, {
+  Future<void> _sign(String path, String email, String password) => _post(
+      path,
+      {
         'email': email.trim(),
         'password': password,
         'nickname': email.trim().split('@').first,
-      }, fallbackLabel: email.trim());
+      },
+      fallbackLabel: email.trim());
 
   Future<void> register(String email, String password) =>
       _sign('register', email, password);
@@ -89,12 +92,14 @@ class CloudBackup {
 
   /// ID token from Google; the server checks signature, audience and expiry,
   /// and reuses the account that already has the same email.
-  Future<void> loginWithGoogle(String idToken, {String? name}) =>
-      _post('google', {'id_token': idToken, if (name != null) 'nickname': name});
+  Future<void> loginWithGoogle(String idToken, {String? name}) => _post(
+      'google', {'id_token': idToken, if (name != null) 'nickname': name});
 
-  Future<void> loginWithApple(String identityToken, {String? name}) =>
+  Future<void> loginWithApple(String identityToken,
+          {String? name, String? authorizationCode}) =>
       _post('apple', {
         'identity_token': identityToken,
+        if (authorizationCode != null) 'authorization_code': authorizationCode,
         'nickname': (name == null || name.isEmpty) ? 'Learner' : name,
       });
 
@@ -104,7 +109,13 @@ class CloudBackup {
         .post(_uri('delete'), headers: _auth)
         .timeout(const Duration(seconds: 30));
     if (r.statusCode != 200) _fail(r, utf8.decode(r.bodyBytes));
+    await _disconnectGoogle();
     settings.setCloudAccount('', '');
+  }
+
+  Future<void> _disconnectGoogle() async {
+    final social = PlatformSocialSignIn();
+    if (social.googleConfigured) await social.googleDisconnect();
   }
 
   Future<void> logout() async {
@@ -115,6 +126,7 @@ class CloudBackup {
             .timeout(const Duration(seconds: 15));
       } catch (_) {}
     }
+    await _disconnectGoogle();
     settings.setCloudAccount('', '');
   }
 

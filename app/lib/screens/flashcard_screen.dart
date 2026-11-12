@@ -180,7 +180,8 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
           albumId: albumId,
           cardScope: cardScope,
           newLimit: scope.settings.dailyNewLimit,
-          reviewLimit: scope.settings.dailyReviewLimit)
+          reviewLimit: scope.settings.dailyReviewLimit,
+          hiddenTypes: () => scope.settings.hiddenExerciseTypes)
         // 問題回報 #693 / #858: a swipe on the back no longer runs the
         // whole precache here (it ranked every card ahead and planned their
         // photos in the middle of the swipe, a dropped frame each page); the

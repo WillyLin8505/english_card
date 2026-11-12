@@ -117,8 +117,8 @@ void main() {
           repository: () => repo,
           photoStore: store,
           createTagger: (uri, key) => TaggingService(
-              endpoint: uri,
-              apiKey: key,
+                endpoint: uri,
+                apiKey: key,
               client: MockClient((_) => replies[calls++].future))),
     );
     addTearDown(queue.dispose);

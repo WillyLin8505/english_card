@@ -31,6 +31,16 @@ const interestOptions =
   ('sports', '運動', Icons.sports_soccer, ['運動']),
   ('hiking', '爬山健行', Icons.terrain, ['爬山', '登山', '戶外活動']),
   ('travel', '旅遊景點', Icons.flight_takeoff, ['旅行', '旅遊']),
+  // 卡 #1042 (問題回報 #1562): the 法語主題相片冊; listed only when such a deck exists.
+  ('basics', '時間、數字與顏色', Icons.calendar_month_outlined,
+      ['季節', '月份與星期', '時間', '數字', '顏色', '方位', '問候與禮貌']),
+  ('transport', '交通', Icons.directions_bus_outlined, ['交通']),
+  ('meals', '用餐', Icons.restaurant_menu, ['用餐']),
+  ('home', '居家生活', Icons.home_outlined, ['居家生活']),
+  ('shopping', '購物', Icons.shopping_bag_outlined, ['購物']),
+  ('weather', '天氣', Icons.wb_cloudy_outlined, ['天氣']),
+  ('family', '家庭', Icons.family_restroom, ['家庭']),
+  ('body', '身體與衣服', Icons.accessibility_new, ['身體', '衣服']),
 ];
 
 /// The interests that have at least one deck in [decks] (卡 #891): a topic

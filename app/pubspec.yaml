@@ -45,6 +45,7 @@ flutter:
     - assets/word_db.json
     - assets/cefr_en.json
     - assets/lexicon/
+    - assets/compact/
     - assets/lexicon/media/audio/en/
     - assets/lexicon/media/images/
     - assets/figma/

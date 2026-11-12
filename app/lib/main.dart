@@ -38,6 +38,8 @@ import 'widgets/tagging_progress.dart';
 import 'services/analytics.dart';
 import 'services/crash_reporting.dart';
 import 'services/card_report.dart';
+import 'services/compact_dictionary_stub.dart'
+    if (dart.library.ffi) 'services/compact_dictionary.dart';
 import 'services/feedback_context.dart';
 import 'services/memory_monitor.dart';
 import 'widgets/feedback_button.dart';
@@ -99,6 +101,10 @@ Future<void> _start() async {
       // The downloaded language pack first, then the older bundled data.
       lookupDetail: (w) =>
           LexiconPack.instance.detail(w) ??
+          // Card #1075: nothing in the pack → the compact offline dictionary.
+          CompactDictionary.instance
+              .lookup(w, settings.learningLanguage, settings.nativeLanguage)
+              ?.toDetail(CompactDictionary.sourceLabel) ??
           // Card #957: the bundled word_db.json is Traditional Chinese only;
           // for any other native language it would show Chinese examples.
           (settings.nativeLanguage == 'zh-TW'
@@ -111,6 +117,8 @@ Future<void> _start() async {
           photoStore.remove(filePath: p.filePath, storedKey: p.storedKey));
   }
 
+  await CompactDictionary.instance
+      .open(settings.learningLanguage, settings.nativeLanguage);
   final repository = await open(settings.learningLanguage);
   GoogleFonts.config.allowRuntimeFetching = false;
   runApp(PhotoEnglishApp(

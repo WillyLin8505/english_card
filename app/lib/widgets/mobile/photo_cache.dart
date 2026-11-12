@@ -249,7 +249,7 @@ class CachedNetworkPhoto extends ImageProvider<CachedNetworkPhoto> {
     if (error is NetworkImageLoadException) {
       final code = error.statusCode;
       if (code == 404 || code == 403 || code == 410) return '原因：找不到這張圖';
-      if (code == 429 || code >= 500) return '原因：伺服器忙碌中';
+      if (code == 429 || code >= 500) return '原因：圖片存放在雲端伺服器，伺服器目前忙碌，請稍後再試';
       return '原因：找不到這張圖';
     }
     if (error is SocketException ||

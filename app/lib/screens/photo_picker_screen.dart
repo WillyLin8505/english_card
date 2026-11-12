@@ -136,25 +136,66 @@ class _PhotoPickerScreenState extends State<PhotoPickerScreen> {
         }
       });
 
+  /// Library access for 最近照片 (問題回報 #1536): the system asks only when
+  /// the learner taps 顯示最近照片 — never on open, and never again after a
+  /// denial. 從相簿選擇 (PHPicker) needs no permission at all.
+  static const _recentPermission = PermissionRequestOption(
+      androidPermission:
+          AndroidPermission(type: RequestType.image, mediaLocation: false));
+
+  /// null until checked (and on platforms without a photo library).
+  PermissionState? _recentState;
+
   @override
   void initState() {
     super.initState();
-    unawaited(_loadDevicePhotos());
+    unawaited(_checkRecentAccess());
   }
 
-  Future<void> _loadDevicePhotos() async {
-    if (kIsWeb ||
-        (defaultTargetPlatform != TargetPlatform.android &&
-            defaultTargetPlatform != TargetPlatform.iOS)) {
-      return;
+  /// Reads the permission without asking; the photos load only if the
+  /// learner already allowed it on an earlier visit.
+  Future<void> _checkRecentAccess() async {
+    if (!_hasPhotoLibrary) return;
+    try {
+      final state = await PhotoManager.getPermissionState(
+          requestOption: _recentPermission);
+      if (!mounted) return;
+      setState(() => _recentState = state);
+      if (state.hasAccess) await _loadDevicePhotos();
+    } on MissingPluginException {
+      // Desktop tests and unsupported platforms keep the file picker.
+    } catch (e) {
+      debugPrint('Unable to check photo access: $e');
     }
+  }
+
+  /// 顯示最近照片: the one place the library permission is requested.
+  Future<void> _showRecentPhotos() async {
+    try {
+      final state = await PhotoManager.requestPermissionExtend(
+          requestOption: _recentPermission);
+      if (!mounted) return;
+      setState(() => _recentState = state);
+      if (state.hasAccess) await _loadDevicePhotos();
+    } on MissingPluginException {
+      // Desktop tests and unsupported platforms keep the file picker.
+    } catch (e) {
+      debugPrint('Unable to request photo access: $e');
+    }
+  }
+
+  bool get _hasPhotoLibrary =>
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS);
+
+  /// The button shows only while the learner has not answered yet; after a
+  /// denial the photos stay hidden and 從相簿選擇 is the way in.
+  bool get _offerRecent => _recentState == PermissionState.notDetermined;
+
+  Future<void> _loadDevicePhotos() async {
     setState(() => _loadingDevice = true);
     try {
-      final permission = await PhotoManager.requestPermissionExtend(
-          requestOption: const PermissionRequestOption(
-              androidPermission: AndroidPermission(
-                  type: RequestType.image, mediaLocation: false)));
-      if (!permission.hasAccess) return;
       final albums = await PhotoManager.getAssetPathList(
           type: RequestType.image, onlyAll: true);
       if (albums.isEmpty) return;
@@ -452,6 +493,20 @@ class _PhotoPickerScreenState extends State<PhotoPickerScreen> {
                                 style: MFont.inter(
                                     14, FontWeight.w700, MColors.albumInk)),
                           ),
+                          if (_offerRecent)
+                            Tap(
+                              onTap: _loadingDevice ? null : _showRecentPhotos,
+                              label: '顯示最近照片',
+                              child: Container(
+                                height: 32,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10),
+                                alignment: Alignment.center,
+                                child: UiText('顯示最近照片',
+                                    style: MFont.inter(
+                                        13, FontWeight.w700, MColors.primary)),
+                              ),
+                            ),
                           UiText(
                               count > 0
                                   ? '已選 $count 張'

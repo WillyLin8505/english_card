@@ -191,8 +191,8 @@ class CloudSync extends ChangeNotifier {
     _running = false;
     if (result == CloudSyncState.offline || result == CloudSyncState.failed) {
       final i = min(_failures++, _retryMinutes.length - 1);
-      _retry = Timer(Duration(minutes: _retryMinutes[i]),
-          () => unawaited(syncNow()));
+      _retry = Timer(
+          Duration(minutes: _retryMinutes[i]), () => unawaited(syncNow()));
     }
     _emit(result);
     if (_again) {
@@ -341,8 +341,8 @@ class CloudSync extends ChangeNotifier {
 
   // ── Pull ─────────────────────────────────────────────────────────────
 
-  Future<bool> _pull(Box<String> state, String device,
-      Map<String, SyncBoxes> books) async {
+  Future<bool> _pull(
+      Box<String> state, String device, Map<String, SyncBoxes> books) async {
     var since = int.tryParse(state.get('cursor') ?? '') ?? 0;
     final all = <Map<String, dynamic>>[];
     while (true) {
@@ -414,8 +414,9 @@ class CloudSync extends ChangeNotifier {
         blob: blob ?? old?.blob ?? SyncMark.blobSent,
       );
 
-  static Map<String, dynamic> _clean(Map<String, dynamic> data) =>
-      {...data}..remove('_v')..remove('_w');
+  static Map<String, dynamic> _clean(Map<String, dynamic> data) => {...data}
+    ..remove('_v')
+    ..remove('_w');
 
   Future<bool> _applyLanguage(String language, SyncBoxes b, String device,
       Map<String, List<_Incoming>> groups) async {
@@ -450,9 +451,7 @@ class CloudSync extends ChangeNotifier {
         } else if (write != null) {
           await write(r, mine);
         } else {
-          await b
-              .boxOf(collection)!
-              .put(r.id, jsonEncode(_clean(r.data!)));
+          await b.boxOf(collection)!.put(r.id, jsonEncode(_clean(r.data!)));
           await b.setMark(collection, r.id, _applied(r, r.id, old: mine));
         }
       }
@@ -518,7 +517,8 @@ class CloudSync extends ChangeNotifier {
       if (entry == null) return;
       await b.occurrencesBox
           .put(r.id, jsonEncode(_clean(r.data!)..['wordEntryId'] = entry));
-      await b.setMark(SyncBoxes.occurrences, r.id, _applied(r, r.id, old: mine));
+      await b.setMark(
+          SyncBoxes.occurrences, r.id, _applied(r, r.id, old: mine));
     });
 
     for (final r in groups[SyncBoxes.cards] ?? const <_Incoming>[]) {
@@ -806,8 +806,7 @@ class CloudSync extends ChangeNotifier {
     return null;
   }
 
-  Future<void> _send(
-      String device, List<Map<String, Object?>> records) async {
+  Future<void> _send(String device, List<Map<String, Object?>> records) async {
     final r = await _client
         .post(_uri('push'),
             headers: {..._auth, 'Content-Type': 'application/json'},
@@ -816,8 +815,8 @@ class CloudSync extends ChangeNotifier {
     if (r.statusCode != 200) _fail(r);
   }
 
-  Future<void> _push(Box<String> state, String device,
-      Map<String, SyncBoxes> books) async {
+  Future<void> _push(
+      Box<String> state, String device, Map<String, SyncBoxes> books) async {
     var batch = <Map<String, Object?>>[];
     var done = <Future<void> Function()>[];
     var bytes = 0;
@@ -854,9 +853,8 @@ class CloudSync extends ChangeNotifier {
             }
           }
 
-          final sentProfile = c == SyncBoxes.meta && id == _profile
-              ? b.metaBox.get(id)
-              : null;
+          final sentProfile =
+              c == SyncBoxes.meta && id == _profile ? b.metaBox.get(id) : null;
           final data = m.deleted
               ? null
               : c == SyncBoxes.decks

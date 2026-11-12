@@ -41,6 +41,18 @@ class DataSourcesScreen extends StatelessWidget {
       'https://github.com/skywind3000/ECDICT',
     ),
     (
+      '精簡離線字典（英→中，約 40 萬字）',
+      'ECDICT（skywind3000），簡體以 OpenCC（s2twp）轉台灣用語',
+      'MIT（ECDICT）；Apache-2.0（OpenCC）',
+      'https://github.com/skywind3000/ECDICT',
+    ),
+    (
+      '精簡離線字典（法→英，約 36 萬字）',
+      'Wiktionary，由 Kaikki.org（wiktextract）整理；此字典檔同以 CC BY-SA 4.0 釋出',
+      'CC BY-SA 4.0',
+      'https://kaikki.org/',
+    ),
+    (
       '相片冊『基礎 3000 字』',
       'New General Service List 1.2（Browne, Culligan & Phillips）',
       'CC BY-SA 4.0',
@@ -51,6 +63,24 @@ class DataSourcesScreen extends StatelessWidget {
       'CEFR-J Wordlist（東京外國語大學投野研究室）與 Octanove Labs',
       'CEFR-J：註明出處即可使用；Octanove：CC BY-SA 4.0',
       'https://github.com/openlanguageprofiles/olp-en-cefrj',
+    ),
+    (
+      '法文詞頻與程度分級',
+      'Lexique 3.83（New, Pallier 等人，法國 CNRS 與 Université Savoie Mont Blanc）',
+      'CC BY-SA 4.0',
+      'http://www.lexique.org/',
+    ),
+    (
+      '法文詞頻（輔助程度分級）',
+      'wordfreq（Robyn Speer 等人）的詞頻資料',
+      'CC BY-SA 4.0（程式碼為 Apache-2.0）',
+      'https://github.com/rspeer/wordfreq',
+    ),
+    (
+      '法文『基礎 3000 字』程度',
+      '依上述詞頻資料整理，並經 AI 審閱（A1–B1），App 內標示為估算',
+      '衍生自 CC BY-SA 4.0 資料，同以 CC BY-SA 4.0 釋出',
+      'https://creativecommons.org/licenses/by-sa/4.0/',
     ),
     (
       '圖片',

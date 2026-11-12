@@ -94,8 +94,8 @@ Future<bool?> showFeedbackDialog(BuildContext context,
   ).then((sent) {
     if (sent == null) return null;
     messenger?.removeCurrentSnackBar();
-    messenger?.showSnackBar(
-        SnackBar(content: UiText(sent
+    messenger?.showSnackBar(SnackBar(
+        content: UiText(sent
             ? '已送出，謝謝你的意見'
             : sink.lastStatus == null
                 ? '已存在這支手機，連上網路後會再送出'
@@ -168,6 +168,11 @@ class _FeedbackDialogState extends State<_FeedbackDialog> {
                 decoration: const InputDecoration(border: OutlineInputBorder()),
               ),
               UiText('會一併附上目前頁面、App 版本與學習語言。',
+                  style: MFont.inter(12, FontWeight.w500, MColors.label)),
+              const SizedBox(height: 4),
+              UiText(
+                  '送出即表示你同意：這則回饋（含勾選的截圖）會存進問題回報系統，並交給協助開發的 AI 服務（Anthropic Claude、OpenAI Codex、Cursor）讀取處理。',
+                  key: const ValueKey('feedback-consent'),
                   style: MFont.inter(12, FontWeight.w500, MColors.label)),
               if (widget.screenshot case final shot?) ...[
                 const SizedBox(height: 8),

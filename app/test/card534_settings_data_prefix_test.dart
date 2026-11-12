@@ -11,7 +11,7 @@ void main() {
       (tester) async {
     closeFrench();
     await pumpApp(tester,
-        initialTab: AppTab.settings, size: const Size(402, 2400));
+        initialTab: AppTab.settings, size: const Size(402, 4000));
     expect(find.textContaining('英文（English）：'), findsNothing);
     expect(find.textContaining(RegExp(r'^\S+ 個單字 · ')), findsOneWidget);
   });
@@ -23,7 +23,7 @@ void main() {
       if (added) availableLearningLanguages.remove('fr');
     });
     await pumpApp(tester,
-        initialTab: AppTab.settings, size: const Size(402, 2400));
+        initialTab: AppTab.settings, size: const Size(402, 4000));
     expect(find.textContaining('英文（English）：'), findsOneWidget);
   });
 }

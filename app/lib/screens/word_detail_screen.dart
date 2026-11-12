@@ -378,6 +378,14 @@ class _WordBody extends StatelessWidget {
       ),
       if (entry.dataStatus != WordDataStatus.complete)
         _DataStatus(entry: entry),
+      // Card #1075: only the compact offline dictionary knew this word.
+      if (entry.basic)
+        Padding(
+          key: const ValueKey('basic-data-badge'),
+          padding: const EdgeInsets.only(top: MSpace.xs),
+          child: UiText('基本資料（精簡字典）：連網後會補上例句、關聯詞與圖片。',
+              style: MFont.manrope(12, FontWeight.w700, MColors.muted)),
+        ),
       // 問題回報 #617: a word with no photo of the learner's own (added from
       // the database or by hand) still shows the database pictures that tag
       // it, with their word labels. 問題回報 #1411 (卡 #958): above the
@@ -643,7 +651,9 @@ class _DataStatus extends StatelessWidget {
                           for (final n in missingFieldNames(entry))
                             ui(context, n)
                         ].join('、')}。詞庫更新後會自動補上。')
-                  : '正在整理單字內容…',
+                  : (entry.basic
+                      ? '正在補完整內容…'
+                      : '正在整理單字內容…'),
               style: MFont.manrope(12, FontWeight.w700,
                   failed ? MColors.hardFg : MColors.primary),
             ),

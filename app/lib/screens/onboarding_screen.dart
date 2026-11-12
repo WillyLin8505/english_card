@@ -5,6 +5,7 @@ import '../models/word_entry.dart';
 import '../services/app_settings.dart';
 import '../services/cefr_lexicon.dart';
 import '../services/deck_library.dart';
+import '../services/event_report.dart';
 import '../services/interest_topics.dart';
 import '../theme/mobile_theme.dart';
 import '../widgets/account_sign_in.dart';
@@ -111,6 +112,10 @@ class OnboardingScreen extends StatefulWidget {
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
   int _step = 0;
+  // 卡 #1009: nothing is sent before an explicit yes/no; someone who already has a
+  // saved choice (an update) is not asked again.
+  late final bool _askConsent = widget.settings != null &&
+      widget.settings!.anonymousEventsChoice == null;
   int _checkLevel = 0;
   late String _native =
       nativeLanguageAvailable(widget.uiLanguage) ? widget.uiLanguage : 'zh-TW';
@@ -129,7 +134,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   void initState() {
     super.initState();
-    if (_learning == _native) _native = _nativeFor(_learning);
+    // 問題回報 #1616: a French device must not start on the closed pair
+    // (learn English, native French); preselect one that can continue.
+    if (_learning == _native || !languagePairAvailable(_learning, _native)) {
+      _native = _nativeFor(_learning);
+    }
   }
 
   /// A learning language other than [native], English first.
@@ -171,6 +180,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final steps = [
+      if (_askConsent) _consent,
       _languages,
       _background,
       _goalsPage,
@@ -320,6 +330,33 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
         );
       });
+
+  void _answerConsent(bool allow) {
+    final s = widget.settings!;
+    s.anonymousEvents = allow;
+    if (allow) EventReport.instance.once('install', flushNow: false);
+    setState(() => _step++);
+  }
+
+  Widget _consent() => _page(
+        title: '幫助改善 App',
+        subtitle: '要不要讓我們知道有人安裝並使用這個 App？',
+        children: [
+          UiText(
+              '允許的話，只會把這次安裝的隨機編號，以及「安裝、完成引導、第一次拍照、第一次複習、每天開啟」這幾種事件的名稱和日期，送到我們自己的伺服器。不含姓名、帳號、照片、單字或位置。選「不要」也完全不影響使用，之後可以在「設定 → 隱私」改變主意。',
+              style: MFont.manrope(15, FontWeight.w600, MColors.ink)),
+        ],
+        action: Column(children: [
+          PrimaryButton(
+              key: const ValueKey('consent-allow'),
+              label: '允許',
+              onTap: () => _answerConsent(true)),
+          TextButton(
+              key: const ValueKey('consent-deny'),
+              onPressed: () => _answerConsent(false),
+              child: const UiText('不要')),
+        ]),
+      );
 
   Widget _languages() => _page(
         title: '歡迎使用拍照學單字',

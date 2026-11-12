@@ -48,28 +48,37 @@ class EventReport {
     return id;
   }
 
-  /// First start: `install`. Later starts: one `open` per local day.
+  /// First start of someone who has not finished the guide: `install`, plus one
+  /// `open` per local day. Someone who already finished the guide before this
+  /// existed is not a new install (an update must not look like a new cohort).
   void appStarted() {
     final s = _settings;
     if (s == null) return;
-    if (s.usageValue('evt_install') == null) once('install');
+    if (s.usageValue('evt_install') == null) {
+      if (s.onboarded) {
+        if (s.anonymousEvents) s.setUsageValue('evt_install', 'existing');
+        return;
+      }
+      once('install', flushNow: false);
+    }
+    if (!s.anonymousEvents || s.usageValue('evt_install') == 'existing') return;
     final today = _day();
     if (s.usageValue('evt_open_day') != today) {
-      if (s.anonymousEvents) s.setUsageValue('evt_open_day', today);
+      s.setUsageValue('evt_open_day', today);
       _add('open');
     }
     flush();
   }
 
   /// A "first time" event (install, onboarded, first_photo, first_review): sent once per install.
-  void once(String event) {
+  void once(String event, {bool flushNow = true}) {
     final s = _settings;
     if (s == null || !s.anonymousEvents || s.usageValue('evt_$event') != null) {
       return;
     }
     s.setUsageValue('evt_$event', _day());
     _add(event);
-    flush();
+    if (flushNow) flush();
   }
 
   void _add(String event) {
@@ -96,7 +105,10 @@ class EventReport {
   /// Sends the queue. Returns whether the server took it (or nothing was due).
   Future<bool> flush() async {
     final s = _settings;
-    if (s == null || !s.anonymousEvents || _sending || _baseUrl.trim().isEmpty) {
+    if (s == null ||
+        !s.anonymousEvents ||
+        _sending ||
+        _baseUrl.trim().isEmpty) {
       return false;
     }
     final q = _queue(s);
@@ -109,8 +121,9 @@ class EventReport {
               headers: {'Content-Type': 'application/json'},
               body: jsonEncode({'install_id': installId(s), 'events': sent}))
           .timeout(const Duration(seconds: 10));
-      if (r.statusCode != 200) return false;
-      final rest = _queue(s)..removeRange(0, min(sent.length, _queue(s).length));
+      if (r.statusCode != 200 || !s.anonymousEvents) return false;
+      final rest = _queue(s)
+        ..removeRange(0, min(sent.length, _queue(s).length));
       s.setUsageValue('evt_queue', jsonEncode(rest));
       return true;
     } catch (_) {

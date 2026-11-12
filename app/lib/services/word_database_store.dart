@@ -139,10 +139,11 @@ class HiveWordDatabaseStore
   static Future<List<String?>> savedPhotoPaths({String boxPrefix = ''}) async =>
       [
         for (final language in supportedLanguages.keys)
-          for (final raw in (await open(language: language, boxPrefix: boxPrefix))
-              .sync
-              .photosBox
-              .values)
+          for (final raw
+              in (await open(language: language, boxPrefix: boxPrefix))
+                  .sync
+                  .photosBox
+                  .values)
             (jsonDecode(raw) as Map)['filePath'] as String?,
       ];
 

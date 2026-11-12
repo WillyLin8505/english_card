@@ -47,9 +47,8 @@ class CloudSyncPanel extends StatelessWidget {
         return '雲端照片空間已滿，照片暫停上傳';
       case CloudSyncState.idle:
         final at = sync.lastSyncedAt;
-        final done = at == null
-            ? '已同步'
-            : '已同步 ${_two(at.hour)}:${_two(at.minute)}';
+        final done =
+            at == null ? '已同步' : '已同步 ${_two(at.hour)}:${_two(at.minute)}';
         if (sync.photosWaitForWifi) {
           return '$done · ${sync.pendingPhotos} 張照片等 Wi-Fi';
         }

@@ -122,7 +122,7 @@ void main() {
       await tester.pumpAndSettle();
       var front = tester.widget<FlashcardFront>(find.byType(FlashcardFront));
       await tester.enterText(find.byType(TextField), front.entry.word);
-      await tester.tap(find.byTooltip('送出答案'));
+      await tester.tap(find.text('顯示答案'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('記得'));
       await tester.pumpAndSettle();

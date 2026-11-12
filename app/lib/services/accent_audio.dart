@@ -122,3 +122,20 @@ RecordingCredit? packAccentAudioCredit(LexEntry source, String accent) {
   if (recording.synthetic) return RecordingCredit.synthetic;
   return source.recordingCredits[recording.path];
 }
+
+/// The Azure synthetic file [entry] has in [accent] (else any accent), or
+/// null: the flip's second sound after a person's recording (問題回報
+/// #1589, owner: 機械式的聲音放第二個，第一個一定是人的聲音). Null means the
+/// phone's TTS voice.
+String? accentSyntheticUrl(WordEntry entry, String accent) {
+  final source = _packSource(entry);
+  if (source == null) return null;
+  final aliases = _aliases(accent);
+  final synthetic = source.recordings.where((r) => r.synthetic);
+  final r = synthetic
+          .where((r) => aliases.contains(r.accent?.toLowerCase()))
+          .firstOrNull ??
+      synthetic.firstOrNull;
+  if (r == null) return null;
+  return packRecordingUrl(LexiconPack.instance.mediaBase, r.path);
+}

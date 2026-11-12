@@ -131,6 +131,25 @@ class _InteractiveExerciseState extends State<_InteractiveExercise> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        ..._questions(x),
+        // 問題回報 #1590: stop this kind of question, not the card.
+        Align(
+          alignment: Alignment.center,
+          child: TextButton(
+            key: const ValueKey('hide-exercise-type'),
+            onPressed: () {
+              final settings = AppScope.of(context).settings;
+              widget.session.replaceExerciseType(settings.hideExerciseType);
+            },
+            child: const UiText('不要這種題型'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _questions(ReviewExercise x) {
+    return [
         if (x.type == ReviewExerciseType.sentenceCloze) ...[
           // Card #561 (issue #609): the fill-in front shows the word's photo
           // too, so the sentence and the picture work together. No ring, but
@@ -151,14 +170,20 @@ class _InteractiveExerciseState extends State<_InteractiveExercise> {
             textAlign: TextAlign.center,
             textInputAction: TextInputAction.done,
             onSubmitted: (_) => _submitText(),
-            decoration: InputDecoration(
-              suffixIcon: IconButton(
-                tooltip: ui(context, '送出答案'),
-                onPressed: _submitText,
-                icon: const Icon(Icons.arrow_forward),
-              ),
-            ),
+            onChanged: (v) => setState(() => widget.session.typedDraft = v),
           ),
+          // 問題回報 #1592: how far the typing is from the answer.
+          if (_answer.text.trim().isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Builder(builder: (context) {
+                final d = FlashcardSession.letterDistance(
+                    _answer.text, x.answer);
+                return UiText(d == 0 ? '完全正確' : '還差 $d 個字母',
+                    textAlign: TextAlign.center,
+                    style: MFont.manrope(13, FontWeight.w700, MColors.muted));
+              }),
+            ),
           Align(
             alignment: Alignment.centerRight,
             child: IconButton(
@@ -315,8 +340,7 @@ class _InteractiveExerciseState extends State<_InteractiveExercise> {
                 style: MFont.manrope(13, FontWeight.w700, MColors.againFg)),
           ],
         ],
-      ],
-    );
+    ];
   }
 
   void _submitText() {

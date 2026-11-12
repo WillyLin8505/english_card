@@ -77,7 +77,7 @@ class _RecommendedDecksScreenState extends State<RecommendedDecksScreen> {
       _progress = '';
     });
     try {
-      final deck = await _library.fetchDeck(info.slug);
+      final deck = await _library.fetchDeck(info.slug, listed: info);
       final created = await _library.install(deck,
           repository: scope.repository,
           intake: scope.intake, onProgress: (done, total) {
@@ -240,8 +240,7 @@ class _RecommendedCard extends StatelessWidget {
                             ? const UiText('已加入')
                             : FilledButton(
                                 onPressed: disabled ? null : onAdd,
-                                child:
-                                    UiText(info.isPhotos ? '加入相片冊' : '加入')),
+                                child: UiText(info.isPhotos ? '加入相片冊' : '加入')),
                   ),
                 ],
               ),

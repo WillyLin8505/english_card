@@ -60,9 +60,25 @@ Future<void> playBothAccents(BuildContext context, WordEntry entry) async {
   // synthetic files, then TTS (卡 #695/#759); British first within a rank.
   final rank = {for (final a in both) a: accentAudioRank(entry, a)};
   final ordered = [...both]..sort((a, b) => rank[a]!.compareTo(rank[b]!));
-  for (final accent in ordered) {
+  // 問題回報 #1589: one person's recording standing for both accents is
+  // heard first; the second sound is the mechanical one (Azure file, else
+  // TTS), never the same recording again.
+  final first = cardAccentAudioUrl(entry, ordered[0]);
+  final sameClip = first != null &&
+      first == cardAccentAudioUrl(entry, ordered[1]) &&
+      accentAudioRank(entry, ordered[0]) < 2;
+  for (var i = 0; i < ordered.length; i++) {
     if (!context.mounted || run != _cardAudioRun) return;
-    if (!await playAccent(context, entry, accent)) return;
+    final accent = ordered[i];
+    if (sameClip && i == 1) {
+      final ok = await AppScope.of(context).speaker.say(entry.word,
+          language: entry.language,
+          accent: accent,
+          audioUrl: accentSyntheticUrl(entry, accent));
+      if (!ok) return;
+    } else if (!await playAccent(context, entry, accent)) {
+      return;
+    }
   }
 }
 
@@ -323,6 +339,10 @@ class FlashcardBack extends StatelessWidget {
   /// navigator when null.
   final ValueChanged<String>? onOpenWord;
 
+  /// Card #1051: sentences the deck being reviewed picked for this word;
+  /// shown before the word's own examples. Empty: the usual examples only.
+  final List<WordExample> contextExamples;
+
   const FlashcardBack({
     super.key,
     required this.entry,
@@ -343,6 +363,7 @@ class FlashcardBack extends StatelessWidget {
     required this.onPlay,
     required this.onOpen,
     this.onOpenWord,
+    this.contextExamples = const [],
   });
 
   /// The card's headword: capitalised English, lowercase French with the
@@ -859,8 +880,16 @@ class FlashcardBack extends StatelessWidget {
   List<LexMorpheme> _morphemes() => _data.morphemes ??= _findMorphemes();
 
   /// The examples for the learner's level, best first (M-PERF: sorted once).
-  List<WordExample> _examples() => _data.examples.putIfAbsent(learnerLevel,
-      () => learningExamples(entry, learnerLevel, maxItems: 10000));
+  List<WordExample> _examples() {
+    final own = _data.examples.putIfAbsent(learnerLevel,
+        () => learningExamples(entry, learnerLevel, maxItems: 10000));
+    if (contextExamples.isEmpty) return own;
+    final seen = {for (final x in contextExamples) x.text.toLowerCase()};
+    return [
+      ...contextExamples,
+      ...own.where((x) => seen.add(x.text.toLowerCase()))
+    ];
+  }
 
   String? _origin() {
     final data = _data;
@@ -965,7 +994,8 @@ class FlashcardBack extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (entry.entryType != 'word') TagChip(entryTypeLabel(entry.entryType)),
+        if (entry.entryType != 'word')
+          TagChip(entryTypeLabel(entry.entryType, lang: uiLanguage(context))),
         if (answerCorrect != null) ...[
           Container(
             padding: const EdgeInsets.all(MSpace.md),

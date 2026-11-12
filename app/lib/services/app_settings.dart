@@ -136,6 +136,25 @@ class AppSettings extends ChangeNotifier {
     _save('seenTutorials', _seenTutorials.join(','));
   }
 
+  // 問題回報 #1590: 複習題型 the learner turned off (ReviewExerciseType.name),
+  // comma-joined in the box. Only that kind of question stops; the cards stay.
+  late final Set<String> _hiddenExerciseTypes =
+      _readList('hiddenExerciseTypes').toSet();
+
+  Set<String> get hiddenExerciseTypes =>
+      Set.unmodifiable(_hiddenExerciseTypes);
+
+  void hideExerciseType(String type) {
+    if (!_hiddenExerciseTypes.add(type)) return;
+    _save('hiddenExerciseTypes', _hiddenExerciseTypes.join(','));
+  }
+
+  void showAllExerciseTypes() {
+    if (_hiddenExerciseTypes.isEmpty) return;
+    _hiddenExerciseTypes.clear();
+    _save('hiddenExerciseTypes', '');
+  }
+
   List<String> _readList(String key) => [
         for (final s in (_box?.get(key) ?? '').split(','))
           if (s.isNotEmpty) s
@@ -156,8 +175,9 @@ class AppSettings extends ChangeNotifier {
   /// Builds that may talk to a tagging server show its address and key in
   /// 設定: the web page (its own server), a build with TAGGING_URL, or
   /// `--dart-define=DEV_TOOLS=true`.
-  static const developerTools =
-      bool.fromEnvironment('DEV_TOOLS') || defaultTaggingUrl != '';
+  /// Card #1074 (owner 11/11, Apple): phones never send photos to a server,
+  /// so only the web page (its own server) shows the address fields.
+  static const developerTools = bool.fromEnvironment('DEV_TOOLS');
 
   /// Set when start-up found a stored pair without a dictionary (繁中母語＋
   /// 法文) and went back to English; the app shows it once ([takePairReset]).
@@ -172,7 +192,7 @@ class AppSettings extends ChangeNotifier {
   }
 
   AppSettings._(this._box)
-      : _taggingUrl = _box?.get('taggingUrl') ?? defaultTaggingUrl,
+      : _taggingUrl = kIsWeb ? (_box?.get('taggingUrl') ?? defaultTaggingUrl) : '',
         _apiKey = _box?.get('apiKey') ?? defaultApiKey,
         _cloudToken = '',
         _cloudEmail = _box?.get('cloudEmail') ?? '',
@@ -286,6 +306,9 @@ class AppSettings extends ChangeNotifier {
 
   /// Tagging endpoint, e.g. `http://127.0.0.1:8765/tag` or a Cloudflare
   /// Web builds use the local app server automatically when no override is set.
+  /// Card #1074: on a phone the stored address is always empty (cleared on
+  /// load, and no screen offers the field), so photos never leave the device;
+  /// only tests can inject one through [AppSettings.inMemory].
   String get taggingUrl => _taggingUrl.trim().isNotEmpty
       ? _taggingUrl
       : kIsWeb
@@ -293,14 +316,13 @@ class AppSettings extends ChangeNotifier {
           : '';
   String get apiKey => _taggingUrl.trim().isEmpty && kIsWeb ? '' : _apiKey;
 
-  /// No server address and the device can classify: photos are recognized
-  /// on the phone and never uploaded.
+  /// The device can classify and no address is set (always so on phones,
+  /// card #1074): photos are recognized on the phone and never uploaded.
   bool get usesLocalRecognition =>
       !kIsWeb && _taggingUrl.trim().isEmpty && localRecognition;
 
   /// Whether 設定 offers the server address / key fields at all.
-  bool get showsTaggingServer =>
-      kIsWeb || developerTools || _taggingUrl.trim().isNotEmpty;
+  bool get showsTaggingServer => kIsWeb || _taggingUrl.trim().isNotEmpty;
 
   /// Something can recognize photos: the device itself or a server.
   bool get taggingConfigured => usesLocalRecognition || taggingUrl.isNotEmpty;
@@ -433,18 +455,41 @@ class AppSettings extends ChangeNotifier {
     _box?.put(k, v);
   }
 
-  int usageCount(String key) => int.tryParse(_usageGet('usage_$key') ?? '') ?? 0;
-  void bumpUsage(String key) => _usagePut('usage_$key', '${usageCount(key) + 1}');
+  int usageCount(String key) =>
+      int.tryParse(_usageGet('usage_$key') ?? '') ?? 0;
+  void bumpUsage(String key) =>
+      _usagePut('usage_$key', '${usageCount(key) + 1}');
 
   /// Raw usage-store access for the anonymous events (card #914).
   String? usageValue(String key) => _usageGet(key);
   void setUsageValue(String key, String v) => _usagePut(key, v);
 
-  /// 設定 → 匿名使用事件 (card #914). Default on; off means nothing is queued or sent.
-  bool get anonymousEvents => _usageGet('anonEvents') != 'false';
+  /// 設定 → 匿名安裝與留存統計 (card #914, consent #1009). Nothing is queued or sent
+  /// until the person said yes: null = never asked (the guide page asks), and
+  /// someone who saved 'true'/'false' before keeps that value.
+  bool? get anonymousEventsChoice => switch (_usageGet('anonEvents')) {
+        'true' => true,
+        'false' => false,
+        _ => null,
+      };
+  bool get anonymousEvents => anonymousEventsChoice == true;
   set anonymousEvents(bool v) {
     _usagePut('anonEvents', '$v');
     if (!v && _usageGet('evt_queue') != null) _usagePut('evt_queue', '[]');
+    notifyListeners();
+  }
+
+  /// 設定 → 隱私 → 把使用數字送到我的帳號 (card #1009). null = not asked yet (asked once
+  /// after a sign-in); only an explicit yes lets UsageReport send.
+  bool? get accountStatsChoice => switch (_usageGet('acctStats')) {
+        'true' => true,
+        'false' => false,
+        _ => null,
+      };
+  bool get accountStats => accountStatsChoice == true;
+  set accountStats(bool v) {
+    _usagePut('acctStats', '$v');
+    if (!v) _usagePut('statsSentAt', '0');
     notifyListeners();
   }
 

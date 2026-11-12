@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:photo_english_app/app/app_scope.dart';
@@ -46,5 +48,22 @@ void main() {
         matching: find.byType(BackNavButton)));
     await tester.pumpAndSettle();
     expect(find.text('分享使用統計'), findsOneWidget);
+  });
+
+  test('docs/privacy.html carries every in-app section verbatim (card #1010)',
+      () {
+    final html = File('../docs/privacy.html').readAsStringSync();
+    String plain(String t) => t.replaceAll('&', '&amp;').replaceAll('<', '&lt;');
+    for (final s in PrivacyPolicyScreen.sections.skip(1)) {
+      expect(html, contains('<h2>${plain(s.$1)}</h2>'));
+      expect(html, contains(plain(s.$2).replaceAll(
+          'sssss971412@gmail.com',
+          '<a href="mailto:sssss971412@gmail.com">sssss971412@gmail.com</a>')));
+    }
+    expect(html, contains(plain(PrivacyPolicyScreen.sections.first.$2)));
+    // The five things 5.1.1(i) / 5.1.2(i) review asked for.
+    for (final t in ['帳號資料', '雲端備份與同步', '意見回饋與卡片回報', '網路連線與第三方', '保存與刪除']) {
+      expect(PrivacyPolicyScreen.sections.map((s) => s.$1), contains(t));
+    }
   });
 }

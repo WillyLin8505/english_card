@@ -26,12 +26,17 @@ class LevelColumnPanel extends StatelessWidget {
   final String Function(GridWord w) display;
   final ValueChanged<GridWord> onWordTap;
 
+  /// 問題回報 #1583: show every level of [grid] (the listed labels), so the
+  /// counts here match the label list above instead of one level's slice.
+  final bool allLevels;
+
   const LevelColumnPanel({
     super.key,
     required this.grid,
     required this.level,
     required this.onWordTap,
     this.known = const {},
+    this.allLevels = false,
     this.display = _plain,
   });
 
@@ -49,8 +54,12 @@ class LevelColumnPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(children: [
-            Text('${cefrLevels[level]} ', style: head),
-            UiText('的字', style: head),
+            if (allLevels)
+              UiText('照片上的字', style: head)
+            else ...[
+              Text('${cefrLevels[level]} ', style: head),
+              UiText('的字', style: head),
+            ],
           ]),
           for (final r in levelColumnRows) ...[
             const SizedBox(height: 8),
@@ -63,7 +72,7 @@ class LevelColumnPanel extends StatelessWidget {
                     child: UiText(gridRowLabel(r),
                         style: MFont.manrope(12, FontWeight.w800,
                             posAccent(r.name, '') ?? MColors.muted))),
-                Expanded(child: _cell(context, r, grid.cell(r, level))),
+                Expanded(child: _cell(context, r, _words(r))),
               ],
             ),
           ],
@@ -71,6 +80,10 @@ class LevelColumnPanel extends StatelessWidget {
       ),
     );
   }
+
+  List<GridWord> _words(GridRow r) => allLevels
+      ? [for (var i = 0; i < cefrLevels.length; i++) ...grid.cell(r, i)]
+      : grid.cell(r, level);
 
   Widget _cell(BuildContext context, GridRow r, List<GridWord> words) {
     if (words.isEmpty) {

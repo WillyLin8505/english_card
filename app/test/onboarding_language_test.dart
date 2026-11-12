@@ -73,7 +73,9 @@ void main() {
         ('en', 'zh-TW'));
   });
 
-  testWidgets('a French phone gets French as native, English to learn',
+  testWidgets(
+      'a French phone starts on a pair that can continue (#1616): '
+      'English to learn, Chinese native (en-fr is closed)',
       (tester) async {
     final result = await pump(tester, uiLanguage: 'fr');
     expect(
@@ -85,7 +87,8 @@ void main() {
     await toInterests(tester);
     await tester.tap(find.text('Commencer'));
     expect(
-        (result()!.learningLanguage, result()!.nativeLanguage), ('en', 'fr'));
+        (result()!.learningLanguage, result()!.nativeLanguage),
+        ('en', 'zh-TW'));
   });
 
   testWidgets(
@@ -129,15 +132,18 @@ void main() {
       'choice', (tester) async {
     openFrench();
     final result = await pump(tester, uiLanguage: 'fr');
-    // Device French → native French, English to learn; now learn French.
-    await tester.tap(find.text('Français').first);
+    // Device French → starts on English to learn, Chinese native (#1616);
+    // French is only offered to English natives: pick English native first.
+    await tester.tap(find.text('Anglais (English)').last);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Suivant'));
+    await tester.tap(find.text('French (Français)').first);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Je connais les bases'));
+    await tester.tap(find.text('Next'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Know basic words'));
     await tester.pump();
     await toInterests(tester);
-    await tester.tap(find.text('Commencer'));
+    await tester.tap(find.text('Get started'));
     expect((result()!.learningLanguage, result()!.nativeLanguage),
         ('fr', 'en'));
   });

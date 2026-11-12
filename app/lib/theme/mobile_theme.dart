@@ -338,9 +338,10 @@ abstract final class MDecor {
 
 /// Typography. Manrope (UI) + Inter (album/meta); CJK via fallbacks.
 abstract final class MFont {
-  /// Tests turn this off (test/flutter_test_config.dart) so no test ever
-  /// tries to download a font.
-  static bool useGoogleFonts = true;
+  /// Off: the app never downloads fonts from Google (privacy policy, card
+  /// #1010); Manrope / Inter / Noto Sans TC are used only if installed, else
+  /// the system font. Bundle the font files before turning this on.
+  static bool useGoogleFonts = false;
 
   static const _cjkFallback = <String>[
     'Noto Sans TC',

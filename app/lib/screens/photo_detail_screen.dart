@@ -312,7 +312,15 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
     final scope = AppScope.of(context);
     _save();
     final e = scope.repository.entryByWord(w.word);
-    if (e != null) scope.navigator.openWord(e.id);
+    if (e != null) {
+      scope.navigator.openWord(e.id);
+      return;
+    }
+    // 問題回報 #1586: a word not in the book (deleted / not saved) used to do
+    // nothing at all on 查看單字.
+    if (mounted) {
+      showToast(context, '「${_shown(w.word, w.candidate.pos)}」還沒存進單字本，沒有詳情可看');
+    }
   }
 
   Future<void> _pinActions(SessionWord w) async {
@@ -759,17 +767,12 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
     return PinnedPhoto(
       photo: photo,
       pins: pins,
-      // 問題回報 #1153: a tap means 「我要這個字」 (collect it); a long press
-      // opens the list of things to do with it.
+      // 問題回報 #1585 (replaces #1153): a tap opens 單字詳情 at once;
+      // collecting is the star on the list card or dragging to the 收集區,
+      // a long press opens the list of things to do with it.
       onPinTap: (p) {
         final w = wordOf(p);
-        if (w == null) return;
-        if (w.starred) {
-          showToast(context, '「${_shown(w.word, w.candidate.pos)}」已收集');
-        } else {
-          session.collect(w);
-          showToast(context, '已收集「${_shown(w.word, w.candidate.pos)}」');
-        }
+        if (w != null) _openWord(w);
       },
       onPinLongPress: (p) {
         final w = wordOf(p);
@@ -878,13 +881,18 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
   /// 卡 #744: the table's column for the level the bar is on.
   Widget _levelColumn(Photo photo, PhotoWordSession session) {
     final repo = AppScope.of(context).repository;
+    // 問題回報 #1584: the picture's labels and the bank words of this photo
+    // (已確定的單字庫), all levels. The labels come first, so the counts
+    // here always include them.
+    final listed = {for (final w in session.words) w.word.toLowerCase()};
     final words = [
       for (final w in session.words) GridWord.fromCandidate(w.candidate),
-      for (final c in photo.candidates) GridWord.fromCandidate(c),
-      for (final o in session.oldWords) GridWord.fromCandidate(o.candidate),
+      for (final o in session.oldWords)
+        if (!listed.contains(o.candidate.word.toLowerCase()))
+          GridWord.fromCandidate(o.candidate),
     ];
-    final listed = {for (final w in session.words) w.word.toLowerCase()};
     return LevelColumnPanel(
+      allLevels: true,
       grid: buildPhotoWordGrid(words),
       level: session.target,
       known: {
@@ -1093,20 +1101,57 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
     final grid = buildPhotoWordGrid(words);
     if (grid.isEmpty) return const SizedBox.shrink();
     final listed = {for (final w in session.words) w.word.toLowerCase()};
+    final known = {
+      for (final w in words)
+        if (listed.contains(w.word.toLowerCase()) ||
+            repo.entryByWord(w.word) != null)
+          w.word.toLowerCase(),
+    };
+    // 問題回報 #1582 「給我一個按鈕把所有單字全部收進去」: one button adds
+    // every grid word that is not yet on the list or in the book.
+    final todo = <GridWord>[];
+    final seen = <String>{};
+    for (final w in words) {
+      final k = w.word.toLowerCase();
+      if (!known.contains(k) && seen.add(k)) todo.add(w);
+    }
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-      child: PhotoWordGridTable(
-        grid: grid,
-        known: {
-          for (final w in words)
-            if (listed.contains(w.word.toLowerCase()) ||
-                repo.entryByWord(w.word) != null)
-              w.word.toLowerCase(),
-        },
-        display: (w) => _shown(w.word, w.pos),
-        onWordTap: _gridTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (todo.isNotEmpty)
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                key: const ValueKey('grid-add-all'),
+                onPressed: () => _addAllGrid(session, todo),
+                child: UiText('全部加入（${todo.length}）',
+                    maxLines: 1, overflow: TextOverflow.ellipsis),
+              ),
+            ),
+          PhotoWordGridTable(
+            grid: grid,
+            known: known,
+            display: (w) => _shown(w.word, w.pos),
+            onWordTap: _gridTap,
+          ),
+        ],
       ),
     );
+  }
+
+  void _addAllGrid(PhotoWordSession session, List<GridWord> todo) {
+    var n = 0;
+    for (final g in todo) {
+      final c = g.candidate;
+      final w = c != null
+          ? session.addFound(c, g.point ?? (c.grounded ? c.point : null))
+          : session.add(
+              word: g.word, meaning: g.meaning, level: g.level, at: g.point);
+      if (w != null) n++;
+    }
+    if (mounted) showToast(context, '已加入 $n 個單字');
   }
 
   /// A word in the book (or on the list, saved first) opens 單字詳情; any

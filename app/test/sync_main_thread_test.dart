@@ -152,8 +152,16 @@ void main() {
           full ? 'application/vnd.sqlite3' : 'application/json; charset=utf-8';
       final repo = newRepo();
       final s = DictionarySync(
-          client: MockClient((request) async =>
-              http.Response.bytes(body, 200, headers: {'content-type': type})),
+          client: MockClient((request) async {
+            // Like the server: a client already on the new version gets a
+            // 304. Under load the test outlives the 30 s refresh timer, and
+            // the same old-base patch would then be refused.
+            if (request.url.queryParameters['since'] == 'm-perf2-next') {
+              return http.Response('', 304);
+            }
+            return http.Response.bytes(body, 200,
+                headers: {'content-type': type});
+          }),
           remote: true);
       services.add(s);
       final stall = await longestStall(() async {

@@ -20,8 +20,8 @@ class CrashReporting {
   static final instance = CrashReporting._();
 
   static const dsn = String.fromEnvironment('SENTRY_DSN');
-  static const environment = String.fromEnvironment('SENTRY_ENVIRONMENT',
-      defaultValue: 'production');
+  static const environment =
+      String.fromEnvironment('SENTRY_ENVIRONMENT', defaultValue: 'production');
 
   bool _sharing = false;
   bool _debugTreatAsEnabled = false;

@@ -720,6 +720,9 @@ class FlashcardCardView extends StatelessWidget {
                             correctAnswer: session.exercise?.answer,
                             template: repo.template,
                             learnerLevel: repo.profile.cefr,
+                            contextExamples: DeckLibrary.instance
+                                .contextExamples(
+                                    scope.settings.reviewScope, entry.word),
                             onPlay: () => scope.speakEntry(context, entry,
                                 language: repo.language),
                             onOpen: () => scope.navigator.openWord(entry.id),

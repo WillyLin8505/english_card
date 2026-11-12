@@ -34,8 +34,22 @@ const visionCategoryLabels = <String>{
 /// Real words that Vision often gives with high confidence but that say
 /// little about the photo. Kept, but ranked after the specific nouns.
 const visionWeakLabels = <String>{
-  'table', 'floor', 'wall', 'ceiling', 'window', 'door', 'shelf', 'grass',
-  'tree', 'plant', 'flower', 'cloud', 'water', 'wood', 'glass', 'cup',
+  'table',
+  'floor',
+  'wall',
+  'ceiling',
+  'window',
+  'door',
+  'shelf',
+  'grass',
+  'tree',
+  'plant',
+  'flower',
+  'cloud',
+  'water',
+  'wood',
+  'glass',
+  'cup',
 };
 
 /// Multiplier applied to the score of a weak label.

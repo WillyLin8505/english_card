@@ -92,8 +92,14 @@ class DeckContent {
   final List<({int assetId, List<WordCandidate> labels, String? credit})>
       pictures;
 
+  /// Card #1051: the sentences a situation deck picked for its words
+  /// (normalized word → examples); empty for decks without any.
+  final Map<String, List<WordExample>> examples;
+
   const DeckContent(this.info,
-      {this.words = const [], this.pictures = const []});
+      {this.words = const [],
+      this.pictures = const [],
+      this.examples = const {}});
 
   factory DeckContent.fromJson(Map<String, dynamic> j) {
     final info = DeckInfo.fromJson(j);
@@ -113,14 +119,57 @@ class DeckContent {
           ),
       ]);
     }
-    return DeckContent(info, words: [
-      for (final i in items)
-        (
-          word: i['word'] as String,
-          pos: shortPos(i['pos'] as String? ?? ''),
-          level: i['cefr'] as String?,
-        ),
-    ]);
+    final examples = <String, List<WordExample>>{};
+    for (final i in items) {
+      final list = _deckExamples(i['examples']);
+      final word = (i['word'] as String?)?.trim().toLowerCase();
+      if (list.isNotEmpty && word != null && word.isNotEmpty) {
+        examples[word] = list;
+      }
+    }
+    return DeckContent(info,
+        words: [
+          for (final i in items)
+            (
+              word: i['word'] as String,
+              pos: shortPos(i['pos'] as String? ?? ''),
+              level: i['cefr'] as String?,
+            ),
+        ],
+        examples: examples);
+  }
+
+  /// A deck item's `examples` (Tatoeba sentences with author and licence)
+  /// as [WordExample]s; anything malformed is skipped.
+  static List<WordExample> _deckExamples(Object? raw) {
+    if (raw is! List) return const [];
+    final out = <WordExample>[];
+    for (final e in raw) {
+      if (e is! Map) continue;
+      String? s(String k) {
+        final v = e[k];
+        return v is String && v.trim().isNotEmpty ? v.trim() : null;
+      }
+
+      final text = s('text');
+      if (text == null) continue;
+      final id = e['tatoeba_id'];
+      final credit = [
+        if (s('author') case final a?) '作者：$a',
+        s('license'),
+        if (id != null) 'Tatoeba #$id',
+      ].join(' · ');
+      out.add(WordExample(
+        text: text,
+        translation: s('translation') ?? s('zh'),
+        aiTranslated: e['aiTranslated'] == true ||
+            e['translation_ai'] == true ||
+            e['zh_ai'] == true,
+        source: 'tatoeba',
+        credit: credit.isEmpty ? null : credit,
+      ));
+    }
+    return out;
   }
 
   static WordCandidate _label(Map<String, dynamic> l, String? deckLevel) {
@@ -161,6 +210,10 @@ class InstalledDeck {
   /// decks and for picture decks installed before albums existed.
   final String? albumId;
 
+  /// Card #1051: the deck's own example sentences per word (normalized);
+  /// empty for decks without any and for decks installed before this field.
+  final Map<String, List<WordExample>> examples;
+
   const InstalledDeck({
     required this.info,
     required this.installedAt,
@@ -168,6 +221,7 @@ class InstalledDeck {
     this.wordEntryIds = const [],
     this.words,
     this.albumId,
+    this.examples = const {},
   });
 
   /// How many words the deck has (all of them, not only the new ones).
@@ -200,6 +254,7 @@ class InstalledDeck {
         wordEntryIds: wordEntryIds,
         words: words,
         albumId: id,
+        examples: examples,
       );
 
   InstalledDeck withWords(List<String> all) => InstalledDeck(
@@ -209,6 +264,7 @@ class InstalledDeck {
         wordEntryIds: wordEntryIds,
         words: all,
         albumId: albumId,
+        examples: examples,
       );
 
   factory InstalledDeck.fromJson(Map<String, dynamic> j) => InstalledDeck(
@@ -218,6 +274,13 @@ class InstalledDeck {
         wordEntryIds: (j['wordEntryIds'] as List).cast<String>(),
         words: (j['words'] as List?)?.cast<String>(),
         albumId: j['albumId'] as String?,
+        examples: {
+          for (final e in ((j['examples'] as Map?) ?? const {}).entries)
+            e.key as String: [
+              for (final x in e.value as List)
+                WordExample.fromJson(Map<String, dynamic>.from(x as Map))
+            ],
+        },
       );
 
   Map<String, dynamic> toJson() => {
@@ -227,6 +290,11 @@ class InstalledDeck {
         'wordEntryIds': wordEntryIds,
         if (words != null) 'words': words,
         'albumId': albumId,
+        if (examples.isNotEmpty)
+          'examples': {
+            for (final e in examples.entries)
+              e.key: [for (final x in e.value) x.toJson()],
+          },
       };
 }
 
@@ -277,8 +345,15 @@ class DeckLibrary extends ChangeNotifier {
     ];
   }
 
-  Future<DeckContent> fetchDeck(String slug) async =>
-      DeckContent.fromJson(await _getJson(_api('/api/decks/$slug')));
+  /// [listed] is the deck as the list showed it (named for the user's
+  /// native language); the detail endpoint always answers in Chinese, so the
+  /// installed deck and its 相片冊 keep the listed name (卡 #954).
+  Future<DeckContent> fetchDeck(String slug, {DeckInfo? listed}) async {
+    final c = DeckContent.fromJson(await _getJson(_api('/api/decks/$slug')));
+    if (listed == null) return c;
+    return DeckContent(listed,
+        words: c.words, pictures: c.pictures, examples: c.examples);
+  }
 
   Future<Map<String, dynamic>> _getJson(Uri uri) async {
     if (!remote) throw const DeckException('目前沒有連線到相片冊伺服器');
@@ -370,6 +445,14 @@ class DeckLibrary extends ChangeNotifier {
 
   InstalledDeck? installedDeck(String slug) => _installed[slug];
 
+  /// The deck's own example sentences for [word] when the learner reviews
+  /// the deck [scope] (`deck:<slug>`); empty everywhere else (card #1051).
+  List<WordExample> contextExamples(String scope, String word) {
+    if (!scope.startsWith('deck:')) return const [];
+    final deck = _installed[scope.substring(5)];
+    return deck?.examples[word.trim().toLowerCase()] ?? const [];
+  }
+
   Future<void> _save(String language) async {
     try {
       await _box?.put(language,
@@ -431,6 +514,7 @@ class DeckLibrary extends ChangeNotifier {
       wordEntryIds: [for (final w in created) w.id],
       words: deck.info.isPhotos ? null : _normalized(deck),
       albumId: albumId,
+      examples: deck.examples,
     );
     await _save(repository.language);
     notifyListeners();

@@ -101,7 +101,7 @@ void main() {
     await tester.pumpAndSettle();
     for (var i = 0; i < 3; i++) {
       await tester.enterText(find.byType(TextField), 'wrong');
-      await tester.tap(find.byTooltip('送出答案'));
+      await tester.tap(find.text('顯示答案'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('忘記'));
       await tester.pumpAndSettle();

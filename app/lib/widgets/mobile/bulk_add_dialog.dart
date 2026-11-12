@@ -178,6 +178,7 @@ class _BulkAddDialogState extends State<_BulkAddDialog> {
         if (it.isPhrase) ui(context, '片語') else it.pos,
         if (it.level != null) it.level!,
         if (it.meaning.isNotEmpty) it.meaning,
+        if (it.basic) ui(context, '基本資料'),
       ],
     ].join(' · ');
     return Padding(

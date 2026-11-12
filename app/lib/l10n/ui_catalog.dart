@@ -560,9 +560,9 @@ const uiCatalog = <String, (String, String)>{
     'Offline · using saved dictionary; retrying later',
     'Hors ligne · dictionnaire enregistré utilisé ; nouvel essai plus tard'
   ),
-  '詞庫暫時無法更新，稍後重試': (
-    'Dictionary update paused; retrying later',
-    'Mise à jour du dictionnaire en pause ; nouvel essai plus tard'
+  '詞庫這次沒更新成功（伺服器忙或網路不穩）。已存的詞庫照常可用，App 會自動再試，也可以點「重試」': (
+    "The dictionary didn't update this time (server busy or network unstable). Your saved dictionary still works; the app will retry automatically, or tap Retry.",
+    "Le dictionnaire n'a pas pu être mis à jour (serveur occupé ou réseau instable). Le dictionnaire enregistré reste utilisable ; l'app réessaiera seule, ou touchez Réessayer."
   ),
   '字母 A–Z': ('Alphabetical A–Z', 'Ordre alphabétique A–Z'),
   '最近更新': ('Recently updated', 'Mise à jour récente'),
@@ -600,6 +600,7 @@ const uiCatalog = <String, (String, String)>{
     'Pas d’adverbe adapté à ce niveau'
   ),
   '的字': ('words', 'mots'),
+  '照片上的字': ('Words in photos', 'Mots des photos'),
   '代名詞': ('Pronoun', 'Pronom'),
   '介系詞': ('Preposition', 'Préposition'),
   '連接詞': ('Conjunction', 'Conjonction'),
@@ -726,25 +727,33 @@ const uiCatalog = <String, (String, String)>{
     'Anonymous install and retention',
     'Installation anonyme et rétention'
   ),
-  '預設打開。只送隨機安裝編號與「安裝、完成引導、第一次拍照、第一次複習、每天開啟」，不含帳號或內容；關閉後不再送出。': (
-    'On by default. Only a random install id is sent, plus install, finished the guide, first photo, first review, and one open per day. No account and no content. Turning it off stops further sends.',
-    'Activé par défaut. Seul un identifiant d’installation aléatoire est envoyé, plus l’installation, le guide terminé, la première photo, la première révision et une ouverture par jour. Pas de compte ni de contenu. Le désactiver arrête tout envoi.'
+  '只有你同意才會送。只送隨機安裝編號與「安裝、完成引導、第一次拍照、第一次複習、每天開啟」，不含帳號或內容；關閉後不再送出。': (
+    'Only sent if you agree. Only a random install id is sent, plus install, finished the guide, first photo, first review, and one open per day. No account and no content. Turning it off stops further sends.',
+    'Envoyé seulement si vous acceptez. Seul un identifiant d’installation aléatoire est envoyé, plus l’installation, le guide terminé, la première photo, la première révision et une ouverture par jour. Pas de compte ni de contenu. Le désactiver arrête tout envoi.'
   ),
   '匿名安裝與留存': (
     'Anonymous install and retention',
     'Installation anonyme et rétention'
   ),
-  '「設定 → 匿名安裝與留存統計」預設是打開的，用來計算新安裝、有沒有完成引導、有沒有做第一次複習，以及安裝後第 1、7、30 天有沒有回來。打開時只送這次安裝的隨機編號，以及「安裝、完成引導、第一次拍照、第一次複習、每天開啟」這幾種事件的名稱和日期，送到我們自己的伺服器。不送姓名、帳號、電子郵件、照片、單字或位置，也不跟登入帳號合併。可以隨時關掉；關掉後還沒送出的事件會捨棄。這項跟「分享使用統計」分開。':
+  '第一次開 App 的引導會問你是否允許「匿名安裝與留存統計」（選之前什麼都不送；已經設定過的人沿用原本的選擇）。這項用來計算新安裝、有沒有完成引導、有沒有做第一次複習，以及安裝後第 1、7、30 天有沒有回來。允許時只送這次安裝的隨機編號，以及「安裝、完成引導、第一次拍照、第一次複習、每天開啟」這幾種事件的名稱和日期，送到我們自己的伺服器。不送姓名、帳號、電子郵件、照片、單字或位置，也不跟登入帳號合併。可以隨時在「設定 → 隱私」關掉；關掉後還沒送出的事件會捨棄。這項跟「分享使用統計」分開。':
       (
-    'Settings → Anonymous install and retention is on by default. It counts new installs, whether the guide was finished, whether a first review happened, and whether the app was opened on day 1, 7 and 30. While it is on, only a random id for this install is sent, plus the name and date of these events: install, finished the guide, first photo, first review, and one open per day, to our own server. No name, account, email, photo, word or location, and it is not joined to a signed-in account. You can turn it off at any time; events not yet sent are discarded. This is separate from Share usage statistics.',
-    'Réglages → Installation anonyme et rétention est activé par défaut. Cela compte les nouvelles installations, si le guide a été terminé, si une première révision a eu lieu, et si l’app a été ouverte aux jours 1, 7 et 30. Lorsqu’il est activé, seul un identifiant aléatoire de cette installation est envoyé, avec le nom et la date de ces événements : installation, guide terminé, première photo, première révision et une ouverture par jour, vers notre serveur. Pas de nom, de compte, d’e-mail, de photo, de mot ni de lieu, et rien n’est relié à un compte connecté. Vous pouvez le désactiver ; ce qui n’est pas encore envoyé est effacé. C’est distinct du partage des statistiques.'
+    'The first-run guide asks whether to allow anonymous install and retention statistics (nothing is sent before you choose; an existing choice is kept). It counts new installs, whether the guide was finished, whether a first review happened, and whether the app was opened on day 1, 7 and 30. While it is on, only a random id for this install is sent, plus the name and date of these events: install, finished the guide, first photo, first review, and one open per day, to our own server. No name, account, email, photo, word or location, and it is not joined to a signed-in account. You can turn it off at any time in Settings → Privacy; events not yet sent are discarded. This is separate from Share usage statistics.',
+    'Le guide du premier lancement demande s’il faut autoriser les statistiques anonymes d’installation et de rétention (rien n’est envoyé avant votre choix ; un choix existant est conservé). Cela compte les nouvelles installations, si le guide a été terminé, si une première révision a eu lieu, et si l’app a été ouverte aux jours 1, 7 et 30. Si vous autorisez, seul un identifiant aléatoire de cette installation est envoyé, avec le nom et la date de ces événements : installation, guide terminé, première photo, première révision et une ouverture par jour, vers notre serveur. Pas de nom, de compte, d’e-mail, de photo, de mot ni de lieu, et rien n’est relié à un compte connecté. Vous pouvez le désactiver à tout moment dans Réglages → Confidentialité ; ce qui n’est pas encore envoyé est effacé. C’est distinct du partage des statistiques.'
   ),
+  '聯絡我們': ('Contact us', 'Nous contacter'),
+  '複製聯絡信箱': ('Copy contact email', 'Copier l’e-mail de contact'),
+  '已複製聯絡信箱': ('Contact email copied', 'E-mail de contact copié'),
+  '幫助改善 App': ('Help improve the app', 'Aidez à améliorer l’app'),
+  '要不要讓我們知道有人安裝並使用這個 App？': ('May we know that someone installed and uses this app?', 'Pouvons-nous savoir que quelqu’un a installé et utilise cette app ?'),
+  '允許的話，只會把這次安裝的隨機編號，以及「安裝、完成引導、第一次拍照、第一次複習、每天開啟」這幾種事件的名稱和日期，送到我們自己的伺服器。不含姓名、帳號、照片、單字或位置。選「不要」也完全不影響使用，之後可以在「設定 → 隱私」改變主意。': ('If you allow it, only a random id for this install and the name and date of a few events (install, finished the guide, first photo, first review, one open per day) are sent to our own server. No name, account, photo, word or location. Choosing “No” changes nothing in the app, and you can change your mind later in Settings → Privacy.', 'Si vous autorisez, seuls un identifiant aléatoire de cette installation et le nom et la date de quelques événements (installation, guide terminé, première photo, première révision, une ouverture par jour) sont envoyés à notre propre serveur. Ni nom, ni compte, ni photo, ni mot, ni lieu. Choisir « Non » ne change rien dans l’app, et vous pourrez changer d’avis dans Réglages → Confidentialité.'),
+  '允許': ('Allow', 'Autoriser'),
+  '不要': ('No', 'Non'),
+  '把使用數字送到我的帳號？': ('Send usage numbers to my account?', 'Envoyer les chiffres d’usage à mon compte ?'),
+  '每天最多一次，把已安裝的單字牌組與相片冊名稱、學習語言、單字數，以及複習與拍照的次數送到你的帳號。管理者會看到你用了哪些資料庫；不含單字內容、照片或位置。可以隨時在「設定 → 隱私」關閉，關閉後伺服器上的這筆數字會被刪除。': ('At most once a day, the names of the installed word decks and photo albums, your learning language, the word count, and your review and photo counts are sent to your account. The administrator can see which databases you use; no word content, photos or location. You can turn it off any time in Settings → Privacy, and the numbers on the server are then deleted.', 'Au plus une fois par jour, les noms des paquets de mots et albums installés, votre langue d’apprentissage, le nombre de mots et vos nombres de révisions et de photos sont envoyés à votre compte. L’administrateur voit quelles bases vous utilisez ; ni contenu de mots, ni photos, ni lieu. Vous pouvez le désactiver à tout moment dans Réglages → Confidentialité, et les chiffres sur le serveur sont alors supprimés.'),
+  '把使用數字送到我的帳號': ('Send usage numbers to my account', 'Envoyer les chiffres d’usage à mon compte'),
+  '每天最多一次，把牌組與相片冊名稱、語言、單字數和複習、拍照次數送到你的帳號，管理者會看到你用了哪些資料庫。關閉後不再送，並請伺服器刪除這筆數字。': ('At most once a day, deck and album names, languages, the word count and review and photo counts are sent to your account; the administrator sees which databases you use. Turning it off stops this and asks the server to delete the numbers.', 'Au plus une fois par jour, les noms des paquets et albums, les langues, le nombre de mots et les nombres de révisions et de photos sont envoyés à votre compte ; l’administrateur voit quelles bases vous utilisez. La désactivation arrête l’envoi et demande au serveur de supprimer ces chiffres.'),
   '查看隱私權政策': ('View privacy policy', 'Voir la politique de confidentialité'),
   '隱私權政策': ('Privacy policy', 'Politique de confidentialité'),
-  '本政策說明「拍照學單字」如何處理資料。分享使用統計預設是關閉的。匿名安裝與留存統計預設是打開的，可在設定裡關閉。': (
-    'This policy explains how 拍照學單字 handles data. Sharing usage statistics is off by default. Anonymous install and retention statistics are on by default and can be turned off in Settings.',
-    'Cette politique explique comment 拍照學單字 traite les données. Le partage des statistiques est désactivé par défaut. Les statistiques anonymes d’installation et de rétention sont activées par défaut et peuvent être désactivées dans Réglages.'
-  ),
   '使用統計': ('Usage statistics', 'Statistiques d’usage'),
   '打開「分享使用統計」之後，操作紀錄會送到 PostHog（主機 us.i.posthog.com）。送出的只有：這次安裝產生的隨機代號、開啟 App、所在分頁、學習語言、母語、程度與程度來源、有沒有加入照片或單字（不含照片和單字本身）、複習開始與結束，以及單次作答的評分、題型、對錯、提示次數、作答時間與下次間隔天數。不送姓名、帳號、電子郵件或廣告識別碼。隨時可以在設定裡關掉；還沒送出的紀錄會一併捨棄。':
       (
@@ -752,11 +761,6 @@ const uiCatalog = <String, (String, String)>{
     'Après avoir activé le partage, l’activité est envoyée à PostHog (hôte us.i.posthog.com). Nous envoyons seulement : un identifiant aléatoire créé pour cette installation, les ouvertures, l’onglet affiché, la langue étudiée, la langue maternelle, le niveau et son origine, l’ajout d’une photo ou d’un mot (sans la photo ni le mot), le début et la fin d’une révision, et pour chaque réponse la note, le type d’exercice, juste ou faux, le nombre d’indices, le temps et le prochain intervalle en jours. Pas de nom, de compte, d’e-mail ni d’identifiant publicitaire. Vous pouvez désactiver cela dans Réglages ; ce qui n’est pas encore envoyé est effacé.'
   ),
   '照片與辨識': ('Photos and recognition', 'Photos et reconnaissance'),
-  '照片和字卡保存在這台裝置。使用辨識時，照片會傳到你設定的辨識伺服器，只在記憶體裡即時辨識，不會存成照片檔。伺服器可能留下辨識結果的文字快取（單字與分數，不含照片），以免同一張照片重複運算。照片不會送到分析服務。':
-      (
-    'Photos and cards stay on this device. When you use recognition, the photo is sent to the recognition server you configured, processed in memory at that moment, and not saved as a photo file. The server may keep a text cache of the result (words and scores, not the photo) so the same photo is not processed twice. Photos are not sent to the analytics service.',
-    'Les photos et les cartes restent sur cet appareil. Pour la reconnaissance, la photo est envoyée au serveur que vous avez indiqué, traitée en mémoire sur le moment, et n’est pas enregistrée comme fichier photo. Le serveur peut garder un cache texte du résultat (mots et scores, pas la photo) pour ne pas retraiter la même photo. Les photos ne vont pas au service d’analyse.'
-  ),
   '不做跨 App 追蹤': ('No cross-app tracking', 'Pas de suivi entre applications'),
   '本 App 只做自己的使用統計，不把資料拿去跟其他 App 或網站比對，也不使用廣告識別碼，所以不會跳出「允許追蹤」的詢問。': (
     'This app only measures its own use. It does not combine that data with other companies’ apps or websites, and it does not use an advertising id, so it does not ask for permission to track.',
@@ -766,6 +770,111 @@ const uiCatalog = <String, (String, String)>{
   '政策網頁還沒有公開網址。這份說明就是目前的隱私權政策；公開後，App Store 會連到同一個內容。': (
     'The policy page does not have a public address yet. This screen is the privacy policy for now; once it is published, the App Store will link to the same text.',
     'La page n’a pas encore d’adresse publique. Cet écran est la politique pour l’instant ; une fois publiée, l’App Store pointera vers le même texte.'
+  ),
+  '本政策說明「拍照學單字」收集哪些資料、怎麼用、與誰分享、保存多久，以及怎麼刪除。生效日 2026-10-18，最近更新 2026-11-09。分享使用統計預設是關閉的；匿名安裝與留存統計和登入後的使用數字，都要你先同意才會送。這些都可在設定裡隨時關閉。未滿 13 歲請在家長同意下使用。':
+      (
+    'This policy explains what data 拍照學單字 collects, how it is used, who it is shared with, how long it is kept and how to delete it. Effective 2026-10-18, last updated 2026-11-09. Sharing usage statistics is off by default; anonymous install and retention statistics and the signed-in usage numbers are sent only if you agree. All of them can be turned off in Settings at any time. Children under 13 should use the app only with a parent’s consent.',
+    'Cette politique explique quelles données 拍照學單字 collecte, comment elles sont utilisées, avec qui elles sont partagées, combien de temps elles sont conservées et comment les supprimer. En vigueur depuis le 2026-10-18, mise à jour le 2026-11-09. Le partage des statistiques est désactivé par défaut ; les statistiques anonymes d’installation et de rétention et les chiffres d’usage du compte ne sont envoyés que si vous acceptez. Tout peut être désactivé à tout moment dans Réglages. Les moins de 13 ans doivent utiliser l’app avec l’accord d’un parent.'
+  ),
+  '帳號資料':
+      (
+    'Account data',
+    'Données du compte'
+  ),
+  '不登入也能使用 App。登入是選用的（Apple、Google 或 Email＋密碼），用來雲端備份、換手機還原與分享自己的集合。登入會收集：Email、暱稱、母語與程度；密碼只存加鹽雜湊；用 Apple 或 Google 登入時，另存它們提供的使用者代號。登入憑證存在 iOS 鑰匙圈。這些資料只用來辦理登入與帳號功能，不賣給任何人。在 App 內刪除帳號，上述資料就一併刪除。':
+      (
+    'You can use the app without signing in. Signing in (Apple, Google, or email and password) is optional and is used for cloud backup, restoring on a new phone and sharing your own decks. We collect your email, nickname, native language and level; passwords are stored only as salted hashes; with Apple or Google sign-in we also keep the user id they provide. The login token lives in the iOS Keychain. This data is used only to run sign-in and account features and is never sold. Deleting your account in the app deletes all of it.',
+    'Vous pouvez utiliser l’app sans vous connecter. La connexion (Apple, Google ou e-mail et mot de passe) est facultative et sert à la sauvegarde dans le cloud, à la restauration sur un nouveau téléphone et au partage de vos propres collections. Nous collectons votre e-mail, votre pseudo, votre langue maternelle et votre niveau ; les mots de passe ne sont conservés que sous forme de hachage salé ; avec Apple ou Google, nous gardons aussi l’identifiant qu’ils fournissent. Le jeton de connexion est dans le trousseau iOS. Ces données servent uniquement à la connexion et aux fonctions du compte, et ne sont jamais vendues. Supprimer votre compte dans l’app supprime tout cela.'
+  ),
+  '雲端備份與同步':
+      (
+    'Cloud backup and sync',
+    'Sauvegarde et synchronisation cloud'
+  ),
+  '登入後，App 會把照片、單字、字卡、相片冊、複習紀錄和設定備份到我們的伺服器（存放在你的帳號下），並同步到用同一帳號登入的其他裝置。可在「設定 → 資料」關閉同步，或只關閉照片同步。這些資料只要帳號還在就保留，刪除帳號時一併刪除；沒登入就不會上傳。':
+      (
+    'When you are signed in, the app backs up your photos, words, cards, albums, review history and settings to our server (stored under your account) and syncs them to other devices signed in with the same account. You can turn sync, or just photo sync, off in Settings → Data. This data is kept as long as the account exists and is deleted with it; nothing is uploaded when you are signed out.',
+    'Une fois connecté, l’app sauvegarde vos photos, mots, cartes, albums, historique de révision et réglages sur notre serveur (sous votre compte) et les synchronise avec les autres appareils connectés au même compte. Vous pouvez désactiver la synchronisation, ou seulement celle des photos, dans Réglages → Données. Ces données sont conservées tant que le compte existe et supprimées avec lui ; rien n’est envoyé si vous n’êtes pas connecté.'
+  ),
+  '意見回饋與卡片回報':
+      (
+    'Feedback and card reports',
+    'Commentaires et signalements de cartes'
+  ),
+  '送出意見回饋或卡片回報時，會收集：你寫的文字、目前頁面、App 版本、裝置型號、學習語言，以及畫面截圖（截圖預設勾選，可取消）。這些內容存在我們的問題回報系統，用來修正問題；你可以在「設定 → 我的意見回饋」刪除自己送出的回報。這些回報會由協助開發的 AI 服務（Anthropic Claude、OpenAI Codex、Cursor）讀取處理，送出前畫面會再提醒一次，送出即表示同意。請不要在文字或截圖裡放別人的個資。':
+      (
+    'When you send feedback or a card report we collect: the text you write, the current page, app version, device model, learning language, and a screenshot of the screen (ticked by default; you can untick it). This is stored in our issue tracker to fix problems; you can delete your own reports in Settings → My feedback. These reports are read and processed by the AI services that help us develop the app (Anthropic Claude, OpenAI Codex, Cursor). The screen reminds you before sending, and sending means you agree. Please do not put other people’s personal data in the text or screenshot.',
+    'Quand vous envoyez un commentaire ou un signalement de carte, nous collectons : le texte que vous écrivez, la page affichée, la version de l’app, le modèle d’appareil, la langue étudiée et une capture d’écran (cochée par défaut, vous pouvez la décocher). Ces éléments sont enregistrés dans notre système de suivi pour corriger les problèmes ; vous pouvez supprimer vos propres signalements dans Réglages → Mes commentaires. Ces signalements sont lus et traités par les services d’IA qui nous aident à développer l’app (Anthropic Claude, OpenAI Codex, Cursor). L’écran vous le rappelle avant l’envoi, et envoyer vaut accord. Ne mettez pas de données personnelles d’autres personnes dans le texte ou la capture.'
+  ),
+  '照片和字卡保存在這台裝置（登入並開啟同步時，另存一份在你的帳號下）。所有版本的照片辨識都在手機上完成，辨識時照片不會離開手機，也沒有可設定的辨識伺服器；查字用手機上的離線詞庫。照片不會送到分析服務。':
+      (
+    'Photos and cards stay on this device (with a copy under your account if you are signed in and sync is on). In every version, photo recognition runs on the phone and the photo never leaves it; there is no recognition server to set, and words are looked up in the offline dictionary on the phone. Photos are not sent to the analytics service.',
+    'Les photos et les cartes restent sur cet appareil (avec une copie sous votre compte si vous êtes connecté et que la synchronisation est activée). Dans la version App Store, la reconnaissance des photos se fait sur le téléphone et la photo n’est pas envoyée. Seules les versions de développement peuvent utiliser un serveur de reconnaissance. Les photos ne vont pas au service d’analyse.'
+  ),
+  '當機回報':
+      (
+    'Crash reports',
+    'Rapports de plantage'
+  ),
+  '同一個「分享使用統計」開關也控制當機回報：打開後，App 當機或發生未處理的錯誤時，會把錯誤類型、程式呼叫堆疊、App 版本與 build 號、作業系統版本與裝置型號送到 Sentry。不送照片、單字內容、電子郵件、使用者名稱或操作軌跡，也不含錯誤訊息文字。關閉時不會送出。':
+      (
+    'The same Share usage statistics switch controls crash reports: when it is on, a crash or unhandled error sends the error type, stack trace, app version and build number, OS version and device model to Sentry. It does not include photos, word content, email, user name, activity trail or the error message text. Nothing is sent while it is off.',
+    'Le même interrupteur de partage des statistiques commande les rapports de plantage : lorsqu’il est activé, un plantage ou une erreur non gérée envoie le type d’erreur, la pile d’appels, la version et le numéro de build de l’app, la version du système et le modèle d’appareil à Sentry. Sans photos, contenu des mots, e-mail, nom d’utilisateur, historique d’actions ni texte du message d’erreur. Rien n’est envoyé lorsqu’il est désactivé.'
+  ),
+  '分享的集合':
+      (
+    'Shared decks',
+    'Collections partagées'
+  ),
+  '你分享的單字集或相片冊（照片、單字、程度標籤、名稱與簡介）會公開在平台上，其他使用者可以瀏覽與下載，並顯示你的暱稱。照片會先通過自動安全檢查才會上架，上傳前請確認沒有他人的臉或隱私資訊。你可以隨時撤回分享；刪除帳號時分享的內容一併刪除。使用者可以檢舉不當集合或封鎖作者，違規內容會被下架。人數與下載次數只是計次，不是個人行為追蹤。':
+      (
+    'A word deck or photo album you share (photos, words, level tags, name and description) becomes public on the platform with your nickname, and other users can browse and download it. Photos pass an automatic safety check before going live; make sure they contain no one else’s face or private information. You can withdraw a share at any time; shared content is deleted with your account. Users can report a deck or block an author, and violating content is removed. Share and download counts are plain tallies, not behavioural tracking.',
+    'Une collection de mots ou un album photo que vous partagez (photos, mots, étiquettes de niveau, nom et description) devient public sur la plateforme avec votre pseudo, et les autres utilisateurs peuvent le consulter et le télécharger. Les photos passent un contrôle de sécurité automatique avant publication ; vérifiez qu’elles ne montrent ni le visage ni des informations privées d’autres personnes. Vous pouvez retirer un partage à tout moment ; le contenu partagé est supprimé avec votre compte. Les utilisateurs peuvent signaler une collection ou bloquer un auteur, et le contenu fautif est retiré. Les compteurs de partages et de téléchargements sont de simples totaux, pas un suivi de comportement.'
+  ),
+  '網路連線與第三方':
+      (
+    'Network and third parties',
+    'Réseau et tiers'
+  ),
+  'App 的連線只有這些：我們自己的伺服器 api.willylinai.com（帳號、備份與同步、分享的集合、公開字典與卡片集、意見回饋、匿名安裝統計），所有連線都經過 Cloudflare 傳輸；打開統計時的 PostHog（us.i.posthog.com）；有啟用當機回報的版本才有 Sentry。字型使用系統字型，不會向 Google 下載。意見回饋由上面列出的 AI 服務處理。這些第三方只拿到上述各節列出的資料，我們要求他們提供與本政策同等的保護。':
+      (
+    'The app connects only to: our own server api.willylinai.com (accounts, backup and sync, shared decks, the public dictionary and decks, feedback, anonymous install statistics), and every connection travels through Cloudflare; PostHog (us.i.posthog.com) when statistics are on; and Sentry only in builds with crash reports enabled. Fonts come from the system and are not downloaded from Google. Feedback is processed by the AI services listed above. These third parties receive only the data listed in the sections above, and we require them to give protection equal to this policy.',
+    'L’app se connecte uniquement à : notre propre serveur api.willylinai.com (comptes, sauvegarde et synchronisation, collections partagées, dictionnaire et collections publics, commentaires, statistiques anonymes d’installation), et chaque connexion passe par Cloudflare ; PostHog (us.i.posthog.com) lorsque les statistiques sont activées ; et Sentry seulement dans les versions où les rapports de plantage sont activés. Les polices viennent du système et ne sont pas téléchargées depuis Google. Les commentaires sont traités par les services d’IA indiqués plus haut. Ces tiers ne reçoivent que les données listées dans les sections ci-dessus, et nous exigeons d’eux une protection équivalente à cette politique.'
+  ),
+  '保存與刪除':
+      (
+    'Retention and deletion',
+    'Conservation et suppression'
+  ),
+  '帳號、備份與同步資料：帳號存在就保留，刪除帳號時立即一併刪除。意見回饋與回報：保留到問題處理完成，你可以隨時在「設定 → 我的意見回饋」刪除。伺服器存取紀錄（連線時間、網址、IP）：只用來除錯與防濫用，保留不超過 30 天。匿名統計：保留不超過 24 個月。要撤銷同意，在設定關掉對應開關即可；要求刪除任何資料，請寫信到下方信箱，我們會在 30 天內處理。':
+      (
+    'Account, backup and sync data: kept while the account exists and deleted immediately with it. Feedback and reports: kept until the issue is handled, and you can delete yours at any time in Settings → My feedback. Server access logs (time, URL, IP): used only for debugging and abuse prevention and kept no longer than 30 days. Anonymous statistics: kept no longer than 24 months. To withdraw consent, turn the matching switch off in Settings; to ask for any data to be deleted, email the address below and we will act within 30 days.',
+    'Compte, sauvegarde et synchronisation : conservés tant que le compte existe et supprimés immédiatement avec lui. Commentaires et signalements : conservés jusqu’au traitement du problème, et vous pouvez supprimer les vôtres à tout moment dans Réglages → Mes commentaires. Journaux d’accès du serveur (heure, URL, IP) : utilisés uniquement pour le débogage et la prévention des abus, conservés 30 jours au maximum. Statistiques anonymes : conservées 24 mois au maximum. Pour retirer votre consentement, désactivez l’interrupteur correspondant dans Réglages ; pour demander la suppression de données, écrivez à l’adresse ci-dessous, nous répondrons sous 30 jours.'
+  ),
+  '聯絡與政策網頁':
+      (
+    'Contact and policy page',
+    'Contact et page de la politique'
+  ),
+  '公開網址：https://api.willylinai.com/privacy（與 App Store 頁面相同內容）。要詢問本政策，或要求刪除資料，請寫信到 sssss971412@gmail.com。':
+      (
+    'Published at https://api.willylinai.com/privacy (the same text as the App Store page). To ask about this policy or to request deletion of data, email sssss971412@gmail.com.',
+    'Publiée sur https://api.willylinai.com/privacy (même texte que la page App Store). Pour toute question sur cette politique ou pour demander la suppression de données, écrivez à sssss971412@gmail.com.'
+  ),
+  '送出即表示你同意：這則回饋（含勾選的截圖）會存進問題回報系統，並交給協助開發的 AI 服務（Anthropic Claude、OpenAI Codex、Cursor）讀取處理。':
+      (
+    'By sending, you agree that this feedback (including the screenshot if ticked) is stored in our issue tracker and read and processed by the AI services that help us develop the app (Anthropic Claude, OpenAI Codex, Cursor).',
+    'En envoyant, vous acceptez que ce commentaire (avec la capture d’écran si elle est cochée) soit enregistré dans notre système de suivi et lu et traité par les services d’IA qui nous aident à développer l’app (Anthropic Claude, OpenAI Codex, Cursor).'
+  ),
+  '雲端帳號的使用數字':
+      (
+    'Usage numbers for cloud accounts',
+    'Chiffres d’usage du compte cloud'
+  ),
+  '只有登入雲端帳號、並在登入後同意「把使用數字送到我的帳號」的人，App 每天最多一次把數字送到自己的帳號伺服器，讓管理者看到用了哪些資料庫。送出的只有：已安裝的單字牌組與相片冊的名稱與類型、目前的學習語言與母語、單字數，以及複習與拍照的次數。不送單字內容、照片或位置。這些數字跟你的電子郵件放在同一筆帳號裡，刪除帳號時一併刪除。沒登入或沒同意就不會送出；在「設定 → 隱私」關閉後不再送，並請伺服器刪除這筆數字。':
+      (
+    'Only when you are signed in to a cloud account, the app sends at most once a day some numbers to our own account server, so the administrator can see which databases are used. We send only: the names and types of installed word decks and photo albums, the current learning and native language, the word count, and the number of reviews and photos taken. No word content, photos or location. These numbers sit in the same account record as your email and are deleted with your account. Nothing is sent when you are signed out or have not agreed; turning it off in Settings → Privacy stops it and asks the server to delete the numbers.',
+    'Uniquement si vous êtes connecté à un compte cloud, l’app envoie au plus une fois par jour quelques chiffres à notre propre serveur de comptes, afin que l’administrateur voie quelles bases sont utilisées. Nous envoyons seulement : les noms et types des collections de mots et albums photo installés, la langue étudiée et la langue maternelle, le nombre de mots, et le nombre de révisions et de photos prises. Pas de contenu de mots, de photos ni de lieu. Ces chiffres sont dans le même enregistrement de compte que votre e-mail et sont supprimés avec votre compte. Rien n’est envoyé si vous n’êtes pas connecté ou n’avez pas accepté ; la désactivation dans Réglages → Confidentialité arrête l’envoi et demande au serveur de supprimer ces chiffres.'
   ),
   '返回': ('Back', 'Retour'),
   '分享': ('Share', 'Partager'),
@@ -930,6 +1039,17 @@ const uiCatalog = <String, (String, String)>{
     'Downloading the dictionary (about 62 MB)',
     'Téléchargement du dictionnaire (environ 62 Mo)'
   ),
+  // 審查 4.2.3(ii), card #1015: full pack on mobile data asks first.
+  '下載完整詞庫，建議使用 Wi-Fi': (
+    'Download the full dictionary; Wi-Fi is recommended',
+    'Télécharger le dictionnaire complet ; le Wi-Fi est recommandé'
+  ),
+  '連上 Wi-Fi 後會自動下載；也可以現在用行動網路下載': (
+    'It downloads by itself once you are on Wi-Fi, or you can use mobile data now',
+    'Il se télécharge seul dès que vous êtes en Wi-Fi, ou vous pouvez utiliser les données mobiles maintenant'
+  ),
+  '現在下載': ('Download now', 'Télécharger maintenant'),
+  '連上 Wi-Fi 再下載': ('Wait for Wi-Fi', 'Attendre le Wi-Fi'),
   '詞庫還在下載，下載完成後就能搜尋': (
     'The dictionary is still downloading; you can search once it is done',
     'Le dictionnaire se télécharge encore ; la recherche sera possible ensuite'
@@ -1178,6 +1298,7 @@ const uiCatalog = <String, (String, String)>{
   '送出答案': ('Submit answer', 'Valider la réponse'),
   '輸入缺少的單字': ('Enter the missing word', 'Saisissez le mot manquant'),
   '需要提示': ('Need a hint', 'Besoin d’un indice'),
+  '不要這種題型': ('Hide this question type', 'Ne plus afficher ce type de question'),
   '提示已顯示': ('Hint shown', 'Indice affiché'),
   '顯示字首提示': ('Show first-letter hint', 'Afficher la première lettre'),
   '字首提示': ('First-letter hint', 'Première lettre'),
@@ -1209,6 +1330,7 @@ const uiCatalog = <String, (String, String)>{
   ),
   '從相簿選擇': ('Choose from gallery', 'Choisir dans la galerie'),
   '最近照片': ('Recent photos', 'Photos récentes'),
+  '顯示最近照片': ('Show recent photos', 'Afficher les photos récentes'),
   '最近的照片': ('Recent photos', 'Photos récentes'),
   '查看最近照片的單字': (
     'View words in recent photos',
@@ -1294,7 +1416,10 @@ const uiCatalog = <String, (String, String)>{
     'Impossible de charger la photo. Réessayez plus tard.'
   ),
   '原因：找不到這張圖': ('Reason: photo not found', 'Cause : photo introuvable'),
-  '原因：伺服器忙碌中': ('Reason: server busy', 'Cause : serveur occupé'),
+  '原因：圖片存放在雲端伺服器，伺服器目前忙碌，請稍後再試': (
+    'Reason: the photo is stored on our server, which is busy right now. Please try again later.',
+    'Cause : la photo est sur notre serveur, actuellement occupé. Réessayez plus tard.'
+  ),
   '原因：沒有網路或連線不穩': (
     'Reason: no internet or unstable connection',
     'Cause : pas de connexion ou connexion instable'
@@ -1964,6 +2089,62 @@ const _templateCopy = <String, (String, String)>{
   '備份失敗：{0}': ('Backup failed: {0}', 'Échec de la sauvegarde : {0}'),
   '還原失敗：{0}': ('Restore failed: {0}', 'Échec de la restauration : {0}'),
   '來源：{0}': ('Source: {0}', 'Source : {0}'),
+  '詞義、詞源、音標': (
+    'Meanings, etymology, pronunciation',
+    'Sens, étymologie, prononciation'
+  ),
+  '同義詞與詞彙關係': (
+    'Synonyms and word relations',
+    'Synonymes et relations entre mots'
+  ),
+  '英文發音': (
+    'English pronunciation',
+    'Prononciation anglaise'
+  ),
+  '中文譯詞': (
+    'Chinese translations',
+    'Traductions en chinois'
+  ),
+  'CEFR 程度分級': (
+    'CEFR level grading',
+    'Niveaux CECRL'
+  ),
+  '發音音檔': (
+    'Pronunciation audio',
+    'Fichiers audio de prononciation'
+  ),
+  '法文詞頻與程度分級': (
+    'French word frequency and level grading',
+    'Fréquence et niveaux des mots français'
+  ),
+  '法文詞頻（輔助程度分級）': (
+    'French word frequency (supports level grading)',
+    'Fréquence des mots français (aide au classement des niveaux)'
+  ),
+  '法文『基礎 3000 字』程度': (
+    'French “core 3000 words” levels',
+    'Niveaux des « 3 000 mots de base » du français'
+  ),
+  'Lexique 3.83（New, Pallier 等人，法國 CNRS 與 Université Savoie Mont Blanc）': (
+    'Lexique 3.83 (New, Pallier et al., CNRS and Université Savoie Mont Blanc, France)',
+    'Lexique 3.83 (New, Pallier et al., CNRS et Université Savoie Mont Blanc, France)'
+  ),
+  'wordfreq（Robyn Speer 等人）的詞頻資料': (
+    'Word frequency data from wordfreq (Robyn Speer et al.)',
+    'Données de fréquence de wordfreq (Robyn Speer et al.)'
+  ),
+  'CC BY-SA 4.0（程式碼為 Apache-2.0）': (
+    'CC BY-SA 4.0 (code is Apache-2.0)',
+    'CC BY-SA 4.0 (le code est sous Apache-2.0)'
+  ),
+  '依上述詞頻資料整理，並經 AI 審閱（A1–B1），App 內標示為估算': (
+    'Compiled from the frequency data above and reviewed by AI (A1–B1); shown as an estimate in the app',
+    'Établi à partir des données de fréquence ci-dessus et relu par IA (A1–B1) ; affiché comme estimation dans l’app'
+  ),
+  '衍生自 CC BY-SA 4.0 資料，同以 CC BY-SA 4.0 釋出': (
+    'Derived from CC BY-SA 4.0 data and shared under CC BY-SA 4.0',
+    'Dérivé de données CC BY-SA 4.0 et partagé sous CC BY-SA 4.0'
+  ),
   // M180 (owner #732): the photo's 詞性 × CEFR table.
   '已加入「{0}」': ('Added “{0}”', '« {0} » ajouté'),
   // 問題回報 #850: 照片詳情's 儲存 with reduced motion.
@@ -2002,6 +2183,14 @@ const _templateCopy = <String, (String, String)>{
   // 問題回報 #1520: the goal and the topic no longer share one name.
   '出國旅行': ('Traveling abroad', 'Voyager à l’étranger'),
   '旅遊景點': ('Places to visit', 'Lieux à visiter'),
+  '時間、數字與顏色': ('Time, numbers and colors', 'Heure, nombres et couleurs'),
+  '交通': ('Transport', 'Transports'),
+  '用餐': ('Meals', 'Repas'),
+  '居家生活': ('Home life', 'Vie à la maison'),
+  '購物': ('Shopping', 'Achats'),
+  '天氣': ('Weather', 'Météo'),
+  '家庭': ('Family', 'Famille'),
+  '身體與衣服': ('Body and clothes', 'Corps et vêtements'),
   '工作': ('Work', 'Travail'),
   '考試': ('Exams', 'Examens'),
   '學校課業': ('School', 'École'),

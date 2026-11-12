@@ -1,6 +1,5 @@
 import '../l10n/ui_text.dart';
 import '../widgets/cloud_backup_buttons.dart';
-import '../screens/connection_scan_screen.dart';
 import '../screens/data_sources_screen.dart';
 import '../screens/my_feedback_screen.dart';
 import '../screens/privacy_policy_screen.dart';
@@ -12,16 +11,17 @@ import '../services/language_photo_import.dart';
 import '../services/word_database_store.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 
 import '../app/app_scope.dart';
 import '../models/word_entry.dart';
 import '../services/accent_audio.dart';
 import '../services/app_settings.dart';
 import '../services/card_report.dart';
-import '../services/connection_qr.dart';
 import '../services/interest_topics.dart';
 import '../services/lexicon_pack.dart';
 import '../services/tagging_service.dart';
+import '../services/usage_report.dart';
 import '../services/word_database_query.dart';
 import '../theme/mobile_theme.dart';
 import '../widgets/mobile/common.dart';
@@ -84,9 +84,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final position = Scrollable.of(toc).position;
       for (var i = 0; i < 20 && target == null; i++) {
         if (position.pixels >= position.maxScrollExtent) break;
-        position.jumpTo(
-            (position.pixels + position.viewportDimension)
-                .clamp(0.0, position.maxScrollExtent));
+        position.jumpTo((position.pixels + position.viewportDimension)
+            .clamp(0.0, position.maxScrollExtent));
         await WidgetsBinding.instance.endOfFrame;
         if (!mounted) return;
         target = _keyFor(title).currentContext;
@@ -97,6 +96,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           duration: const Duration(milliseconds: 250));
     }
   }
+
   final _tocKey = GlobalKey();
   bool _checking = false;
   bool _switching = false;
@@ -136,20 +136,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       await Scrollable.ensureVisible(target,
           duration: const Duration(milliseconds: 200));
     }
-  }
-
-  /// 掃描後台 QR code，帶入網址與金鑰後直接測試連線（手動輸入仍可用）。
-  Future<void> _scanConnection() async {
-    final found = await Navigator.of(context).push<ConnectionQr>(
-        MaterialPageRoute<ConnectionQr>(
-            builder: (_) => const ConnectionScanScreen()));
-    if (found == null || !mounted) return;
-    _url!.text = found.taggingUrl;
-    _key!.text = found.apiKey;
-    final settings = AppScope.of(context).settings;
-    settings.taggingUrl = found.taggingUrl;
-    settings.apiKey = found.apiKey;
-    await _testConnection();
   }
 
   Future<void> _testConnection() async {
@@ -194,10 +180,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  Future<void> _switchLanguage(String language) async {
+  /// A native language that works with [learning], the current one first
+  /// (問題回報 #1596: English native + French learning was unreachable).
+  String? _nativeFor(String learning) {
+    final current = AppScope.of(context).settings.nativeLanguage;
+    for (final n in [current, 'en', ...supportedLanguages.keys]) {
+      if (n != learning &&
+          nativeLanguageAvailable(n) &&
+          languagePairAvailable(learning, n)) {
+        return n;
+      }
+    }
+    return null;
+  }
+
+  /// A learning language that works with [native], the current one first.
+  String? _learningFor(String native) {
+    final current = AppScope.of(context).settings.learningLanguage;
+    for (final l in [current, 'en', ...supportedLanguages.keys]) {
+      if (l != native &&
+          learningLanguageAvailable(l) &&
+          languagePairAvailable(l, native)) {
+        return l;
+      }
+    }
+    return null;
+  }
+
+  Future<void> _switchLanguage(String language, {String? native}) async {
     final scope = AppScope.of(context);
-    if (language == scope.settings.learningLanguage || _switching) return;
-    if (language == scope.settings.nativeLanguage) {
+    if (_switching) return;
+    if (language == scope.settings.learningLanguage && native == null) return;
+    if (language == (native ?? scope.settings.nativeLanguage)) {
       showToast(context, '學習語言和母語不能相同');
       return;
     }
@@ -212,6 +226,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             Text(supportedLanguages[language] ?? language),
             const SizedBox(height: 8),
+            if (native != null) ...[
+              Text('母語：${supportedLanguages[native] ?? native}'),
+              const SizedBox(height: 8),
+            ],
             const UiText('目前學習語言的資料會保留，隨時可以切回來。'),
           ],
         ),
@@ -228,6 +246,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (ok != true || !mounted) return;
     setState(() => _switching = true);
     try {
+      if (native != null) scope.settings.nativeLanguage = native;
       await scope.switchLanguage(language);
     } finally {
       if (mounted) setState(() => _switching = false);
@@ -287,8 +306,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   // (same rule as 卡 #897; the tab bar still leaves the tab).
                   leading: Navigator.of(context).canPop()
                       ? BackNavButton(
-                          onTap: () =>
-                              scope.navigator.selectTab(AppTab.camera))
+                          onTap: () => scope.navigator.selectTab(AppTab.camera))
                       : const SizedBox(width: 48),
                 ),
                 Expanded(
@@ -362,10 +380,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                         : (_) {
                                             if (!languagePairAvailable(e.key,
                                                 settings.nativeLanguage)) {
-                                              showToast(
-                                                  context,
-                                                  pairUnavailableNote(e.key,
-                                                      settings.nativeLanguage));
+                                              final n = _nativeFor(e.key);
+                                              if (n == null) {
+                                                showToast(
+                                                    context,
+                                                    pairUnavailableNote(
+                                                        e.key,
+                                                        settings
+                                                            .nativeLanguage));
+                                                return;
+                                              }
+                                              _switchLanguage(e.key,
+                                                  native: n);
                                               return;
                                             }
                                             _switchLanguage(e.key);
@@ -387,13 +413,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             runSpacing: 8,
                             children: [
                               for (final e in supportedLanguages.entries)
-                                if (nativeLanguageAvailable(e.key) &&
-                                    e.key != settings.learningLanguage)
+                                if (nativeLanguageAvailable(e.key))
                                   ChoiceChip(
                                     label: UiText(languageOptionLabel(e.key,
                                         learning: false)),
                                     selected: e.key == settings.nativeLanguage,
                                     onSelected: (_) {
+                                      if (e.key == settings.learningLanguage) {
+                                        // Native = the language being learned:
+                                        // move the learning language along.
+                                        final l = _learningFor(e.key);
+                                        if (l == null) {
+                                          showToast(context, '學習語言和母語不能相同');
+                                          return;
+                                        }
+                                        _switchLanguage(l, native: e.key);
+                                        return;
+                                      }
                                       if (!languagePairAvailable(
                                           settings.learningLanguage, e.key)) {
                                         showToast(
@@ -693,7 +729,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ),
                             ],
                           ),
-                          _note('預設打開。只送隨機安裝編號與「安裝、完成引導、第一次拍照、第一次複習、每天開啟」，不含帳號或內容；關閉後不再送出。'),
+                          _note(
+                              '只有你同意才會送。只送隨機安裝編號與「安裝、完成引導、第一次拍照、第一次複習、每天開啟」，不含帳號或內容；關閉後不再送出。'),
+                          if (settings.cloudSignedIn) ...[
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: UiText('把使用數字送到我的帳號',
+                                      style: MFont.manrope(
+                                          15, FontWeight.w800, MColors.ink)),
+                                ),
+                                Switch(
+                                  key: const ValueKey('account-stats-switch'),
+                                  value: settings.accountStats,
+                                  onChanged: (v) {
+                                    settings.accountStats = v;
+                                    if (!v) {
+                                      settings.setUsageValue(
+                                          'acctStatsDelete', 'pending');
+                                      UsageReport(settings,
+                                              AppScope.of(context).repository)
+                                          .deleteRemote();
+                                    }
+                                  },
+                                ),
+                              ],
+                            ),
+                            _note(
+                                '每天最多一次，把牌組與相片冊名稱、語言、單字數和複習、拍照次數送到你的帳號，管理者會看到你用了哪些資料庫。關閉後不再送，並請伺服器刪除這筆數字。'),
+                          ],
                           Align(
                             alignment: Alignment.centerLeft,
                             child: TextButton(
@@ -763,8 +827,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             '${ui(context, '版本')} ${CardReport.appVersion.split('+').first}'
                             '（${ui(context, 'build')} ${CardReport.appVersion.contains('+') ? CardReport.appVersion.split('+').last : '-'}）',
                             key: const ValueKey('about-version'),
-                            style: MFont.manrope(
-                                14, FontWeight.w700, MColors.ink),
+                            style:
+                                MFont.manrope(14, FontWeight.w700, MColors.ink),
                           ),
                           Align(
                             alignment: Alignment.centerLeft,
@@ -776,6 +840,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               child: const UiText('資料來源與授權'),
                             ),
                           ),
+                          // 卡 #1011: 審查 1.5 要有容易聯絡的方式。
+                          UiText('${ui(context, '聯絡我們')}：sssss971412@gmail.com',
+                              key: const ValueKey('about-contact'),
+                              style: MFont.manrope(
+                                  14, FontWeight.w700, MColors.ink)),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton(
+                              key: const ValueKey('about-contact-copy'),
+                              onPressed: () async {
+                                final messenger = ScaffoldMessenger.of(context);
+                                final text = ui(context, '已複製聯絡信箱');
+                                await Clipboard.setData(const ClipboardData(
+                                    text: 'sssss971412@gmail.com'));
+                                messenger.showSnackBar(
+                                    SnackBar(content: Text(text)));
+                              },
+                              child: const UiText('複製聯絡信箱'),
+                            ),
+                          ),
+                          const UiText('https://api.willylinai.com/support',
+                              key: ValueKey('about-support-url')),
                         ],
                       ),
                       // 問題回報 #390: advanced settings sit at the bottom,
@@ -798,8 +884,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             _note(kIsWeb
                                 ? '網頁版會自動連接這台電腦的照片辨識服務，不用填網址或金鑰。只有使用其他服務時才需要修改。連不上時照片會先排隊，'
                                     '恢復連線後自動處理。'
-                                : '留空時用手機本機辨識照片；填入服務網址與金鑰則改用該服務。連不上時照片會先排隊，'
-                                    '恢復連線後自動處理。'),
+                                : '手機版照片只在手機上辨識。'),
                             const SizedBox(height: 12),
                             TextField(
                               controller: _url,
@@ -827,12 +912,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               spacing: 12,
                               runSpacing: 8,
                               children: [
-                                if (!kIsWeb)
-                                  OutlinedButton(
-                                    onPressed:
-                                        _checking ? null : _scanConnection,
-                                    child: const UiText('掃描 QR code'),
-                                  ),
                                 OutlinedButton(
                                   onPressed: _checking ? null : _testConnection,
                                   child: UiText(_checking ? '測試中…' : '測試連線'),
@@ -1012,9 +1091,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           alignment: Alignment.centerLeft,
           child: TextButton(
             key: const ValueKey('open-progress'),
-            onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                    builder: (_) => const ProgressScreen())),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                builder: (_) => const ProgressScreen())),
             child: const UiText('查看學習進度'),
           ),
         ),

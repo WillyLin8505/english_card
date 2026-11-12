@@ -176,4 +176,21 @@ void main() {
     expect(find.byType(WordDetailScreen), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('1582: 全部加入 puts every grid word on the list', (tester) async {
+    showPhotoWordGrid = true;
+    addTearDown(() => showPhotoWordGrid = photoWordGridFlag);
+    final app = await pumpApp(tester,
+        initialTab: AppTab.album, size: const Size(375, 812));
+    app.navigator.openPhoto('photo-breakfast');
+    await tester.pumpAndSettle();
+    final all = find.byKey(const ValueKey('grid-add-all'));
+    await tester.scrollUntilVisible(all, 300,
+        scrollable: find.byType(Scrollable).first);
+    await tester.pumpAndSettle();
+    await tester.tap(all);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('word:rustic')), findsOneWidget);
+    expect(all, findsNothing);
+  });
 }

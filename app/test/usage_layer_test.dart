@@ -54,7 +54,7 @@ void main() {
     await tester.tap(find.text('綜合'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'match');
-    await tester.tap(find.byTooltip('送出答案'));
+    await tester.tap(find.text('顯示答案'));
     await tester.pumpAndSettle();
     // 問題回報 #1167: the review back omits the 詞性與意思 title.
     expect(find.text('詞性與意思'), findsNothing);
@@ -74,14 +74,14 @@ void main() {
     await tester.tap(find.text('綜合'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'match');
-    await tester.tap(find.byTooltip('送出答案'));
+    await tester.tap(find.text('顯示答案'));
     await tester.pumpAndSettle();
     expect(find.text('名詞'), findsOneWidget);
     expect(find.text('動詞'), findsNothing);
     await tester.tap(find.text('忘記'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'match');
-    await tester.tap(find.byTooltip('送出答案'));
+    await tester.tap(find.text('顯示答案'));
     await tester.pumpAndSettle();
     expect(find.text('動詞'), findsOneWidget);
     expect(find.text('名詞'), findsNothing);

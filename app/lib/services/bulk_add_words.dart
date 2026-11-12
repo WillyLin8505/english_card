@@ -1,3 +1,5 @@
+import 'compact_dictionary_stub.dart'
+    if (dart.library.ffi) 'compact_dictionary.dart';
 import 'lexicon_pack.dart';
 import 'word_database_repository.dart';
 
@@ -46,6 +48,9 @@ class BulkItem {
   final String? level;
   final String meaning;
 
+  /// Card #1075: found only in the compact offline dictionary (基本資料).
+  final bool basic;
+
   /// Closest dictionary word for a [BulkStatus.typo].
   final String? suggestion;
 
@@ -62,6 +67,7 @@ class BulkItem {
     required this.pos,
     this.level,
     this.meaning = '',
+    this.basic = false,
     this.suggestion,
     this.keepTyped = false,
     this.include = true,
@@ -83,6 +89,7 @@ class BulkItem {
       pos: pos,
       level: level,
       meaning: meaning,
+      basic: basic,
       suggestion: suggestion,
       keepTyped: keepTyped ?? this.keepTyped,
       include: include ?? this.include);
@@ -149,6 +156,22 @@ BulkItem classifyBulkWord(
         typed: w, status: BulkStatus.existing, word: w, pos: 'noun');
   }
   final hit = pack.isEmpty ? null : pack.lookup(w);
+  if (hit == null && !phrase) {
+    final c = CompactDictionary.instance.lookup(w, pack.target ?? 'en', pack.native ?? 'zh-TW');
+    if (c != null) {
+      if (repo.entryByWord(c.word) != null) {
+        return BulkItem(
+            typed: w, status: BulkStatus.existing, word: c.word, pos: c.pos);
+      }
+      return BulkItem(
+          typed: w,
+          status: c.word != w ? BulkStatus.variant : BulkStatus.ready,
+          word: c.word,
+          pos: c.pos.isEmpty ? 'noun' : c.pos,
+          meaning: c.meaning,
+          basic: true);
+    }
+  }
   if (hit == null) {
     final near = pack.isEmpty || phrase || !suggest
         ? const <String>[]
@@ -212,7 +235,8 @@ String _appPos(String packPos, String fallback) => switch (packPos) {
           meaning:
               i.status == BulkStatus.variant && i.keepTyped ? '' : i.meaning,
           // The level stays the dictionary's (a given level is marked "user").
-          level: null);
+          level: null,
+          basic: i.basic);
       added++;
     } on DuplicateWordException {
       skipped++;

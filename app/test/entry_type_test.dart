@@ -69,7 +69,7 @@ void main() {
     await tester.tap(find.text('綜合'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'turn off');
-    await tester.tap(find.byTooltip('送出答案'));
+    await tester.tap(find.text('顯示答案'));
     await tester.pumpAndSettle();
     expect(find.text('片語動詞'), findsWidgets);
     expect(tester.takeException(), isNull);

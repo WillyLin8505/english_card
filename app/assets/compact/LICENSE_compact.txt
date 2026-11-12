@@ -1,0 +1,13 @@
+Compact offline dictionaries (card #1075)
+
+compact_en_zh-TW.sqlite
+  English -> Chinese: ECDICT, https://github.com/skywind3000/ECDICT (MIT License,
+  Copyright (c) 2017 Linwei / skywind3000). Simplified Chinese converted to Taiwan usage
+  with OpenCC (config s2twp), https://github.com/BYVoid/OpenCC (Apache License 2.0).
+  Pronunciation: ECDICT.
+
+compact_fr_en.sqlite
+  French -> English: Wiktionary (https://fr.wiktionary.org / en.wiktionary.org) extracted by
+  Kaikki.org (Tatu Ylonen, wiktextract). Licensed CC BY-SA 4.0
+  (https://creativecommons.org/licenses/by-sa/4.0/). This file is a derivative and is released
+  under the same CC BY-SA 4.0 licence.

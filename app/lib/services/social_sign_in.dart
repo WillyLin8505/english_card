@@ -8,7 +8,11 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 class SocialCredential {
   final String token;
   final String? name;
-  const SocialCredential(this.token, [this.name]);
+
+  /// Apple's one-time authorizationCode: the server swaps it for a refresh
+  /// token so deleting the account can revoke the Apple grant (5.1.1(v)).
+  final String? authorizationCode;
+  const SocialCredential(this.token, [this.name, this.authorizationCode]);
 }
 
 /// Google and Apple sign-in behind one seam so tests (and a build without a
@@ -19,6 +23,9 @@ abstract class SocialSignIn {
   bool get appleAvailable;
   Future<SocialCredential?> google();
   Future<SocialCredential?> apple();
+
+  /// Revokes the Google grant on sign-out / account deletion (5.1.1(v)).
+  Future<void> googleDisconnect();
 }
 
 class PlatformSocialSignIn implements SocialSignIn {
@@ -60,6 +67,14 @@ class PlatformSocialSignIn implements SocialSignIn {
   }
 
   @override
+  Future<void> googleDisconnect() async {
+    if (!_googleReady) return; // never signed in with Google in this run
+    try {
+      await GoogleSignIn.instance.disconnect();
+    } catch (_) {} // sign-out / deletion must not fail on this
+  }
+
+  @override
   Future<SocialCredential?> apple() async {
     try {
       final c = await SignInWithApple.getAppleIDCredential(scopes: [
@@ -72,7 +87,8 @@ class PlatformSocialSignIn implements SocialSignIn {
           .whereType<String>()
           .where((s) => s.isNotEmpty)
           .join(' ');
-      return SocialCredential(id, name.isEmpty ? null : name);
+      return SocialCredential(
+          id, name.isEmpty ? null : name, c.authorizationCode);
     } on SignInWithAppleAuthorizationException catch (e) {
       if (e.code == AuthorizationErrorCode.canceled) return null;
       rethrow;

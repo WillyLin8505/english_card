@@ -104,6 +104,20 @@ class FlashcardSession extends ChangeNotifier {
   bool _practice = false;
   bool get isExtraPractice => _practice;
 
+  /// 問題回報 #1590: question types the learner turned off; read each time a
+  /// question is built, so a change applies at once.
+  final Set<String> Function()? hiddenTypes;
+
+  /// Stops this kind of question for good and swaps the one on screen for
+  /// another kind of the same card (the flip card when none is left).
+  void replaceExerciseType(void Function(String type) hide) {
+    final type = _exercise?.type;
+    if (type == null) return;
+    hide(type.name);
+    _exercise = _buildExercise();
+    notifyListeners();
+  }
+
   FlashcardSession(this.repo,
       {math.Random? random,
       LexiconPack? lexicon,
@@ -112,7 +126,8 @@ class FlashcardSession extends ChangeNotifier {
       this.albumId,
       this.cardScope,
       this.newLimit,
-      this.reviewLimit})
+      this.reviewLimit,
+      this.hiddenTypes})
       : _random = random ?? math.Random(),
         _albumCards = albumId == null ? null : repo.cardIdsInAlbum(albumId),
         _albumPhotos = albumId == null
@@ -308,8 +323,34 @@ class FlashcardSession extends ChangeNotifier {
     };
   }
 
+  /// What the learner has typed on a fill-in front (問題回報 #1592): the
+  /// dock's 顯示答案 / next button submits it, so there is no arrow to press.
+  String typedDraft = '';
+
+  /// Letters between [typedDraft] and the answer (edit distance).
+  static int letterDistance(String a, String b) {
+    a = a.trim().toLowerCase();
+    b = b.trim().toLowerCase();
+    var prev = List<int>.generate(b.length + 1, (i) => i);
+    for (var i = 1; i <= a.length; i++) {
+      final cur = List<int>.filled(b.length + 1, 0)..[0] = i;
+      for (var j = 1; j <= b.length; j++) {
+        cur[j] = math.min(
+            math.min(cur[j - 1], prev[j]) + 1,
+            prev[j - 1] + (a[i - 1] == b[j - 1] ? 0 : 1));
+      }
+      prev = cur;
+    }
+    return prev[b.length];
+  }
+
   void showAnswer() {
     if (finished || _back || !canAnswer) return;
+    if (_exercise?.type == ReviewExerciseType.sentenceCloze &&
+        typedDraft.trim().isNotEmpty) {
+      submitAnswer(typedDraft);
+      return;
+    }
     _attempts = math.max(1, _attempts);
     _back = true;
     notifyListeners();
@@ -327,6 +368,7 @@ class FlashcardSession extends ChangeNotifier {
     if (x == null || _back || !canAnswer) return;
     _attempts++;
     _submittedAnswer = answer.trim();
+    typedDraft = '';
     _correct = answer.trim().toLowerCase() == x.answer.trim().toLowerCase();
     _back = true;
     notifyListeners();
@@ -479,6 +521,7 @@ class FlashcardSession extends ChangeNotifier {
   }
 
   void _advance() {
+    typedDraft = '';
     _photoAttempt++;
     _photoGuarded = false;
     _photoReady = true;
@@ -562,15 +605,21 @@ class FlashcardSession extends ChangeNotifier {
   }
 
   ReviewExercise? _exerciseFor(WordEntry entry) {
-    final builders = <ReviewExercise? Function()>[
-      () => _cloze(entry),
-      () => _photoChoice(entry),
-      () => _similarMatch(entry),
+    final hidden = hiddenTypes?.call() ?? const <String>{};
+    final all = <(ReviewExerciseType, ReviewExercise? Function())>[
+      (ReviewExerciseType.sentenceCloze, () => _cloze(entry)),
+      (ReviewExerciseType.photoChoice, () => _photoChoice(entry)),
+      (ReviewExerciseType.similarMatch, () => _similarMatch(entry)),
       // 問題回報 #1508: French cards mostly have no picture, so this
       // picture-free question keeps the rotation from collapsing to cloze.
-      if (repo.language == 'fr') () => _textChoice(entry),
-      () => _photoRecall(entry),
-      () => _imageDrag(entry),
+      if (repo.language == 'fr')
+        (ReviewExerciseType.textChoice, () => _textChoice(entry)),
+      (ReviewExerciseType.photoRecall, () => _photoRecall(entry)),
+      (ReviewExerciseType.imageDrag, () => _imageDrag(entry)),
+    ];
+    final builders = [
+      for (final (type, build) in all)
+        if (!hidden.contains(type.name)) build
     ];
     for (var offset = 0; offset < builders.length; offset++) {
       final found = builders[(_step + offset) % builders.length]();
