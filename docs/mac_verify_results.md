@@ -3031,3 +3031,14 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #1010（#1531）App 內隱私權政策 | 通過 | 同一輪 iPad：隱私權政策 14 段，畫面上 14 個標題都看到（隱私權政策、帳號資料、雲端備份與同步、意見回饋與卡片回報、照片與辨識、匿名安裝與留存、使用統計、App 崩潰回報、雲端帳號的使用數字、分享的集合、網路連線與第三方、保存與刪除、不做跨 App 追蹤、聯絡與政策網頁），和網頁版同一套段落。法文、英文版這輪沒看 | mac_tools/mrev/shots/privacy_0.png | - | iPad |
 | #1009（#1530）設定→隱私開關說明 | 通過 | 同一輪 iPad：設定→隱私的「匿名安裝與留存統計」說明改成「只有你同意才會送」並列出送的事件；新手引導第一頁的問題另見上一節（全新安裝會卡在語言頁，已另列） | mac_tools/mrev/shots/privacy_section.png | - | iPad |
 | #1016（#1538）資料來源與授權的法文來源 | 通過 | 同一輪 iPad：資料來源頁新增「法文詞頻與程度分級：Lexique 3.83（New, Pallier 等人，CNRS 與 Université Savoie Mont Blanc）」「法文詞頻（輔助程度分級）」「法文『基礎 3000 字』程度」三項 | mac_tools/mrev/shots/sources_1.png | - | iPad |
+
+## 2026-11-13 01:1x M920 #1026 #1085 #1086 #1087 #1080 #1081、伺服器 530（Mac，iPad 與模擬器）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1026（#1549）新手引導頂端錯誤列翻譯 | 通過 | 01:0x 伺服器回 530 時，375×667 模擬器全新安裝：系統法文第一頁頂端是「Le dictionnaire n'a pas pu être mis à jour (serveur occupé ou réseau instable)…｜Réessayer」，系統英文是「The dictionary didn't update this time (server busy or network unstable)…｜Retry」，不再是中文；#1009 的同意頁法文、英文也都有翻譯 | mac_tools/m1026fr/n01_consent.png、mac_tools/m1026en/n01_consent.png | - | 模擬器 |
+| #1085（#1590）複習「不要這種題型」按鈕 | 通過 | HEAD e7dbc36d store 版 iPad 複習：打字題正面下方有「不要這種題型」按鈕（沒按，按了會改設定） | mac_tools/m1086/shots/1086_partial.png | - | iPad |
+| #1086（#1592）打字題「還差 N 個字母」 | 注意 | iPad 抽到打字題（like、on），但測試在實機輸入框打不進字（enterText 與 testTextInput 都沒進去），所以「還差 N 個字母」和按「顯示答案」直接送出這輪沒看到；打字題右邊已沒有送出箭頭，只剩提示燈泡。要 owner 手動打字確認，尚未在本輪驗完 | mac_tools/m1086/shots/1086_partial.png | - | iPad |
+| #1087（#1594）單字詳情圖片在發音下方 | 通過 | 11/12 15:2x iPad house 單字頁截圖：發音錄音與程度下面就是「資料庫圖片（5）」，在詞性與意思之前，符合本卡 | mac_tools/m909c/shots/1110_house.png | - | iPad |
+| #1080／#1081／#1082 照片詳情點標籤開單字、查看單字提示 | 注意 | 程式裡點標籤和「查看單字」都會先 _save() 照片，owner 規則不在 iPad 照片詳情儲存；模擬器全新安裝又被 #1009 卡在語言頁，這輪做不到，尚未在本輪驗完 | - | - | iPad |
+| 伺服器 api.willylinai.com 又連不上 | 不通過 | 11/13 01:0x 從 Mac 打 /api/lexicon 連續回 530（Cloudflare 連不到原站）；iPad 複習頁頂端出現「詞庫這次沒更新成功（伺服器忙或網路不穩）」紅條。詞庫更新、圖片、推薦相片冊、意見回饋都受影響，請確認 Windows 那台和伺服器有沒有在跑 | mac_tools/m1086/shots/1086_partial.png | 高 | iPad |
