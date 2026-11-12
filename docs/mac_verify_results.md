@@ -2952,3 +2952,10 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #1075（#1598）精簡字典法→英查字 | 通過 | 同一輪 iPad 直接查法→英精簡字典（28 MB）：10 個全部查得到並有英文釋義和音標，例如 flâner「to wander around；to loiter」fla.ne、cauchemar「nightmare」kɔʃ.maʁ；mangeons、mangé 都回原形 manger 並標變化形，retrouvailles 回 retrouvaille。小問題：manger 的釋義重複成「to eat；to eat」，go 的音標是 ECDICT 舊式「gou」 | mac_tools/m1075/shots/mac_log.txt | 低 | iPad |
 | #1075 飛航模式、批次加字畫面與加入後單字頁 | 注意 | 飛航模式是 owner iPad 的系統設定，Mac 不改；精簡字典本來就在 App 內查，不靠網路。批次加字對話框的截圖這輪沒成功（測試輸入的文字沒進輸入框，檢查結果是空的），加入後單字頁「基本資料（精簡字典）」要實際加字，不在 owner 的 iPad 加，下一輪改在模擬器做，尚未在本輪驗完 | mac_tools/m1075/shots/1075_check_0.png | - | iPad |
 | #1098（#1605）精簡字典台灣用語與詞性 | 通過 | 同一輪 iPad：精簡字典 bus 是「公車」、詞性 noun（App 值，不再是 ECDICT 縮寫）。taxi、software 在完整詞庫已有，批次加字顯示「已在單字本」，不會走精簡字典，所以這兩個沒看到精簡字典的中文 | mac_tools/m1075/shots/mac_log.txt | - | iPad |
+
+## 2026-11-12 23:1x M920 #1074 本機辨識與 Qwen 50 張對照（Mac，iPad）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1074（#1597）本機辨識 vs Qwen 50 張對照 | 注意 | HEAD c39f0c36 store 版 iPad（本機辨識=true，學習者程度 B1）：用 App 的 LocalVision（Apple Vision）辨識 golden v1 的 50 張照片（從伺服器 /api/image 下載，沒有加進相簿）。速度：每張中位 38 ms、平均 40 ms、最慢 132 ms。數量：Apple Vision 原始標籤平均 3.8 個／張，App 篩完共 77 個字（平均 1.5 個／張），16 張一個字都沒有；Qwen 在同一批照片有 813 個核可標籤（平均 16 個／張）。本機 77 個字中 34 個（44%）也在 Qwen 標籤裡，只涵蓋 Qwen 標籤的 4%。0 字的照片多半是 Vision 只回 people、adult、food、tableware 這類大類（被規則濾掉），時鐘（111）、椅子（98）等照片 Vision 沒回或只回 people。逐張表在下方「#1074 對照表」。照片只在手機辨識速度很快，但每張照片能學的字遠少於 Qwen，請 owner 看是否可以接受 | mac_tools/m1074/m1074.json、mac_tools/m1074/cmp1074.txt | - | iPad |
+| #1074 飛航模式拍照辨識 | 注意 | 要 owner 開飛航模式並用相機拍照，Mac 不改 iPad 系統設定、不代拍；本機辨識本身不走網路（上面 50 張是先下載圖再在手機上辨識），尚未在本輪驗完 | - | - | iPad |
