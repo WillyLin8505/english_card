@@ -2818,3 +2818,13 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #1107（#1615）基礎單字、基礎 3000 字新封面 | 通過 | 同一輪 iPad 下載相片冊頁：基礎單字（先行版）封面是一間木造平房，基礎 3000 字是黑白老照片裡一對夫妻站在房子前，都是一般生活實景，合適。basic-3000-a1／b1、法文集封面這輪沒看 | mac_tools/m892b/shots/892_download_0.png、892_download_1.png | - | iPad |
 | #1100（#1608）run 詞形變化 | 注意 | iPad 10:55 已下載新的 en-zh-TW 包，但 run 背面仍是 rins、rinning；Mac 另外下載伺服器目前的 sqlite（etag 17cfa95d…），run 動詞 forms 仍含 rins、rinning，伺服器包還沒重建，等重建後再驗，尚未在本輪驗完 | mac_tools/m894b/shots/894_run_back.png | - | iPad |
 | #1109（#1617）lors 中文 | 注意 | 11/12 12:0x 下載伺服器 fr×zh-TW sqlite，lors 仍是「因此，當時」，伺服器包還沒重新匯出，等匯出後再驗，尚未在本輪驗完 | - | - | iPad |
+
+## 2026-11-12 M909 #1077 #1110 #1113 與複驗 #1100 #1102（Mac，iPad 與模擬器）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1077（#1581）照片詳情相框比例 | 通過 | HEAD 6e260cee 新裝到 iPad：兩張自己的照片（原圖 768×1024，3:4）在照片詳情顯示 343×457，正好 3:4，沒有拉長。比 3:4 更長的照片這輪沒抽到 | mac_tools/m909/shots/1077_0.png | - | iPad |
+| #1110（#1618）house 第一張資料庫圖片 | 注意 | iPad 已有伺服器最新的 en-zh-TW 包（11:55，etag 190de0d0…，和伺服器相同），house 第一張仍是電話。Mac 查同一包的 catalog_images：13,229 張圖的綁定都沒有 rank 欄位，伺服器包還沒用新規則重建，等重建後再驗，尚未在本輪驗完 | mac_tools/m909/shots/1110_house.png | - | iPad |
+| #1100（#1608）run 詞形變化（複驗） | 注意 | 同一個最新包，run 背面詞形仍是 rins、rinning；包裡 run 動詞 forms 仍含 rins、rinning，伺服器包還沒重建，尚未在本輪驗完 | mac_tools/m909/shots/1100_run_back.png | - | iPad |
+| #1102（#1610）基礎 3000 字・A2 封面（複驗） | 通過 | iPad 推薦頁：A2 封面已從滿臉是血的男人換成一個粉紅色果莢的特寫，內容無害；和基礎單字沒有明顯關聯，但可以接受 | mac_tools/m892c/shots/892_recommended_0.png | - | iPad |
+| #1113（#1620）法文基礎相片冊新封面 | 不通過 | 375×667 模擬器全新安裝，母語英文學法文，推薦頁：French Basic 3000 Words 是老街素描（合適）、2000 Words 是一群家人合照（合適）、B1 是黑白街景有人靠在塗鴉垃圾桶旁（偏暗但可接受）；A2 是街頭抗議遊行，布條寫 STOP AUX VIOLENCES POLICIÈRES（反警察暴力），政治抗議不適合當初學者相片冊封面，要再換 | mac_tools/m1113/n10_recommended_added.png | 中 | 模擬器 |
