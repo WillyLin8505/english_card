@@ -2868,3 +2868,11 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
 |----|----|----|----|----|----|
 | #1110／#1100 包重建（複查） | 注意 | 14:42 伺服器 en-zh-TW 包換成新的（etag 3941ea41…，79.5 MB），但 catalog_images 13,229 張的綁定仍沒有 rank，house 詞條裡也沒有 rank；run 動詞 forms 仍含 rins、rinning。這次重建沒帶到 #1110、#1100 的修改，iPad 不用重驗，尚未在本輪驗完 | - | - | Mac |
+
+## 2026-11-12 15:2x #1110 house 圖片順序、#1100 複查（Mac，iPad）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1110（#1618）house 第一張資料庫圖片 | 通過 | HEAD de6b220a，伺服器新包（etag 6f976cf3…，綁定共 183,988 個 rank）iPad 15:14 下載後重開 App：house 資料庫圖片第一張是雪地裡的房子（標籤 house 房屋），第二張是石造大房子，電話那張不再排第一。包裡 house 最佳圖 18238 rank -1、電話圖 636 rank 384。dog 第一張也換成有狗的圖 | mac_tools/m909c/shots/1110_house.png | - | iPad |
+| 新包下載當下的圖片順序 | 注意 | 第一次跑時 iPad 在 App 開著的 15:14 下載新包，同一次執行打開 house 仍是舊順序（電話第一），重開 App 才換成新順序；下載新包後已打開的畫面要重開才更新，影響小 | mac_tools/m909b0/shots/1110_house.png | 低 | iPad |
+| #1100（#1608）run 詞形變化（複查） | 注意 | 同一個新包，run 背面詞形仍是 rins、rinning，包裡 run 動詞 forms 仍含 rins、rinning，這次重建只帶到 #1110，尚未在本輪驗完 | mac_tools/m909c/shots/1100_run_back.png | - | iPad |
