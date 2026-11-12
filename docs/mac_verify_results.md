@@ -2828,3 +2828,12 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #1100（#1608）run 詞形變化（複驗） | 注意 | 同一個最新包，run 背面詞形仍是 rins、rinning；包裡 run 動詞 forms 仍含 rins、rinning，伺服器包還沒重建，尚未在本輪驗完 | mac_tools/m909/shots/1100_run_back.png | - | iPad |
 | #1102（#1610）基礎 3000 字・A2 封面（複驗） | 通過 | iPad 推薦頁：A2 封面已從滿臉是血的男人換成一個粉紅色果莢的特寫，內容無害；和基礎單字沒有明顯關聯，但可以接受 | mac_tools/m892c/shots/892_recommended_0.png | - | iPad |
 | #1113（#1620）法文基礎相片冊新封面 | 不通過 | 375×667 模擬器全新安裝，母語英文學法文，推薦頁：French Basic 3000 Words 是老街素描（合適）、2000 Words 是一群家人合照（合適）、B1 是黑白街景有人靠在塗鴉垃圾桶旁（偏暗但可接受）；A2 是街頭抗議遊行，布條寫 STOP AUX VIOLENCES POLICIÈRES（反警察暴力），政治抗議不適合當初學者相片冊封面，要再換 | mac_tools/m1113/n10_recommended_added.png | 中 | 模擬器 |
+
+## 2026-11-12 M911 #1115、#984、flutter test（Mac，iPad）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1115（#1621）基礎 3000 字・A2 新封面（水果） | 通過 | iPad 推薦頁 12:3x 截圖：A2 封面是粉紅色果實的特寫（就是 asset 32916 的水果照），沒有不適合的內容 | mac_tools/m892c/shots/892_recommended_0.png | - | iPad |
+| #984（#1500）侍應生改服務生 | 通過 | 11/12 下載伺服器 en-zh-TW sqlite（iPad 用的同一包）解開全部 senses 與 body：「侍應生」0 筆，「服務生」30 筆。iPad 畫面這輪沒開 waitress 單字頁 | - | - | Mac |
+| #953／#988／#948 flutter test | 注意 | HEAD 0ee77ed3 在 Mac 跑 flutter test：980 通過、3 略過、1 個不過——test/screens_test.dart「#815: the fix-it hint also shows at the top and opens 進階設定」第 549 行找不到「測試連線」，單獨重跑也一樣。Windows 回報全過，可能是 Mac 的環境差異（Mac 本機有未提交的 pubspec／iOS 簽章改動），需要 Windows 看是不是測試依賴字型或畫面高度，尚未在本輪驗完 | mac_tools/ftest.log | - | Mac |
+| #1110／#1100 包重建（複查） | 注意 | 12:5x 伺服器 en-zh-TW 包 etag 897d21d3…：catalog_images 仍沒有 rank、run 仍含 rins／rinning，伺服器包還沒用新規則重建，尚未在本輪驗完 | - | - | Mac |
