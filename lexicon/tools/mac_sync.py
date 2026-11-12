@@ -353,6 +353,8 @@ def analyze(c: Candidate) -> tuple[bool, str]:
         errors = mc.analyze_errors(output)
         if code == 124 or not errors:
             return False, f"flutter analyze 沒跑完（{code}）\n" + output[-2000:]
+        shown = [ln.strip()[:170] for ln in output.splitlines() if ln.lstrip().startswith("error")]
+        log(f"analyze round: {len(shown)} error(s) in {len(errors)} file(s): " + " | ".join(shown[:3]))
         moved, narrowed = False, False
         for f in errors:
             reach = mc.import_closure(c.checkout, f)
