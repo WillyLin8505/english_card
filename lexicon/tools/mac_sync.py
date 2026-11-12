@@ -430,7 +430,10 @@ def test_round(c: Candidate) -> tuple[bool, str]:
         if not cause:
             c.known_failures.append(t)
             continue
-        c.take_out(cause, f"flutter test 失敗：{t}", blamed=True)
+        # card #1112: a test that also reaches unfinished (held) files, or a cause as wide as a whole
+        # feature, is the combination's fault: wait for the other cards, don't quarantine it for 2 h
+        mixed = bool(mc.import_closure(c.checkout, t) & set(c.scan.held)) or len(cause) > 3
+        c.take_out(cause, f"flutter test 失敗：{t}" + ("（和還沒做完的檔案一起才壞）" if mixed else ""), blamed=not mixed)
         moved = True
     if moved:
         return False, ""
