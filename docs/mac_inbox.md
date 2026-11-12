@@ -6819,3 +6819,203 @@ commit `59813875`（Windows：flutter analyze 無 error、02:10 +983 ~2: All tes
   結果：第 252 輪：未完成（0/2），fuzz 與 packupdate 都跑滿 540 秒上限未完成，判斷是機器被佔用，不是 App 錯誤；下一輪重跑。
 - 卡 #1092：問題回報 #1599：[owner] 手機詞庫包瘦身：照片標籤每張圖被複製約 11 次（440 MB），改成每張圖存一次；關聯詞量一下手機要
   結果：結論：手機詞庫包 916.1 MB → 383.9 MB（省 532 MB）。照片標籤 436.3 MB（每張圖複製約 11 次）→ 0.26 MB（每張圖一列，共 10,720 張）。App 收到的資料與舊包逐位元相同。關聯詞照 owner 11/11 決定未刪減，只量了顯示數量。（dispatch_tick 04:
+
+## M920（2026-11-12 22:21）狀態：待做
+commit `da65237c`（Windows：flutter analyze 無 error、flutter test 1009 項過（speaker_feedback 3 項整批時超時，單獨跑 3/3 過）；整個 app/ 一起交（mac_sync 分卡檢查有誤，#1619））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1011：問題回報 #1535：[owner] 缺支援網址（審查 1.5，App Store Connect 必填）：https:
+  結果：第 1 輪：/support 頁、設定→關於「聯絡我們」、三語文字都已加好；flutter analyze 仍在 heavylock 排隊，尚未看到結果，flutter test 未跑。
+  需要 Mac：在 iPhone／iPad 看設定→關於的聯絡區塊與複製按鈕。
+- 卡 #1009：問題回報 #1530：[owner] 沒問就送統計（審查 5.1.1(ii)）：「匿名安裝與留存統計」預設打開，登入後的
+  結果：第 1 輪：同意機制已做完並通過測試（後端 7 passed、Flutter 相關 17 個全過、analyze 無 error）；只剩 serveapp reload 與 Mac iPad 驗證。
+  需要 Mac：用 iPad 驗證 (1) 全新安裝：引導第一頁「幫助改善 App」，選之前不送任何事件、選「允許」後才記 install；(2) 登入後跳出「把使用數字送到我的帳號？」一次；(3) 設定→隱私 兩個開關（登入後才看得到第二個）；(4) 舊使用者（已存過匿名統計值）更新後引導不重問。
+    
+    改了什麼
+    - app_settings.dart：anonymousEvents 預設改為「沒回答＝不送」（anonymousEventsChoice 為 null/true/false，舊的 'true'/'false' 沿用）；新增 accountStats／accountStatsChoice（'acctStats'），關閉時重設 statsSentAt。
+    - onboarding_screen.dart：沒有存過選擇的人，第一步加「幫助改善 App」頁（允許／不要，無預設）；選完才記 install。
+    - account_sign_in.dart：登入成功後問一次（askAccountStats）。
+    - usage_report.dart：沒同意不送；新增 deleteRemote()（DELETE /api/account/stats），失敗標 pending，下次啟動重試。
+    - settings_screen.dart：隱私區加「把使用數字送到我的帳號」開關（關掉就呼叫刪除）；匿名統計說明改成「只有你同意才會送」。
+    - 後端：accounts.delete_stats + serve_app.py 的 DELETE /api/account/stats（do_DELETE 轉到 handle_account）。
+    - 隱私權政策（privacy_policy_screen.dart、docs/privacy.html、docs/app-store-privacy.md）與 ui_catalog 三語文字同步（與「隱私權政策缺漏」那張的新文字合併，改的是目前版本）。
+    - 測試：app/test/card1009_consent_test.dart（未同意不送、撤銷後不送並刪除、刪除失敗重試、引導會問／舊使用者不重問）；card911／card914 測試改成先同意；lexicon/tests/test_card911_user_stats.py 加 delete_stats。
+    
+    注意
+    - 已 onboarded 但從沒存過匿名統計值的舊使用者：不重問，也不再送（保守處理，以前是預設送）；他們可在設定→隱私 自己打開。
+    - serve_app.py 改了 DELETE 路由，等派工程式的 serve_app reload 才生效。
+    - 沒動資料，不需備份；golden／QC 與本卡無關（未跑）。
+    - 輔助腳本 lexicon/tools/_card1009_text.py 是一次性的文字替換，可刪。
+    
+    
+    剩餘：Flutter 全套 flutter test 未跑（只跑相關 5 個檔，因 heavy_lock 排隊很久）；iPad 驗證。
+- 卡 #1016：問題回報 #1538：[owner] 資料來源與授權頁缺法文資料來源（審查 5.2 智慧財產）
+  結果：第 1 輪：資料來源與授權頁已補法文來源（Lexique 3.83、wordfreq、法文基礎 3000 字程度），三語已加入 uicatalog；flutter analyze 無問題，全部 flutter test 尚在跑（結果見下方補充）。
+  需要 Mac：在 iPhone／iPad 看「關於→資料來源與授權」三語顯示與長度。
+    - 無資料改動，不需備份／golden／QC。
+    
+    補充：flutter test 全部 992 過、3 個失敗（card1015_mobile_download ×2、card910_account_login ×1，單獨重跑仍失敗）。
+    這 3 個測的是登入按鈕與行動網路下載，與資料來源頁／ui_catalog 無關，疑為工作樹中其他卡尚在修改的檔案（card910／1015）。本卡未動這些檔案。
+- 卡 #1015：問題回報 #1537：[owner] 新安裝會自動下載約 62 MB 詞庫，行動網路下沒先告知大小（審查 4.2.3(i
+  結果：全部完成：行動網路下首次下載完整詞庫（約 62 MB）前先詢問；Wi-Fi 直接下載。新測試 2 個通過，analyze 無 error。
+  需要 Mac：在 iPhone／iPad 用行動網路（關 Wi-Fi）全新安裝，確認出現詢問卡、按「現在下載」開始、改連 Wi-Fi 會自動下載。「允許」只在本次執行有效，重開 App 會再問（若 owner 要永久記住再開卡）。
+- 卡 #1017：問題回報 #1536：[owner] 選照片畫面一打開就要求整個相簿的權限（審查 5.1.1(iii) 資料最少化）
+  結果：選照片畫面打開時不再要求整個相簿權限；「最近照片」改成點「顯示最近照片」才問，拒絕後不再自動跳視窗。flutter analyze 無問題；flutter test 998 過、1 失敗（card910 登入測試，與本卡無關）。
+  需要 Mac：在 iPad（實機）驗證：1) 第一次打開「選擇照片」，不應跳出照片權限視窗，應看到「顯示最近照片」按鈕；2) 點按鈕，系統視窗出現，允許後顯示最近照片縮圖；3) 再次打開，直接顯示縮圖、沒有按鈕；4) 另一台或重設後選「不允許」，按鈕消失、不再自動跳窗，「從相簿選擇」仍能選照片加入；5) 英文與法文介面下「顯示最近照片」有翻譯。
+- 卡 #1025：問題回報 #1548：[Mac] 2026-11-09 收件匣 M597–M836（Mac，iPad 與模擬器）：#95
+  結果：已在工作樹修好、等 Mac 重驗：卡 #954 的修正（decklibrary.dart fetchDeck(listed:)）尚未 commit，Mac 測的 HEAD 63c2510b 不含它。
+  需要 Mac：commit 後用全新安裝（英文介面學法文，加入 French Basic 3000 Words）確認相片冊卡片與複習格子是英文名。
+    
+    剩餘：fillDeckWords 仍呼叫 fetchDeck(slug) 無 listed，但只更新單字清單，不動名稱，不影響。已用舊版安裝的相片冊名稱仍是中文，需刪除重加（尚未做遷移）。
+- 卡 #1036：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
+  結果：全部完成：flutter test 999 全過（2 skipped）、flutter analyze 0 error；根因是測試的假伺服器，不是 App。
+  需要 Mac：無。
+- 卡 #1042：問題回報 #1562：[owner] 法文生活主題相片冊（15 本）：季節、月份與星期、時間、方位、交通、用餐、居家生活
+  結果：全部完成：15 本法文生活主題相片冊上架（goalcheck A3：0/15 → 15/15 本），每本 20–38 個詞，12–37 個詞附 Tatoeba 例句；缺詞已匯入，新手引導興趣頁新增 8 個法文主題。
+  需要 Mac：iPad 驗證 15 本在 卡片集 可下載、新手引導興趣頁（法文）出現新主題；詞卡尚未顯示 examples（同 #1041）。
+    - 例句只抽看少量，部分偏泛。serve_app 無程式改動，不需重啟。
+- 卡 #1051：問題回報 #1571：[owner] 相片冊詞卡顯示情境例句：法文 23 本已存 deck_items.labels.e
+  結果：全部完成（App 端）：從情境相片冊（word deck）複習時，詞卡背面優先顯示該相片冊的 Tatoeba 情境例句，並標作者；待 Mac 在 iPad 驗。；- lexicon/backend/app/decks.py：publicdeck 對 examples 以 tatoebalinks 補英文 transla
+- 卡 #1054：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
+  結果：全部完成：flutter analyze 無 error（只剩 12 個 info），flutter test 前次 998 過／4 敗，修後全過。
+- 卡 #1031：問題回報 #1525：[owner] [owner] Google 登入需要你建立 OAuth Client ID（Go
+  結果：第 2 輪：仍沒有 Google OAuth Client ID，本輪無法往下做，狀態維持等 owner 本人建立。
+- 卡 #1055：問題回報 #1525：[owner] [owner] Google 登入需要你建立 OAuth Client ID（Go
+  結果：還沒有 Google OAuth Client ID：需要 owner 本人登入 Google Cloud Console 建立，AI 無法代做，本輪無法往下做。；狀態（2026-11-10 檢查）
+- 卡 #1052：問題回報 #1569：[owner] 英文生活主題相片冊（15 本）：季節、月份與星期、時間、方位、交通、用餐、居家生活
+  結果：第 1 輪：15 本英文主題相片冊已上架（en-theme-，共 444 詞、347 句 Tatoeba 例句），缺的 5 個字已補進詞庫；還剩 QC after 與 golden 比對（heavylock 一直被其他程序持有，未能執行）。
+  需要 Mac：在 iPad 上確認英文學習者的新手引導興趣頁與 卡片集 能看到 15 本。App 程式我沒有改。
+    
+    備份與還原
+    - 快照：lexicon/logs/agents/card1052_work/card1052_backup_lexemes_decks.json（寫入前的 decks 57 筆、5 個字的 lexeme 列、deck_items 18627、lexemes 總數 246632）。檔案在 card1052_work 子資料夾。
+    - 還原相片冊：python lexicon/tools/card1052_theme_albums_en.py --rollback（刪除 15 個 en-theme-* deck）。
+    - 還原詞庫：刪除新 lexeme #264202、#264210、#264219、#264223、#264230、#264231；goodbye noun #41699 依快照還原成 stub（status、zh、pronunciation 列）。
+    
+    golden 與 QC
+    - QC before（寫入相片冊前、匯入後）：lexicon/logs/agents/card1052_work/qc_before.json。metrics 重點：lexemes_in_pack 28018、full 27473、v.entry.full_without_ipa 247、v.sense.main_without_chinese 707；golden 全部 1.0 或 0.9286（photo.expected_sense），regressions []。
+    - QC after：未完成。qc.py check --live 三次都在 heavy_lock 等待，holder 是已經不存在的程序（pid 97780／104000），鎖仍被別的程序持有。
+    - 這次寫入只新增 deck 與 5 個字的詞條；golden 300 詞與 50 張照片都沒有這 5 個字，也沒有改既有 full 詞，因此預期沒有退步；但還沒有實際量到。下一輪要先跑 python lexicon/tools/heavy_lock.py run -- python lexicon/tools/qc.py check --live --out lexicon/logs/agents/card1052_work/qc_after.json，再和 qc_before.json 比。
+    
+    剩下
+    - 跑 QC after（見上）與 golden 比對。
+    - goodbye noun 的錯誤中文。
+    - Mac：iPad 確認 15 本英文相片冊與興趣頁。
+    - 全庫 IPA 補齊：已開 #1572，由 owner 決定。
+- 卡 #1061：問題回報 #1575：[owner] 相片冊情境例句的翻譯到不了 App：英文本存在 examples[].zh／zh_
+  結果：全部完成（程式部分）：decks.py 與 decklibrary.dart 已補 translation／aiTranslated；Python 1 passed、flutter analyze 無問題、card1051 測試 4/4 通過；剩 Mac 在 iPad 驗。
+  需要 Mac：iPad 驗英文「在餐廳」相片冊（移除重下載）→ bill 背面有情境例句、中文翻譯、「AI 翻譯」標示、Tatoeba 作者；法文 addition 仍顯示英文翻譯。
+- 卡 #1079：問題回報 #1583：[意見回饋] 照片詳情：你上面的單字跟你在這邊列的名詞形容詞動詞的個數要一樣啊，上面
+  結果：已修：照片詳情的「詞性表」改成只列上方標籤清單裡的字（不分難度），數量與上方一致，標籤增減會跟著變（#1583）。
+- 卡 #1078：問題回報 #1582：[意見回饋] 照片詳情：你給我一個按鈕把所有單字全部收進去
+  結果：已完成：照片詳情的單字表（詞性×程度）上方新增「全部加入（N）」按鈕，一次把表中尚未加入的單字全部收進清單（離開頁面時存入單字本）。；- 改動：app/lib/screens/photodetailscreen.dart（wordGrid 加按鈕、addAllGrid）；沿用既有翻譯「已加入 {0} 個單字」「全部加入
+  需要 Mac：照片詳情（開啟單字表旗標時）按「全部加入」，確認 toast 與單字本。
+    - 備註：單字表受 showPhotoWordGrid 旗標控制（預設關），旗標關閉時看不到此按鈕。
+- 卡 #1080：問題回報 #1585：[意見回饋] 照片詳情：點擊那個單字的時候就直接進入單字詳情模式
+  結果：已完成程式修改：照片詳情點擊照片上的單字標籤，現在直接進入單字詳情（問題回報 #1585）。
+  需要 Mac：在 iPad 照片詳情點單字標籤，確認直接開單字詳情、返回後照片頁正常。
+- 卡 #1081：問題回報 #1586：[意見回饋] 照片詳情：我查看單子的按鈕是沒有功能的為什麼？
+  結果：第 1 輪：照片詳情「查看單字」在詞庫找不到該字時完全沒反應，已改成顯示提示（尚未在 iPad 驗證）。
+  需要 Mac：用 iPad 在照片詳情對一個沒存進單字本的字點「查看單字」，確認出現提示；對已存字確認仍開詳情。
+- 卡 #1082：問題回報 #1587：[意見回饋] 照片詳情：我查看單子的按鈕是沒有功能的為什麼？
+  結果：結論：#1587「查看單子沒功能」＝「查看單字」，與 #1586 同一問題，程式已修（photodetailscreen.dart openWord），本卡無新增改動。
+  需要 Mac：用 iPad 開照片 photo-1794409021645465，點一個未存的釘選 → 查看單字，確認出現提示；已存的字要能開詳情。
+    剩餘：若 iPad 上已存的字仍無反應，再開新問題（本輪看不出）。
+- 卡 #1083：問題回報 #1588：[意見回饋] 複習：為什麼會出現這種狀況？照片？不是存在自己？手機？手機端嗎？跟
+  結果：第一行：卡 #1083 只改了說明文字；圖片來自雲端伺服器（不是手機本機、不是你的照片），該次下載收到 429/5xx，已自動重試 2 次仍失敗。
+- 卡 #1084：問題回報 #1589：[意見回饋] 複習：我說過了機械式的聲音都要放在第二個第一個一定是人的聲音
+  結果：第 1 輪：複習翻卡的第二個聲音改成機械式（合成／TTS），第一個一定是真人錄音；已過 flutter analyze，flutter test 因他人編輯中的 flashcardexercise.dart 語法錯誤無法編譯，未跑。
+  需要 Mac：在 iPad 翻一張只有單一真人錄音的字，確認先真人、後機械聲。
+    - 例句旁的喇叭是否也有類似順序問題，本輪未查。
+- 卡 #1087：問題回報 #1594：[意見回饋] 複習：單字詳情在發音，下面就要加入圖片了
+  結果：結論：不需改程式——截圖是舊版 App（圖片區塊在最下面，標題「資料庫圖片（0）」）；目前程式已把圖片放在發音區塊正下方、詞性與意思之前。
+- 卡 #1075：問題回報 #1598：[owner] 手機離線精簡字典：完整詞庫查不到的字，離線改查精簡字典（ECDICT 英中、Wik
+  結果：全部完成（Windows 端）：精簡字典英→中 401,107 字（25 MB）、法→英 357,234 字（28 MB）已建好並接進 App 查字流程；iPad 飛航模式實測待 Mac。
+  需要 Mac：用 iPad 開飛航模式，在「批次新增單字」各查 10 個冷門英文字（serendipity、pernicious、ephemeral、ubiquitous、obfuscate、quixotic、sycophant、laconic、mellifluous、perspicacious）和 10 個法文字（flâner、mangeons、mangé、dépaysement、retrouvailles、cauchemar、grelotter、chuchoter、butiner、rafraîchir），確認列出「基本資料」、有台灣用語中文（英）／英文釋義（法）和音標；加入後單字頁顯示「基本資料（精簡字典）」；went→go 這類變化形顯示「變成原形」。截圖放 mac_verify_results.md（卡號 #1075，裝置 iPad）。
+- 卡 #1085：問題回報 #1590：[意見回饋] 複習：在那個圖片下面給我加一個按鈕是我不要這張卡片就是我不要這一種
+  結果：做了：複習題目下方加「不要這種題型」按鈕，只關掉該題型（例如填空、選圖），卡片本身不動；flutter test 尚未完整驗證（見下）。；- 新測試 app/test/card1085hideexercisetypetest.dart
+- 卡 #1089：問題回報 #1596：[意見回饋] 設定：誒我怎麼沒有辦法設定母語英文學習法文啊？
+  結果：已修：設定頁現在可以設成「母語英文、學習法文」（一次點選即可）。
+  需要 Mac：在 iPad 設定頁，母語中文＋學英文時點「法文」，確認視窗出現並成功切換。
+- 卡 #1086：問題回報 #1592：[意見回饋] 複習：我這種打字的這種卡片，你在正面的時候要呈現說我打得跟答案到底
+  結果：全部完成：填空（打字）題正面改成即時顯示「還差 N 個字母」，並拿掉輸入框右側的箭頭；打字後直接按下方「顯示答案」鍵就等於送出。；- 測試：5 個舊測試改為點「顯示答案」而非 tooltip「送出答案」，20 個全過；flutter analyze 無問題。
+  需要 Mac：在 iPad 上確認填空題打字時顯示「還差 N 個字母」，且按下方「顯示答案」會直接送出。
+- 卡 #1090：問題回報 #1584：[意見回饋] 照片詳情：你這邊的單字數量除了包含我已經確定的單字庫以外，還要圖片中的
+  結果：- app/lib/screens/photodetailscreen.dart levelColumn：words = session.words（標籤）＋ session.oldWords（單字庫，去掉已在標籤裡的）。known 集合不變。；- flutter test（經 heavylock）card744lev
+- 卡 #1094：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
+  結果：結論：flutter analyze 無 error（12 個 info）；全套 flutter test 原本 1002 過／5 失敗，修完後 4 個測試檔重跑全過（19/19）。
+- 卡 #1097：問題回報 #1606：[意見回饋] 設定：他說詞彙無法更新，稍後再試是什麼意思啊？
+  結果：已修：「詞庫暫時無法更新，稍後重試」改成說明原因與下一步的文字（只動 App 文案，無資料變更）。；- 驗證：flutter analyze 兩檔無問題；issue856 與 screenstest 全過（36 項）。
+  需要 Mac：在 iPad 設定頁模擬詞庫更新失敗，確認新文字不被截斷、「重試」按鈕在該畫面可見。
+- 卡 #1098：問題回報 #1605：[owner] 精簡字典英中：部分中文不是台灣用語（bus→公共汽車），詞性是 ECDICT 縮寫
+  結果：第一輪：精簡字典 bus 已改成「名詞：公車」，pos 欄改成 App 值（noun/verb/adj/adv…），asset 已重建，flutter analyze 無問題、card1075 字典測試 9/9 通過；還剩 Mac 在 iPad 驗證，以及台灣用語表尚未對照教育部辭典。
+  需要 Mac：在 iPad 飛航模式查 bus、taxi、software、serendipity，確認中文是台灣用語、詞性顯示為名詞。
+- 卡 #1108：問題回報 #1616：[Mac 注意] 2026-11-12 收件匣最舊項目 #937 #935（Mac，iPad 與模
+  結果：第 1 輪：法文系統新使用者預設改選可用組合（app/lib/screens/onboardingscreen.dart initState）；flutter analyze 無問題，flutter test 未跑成。
+  需要 Mac：用法文系統的模擬器確認一打開預設勾的是可用組合、Suivant 可前進。
+- 卡 #1106：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
+  結果：全部完成：flutter analyze 0 error（12 個 info）、flutter test 1010 項全過（2 skipped）；修了 3 個過時的測試，未刪任何測試、未改 app/lib。
+  需要 Mac：無新增項目。
+- 卡 #1074：問題回報 #1597：[owner] 照片只在手機端辨識，不再傳到遠端伺服器（Apple 原則）
+  結果：第 2 輪：owner 決定 A（網頁版保留連本機伺服器）已套用，程式與 flutter analyze 無錯誤（12 筆皆 info）；第 4 項「本機 vs Qwen 50 張對照」只能在 iPad 量，仍未完成，所以不算全部完成。
+  需要 Mac：iPad 量測）
+    - 對 golden 50 張照片跑本機辨識，記錄每張標籤數、正確數、秒數，與 Qwen 結果（lexicon golden 的 Qwen 標籤）成表。Windows 無 Apple Vision，我沒有編數字。
+    - 飛航模式拍照仍能辨識並查到字。
+- 卡 #1120：問題回報 #1602：[owner] 內建詞庫的圖片要放多少張：目前 2600 張，蓋不到的字複習時沒有圖
+  結果：第 1 輪：依 owner 在 #1602 的回覆，App 內建詞庫的圖片已去掉（2600 → 0 張），flutter analyze / pytest 尚在排隊中、結果未確認，還不能算完成。
+  需要 Mac：在 iPad 驗證，沒下載相片冊時無圖版面不出錯、下載相片冊後有圖。
+    
+    補充：pytest -k "bundle or pack_sqlite or card268"（略過收集即出錯的 test_card1104_etymology.py、test_card722_grid_fill.py，與本卡無關，未查原因）：2 passed。flutter analyze 排不到 heavy_lock 被停掉，仍未驗證。
+- 卡 #1112：問題回報 #1619：mac_sync 交接卡住：36 張做完的 App 卡（11/09 起）一直沒推給 Mac 驗證
+  結果：第 1 輪：macsync 修好後，11:32–13:28 四次實際推出 12 張卡（M908 5、M909 3、M911 1、M912 3）；修前 07:20 到 11:32 是 0 張。還沒全清：14:02 那輪又 0 張，剩約 30 張卡等。
+  需要 Mac：無。
+- 卡 #1123：問題回報 #1602：[owner] 內建詞庫的圖片要放多少張：目前 2600 張，蓋不到的字複習時沒有圖
+  結果：全部完成：App 內建詞庫已不含任何圖片（2600 → 0 張），依 owner 11/12 決定「App 都不要有圖片，等使用者下載相片庫」。
+  需要 Mac：在 iPad 驗 (1) 沒下載相片冊時，複習／詞條頁無圖、不出錯、版面正常；(2) 下載相片冊後有圖。
+    剩下：#1602 等 Mac iPad 驗證後結案。約 17500 字無核准圖片仍由排程 #3 追蹤。
+- 卡 #1124：問題回報 #1602：[owner] 內建詞庫的圖片要放多少張：目前 2600 張，蓋不到的字複習時沒有圖
+  結果：全部完成：#1602 已被 owner 11/12 的決定取代——App 內建圖片 0 張（不是 3909 也不是 2600），已由卡 #1123 做完，本卡不重複重建。
+  需要 Mac：在 iPad 驗 (1) 沒下載相片冊時複習／詞條頁無圖、不出錯、版面正常；(2) 下載相片冊後有圖。
+    剩下：#1602 等 Mac iPad 驗證後結案。約 17500 字無核准圖片由排程 #3 追蹤。
+- 卡 #1126：問題回報 #1602：[owner] 內建詞庫的圖片要放多少張：目前 2600 張，蓋不到的字複習時沒有圖
+  結果：全部完成：#1602 owner 已決定「App 不內建任何圖片」（0 張），這張卡的 A/B/C 選項已過時；實際工作由卡 #1120 完成，本卡只做驗證，沒有再改資料。
+  需要 Mac：在 iPad 驗證沒下載相片冊時無圖版面不出錯、下載後有圖。
+- 卡 #1128：問題回報 #1625：[Mac] 2026-11-12 收件匣 #1023 #1025 #1026、複查 #110：#1
+  結果：已在工作樹修好（卡 #954 的 listed 名稱修正，尚未 commit），Mac 當時 HEAD 459ae9a3 還沒有；需要 Mac 用新版重驗。
+  需要 Mac：新版全新安裝（英文母語學法文）→ 引導加入 French Basic 3000 Words → 相片冊分頁應顯示英文名。
+    剩餘：舊版已安裝的牌組（名稱存成中文）不會自動改名，只有重新加入才會；未做遷移，需要的話另開問題回報。
+    未動資料，無備份；golden/QC 不受影響（純 App 端）。
+- 卡 #1127：問題回報 #1602：[owner] 內建詞庫的圖片要放多少張：目前 2600 張，蓋不到的字複習時沒有圖
+  結果：第 1 輪：內建詞庫已不含任何圖片（owner 決定 0 張）；App 少了約 242 MB（11961 個 webp，git HEAD 的 images 目錄）；flutter test 沒跑完，golden／QC 還沒比對。
+  需要 Mac：在 iPad 驗證——沒下載相片冊時，複習／詞卡無圖版面正常、不出錯；下載相片冊後有圖。
+    - 提醒：內建詞庫只有 12813 字（字庫現有 28022 字），與本卡無關，另案處理。
+- 卡 #1131：問題回報 #1602：[owner] 內建詞庫的圖片要放多少張：目前 2600 張，蓋不到的字複習時沒有圖
+  結果：全部完成（資料層）：owner 在 #1602 回覆「App 都不要有圖片」，內建詞庫圖片 2600 → 0 張，已由卡 #1120 重建並於本卡複驗；App 少約 280 MB（圖片 270 MB + 詞庫約 17 MB）。仍待 Mac 在 iPad 驗證。
+  需要 Mac：在 iPad 驗證沒下載相片冊時無圖版面不出錯、下載相片冊後有圖。
+    剩下：字庫 28023 字 vs 內建 12813 字的整包重建（會變 161 MB）是另一個 app 大小決定，未做。
+- 卡 #1130：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
+  結果：結論：flutter analyze 0 error（只剩 12 個 info）；flutter test 1010 過、僅 1 個計時測試不穩（syncmainthreadtest「整個 SQLite 檔」），不是這批程式造成。
+- 卡 #1132：問題回報 #1602：[owner] 內建詞庫的圖片要放多少張：目前 2600 張，蓋不到的字複習時沒有圖
+  結果：全部完成：#1602 owner 已決定「App 內建 0 張圖」，內建詞庫 2600 → 0 張圖，App 資產少約 280 MB；此卡驗證了卡 #1120 做好的結果。
+  需要 Mac：在 iPad 驗證沒下載相片冊時無圖版面不出錯、下載後有圖。
+    - 字庫已 28023 字，內建包仍是 10/23 的 12813 字；整包重建（JSON 約 161 MB）是 App 大小的另一個決定，未做。
+    - card1128 測試失敗請該卡處理。
+- 卡 #1134：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
+  結果：第 1 輪：flutter analyze 已無 error（12 個 info）；flutter test 1010 過、剩 1 個計時測試失敗（syncmainthreadtest，整個 SQLite 檔）。
+- 卡 #1135：問題回報 #1602：[owner] 內建詞庫的圖片要放多少張：目前 2600 張，蓋不到的字複習時沒有圖
+  結果：全部完成：owner 已決定 App 不內建任何圖片（問題回報 #1602 decision），內建詞庫已是 0 張圖（maximages=0），本卡沒有再改資料。
+- 卡 #1136：問題回報 #1602：[owner] 內建詞庫的圖片要放多少張：目前 2600 張，蓋不到的字複習時沒有圖
+  結果：全部完成：#1602 owner 已決定 App 內建詞庫不放任何圖片（11/12），不需提高到 3909 張，本卡不重建資料。
+- 卡 #1137：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
+  結果：全部完成：flutter analyze 0 error（剩 12 個 info），flutter test 1012 通過、2 skipped、0 失敗。
+- 卡 #1139：問題回報 #1602：[owner] 內建詞庫的圖片要放多少張：目前 2600 張，蓋不到的字複習時沒有圖
+  結果：全部完成：依 owner 11/12 決定（#1602「App 都不要有圖片，等使用者下載相片庫」），App 內建詞庫圖片為 0 張（原 2600 設定、舊資產 3238 檔）；重建已由卡 #1129 於 11/12 14:00 完成，本卡驗證，未再重建。
+  需要 Mac：在 iPad 驗證「沒下載相片冊時無圖不出錯、下載後有圖」。pubspec 仍列空的 assets/lexicon/media/images/（無害）。
+- 卡 #1143：問題回報 #1602：[owner] 內建詞庫的圖片要放多少張：目前 2600 張，蓋不到的字複習時沒有圖
+  結果：全部完成：owner 決定 App 內建 0 張圖片（#1602 decision）；內建詞庫 14:00 已重建為無圖（catalogimages 0、media/images 0 檔），本卡只驗證，沒有再改資料。
+  需要 Mac：在 iPad 驗證沒下載相片冊時無圖版面不出錯、下載相片冊後有圖。
+    - sync_main_thread_test 在負載低時再跑一次確認（環境性，非本卡）。
+- 卡 #1144：問題回報 #1602：[owner] 內建詞庫的圖片要放多少張：目前 2600 張，蓋不到的字複習時沒有圖
+  結果：結論：owner 已決定 App 內建 0 張圖（#1602），資料已由卡 #1120 重建完成；本卡驗證：flutter analyze 無 error/warning、flutter test 1011 通過，QC 未能執行。
+  需要 Mac：用 iPad 驗證：(1) 沒下載相片冊時，複習／詳情頁無圖版面正常、不出錯；(2) 下載相片冊後有圖。
+    - 實際 IPA／APK 大小差量待 flutter build 後量。
+    - 內建詞庫仍是 12813 字的舊版（字庫現為 28023 字）；整包更新會讓 JSON 約 161 MB，是另一個 app 大小的決定，本卡未處理。
+- 卡 #1145：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
+  結果：全部完成：flutter analyze 0 error（12 個 info）、flutter test 1011 通過 / 2 略過 / 0 失敗（無需改程式）。
