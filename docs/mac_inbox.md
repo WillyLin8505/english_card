@@ -6799,3 +6799,11 @@ commit `eaf18a93`（Windows：flutter analyze 無 error、02:10 +983 ~2: All tes
 - 卡 #1141：問題回報 #1628：[Mac] 2026-11-12 M916 #1133 基礎 3000 字 A1／A2／B1：#1
   結果：全部完成：A1／B1（及 A2）封面的文字圖已換成實景照片；3 個牌組換封面。
   需要 Mac：iPad 推薦頁看 A1／A2／B1 新封面（App 需重新同步詞庫）。
+
+## M918（2026-11-12 19:39）狀態：待做
+commit `1e0c8a52`（Windows：flutter analyze 無 error、02:10 +983 ~2: All tests passed!；另有 7 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1142：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
+  結果：全部完成：flutter analyze 無 error（只剩 12 筆 info，無 warning）、flutter test 1012 項全過（~2 skipped），無需改程式。
+- 卡 #224：模擬使用者・拍照
+  結果：第 423 輪：photoui 1/1 通過（117 秒）、pins 7 個切片全通過（共 36781 張照片、110343 個圖釘排版、0 個發現）；新問題 0；UX 建議 0（本輪只跑測試，沒有逐畫面截圖評估）。
+  需要 Mac：無。
