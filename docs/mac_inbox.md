@@ -6753,3 +6753,24 @@ App 畫面若和這個決定不同，請照決定改。
 commit `c5ebd4d2`（Windows：flutter analyze 無 error、flutter test 全過；另有 2 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #1119：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
   結果：全部完成：目前工作樹上 flutter test 全過（+1011，2 略過，0 失敗），flutter analyze 無 error（12 個 info/warning）。
+
+## M915（2026-11-12 17:36）狀態：待做
+commit `72762af4`（Windows：flutter analyze 無 error、01:35 +983 ~2: All tests passed!；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1091：問題回報 #1593：[意見回饋] 複習：為什麼有一些卡片上沒有圖片？是不是要開卡？全部去掃描？到底還
+  結果：第 2 輪：owner 已決定 App 內建 0 張圖（#1604）；但重建 app/assets/lexicon 已由卡 #1120（Claude CLI 11，#1602）進行中，本卡不重複改同一份資料，等 #1120 完成後驗證。
+- 卡 #1121：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
+  結果：全部完成：flutter analyze 0 error（12 條 info）；flutter test 1010 過、0 失敗（syncmainthreadtest 有一次計時抖動，retry 後過）。
+- 卡 #1122：問題回報 #1602：[owner] 內建詞庫的圖片要放多少張：目前 2600 張，蓋不到的字複習時沒有圖
+  結果：全部完成：owner 已決定 App 內建 0 張圖（問題回報 #1602 decision），內建詞庫已是 0 圖版（2026-11-12 14:00 重建）。本卡沒有再改資料。
+  需要 Mac：在 iPad 驗證 (1) 沒下載相片冊時，複習／詞義頁沒有圖也不出錯、版面正常；(2) 下載相片冊後有圖。
+    還原：git 內 HEAD 版本含 2600 張圖與舊 sqlite（git checkout 不可由 agent 執行，需 owner 操作）。
+- 卡 #1125：問題回報 #1624：[Mac 注意] 2026-11-12 15:2x #1110 house 圖片順序、#1100
+  結果：結論：不修（低影響）。下載新包時已打開的畫面不會自動重讀，重開即為新順序；無資料問題，未改程式/資料。；不處理：換新包時 LexiconPack 已 notifyListeners，只有『已打開的單字詳情』保留舊圖片順序；重開畫面即更新，不影響資料正確性，且使用者極少在下載新包的同一秒停在詳情頁。Mac 已確認重開 A
+- 卡 #38：常態：檢查相似詞比較只從使用者已有的單字挑選
+  結果：第 38 輪通過：重播審計 6,358 詞、178,992 次出題嘗試，違規 0、標籤不符 0、拖曳畫面 redirect 洩漏 0、phraseguard.leaked 0。
+- 卡 #4：掃描還沒打完的圖片標籤
+  結果：結論：圖片標籤無待標：pending 0、done 33541、failed 56（與上輪完全相同，無新圖進來）；Qwen :8790 與 tagger :8765 health 皆 ok。
+  需要 Mac：無。剩下：新圖進來時再看 pending 是否消化。
+- 卡 #1129：問題回報 #1602：[owner] 內建詞庫的圖片要放多少張：目前 2600 張，蓋不到的字複習時沒有圖
+  結果：全部完成：App 內建詞庫已不含任何圖片（0 張，依 owner 11/12 決定「App 都不要有圖片，等使用者下載相片庫」），內建資料夾圖片由 3238 檔（約 398 MB 備份內）降為 0。
+  需要 Mac：在 iPad 驗證「沒下載相片冊時無圖不出錯、下載後有圖」。
