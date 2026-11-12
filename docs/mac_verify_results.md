@@ -2959,3 +2959,58 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 |----|----|----|----|----|----|
 | #1074（#1597）本機辨識 vs Qwen 50 張對照 | 注意 | HEAD c39f0c36 store 版 iPad（本機辨識=true，學習者程度 B1）：用 App 的 LocalVision（Apple Vision）辨識 golden v1 的 50 張照片（從伺服器 /api/image 下載，沒有加進相簿）。速度：每張中位 38 ms、平均 40 ms、最慢 132 ms。數量：Apple Vision 原始標籤平均 3.8 個／張，App 篩完共 77 個字（平均 1.5 個／張），16 張一個字都沒有；Qwen 在同一批照片有 813 個核可標籤（平均 16 個／張）。本機 77 個字中 34 個（44%）也在 Qwen 標籤裡，只涵蓋 Qwen 標籤的 4%。0 字的照片多半是 Vision 只回 people、adult、food、tableware 這類大類（被規則濾掉），時鐘（111）、椅子（98）等照片 Vision 沒回或只回 people。逐張表在下方「#1074 對照表」。照片只在手機辨識速度很快，但每張照片能學的字遠少於 Qwen，請 owner 看是否可以接受 | mac_tools/m1074/m1074.json、mac_tools/m1074/cmp1074.txt | - | iPad |
 | #1074 飛航模式拍照辨識 | 注意 | 要 owner 開飛航模式並用相機拍照，Mac 不改 iPad 系統設定、不代拍；本機辨識本身不走網路（上面 50 張是先下載圖再在手機上辨識），尚未在本輪驗完 | - | - | iPad |
+
+### #1074 對照表（照片 id｜Qwen 核可標籤數｜本機字數｜兩邊都有｜Apple Vision 毫秒｜本機字｜Qwen 字前 8 個）
+
+```text
+1 | 19 | 1 | 1 | 132 | apple | apple, blemish, calyx, cluster, fresh, fruit, glare, gloss
+17 | 15 | 3 | 1 | 38 | blue sky, land, volcano | barren, branch, crater, erode, ground, landscape, mountain, peak
+26 | 16 | 1 | 0 | 43 | spinach | background, close-up, edge, foliage, glossy, green, illuminated, jagged
+31 | 16 | 2 | 2 | 48 | fork, plate | crumple, cutlery, edge, fork, grain, handle, knife, metal
+44 | 21 | 1 | 1 | 18 | book | binding, book, border, calligraphy, figure, illuminated, illumination, illustration
+57 | 12 | 0 | 0 | 18 |  | cheek, chin, collar, group, hair, interlock, lean, outdoor
+70 | 11 | 1 | 0 | 20 | consumer electronics | android, cellular, display, illustrate, orange, phone, render, screen
+71 | 17 | 1 | 0 | 36 | consumer electronics | antenna, card, display, flip phone, hinged, keypad, mobile phone, open
+84 | 17 | 0 | 0 | 49 |  | adorn, cake, chop, container, glare, glaze, green, grid
+85 | 22 | 2 | 2 | 11 | tire, wheel | basket, black, brass, car, display, documentation, exhibit, fender
+98 | 12 | 0 | 0 | 100 |  | armrest, carved, carving, chair, floor, leg, seat, shadow
+111 | 11 | 0 | 0 | 66 |  | clock, decorative, dial, digit, hand, mark, needle, pattern
+125 | 15 | 4 | 3 | 34 | plate, fry, drinking glass, sandwich | bacon, bread, cheese, fry, glass, ham, lettuce, orange
+140 | 18 | 0 | 0 | 40 |  | bean, bowl, center, chip, coffee, coffee bean, contain, container
+153 | 18 | 1 | 1 | 40 | plate | border, building, ceramic, color, contain, decorated, dish, embellish
+169 | 19 | 0 | 0 | 15 |  | arrange, blade, chopping board, cook, cutlery, cutting board, embossed, garnish
+182 | 18 | 0 | 0 | 38 |  | blend, bubble, combine, container, dough, effervescence, effervescent, ferment
+195 | 17 | 0 | 0 | 38 |  | barrier, child, clothing, cramp, dim, foot, grate, hat
+213 | 18 | 1 | 0 | 49 | illustration | anther, branch, bud, corolla, cross-section, drupe, filament, flower
+227 | 11 | 3 | 1 | 40 | foliage, branch, plant | attached, branch, dewdrop, droplet, fruit, green, hanging, leaf
+240 | 9 | 1 | 0 | 50 | drinking glass | base, container, edge, empty, glass, reflection, rim, surface
+254 | 21 | 1 | 0 | 30 | automobile | beam, bumper, ceiling, display, exhibition, fender, fire truck, firefighter
+267 | 16 | 5 | 1 | 42 | decoration, frame, pineapple, citrus fruit, orange | apple, bottle, bowl, container, display, glass, jar, light
+280 | 17 | 3 | 1 | 35 | musical instrument, music, piano | arrange, control, design, grain, key, keyboard, knob, label
+293 | 16 | 3 | 1 | 47 | conveyance, portal, window | decay, faded, frame, glass, grain, pane, peel, plank
+306 | 10 | 0 | 0 | 43 |  | atmosphere, cloud, coastline, continent, curvature, curved, landmass, ocean
+319 | 16 | 1 | 0 | 43 | baby | bottle, cheek, chin, clothing, embroidery, eye, eyebrow, feed
+333 | 9 | 1 | 0 | 36 | night sky | cloud, cluster, cosmic, dust, formation, nebula, region, shimmer
+346 | 19 | 0 | 0 | 23 |  | base, carved, carving, case, clock, decorative, depict, dial
+359 | 15 | 1 | 1 | 25 | coffee bean | basket, bean, brush, coffee, coffee bean, dial, glass, lid
+372 | 10 | 0 | 0 | 27 |  | aligned, feature, golden, grout, handrail, metal, panel, stain
+386 | 18 | 6 | 3 | 37 | fork, plate, drinking glass, knife, table, cup | bake, cake, coffee, condiment, cream, crumb, crystal, foam
+399 | 11 | 1 | 0 | 24 | bucket | background, cup, fabric, green, handle, pattern, plastic, spout
+412 | 19 | 2 | 2 | 36 | spaghetti, plate | basil, cook, dish, dishware, food, garnished, hearty, meal
+425 | 21 | 4 | 4 | 38 | plate, fork, sandwich, table | bread, cabbage, coffee, compose, cup, fork, garnished, grain
+438 | 18 | 2 | 1 | 34 | plate, cup | coffee, contain, cup, edge, fill, handle, hold, liquid
+451 | 21 | 0 | 0 | 42 |  | alloy, base, bowl, bronze, cast, container, copper, display
+467 | 18 | 7 | 2 | 27 | blue sky, fence, land, freeze, hill, snow, water | barren, desert, dirt, distant, fence, flat, gravel, hill
+482 | 13 | 0 | 0 | 22 |  | divergent, epidermis, extend, finger, hand, open, palm, separate
+497 | 21 | 2 | 1 | 27 | cloudy, water | canoe, cloud, darkness, erupt, expansion, explosive, gloom, horizon
+512 | 16 | 1 | 1 | 31 | pillow | bed, cheek, comfortable, embrace, eye, eyebrow, eyelid, forehead
+614 | 18 | 1 | 0 | 31 | book | binding, blue, cover, embossed, fabric, grain, indigo, letter
+616 | 18 | 5 | 0 | 35 | christmas tree, celebration, statue, plant, tree | arrange, branch, decorate, display, evergreen, exhibit, feature, head
+660 | 22 | 1 | 1 | 22 | handwriting | adorn, arch, architectural, border, brussels, building, city, embellish
+680 | 4 | 0 | 0 | 60 |  | curved, framework, vertical, wooden
+684 | 13 | 1 | 0 | 93 | illustration | apparatus, bell, conic, device, instrument, mouthpiece, musical, pointed
+702 | 16 | 4 | 1 | 44 | blue sky, fence, lake, water | diamond, emblem, fence, foliage, notice, post, protection, rail
+703 | 25 | 3 | 2 | 40 | land, brick, grass | bough, branch, brick, canopy, community, entrance, foliage, grass
+721 | 20 | 0 | 0 | 48 |  | adorn, armor, bridle, chainmail, embellish, feather, gauntlet, harness
+723 | 20 | 0 | 0 | 48 |  | antique, attach, chainmail, collar, craft, hem, interlock, link
+```
