@@ -370,7 +370,12 @@ def analyze(c: Candidate) -> tuple[bool, str]:
                 # card #1112: a file left at HEAD that no longer compiles against the changes it
                 # imports. Taking out its whole import closure held 33 of 36 ready cards back.
                 narrowed = True
-                cause = mc.narrow(lambda g: analyze_fixed_without(c, f, g), suspects, tries=8)
+                gone = {p for p in suspects if c.bytes.get(p) is None}      # deleted files: usually several at once
+                cause = set()
+                if gone and len(gone) < len(suspects) and analyze_fixed_without(c, f, gone):
+                    cause = mc.narrow(lambda g: analyze_fixed_without(c, f, g), gone, tries=4) or gone
+                if not cause:
+                    cause = mc.narrow(lambda g: analyze_fixed_without(c, f, g), suspects, tries=8)
                 if cause:
                     log(f"analyze error in {f}: {len(cause)} of {len(suspects)} suspect file(s) cause it")
                     suspects = cause
