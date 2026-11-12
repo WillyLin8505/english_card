@@ -2753,3 +2753,35 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #496 粗俗詞標籤 | 注意 | 英文介面法文 merde、foutre、cul 單字頁都沒有 Vulgar（foutre 顯示 Slang）；不確定哪個字在資料裡標 vulgar，尚未在本輪驗完 | mac_tools/b1/en_fr/mac_log.txt | - | 模擬器 |
 | #1009 #1010 #1011 #1015 #1016 #1017 上架審查卡 | 注意 | HEAD 63c2510b 的 app/lib 還沒有這幾張的改動（例如找不到「幫助改善 App」「顯示最近照片」），尚未在 main，同步後再驗 | - | - | 模擬器 |
 | 模擬使用者常態卡 #225 #226 #227 #228 #12 | 通過 | HEAD 63c2510b，375×667 模擬器英文／繁中／法文全新安裝各一次：引導、推薦、五個分頁教學與重看、相片冊、單字本、設定、複習（法文 5 張、iPad 12 張）都走完，例外 0。#224 相機要 owner 手動 | mac_tools/b1/ | - | 模擬器 |
+
+## 2026-11-12 #1092 詞庫包瘦身（Mac，iPad）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1092（#1599）手機詞庫包瘦身 | 通過 | HEAD e7c0cbed，iPad 現有 App 打開後 20 秒內下載新的 en-zh-TW.server.1794442893136.sqlite（75.8 MB），App 持續執行正常。伺服器 format=sqlite 回 79,462,400 bytes。與 iPad 11/09 的包比：表只有 meta、lexemes，lexemes 28,020→28,023，meta 的 labels、media_base 等相同，catalog_images 51.66 MB 幾乎一樣，只是詞條內容的正常更新。手機收到的 sqlite 包本來就沒有每張圖複製 11 次的照片標籤，所以 916→384 MB 的縮小是 Windows 端檔案，Mac 看不到前後數字；照片標籤在單字頁的顯示這輪沒在畫面上看，尚未在本輪驗完 | - | - | iPad |
+| 伺服器 api.willylinai.com | 通過 | 11/12 08:20 從 Mac 打 /api/issues/status 和 /api/lexicon 都回 200，11/09 的 530 已恢復 | - | - | iPad |
+| #1075 精簡字典、#1074 照片只在手機辨識與 Qwen 50 張對照 | 注意 | owner 指定優先驗，但 docs/mac_inbox.md 和 git log 都還沒有這兩張卡（/api/issues 的 1074、1075 是別的問題回報編號），等 Windows 同步後再驗，尚未在本輪驗完 | - | - | iPad |
+
+## 2026-11-12 #894 複習圖片配句子義項（Mac，iPad）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #894 複習圖片配句子義項、輪播從最好的圖開始 | 不通過 | HEAD 63787671，iPad 用 App 的「複習這些卡」直接開 bank、light 的卡。bank：題目 He's at the bank exchanging money（義項 銀行），背面第 1/16 張是湖邊樹林（河岸），標籤寫 Bank 銀行。light：題目 All plants need water and light（義項 明亮的、光明的），第 1/13 張是一條魚的黑白插圖。圖片沒有依句子的義項挑，第一張也不是最好的圖 | mac_tools/m894/shots/894_bank_back.png、894_light_back.png | 中 | iPad |
+| #894 run 卡 | 注意 | run 卡題目 Better run away immediately!（義項 跑、奔跑、走），這張卡 0 張圖片，背面沒有圖片區；run 沒有圖可以比對義項，尚未在本輪驗完 | mac_tools/m894/shots/894_run_back.png | - | iPad |
+| run 詞形變化 | 不通過 | iPad run 複習卡背面詞形變化：第三人稱單數 rins、現在分詞 rinning，應為 runs、running（過去式 ran 正確） | mac_tools/m894/shots/mac_log.txt | 中 | iPad |
+
+## 2026-11-12 #779／#920 小螢幕照片選字卡（Mac，iPad）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #779／#920 小螢幕照片選字卡（有框的卡片樣式） | 通過 | HEAD 5e510e3c，iPad 複習 11 張中抽到 2 張照片選字卡（glow、transparent）：題目兩行，三個選項全部在卡片框內，最下面的選項底約 666pt，「顯示答案」頂 743pt，沒有被蓋住。注意這次 iPad 上 App 的畫面是 375×820（之前是 375×667），所以 667 高的情況這輪沒量到，尚未在本輪驗完 | mac_tools/m920/shots/920_photoChoice_glow.png | - | iPad |
+
+## 2026-11-12 收件匣最舊項目 #892 #826 #912 #925 #926（Mac，iPad）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #892 主題相片冊（運動、爬山） | 通過 | HEAD 4e0ea38c，iPad 下載相片冊頁列出運動相片冊（64 字）、爬山與戶外活動相片冊（62 字）、旅行、工作、考試、學校等；推薦頁以興趣 運動＋爬山健行、程度 A2 打開，前兩本就是爬山與戶外活動、運動，封面都有照片。沒有按加入 | mac_tools/m892/shots/892_recommended_0.png | - | iPad |
+| 基礎 3000 字・A2 封面 | 注意 | 同一個推薦頁，基礎 3000 字・A2 的封面是海上起火冒黑煙的船，給初學者的基礎單字相片冊不太合適，建議換封面 | mac_tools/m892/shots/892_recommended_0.png | 低 | iPad |
+| #826（#947）學英文、母語法文不再出現中文 | 注意 | 11/12 伺服器 api/lexicon?target=en&native=fr&format=sqlite 仍是 0 筆 lexemes；而且 #957 之後 App 在引導和設定把「學英文、母語法文」擋掉，和 M 項 #826 的 owner 決定（先開放、沒翻譯的字明說）不同，需要 owner／Windows 確認以哪個為準；iPad 上不能選這個組合，尚未在本輪驗完 | - | - | iPad |
+| #912 跨裝置自動同步 | 注意 | 要用同一帳號在 iPad、iPhone 登入交替複習，需要 owner 登入，Mac 不代填帳號密碼，尚未在本輪驗完 | - | - | iPad |
+| #925（#1179）／#926（#1180）刪除照片與還原後的照片檔 | 注意 | 要在 iPad 拍照後刪除照片或從舊備份還原，owner 規則 iPad 不刪照片、不還原備份，要改在模擬器做或等 owner，尚未在本輪驗完 | - | - | iPad |
