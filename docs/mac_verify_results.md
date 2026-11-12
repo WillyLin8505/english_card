@@ -2876,3 +2876,12 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #1110（#1618）house 第一張資料庫圖片 | 通過 | HEAD de6b220a，伺服器新包（etag 6f976cf3…，綁定共 183,988 個 rank）iPad 15:14 下載後重開 App：house 資料庫圖片第一張是雪地裡的房子（標籤 house 房屋），第二張是石造大房子，電話那張不再排第一。包裡 house 最佳圖 18238 rank -1、電話圖 636 rank 384。dog 第一張也換成有狗的圖 | mac_tools/m909c/shots/1110_house.png | - | iPad |
 | 新包下載當下的圖片順序 | 注意 | 第一次跑時 iPad 在 App 開著的 15:14 下載新包，同一次執行打開 house 仍是舊順序（電話第一），重開 App 才換成新順序；下載新包後已打開的畫面要重開才更新，影響小 | mac_tools/m909b0/shots/1110_house.png | 低 | iPad |
 | #1100（#1608）run 詞形變化（複查） | 注意 | 同一個新包，run 背面詞形仍是 rins、rinning，包裡 run 動詞 forms 仍含 rins、rinning，這次重建只帶到 #1110，尚未在本輪驗完 | mac_tools/m909c/shots/1100_run_back.png | - | iPad |
+
+## 2026-11-12 收件匣 #1023 #1025 #1026、複查 #1100（Mac，iPad 與模擬器）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1023（#1547）免費帳號簽章開關 | 通過 | HEAD a023dc51：main 的 project.pbxproj 三處都是 CODE_SIGN_ENTITLEMENTS = "$(APP_ENTITLEMENTS)"，Google.defaults.xcconfig 預設 Runner/Runner.entitlements。Mac 把 Runner.entitlements 還原成 main（含 Sign in with Apple），只加 ios/Flutter/Signing.local.xcconfig（APP_ENTITLEMENTS=Runner/RunnerFree.entitlements），用免費帳號建 store Release 成功，簽好的 App 沒有 applesignin，裝到 iPad 並打開正常。Mac 先前本機移除 entitlement 的改動已丟掉 | mac_tools/rel1023.log | - | iPad |
+| #1025（#1548）英文介面相片冊名稱 | 不通過 | 11/12 13:3x 模擬器全新安裝（母語英文學法文，引導中加入 French Basic 3000 Words，HEAD 459ae9a3）：推薦頁是英文名，但加入後相片冊分頁卡片仍是「法語基礎 3000 字」，整輪 log 出現 18 次 | mac_tools/m1117/n13_tab_相片冊.png | 中 | 模擬器 |
+| #1026（#1549）新手引導頂端錯誤列翻譯 | 注意 | 要在伺服器 530（連不上）時全新安裝才會出現那一行，現在伺服器正常，看不到，尚未在本輪驗完 | - | - | 模擬器 |
+| #1100（#1608）run 詞形（複查） | 注意 | 15:5x 伺服器 en-zh-TW 包 etag 88556bd5…：run 動詞 forms 仍含 rins、rinning；overbid 也仍是 overbided、overbiding、overbides。#1100 說刪掉的 7 筆詞形還在包裡，尚未在本輪驗完 | - | - | Mac |
