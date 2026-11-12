@@ -63,7 +63,7 @@ TEST_TIMEOUT_S = 25 * 60        # 540 s ended every run under load 10/31 11:41�
 SLOT_WAIT_S = 20 * 60
 TEST_GAP_S = 10 * 60            # CLIs wait for the same heavy slot
 MAX_TEST_ROUNDS = 2
-MAX_ANALYZE_ROUNDS = 12
+MAX_ANALYZE_ROUNDS = 20
 QUARANTINE_S = 2 * 60 * 60      # the cause may be fixed in another file: try again after this
 
 
@@ -329,6 +329,18 @@ class Candidate:
         return hashlib.sha1(repr(bits).encode("utf-8", "replace")).hexdigest()
 
 
+def analyze_fixed_without(c: Candidate, f: str, group: set[str]) -> bool:
+    """With `group` back at HEAD, is `f` free of analyze errors?"""
+    for p in group:
+        c.head(p)
+    try:
+        code, output = flutter("analyze", "--no-fatal-infos", "--no-fatal-warnings", cwd=c.app, timeout=ANALYZE_TIMEOUT_S)
+        return code == 0 or (code != 124 and f not in mc.analyze_errors(output))
+    finally:
+        for p in group:
+            c.mine(p)
+
+
 def analyze(c: Candidate) -> tuple[bool, str]:
     """Take out what doesn't compile until the rest does. Needing a card that isn't finished is
     nobody's failure, so only real errors are blamed."""
@@ -341,12 +353,23 @@ def analyze(c: Candidate) -> tuple[bool, str]:
         errors = mc.analyze_errors(output)
         if code == 124 or not errors:
             return False, f"flutter analyze 沒跑完（{code}）\n" + output[-2000:]
-        moved = False
+        moved, narrowed = False, False
         for f in errors:
             reach = mc.import_closure(c.checkout, f)
             suspects = {f} if f in c.included else reach & c.included
+            if f not in c.included:
+                # a deleted file is no longer in the copy, so the import closure can't see it
+                suspects |= {p for p in c.included if c.bytes.get(p) is None}
             if not suspects:
                 continue
+            if len(suspects) > 1 and not narrowed:
+                # card #1112: a file left at HEAD that no longer compiles against the changes it
+                # imports. Taking out its whole import closure held 33 of 36 ready cards back.
+                narrowed = True
+                cause = mc.narrow(lambda g: analyze_fixed_without(c, f, g), suspects, tries=8)
+                if cause:
+                    log(f"analyze error in {f}: {len(cause)} of {len(suspects)} suspect file(s) cause it")
+                    suspects = cause
             if reach & set(c.scan.held):
                 c.take_out(suspects, "依賴還沒做完的卡")
             else:
@@ -383,6 +406,9 @@ def test_round(c: Candidate) -> tuple[bool, str]:
         raise CheckStopped(f"flutter test 沒跑完（{code}）\n" + output[-2000:])
     code2, again = run_tests(c, failed)
     still = [] if code2 == 0 else mc.failed_tests(again)
+    if code2 != 0 and not still and code2 != 124:
+        # card #1112: a test that fails to load prints no "[E]" line; it still failed, so narrow it
+        still = list(failed)
     if code2 != 0 and not still:
         raise CheckStopped("flutter test 重跑沒跑完\n" + again[-2000:])
     flaky = sorted(set(failed) - set(still))
@@ -488,6 +514,15 @@ def sync_app(cards: list[dict], state: dict, check_only: bool = False) -> int:
         return rc
 
 
+def log_waiting(c: Candidate, cards: list[dict]):
+    """Card #1112: say which file keeps each waiting card back (for how long it has been held)."""
+    for x in cards:
+        files = c.scan.owned[int(x["card"])] & set(c.out)
+        if files:
+            p = sorted(files)[0]
+            log(f"  #{x['card']} waits: {len(files)} of its {len(c.scan.owned[int(x['card'])])} file(s) out, e.g. {p}: {c.out[p]}")
+
+
 def check_and_push(c: Candidate, cards: list[dict], state: dict, head: str, check_only: bool) -> int:
     """0 = pushed or nothing to do · 1 = no push, the verdict stands · 2 = no verdict, try again."""
     line = ""
@@ -526,6 +561,7 @@ def check_and_push(c: Candidate, cards: list[dict], state: dict, head: str, chec
         warn("檢查沒跑完：" + str(e)[:200].replace("\n", " "))
         return 2
     landing = [x for x in cards if not c.unready(x)]
+    log_waiting(c, cards)
     log(f"checks passed: {len(landing)} card(s) go, {len(cards) - len(landing)} wait; {line}")
     if c.known_failures:
         line += f"；另有 {len(c.known_failures)} 檔在 HEAD 上就失敗（已開問題回報，不是這批造成）"
