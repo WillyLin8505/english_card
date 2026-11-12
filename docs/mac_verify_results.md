@@ -2936,3 +2936,10 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #1140（#1627）A2 不再是滿臉是血 | 通過 | A2 目前是 32733 羅馬競技場（#1141 之後的版本，不是 #1140 寫的水果 32916），滿臉是血的 4377 已不在；iPad 推薦頁 18:5x 截圖確認 | mac_tools/m1133b/shots/892_rec_A2_0.png | - | iPad |
 | #1138（#1602）沒相片冊無圖、下載後有圖 | 通過 | 和 #1122／#1129 同一件事，17:5x 模擬器全新安裝已驗：加入相片冊後複習照片題有圖、沒圖的卡版面正常、沒加相片冊時沒有例外。owner 的 iPad 已有相片冊又不刪資料，「沒相片冊」只在模擬器看 | mac_tools/m1122b/b07_front_photoChoice.png | - | 模擬器 |
 | #1100（#1608）run 詞形（複查） | 注意 | 19:2x 伺服器 en-zh-TW 包 etag 0e772e2e…：run 仍含 rins、rinning，overbid 仍有 overbided、overbiding、overbides，尚未在本輪驗完 | - | - | Mac |
+
+## 2026-11-12 M918 #1142 flutter test、#1100 複查（Mac）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1142 flutter test | 注意 | HEAD dfd331cb 在 Mac 跑 flutter test：981 過、3 略過、1 個不過，和下午同一個：screens_test.dart「#815: the fix-it hint also shows at the top and opens 進階設定」，前面「提示出現在頂端」那段過了，按提示之後找不到「測試連線」（第 549 行）。Mac 本機對 app/ 的未提交改動只有 pubspec 加 integration_test 和 iOS 簽章設定，和這個測試無關；Windows 回報全過，可能是按提示後捲動／展開在 Mac 的字型尺寸下沒點到，尚未在本輪驗完 | mac_tools/ftest2.log | - | Mac |
+| #1100（#1608）run 詞形（複查） | 注意 | 19:5x 伺服器 en-zh-TW 包 etag 3e118d82…：run 仍含 rins、rinning，overbid 仍有 overbided、overbiding、overbides，尚未在本輪驗完 | - | - | Mac |
