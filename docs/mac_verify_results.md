@@ -2761,3 +2761,11 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #1092（#1599）手機詞庫包瘦身 | 通過 | HEAD e7c0cbed，iPad 現有 App 打開後 20 秒內下載新的 en-zh-TW.server.1794442893136.sqlite（75.8 MB），App 持續執行正常。伺服器 format=sqlite 回 79,462,400 bytes。與 iPad 11/09 的包比：表只有 meta、lexemes，lexemes 28,020→28,023，meta 的 labels、media_base 等相同，catalog_images 51.66 MB 幾乎一樣，只是詞條內容的正常更新。手機收到的 sqlite 包本來就沒有每張圖複製 11 次的照片標籤，所以 916→384 MB 的縮小是 Windows 端檔案，Mac 看不到前後數字；照片標籤在單字頁的顯示這輪沒在畫面上看，尚未在本輪驗完 | - | - | iPad |
 | 伺服器 api.willylinai.com | 通過 | 11/12 08:20 從 Mac 打 /api/issues/status 和 /api/lexicon 都回 200，11/09 的 530 已恢復 | - | - | iPad |
 | #1075 精簡字典、#1074 照片只在手機辨識與 Qwen 50 張對照 | 注意 | owner 指定優先驗，但 docs/mac_inbox.md 和 git log 都還沒有這兩張卡（/api/issues 的 1074、1075 是別的問題回報編號），等 Windows 同步後再驗，尚未在本輪驗完 | - | - | iPad |
+
+## 2026-11-12 #894 複習圖片配句子義項（Mac，iPad）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #894 複習圖片配句子義項、輪播從最好的圖開始 | 不通過 | HEAD 63787671，iPad 用 App 的「複習這些卡」直接開 bank、light 的卡。bank：題目 He's at the bank exchanging money（義項 銀行），背面第 1/16 張是湖邊樹林（河岸），標籤寫 Bank 銀行。light：題目 All plants need water and light（義項 明亮的、光明的），第 1/13 張是一條魚的黑白插圖。圖片沒有依句子的義項挑，第一張也不是最好的圖 | mac_tools/m894/shots/894_bank_back.png、894_light_back.png | 中 | iPad |
+| #894 run 卡 | 注意 | run 卡題目 Better run away immediately!（義項 跑、奔跑、走），這張卡 0 張圖片，背面沒有圖片區；run 沒有圖可以比對義項，尚未在本輪驗完 | mac_tools/m894/shots/894_run_back.png | - | iPad |
+| run 詞形變化 | 不通過 | iPad run 複習卡背面詞形變化：第三人稱單數 rins、現在分詞 rinning，應為 runs、running（過去式 ran 正確） | mac_tools/m894/shots/mac_log.txt | 中 | iPad |
