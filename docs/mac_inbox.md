@@ -7204,3 +7204,10 @@ commit `1629e8bf`（Windows：flutter analyze 無 error、flutter test 全過）
   需要 Mac：在 iPad 驗證 (1) 沒下載相片冊時複習畫面無圖、不出錯；(2) 下載相片冊後有圖。
     
     剩餘：約 17500 字沒有已核准圖片，由排程 #3 追蹤，不在此卡。
+
+## M935（2026-11-13 15:07）狀態：待做
+commit `93dffde4`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1179：問題回報 #1602：[owner] 內建詞庫的圖片要放多少張：目前 2600 張，蓋不到的字複習時沒有圖
+  結果：全部完成：內建詞庫已不含任何圖片（2600 張 → 0 張），App 少約 47.4 MB 圖片（pack 也從 81.0 MB 降到 74.4 MB）。
+  需要 Mac：在 iPad 驗證——沒下載相片冊時，複習／單字頁無圖版面正常、不出錯；下載相片冊後有圖。
+    剩餘：App 完整 flutter analyze 與全套 flutter test 未在本輪重跑。
