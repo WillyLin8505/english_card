@@ -22,6 +22,13 @@ LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"]
 WF_LANG = {"en": "en", "fr": "fr", "zh-TW": "zh"}
 # British English is the default playback (spec section 7).
 TTS_LOCALE = {"en": "en-GB", "fr": "fr-FR", "zh-TW": "zh-TW"}
+# 問題回報 #1644: a digit relation word (1, 2 …) gets its numeral, not whichever
+# lexeme or abbreviation sense the lexicon happens to hold for it.
+NUMERAL_ZH = {str(i): z for i, z in enumerate(
+    ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十"])}
+# A sense that only names another word's abbreviation, misspelling or variant is no
+# translation of the relation word (1 → 一百八十度旋轉的縮寫, 2 → 二靈的別字).
+ABBREV_GLOSS = re.compile(r"的(縮寫|簡稱|略稱|縮略|別字|異體字)")
 
 
 @lru_cache(maxsize=1)
@@ -2373,6 +2380,12 @@ class LexiconLookup(SourceAdapter):
             w = item.get("word", "")
             from ..text import normalize_lemma
             norm = normalize_lemma(w, ctx.target)
+            if f != "derived_pos" and ctx.native == "zh-TW" and norm in NUMERAL_ZH:
+                slot = slots.get(w.lower(), w.lower())
+                C.append(Candidate(f, ctx.native, {"word": w, "text": NUMERAL_ZH[norm],
+                                                   "slot": slot, "part": w},
+                                   slot, slot=slot, source_record_id=f"numeral:{norm}"))
+                continue
             q = select(m.Lexeme).where(m.Lexeme.language == ctx.target,
                                        m.Lexeme.normalized == norm, m.Lexeme.status == "full")
             lexemes = s.execute(q).scalars().all()
@@ -2410,6 +2423,8 @@ class LexiconLookup(SourceAdapter):
                     .order_by(m.Sense.ordinal)).all()
                 # Its first common sense (not obsolete, slang or another
                 # etymology's), as the app's card front reads it.
+                # Abbreviation and variant glosses are no translation (問題回報 #1644).
+                rows = [r for r in rows if not ABBREV_GLOSS.search(r.text or "")]
                 common = [r for r in rows if not any(
                     str(l).lower() in RARE_SENSE_LABELS or str(l).startswith("etymology-")
                     for l in (r.labels or []))]
