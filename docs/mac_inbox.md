@@ -7176,3 +7176,11 @@ commit `8aea2817`（Windows：flutter analyze 無 error、flutter test 全過；
     未動資料，所以沒有新備份、golden/QC 無變動需比對。
     
     剩下：Mac 在 iPad 驗證（見上）。
+
+## M931（2026-11-13 14:30）狀態：待做
+commit `69dbfcfc`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1174：問題回報 #1602：[owner] 內建詞庫的圖片要放多少張：目前 2600 張，蓋不到的字複習時沒有圖
+  結果：全部完成（資料面）：owner 已決定 App 內建 0 張圖，內建詞庫已由卡 #1120 重建（圖片 2600 → 0），本卡補驗證：flutter analyze 0 錯誤、flutter test 1012 通過。
+  需要 Mac：在 iPad 驗證：沒下載相片冊時複習／單字頁無圖版面不出錯；下載相片冊後有圖。實際 IPA 差量待 build 後量。
+    
+    剩下：內建詞庫仍是 10/23 的 12813 字（字庫已 28023 字），整包更新會讓 JSON 變約 161 MB，是另一個 app 大小決定，不在本卡。
