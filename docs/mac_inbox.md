@@ -7118,3 +7118,10 @@ commit `6791c290`（Windows：flutter analyze 無 error、flutter test 全過；
 commit `76f99418`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #1161：問題回報 #1602：[owner] 內建詞庫的圖片要放多少張：目前 2600 張，蓋不到的字複習時沒有圖
   結果：結論：owner 已決定 App 內建 0 張圖片，內建詞庫 11/12 14:00 已照此重建（圖片 2600→0，約少 47.4 MB 圖片、sqlite 41.4→30.8 MB），flutter analyze／test 全過。
+
+## M929（2026-11-13 12:01）狀態：待做
+commit `7a07207b`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1162：問題回報 #1602：[owner] 內建詞庫的圖片要放多少張：目前 2600 張，蓋不到的字複習時沒有圖
+  結果：全部完成：App 內建詞庫圖片已是 0 張（owner 11/12 決定），App 比 10/23 版少 47.4 MB 圖片；未再改資料。
+  需要 Mac：在 iPad 驗 (1) 沒下載相片冊時，複習／單字頁無圖版面正常、不出錯；(2) 下載相片冊後有圖。
+    剩餘：無。約 17500 字沒有已核准圖片，仍由排程 #3 追蹤。
