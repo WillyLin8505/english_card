@@ -45,8 +45,11 @@ def _activity(ctx: Context, kind: str, items: list[dict]) -> str:
 # Latin letters incl. accented/combining ones (pĕrvé, abílit): the validator's A-Z run would
 # otherwise split a root around the accent and leave "（p）ĕ（rv）é" (card #1103).
 _LATIN_L = "A-Za-zÀ-ÖØ-öø-ɏ̀-ͯḀ-ỿ"
+# Spacing modifier letters (ʰ ʷ ʲ …, U+02B0–U+02FF) belong inside a root too: *selbʰ- is
+# one root; without them the run stopped at ʰ and gave "*（selb）ʰ-" (問題回報 #1639).
+_LATIN_CONT = _LATIN_L + "ʰ-˿'’\\-"
 _FOREIGN_ROOT = re.compile(
-    rf"[{_LATIN_L}][{_LATIN_L}'’\-]*(?:[ 	][{_LATIN_L}][{_LATIN_L}'’\-]*)*")
+    rf"[{_LATIN_L}][{_LATIN_CONT}]*(?:[ 	][{_LATIN_L}][{_LATIN_CONT}]*)*")
 _NOTE_SPAN = re.compile(r"[（(][^）)]*[）)]")
 
 

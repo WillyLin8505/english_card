@@ -1413,7 +1413,7 @@ class Tagger:
         }
 
 
-TRANSLATE_PROMPT_VERSION = 'translate-v5'
+TRANSLATE_PROMPT_VERSION = 'translate-v6'
 TRANSLATE_SCHEMA = {
     'type': 'object',
     'properties': {'items': {'type': 'array', 'items': {
@@ -1435,7 +1435,10 @@ TRANSLATE_KIND = {
              'definition sentence.',
     'sentence': 'Each item is a {lang} sentence; translate it naturally into {native}.',
     'etymology': 'Each item is an English etymology note; rewrite it as one or two plain '
-                 '{native} sentences a learner can read. Keep word forms as written.',
+                 '{native} sentences a learner can read. Copy every foreign word, root and affix '
+                 'of the note exactly as written (seal, sex, urchin, sculpō, -ant): never '
+                 'translate, respell or replace one with a {native} word; translate only the '
+                 'explanation around them. Keep word forms as written.',
     'define': 'Each item is a {lang} word; write one short, simple {lang} definition of '
               'its main sense for learners.',
     'part': 'Each item is one part of a {lang} word (a prefix, root or suffix; the context says '
