@@ -1077,6 +1077,7 @@ const uiCatalog = <String, (String, String)>{
     'Un mot par ligne, ou séparés par des virgules ou tabulations (300 maximum).'
   ),
   '可加入': ('Ready', 'Prêt'),
+  '基本資料': ('Basic entry', 'Entrée de base'),
   '已在單字本（略過）': ('Already added (skipped)', 'Déjà ajouté (ignoré)'),
   '詞庫沒有，仍可加入': (
     'Not in dictionary, can still add',
