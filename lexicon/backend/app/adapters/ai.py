@@ -24,6 +24,20 @@ from .base import Candidate, Context, SourceAdapter
 # near-homophone "fawn" had already cached that text).
 RELATION_MEANING = {"synonyms", "antonyms", "hypernyms", "hyponyms", "related", "derived_terms"}
 RELATION_FORM = {"homophones", "near_homophones", "similar_spelling"}
+
+
+def phrase_context(word: str, head: str) -> str | None:
+    """Context for a multi-word relation item that contains the headword (issue #1645).
+
+    With the headword's own sense as context, Qwen glossed box about / box in as 箱子;
+    the phrase's meaning (phrasal verb, idiom, compound) is often a different sense.
+    None for single words: the caller keeps the sense context.
+    """
+    tokens = word.lower().replace("-", " ").split()
+    if len(tokens) < 2 or head.lower() not in tokens:
+        return None
+    return (f"vocabulary connected to {head}; a phrase: give the meaning of the whole "
+            f"phrase '{word}' (phrasal verb, idiom or compound), not of '{head}' alone")[:200]
 # Same rule as exporter.zh_key: two glosses compared without spaces and punctuation.
 _GLOSS_NOISE = re.compile(r"[\s。．.、，,；;：:！!？?「」『』\"'“”()（）]")
 
@@ -145,7 +159,9 @@ class AITranslate(SourceAdapter):
                 context = (f"vocabulary connected to {ctx.display or ctx.lemma}; "
                            f"{sense.get('pos', '')}: {sense.get('gloss', '')}")[:200]
             return "word", [{"id": i["word"].lower(), "text": i["word"],
-                             "context": context, "category": category}
+                             "context": (category == "meaning"
+                                         and phrase_context(i["word"], ctx.display or ctx.lemma))
+                             or context, "category": category}
                             for i in ctx.items(rel)
                             if i.get("word") and want(i["word"].lower())][:30]
         if f == "etymology_native":
