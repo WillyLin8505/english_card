@@ -26,9 +26,10 @@ TTS_LOCALE = {"en": "en-GB", "fr": "fr-FR", "zh-TW": "zh-TW"}
 # lexeme or abbreviation sense the lexicon happens to hold for it.
 NUMERAL_ZH = {str(i): z for i, z in enumerate(
     ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十"])}
-# A sense that only names another word's abbreviation, misspelling or variant is no
-# translation of the relation word (1 → 一百八十度旋轉的縮寫, 2 → 二靈的別字).
-ABBREV_GLOSS = re.compile(r"的(縮寫|簡稱|略稱|縮略|別字|異體字)")
+# A sense that only names another word's abbreviation, misspelling or variant, or a
+# letter of another alphabet, is no translation of the relation word (1 → 一百八十度旋轉的縮寫,
+# 2 → 二靈的別字, au → 印地語字母中的元音).
+META_GLOSS = re.compile(r"的(縮寫|簡稱|略稱|縮略|別字|異體字)|字母中的")
 
 
 @lru_cache(maxsize=1)
@@ -2424,7 +2425,7 @@ class LexiconLookup(SourceAdapter):
                 # Its first common sense (not obsolete, slang or another
                 # etymology's), as the app's card front reads it.
                 # Abbreviation and variant glosses are no translation (問題回報 #1644).
-                rows = [r for r in rows if not ABBREV_GLOSS.search(r.text or "")]
+                rows = [r for r in rows if not META_GLOSS.search(r.text or "")]
                 common = [r for r in rows if not any(
                     str(l).lower() in RARE_SENSE_LABELS or str(l).startswith("etymology-")
                     for l in (r.labels or []))]
