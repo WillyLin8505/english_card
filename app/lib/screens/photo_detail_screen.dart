@@ -1093,14 +1093,20 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
   /// grid (Windows #731) its words go into [buildPhotoWordGrid] instead.)
   Widget _wordGrid(Photo photo, PhotoWordSession session, List<OldWord> old) {
     final repo = AppScope.of(context).repository;
+    final listed = {for (final w in session.words) w.word.toLowerCase()};
+    // 問題回報 #1637: words already in the book but not on this photo's list
+    // are not shown above, so the table leaves them out too (counts match).
+    bool inTable(String word) =>
+        listed.contains(word.toLowerCase()) || repo.entryByWord(word) == null;
     final words = [
       for (final w in session.words) GridWord.fromCandidate(w.candidate),
-      for (final c in photo.candidates) GridWord.fromCandidate(c),
-      for (final o in session.oldWords) GridWord.fromCandidate(o.candidate),
+      for (final c in photo.candidates)
+        if (inTable(c.word)) GridWord.fromCandidate(c),
+      for (final o in session.oldWords)
+        if (inTable(o.candidate.word)) GridWord.fromCandidate(o.candidate),
     ];
     final grid = buildPhotoWordGrid(words);
     if (grid.isEmpty) return const SizedBox.shrink();
-    final listed = {for (final w in session.words) w.word.toLowerCase()};
     final known = {
       for (final w in words)
         if (listed.contains(w.word.toLowerCase()) ||

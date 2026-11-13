@@ -59,6 +59,22 @@ class AppShellState extends State<AppShell> implements AppNavigator {
   // 8,680 words on a phone; card #791, 問題回報 #928). Once built a tab stays
   // alive in the IndexedStack, so its state and navigation stack are kept.
   late final Set<AppTab> _built = {widget.initialTab};
+  /// Tabs with a route (page, menu, dialog) open above their root; the
+  /// first-time tutorial card waits so it never covers them (#1636).
+  final _covered = ValueNotifier<Set<AppTab>>(const {});
+
+  void _syncCovered(AppTab tab, NavigatorObserver o) {
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      final can = o.navigator?.canPop() ?? false;
+      if (_covered.value.contains(tab) == can) return;
+      _covered.value = {
+        for (final t in _covered.value)
+          if (t != tab) t,
+        if (can) tab,
+      };
+    });
+  }
+
   final _navigators = {
     for (final t in AppTab.values) t: GlobalKey<NavigatorState>()
   };
@@ -223,7 +239,10 @@ class AppShellState extends State<AppShell> implements AppNavigator {
                   if (_built.contains(tab))
                     Navigator(
                       key: _navigators[tab],
-                      observers: [FeedbackObserver(tab)],
+                      observers: [
+                        FeedbackObserver(tab),
+                        _CoverObserver((o) => _syncCovered(tab, o)),
+                      ],
                       onGenerateRoute: (_) =>
                           MaterialPageRoute<void>(builder: (_) => _root(tab)),
                     )
@@ -236,10 +255,12 @@ class AppShellState extends State<AppShell> implements AppNavigator {
             Align(
                 alignment: Alignment.bottomCenter,
                 child: ListenableBuilder(
-                    listenable: AppScope.of(context).settings,
+                    listenable: Listenable.merge(
+                        [AppScope.of(context).settings, _covered]),
                     builder: (context, _) {
                       final settings = AppScope.of(context).settings;
-                      if (settings.tutorialSeen(_tab.name)) {
+                      if (settings.tutorialSeen(_tab.name) ||
+                          _covered.value.contains(_tab)) {
                         return const SizedBox.shrink();
                       }
                       return TabTutorialOverlay(
@@ -254,4 +275,23 @@ class AppShellState extends State<AppShell> implements AppNavigator {
       ),
     );
   }
+}
+
+/// Reports every route change of a tab's navigator.
+class _CoverObserver extends NavigatorObserver {
+  final void Function(NavigatorObserver) onChange;
+  _CoverObserver(this.onChange);
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) =>
+      onChange(this);
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) =>
+      onChange(this);
+  @override
+  void didRemove(Route<dynamic> route, Route<dynamic>? previousRoute) =>
+      onChange(this);
+  @override
+  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) =>
+      onChange(this);
 }
