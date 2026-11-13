@@ -3080,3 +3080,10 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #1154（#1633）批次加字清單的詞性 | 通過 | HEAD ff04f029，375×667 模擬器全新安裝：繁中介面清單顯示「名詞・偶然發現珍寶的運氣…」「形容詞・有害的…」「形容詞・C2・短暫的…」；系統英文介面顯示「Noun」「Adjective」，不再是 noun／adj／adj. 代碼 | mac_tools/m1154z/1075_check_0.png、mac_tools/m1154e/1075_check_0.png | - | 模擬器 |
 | 批次加字「基本資料」標記沒翻譯 | 注意 | 同一輪英文介面清單（Ready、Noun、Add 12 都是英文）裡，精簡字典來的字仍標中文「基本資料」：bulk_add_dialog.dart 第 182 行 ui(context, '基本資料')，但 ui_catalog.dart 沒有「基本資料」這一條，英文、法文介面都會顯示中文 | mac_tools/m1154e/1075_check_0.png | 低 | 模擬器 |
 | #1156／#1157（#1602）App 內建 0 張圖 | 通過 | 和 #1122／#1129／#1138 同一件事：11/12 17:5x 模擬器全新安裝已驗「沒相片冊無例外、加入相片冊後複習有圖」；11/12 17:1x store build 量到內建 webp 0 張、flutter_assets 247 MB、Runner.app 286 MB（未壓縮的 .app，不是上架 IPA）。owner iPad 已有相片冊又不刪資料，「沒相片冊」只在模擬器看 | mac_tools/m1122b/b07_front_photoChoice.png、mac_tools/rel1119.log | - | 模擬器 |
+
+## 2026-11-13 11:5x M926–M927 #1160 #1158 #1159（Mac，模擬器）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1160（#1635）批次加字「基本資料」翻譯 | 通過 | HEAD 5472fb2f，375×667 模擬器系統英文全新安裝：批次加字清單 serendipity、pernicious、ubiquitous 等精簡字典來的字標「Basic entry」，不再是中文「基本資料」；法文介面這輪沒看 | mac_tools/m1160/1075_check_0.png | - | 模擬器 |
+| #1158／#1159（#1602）App 內建 0 張圖 | 通過 | 和 #1156／#1157 同一件事，前面已驗：模擬器全新安裝沒相片冊無例外、加入相片冊後複習有圖；owner iPad 已有相片冊又不刪資料，「沒相片冊」只在模擬器看 | mac_tools/m1122b/b07_front_photoChoice.png | - | 模擬器 |
