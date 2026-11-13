@@ -3072,3 +3072,11 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #1150（#1630）新手引導走完 | 通過 | HEAD df1916fb（onboarding_screen.dart 改成 _step++ 與 _interestsStep／_checkStep），375×667 模擬器全新安裝兩次都走完：繁中學英文——同意頁選「不要」→語言→背景→目的→興趣→推薦加入基礎單字（先行版）→開始使用，0 ms 進主畫面，單字 1,687；系統英文、母語英文學法文——同樣走完，加入 French Basic 3000 Words，單字 3,000。兩次例外 0 | mac_tools/m1150/n11_recommended_added.png、mac_tools/m1150f/n14_tab_相片冊.png | - | 模擬器 |
 | #1025（#1548）英文介面相片冊名稱 | 通過 | 同一輪全新安裝（母語英文學法文，引導中加入 French Basic 3000 Words）：相片冊分頁卡片是「French Basic 3000 Words｜3000 words」，複習格子也是「French Basic 3000 Words」，不再出現「法語基礎 3000 字」 | mac_tools/m1150f/n14_tab_相片冊.png、n26_review_grid.png | - | 模擬器 |
 | #1151（#1631）／#1152（#1632）伺服器恢復後紅條消失 | 通過 | 10:3x iPad 打開 App 和「選擇照片」：頂端沒有「詞庫這次沒更新成功」紅條，最近照片 37 張正常；Mac 打 /api/issues/status 回 200。530 的時段是 11/13 約 01:00 到 08:00 | mac_tools/m1151/shots/1017_picker.png | - | iPad |
+
+## 2026-11-13 11:3x M923–M925 #1154 #1156 #1157（Mac，模擬器）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1154（#1633）批次加字清單的詞性 | 通過 | HEAD ff04f029，375×667 模擬器全新安裝：繁中介面清單顯示「名詞・偶然發現珍寶的運氣…」「形容詞・有害的…」「形容詞・C2・短暫的…」；系統英文介面顯示「Noun」「Adjective」，不再是 noun／adj／adj. 代碼 | mac_tools/m1154z/1075_check_0.png、mac_tools/m1154e/1075_check_0.png | - | 模擬器 |
+| 批次加字「基本資料」標記沒翻譯 | 注意 | 同一輪英文介面清單（Ready、Noun、Add 12 都是英文）裡，精簡字典來的字仍標中文「基本資料」：bulk_add_dialog.dart 第 182 行 ui(context, '基本資料')，但 ui_catalog.dart 沒有「基本資料」這一條，英文、法文介面都會顯示中文 | mac_tools/m1154e/1075_check_0.png | 低 | 模擬器 |
+| #1156／#1157（#1602）App 內建 0 張圖 | 通過 | 和 #1122／#1129／#1138 同一件事：11/12 17:5x 模擬器全新安裝已驗「沒相片冊無例外、加入相片冊後複習有圖」；11/12 17:1x store build 量到內建 webp 0 張、flutter_assets 247 MB、Runner.app 286 MB（未壓縮的 .app，不是上架 IPA）。owner iPad 已有相片冊又不刪資料，「沒相片冊」只在模擬器看 | mac_tools/m1122b/b07_front_photoChoice.png、mac_tools/rel1119.log | - | 模擬器 |
