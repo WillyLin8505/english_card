@@ -7113,3 +7113,8 @@ commit `6791c290`（Windows：flutter analyze 無 error、flutter test 全過；
 - 卡 #1160：問題回報 #1635：[Mac 注意] 2026-11-13 11:3x M923–M925 #1154 #1156 #
   結果：已修：批次加字的「基本資料」標記在英文／法文介面現在會翻譯（Basic entry／Entrée de base）。；- 根因：app/lib/l10n/uicatalog.dart 缺少「基本資料」這一條（bulkadddialog.dart:182 用 ui() 查表）。
   需要 Mac：英文／法文介面重看批次加字清單，確認標記顯示 Basic entry／Entrée de base。
+
+## M928（2026-11-13 11:48）狀態：待做
+commit `76f99418`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1161：問題回報 #1602：[owner] 內建詞庫的圖片要放多少張：目前 2600 張，蓋不到的字複習時沒有圖
+  結果：結論：owner 已決定 App 內建 0 張圖片，內建詞庫 11/12 14:00 已照此重建（圖片 2600→0，約少 47.4 MB 圖片、sqlite 41.4→30.8 MB），flutter analyze／test 全過。
