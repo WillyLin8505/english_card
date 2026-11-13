@@ -7074,3 +7074,16 @@ commit `df1916fb`（Windows：flutter analyze 無 error、flutter test 全過；
   結果：第 30 輪未完成：全庫 B 群掃描又沒拿到 heavy.lock，沒有新數字（連續第 2 輪，r29 同樣原因）。
   需要 Mac：無。
     - 剩下：下一輪在模擬卡結束後重跑上面指令並與 r28 比對。建議派工程式讓本卡避開模擬卡時段（或把 scan_library --only B 改成唯讀、不需 heavy_lock 的輕量掃描），否則本卡會持續空轉。
+
+## M924（2026-11-13 10:55）狀態：待做
+commit `1cb3107c`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #12：模擬使用者・跨分頁（亂點、詞庫更新）
+  結果：第 253 輪：2/2 通過（fuzz 1500 步 seed 431 無發現；packupdate 通過），上輪逾時是機器忙，這輪沒問題。
+- 卡 #227：模擬使用者・單字本
+  結果：第 433 輪：database、detail 2/2 通過；新問題 0、UX 建議 0。
+  需要 Mac：無。
+- 卡 #1156：問題回報 #1602：[owner] 內建詞庫的圖片要放多少張：目前 2600 張，蓋不到的字複習時沒有圖
+  結果：全部完成（決定已由 owner 在 #1602 下達）：App 內建圖片 2600 → 0 張，詞庫 json+sqlite 122.4 → 105.2 MB（−17.2 MB），圖片 270 MB 資產移除；flutter test 1012 項全過。圖片只靠使用者下載相片冊。
+  需要 Mac：在 iPad 驗證沒下載相片冊時，複習／單字頁無圖也不出錯；下載後有圖。
+    2. 實際 IPA／APK 大小差量待 flutter build 後量。
+    3. qc.py check --live 若要補量，請在 DB 較閒時重跑。
