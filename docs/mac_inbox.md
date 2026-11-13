@@ -7224,3 +7224,10 @@ commit `058c5a64`（Windows：flutter analyze 無 error、flutter test 全過）
 - 卡 #1181：問題回報 #1602：[owner] 內建詞庫的圖片要放多少張：目前 2600 張，蓋不到的字複習時沒有圖
   結果：全部完成：#1602 的最終決定是「App 內建圖片 0 張，圖片只隨使用者下載的相片庫」，內建包已是 0 張圖（卡 #1120/#1180 做完），本卡只驗證，沒有再改資料或程式。
   需要 Mac：在 iPad 驗證沒下載相片庫時無圖版面不出錯、下載後有圖。
+
+## M938（2026-11-13 16:22）狀態：待做
+commit `ee71cec8`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1182：問題回報 #1602：[owner] 內建詞庫的圖片要放多少張：目前 2600 張，蓋不到的字複習時沒有圖
+  結果：全部完成：owner 11/12 決定「App 內建 0 張圖片」，內建資料早已重建（media/images 0 張、manifest maximages=0）；本輪補完驗證：flutter test 1012 通過、QC 無退步。
+  需要 Mac：iPad 驗證（1）沒下載相片冊時無圖版面正常；（2）下載相片冊後有圖。
+    - 剩下：無（缺圖由排程 #3 追蹤）。
