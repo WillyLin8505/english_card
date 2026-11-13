@@ -7024,3 +7024,31 @@ commit `da65237c`（Windows：flutter analyze 無 error、flutter test 1009 項�
 commit `0d58e90e`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #1147：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
   結果：第 1 輪（未全部完成）：flutter analyze 0 error（12 個 info），卡上列的 card496frenchuitest、privacysettingstest 現在都過；全套 flutter test 1011 過、2 略過、1 失敗。
+
+## M922（2026-11-13 10:12）狀態：待做
+commit `625fb788`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1148：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
+  結果：全部完成：privacysettingstest.dart 現在通過；flutter test 全過（1012 通過、2 略過），flutter analyze 0 error（12 條 info）。
+- 卡 #1151：問題回報 #1631：[Mac] 2026-11-13 01:1x M920 #1026 #1085 #1086 ：伺服
+  結果：伺服器現在正常，無需改程式：api.willylinai.com 於 11/13 回 200（/api/lexicon）、本機 8770 /health ok、cloudflared 在跑。
+  需要 Mac：到 iPad 重新整理複習頁，確認紅條「詞庫這次沒更新成功」消失、詞庫更新與圖片可用。
+    剩下：若再出現 530，請記下時間，以便對照 watchdog 日誌。
+- 卡 #1152：問題回報 #1632：[Mac] 2026-11-13 01:4x M920 #1017 選照片權限（Mac，iP：伺服
+  結果：伺服器 530 已不再出現：Windows 重現不了，目前 https://api.willylinai.com/api/lexicon?format=sqlite 回 200（約 80 MB），屬 01:4x 的暫時性 Cloudflare tunnel 中斷，非 App／iOS 問題。
+  需要 Mac：在 iPad 重新點「重試」更新詞庫，確認紅條消失、選照片權限畫面可驗。若仍 530 請附時間，我再查 watchdog 紀錄。
+- 卡 #1150：問題回報 #1630：[Mac] 2026-11-12 23:5x #1009 新手引導卡在語言頁（Mac，模擬器：#1
+  結果：已修好：新手引導在「幫助改善 App」同意頁之後卡在語言頁（問題回報 #1630）。
+  需要 Mac：全新安裝模擬器重跑 引導（同意→語言→背景→目的→興趣）確認可走完。
+    剩下：未新增專用回歸測試（既有測試涵蓋同意頁但沒走完整流程）。
+- 卡 #1149：問題回報 #1602：[owner] 內建詞庫的圖片要放多少張：目前 2600 張，蓋不到的字複習時沒有圖
+  結果：結論：owner 已決定 App 內建 0 張圖（#1602 decision）；內建詞庫已由卡 #1120 在 11/12 14:00 重建為 0 張，本卡驗證通過，沒有再改任何資料。
+- 卡 #228：模擬使用者・設定
+  結果：第 426 輪：settings 1/1 通過（10 秒）；新問題 無；UX 建議 無新增（沿用既有問題回報 #1530、#1520、#1521）。
+  需要 Mac：無。
+    - 剩下：無。
+- 卡 #4：掃描還沒打完的圖片標籤
+  結果：結論：圖片標籤無待標：pending 0、done 33541、failed 56（與上輪完全相同，無新圖進來）；Qwen :8790 與 tagger :8765 health 皆 ok。
+  需要 Mac：無。剩下：新圖進來時再看 pending 是否消化。
+- 卡 #224：模擬使用者・拍照
+  結果：第 425 輪：photoui 1/1 通過（42 秒）、pins 7 個切片全通過（0–6，每片 6000 張）；新問題 0；UX 建議 0（本輪只跑測試，沒有逐畫面截圖評估）。
+  需要 Mac：無。
