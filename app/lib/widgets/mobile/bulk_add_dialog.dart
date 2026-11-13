@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../l10n/ui_text.dart';
 import '../../services/bulk_add_words.dart';
+import '../../services/learning_content.dart';
 import '../../services/lexicon_pack.dart';
 import '../../services/word_database_repository.dart';
 import '../../theme/mobile_theme.dart';
@@ -175,7 +176,7 @@ class _BulkAddDialogState extends State<_BulkAddDialog> {
     }
     final detail = [
       if (it.status == BulkStatus.ready || it.status == BulkStatus.variant) ...[
-        if (it.isPhrase) ui(context, '片語') else it.pos,
+        ui(context, posLabel(it.pos)),
         if (it.level != null) it.level!,
         if (it.meaning.isNotEmpty) it.meaning,
         if (it.basic) ui(context, '基本資料'),

@@ -112,6 +112,9 @@ class OnboardingScreen extends StatefulWidget {
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
   int _step = 0;
+  // Pages after the optional consent page shift by one (問題回報 #1630).
+  int get _interestsStep => _askConsent ? 4 : 3;
+  int get _checkStep => _interestsStep + 1;
   // 卡 #1009: nothing is sent before an explicit yes/no; someone who already has a
   // saved choice (an update) is not asked again.
   late final bool _askConsent = widget.settings != null &&
@@ -413,7 +416,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
         ],
         action:
-            PrimaryButton(label: '下一步', onTap: () => setState(() => _step = 1)),
+            PrimaryButton(label: '下一步', onTap: () => setState(() => _step++)),
       );
 
   Widget _background() => _page(
@@ -430,7 +433,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ],
         action: PrimaryButton(
             label: '下一步',
-            onTap: _self == null ? null : () => setState(() => _step = 2)),
+            onTap: _self == null ? null : () => setState(() => _step++)),
       );
 
   /// A multi-select chip (學習目的 / 興趣主題).
@@ -468,11 +471,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       setState(() => _decks = decks);
       // 問題回報 #1257: a language without any matching deck (French) would
       // show an empty interests page, so skip it.
-      if (_step == 3 && availableInterests(decks).isEmpty) {
+      if (_step == _interestsStep && availableInterests(decks).isEmpty) {
         _interests.clear();
         if (_canCheck) {
           setState(() {
-            _step = 4;
+            _step = _checkStep;
             _checkLevel = 0;
             _known.clear();
           });
@@ -502,14 +505,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           PrimaryButton(
               label: '下一步',
               onTap: () {
-                setState(() => _step = 3);
+                setState(() => _step = _interestsStep);
                 _loadDecks();
               }),
           TextButton(
               onPressed: () {
                 setState(() {
                   _goals.clear();
-                  _step = 3;
+                  _step = _interestsStep;
                 });
                 _loadDecks();
               },
@@ -567,7 +570,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 if (_canCheck)
                   TextButton(
                     onPressed: () => setState(() {
-                      _step = 4;
+                      _step = _checkStep;
                       _checkLevel = 0;
                       _known.clear();
                     }),
