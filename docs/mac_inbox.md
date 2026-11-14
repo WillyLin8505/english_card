@@ -7353,3 +7353,9 @@ commit `b680bac5`（Windows：flutter analyze 無 error、flutter test 全過）
 - 卡 #227：模擬使用者・單字本
   結果：第 4260 輪：database、detail 2/2 通過（database 93 秒、detail 86 秒，pack 28024 詞）；新問題 0、UX 建議 0。
   需要 Mac：無。
+
+## M958（2026-11-15 05:18）狀態：待做
+commit `69387c91`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #224：模擬使用者・拍照
+  結果：第 428 輪（app/build/rounds/4261）：photoui 1/1 通過、pins 7 個切片（0–6）全通過；新問題 0；UX 建議 0（本輪只跑測試，沒有逐畫面截圖評估）。
+  需要 Mac：無。
