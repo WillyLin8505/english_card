@@ -92,7 +92,10 @@ List<SampleWord> sampleWords(LexiconPack pack, Map<String, dynamic> json) => [
 /// A "null" on screen that is not the English word null (shown as a related
 /// word of none / nowhere: 「null　空值」).
 bool showsNull(String text) =>
-    RegExp(r'\bnull\b').hasMatch(text.replaceAll(RegExp(r'(^|\n)null\u3000'), ''));
+    RegExp(r'\bnull\b').hasMatch(text
+        .replaceAll(RegExp(r'(^|\n)null\u3000'), '')
+        // 'null and void' is a real legal idiom in examples, not a leaked Dart null.
+        .replaceAll(RegExp(r'\bnull and void\b', caseSensitive: false), ''));
 
 /// The heading of a section: 單字詳情's [SectionLabel] or the 資料庫 detail's
 /// titleSm [UiText].
