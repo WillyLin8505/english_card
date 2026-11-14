@@ -7242,3 +7242,10 @@ commit `10177391`（Windows：flutter analyze 無 error、flutter test 全過）
 - 卡 #4：掃描還沒打完的圖片標籤
   結果：結論：標籤在正常消化：pending 353、過去 1 小時標完 152 張；done 34978、failed 57（+1）；Qwen :8790 與 tagger :8765 health 皆 ok。
   需要 Mac：無。剩下：下輪再看 pending 是否清到 0。
+
+## M941（2026-11-15 01:38）狀態：待做
+commit `7b8f4820`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #228：模擬使用者・設定
+  結果：第 434 輪：settings 1/1 通過（12 秒）；新問題 無；UX 建議 無新增（沿用既有問題回報 #1530、#1520、#1521）。
+  需要 Mac：無。
+    - 剩下：無。
