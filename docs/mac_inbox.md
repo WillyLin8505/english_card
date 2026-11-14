@@ -7267,3 +7267,12 @@ commit `dc83abc2`（Windows：flutter analyze 無 error、flutter test 全過）
   結果：第 56 輪（模擬輪次 4245）：2/2 通過 — learner 102 秒、restart 38 秒；新問題：無；UX 建議：無（本輪只跑文字模擬，沒有 learnerview 截圖，不重複上一輪）。
   需要 Mac：無。
     - 剩餘：無；夜間排程維持。
+
+## M945（2026-11-15 02:17）狀態：待做
+commit `12297ce1`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #5：檢查標籤分級是否錯誤
+  結果：第 31 輪未完成：全庫 B 群掃描排不到 heavy.lock，沒有新數字（連續第 3 輪，r29、r30 同樣原因）。
+  需要 Mac：無。
+    - 剩下：下一輪重跑上面指令並與 r28 比對。
+    
+    建議（給派工程式）：本卡的 scan_library --only B 是唯讀，連三輪空轉；可讓本卡避開模擬卡時段，或給唯讀掃描走較輕的鎖（類似 qwen_slot），否則會一直拿不到鎖。
