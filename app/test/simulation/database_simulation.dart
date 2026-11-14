@@ -73,7 +73,7 @@ void main() {
       opened++;
       final page = await sweepPage(tester);
       for (final s in page.texts) {
-        if (showsNull(s)) f.add('畫面出現 null', '$current：$s');
+        if (current != 'null' && showsNull(s)) f.add('畫面出現 null', '$current：$s');
       }
       for (final h in page.blank) {
         f.add('空白標題（標題下沒有內容）', '$current：$h');

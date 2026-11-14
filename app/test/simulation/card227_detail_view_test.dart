@@ -207,7 +207,7 @@ void main() {
       final page = await sweepPage(tester);
       learnerViews[e.word] = page.texts.toList();
       for (final t in page.texts) {
-        if (showsNull(t)) f.add('畫面出現 null', '${e.word}：$t');
+        if (e.word != 'null' && showsNull(t)) f.add('畫面出現 null', '${e.word}：$t');
         if (t.contains('Instance of')) f.add('畫面出現物件字串', '${e.word}：$t');
       }
       for (final h in page.blank) {
