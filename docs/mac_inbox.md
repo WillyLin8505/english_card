@@ -7454,3 +7454,9 @@ commit `7fccdff0`（Windows：flutter analyze 無 error、flutter test 全過）
   需要 Mac：無。
     - 剩下：照片上估算 C1/C2 增加 102（多為新入庫照片詞）；上述第 1 點的 303 個 base 誤判請由 #162/#163 處理，本卡下一輪再比對數字。
     - 建議（給派工程式）：本卡掃描唯讀，建議改走輕量鎖，否則連續幾輪會搶不到 heavy_lock。
+
+## M973（2026-11-16 02:39）狀態：待做
+commit `ad05fc6f`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #227：模擬使用者・單字本
+  結果：第 4302 輪：database、detail 2/2 通過（database 93 秒、detail 83 秒，pack 28024 詞）；新問題 0、UX 建議 0。
+  需要 Mac：無。
