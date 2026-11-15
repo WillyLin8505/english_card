@@ -7486,3 +7486,8 @@ commit `cef62844`（Windows：flutter analyze 無 error、flutter test 全過）
   結果：第 4306 輪：settings 1/1 通過（10 秒）；新問題 無；UX 建議 無新增（沿用既有問題回報 #1530、#1520、#1521）。
   需要 Mac：無。
     - 剩下：無。
+
+## M978（2026-11-16 03:41）狀態：待做
+commit `ee1e04a6`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #12：模擬使用者・跨分頁（亂點、詞庫更新）
+  結果：第 259 輪：0/2 執行（heavylock 等了約 10 分鐘仍被別的 CLI 佔著，packupdate、fuzz 都沒跑到）。
