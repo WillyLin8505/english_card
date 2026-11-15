@@ -7428,3 +7428,9 @@ commit `4fe8082e`（Windows：flutter analyze 無 error、flutter test 全過）
   結果：第 60 輪（模擬輪次 4298）：2/2 通過 — learner 82 秒、restart 38 秒；新問題：無；UX 建議：無（本輪只跑文字模擬，沒有截圖，不重複上一輪）。
   需要 Mac：無。
     - 剩餘：無；夜間排程維持。
+
+## M970（2026-11-16 01:49）狀態：待做
+commit `2fb623d3`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #224：模擬使用者・拍照
+  結果：第 430 輪（app/build/rounds/4299）：photoui 1/1 通過、pins 7 個切片（0–6）全通過（約 41,980 張照片、125,960 個版面，findings 皆為空）；新問題 0；UX 建議 0（本輪只跑測試，沒有逐畫面截圖評估）。
+  需要 Mac：無。
