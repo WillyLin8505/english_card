@@ -374,7 +374,10 @@ void main() {
             find.byType(SingleChildScrollView).first, const Offset(0, -600));
         await tester.pumpAndSettle(const Duration(milliseconds: 100),
             EnginePhase.sendSemanticsUpdate, const Duration(seconds: 10));
-        await tester.tap(find.text(n % 5 == 0 ? '忘記' : '記得'));
+        // A card that is still leaving can briefly leave a second button with
+        // the same label (round 70, dismember); the visible one is on top.
+        await tester.tap(
+            find.text(n % 5 == 0 ? '忘記' : '記得').hitTestable().last);
         await tester.pumpAndSettle(const Duration(milliseconds: 100),
             EnginePhase.sendSemanticsUpdate, const Duration(seconds: 10));
       } catch (e) {
