@@ -7597,3 +7597,10 @@ commit `ec67663b`（Windows：flutter analyze 無 error、flutter test 全過）
   結果：第 33 輪完成全庫 B 群掃描（唯讀，434 秒）：估算 17,288、照片上估算 C1/C2 4,185、名詞 2,837、衍生詞比本形高 ≥2 級 303。
   需要 Mac：無。
     - 剩下：照片上估算 C1/C2 增加 135（多為新入庫照片詞）；303 個 base 誤判待 #162/#163；相關問題回報 #213–#218 皆已 fixed，無新增回報。
+
+## M996（2026-11-16 18:25）狀態：待做
+commit `452dcfac`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #228：模擬使用者・設定
+  結果：第 4324 輪：settings 1/1 通過（12 秒）；新問題 無；UX 建議 無新增（沿用既有問題回報 #1530、#1520、#1521）。
+  需要 Mac：無。
+    - 剩下：無。
