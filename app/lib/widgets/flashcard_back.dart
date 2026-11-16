@@ -1624,8 +1624,12 @@ class _MorphemeBox extends StatelessWidget {
                 style: MFont.manrope(11, FontWeight.w600, MColors.muted)),
             if (native.isNotEmpty)
               Row(mainAxisSize: MainAxisSize.min, children: [
-                Text(native,
-                    style: MFont.manrope(13, FontWeight.w700, MColors.ink)),
+                // 問題回報 #1648: a long meaning wraps instead of overflowing.
+                Flexible(
+                  child: Text(native,
+                      textAlign: TextAlign.center,
+                      style: MFont.manrope(13, FontWeight.w700, MColors.ink)),
+                ),
                 if (m.nativeAi) ...[
                   const SizedBox(width: 4),
                   Container(
