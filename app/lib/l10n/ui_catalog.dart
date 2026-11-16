@@ -1913,6 +1913,10 @@ const _templateCopy = <String, (String, String)>{
     'Include incomplete words ({0})',
     'Inclure les mots incomplets ({0})'
   ),
+  '另有 {0} 個字還沒有{N}意思，補齊後會自動加入複習。': (
+    '{0} more words have no {N} meaning yet and join review once it is ready.',
+    '{0} autres mots n’ont pas encore de sens en {N} ; ils rejoindront la révision dès qu’il sera disponible.'
+  ),
   '第 {0} 個，共 {1} 個': ('{0} of {1}', '{0} sur {1}'),
   '共 {0} 個': ('{0} in total', '{0} au total'),
   '找到 {0} 個字': ('Found {0} words', '{0} mots trouvés'),

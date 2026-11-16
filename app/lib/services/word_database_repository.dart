@@ -2085,10 +2085,14 @@ class WordDatabaseRepository extends ChangeNotifier {
   /// Cards are created as soon as a photo is saved, but a recall prompt is
   /// unusable until the native-language meaning arrives from the dictionary.
   /// They remain intact and automatically become eligible after enrichment.
-  bool get hasCardsWaitingForMeaning => _cards.any((card) {
+  bool get hasCardsWaitingForMeaning => cardsWaitingForMeaning > 0;
+
+  /// How many cards sit out of review for want of a native meaning
+  /// (問題回報 #1649: said on the 複習 start page next to the ones that run).
+  int get cardsWaitingForMeaning => _cards.where((card) {
         final word = entry(card.wordEntryId);
         return !card.archived && word != null && word.meaning.trim().isEmpty;
-      });
+      }).length;
 }
 
 /// A list that counts its writes, so lookup tables built from it know when

@@ -202,6 +202,14 @@ class _Intro extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: MFont.manrope(14, FontWeight.w600, MColors.muted),
               ),
+              if (any && repo.cardsWaitingForMeaning > 0) ...[
+                const SizedBox(height: 8),
+                UiText(
+                  '另有 ${repo.cardsWaitingForMeaning} 個字還沒有{N}意思，補齊後會自動加入複習。',
+                  textAlign: TextAlign.center,
+                  style: MFont.manrope(13, FontWeight.w600, MColors.label),
+                ),
+              ],
               const SizedBox(height: 28),
               if (any)
                 PrimaryButton(label: '開始複習', onTap: onStart)
