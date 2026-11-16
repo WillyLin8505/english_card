@@ -1928,6 +1928,13 @@ const _templateCopy = <String, (String, String)>{
     'Enregistrer dans un album ({0} photos)'
   ),
   '加入 {0} 張': ('Add {0}', 'Ajouter {0}'),
+  '已選 {0} 項': ('{0} selected', '{0} sélectionnés'),
+  '尚未選擇': ('None selected', 'Aucune sélection'),
+  '目前樣式：': ('Current style: ', 'Style actuel : '),
+  '只送匿名的使用紀錄與安裝、留存次數，用來改善 App；不含帳號或內容，關閉不影響任何功能。詳情見下方「隱私權政策」。': (
+    'Only anonymous usage and install/retention counts are sent, to improve the app. No account or content; turning it off changes nothing. See the Privacy Policy below.',
+    'Seuls des usages anonymes et des comptes d’installation/rétention sont envoyés, pour améliorer l’app. Aucun compte ni contenu ; désactiver ne change rien. Voir la politique de confidentialité ci-dessous.'
+  ),
   '已選 {0} 張': ('{0} selected', '{0} sélectionnées'),
   '正在加入第 {0} 張，共 {1} 張': (
     'Adding photo {0} of {1}',

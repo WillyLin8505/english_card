@@ -390,8 +390,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                                             .nativeLanguage));
                                                 return;
                                               }
-                                              _switchLanguage(e.key,
-                                                  native: n);
+                                              _switchLanguage(e.key, native: n);
                                               return;
                                             }
                                             _switchLanguage(e.key);
@@ -589,25 +588,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ),
                           ]),
                           const SizedBox(height: 16),
-                          UiText('你對哪些主題有興趣？',
-                              style: MFont.manrope(
-                                  15, FontWeight.w800, MColors.ink)),
-                          const SizedBox(height: 8),
-                          Wrap(spacing: 8, runSpacing: 8, children: [
-                            for (final (key, label, _, _) in interestOptions)
-                              FilterChip(
-                                key: ValueKey('interest:$key'),
-                                label: UiText(label),
-                                selected: settings.interests.contains(key),
-                                onSelected: (on) => settings.interests = [
-                                  for (final o in interestOptions)
-                                    if (o.$1 == key
-                                        ? on
-                                        : settings.interests.contains(o.$1))
-                                      o.$1
+                          Material(
+                            color: Colors.transparent,
+                            child: Theme(
+                              data: Theme.of(context)
+                                  .copyWith(dividerColor: Colors.transparent),
+                              child: ExpansionTile(
+                                key: const ValueKey('interests-tile'),
+                                tilePadding: EdgeInsets.zero,
+                                childrenPadding: EdgeInsets.zero,
+                                title: UiText('你對哪些主題有興趣？',
+                                    style: MFont.manrope(
+                                        15, FontWeight.w800, MColors.ink)),
+                                subtitle: UiText(settings.interests.isEmpty
+                                    ? '尚未選擇'
+                                    : '已選 ${settings.interests.length} 項'),
+                                expandedAlignment: Alignment.centerLeft,
+                                children: [
+                                  Wrap(spacing: 8, runSpacing: 8, children: [
+                                    for (final (key, label, _, _)
+                                        in interestOptions)
+                                      FilterChip(
+                                        key: ValueKey('interest:$key'),
+                                        label: UiText(label),
+                                        selected:
+                                            settings.interests.contains(key),
+                                        onSelected: (on) =>
+                                            settings.interests = [
+                                          for (final o in interestOptions)
+                                            if (o.$1 == key
+                                                ? on
+                                                : settings.interests
+                                                    .contains(o.$1))
+                                              o.$1
+                                        ],
+                                      ),
+                                  ]),
                                 ],
                               ),
-                          ]),
+                            ),
+                          ),
                           _note('用來先列出符合的相片冊。'),
                         ],
                       ),
@@ -616,9 +636,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         key: _keyFor('卡片樣式'),
                         title: '卡片樣式',
                         children: [
-                          CardStylePicker(
-                            selected: settings.cardStyle,
-                            onChanged: (style) => settings.cardStyle = style,
+                          Material(
+                            color: Colors.transparent,
+                            child: Theme(
+                              data: Theme.of(context)
+                                  .copyWith(dividerColor: Colors.transparent),
+                              child: ExpansionTile(
+                                key: const ValueKey('card-style-tile'),
+                                tilePadding: EdgeInsets.zero,
+                                childrenPadding: EdgeInsets.zero,
+                                title: Wrap(children: [
+                                  UiText('目前樣式：',
+                                      style: MFont.manrope(
+                                          15, FontWeight.w800, MColors.ink)),
+                                  UiText(settings.cardStyle.label,
+                                      style: MFont.manrope(
+                                          15, FontWeight.w800, MColors.ink)),
+                                ]),
+                                children: [
+                                  CardStylePicker(
+                                    selected: settings.cardStyle,
+                                    onChanged: (style) =>
+                                        settings.cardStyle = style,
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                           _note('只改變複習卡片的外觀，內容和複習方式不變。'),
                           const Divider(height: 24),
@@ -709,28 +752,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ),
                               Switch(
                                 key: const ValueKey('usage-stats-switch'),
-                                value: settings.shareUsageStats,
-                                onChanged: (v) => settings.shareUsageStats = v,
-                              ),
-                            ],
-                          ),
-                          _note('只送匿名的操作紀錄，用來改善 App；關閉不影響任何功能。'),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: UiText('匿名安裝與留存統計',
-                                    style: MFont.manrope(
-                                        15, FontWeight.w800, MColors.ink)),
-                              ),
-                              Switch(
-                                key: const ValueKey('anonymous-events-switch'),
-                                value: settings.anonymousEvents,
-                                onChanged: (v) => settings.anonymousEvents = v,
+                                value: settings.shareUsageStats ||
+                                    settings.anonymousEvents,
+                                onChanged: (v) {
+                                  settings.shareUsageStats = v;
+                                  settings.anonymousEvents = v;
+                                },
                               ),
                             ],
                           ),
                           _note(
-                              '只有你同意才會送。只送隨機安裝編號與「安裝、完成引導、第一次拍照、第一次複習、每天開啟」，不含帳號或內容；關閉後不再送出。'),
+                              '只送匿名的使用紀錄與安裝、留存次數，用來改善 App；不含帳號或內容，關閉不影響任何功能。詳情見下方「隱私權政策」。'),
                           if (settings.cloudSignedIn) ...[
                             Row(
                               children: [
@@ -1036,9 +1068,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     // 問題回報 #430: with nothing to show, one line instead of three empty
     // headings; sub-sections appear only once they have data.
     if (ins.total == 0 && shownChanges.isEmpty && ins.weakWords.isEmpty) {
-      return _Card(title: '學習洞察', children: [
-        _note('複習幾次之後，這裡會顯示你的複習次數、程度變化和弱項單字。'),
-      ]);
+      return const SizedBox.shrink();
     }
     final sections = <List<Widget>>[
       if (ins.total > 0)

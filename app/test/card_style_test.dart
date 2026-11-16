@@ -265,6 +265,14 @@ void main() {
     // Owner's choice on #317: B is the default.
     expect(app.settings.cardStyle, CardStyle.immersive);
     final chip = find.text('活潑遊戲');
+    final tile = find.byKey(const ValueKey('card-style-tile'));
+    await tester.scrollUntilVisible(tile, 300,
+        scrollable: find
+            .descendant(
+                of: find.byType(ListView), matching: find.byType(Scrollable))
+            .first);
+    await tester.tap(tile);
+    await tester.pumpAndSettle();
     await tester.scrollUntilVisible(chip, 300,
         scrollable: find
             .descendant(
