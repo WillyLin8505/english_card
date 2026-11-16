@@ -7810,3 +7810,16 @@ commit `fd3b55de`（Windows：flutter analyze 無 error、flutter test 全過；
 - 卡 #228：模擬使用者・設定
   結果：第 68 輪（r4433）：1/1 通過（8 秒）；新問題 無、UX 建議 #1650（3 點）。
   需要 Mac：無。
+
+## M1027（2026-11-17 07:04）狀態：待做
+commit `5a402ba2`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #226：模擬使用者・複習
+  結果：第 70 輪（輪次 4434）：1/2 通過（restart 通過；learner 失敗一次，同抽字重跑輪次 4435 通過 1/1）— 新問題 #1651（偶發）。UX 建議：無（只跑文字模擬，無截圖）。
+  需要 Mac：無。
+    - 剩餘：#1651 若再出現，learner_simulation.dart 點擊前改等換場結束。
+- 卡 #227：模擬使用者・單字本
+  結果：第 4436 輪：2/2 通過（database 93 秒、detail 89 秒），新問題 0、UX 建議 0 新增（沿用 #1649）。
+  需要 Mac：無。
+    - 剩餘：下一輪搭配 learner_view 做畫面文字的 UX 評估。log：app/build/rounds/4436/。
+- 卡 #1192：問題回報 #1651：複習模擬第 70 輪：背面評分按鈕「記得」同時找到 2 個（dismember），重跑即過
+  結果：已修：複習模擬點「記得／忘記」前改成只點畫面上可點的最上層那個，偶發的「找到 2 個 widget」不再讓整輪失敗（#1651）。
