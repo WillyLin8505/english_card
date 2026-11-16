@@ -7726,3 +7726,10 @@ commit `99ceb51f`（Windows：flutter analyze 無 error、flutter test 全過）
 - 卡 #228：模擬使用者・設定
   結果：第 N 輪（r4417）：1/1 通過，設定模擬正常跑完（8 秒）；新問題 無、UX 建議 無（JSON 只有設定值，findings 為空）。
   需要 Mac：無。
+
+## M1015（2026-11-17 04:30）狀態：待做
+commit `c72ae919`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #226：模擬使用者・複習
+  結果：第 68 輪（模擬輪次 4416）：1/2 通過（restart 通過；learner 失敗）— 新問題 #1648：letterpress 正面 RenderFlex 溢出 79 px（390 寬）；同輪重跑 4 次（4421–4424）皆 0 溢出，屬抽字隨機，題型不明。UX 建議：無（只跑文字模擬，無截圖）。
+  需要 Mac：無。
+    - 剩餘：#1648 等再出現時用新輸出定位；run_round 輪次資料夾自動清理。
