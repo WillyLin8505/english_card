@@ -7733,3 +7733,18 @@ commit `c72ae919`（Windows：flutter analyze 無 error、flutter test 全過；
   結果：第 68 輪（模擬輪次 4416）：1/2 通過（restart 通過；learner 失敗）— 新問題 #1648：letterpress 正面 RenderFlex 溢出 79 px（390 寬）；同輪重跑 4 次（4421–4424）皆 0 溢出，屬抽字隨機，題型不明。UX 建議：無（只跑文字模擬，無截圖）。
   需要 Mac：無。
     - 剩餘：#1648 等再出現時用新輸出定位；run_round 輪次資料夾自動清理。
+
+## M1016（2026-11-17 04:44）狀態：待做
+commit `c9fc0873`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #227：模擬使用者・單字本
+  結果：第 4425 輪：2/2 通過（database 96 秒、detail 89 秒），新問題 0、UX 建議 0。
+  需要 Mac：無。
+    - 剩餘：下一輪搭配 learner_view 做學習者視角 UX 評估，並查證 full-no-meaning 是否已有問題回報。
+- 卡 #1189：問題回報 #1648：複習模擬第 68 輪：單字 letterpress 的正面版面溢出 79 px（390 寬）
+  結果：全部完成：根因是背面「詞素框」(MorphemeBox) 的母語意思放在不換行的 Row，意思很長時溢出（letterpress 的詞素，79 px）；改成 Flexible＋置中換行，用同一輪的 pack＋seed（4416）重跑：4 → 0 個版面錯誤（180 張卡）。
+  需要 Mac：用 iPad 看含長詞素意思的字（letterpress）背面是否正常換行。
+- 卡 #224：模擬使用者・拍照
+  結果：第 4419 輪：photoui 1/1 通過；pins 8 個切片全部通過（共 45011 張照片、135049 個圖釘排版，findings 全為 0）；新問題 0；UX 建議 0（本卡只跑 widget 模擬，沒有截圖可評）。
+  需要 Mac：無。
+- 卡 #12：模擬使用者・跨分頁（亂點、詞庫更新）
+  結果：第 4420 輪：本卡 2/2 通過（packupdate 396 秒、fuzz 240 秒），28024 詞，無新問題。
