@@ -7679,3 +7679,10 @@ commit `ad8075a8`（Windows：flutter analyze 無 error、flutter test 全過）
 - 卡 #225：模擬使用者・相片冊
   結果：第 225-71 輪：相片冊模擬 1/1 通過（round 4405，33 秒測試），新問題 無、UX 建議 無（simulation 只產事件、無截圖，無法做畫面層級評估）。
   需要 Mac：無新增。
+
+## M1008（2026-11-17 02:57）狀態：待做
+commit `2a51b384`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #5：檢查標籤分級是否錯誤
+  結果：第 34 輪完成全庫 B 群掃描（唯讀，408 秒）：估算 17,288、照片上估算 C1/C2 4,197、名詞 2,844、衍生詞比本形高 ≥2 級 304。
+  需要 Mac：無。
+    - 剩下：304 個 base 誤判待 #162/#163；相關問題回報 #213–#218 皆已 fixed，無新增回報。
