@@ -7720,3 +7720,9 @@ commit `456f2595`（Windows：flutter analyze 無 error、flutter test 全過）
 - 卡 #225：模擬使用者・相片冊
   結果：第 225-72 輪：相片冊模擬 1/1 通過（round 4413，40 秒測試），新問題 無、UX 建議 無（simulation 只產事件、無截圖，無法做畫面層級評估）。
   需要 Mac：無新增。
+
+## M1014（2026-11-17 04:13）狀態：待做
+commit `99ceb51f`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #228：模擬使用者・設定
+  結果：第 N 輪（r4417）：1/1 通過，設定模擬正常跑完（8 秒）；新問題 無、UX 建議 無（JSON 只有設定值，findings 為空）。
+  需要 Mac：無。
