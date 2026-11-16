@@ -7667,3 +7667,9 @@ commit `00af01da`（Windows：flutter analyze 無 error、flutter test 全過）
   結果：第 4400 輪：2/2 通過（packupdate 386 秒、fuzz 252 秒），28024 詞，無新問題。
 - 卡 #496：模擬使用者・法語（英語母語者學法語）
   結果：第66輪（round 186–188）4 項法語模擬全部通過；未改程式或資料，沒有新問題。
+
+## M1006（2026-11-17 01:47）狀態：待做
+commit `092ab20c`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #4：掃描還沒打完的圖片標籤
+  結果：結論：標籤已全部消化：pending 0（上輪 1285）、過去 1 小時標完 38 張；done 41693、failed 61（+1）；Qwen :8790 與 tagger :8765 health 皆 ok。
+  需要 Mac：無。剩下：無，下輪只確認 pending 維持 0。
