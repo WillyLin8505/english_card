@@ -338,7 +338,7 @@ void main() {
       // this handler and the log would show only that (round 103), so print
       // the real exception first.
       // ignore: avoid_print
-      print('render error at $current: ${d.exceptionAsString()}\n${d.stack}');
+      print('render error at $current: ${d.exceptionAsString()}\n${d.stack ?? d.toString().split('\n').take(40).join('\n')}');
     };
     addTearDown(() => FlutterError.onError = original);
 
