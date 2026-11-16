@@ -7823,3 +7823,12 @@ commit `5a402ba2`（Windows：flutter analyze 無 error、flutter test 全過；
     - 剩餘：下一輪搭配 learner_view 做畫面文字的 UX 評估。log：app/build/rounds/4436/。
 - 卡 #1192：問題回報 #1651：複習模擬第 70 輪：背面評分按鈕「記得」同時找到 2 個（dismember），重跑即過
   結果：已修：複習模擬點「記得／忘記」前改成只點畫面上可點的最上層那個，偶發的「找到 2 個 widget」不再讓整輪失敗（#1651）。
+
+## M1028（2026-11-17 07:18）狀態：待做
+commit `294d7e4f`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1191：問題回報 #1650：[模擬 設定 第68輪 UX] 隱私區有兩個很像的統計開關，且「設定」首頁太長
+  結果：已修 #1650 三項（設定頁 app/lib/screens/settingsscreen.dart）：隱私合併成 1 個開關、興趣主題與卡片樣式預設收合、無資料時學習洞察整段隱藏。
+  需要 Mac：iPad 上確認收合展開與開關。隱私權政策文字（privacy_policy_screen.dart、docs/privacy.html、ui_catalog）仍寫兩個開關，未改（有測試要求 html 與 App 逐字一致），建議另開卡改政策措辭。
+- 卡 #1193：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
+  結果：全部完成：flutter test 1012 通過（0 失敗），flutter analyze 0 error（12 個 info）。
+  需要 Mac：無。
