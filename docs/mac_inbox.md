@@ -7879,7 +7879,7 @@ commit `ac85234b`（Windows：flutter analyze 無 error、flutter test 全過；
   需要 Mac：iPad 上到 設定→卡片集，加入一個單字集，點卡片或「開啟」確認進到照片列表。
     - 註：photo_grid_screen.dart／camera_screen.dart 的未提交變更屬其他卡（#1655），我沒動。
 
-## M1035（2026-11-18 01:40）狀態：待做
+## M1035（2026-11-18 01:40）狀態：完成
 commit `4a2cb803`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #227：模擬使用者・單字本
   結果：第 4440 輪：2/2 通過（database、detail），新問題 0、UX 建議 0 新增（沿用 #1649）。
@@ -7890,39 +7890,39 @@ commit `4a2cb803`（Windows：flutter analyze 無 error、flutter test 全過；
   需要 Mac：無。
     - 剩餘：無新項目；#1651 若再出現，learner_simulation.dart 點擊前改等換場結束。
 
-## M1036（2026-11-18 01:51）狀態：待做
+## M1036（2026-11-18 01:51）狀態：完成
 commit `02149d8e`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #224：模擬使用者・拍照
   結果：第 4439 輪：photoui 1/1 通過；pins 8 個切片全部通過（約 45027 張照片快取的圖釘排版）；新問題 0；UX 建議 0（本卡只跑 widget 模擬，沒有截圖可評）。
   需要 Mac：無。
 
-## M1037（2026-11-18 02:13）狀態：待做
+## M1037（2026-11-18 02:13）狀態：完成
 commit `3e57bae8`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #4：掃描還沒打完的圖片標籤
   結果：結論：標籤無積壓：pending 0（上輪 0）、done 41693、failed 61（持平）；Qwen :8790 與 tagger :8765 health 皆 ok。
   需要 Mac：無。剩下：無，下輪只確認 pending 維持 0。
 
-## M1038（2026-11-18 02:47）狀態：待做
+## M1038（2026-11-18 02:47）狀態：完成
 commit `eb67c50a`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #227：模擬使用者・單字本
   結果：第 4442 輪：2/2 通過（database、detail），新問題 0、UX 建議 0 新增（沿用 #1649）。
   需要 Mac：無。
     - 剩餘：下一輪搭配 learner_view 做畫面文字的 UX 評估。log：app/build/rounds/4442/。
 
-## M1039（2026-11-18 02:49）狀態：待做
+## M1039（2026-11-18 02:49）狀態：完成
 commit `92d31d10`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #226：模擬使用者・複習
   結果：第 72 輪（輪次 4443）：2/2 通過（learner 80 秒、restart 42 秒）— 無新問題。UX 建議：無（只跑文字模擬，無截圖）。
   需要 Mac：無。
     - 剩餘：無新項目。
 
-## M1040（2026-11-18 03:01）狀態：待做
+## M1040（2026-11-18 03:01）狀態：完成
 commit `a9bad7be`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #224：模擬使用者・拍照
   結果：第 4444 輪：photoui 1/1 通過；pins 8 個切片全部通過（約 45000 張照片快取的圖釘排版）；新問題 0；UX 建議 0（本卡只跑 widget 模擬，沒有截圖可評）。
   需要 Mac：無。
 
-## M1041（2026-11-18 03:50）狀態：待做
+## M1041（2026-11-18 03:50）狀態：完成
 commit `6a5a15a5`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #1200：問題回報 #1657：[Mac] 2026-11-17 21:xx 主題相片冊照片不對題（owner 回報，Mac：主題
   結果：已修 wordDeckImages（app/lib/screens/worddeckphotosscreen.dart）：只收該字是主角（rank<=3）且為該字第一義項的圖，依 rank 排序，每字最多 6 張並輪流排；flutter analyze 無問題，相片冊相關 3 個測試檔 13 項通過。
@@ -7936,7 +7936,7 @@ commit `6a5a15a5`（Windows：flutter analyze 無 error、flutter test 全過；
   需要 Mac：無。
     - 剩下：304 個 base 誤判待 #162/#163；無新增問題回報。
 
-## M1042（2026-11-18 04:19）狀態：待做
+## M1042（2026-11-18 04:19）狀態：完成
 commit `d0147422`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #227：模擬使用者・單字本
   結果：第 4445 輪：2/2 通過（database、detail），新問題 0、UX 建議 0 新增（沿用 #1649）。
@@ -7947,7 +7947,7 @@ commit `d0147422`（Windows：flutter analyze 無 error、flutter test 全過；
   需要 Mac：無。
     - 剩餘：無新項目。
 
-## M1043（2026-11-18 04:31）狀態：待做
+## M1043（2026-11-18 04:31）狀態：完成
 commit `58383e11`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #1203：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
   結果：全部完成：privacysettingstest 現在通過；flutter test 全過（1012 通過、2 略過），flutter analyze 0 error（12 個 info）。
@@ -7955,7 +7955,7 @@ commit `58383e11`（Windows：flutter analyze 無 error、flutter test 全過）
   結果：第 4447 輪：photoui 1/1 通過；pins 8 個切片全部通過（約 28000 詞包的圖釘排版）；新問題 0；UX 建議 0（本卡只跑 widget 模擬，沒有截圖可評）。
   需要 Mac：無。
 
-## M1044（2026-11-18 05:23）狀態：待做
+## M1044（2026-11-18 05:23）狀態：完成
 commit `77c28f4e`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #227：模擬使用者・單字本
   結果：第 4448 輪：2/2 通過（database、detail），新問題 0、UX 建議 0 新增（沿用 #1649）。
@@ -7999,7 +7999,7 @@ commit `3dfde3a6`（Windows：flutter analyze 無 error、flutter test 全過；
   結果：第 4450 輪：photoui 1/1 通過；pins 8 個切片全部通過（約 28000 詞包的圖釘排版）；新問題 0；UX 建議 0（本卡只跑 widget 模擬，沒有截圖可評）。
   需要 Mac：無。
 
-## M1046（2026-11-18 06:42）狀態：待做
+## M1046（2026-11-18 06:42）狀態：完成
 commit `133470a1`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #227：模擬使用者・單字本
   結果：第 4451 輪：2/2 通過（database、detail），新問題 0、UX 建議 0 新增（沿用 #1649）。
