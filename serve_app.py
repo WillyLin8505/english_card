@@ -140,6 +140,21 @@ def tag_aliases(item, form_lemmas) -> list[str]:
     return list(dict.fromkeys(out))
 
 
+def image_rank(binding) -> int:
+    """Fetch rank of a picture binding for the App (card #1210, 問題回報 #1663).
+
+    -1 (shown first, and let through the photo albums' main-subject check)
+    only for a representative that is also a top fetch hit with a real
+    semantic score; 4,000 of 8,620 approved representatives were low-score
+    or fetched far down the list (suitcase, station: a role-play photo, a
+    space station), so they rank by ordinal like any other picture.
+    """
+    if (binding.role == 'representative' and binding.ordinal < 3
+            and (binding.semantic_score or 0) > 0.5):
+        return -1
+    return binding.ordinal
+
+
 def catalog_snapshot(session, target):
     """Publish only reviewed pictures and their approved dictionary labels.
 
@@ -176,7 +191,7 @@ def catalog_snapshot(session, target):
                 'review_status': binding.review_status, 'origin': 'binding',
                 # Card #1110 (問題回報 #1618): the fetch rank, so the App shows a
                 # word's best picture first (representative = -1, then ordinal).
-                'rank': -1 if binding.role == 'representative' else binding.ordinal})
+                'rank': image_rank(binding)})
     # Vision labels are English words (#331). In another language's pack a
     # picture shared by meaning (#336) is bound to one word only, so it also
     # names the target words whose main sense means one of the picture's
