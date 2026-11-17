@@ -7921,3 +7921,17 @@ commit `a9bad7be`（Windows：flutter analyze 無 error、flutter test 全過）
 - 卡 #224：模擬使用者・拍照
   結果：第 4444 輪：photoui 1/1 通過；pins 8 個切片全部通過（約 45000 張照片快取的圖釘排版）；新問題 0；UX 建議 0（本卡只跑 widget 模擬，沒有截圖可評）。
   需要 Mac：無。
+
+## M1041（2026-11-18 03:50）狀態：待做
+commit `6a5a15a5`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1200：問題回報 #1657：[Mac] 2026-11-17 21:xx 主題相片冊照片不對題（owner 回報，Mac：主題
+  結果：已修 wordDeckImages（app/lib/screens/worddeckphotosscreen.dart）：只收該字是主角（rank<=3）且為該字第一義項的圖，依 rank 排序，每字最多 6 張並輪流排；flutter analyze 無問題，相片冊相關 3 個測試檔 13 項通過。
+  需要 Mac：用 iPad 開旅行、在車站與機場、顏色、數字相片冊，看是否還有地毯／圓圈／匯流排圖，以及張數是否過少。
+- 卡 #1201：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
+  結果：全部完成：flutter test 1012 全過（2 略過），flutter analyze 0 error（12 個 info）。
+- 卡 #1202：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
+  結果：全部完成：flutter analyze 無 error（12 個 info），flutter test 全過（1012 通過、2 skip）。
+- 卡 #5：檢查標籤分級是否錯誤
+  結果：第 36 輪全庫 B 群掃描完成（唯讀，424 秒）：數字與 r35 完全相同，無新增問題。
+  需要 Mac：無。
+    - 剩下：304 個 base 誤判待 #162/#163；無新增問題回報。
