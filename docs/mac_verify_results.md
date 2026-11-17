@@ -3204,3 +3204,12 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #1205 學法文本機辨識出法文字 | 部分通過 | 模擬器沒有 Apple Vision，只測對照：vision_fr.json 有載入（14533 個英文標籤），8 個英文標籤全轉成法文：dog→chien、chair→chaise、car→voiture、apple→pomme、book→livre、tree→arbre、table→table，但 cup→coupe（應為 tasse，請查對照表排序）。實機每張平均字數、正確率、法文相片冊下載待 iPad。 | — | 低 | 模擬器 |
 | #1197 拍照預覽被拉長 | 待 iPad | 模擬器沒有相機，未驗；待 iPad 直向／橫向開拍照頁看人物比例。 | — | — | 模擬器 |
 | #1207 手機辨識字太少 | 待 iPad | 需要 golden 50 張在 iPad 量平均字數、0 字照片數；模擬器沒有 Vision，未量。 | — | — | 模擬器 |
+
+## M1045 #1207／#1205 iPad 量測（Mac 2026-11-18 07:40，iPad A16，golden 50 張，store 版設定）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1207 手機辨識字數 | 通過 | iPad 本機辨識（Apple Vision）50 張：英文平均每張 6.82 字（上次 1.5），0 字照片 2 張（目標 ≤5）。分佈：1 字 6 張、4 字 9 張、11 字以上 15 張。目標兩項都達到。 | — | — | iPad |
+| #1207 字的品質 | 注意 | 候選裡混了不該當單字的 Vision 標籤：cake regular、road other、raw glass、pot cooking、tea drink、interior room、printed page、consumer electronics、engine vehicle；還有法文字跑進英文候選：plat、suivre、tirer，以及 jean（應 jeans）、fry。請過濾多字標籤／非英文字。正確率（對照 Qwen 核可標籤）這輪沒量準：golden 照片 id 對不上詞庫 catalog 圖 id（啟動時詞庫圖 0 張），7/230 不可採信，需要 Windows 給 golden 照片的 Qwen 標籤來源。 | — | 中 | iPad |
+| #1205 法文本機辨識 | 部分通過 | 同 50 張轉法文：平均每張 5.78 個法文字，0 字照片 4 張。139 組對照裡約 17 組譯錯或用俚語：mug→gueule（嘴，粗話）、plate→plaque（應 assiette）、cup→coupe（應 tasse）、bedding→litière（貓砂）、plant→fabrique（工廠義）、pickle→pétrin、lime→tilleul、watch→garde、horse→dada、river→cours、cake→friandise、carton→pot、pacifier→pacificateur、chart→carte、suit→costard、land→pays、phone→phone（應 téléphone）。請改對照表取第一義的規則，至少把俚語和非具體義排掉。法文相片冊下載、加入單字本、進複習這輪沒驗。 | — | 中 | iPad |
+| #1197 拍照預覽被拉長 | 待 owner 手測 | 自動測試拍不到相機畫面（測試啟動會讓相機變黑），需要 owner 在 iPad 直向、橫向開拍照頁看人物有沒有變胖或變長。iPad 已裝回一般版 App。 | — | — | iPad |
