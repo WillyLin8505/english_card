@@ -34,7 +34,56 @@ class PhotoGridScreen extends StatefulWidget {
   State<PhotoGridScreen> createState() => _PhotoGridScreenState();
 }
 
+/// Words shown in the long-press preview (問題回報 #1655: 10 to 20).
+const _previewWords = 20;
+
 class _PhotoGridScreenState extends State<PhotoGridScreen> {
+  /// Long-press on a photo: its first [_previewWords] words in a sheet, with
+  /// a button to open the photo.
+  void _preview(Photo photo, List<(String, bool)> labels, dynamic scope) {
+    final shown = labels.take(_previewWords).toList();
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheet) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              UiText('${photo.title}（${labels.length} 個單字）',
+                  style: MFont.inter(15, FontWeight.w700, MColors.gray500)),
+              const SizedBox(height: 12),
+              if (shown.isEmpty)
+                const UiText('沒有單字')
+              else
+                Wrap(spacing: 6, runSpacing: 6, children: [
+                  for (final (label, focus) in shown)
+                    FilterPill(label: label, active: focus),
+                ]),
+              const SizedBox(height: 16),
+              Tap(
+                onTap: () {
+                  Navigator.pop(sheet);
+                  scope.navigator.openPhoto(photo.id);
+                },
+                label: '開啟照片',
+                child: Container(
+                  height: 48,
+                  decoration: MDecor.primaryPill(),
+                  alignment: Alignment.center,
+                  child: UiText('開啟照片',
+                      style: MFont.inter(15, FontWeight.w700, Colors.white)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   final _query = TextEditingController();
 
   /// The 標籤程度 picker; null shows the words being learned.
@@ -178,6 +227,8 @@ class _PhotoGridScreenState extends State<PhotoGridScreen> {
                             emptyText: _level == null ? null : '沒有 $_level 標籤',
                             onTap: () =>
                                 scope.navigator.openPhoto(photos[i].id),
+                            onLongPress: () => _preview(
+                                photos[i], labelsOf(photos[i]), scope),
                           ),
                         ),
                 ),
@@ -263,11 +314,15 @@ class _PhotoCard extends StatelessWidget {
   final String? emptyText;
   final VoidCallback onTap;
 
+  /// 問題回報 #1655: a preview of the photo's words (up to 20) before opening.
+  final VoidCallback onLongPress;
+
   const _PhotoCard({
     required this.photo,
     required this.labels,
     required this.emptyText,
     required this.onTap,
+    required this.onLongPress,
   });
 
   @override
@@ -277,6 +332,7 @@ class _PhotoCard extends StatelessWidget {
     final date = '${t.year}/${two(t.month)}/${two(t.day)}';
     return Tap(
       onTap: onTap,
+      onLongPress: onLongPress,
       label: photo.title,
       child: Container(
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 14),

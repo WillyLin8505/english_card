@@ -11,6 +11,7 @@ import '../widgets/mobile/common.dart';
 import '../widgets/mobile/photo_cache.dart' show networkPhoto;
 import '../services/interest_topics.dart';
 import 'photo_grid_screen.dart';
+import 'word_deck_photos_screen.dart';
 
 /// 卡片集 (card #323, 問題回報 #320). Layout choice: a full-screen list
 /// opened from 設定 and from the top of 單字本 — a fifth tab would crowd the
@@ -214,106 +215,110 @@ class _DeckCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final albumId = library.installedDeck(info.slug)?.albumId;
+    final deck = library.installedDeck(info.slug);
+    final albumId = deck?.albumId;
+    // 問題回報 #1656: a 單字集 has no album, so it opens its picture list.
+    void open() => Navigator.of(context).push(MaterialPageRoute<void>(
+          builder: (_) => albumId != null
+              ? PhotoGridScreen.album(albumId: albumId)
+              : WordDeckPhotosScreen(deck: deck!),
+        ));
     final cover = info.coverAssetId;
-    return Container(
-      margin: const EdgeInsets.only(bottom: MSpace.md),
-      decoration: BoxDecoration(
-        color: MColors.surface,
-        borderRadius: MRadii.rLg,
-        border: Border.all(color: const Color(0xFFE9EDF7)),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (cover != null)
-            AspectRatio(
-              aspectRatio: 16 / 9,
-              // 問題回報 #859: kept on disk, the server's smaller copy.
-              child: Image(
-                image: networkPhoto(sizedServerImage(
-                    library.imageUri(cover).toString(),
-                    side: 768)),
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) =>
-                    const ColoredBox(color: MColors.primarySoft),
+    return GestureDetector(
+      onTap: installed && deck != null && !busy && !disabled ? open : null,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: MSpace.md),
+        decoration: BoxDecoration(
+          color: MColors.surface,
+          borderRadius: MRadii.rLg,
+          border: Border.all(color: const Color(0xFFE9EDF7)),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (cover != null)
+              AspectRatio(
+                aspectRatio: 16 / 9,
+                // 問題回報 #859: kept on disk, the server's smaller copy.
+                child: Image(
+                  image: networkPhoto(sizedServerImage(
+                      library.imageUri(cover).toString(),
+                      side: 768)),
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) =>
+                      const ColoredBox(color: MColors.primarySoft),
+                ),
+              ),
+            Padding(
+              padding: const EdgeInsets.all(MSpace.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    Expanded(
+                      child: UiText(info.title,
+                          style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              color: MColors.ink)),
+                    ),
+                    if (info.cefr != null) LevelBadge(info.cefr!),
+                  ]),
+                  const SizedBox(height: MSpace.xxs),
+                  Text(
+                    [
+                      ui(context, info.isPhotos ? '相片冊' : '相片冊'),
+                      if (info.topic != null) ui(context, info.topic!),
+                      '${info.count} ${ui(context, info.isPhotos ? '張' : '字')}',
+                      if (info.author != null) ui(context, info.author!),
+                    ].join('　·　'),
+                    style: const TextStyle(fontSize: 12, color: MColors.muted),
+                  ),
+                  if (info.description != null) ...[
+                    const SizedBox(height: MSpace.xs),
+                    UiText(info.description!,
+                        style:
+                            const TextStyle(fontSize: 14, color: MColors.ink)),
+                  ],
+                  const SizedBox(height: MSpace.sm),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: busy
+                        ? Row(mainAxisSize: MainAxisSize.min, children: [
+                            const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2)),
+                            const SizedBox(width: MSpace.xs),
+                            Text(progress),
+                          ])
+                        : installed
+                            ? Wrap(
+                                spacing: MSpace.xs,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  if (albumId != null) const UiText('已在相片冊'),
+                                  if (deck != null)
+                                    OutlinedButton(
+                                        onPressed: disabled ? null : open,
+                                        child: UiText(
+                                            albumId != null ? '開啟相簿' : '開啟')),
+                                  OutlinedButton(
+                                      onPressed: disabled ? null : onRemove,
+                                      child: const UiText('移除')),
+                                ],
+                              )
+                            : FilledButton(
+                                onPressed: disabled ? null : onAdd,
+                                child: UiText(info.isPhotos ? '加入相片冊' : '加入')),
+                  ),
+                ],
               ),
             ),
-          Padding(
-            padding: const EdgeInsets.all(MSpace.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(children: [
-                  Expanded(
-                    child: UiText(info.title,
-                        style: const TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w700,
-                            color: MColors.ink)),
-                  ),
-                  if (info.cefr != null) LevelBadge(info.cefr!),
-                ]),
-                const SizedBox(height: MSpace.xxs),
-                Text(
-                  [
-                    ui(context, info.isPhotos ? '相片冊' : '相片冊'),
-                    if (info.topic != null) ui(context, info.topic!),
-                    '${info.count} ${ui(context, info.isPhotos ? '張' : '字')}',
-                    if (info.author != null) ui(context, info.author!),
-                  ].join('　·　'),
-                  style: const TextStyle(fontSize: 12, color: MColors.muted),
-                ),
-                if (info.description != null) ...[
-                  const SizedBox(height: MSpace.xs),
-                  UiText(info.description!,
-                      style: const TextStyle(fontSize: 14, color: MColors.ink)),
-                ],
-                const SizedBox(height: MSpace.sm),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: busy
-                      ? Row(mainAxisSize: MainAxisSize.min, children: [
-                          const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2)),
-                          const SizedBox(width: MSpace.xs),
-                          Text(progress),
-                        ])
-                      : installed
-                          ? Wrap(
-                              spacing: MSpace.xs,
-                              crossAxisAlignment: WrapCrossAlignment.center,
-                              children: [
-                                if (albumId != null) ...[
-                                  const UiText('已在相片冊'),
-                                  OutlinedButton(
-                                      onPressed: disabled
-                                          ? null
-                                          : () => Navigator.of(context).push(
-                                                MaterialPageRoute<void>(
-                                                  builder: (_) =>
-                                                      PhotoGridScreen.album(
-                                                          albumId: albumId),
-                                                ),
-                                              ),
-                                      child: const UiText('開啟相簿')),
-                                ],
-                                OutlinedButton(
-                                    onPressed: disabled ? null : onRemove,
-                                    child: const UiText('移除')),
-                              ],
-                            )
-                          : FilledButton(
-                              onPressed: disabled ? null : onAdd,
-                              child: UiText(info.isPhotos ? '加入相片冊' : '加入')),
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

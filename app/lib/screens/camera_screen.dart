@@ -4,7 +4,7 @@ import 'dart:async';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show HapticFeedback;
+import 'package:flutter/services.dart' show HapticFeedback, DeviceOrientation;
 
 import '../app/app_scope.dart';
 import '../models/photo.dart';
@@ -468,6 +468,20 @@ class _CameraScreenState extends State<CameraScreen>
   }
 }
 
+/// Size for [CameraPreview] inside a cover FittedBox, with the same ratio the
+/// preview draws itself at (sensor ratio, turned with the device orientation).
+/// A fixed portrait box stretched the picture on iPad landscape (問題回報 #1654).
+(double, double) _previewDims(CameraController c) {
+  final ar = c.value.aspectRatio; // landscape width / height
+  if (ar <= 0 || ar.isNaN || ar.isInfinite) return (300.0, 400.0);
+  final o = c.value.isRecordingVideo
+      ? c.value.recordingOrientation
+      : (c.value.lockedCaptureOrientation ?? c.value.deviceOrientation);
+  final landscape = o == DeviceOrientation.landscapeLeft ||
+      o == DeviceOrientation.landscapeRight;
+  return landscape ? (ar * 300, 300.0) : (300.0, ar * 300);
+}
+
 /// Figma viewfinder (11:18): 24px corners, the AI badge top-left.
 class _Viewfinder extends StatelessWidget {
   final CameraController? controller;
@@ -489,9 +503,7 @@ class _Viewfinder extends StatelessWidget {
     final c = controller;
     final Widget content;
     if (c != null && c.value.isInitialized) {
-      final size = c.value.previewSize;
-      final w = size == null ? 300.0 : math.min(size.width, size.height);
-      final h = size == null ? 400.0 : math.max(size.width, size.height);
+      final (w, h) = _previewDims(c);
       content = SizedBox.expand(
         child: FittedBox(
           fit: BoxFit.cover,
@@ -611,9 +623,7 @@ class _FullCameraState extends State<_FullCamera> {
     final hint = widget.hint;
     Widget preview = const SizedBox.shrink();
     if (c.value.isInitialized) {
-      final size = c.value.previewSize;
-      final w = size == null ? 300.0 : math.min(size.width, size.height);
-      final h = size == null ? 400.0 : math.max(size.width, size.height);
+      final (w, h) = _previewDims(c);
       preview = FittedBox(
         fit: BoxFit.cover,
         clipBehavior: Clip.hardEdge,
