@@ -342,6 +342,13 @@ class _ScopeGrid extends StatelessWidget {
         const SizedBox(height: 4),
         UiText('點一格就開始；做完還可以繼續練習，想休息時按左上角結束。',
             style: MFont.manrope(13, FontWeight.w600, MColors.muted)),
+        if (repo.cardsWaitingForMeaning > 0) ...[
+          const SizedBox(height: 4),
+          UiText(
+            '另有 ${repo.cardsWaitingForMeaning} 個字還沒有{N}意思，補齊後會自動加入複習。',
+            style: MFont.manrope(13, FontWeight.w600, MColors.label),
+          ),
+        ],
         const SizedBox(height: MSpace.md),
         GridView.count(
           shrinkWrap: true,
