@@ -7864,3 +7864,17 @@ commit `0bdfa41a`（Windows：flutter analyze 無 error、flutter test 全過）
   結果：第 35 輪全庫 B 群掃描完成（唯讀，369 秒）：數字與 r34 完全相同，無新增問題。
   需要 Mac：無。
     - 剩下：304 個 base 誤判待 #162/#163；無新增問題回報。
+
+## M1034（2026-11-18 01:26）狀態：待做
+commit `ac85234b`（Windows：flutter analyze 無 error、flutter test 全過；另有 2 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1197：問題回報 #1654：[意見回饋] 拍照：你這個照片都被拉長了
+  結果：已修：拍照預覽比例改用相機實際比例，不再被拉長（只動 app/lib/screens/camerascreen.dart）。；根因：Viewfinder 與 FullCamera 把 CameraPreview 塞進固定直向方框（previewSize 的 min/max），iPad 橫向或感測器比例不是 3:4 時，
+  需要 Mac：在 iPad（直向與橫向）和 iPhone 開拍照頁，確認預覽人物不變胖或變長。
+    剩餘：無（待 iPad 驗證）。
+- 卡 #1198：問題回報 #1655：[意見回饋] 照片詳情：幫我點選相片我可以先預覽裡面的10到20張照片單字這樣子
+  結果：已完成：照片格（項目照片）長按任一張照片，會跳出預覽面板，列出該照片最多 20 個單字，並有「開啟照片」按鈕；原本點一下仍直接開啟。
+  需要 Mac：在 iPad 上長按照片格驗證預覽面板。若 owner 要的是「單點就預覽」或「照片詳情頁」內的預覽，請回覆，我再調整。
+- 卡 #1199：問題回報 #1656：[意見回饋] 照片詳情：我加入完了之後點這個相片冊怎麼沒有辦法直接進去看有什麼相片
+  結果：全部完成：下載頁（卡片集）的相片冊加入後，現在可以點進去看（單字集原本沒有開啟入口）。；- 驗證：flutter analyze 無問題；deck 相關 flutter test 29 項全過。未動資料，無備份／golden／QC 需求。
+  需要 Mac：iPad 上到 設定→卡片集，加入一個單字集，點卡片或「開啟」確認進到照片列表。
+    - 註：photo_grid_screen.dart／camera_screen.dart 的未提交變更屬其他卡（#1655），我沒動。
