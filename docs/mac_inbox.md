@@ -8017,3 +8017,9 @@ commit `7b883774`（Windows：flutter analyze 無 error、flutter test 全過；
 - 卡 #1210：問題回報 #1663：[Mac 注意] M1035–M1046 已完成的卡（Mac 2026-11-18 07:10，模
   結果：第 1 輪：Mac 指的 rank -1 錯標已修一半——serveapp 現在只讓「前 3 名且分數 > 0.5」的代表圖排 -1，其餘依抓取名次；img 625（圓圈標 border，序 0、分 0.95）仍在，標籤本身錯。
   需要 Mac：下載新包後，用 iPad 開旅行相片冊，看 527／31401 是否消失。
+
+## M1048（2026-11-18 07:32）狀態：待做
+commit `cd85905b`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #224：模擬使用者・拍照
+  結果：第 4453 輪：photoui 1/1 通過；pins 8 個切片全部通過（約 28024 詞包）；新問題 0；UX 建議 0（本卡只跑 widget 模擬，沒有截圖可評）。
+  需要 Mac：無。
