@@ -7851,3 +7851,9 @@ commit `0d98e67d`（Windows：flutter analyze 無 error、flutter test 全過；
   需要 Mac：在 iPad/模擬器加入沒有中文意思的字（someplace、whenever、pal），切到複習分頁，確認格子頁標題下出現該行。
 - 卡 #1196：問題回報 #1653：[Mac 注意] 2026-11-17 08:3x #1189 #1190 #1191（Mac，i
   結果：全部完成：App 內隱私權政策與網頁 /privacy 已改成「設定只有一個『分享使用統計』開關」，與設定頁一致（問題回報 #1653）。
+
+## M1032（2026-11-17 14:03）狀態：待做
+commit `3044f1fb`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #4：掃描還沒打完的圖片標籤
+  結果：結論：標籤無積壓：pending 0（上輪 0）、done 41693、failed 61（持平）；Qwen :8790 與 tagger :8765 health 皆 ok。
+  需要 Mac：無。剩下：無，下輪只確認 pending 維持 0。
