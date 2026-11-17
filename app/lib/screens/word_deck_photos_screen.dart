@@ -17,7 +17,7 @@ import 'database_library_screen.dart' show DatabaseImageTile, databaseImageTags;
 /// deck's words (or the word its pictures come from, [LexEntry.pictureIds]).
 List<Map<String, dynamic>> wordDeckImages(
     WordDatabaseRepository repo, InstalledDeck deck, LexiconPack pack,
-    {int max = 300, String? level}) {
+    {int max = 300, int perWord = 6, String? level}) {
   final ids = <int>{};
   for (final id in deck.entryIds(repo)) {
     final e = repo.entry(id);
@@ -29,16 +29,49 @@ List<Map<String, dynamic>> wordDeckImages(
     ids.addAll(lex.pictureIds ?? [lex.id]);
   }
   if (ids.isEmpty) return const [];
-  return [
-    for (final image in pack.catalogImages)
-      // A one-level set keeps pictures where a set word is tagged at that
-      // level (a word tagged at another level there shows no label).
-      if (databaseImageTags(image).any((t) =>
-          ids.contains((t['lexeme_id'] as num?)?.toInt()) &&
-          (level == null || t['cefr'] == level)))
-        image,
-  ].take(max).toList();
+  // 問題回報 #1657: a picture counts for a word only when that word is its
+  // main subject (rank <= [_mainRank]) in the word's first sense; border's
+  // 「邊框」 pictures, plane's 「平面」 and the like stay out. Best ranked
+  // first, at most [perWord] per word, taken in turns so one common word
+  // cannot fill the page.
+  final firstSense = <int, int?>{};
+  int? mainSense(int id) => firstSense.putIfAbsent(id, () {
+        final s = pack.byId(id)?.senses;
+        return s == null || s.isEmpty ? null : s.first.id;
+      });
+  final byWord = <int, List<(int, Map<String, dynamic>)>>{};
+  for (final image in pack.catalogImages) {
+    int? bestId;
+    var best = 1 << 30;
+    for (final t in databaseImageTags(image)) {
+      final id = (t['lexeme_id'] as num?)?.toInt();
+      if (id == null || !ids.contains(id)) continue;
+      if (level != null && t['cefr'] != level) continue;
+      final r = (t['rank'] as num?)?.toInt();
+      if (r != null && r > _mainRank) continue;
+      final sense = (t['sense_id'] as num?)?.toInt();
+      final main = mainSense(id);
+      if (sense != null && main != null && sense != main) continue;
+      if ((r ?? 0) < best) {
+        best = r ?? 0;
+        bestId = id;
+      }
+    }
+    if (bestId != null) (byWord[bestId] ??= []).add((best, image));
+  }
+  for (final list in byWord.values) {
+    list.sort((a, b) => a.$1.compareTo(b.$1));
+  }
+  final out = <Map<String, dynamic>>[];
+  for (var i = 0; i < perWord && out.length < max; i++) {
+    for (final list in byWord.values) {
+      if (i < list.length && out.length < max) out.add(list[i].$2);
+    }
+  }
+  return out;
 }
+
+const _mainRank = 3;
 
 class WordDeckPhotosScreen extends StatefulWidget {
   final InstalledDeck deck;

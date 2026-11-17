@@ -49,7 +49,12 @@ Map<String, dynamic> pack() => {
             'width': 100,
             'height': 100,
             'tags': [
-              {'lexeme_id': lex, 'sense_id': 1, 'review_status': 'approved'}
+              {
+                'lexeme_id': lex,
+                'sense_id': lex * 10 + 1,
+                'rank': 1,
+                'review_status': 'approved'
+              }
             ],
             'labels': const [],
           },
