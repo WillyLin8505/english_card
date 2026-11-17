@@ -7901,3 +7901,10 @@ commit `3e57bae8`（Windows：flutter analyze 無 error、flutter test 全過）
 - 卡 #4：掃描還沒打完的圖片標籤
   結果：結論：標籤無積壓：pending 0（上輪 0）、done 41693、failed 61（持平）；Qwen :8790 與 tagger :8765 health 皆 ok。
   需要 Mac：無。剩下：無，下輪只確認 pending 維持 0。
+
+## M1038（2026-11-18 02:47）狀態：待做
+commit `eb67c50a`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #227：模擬使用者・單字本
+  結果：第 4442 輪：2/2 通過（database、detail），新問題 0、UX 建議 0 新增（沿用 #1649）。
+  需要 Mac：無。
+    - 剩餘：下一輪搭配 learner_view 做畫面文字的 UX 評估。log：app/build/rounds/4442/。
