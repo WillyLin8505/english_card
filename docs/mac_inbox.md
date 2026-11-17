@@ -7965,3 +7965,36 @@ commit `77c28f4e`（Windows：flutter analyze 無 error、flutter test 全過）
   結果：第 74 輪（輪次 4449）：2/2 通過（learner 106 秒、restart 41 秒）— 無新問題。UX 建議：無（只跑文字模擬，無截圖）。
   需要 Mac：無。
     - 剩餘：無新項目。
+
+## M1045（2026-11-18 05:58）狀態：待做
+commit `3dfde3a6`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1207：問題回報 #1660：[owner] 手機辨識字太少：本機每張平均 1.5 個字、Qwen 16 個，50 張裡 16
+  結果：第 1 輪：已放寬手機辨識的篩選，但還沒在 iPad 量過，目標（平均 ≥ 5 字、0 字照片 ≤ 5）未驗證，不算完成。
+  需要 Mac：用 golden v1 的 50 張在 iPad 重量平均字數、0 字照片數、正確率（對照 Qwen 核可標籤）。若仍 < 5：
+    1) 把 TextScan（照片文字）的字併入候選；2) 在 Core ML 加 ImageNet 類小模型（比較大小）；3) 父類別換成具體字。
+    法文：候選走同一個詞庫比對，英→法對照由 #1658 接；本輪沒有另外改。
+    golden／qc --live 未跑（本輪沒動後端與資料）。
+- 卡 #1206：問題回報 #1659：[owner] 學法文（母語英文）後切不回「母語中文學英文」：設定頁兩條路都被擋
+  結果：已修好：設定頁現在可在「母語中文學英文」和「母語英文學法文」間來回切換（問題回報 #1659）；flutter test 全部 1015 通過、analyze 無問題。
+  需要 Mac：在 iPad App 內設定頁（不改系統語言）驗證：學法文（母語英文）後，點母語「繁體中文」→ 確認框 → 變學英文／母語中文；再切回法文，再用學習語言「英文」鈕回來；單字與相片冊仍在。
+    
+    剩下：Mac 驗證。
+- 卡 #1205：問題回報 #1658：[owner] 學法文完全不能用：拍照／從相簿匯入照片辨識不出法文字（本機辨識只出英文）
+  結果：第 1 輪完成程式與測試：學法文時，本機辨識（Apple Vision 英文標籤）現在會轉成法文字；對照表 14,533 個英文標籤，golden 300 詞中 198 個名詞有 167 個（84%）找得到法文字，golden 照片的具體名詞 9/9 都對應得到。實機每張平均出幾字、正確率還要 Mac 在 iPad 量
+  需要 Mac：在 iPad 上（不改系統語言，App 內切到學法文）用 golden 50 張照片跑拍照／相簿匯入，記錄平均每張法文字數與正確率；並確認 法文相片冊 能下載、有圖，單字能加入單字本、進複習。
+    
+    改了什麼
+    - 新 app/assets/vision_fr.json（630 KB，pubspec 已加）：英文標籤 → 法文名詞，含 CEFR 與 le/la 性別。資料全開放來源：Wiktionary/Kaikki（CC BY-SA）英文釋義反查、Lexique 3.83 詞頻、已審 CEFR 表、詞庫 fr_gender，沒有用 AI。
+    - 新 lexicon/tools/card1205_build_vision_fr.py（重建：python lexicon/tools/card1205_build_vision_fr.py）。
+    - app/lib/services/local_vision.dart：VisionFrench + frenchCandidatesFromLabels；LocalVisionTagger.candidates 在 lang=='fr' 時走法文路徑。拍照、相簿匯入共用這條（tagging_queue._ask 傳 repository().language），照片不送伺服器。
+    - app/test/local_vision_test.dart 新增法文測試（用真實資產）。
+    - 驗證：flutter analyze（兩個檔案）無問題；local_vision_test 12 項全過。沒改資料庫，所以沒有備份；還原只要刪 vision_fr.json 並還原三個檔案。golden／QC 不受影響（沒動詞庫）。
+    
+    沒做／剩下
+    - 候選字目前只放詞形（chaise），le/la 性別已存在 JSON 但候選卡還沒顯示冠詞（WordCandidate 無性別欄位）；單字頁照法文詞庫顯示。需要的話另開卡。
+    - 只覆蓋名詞（Vision 本來就多為名詞）；動詞／形容詞標籤（如 black）沒有法文對照；少數俚語（fric=bread 的錢義）可能排在第二義，只取第一名且與最高分差 0.5 內。
+    - 法文相片冊下載、新手引導→複習全流程：本機無法跑 iPad，未驗證，交 Mac。
+    - 本輪沒跑完整 flutter test 與 qc.py（沒動 lexicon 資料）。
+- 卡 #224：模擬使用者・拍照
+  結果：第 4450 輪：photoui 1/1 通過；pins 8 個切片全部通過（約 28000 詞包的圖釘排版）；新問題 0；UX 建議 0（本卡只跑 widget 模擬，沒有截圖可評）。
+  需要 Mac：無。
