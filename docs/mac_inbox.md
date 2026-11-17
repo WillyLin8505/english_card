@@ -8009,3 +8009,11 @@ commit `133470a1`（Windows：flutter analyze 無 error、flutter test 全過；
   結果：第 75 輪（輪次 4452）：2/2 通過（learner 94 秒、restart 50 秒）— 無新問題。UX 建議：無（只跑文字模擬，無截圖）。
   需要 Mac：無。
     - 剩餘：無新項目。
+
+## M1047（2026-11-18 07:19）狀態：待做
+commit `7b883774`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1211：問題回報 #1665：[Mac 注意] M1034／M1045 待 iPad 的卡（Mac 2026-11-18 07:
+  結果：全部完成：#1205 對照表 cup 由 coupe 改為 tasse（修好）；14533→14527 個英文標籤，877 個選字改變（多為去掉俚語／比喻義，如 cow→putain 已移除、mug→gueule 改 tasse）。
+- 卡 #1210：問題回報 #1663：[Mac 注意] M1035–M1046 已完成的卡（Mac 2026-11-18 07:10，模
+  結果：第 1 輪：Mac 指的 rank -1 錯標已修一半——serveapp 現在只讓「前 3 名且分數 > 0.5」的代表圖排 -1，其餘依抓取名次；img 625（圓圈標 border，序 0、分 0.95）仍在，標籤本身錯。
+  需要 Mac：下載新包後，用 iPad 開旅行相片冊，看 527／31401 是否消失。
