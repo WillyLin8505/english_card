@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
@@ -133,11 +134,86 @@ List<WordCandidate> candidatesFromLabels(
   ];
 }
 
+/// English classifier label → French words for a learner of French (問題回報
+/// #1658, card #1205). Apple Vision only names things in English, so for
+/// French the label is looked up in `assets/vision_fr.json`, built offline by
+/// `lexicon/tools/card1205_build_vision_fr.py` from Wiktionary glosses
+/// (CC BY-SA), Lexique 3.83 frequency and the lexicon's fr_gender — no AI.
+class VisionFrench {
+  /// english → [[french, level, gender, zipf], …], best first.
+  static Map<String, List<List<Object?>>>? labels;
+
+  static Future<void> ensureLoaded() async {
+    if (labels != null) return;
+    try {
+      final raw = await rootBundle.loadString('assets/vision_fr.json');
+      final m = (jsonDecode(raw) as Map<String, dynamic>)['labels']
+          as Map<String, dynamic>;
+      labels = {
+        for (final e in m.entries)
+          e.key: [for (final x in e.value as List) List<Object?>.from(x as List)]
+      };
+    } catch (e) {
+      debugPrint('vision_fr.json unavailable: $e');
+      labels = const {};
+    }
+  }
+}
+
+/// [candidatesFromLabels] for French: each English label that has a French
+/// noun becomes that noun (`chaise` for `chair`), levelled by Lexique
+/// frequency / the reviewed CEFR list, nudged toward [level].
+List<WordCandidate> frenchCandidatesFromLabels(
+  List<VisionLabel> labels, {
+  required String level,
+  Map<String, List<List<Object?>>>? table,
+  List<String> exclude = const [],
+  int maxCandidates = LocalVisionTagger.maxCandidates,
+  double minConfidence = LocalVisionTagger.minConfidence,
+}) {
+  final map = table ?? VisionFrench.labels ?? const {};
+  final excluded = {for (final w in exclude) w.trim().toLowerCase()};
+  final seen = <String>{};
+  final found = <WordCandidate>[];
+  for (final l in labels) {
+    if (l.confidence < minConfidence) continue;
+    final en = l.label.trim().toLowerCase().replaceAll('_', ' ');
+    if (en.isEmpty || visionCategoryLabels.contains(en)) continue;
+    final hit = map[en];
+    if (hit == null || hit.isEmpty) continue;
+    final row = hit.first;
+    final fr = row[0] as String;
+    if (excluded.contains(fr) || !seen.add(fr)) continue;
+    found.add(WordCandidate(
+      word: fr,
+      pos: 'noun',
+      meaning: en,
+      level: row[1] as String,
+      levelSource: 'frequency',
+      zipf: (row[3] as num?)?.toDouble(),
+      evidence: '手機辨識：整張照片',
+      point: const LabelPoint(0.5, 0.5),
+      visualConfidence: l.confidence,
+    ));
+  }
+  final target = levelIndex(level);
+  double score(WordCandidate c) =>
+      c.visualConfidence *
+      (1 - 0.12 * (levelIndex(c.level) - target).abs()) *
+      (visionWeakLabels.contains(c.meaning) ? visionWeakFactor : 1);
+  found.sort((a, b) => score(b).compareTo(score(a)));
+  final kept = found.take(maxCandidates).toList();
+  return [
+    for (final (i, c) in kept.indexed)
+      c.copyWith(point: spreadPoint(i, kept.length), grounded: true),
+  ];
+}
+
 /// [PhotoTagger] that never leaves the phone. `enrich` has no local
 /// answer: word data comes from the bundled pack (WordEnricher).
 class LocalVisionTagger implements PhotoTagger {
   static const maxCandidates = 24;
-  static const minConfidence = 0.1;
+  static const minConfidence = 0.03;
   static const modelName = 'Apple Vision（本機）';
 
   const LocalVisionTagger();
@@ -154,6 +230,11 @@ class LocalVisionTagger implements PhotoTagger {
     bool? asWeb,
   }) async {
     final labels = await LocalVision.classify(jpeg);
+    if (lang == 'fr') {
+      await VisionFrench.ensureLoaded();
+      return frenchCandidatesFromLabels(labels,
+          level: level, exclude: exclude);
+    }
     return candidatesFromLabels(labels,
         lexicon: lexicon, level: level, focus: focus, exclude: exclude);
   }

@@ -113,7 +113,7 @@ Future<TestApp> pumpApp(
     speaker: spk,
     lexicon: testLexicon(),
     navigator: nav,
-    switchLanguage: (_) async {},
+    switchLanguage: (l) async => s.learningLanguage = l,
     clock: () => testNow,
     child: MaterialApp(
       navigatorKey: rootKey,

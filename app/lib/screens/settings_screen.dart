@@ -368,8 +368,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             runSpacing: 8,
                             children: [
                               for (final e in supportedLanguages.entries)
-                                if (learningLanguageAvailable(e.key) &&
-                                    e.key != settings.nativeLanguage)
+                                if (learningLanguageAvailable(e.key))
                                   ChoiceChip(
                                     label: UiText(languageOptionLabel(e.key,
                                         learning: true)),
@@ -378,8 +377,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     onSelected: _switching
                                         ? null
                                         : (_) {
-                                            if (!languagePairAvailable(e.key,
-                                                settings.nativeLanguage)) {
+                                            // 問題回報 #1659: same as native →
+                                            // move the native language along.
+                                            if (e.key ==
+                                                    settings.nativeLanguage ||
+                                                !languagePairAvailable(e.key,
+                                                    settings.nativeLanguage)) {
                                               final n = _nativeFor(e.key);
                                               if (n == null) {
                                                 showToast(
@@ -431,6 +434,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                       }
                                       if (!languagePairAvailable(
                                           settings.learningLanguage, e.key)) {
+                                        // 問題回報 #1659: move the learning
+                                        // language along when one fits.
+                                        final l = _learningFor(e.key);
+                                        if (l != null) {
+                                          _switchLanguage(l, native: e.key);
+                                          return;
+                                        }
                                         showToast(
                                             context,
                                             pairUnavailableNote(

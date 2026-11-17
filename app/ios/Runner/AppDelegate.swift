@@ -91,19 +91,32 @@ enum LocalVisionChannel {
     }
   }
 
-  /// Labels for one JPEG/PNG, best first. Keeps the labels Vision itself
-  /// rates as reliable (90% precision) plus anything it is at least half
-  /// sure of, so a plain photo still yields a handful of words.
+  /// Labels for one JPEG/PNG, best first. Card #1207: the old gate (90%
+  /// precision or confidence >= 0.5) left 3.8 labels per photo, 1.5 words
+  /// after the dictionary, 16 of 50 photos with none. Now also keeps labels
+  /// Vision rates at 60% precision or that it is at least 4% sure of (the
+  /// Dart side drops parents and words the dictionary lacks), and adds the
+  /// animal detector's cat/dog.
   static func classify(_ data: Data, maxResults: Int) throws -> [[String: Any]] {
     try autoreleasepool {
       let request = VNClassifyImageRequest()
-      try visionHandler(data).perform([request])
+      let animals = VNRecognizeAnimalsRequest()
+      let handler = try visionHandler(data)
+      try handler.perform([request])
+      try? handler.perform([animals])
       let observations = (request.results as? [VNClassificationObservation]) ?? []
       var out: [[String: Any]] = []
       for o in observations {
-        guard o.hasMinimumRecall(0.01, forPrecision: 0.9) || o.confidence >= 0.5 else { continue }
+        guard o.hasMinimumRecall(0.01, forPrecision: 0.9) || o.hasMinimumRecall(0.05, forPrecision: 0.6)
+                || o.confidence >= 0.04 else { continue }
         out.append(["label": o.identifier, "confidence": Double(o.confidence)])
         if out.count >= maxResults { break }
+      }
+      let seen = Set(out.compactMap { $0["label"] as? String })
+      for a in animals.results ?? [] {
+        for l in a.labels where !seen.contains(l.identifier) {
+          out.append(["label": l.identifier, "confidence": Double(l.confidence)])
+        }
       }
       return out
     }

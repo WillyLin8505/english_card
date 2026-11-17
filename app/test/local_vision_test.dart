@@ -25,6 +25,33 @@ void main() {
     AppSettings.localRecognition = false;
   });
 
+  // 問題回報 #1658 / card #1205: Apple Vision names things in English; a
+  // learner of French gets the French noun from the bundled label table.
+  test('French learner: English labels become French nouns (real asset)', () {
+    final raw = File('assets/vision_fr.json').readAsStringSync();
+    final m = (jsonDecode(raw) as Map<String, dynamic>)['labels']
+        as Map<String, dynamic>;
+    final table = {
+      for (final e in m.entries)
+        e.key: [for (final x in e.value as List) List<Object?>.from(x as List)]
+    };
+    final cs = frenchCandidatesFromLabels(
+      [
+        (label: 'chair', confidence: 0.9),
+        (label: 'banana', confidence: 0.8),
+        (label: 'food', confidence: 0.95),
+        (label: 'golden_retriever', confidence: 0.7),
+        (label: 'dog', confidence: 0.01),
+      ],
+      level: 'A1',
+      table: table,
+    );
+    expect(cs.map((c) => c.word), containsAll(['chaise', 'banane']));
+    expect(cs.map((c) => c.word), isNot(contains('food')));
+    expect(cs.map((c) => c.word), isNot(contains('chien')));
+    expect(cs.first.level, 'A1');
+  });
+
   test('classifier labels become known words, best first, spread out', () {
     final cs = candidatesFromLabels(
       [
