@@ -288,3 +288,4 @@ void main() {
     TextScan.available = true;
   });
 }
+
