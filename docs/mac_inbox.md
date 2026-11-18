@@ -8251,3 +8251,9 @@ commit `bf4a80c3`（Windows：flutter analyze 無 error、flutter test 全過；
     - 4471 輪 database 重跑通過（106 秒）。沒有補獨立單元測試（本輪未做，剩餘）。
     - 沒改資料；golden／QC 不適用，無備份。資料端建議：quality_redirect 產生鏈時應直接指向最終詞（可由後續卡處理）。
     - 剩餘：加一個鏈式指標的單元測試；下一輪搭配 learner_view 做畫面文字 UX 評估。
+
+## M1072（2026-11-19 07:34）狀態：待做
+commit `4549564b`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #224：模擬使用者・拍照
+  結果：第 4470 輪：photoui 1/1 通過；pins 8 個切片全部通過；新問題 0；UX 建議 0（只跑 widget 模擬，沒有截圖可評）。
+  需要 Mac：無。
