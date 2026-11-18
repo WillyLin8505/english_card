@@ -255,7 +255,7 @@ def test_form_only_is_judged_per_pos():
 
 
 def test_form_only_listed_for_its_pos_or_mixed_is_kept():
-    words = {"antics": [3.0, {"n.": "C1"}, ""], "centralised": [3.0, {"adj.": "C2"}, ""]}
+    words = {"antics": [3.0, {"noun": "C1"}, ""], "centralised": [3.0, {"adj.": "C2"}, ""]}
     pack = {"redirects": {}, "lexemes": [
         _form(1, "antics", "noun", "C1", "plural of antic", "cefr-j"),  # listed noun: kept
         _form(2, "centralised", "verb", "C2", "simple past and past participle of centralise", "cefr-j"),
