@@ -8045,3 +8045,11 @@ commit `70c22cba`（Windows：flutter analyze 無 error、flutter test 全過；
     驗證：flutter test test/local_vision_test.dart 13 項全過。golden／QC 不受影響（沒動詞庫），所以沒跑。
     備份／還原：lexicon/backups/card1213_vision_fr.json 複製回 app/assets/vision_fr.json（腳本改動需手動還原）。
     剩餘：實機正確率待 Mac；其餘約 180 個選字變動只抽查了 40 筆。
+
+## M1050（2026-11-18 10:05）狀態：待做
+commit `379fb35d`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1214：問題回報 #1664：[Mac 注意] M1034／M1045 待 iPad 的卡（Mac 2026-11-18 07:
+  結果：修好 #1664（Mac 注意 M1034/M1045）：照片長按預覽改為列出照片全部單字（所有程度，排除已學會），不再被「學習中」篩選擋成 0 個字。flutter analyze 無問題；相關 flutter 測試 3 檔 8 項全過。
+  需要 Mac：iPad 手測 coffee 照片長按面板的單字數，以及「開啟照片」是否進到照片詳情（Mac 注明測試方式限制未確認）。
+    - 沒有 commit／push；沒有備份資料（只改程式，沒動資料）。
+    - 問題回報 #1664 的狀態交給派工流程（修好後由 iPad 驗證收尾）。
