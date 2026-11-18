@@ -8023,3 +8023,25 @@ commit `cd85905b`（Windows：flutter analyze 無 error、flutter test 全過；
 - 卡 #224：模擬使用者・拍照
   結果：第 4453 輪：photoui 1/1 通過；pins 8 個切片全部通過（約 28024 詞包）；新問題 0；UX 建議 0（本卡只跑 widget 模擬，沒有截圖可評）。
   需要 Mac：無。
+
+## M1049（2026-11-18 09:51）狀態：待做
+commit `70c22cba`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #496：模擬使用者・法語（英語母語者學法語）
+  結果：第71輪（rounds 200–202）4 項法語模擬全部通過；未改程式或資料。
+- 卡 #1212：問題回報 #1666：[Mac 注意] M1045 #1207／#1205 iPad 量測（Mac 2026-11-18
+  結果：第 1 輪：已過濾 Vision 的「修飾詞」多字標籤（cake regular、road other、pot cooking、tea drink、engine vehicle…），jean/fry/法文字與 golden 正確率尚未處理。
+  需要 Mac：用 iPad 重測 #1207 候選，確認上述多字標籤已消失。
+- 卡 #1213：問題回報 #1667：[Mac 注意] M1045 #1207／#1205 iPad 量測（Mac 2026-11-18
+  結果：需要 Mac：用 iPad 重跑同 50 張 golden 照片（法文），記錄平均每張法文字數（上輪 5.78）與錯字組數（上輪約 17/139）；順便驗法文相片冊下載、加入單字本、進複習（上輪沒驗）。
+  需要 Mac：用 iPad 重跑同 50 張 golden 照片（法文），記錄平均每張法文字數（上輪 5.78）與錯字組數（上輪約 17/139）；順便驗法文相片冊下載、加入單字本、進複習（上輪沒驗）。
+    
+    改了什麼（只動 App 資產，沒動詞庫）
+    - lexicon/tools/card1205_build_vision_fr.py：(1) 多義法文字（garde、cours、pays）每多一義扣分（0.15，上限 0.45），不再只靠詞頻贏；(2) 與英文同形的借詞若只出現在後面義項就跳過（phone→phone、lobby 類）；(3) OVERRIDES 增加 plant/bedding/pickle/lime/watch/river/cake/pacifier/chart/suit/land/phone/carton/nest/mechanic/mannequin 的日常字。
+    - 重建 app/assets/vision_fr.json（標籤 14,528→14,390，有性別 4,413→4,313，標籤減少來自借詞規則）。
+    - 抽查 40 筆變動：多數變好（jar→bocal、cone→cône、suit→costume、anxiety→anxiété），發現 nest→chez-soi、mechanic→mécano、mannequin→catin 變差，已加進 OVERRIDES 修回。
+    
+    為什麼不能純靠規則：compact 字典的釋義太薄且沒有俚語標記（costard 只寫 "suit"，plante 的植物義根本不在內），反查只能靠啟發式；常見日常物還是要小表保底。更多日常字出錯時，往 OVERRIDES 加即可。
+    
+    驗證：flutter test test/local_vision_test.dart 13 項全過。golden／QC 不受影響（沒動詞庫），所以沒跑。
+    備份／還原：lexicon/backups/card1213_vision_fr.json 複製回 app/assets/vision_fr.json（腳本改動需手動還原）。
+    剩餘：實機正確率待 Mac；其餘約 180 個選字變動只抽查了 40 筆。
