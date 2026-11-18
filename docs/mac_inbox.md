@@ -8226,3 +8226,8 @@ commit `16a50f1f`（Windows：flutter analyze 無 error、flutter test 全過）
   需要 Mac：無。
     - 剩餘：下一輪搭配 learner_view 做畫面文字的 UX 評估。
     - 備註：第一次執行在等 heavy lock 時被 10 分鐘背景時限停掉，已用 2 小時時限重跑。
+
+## M1069（2026-11-19 06:37）狀態：待做
+commit `ddb2af71`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #496：模擬使用者・法語（英語母語者學法語）
+  結果：第209–211輪：4/4 項模擬全數通過（a1 17秒、b1 20秒、carddraw 35秒、frmedia 10秒）；詞庫數字與前輪相同。
