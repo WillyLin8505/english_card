@@ -750,8 +750,9 @@ def apply_decisions(pack: dict, decisions: dict | None = None) -> dict:
     set_cefr = {int(k): v for k, v in (decisions.get("set_cefr") or {}).items()}
     keep_rule = {int(x) for x in load_json("rare_rule_keep.json").get("keep_rule_level", [])}
     by_id = {lx["id"]: lx for lx in pack.get("lexemes", [])}
-    counts = {"redirect": 0, "strip_cefr": 0, "set_cefr": 0, "merged_images": 0, "merged_examples": 0,
-              "derived_form_only": derived["redirect"] + derived["strip_cefr"]}
+    counts = {"redirect": 0, "strip_cefr": 0, "set_cefr": 0, "merged_images": 0, "merged_examples": 0}
+    if derived["redirect"] + derived["strip_cefr"]:
+        counts["derived_form_only"] = derived["redirect"] + derived["strip_cefr"]
     redirects = pack.setdefault("redirects", {})
     for lid, level in set_cefr.items():
         lx = by_id.get(lid)

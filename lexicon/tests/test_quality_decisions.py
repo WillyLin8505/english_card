@@ -215,3 +215,51 @@ def test_stub_exclusions_survive_real_database_reconcile(monkeypatch):
             assert session.execute(text('SELECT count(*) FROM lexemes WHERE cefr IS NOT NULL')).scalar() == 0
             previous = json.loads(json.dumps(decisions))  # persistence round trip
     engine.dispose()
+
+
+# ---- card #1223 (問題回報 #1674): form-only lexemes imported after the last lint run
+def _form(i, word, pos, cefr, note, source="frequency_estimate"):
+    return {"id": i, "lemma": word, "normalized": word, "pos": pos, "status": "full", "cefr": cefr,
+            "cefr_source": source, "senses": [{"id": i * 10, "definition": note, "images": []}], "examples": []}
+
+
+def _word(i, word, pos, cefr="A2", note="a real meaning"):
+    return _form(i, word, pos, cefr, note, "cefr-j")
+
+
+def test_form_only_multiword_plural_redirects_to_base_phrase():
+    pack = {"redirects": {}, "lexemes": [
+        _word(1, "spiral arm", "noun"),
+        _form(2, "spiral arms", "noun", "B1", "plural of spiral arm")]}
+    q.apply_decisions(pack, {"redirect": {}, "strip_cefr": [], "set_cefr": {}})
+    plural = pack["lexemes"][1]
+    assert plural["cefr"] is None and plural["redirect_to"] == 1 and plural["cefr_source"] == "quality_redirect"
+
+
+def test_form_only_without_base_row_is_stripped_not_leveled():
+    pack = {"redirects": {}, "lexemes": [_form(2, "baked goods", "noun", "B1", "plural of baked good: bread")]}
+    q.apply_decisions(pack, {"redirect": {}, "strip_cefr": [], "set_cefr": {}})
+    assert pack["lexemes"][0]["cefr"] is None and pack["lexemes"][0]["cefr_source"] == "quality_excluded"
+
+
+def test_form_only_is_judged_per_pos():
+    # annotating: the verb is only "present participle of annotate"; the noun has a real sense and keeps its level.
+    pack = {"redirects": {}, "lexemes": [
+        _word(1, "annotate", "verb"),
+        _form(2, "annotating", "verb", "C2", "present participle and gerund of annotate"),
+        _form(3, "annotating", "noun", "B2", "the act of adding notes")]}
+    q.apply_decisions(pack, {"redirect": {}, "strip_cefr": [], "set_cefr": {}})
+    verb, noun = pack["lexemes"][1:]
+    assert verb["cefr"] is None and verb["redirect_to"] == 1
+    assert noun["cefr"] == "B2" and "redirect_to" not in noun
+
+
+def test_form_only_listed_for_its_pos_or_mixed_is_kept():
+    words = {"antics": [3.0, {"n.": "C1"}, ""], "centralised": [3.0, {"adj.": "C2"}, ""]}
+    pack = {"redirects": {}, "lexemes": [
+        _form(1, "antics", "noun", "C1", "plural of antic", "cefr-j"),  # listed noun: kept
+        _form(2, "centralised", "verb", "C2", "simple past and past participle of centralise", "cefr-j"),
+        {**_form(3, "bacteria", "noun", "B2", "plural of bacterium"),
+         "senses": [{"id": 1, "definition": "plural of bacterium"}, {"id": 2, "definition": "a group of cells"}]}]}
+    out = q.derive_form_only(pack, {"redirect": {}, "strip_cefr": []}, words)
+    assert out == {"redirect": 0, "strip_cefr": 1}  # only the verb centralised (list has adj only)
