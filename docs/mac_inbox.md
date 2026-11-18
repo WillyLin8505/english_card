@@ -8218,3 +8218,11 @@ commit `0a30ddb3`（Windows：flutter analyze 無 error、flutter test 全過；
   結果：第 80 輪：未執行（0/2）— heavylock 被別的 flutter test 佔住超過 20 分鐘，排隊的 runround 已逾時被終止；沒有新問題、沒有 UX 建議。
   需要 Mac：無。
     - 剩餘：鎖釋放後重跑本輪（夜間 01:00–07:00 較容易取得鎖）；若 flutter_tester 仍在，請 owner 或派工程式的 lingering_kill 處理。
+
+## M1068（2026-11-19 05:55）狀態：待做
+commit `16a50f1f`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #227：模擬使用者・單字本
+  結果：第 4466 輪：2/2 通過（database、detail），新問題 0、UX 建議 0 新增（沿用 #1649）。
+  需要 Mac：無。
+    - 剩餘：下一輪搭配 learner_view 做畫面文字的 UX 評估。
+    - 備註：第一次執行在等 heavy lock 時被 10 分鐘背景時限停掉，已用 2 小時時限重跑。
