@@ -156,6 +156,34 @@ class _PhotoGridScreenState extends State<PhotoGridScreen> {
           ];
         }
 
+        // The long-press preview lists the photo's own words at every level,
+        // not only the chosen one (問題回報 #1198: under the default 學習中
+        // filter a photo whose words are all candidates showed 0 words).
+        // Learned words stay out, as on the grid.
+        List<(String, bool)> previewOf(Photo p) {
+          final seen = <String>{};
+          final words = <(String, bool)>[];
+          void add(String word) {
+            final learned = repo.entryByWord(word);
+            if (!seen.add(word) ||
+                (learned != null && repo.isArchived(learned.id))) {
+              return;
+            }
+            words.add((word, word == focusWord));
+          }
+
+          for (final w in wordsOf(p)) {
+            add(w.word);
+          }
+          for (final c in p.candidates) {
+            add(c.word);
+          }
+          return [
+            ...words.where((l) => l.$2),
+            ...words.where((l) => !l.$2),
+          ];
+        }
+
         final q = _query.text.trim().toLowerCase();
         final photos = [
           for (final p in all)
@@ -228,7 +256,7 @@ class _PhotoGridScreenState extends State<PhotoGridScreen> {
                             onTap: () =>
                                 scope.navigator.openPhoto(photos[i].id),
                             onLongPress: () => _preview(
-                                photos[i], labelsOf(photos[i]), scope),
+                                photos[i], previewOf(photos[i]), scope),
                           ),
                         ),
                 ),
