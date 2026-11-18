@@ -1627,8 +1627,8 @@ def fr_adverbial_phrase(text: str, forms, own_pos) -> bool:
     headword sits in a fixed adverbial phrase, but it has no adverb entry
     (pis keeps only the noun 「udder」 and a colloquial conjunction). Such a
     sentence gets no sense (unbound, like fr_agreement_use)."""
-    if "adv" in own_pos:
-        return False
+    if "adv" in own_pos or "verb" in own_pos:
+        return False  # «tant pleuré»: a participle
     toks, _ = _fr_tokens(text)
     idx = [i for i, t in enumerate(toks) if t in forms]
     return bool(idx) and all(
