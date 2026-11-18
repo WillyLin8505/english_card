@@ -663,6 +663,72 @@ def drop_same_translation(examples: list[dict], lemma: str) -> list[dict]:
     return out
 
 
+# ------------------------------------- form-only entries (#168, card #1223)
+# A lexeme imported after the last lint run (entry_flags.json is only rebuilt by
+# hand) never got a #191 redirect, so "spiral arms" (plural of spiral arm) kept a
+# frequency-estimated B1, "centralised" took the CEFR-J level of its adjective.
+# The same rule as inclusion_flags/inflection_base, decided on the pack itself:
+# every sense is a bare inflection note, the spelling is not listed for this pos.
+_FORM_NOTE_RE = re.compile(
+    r"^(?:\(.*?\)\s*)?(?:simple past|past participle|present participle|plural|"
+    r"third-person|comparative|superlative|gerund|inflection)\b.*?\bof\s+"
+    r"([A-Za-z][A-Za-z' -]*?)\s*(?:[:.,;(]|$)", re.I)
+_FORM_ENDING_POS = (("ing", "verb"), ("ed", "verb"), ("s", "noun"))
+
+
+def form_only_base(lx: dict) -> str | None:
+    """The base word when every sense of ``lx`` is a bare inflection note."""
+    bases = []
+    for se in lx.get("senses") or []:
+        m = _FORM_NOTE_RE.match((se.get("definition") or "").strip())
+        if not m:
+            return None
+        bases.append(m.group(1).strip().lower())
+    return bases[0] if bases and len(set(bases)) == 1 else None
+
+
+def derive_form_only(pack: dict, decisions: dict, cefr_words: dict | None = None) -> dict:
+    """Adds redirect / strip_cefr entries (in place) for form-only lexemes that no
+    decision covers yet. Returns {"redirect": n, "strip_cefr": n}."""
+    if cefr_words is None:
+        try:
+            from .adapters.local import cefr_list
+            cefr_words = {w: v for w, v in cefr_list().items()}
+        except Exception:  # noqa: BLE001 — no list: nothing is shielded, still the same rule
+            cefr_words = {}
+    full = [lx for lx in pack.get("lexemes", []) if lx.get("status") == "full"]
+    by_word: dict[str, list[dict]] = {}
+    for lx in full:
+        by_word.setdefault(lx["normalized"], []).append(lx)
+    decided = ({int(k) for k in decisions.get("redirect") or {}} | {int(x) for x in decisions.get("strip_cefr") or []}
+               | {int(k) for k in decisions.get("set_cefr") or {}})
+    out = {"redirect": 0, "strip_cefr": 0}
+    for lx in full:
+        if (lx["id"] in decided or not lx.get("cefr") or lx.get("pos") in ("name", "", None, "unknown")
+                or lx.get("cefr_source") in ("quality_redirect", "quality_excluded")):
+            continue
+        base = form_only_base(lx)
+        word = lx["normalized"]
+        if not base or base == word or _listed_for_pos(word, lx["pos"], cefr_words):
+            continue
+        pool = [b for b in by_word.get(base, []) if b["id"] != lx["id"]]
+        target = None
+        if pool:
+            ending = next((p for end, p in _FORM_ENDING_POS if word.endswith(end)), "verb")
+            for pos in (lx["pos"], ending, "verb"):
+                target = next((b for b in pool if b.get("pos") == pos), None)
+                if target:
+                    break
+            target = target or pool[0]
+        if target:
+            decisions.setdefault("redirect", {})[str(lx["id"])] = target["id"]
+            out["redirect"] += 1
+        else:
+            decisions.setdefault("strip_cefr", []).append(lx["id"])
+            out["strip_cefr"] += 1
+    return out
+
+
 # ------------------------------------------------- decisions (#191, owner)
 def apply_decisions(pack: dict, decisions: dict | None = None) -> dict:
     """Owner decision 問題回報 #191 (2026-10-14), from quality/decisions.json
@@ -677,12 +743,15 @@ def apply_decisions(pack: dict, decisions: dict | None = None) -> dict:
     Runs after rank_usages/assign_cards (which would otherwise reset them);
     idempotent. Returns per-action counts."""
     decisions = load_json("decisions.json") if decisions is None else decisions
+    decisions = {k: (dict(v) if isinstance(v, dict) else list(v)) for k, v in decisions.items()}
+    derived = derive_form_only(pack, decisions)
     redirect = {int(k): int(v) for k, v in (decisions.get("redirect") or {}).items()}
     strip = {int(x) for x in decisions.get("strip_cefr") or []}
     set_cefr = {int(k): v for k, v in (decisions.get("set_cefr") or {}).items()}
     keep_rule = {int(x) for x in load_json("rare_rule_keep.json").get("keep_rule_level", [])}
     by_id = {lx["id"]: lx for lx in pack.get("lexemes", [])}
-    counts = {"redirect": 0, "strip_cefr": 0, "set_cefr": 0, "merged_images": 0, "merged_examples": 0}
+    counts = {"redirect": 0, "strip_cefr": 0, "set_cefr": 0, "merged_images": 0, "merged_examples": 0,
+              "derived_form_only": derived["redirect"] + derived["strip_cefr"]}
     redirects = pack.setdefault("redirects", {})
     for lid, level in set_cefr.items():
         lx = by_id.get(lid)
