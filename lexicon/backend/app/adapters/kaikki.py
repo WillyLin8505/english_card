@@ -11,7 +11,7 @@ import re
 import urllib.parse
 from concurrent.futures import ThreadPoolExecutor
 
-from .. import catalog, config, kaikki_index
+from .. import fr_conj, catalog, config, kaikki_index
 from .. import morph_data as md
 from ..morphology import (Evidence, Part, _prefix_meaning, expand, normalize_affix_args,
                           parts_from_affix_template,
@@ -343,6 +343,45 @@ def fr_gender(noun_entries) -> str | None:
 FR_ELIDED = re.compile(r"^(?:[mtsl]['’]|(?:me|te|se|nous|vous)\s)", re.I)
 
 
+FR_PERSON_TAGS = (("first-person", "1"), ("second-person", "2"), ("third-person", "3"))
+# Letters no French spelling has: Wiktionary's table sometimes carries an IPA
+# transcription as a form (parler: «paʁl» tagged first-person singular, card #1219).
+FR_NOT_SPELLING = re.compile(r"[ʁɛɔɑəɲŋʃʒɥʔˈˌ.ɡ/\[\]]|[0-9]")
+
+
+def fr_person(tags: set[str]) -> str | None:
+    person = next((n for p, n in FR_PERSON_TAGS if p in tags), None)
+    number = "s" if "singular" in tags else "p" if "plural" in tags else None
+    return f"{person}{number}" if person and number else None
+
+
+def fr_tense(tags: set[str]) -> str | None:
+    """The field's tense name for a simple-tense form of a French verb (card #1219);
+    compound tenses («avoir + past participle») are skipped by the caller."""
+    if "imperative" in tags:
+        return "imperative"
+    if "subjunctive" in tags:
+        # present subjunctive only; the imperfect (que je parlasse) is literary
+        return "subjunctive" if "present" in tags and "imperfect" not in tags else None
+    if "conditional" in tags:
+        return None if "perfect" in tags else "conditional"
+    if "indicative" not in tags:
+        return None
+    if "imperfect" in tags:
+        return "imperfect"
+    if "future" in tags:
+        return None if "perfect" in tags else "future"
+    if {"historic", "past"} <= tags and "anterior" not in tags:
+        return "passe_simple"
+    if "present" in tags and "perfect" not in tags:
+        return "present"
+    return None
+
+
+def fr_spelling_ok(form: str) -> bool:
+    return bool(form) and not FR_NOT_SPELLING.search(form)
+
+
 def fr_auxiliaries(verb_entries) -> list[str]:
     """avoir / être for the compound tenses, from the conjugation table's
     «être + past participle» infinitive (card #429). Both for passer, monter."""
@@ -457,18 +496,15 @@ def form_field(pos: str, tags: set[str], target: str) -> str | None:
                 return "fr_past_participle"
             if {"participle", "present"} <= tags:
                 return "fr_present_participle"
-            if {"first-person", "singular", "indicative"} <= tags:
-                if "imperfect" in tags:
-                    return "fr_imperfect_1s"
-                if "future" in tags and "perfect" not in tags:
-                    return "fr_future_1s"
-            if {"indicative", "present"} <= tags:
-                person = next((n for p, n in (("first-person", "1"), ("second-person", "2"),
-                                              ("third-person", "3")) if p in tags), None)
-                number = "s" if "singular" in tags else "p" if "plural" in tags else None
-                if person and number:
-                    return f"fr_present_{person}{number}"
+            tense = fr_tense(tags)
+            person = fr_person(tags)
+            if tense == "imperative":
+                return f"fr_imperative_{person}" if person in ("2s", "1p", "2p") else None
+            if tense and person:
+                return f"fr_{tense}_{person}"
         if pos in ("adj", "noun"):
+            if {"before-vowel", "masculine", "singular"} <= tags:
+                return "fr_masculine_before_vowel"
             if {"feminine", "plural"} <= tags:
                 return "fr_feminine_plural"
             if "feminine" in tags and "plural" not in tags:
@@ -486,6 +522,33 @@ class Kaikki(SourceAdapter):
         q = urllib.parse.quote
         return (f"https://kaikki.org/dictionary/{DICT_NAME[target]}/meaning/"
                 f"{q(w[0])}/{q(w[:2])}/{q(w)}.jsonl")
+
+    def _fr_grammar(self, f, entries, word, ctx, add):
+        """Grammar notes of a French verb / noun (card #1219), from the dump only."""
+        verbs = [e for e in entries if _pos(e) == "verb"]
+        if f == "fr_h_aspire":
+            if fr_conj.h_aspire([e for e in entries if _pos(e) in ("noun", "adj")]):
+                add({"form": "yes"}, "yes", rid=f"{word}#noun")
+            return
+        if not verbs:
+            return
+        if f == "fr_pronominal":
+            if fr_conj.is_pronominal(verbs, word):
+                add({"form": "yes"}, "yes", rid=f"{word}#verb")
+            return
+
+        def lookup(w):
+            return self.other(ctx, w)
+        values = fr_conj.verb_values(verbs, word)
+        if f in fr_conj.PARTICIPLE_FIELDS:
+            pp = (values.get("fr_past_participle") or [""])[0]
+            for form in fr_conj.participle_agreement(pp, lookup).get(f, []) if pp else []:
+                add({"form": form}, form.lower(), rid=f"{word}#verb")
+            return
+        group = fr_conj.verb_group(word, values)
+        val = group if f == "fr_verb_group" else fr_conj.conj_model(word, values, group, lookup)
+        if val:
+            add({"form": val}, val, rid=f"{word}#verb")
 
     def download_snapshot(self, language, snapshot_dir):
         # The full dumps are multi-GB; this project reads per-headword JSONL
@@ -659,6 +722,9 @@ class Kaikki(SourceAdapter):
         elif f == "fr_auxiliary":
             for aux in fr_auxiliaries([e for e in entries if _pos(e) == "verb"]):
                 add({"form": aux}, aux, rid=f"{word}#verb")
+        elif f in ("fr_verb_group", "fr_conj_model", "fr_pronominal", "fr_h_aspire",
+                   *fr_conj.PARTICIPLE_FIELDS) and t == "fr":
+            self._fr_grammar(f, entries, word, ctx, add)
         elif f in catalog.FORM_FIELDS:
             # A headword that is itself a form (grated, ate, eaten, apples,
             # better) shares its base word's whole table: eat, ate and eaten
@@ -694,6 +760,8 @@ class Kaikki(SourceAdapter):
                     # acquérir's own conjugation (card #429).
                     if t == "fr" and FR_ELIDED.match(form) and not FR_ELIDED.match(owner):
                         continue
+                    if t == "fr" and (not fr_spelling_ok(form) or (pos == "verb" and "-" in form)):
+                        continue  # an IPA transcription (paʁl) or an imperative with its pronoun
                     if form_field(pos or "", set(fo.get("tags", [])), t) == f:
                         if f in ("adj_comparative", "adj_superlative") and (
                                 degree_form_implausible(word, form) or

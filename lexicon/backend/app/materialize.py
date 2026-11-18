@@ -30,6 +30,9 @@ FORM_POS = {"verb_base": "verb", "verb_past": "verb", "verb_past_participle": "v
             "fr_future_1s": "verb", "fr_auxiliary": "verb", "fr_feminine": "adj", "fr_plural": "adj",
             "fr_feminine_plural": "adj", "fr_gender": "noun", **{f"fr_present_{p}": "verb" for p in
                                             ("1s", "2s", "3s", "1p", "2p", "3p")}}
+FORM_POS.update({f: "verb" for f in [*catalog.FR_CONJ_FIELDS, *catalog.FR_VERB_META]})
+FORM_POS["fr_h_aspire"] = "noun"
+FORM_POS["fr_masculine_before_vowel"] = "adj"
 REL_FIELDS = catalog.RELATION_FIELDS + ["derived_terms"]
 
 

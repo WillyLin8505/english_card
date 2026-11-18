@@ -95,6 +95,25 @@ FIELDS: list[Field] = [
     Field("fr_imperfect_1s", "forms", "未完成過去式 je", languages=("fr",)),
     Field("fr_future_1s", "forms", "簡單將來式 je", languages=("fr",)),
     Field("fr_auxiliary", "forms", "複合時態助動詞", languages=("fr",)),
+    # card #1219 (問題回報 #1671): the full simple-tense table from Wiktionary (no AI)
+    *[Field(f"fr_{t}_{p}", "forms", f"{lbl} {pr}", languages=("fr",))
+      for t, lbl in (("imperfect", "未完成過去式"), ("future", "簡單將來式"),
+                     ("conditional", "條件式"), ("subjunctive", "虛擬式現在"),
+                     ("passe_simple", "簡單過去式"))
+      for p, pr in (("1s", "je"), ("2s", "tu"), ("3s", "il／elle"), ("1p", "nous"),
+                    ("2p", "vous"), ("3p", "ils／elles"))
+      if (t, p) not in (("imperfect", "1s"), ("future", "1s"))],
+    Field("fr_imperative_2s", "forms", "命令式 tu", languages=("fr",)),
+    Field("fr_imperative_1p", "forms", "命令式 nous", languages=("fr",)),
+    Field("fr_imperative_2p", "forms", "命令式 vous", languages=("fr",)),
+    Field("fr_past_participle_f", "forms", "過去分詞 陰性單數", languages=("fr",)),
+    Field("fr_past_participle_mpl", "forms", "過去分詞 陽性複數", languages=("fr",)),
+    Field("fr_past_participle_fpl", "forms", "過去分詞 陰性複數", languages=("fr",)),
+    Field("fr_masculine_before_vowel", "forms", "母音前陽性（bel）", languages=("fr",)),
+    Field("fr_verb_group", "forms", "動詞組別", languages=("fr",)),
+    Field("fr_conj_model", "forms", "變位範本", languages=("fr",)),
+    Field("fr_pronominal", "forms", "可作代動詞（se …）", languages=("fr",)),
+    Field("fr_h_aspire", "forms", "有聲 h（h aspiré）", languages=("fr",)),
     # card #367: m. / f. / m./f. (epicene); "pl" = plural-only noun (les gens)
     Field("fr_gender", "forms", "陰陽性", languages=("fr",)),
     Field("fr_feminine", "forms", "陰性", languages=("fr",)),
@@ -150,8 +169,15 @@ RELATION_NATIVE = {f"{r}_native": r for r in RELATION_FIELDS}
 FORM_FIELDS = [f.key for f in FIELDS if f.block == "forms"]
 # Forms-block fields whose value is grammar, not a spelling of the headword
 # (m / f, avoir / être): never one of the word's own forms (card #429).
-NOT_INFLECTIONS = {"fr_gender", "fr_auxiliary"}
+NOT_INFLECTIONS = {"fr_gender", "fr_auxiliary", "fr_verb_group", "fr_conj_model", "fr_pronominal",
+                   "fr_h_aspire"}
 INFLECTION_FIELDS = [f for f in FORM_FIELDS if f not in NOT_INFLECTIONS]
+# card #1219: the French fields added for the full conjugation table / grammar notes
+FR_CONJ_FIELDS = [f for f in FORM_FIELDS if f.startswith("fr_") and f.rsplit("_", 1)[-1] in
+                  ("1s", "2s", "3s", "1p", "2p", "3p", "f", "mpl", "fpl")
+                  and f not in ("fr_present_participle",)]
+FR_VERB_META = ["fr_verb_group", "fr_conj_model", "fr_pronominal"]
+FR_ADJ_FIELDS = ["fr_masculine_before_vowel"]
 
 
 def fields_for(target: str) -> list[Field]:
@@ -195,6 +221,7 @@ _KAIKKI_FR_TARGET = {
     # Wiktionary's affix templates (boulangerie = boulanger + -erie; card #429)
     "morphemes",
 }
+_KAIKKI_FR_TARGET |= set(FR_CONJ_FIELDS) | set(FR_VERB_META) | set(FR_ADJ_FIELDS) | {"fr_h_aspire"}
 _KAIKKI_ZH_TARGET = {"pos", "definition", "usage_labels", "register", "ipa", "audio", "synonyms", "antonyms",
                      "related", "derived_terms", "etymology_text", "example_sentences",
                      "example_sense"}
@@ -429,6 +456,7 @@ MAY_BE_EMPTY = {"antonyms", "hypernyms", "hyponyms", "homophones", "near_homopho
                 "fr_present_2p", "fr_present_3p", "fr_past_participle", "fr_feminine",
                 "fr_plural", "fr_feminine_plural", "fr_present_participle", "fr_imperfect_1s",
                 "fr_future_1s", "fr_auxiliary"}
+MAY_BE_EMPTY |= set(FR_CONJ_FIELDS) | set(FR_VERB_META) | set(FR_ADJ_FIELDS) | {"fr_h_aspire"}
 # Forms that belong to one part of speech (a tuple: any of these).
 FORM_POS = {"verb_base": "verb", "verb_past": "verb", "verb_past_participle": "verb",
             "verb_present_participle": "verb", "verb_third_person": "verb",
@@ -440,6 +468,9 @@ FORM_POS = {"verb_base": "verb", "verb_past": "verb", "verb_past_participle": "v
             "fr_imperfect_1s": "verb", "fr_future_1s": "verb", "fr_auxiliary": "verb",
             "fr_feminine": ("adj", "noun"), "fr_plural": ("adj", "noun"),
             "fr_feminine_plural": ("adj", "noun"), "fr_gender": "noun"}
+FORM_POS.update({f: "verb" for f in [*FR_CONJ_FIELDS, *FR_VERB_META]})
+FORM_POS["fr_h_aspire"] = ("noun", "adj")
+FORM_POS["fr_masculine_before_vowel"] = ("adj", "noun")
 for _f in LEVELED:
     _src, _strategy, _limit = _EN_DEFAULTS[_f]
     _EN_DEFAULTS[_f] = ([*_src, "ai_translate"], _strategy, 30)
