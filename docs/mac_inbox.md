@@ -8086,3 +8086,24 @@ commit `06974dc7`（Windows：flutter analyze 無 error、flutter test 全過）
 - 卡 #224：模擬使用者・拍照
   結果：第 4456 輪：photoui 1/1 通過；pins 8 個切片全部通過；新問題 0；UX 建議 0（本卡只跑 widget 模擬，沒有截圖可評）。
   需要 Mac：無。
+
+## M1056（2026-11-19 01:34）狀態：待做
+commit `42ffbd07`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1217：問題回報 #1669：[owner] [意見回饋] 照片詳情：為什麼法語只辨識得到一個單字而已？
+  結果：第 1 輪：owner 截圖那張照片的 1 個「照片上的標籤」是照片文字辨識讀到的英文字 flavor（學法文卻出英文、未收錄）；已改成法文。iPad 實機每張平均字數仍待 Mac 量，不算完成。
+  需要 Mac：用 iPad（App 內學法文）重開 photo-1795013219769602，確認 flavor 不再出現、改出法文名詞（saveur 等）；並重跑 golden 50 張記錄每張法文字數（上輪 5.78）。
+    
+    查到的事實
+    - 截圖「照片中的單字」清單其實有 6 個法文名詞（livre、sac、musique、lampe、lumière、revue），已含 #1205/#1207 的修改；照片上唯一貼的標籤是 flavor（英文、「未收錄」）。owner 說的「只辨識到一個」應指這個。
+    - 根因：TextScanTagger.candidates 忽略 lang，學法文時照片上印的英文字（零食包裝）原樣變成英文候選。Mac 的 golden 量測用物件辨識，沒走文字路徑，所以沒發現。
+    - 沒量到：Apple Vision 原始標籤數／對照丟幾個／程度篩選丟幾個，Windows 沒有 iOS 裝置也沒有這張照片的原圖，只能 Mac 量。
+    
+    改了什麼
+    - app/lib/services/text_scan.dart：新增 frenchCandidatesFromText（英文印刷字 → vision_fr.json 的法文名詞，貼在原字位置，查不到的丟掉）；TextScanTagger 在 lang=='fr' 時走它。
+    - app/test/card1217_fr_text_test.dart：新測試。
+    - flutter analyze 兩檔無問題；card327_text_scan、local_vision、新測試共 26 項全過。沒跑完整 flutter test。
+    - 沒動資料庫與詞庫，無備份；golden／qc 未跑（不受影響）。還原：還原 text_scan.dart 並刪新測試檔。
+    
+    剩下
+    - 法文只出名詞：動詞／形容詞列顯示「此程度沒有合適的動詞／形容詞」（截圖可見），與英文不對等。需要法文的動詞／形容詞來源，範圍大，建議另開問題回報，這張卡沒擴大。
+    - 清單的法文字（livre、revue、musique）對那張照片（相機、瓶子、零食袋）是否準確，要看原圖；對照表錯義（#1667）由 #1211/#1213 處理。
