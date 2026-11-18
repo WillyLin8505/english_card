@@ -76,6 +76,24 @@ void main() {
     expect({for (final c in cs) '${c.point.x},${c.point.y}'}.length, cs.length);
   });
 
+  test('card 1212: qualified Vision tags are not words', () {
+    final cs = candidatesFromLabels(
+      [
+        (label: 'cake_regular', confidence: 0.9),
+        (label: 'road_other', confidence: 0.9),
+        (label: 'pot_cooking', confidence: 0.9),
+        (label: 'apple', confidence: 0.5),
+      ],
+      lexicon: testLexicon(),
+      level: 'A1',
+      pack: LexiconPack(),
+    );
+    final words = cs.map((c) => c.word).toList();
+    expect(words, isNot(contains('cake regular')));
+    expect(words, isNot(contains('road other')));
+    expect(words, isNot(contains('pot cooking')));
+  });
+
   test('card 909: category labels are dropped, specific nouns lead', () {
     final cs = candidatesFromLabels(
       [

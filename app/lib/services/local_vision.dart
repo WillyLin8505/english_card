@@ -106,6 +106,10 @@ List<WordCandidate> candidatesFromLabels(
     final word = l.label.trim().toLowerCase().replaceAll('_', ' ');
     if (word.isEmpty || excluded.contains(word)) continue;
     if (visionCategoryLabels.contains(word)) continue;
+    if (word.contains(' ') &&
+        word.split(' ').any(visionQualifierWords.contains)) {
+      continue;
+    }
     items.add({
       'label': word,
       'visualConfidence': l.confidence,
@@ -117,7 +121,10 @@ List<WordCandidate> candidatesFromLabels(
   final words = pack ?? LexiconPack.instance;
   final known = [
     for (final c in parsed)
-      if (c.levelSource != 'ai' || words.lookup(c.word, pos: c.pos) != null) c,
+      // A phrase must be a real entry: `engine vehicle` is a taxonomy tag.
+      if ((c.levelSource != 'ai' && !c.word.contains(' ')) ||
+          words.lookup(c.word, pos: c.pos) != null)
+        c,
   ];
   final target = levelIndex(level);
   double score(WordCandidate c) =>
@@ -179,6 +186,7 @@ List<WordCandidate> frenchCandidatesFromLabels(
     if (l.confidence < minConfidence) continue;
     final en = l.label.trim().toLowerCase().replaceAll('_', ' ');
     if (en.isEmpty || visionCategoryLabels.contains(en)) continue;
+    if (en.split(' ').any(visionQualifierWords.contains)) continue;
     final hit = map[en];
     if (hit == null || hit.isEmpty) continue;
     final row = hit.first;

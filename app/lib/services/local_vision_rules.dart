@@ -31,6 +31,14 @@ const visionCategoryLabels = <String>{
   'container', 'packaging', 'household', 'lighting', 'plumbing fixture',
 };
 
+/// Words Vision appends to a noun to say which sense it means (`cake regular`,
+/// `road other`, `pot cooking`, `tea drink`). A label containing one is a
+/// taxonomy tag, not a word (card #1212).
+const visionQualifierWords = <String>{
+  'regular', 'other', 'cooking', 'drink', 'room', 'raw', 'printed',
+  'consumer', 'vehicle', 'natural', 'processed', 'indoor', 'outdoor',
+};
+
 /// Real words that Vision often gives with high confidence but that say
 /// little about the photo. Kept, but ranked after the specific nouns.
 const visionWeakLabels = <String>{
