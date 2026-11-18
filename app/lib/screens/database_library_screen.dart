@@ -4,6 +4,7 @@ import '../l10n/ui_text.dart';
 import 'package:flutter/material.dart';
 
 import '../app/app_scope.dart';
+import 'flashcard_screen.dart' show LinkedText, WordLinks;
 import '../models/learning_card.dart';
 import '../models/photo.dart';
 import '../models/word_entry.dart';
@@ -16,6 +17,8 @@ import '../services/pack_media.dart';
 import '../services/word_database_repository.dart';
 import '../services/word_selector.dart';
 import '../theme/mobile_theme.dart';
+import '../services/french_detail.dart';
+import '../widgets/french_detail_sections.dart';
 import '../widgets/lexicon_download_status.dart';
 import '../widgets/mobile/common.dart';
 import '../widgets/mobile/photo_cache.dart' show networkPhoto;

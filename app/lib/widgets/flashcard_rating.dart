@@ -16,6 +16,10 @@ class ExampleText extends StatelessWidget {
       this.links,
       this.onOpenWord});
 
+  // Card #1218: every example links its words, also where no table is given.
+  WordLinks _links(BuildContext context) =>
+      links ?? WordLinks.of(AppScope.of(context).repository);
+
   @override
   Widget build(BuildContext context) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -30,7 +34,7 @@ class ExampleText extends StatelessWidget {
                 Expanded(
                   child: LinkedText(example.text,
                       style: MFont.manrope(15, FontWeight.w800, MColors.ink),
-                      links: links,
+                      links: _links(context),
                       onOpenWord: onOpenWord),
                 ),
                 IconButton(
@@ -49,7 +53,7 @@ class ExampleText extends StatelessWidget {
           else
             LinkedText(example.text,
                 style: MFont.manrope(15, FontWeight.w800, MColors.ink),
-                links: links,
+                links: _links(context),
                 onOpenWord: onOpenWord),
           if (showTranslation && example.translation != null) ...[
             const SizedBox(height: 2),

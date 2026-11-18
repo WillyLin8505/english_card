@@ -153,11 +153,23 @@ class WordLinks {
         add(f.form, e.id);
       }
     }
-    return WordLinks._(byText, maxWords.clamp(1, 5));
+    final target = pack.target ?? repo.language;
+    return WordLinks._(byText, maxWords.clamp(1, 5))
+      .._compactTarget = target
+      .._compactNative = pack.native ?? (target == 'fr' ? 'en' : 'zh-TW');
   }
 
-  static final _token = RegExp(r"[A-Za-z]+(?:['’-][A-Za-z]+)*");
-  static final _notPhrase = RegExp(r'[^A-Za-z\x27’\- ]');
+  // Card #1218: any letter (é à ç œ …), not only A-Z.
+  static final _token = RegExp(r"\p{L}+(?:['’-]\p{L}+)*", unicode: true);
+  static final _notPhrase = RegExp(r"[^\p{L}'’\- ]", unicode: true);
+  // French elision (l'arbre → arbre); hyphenated words link their parts.
+  static final _elision = RegExp(
+      r"^(?:l|d|j|m|t|s|n|c|qu|jusqu|lorsqu|puisqu)['’](\p{L}.*)$",
+      caseSensitive: false,
+      unicode: true);
+  static const compactPrefix = 'compact:';
+  late final String _compactTarget;
+  late final String _compactNative;
   static final _spaces = RegExp(r'\s+');
 
   // M-PERF: each word and text is looked up once per table.
@@ -185,7 +197,12 @@ class WordLinks {
     final hit = LexiconPack.instance.isEmpty
         ? null
         : LexiconPack.instance.lookup(lemma);
-    return hit == null ? null : '$packPrefix${hit.entry.id}';
+    if (hit != null) return '$packPrefix${hit.entry.id}';
+    // Card #1218: not in the word database → the compact offline dictionary.
+    if (lemma.contains(' ')) return null;
+    final c = CompactDictionary.instance
+        .lookup(lemma, _compactTarget, _compactNative);
+    return c == null ? null : '$compactPrefix$lemma';
   }
 
   static const packPrefix = 'pack:';
@@ -222,6 +239,8 @@ class WordLinks {
         }
       }
       if (id == null) {
+        _linkParts(text, tokens[i], out, plain, () => cursor,
+            (c) => cursor = c);
         i++;
         continue;
       }
@@ -234,6 +253,36 @@ class WordLinks {
     plain(text.length);
     return out;
   }
+  /// A token nothing matched whole: l'arbre links arbre, a hyphenated word
+  /// links the parts that are words (card #1218).
+  void _linkParts(
+      String text,
+      RegExpMatch token,
+      List<({String text, String? id})> out,
+      void Function(int) plain,
+      int Function() cursor,
+      void Function(int) setCursor) {
+    final word = token.group(0)!;
+    final parts = <(int, String)>[];
+    final el = _elision.firstMatch(word);
+    if (el != null) {
+      parts.add((word.length - el.group(1)!.length, el.group(1)!));
+    } else if (word.contains('-')) {
+      var at = 0;
+      for (final p in word.split('-')) {
+        if (p.isNotEmpty) parts.add((at, p));
+        at += p.length + 1;
+      }
+    }
+    for (final (offset, part) in parts) {
+      final id = idFor(part);
+      if (id == null) continue;
+      final start = token.start + offset;
+      plain(start);
+      out.add((text: text.substring(start, start + part.length), id: id));
+      setCursor(start + part.length);
+    }
+  }
 }
 
 /// Opens what [id] (from [WordLinks.idFor]) names: the learner's word, or
@@ -241,6 +290,12 @@ class WordLinks {
 void openWordLink(BuildContext context, String id,
     [ValueChanged<String>? custom]) {
   if (custom != null) return custom(id);
+  if (id.startsWith(WordLinks.compactPrefix)) {
+    Navigator.of(context).push(MaterialPageRoute<void>(
+        builder: (_) => CompactWordScreen(
+            word: id.substring(WordLinks.compactPrefix.length))));
+    return;
+  }
   if (id.startsWith(WordLinks.packPrefix)) {
     final wordId = int.tryParse(id.substring(WordLinks.packPrefix.length));
     if (wordId == null) return;
@@ -2047,6 +2102,74 @@ class AnswerComparison extends StatelessWidget {
         _line(context, '正確答案', answer, differences(answer, submitted), base,
             base.copyWith(color: MColors.success, fontWeight: FontWeight.w900)),
       ],
+    );
+  }
+}
+
+/// Page for a word only the compact offline dictionary knows (card #1218):
+/// spelling, part of speech, meaning, IPA, and a button to add it to the
+/// learner's word book.
+class CompactWordScreen extends StatelessWidget {
+  final String word;
+  const CompactWordScreen({super.key, required this.word});
+
+  @override
+  Widget build(BuildContext context) {
+    final scope = AppScope.of(context);
+    final pack = LexiconPack.instance;
+    final target = pack.target ?? scope.repository.language;
+    final native = pack.native ?? (target == 'fr' ? 'en' : 'zh-TW');
+    final hit = CompactDictionary.instance.lookup(word, target, native);
+    return Scaffold(
+      backgroundColor: MColors.canvas,
+      appBar: AppBar(title: const UiText('單字詳情')),
+      body: hit == null
+          ? Center(child: UiText('查不到這個字', style: MFont.bodyMuted))
+          : ListView(
+              key: const ValueKey('compact-word-page'),
+              padding: const EdgeInsets.all(MSpace.md),
+              children: [
+                Text(hit.word, style: MFont.manrope(28, FontWeight.w800, MColors.ink)),
+                if (hit.ipa != null)
+                  Text('/${hit.ipa}/', style: MFont.bodyMuted),
+                if (hit.pos.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: MSpace.xs),
+                    child: Text(hit.pos, style: MFont.bodyMuted),
+                  ),
+                const SizedBox(height: MSpace.sm),
+                Text(hit.gloss.isEmpty ? hit.meaning : hit.gloss),
+                Padding(
+                  key: const ValueKey('basic-data-badge'),
+                  padding: const EdgeInsets.only(top: MSpace.md),
+                  child: UiText('基本資料（精簡字典）：連網後會補上例句、關聯詞與圖片。',
+                      style: MFont.manrope(12, FontWeight.w700, MColors.muted)),
+                ),
+                const SizedBox(height: MSpace.md),
+                Builder(builder: (context) {
+                  final repo = scope.repository;
+                  final owned = repo.entryByWord(hit.word) != null;
+                  return FilledButton(
+                    key: const ValueKey('compact-add-word'),
+                    onPressed: owned
+                        ? null
+                        : () {
+                            try {
+                              repo.addWord(
+                                  word: hit.word,
+                                  pos: hit.pos.isEmpty ? 'noun' : hit.pos,
+                                  meaning: hit.meaning,
+                                  basic: true);
+                            } on DuplicateWordException {
+                              // Already there: nothing to add.
+                            }
+                            Navigator.of(context).pop();
+                          },
+                    child: UiText(owned ? '已在單字本' : '加入單字本'),
+                  );
+                }),
+              ],
+            ),
     );
   }
 }

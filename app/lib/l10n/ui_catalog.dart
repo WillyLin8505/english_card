@@ -2223,4 +2223,28 @@ const _templateCopy = <String, (String, String)>{
     'Used to list matching albums first.',
     'Sert à afficher d’abord les albums correspondants.'
   ),
+  // 卡 #1220: French word page.
+  '複合過去式': ('passé composé (past)', 'passé composé'),
+  '未完成過去式': ('imperfect (past)', 'imparfait'),
+  '簡單將來式': ('future', 'futur simple'),
+  '條件式': ('conditional', 'conditionnel'),
+  '虛擬式': ('subjunctive', 'subjonctif'),
+  '命令式': ('imperative', 'impératif'),
+  '簡單過去式': ('simple past (literary)', 'passé simple'),
+  '愈過去式': ('pluperfect (past perfect)', 'plus-que-parfait'),
+  '動詞變位': ('Conjugation', 'Conjugaison'),
+  '形容詞變化': ('Adjective forms', 'Formes de l’adjectif'),
+  '不規則動詞': ('irregular verb', 'verbe irrégulier'),
+  '代動詞': ('pronominal verb', 'verbe pronominal'),
+  '助動詞': ('auxiliary', 'auxiliaire'),
+  '顯示更多時態': ('Show more tenses', 'Afficher plus de temps'),
+  '收起時態': ('Show fewer tenses', 'Afficher moins de temps'),
+  '陽性單數': ('masculine singular', 'masculin singulier'),
+  '陰性單數': ('feminine singular', 'féminin singulier'),
+  '陽性複數': ('masculine plural', 'masculin pluriel'),
+  '陽性單數（母音前）': ('masculine singular (before a vowel)', 'masculin singulier (devant voyelle)'),
+  'h aspiré：不連音、不省略（le héros，不是 l’héros）': (
+    'h aspiré: no liaison, no elision (le héros, not l’héros)',
+    'h aspiré : pas de liaison ni d’élision (le héros, pas l’héros)'
+  ),
 };

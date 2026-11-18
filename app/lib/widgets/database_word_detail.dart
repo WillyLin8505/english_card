@@ -64,6 +64,38 @@ class DatabaseWordScreen extends StatelessWidget {
             for (final form in usage.forms)
               if (seenForms.add(form.form.toLowerCase())) form,
         ];
+        // Card #1220: the French blocks read every form (je/il share one).
+        final french = (pack.target ?? 'en') == 'fr';
+        final allForms = [for (final usage in usages) ...usage.forms];
+        final frGender = french
+            ? allForms.where((f) => f.field == 'fr_gender').firstOrNull?.form
+            : null;
+        final frVerb = french && word.pos == 'verb'
+            ? frenchVerbFrom(word.lemma, allForms)
+            : null;
+        final frAdjective = french && word.pos.startsWith('adj')
+            ? frenchAdjectiveFrom(word.lemma, allForms)
+            : null;
+        final frPlural = french && frGender != null
+            ? allForms.where((f) => f.field == 'fr_plural').firstOrNull?.form
+            : null;
+        final frShown = {
+          if (frGender != null) 'fr_gender',
+          if (frPlural != null) 'fr_plural',
+          if (frVerb != null) ...[
+            for (final f in allForms)
+              if (RegExp(
+                      r'^fr_(present|imperfect|future|conditional|subjunctive|imperative|simple_past|pluperfect)_[123][sp]$|^fr_(past|present)_participle$|^fr_auxiliary$')
+                  .hasMatch(f.field))
+                f.field
+          ],
+          if (frAdjective != null) ...[
+            'fr_feminine',
+            'fr_plural',
+            'fr_feminine_plural',
+            'fr_masculine_before_vowel'
+          ],
+        };
         Widget section(String label, List<Widget> children) => Padding(
               padding: const EdgeInsets.only(top: MSpace.lg),
               child: Column(
@@ -139,8 +171,14 @@ class DatabaseWordScreen extends StatelessWidget {
             backgroundColor: MColors.canvas,
             appBar: AppBar(title: const UiText('單字詳情')),
             body: ListView(padding: const EdgeInsets.all(MSpace.md), children: [
-              Text(word.lemma,
-                  style: MFont.manrope(28, FontWeight.w800, MColors.ink)),
+              if (frGender != null)
+                FrenchTitle(word.lemma,
+                    gender: frGender,
+                    plural: frPlural,
+                    hAspire: frenchHAspire(allForms))
+              else
+                Text(word.lemma,
+                    style: MFont.manrope(28, FontWeight.w800, MColors.ink)),
               if (headerLabel.isNotEmpty ||
                   (word.cefr != null && !word.rareUsage)) ...[
                 const SizedBox(height: 4),
@@ -293,7 +331,8 @@ class DatabaseWordScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(example.text,
+                          LinkedText(example.text,
+                              links: WordLinks.of(scope.repository),
                               style: MFont.manrope(
                                   15, FontWeight.w700, MColors.ink)),
                           const SizedBox(height: 4),
@@ -302,6 +341,14 @@ class DatabaseWordScreen extends StatelessWidget {
                       ),
                     ),
                 ]),
+              if (frVerb != null && frVerb.tables.isNotEmpty)
+                Padding(
+                    padding: const EdgeInsets.only(top: MSpace.lg),
+                    child: FrenchVerbSection(frVerb)),
+              if (frAdjective != null)
+                Padding(
+                    padding: const EdgeInsets.only(top: MSpace.lg),
+                    child: FrenchAdjectiveSection(frAdjective)),
               relationSection('近義詞', 'synonyms'),
               relationSection('反義詞', 'antonyms'),
               relationSection('同音詞', 'homophones'),
@@ -309,22 +356,23 @@ class DatabaseWordScreen extends StatelessWidget {
               relationSection('拼寫相似詞', 'similar_spelling'),
               relationSection('衍生詞', 'derived_terms'),
               relationSection('相關詞', 'related'),
-              if (forms.isNotEmpty)
+              if (forms.any((f) => !frShown.contains(f.field)))
                 section('詞形變化', [
                   Wrap(
                     spacing: MSpace.xs,
                     runSpacing: MSpace.xs,
                     children: [
                       for (final form in forms)
-                        TagChip(
-                            form.field == 'fr_gender'
-                                ? '${frenchWithArticle(word.lemma, form.form)}'
-                                    '（${frenchGenderLabel(form.form)}）'
-                                : '${form.form}（${formLabel(form.label ?? form.field)}）',
-                            key: ValueKey('form-${form.form}'),
-                            onTap: form.field == 'fr_gender'
-                                ? null
-                                : openWord(form.form)),
+                        if (!frShown.contains(form.field))
+                          TagChip(
+                              form.field == 'fr_gender'
+                                  ? '${frenchWithArticle(word.lemma, form.form)}'
+                                      '（${frenchGenderLabel(form.form)}）'
+                                  : '${form.form}（${formLabel(form.label ?? form.field)}）',
+                              key: ValueKey('form-${form.form}'),
+                              onTap: form.field == 'fr_gender'
+                                  ? null
+                                  : openWord(form.form)),
                     ],
                   ),
                 ]),

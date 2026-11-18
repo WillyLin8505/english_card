@@ -13,6 +13,8 @@ import '../models/card_template.dart';
 import '../services/accent_audio.dart';
 import '../services/deck_library.dart';
 import '../services/lexicon_pack.dart';
+import '../services/compact_dictionary_stub.dart'
+    if (dart.library.ffi) '../services/compact_dictionary.dart';
 import '../models/learning_card.dart';
 import '../models/photo.dart';
 import '../models/word_entry.dart';

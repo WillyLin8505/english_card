@@ -852,7 +852,13 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
   /// 問題回報 #674: the label options (多看動詞、難一點、重新掃描…) sit right
   /// under the difficulty bar they go with, not below the word list (#451).
   Widget _levelRow(Photo photo, PhotoWordSession session) {
-    final topping = AppScope.of(context).queue.isToppingUp(photo.id);
+    final queue = AppScope.of(context).queue;
+    final topping = queue.isToppingUp(photo.id);
+    // 問題回報 #1668: a photo that already has labels still gets the queue's
+    // recognition (the sweep alone says nothing when labels show), so the
+    // note says 「AI 辨識中…」 while the queue works on this photo.
+    final working = queue.current == photo.id ||
+        photo.taggingStatus == TaggingStatus.tagging;
     // 問題回報 #942: no explaining text here (the #675 hint 「AI 在這張照片
     // 找到的字最難到…」 is gone); the buttons speak for themselves.
     return Padding(
@@ -862,12 +868,17 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
         children: [
           _LevelRow(
             bias: session.bias,
-            busy: topping || session.fetchingMore != null || session.rescanning,
+            busy: topping ||
+                working ||
+                session.fetchingMore != null ||
+                session.rescanning,
             busyLabel: session.rescanning
                 ? 'AI 正在重新掃描…'
-                : session.fetchingMore == null
-                    ? null
-                    : 'AI 正在找更多${PhotoWordSession.focusLabel(session.fetchingMore!)}…',
+                : session.fetchingMore != null
+                    ? 'AI 正在找更多${PhotoWordSession.focusLabel(session.fetchingMore!)}…'
+                    : working
+                        ? 'AI 辨識中…'
+                        : null,
             onBias: session.setBias,
             // 問題回報 #670: read the whole photo again.
             onRescan: session.rescanning ? null : session.rescan,
