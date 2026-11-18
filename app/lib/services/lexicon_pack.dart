@@ -478,7 +478,17 @@ class LexiconPack extends ChangeNotifier {
       (_byLemma[normalize(word)] ?? const <LexEntry>[])
           .any((e) => e.card == null || e.card == e.normalized);
 
-  LexEntry? byId(int id) => _byId[_redirects[id] ?? id];
+  // A pointer can point at another pointer (patronising → patronise →
+  // patronize, card #227 round 4469): follow the chain, with a loop guard.
+  LexEntry? byId(int id) {
+    var at = id;
+    for (var hops = 0; hops < 8; hops++) {
+      final next = _redirects[at];
+      if (next == null || next == at) break;
+      at = next;
+    }
+    return _byId[at];
+  }
 
   /// Every part of speech stored for one spelling, for the full dictionary
   /// detail page. The returned list cannot mutate the loaded pack.
