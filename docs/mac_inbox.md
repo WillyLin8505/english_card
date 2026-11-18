@@ -8138,3 +8138,17 @@ commit `2d9a8a33`（Windows：flutter analyze 無 error、flutter test 全過；
 commit `513f4978`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #1219：問題回報 #1671：[owner] 法文詞庫補完整動詞變位與詞形資料（從 Wiktionary／Kaikki 開放資料
   結果：全部完成：1,015 個法文動詞補齊完整變位表（原 11–12 個形 → 約 45 個，共新增 46,761 筆欄位值、36,292 筆詞形），並清掉 10 筆音標混進詞形的錯誤；golden／QC 無退步，App 包 75.8 → 79.3 MB（+3.5 MB）。
+
+## M1059（2026-11-19 02:42）狀態：待做
+commit `1b717ada`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #496：模擬使用者・法語（英語母語者學法語）
+  結果：第73輪（round 206）4 項法語模擬程式全過，但 A1/B1 的 chineseinenglishui 不是 0：英文介面動詞變位詳情有中文時態標籤；已開問題回報 #1673。
+  需要 Mac：無。
+- 卡 #226：模擬使用者・複習
+  結果：第 78 輪（輪次 4460）：2/2 通過（learner 84 秒、restart 45 秒）— 無新問題。UX 建議：無（只跑文字模擬，無截圖）。
+  需要 Mac：無。
+    - 剩餘：無新項目。
+- 卡 #1222：問題回報 #1673：法語模擬第206輪：英文介面的動詞變位詳情顯示中文時態標籤（未完成過去式／條件式／過去分詞 陰性單
+  結果：第一輪完成：app/lib/l10n/uicatalog.dart 補上 50 個法語變位／文法標籤的英文、法文翻譯（時態×人稱 42 + 過去分詞性數 3 + 母音前陽性、動詞組別、變位範本、可作代動詞、有聲 h），英文介面不再顯示中文時態標籤。
+  需要 Mac：下一輪模擬抓 fr_learner_a1/b1 的 chinese_in_english_ui，確認 back／detail 不再有中文（以 iPad 驗證）。
+    - 詳情頁重設計 #1672 另行處理；未改成「依 UI 語言直接產生標籤」的結構，仍靠查表。
