@@ -8073,3 +8073,10 @@ commit `cec08947`（Windows：flutter analyze 無 error、flutter test 全過）
   結果：第 4454 輪：2/2 通過（database、detail），新問題 0、UX 建議 0 新增（沿用 #1649）。
   需要 Mac：無。
     - 剩餘：下一輪搭配 learner_view 做畫面文字的 UX 評估。log：app/build/rounds/4454/。
+
+## M1054（2026-11-18 18:59）狀態：待做
+commit `5220edaa`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #226：模擬使用者・複習
+  結果：第 76 輪（輪次 4455）：2/2 通過（learner 84 秒、restart 43 秒）— 無新問題。UX 建議：無（只跑文字模擬，無截圖）。
+  需要 Mac：無。
+    - 剩餘：無新項目。
