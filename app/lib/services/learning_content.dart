@@ -80,8 +80,57 @@ String formLabel(String value) => switch (value) {
       'fr_present_2p' || 'fr present 2p' => '現在式 vous',
       'fr_present_3p' || 'fr present 3p' => '現在式 ils／elles',
       'fr_gender' || 'fr gender' => '陰陽性',
-      _ => RegExp(r'[\u4e00-\u9fff]').hasMatch(value) ? value : '變化形',
+      _ => RegExp(r'[一-鿿]').hasMatch(value)
+          ? value
+          : frenchFormLabel(value) ?? '變化形',
     };
+
+const _frTenseLabels = {
+  'present': '現在式',
+  'imperfect': '未完成過去式',
+  'future': '簡單將來式',
+  'conditional': '條件式',
+  'subjunctive': '虛擬式現在',
+  'passe simple': '簡單過去式',
+  'imperative': '命令式',
+};
+const _frPersonLabels = {
+  '1s': 'je',
+  '2s': 'tu',
+  '3s': 'il／elle',
+  '1p': 'nous',
+  '2p': 'vous',
+  '3p': 'ils／elles',
+};
+
+/// Card #1219: the French conjugation fields fr_<tense>_<person> (fr_conditional_1s,
+/// fr_passe_simple_3s, fr_imperative_2p …), participle agreement and grammar notes.
+String? frenchFormLabel(String value) {
+  final key = value.replaceAll(' ', '_');
+  switch (key) {
+    case 'fr_past_participle_f':
+      return '過去分詞 陰性單數';
+    case 'fr_past_participle_mpl':
+      return '過去分詞 陽性複數';
+    case 'fr_past_participle_fpl':
+      return '過去分詞 陰性複數';
+    case 'fr_masculine_before_vowel':
+      return '母音前陽性';
+    case 'fr_verb_group':
+      return '動詞組別';
+    case 'fr_conj_model':
+      return '變位範本';
+    case 'fr_pronominal':
+      return '可作代動詞';
+    case 'fr_h_aspire':
+      return '有聲 h（h aspiré）';
+  }
+  final m = RegExp(r'^fr_([a-z]+(?:_simple)?)_([123][sp])$').firstMatch(key);
+  if (m == null) return null;
+  final tense = _frTenseLabels[m[1]!.replaceAll('_', ' ')];
+  final person = _frPersonLabels[m[2]!];
+  return tense == null || person == null ? null : '$tense $person';
+}
 
 /// fr_gender value (m / f / m/f / pl) as a label: 陽性名詞, 陰性名詞…
 String frenchGenderLabel(String gender) => switch (gender) {
