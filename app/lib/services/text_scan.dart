@@ -9,6 +9,7 @@ import '../models/word_candidate.dart';
 import '../models/word_entry.dart';
 import 'cefr_lexicon.dart';
 import 'lexicon_pack.dart';
+import 'local_vision.dart' show VisionFrench;
 import 'tagging_service.dart';
 
 /// One word the text recognizer read, and where it is printed.
@@ -455,6 +456,65 @@ List<WordCandidate> candidatesFromText(
   return [for (final (c, _) in out.take(maxCandidates)) c];
 }
 
+/// [candidatesFromText] for a learner of French (問題回報 #1669, card #1217):
+/// printed English words (`flavor` on a snack bag) are looked up in the
+/// English → French noun table of `assets/vision_fr.json` and become the
+/// French noun, pinned where the English word is printed. Words with no
+/// French noun are left out — an English word is never a French card.
+List<WordCandidate> frenchCandidatesFromText(
+  List<TextLine> lines, {
+  required String level,
+  Map<String, List<List<Object?>>>? table,
+  List<String> exclude = const [],
+  int maxCandidates = TextScanTagger.maxCandidates,
+}) {
+  final map = table ?? VisionFrench.labels ?? const {};
+  final excluded = {for (final w in exclude) w.trim().toLowerCase()};
+  final found =
+      <String, ({List<Object?> row, String en, TextWord at, String line})>{};
+  for (final line in lines) {
+    for (final w in wordsOf(line)) {
+      final en = w.text.toLowerCase();
+      if (en.length < 3 || textStopWords.contains(en)) continue;
+      final hit = map[en];
+      if (hit == null || hit.isEmpty) continue;
+      final fr = hit.first[0] as String;
+      if (excluded.contains(fr)) continue;
+      final had = found[fr];
+      if (had == null || w.box.height > had.at.box.height) {
+        found[fr] = (row: hit.first, en: en, at: w, line: line.text);
+      }
+    }
+  }
+  final target = levelIndex(level);
+  final out = <(WordCandidate, double)>[];
+  for (final f in found.values) {
+    final lv = f.row[1] as String;
+    final gap = levelIndex(lv) - target;
+    if (gap < -1 && target > 0) continue;
+    final line = f.line.length > 40 ? '${f.line.substring(0, 40)}…' : f.line;
+    out.add((
+      WordCandidate(
+        word: f.row[0] as String,
+        pos: 'noun',
+        meaning: f.en,
+        level: lv,
+        levelSource: 'frequency',
+        zipf: (f.row[3] as num?)?.toDouble(),
+        evidence: '照片文字：「$line」',
+        point: f.at.box.center,
+        box: f.at.box,
+        visualConfidence: 0.7,
+        usefulness:
+            (0.4 + (f.at.box.height * 8).clamp(0.0, 1.0) * 0.5).clamp(0.0, 1.0),
+      ),
+      f.at.box.height - gap.abs() * 0.01,
+    ));
+  }
+  out.sort((a, b) => b.$2.compareTo(a.$2));
+  return [for (final (c, _) in out.take(maxCandidates)) c];
+}
+
 /// [PhotoTagger] that reads the photo's printed text on the device.
 class TextScanTagger implements PhotoTagger {
   static const maxCandidates = 24;
@@ -474,6 +534,10 @@ class TextScanTagger implements PhotoTagger {
     bool? asWeb,
   }) async {
     final lines = await TextScan.recognize(jpeg);
+    if (lang == 'fr') {
+      await VisionFrench.ensureLoaded();
+      return frenchCandidatesFromText(lines, level: level, exclude: exclude);
+    }
     return candidatesFromText(lines,
         lexicon: lexicon, level: level, exclude: exclude);
   }
