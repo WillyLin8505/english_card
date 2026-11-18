@@ -8152,3 +8152,13 @@ commit `1b717ada`（Windows：flutter analyze 無 error、flutter test 全過；
   結果：第一輪完成：app/lib/l10n/uicatalog.dart 補上 50 個法語變位／文法標籤的英文、法文翻譯（時態×人稱 42 + 過去分詞性數 3 + 母音前陽性、動詞組別、變位範本、可作代動詞、有聲 h），英文介面不再顯示中文時態標籤。
   需要 Mac：下一輪模擬抓 fr_learner_a1/b1 的 chinese_in_english_ui，確認 back／detail 不再有中文（以 iPad 驗證）。
     - 詳情頁重設計 #1672 另行處理；未改成「依 UI 語言直接產生標籤」的結構，仍靠查表。
+
+## M1060（2026-11-19 03:02）狀態：待做
+commit `4ab63b6c`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #4：掃描還沒打完的圖片標籤
+  結果：結論：標籤無積壓：pending 0（上輪 0）、done 41693、failed 61（持平）；Qwen :8790 與 tagger :8765 health 皆 ok。
+  需要 Mac：無。剩下：無，下輪只確認 pending 維持 0。
+- 卡 #227：模擬使用者・單字本
+  結果：第 4461 輪：2/2 通過（database、detail），新問題 0、UX 建議 0 新增（沿用 #1649）。
+  需要 Mac：無。
+    - 剩餘：下一輪搭配 learner_view 做畫面文字的 UX 評估。log：app/build/rounds/4461/。
