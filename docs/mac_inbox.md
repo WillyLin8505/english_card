@@ -8174,3 +8174,10 @@ commit `40a8bedc`（Windows：flutter analyze 無 error、flutter test 全過）
 - 卡 #496：模擬使用者・法語（英語母語者學法語）
   結果：第73+1輪（round 207）4 項模擬全過，A1/B1 的 chineseinenglishui 皆為 0（空），抽卡 top5 約 29%、7 天覆蓋 100%；沒有新問題。
   需要 Mac：無。
+
+## M1063（2026-11-19 03:59）狀態：待做
+commit `010aac2e`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #226：模擬使用者・複習
+  結果：第 79 輪（輪次 4463）：2/2 通過（learner 81 秒、restart 42 秒）— 無新問題。UX 建議：無（只跑文字模擬，無截圖）。
+  需要 Mac：無。
+    - 剩餘：無新項目。
