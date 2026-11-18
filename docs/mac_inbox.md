@@ -8238,3 +8238,16 @@ commit `4cf07ccc`（Windows：flutter analyze 無 error、flutter test 全過）
   結果：第 81 輪：2/2 通過（learner 83 秒、restart 43 秒）；無新問題回報、無新 UX 建議（沒有開重複的單）。
   需要 Mac：無。
     - 剩餘：UX 評估本輪只看到測試通過／資料缺口數字，未取得截圖，所以沒有提出 UX 建議；下輪若要評估畫面需另跑含截圖的流程。
+
+## M1071（2026-11-19 07:20）狀態：待做
+commit `bf4a80c3`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #227：模擬使用者・單字本
+  結果：第 4469/4471 輪：database 先失敗後通過、detail 通過；新問題 0、UX 建議 0 新增（沿用 #1649）。需要你決定：無。需要 Mac：無。
+  需要 Mac：無。
+    
+    - 4469 輪 database 失敗：patronising (verb)「沒有加入按鈕」。根因：詞庫指標可以指向另一個指標（patronising → patronise → patronize），App 的 `LexiconPack.byId` 只跟一跳，停在不是卡片的 patronise，頁面打不開。
+    - 全庫量測：718 個指標，其中鏈式 1 個（就是 patronising），其他都是單跳。
+    - 修正：`app/lib/services/lexicon_pack.dart` byId 改為跟到底（上限 8 跳、防迴圈）。flutter analyze 無問題。
+    - 4471 輪 database 重跑通過（106 秒）。沒有補獨立單元測試（本輪未做，剩餘）。
+    - 沒改資料；golden／QC 不適用，無備份。資料端建議：quality_redirect 產生鏈時應直接指向最終詞（可由後續卡處理）。
+    - 剩餘：加一個鏈式指標的單元測試；下一輪搭配 learner_view 做畫面文字 UX 評估。
