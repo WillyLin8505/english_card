@@ -1263,6 +1263,8 @@ class LocalCalc(SourceAdapter):
                 if agreement and fr_agreement_use(item.get("text", ""), forms, verb_only,
                                                   set(by_pos), agreement, ctx.lemma):
                     continue  # «la ville»: le's article, not la the note A (卡 #993)
+                if ctx.target == "fr" and fr_adverbial_phrase(item.get("text", ""), forms, set(by_pos)):
+                    continue  # «tant pis», «de mal en pis»: no adverb entry (卡 #1224)
                 # A French sentence shares no words with an English gloss:
                 # its sense is the part of speech it shows (card #329).
                 words = (set(tokens(item.get("text", "")))
@@ -1618,6 +1620,21 @@ def fr_agreement_use(text: str, forms, verb_only, own_pos, form_pos, lemma: str 
     idx = [i for i, t in enumerate(toks) if t in forms]
     return bool(idx) and all(_fr_foreign_occurrence(toks, cased, i, own_surface, form_pos, strict, text)
                              for i in idx)
+
+
+def fr_adverbial_phrase(text: str, forms, own_pos) -> bool:
+    """«Tant pis», «de mal en pis» (卡 #1224, 問題回報 #1507): every use of the
+    headword sits in a fixed adverbial phrase, but it has no adverb entry
+    (pis keeps only the noun 「udder」 and a colloquial conjunction). Such a
+    sentence gets no sense (unbound, like fr_agreement_use)."""
+    if "adv" in own_pos:
+        return False
+    toks, _ = _fr_tokens(text)
+    idx = [i for i, t in enumerate(toks) if t in forms]
+    return bool(idx) and all(
+        (i > 0 and toks[i - 1] == "tant")
+        or (i > 2 and toks[i - 3] == "de" and toks[i - 1] == "en" and toks[i - 2] in ("mal", "pire", "bien"))
+        for i in idx)
 
 
 def _usage_pos_fr(text: str, forms, verb_only) -> str | None:
