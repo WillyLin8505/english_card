@@ -68,7 +68,32 @@ def trial50_layer():
     return ('英文例句發音試聽 50 句', '2026-10-31', intro, ''.join(rows))
 
 
-LAYERS = [trial50_layer(), sentence_audio_layer()]
+FR = HERE.parent / 'audio_samples'
+FR_SOURCES = [
+    ('1_tatoeba_human.mp3', '真人', 'Tatoeba vlecomte（CC BY-SA）'),
+    ('2_azure_denise.mp3', 'Azure', 'DeniseNeural（目前用的）'),
+    ('3_piper_siwis.wav', 'Piper', 'siwis（本機、免費）'),
+    ('4_kokoro_siwis.wav', 'Kokoro', 'ff_siwis（本機、免費）'),
+]
+
+
+def fr_sentence_layer():
+    keys = ''.join(
+        f'<button class="key" type="button"><span class="k1">{name}</span><span class="k2">{html.escape(voice)}</span>'
+        f'<audio preload="none" src="{data_uri(FR / f)}"></audio></button>'
+        for f, name, voice in FR_SOURCES if (FR / f).exists())
+    item = ('<article class="item"><div class="word">B1 · comporter</div>'
+            '<p class="en">Comportez-vous comme quelqu’un de votre âge.</p>'
+            '<p class="zh">Act your age.</p>'
+            f'<div class="keys">{keys}</div></article>')
+    intro = ('同一句法文例句的四種念法。現況：法文例句約 5.8 萬句，已有 Azure 合成 8,975 句（約 15%），其餘沒有音檔；'
+             'Tatoeba 真人錄音只有約 1% 的句子有，而且大多是不可商用（CC BY-NC）或沒標授權，能用的極少。'
+             'Piper、Kokoro 在這台電腦上免費合成；Azure 每月免費 50 萬字元，超過要付費。'
+             'Apple 手機內建法文語音（App 沒音檔時用的）請直接在 iPad 上聽單字發音比較。')
+    return ('法文例句發音比較', '2026-11-19', intro, item)
+
+
+LAYERS = [fr_sentence_layer(), trial50_layer(), sentence_audio_layer()]
 
 STYLE = '''<title>單字卡測試頁</title>
 <meta name="claude:viewport-fit-sides" content="cover">
