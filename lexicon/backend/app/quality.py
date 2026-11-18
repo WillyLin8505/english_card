@@ -700,8 +700,7 @@ def derive_form_only(pack: dict, decisions: dict, cefr_words: dict | None = None
     by_word: dict[str, list[dict]] = {}
     for lx in full:
         by_word.setdefault(lx["normalized"], []).append(lx)
-    decided = ({int(k) for k in decisions.get("redirect") or {}} | {int(x) for x in decisions.get("strip_cefr") or []}
-               | {int(k) for k in decisions.get("set_cefr") or {}})
+    decided = ({int(k) for k in decisions.get("redirect") or {}} | {int(x) for x in decisions.get("strip_cefr") or []})  # a #191 rule level (set_cefr) on a pure form loses to the redirect
     out = {"redirect": 0, "strip_cefr": 0}
     for lx in full:
         if (lx["id"] in decided or not lx.get("cefr") or lx.get("pos") in ("name", "", None, "unknown")
