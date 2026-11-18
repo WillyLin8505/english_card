@@ -8133,3 +8133,8 @@ commit `2d9a8a33`（Windows：flutter analyze 無 error、flutter test 全過；
 - 卡 #224：模擬使用者・拍照
   結果：第 4457 輪：photoui 1/1 通過；pins 8 個切片全部通過；新問題 0；UX 建議 0（本卡只跑 widget 模擬，沒有截圖可評）。
   需要 Mac：無。
+
+## M1058（2026-11-19 02:02）狀態：待做
+commit `513f4978`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1219：問題回報 #1671：[owner] 法文詞庫補完整動詞變位與詞形資料（從 Wiktionary／Kaikki 開放資料
+  結果：全部完成：1,015 個法文動詞補齊完整變位表（原 11–12 個形 → 約 45 個，共新增 46,761 筆欄位值、36,292 筆詞形），並清掉 10 筆音標混進詞形的錯誤；golden／QC 無退步，App 包 75.8 → 79.3 MB（+3.5 MB）。
