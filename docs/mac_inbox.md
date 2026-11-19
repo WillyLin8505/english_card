@@ -8272,3 +8272,8 @@ commit `a839f61a`（Windows：flutter analyze 無 error、flutter test 全過（
   結果：第 39 輪全庫 B 群掃描完成（唯讀，440 秒）：估算詞略減（17,288→17,100），衍生詞高 ≥2 級仍 304，無新增問題。
   需要 Mac：無。
     - 剩下：304 個 base 誤判待 #162/#163；無新增問題回報。
+
+## M1074（2026-11-19 17:58）狀態：待做
+commit `8cc6edfc`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #168：常態：全庫掃描屈折形／衍生詞的身分與等級
+  結果：第 38 輪未完成量測：heavylock 被另一個 flutter test（pid 123356，05:37 起）占住，scanlibrary.py --only A,B 兩次各等 590 秒仍沒輪到，未取得新數字。
