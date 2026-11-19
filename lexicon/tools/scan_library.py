@@ -3,6 +3,8 @@
 Standing cards #168–#171 call this. It builds the same live pack as
 ``qc.py`` (``serve_app.live_pack``) and writes counts plus up to 30
 samples per check. It does not write the database or call a model.
+Group E also retains every missing-word / odd-name row with stable IDs and
+provenance; --previous compares these rows even across group-only runs.
 
     python lexicon/tools/scan_library.py
     python lexicon/tools/scan_library.py --only A,D
@@ -11,6 +13,7 @@ samples per check. It does not write the database or call a model.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -26,7 +29,7 @@ sys.path.insert(0, str(ROOT))
 
 from app import qc as pack_qc  # noqa: E402
 from app.text import native_latin_issue  # noqa: E402
-from app.quality import example_flags  # noqa: E402
+from app.quality import example_flags, example_words  # noqa: E402
 
 OUT = ROOT / "lexicon" / "exports" / "quality" / "scan"
 SAMPLE_MAX = 30
@@ -133,6 +136,69 @@ def _all_form_of(lexeme: dict, pattern: re.Pattern) -> bool:
 
 def _any_form_of(lexeme: dict, pattern: re.Pattern) -> bool:
     return any(pattern.match(s.get("definition") or "") for s in (lexeme.get("senses") or []))
+
+
+def _redirect_sources(pack: dict) -> dict:
+    """Index actual redirect edges, never trust merged_from alone."""
+    sources = defaultdict(list)
+    redirects = {str(k): str(v) for k, v in (pack.get('redirects') or {}).items()}
+    for lx in pack.get('lexemes') or []:
+        lid = str(lx.get('id'))
+        target = lx.get('redirect_to')
+        edge = redirects.get(lid)
+        if target is not None and edge is not None and str(target) != edge:
+            continue
+        target = str(target) if target is not None else edge
+        if target is not None and target != lid and lx.get('lemma'):
+            sources[(target, lx['lemma'].strip().casefold())].append(lx)
+    return sources
+
+
+def _redirect_source(lx: dict, ex: dict, sources: dict) -> dict | None:
+    name = ex.get('merged_from')
+    if not isinstance(name, str) or not name.strip():
+        return None
+    candidates = sources.get((str(lx.get('id')), name.strip().casefold()), [])
+    if len(candidates) == 1:
+        return candidates[0]
+    # Homographs may both redirect to the same entry; the example ID identifies
+    # its original row without broadening the accepted forms to either source.
+    if ex.get('id') is not None:
+        matches = [s for s in candidates if any(
+            e.get('id') == ex['id'] and _example_text(e) == _example_text(ex)
+            for e in s.get('examples') or [])]
+        if len(matches) == 1:
+            return matches[0]
+    return None
+
+
+def _contains_redirect_form(text: str, source: dict) -> bool:
+    # Require the whole redirected form. example_flags deliberately accepts a
+    # phrase's first verb, which alone cannot prove "lying down" in "lying
+    # about the weather". Token boundaries also reject bronchioles for bronchi.
+    form = [w.casefold() for w in example_words(source.get('lemma') or '')]
+    words = [w.casefold() for w in example_words(text)]
+    return bool(form) and any(words[i:i + len(form)] == form
+                              for i in range(len(words) - len(form) + 1))
+
+
+def _example_row(lx: dict, ex: dict, source: dict | None = None) -> dict:
+    eid = ex.get('id')
+    if eid is None:
+        identity = json.dumps([ex.get('source'), ex.get('source_record_id'),
+                               ex.get('merged_from'), _example_text(ex)], ensure_ascii=False)
+        eid = 'sha256:' + hashlib.sha256(identity.encode('utf-8')).hexdigest()
+    return {'row_id': f"{lx.get('id')}:{eid}", 'lexeme_id': lx.get('id'),
+            'lemma': lx.get('lemma'), 'pos': lx.get('pos'), 'example_id': ex.get('id'),
+            'source': ex.get('source'), 'source_record_id': ex.get('source_record_id'),
+            'source_lexeme_id': source.get('id') if source else (
+                None if ex.get('merged_from') else lx.get('id')),
+            'merged_from': ex.get('merged_from'), 'text': _example_text(ex)}
+
+
+def _example_check(rows: list[dict]) -> dict:
+    return {**_check(len(rows), sorted({r['lemma'] for r in rows})),
+            'rows': sorted(rows, key=lambda r: r['row_id'])}
 
 
 def scan_pack(pack: dict) -> dict:
@@ -256,21 +322,27 @@ def scan_pack(pack: dict) -> dict:
     examples = [(lx, ex) for lx in full for ex in (lx.get("examples") or [])]
     not_sentence = [lx.get("lemma") for lx, ex in examples
                     if _example_text(ex) and not SENTENCE_END.search(_example_text(ex).strip())]
-    odd_name = [lx.get("lemma") for lx, ex in examples if ODD_NAMES.search(_example_text(ex))]
+    redirect_sources = _redirect_sources(pack)
+    odd_name = []
     missing_lemma = []
+    redirect_form_matches = []
     for lx, ex in examples:
-        text = _example_text(ex).lower()
-        forms = {lx.get("normalized") or ""} | {
-            f.get("normalized") for f in (lx.get("forms") or []) if f.get("normalized")
-        }
-        forms.discard("")
+        text = _example_text(ex)
+        source = _redirect_source(lx, ex, redirect_sources)
+        names = sorted(set(ODD_NAMES.findall(text)))
+        if names:
+            odd_name.append({**_example_row(lx, ex, source), 'matches': names})
         # Same rule as the product validator (quality.example_flags, card #344): a stored
         # form list is incomplete for "-s/-ed/-ing" inflections, so a plain word match over
         # it reported ~450 correct sentences ("customs" for custom) as missing the word.
         if text and "missing_lemma" in example_flags(
                 _example_text(ex), lx.get("lemma") or "", lx.get("pos") or "",
                 [f.get("normalized") for f in (lx.get("forms") or []) if f.get("normalized")]):
-            missing_lemma.append(lx.get("lemma"))
+            row = _example_row(lx, ex, source)
+            if source is not None and _contains_redirect_form(text, source):
+                redirect_form_matches.append(row)
+            else:
+                missing_lemma.append(row)
     no_examples = [lx.get("lemma") for lx in full if not lx.get("examples")]
     vulgar_examples = [
         f"{lx.get('lemma')}:{_example_text(ex)[:50]}"
@@ -390,10 +462,12 @@ def scan_pack(pack: dict) -> dict:
             "qc_photo_tag_sense_without_chinese": _check(
                 len(violations.get("photo_tag.sense_without_chinese") or [])),
         }},
-        "E": {"title": GROUPS["E"], "checks": {
+        "E": {"title": GROUPS["E"],
+              "redirect_form_matches": sorted(redirect_form_matches, key=lambda r: r['row_id']),
+              "checks": {
             "examples_not_sentence": _check(len(not_sentence), not_sentence),
-            "examples_odd_tatoeba_names": _check(len(odd_name), sorted(set(odd_name))),
-            "examples_missing_lemma": _check(len(missing_lemma), sorted(set(missing_lemma))),
+            "examples_odd_tatoeba_names": _example_check(odd_name),
+            "examples_missing_lemma": _example_check(missing_lemma),
             "full_without_examples": _check(len(no_examples), no_examples),
             "examples_profanity": _check(len(vulgar_examples), vulgar_examples),
             "relations_profanity": _check(len(vulgar_relations), vulgar_relations),
@@ -459,6 +533,19 @@ def delta_against(report: dict, previous: dict | None) -> dict:
                 "prev": prev_n,
                 "diff": None if prev_n is None else row["n"] - prev_n,
             }
+            if 'rows' in row:
+                prev_rows = (prev_checks.get(check) or {}).get('rows')
+                row_diff = None  # Old sample-only reports cannot prove row changes.
+                if prev_rows is not None:
+                    old = {r['row_id']: r for r in prev_rows}
+                    new = {r['row_id']: r for r in row['rows']}
+                    row_diff = {
+                        'added': [new[k] for k in sorted(new.keys() - old.keys())],
+                        'removed': [old[k] for k in sorted(old.keys() - new.keys())],
+                        'changed': [{'before': old[k], 'after': new[k]}
+                                    for k in sorted(old.keys() & new.keys()) if old[k] != new[k]],
+                    }
+                out[f"{name}.{check}"]['row_diff'] = row_diff
     return out
 
 
@@ -538,6 +625,7 @@ def main(argv=None) -> int:
     parser.add_argument("--only", help="comma-separated groups to keep in the report (A–H)")
     parser.add_argument("--pack", help="read this pack JSON instead of building the live pack")
     parser.add_argument("--out", help="output directory (default: lexicon/exports/quality/scan)")
+    parser.add_argument("--previous", help="previous report for counts and complete row comparisons")
     parser.add_argument("--no-write", action="store_true", help="print the summary only")
     args = parser.parse_args(argv)
     only = args.only.split(",") if args.only else None
@@ -548,7 +636,10 @@ def main(argv=None) -> int:
         pack = build_pack()
     report = select_groups(scan_pack(pack), only)
     out_dir = Path(args.out) if args.out else OUT
-    previous = _load_previous(out_dir / "latest.json") if not args.no_write else None
+    if args.previous and not Path(args.previous).is_file():
+        parser.error(f"previous report does not exist: {args.previous}")
+    previous = _load_previous(Path(args.previous)) if args.previous else (
+        _load_previous(out_dir / "latest.json") if not args.no_write else None)
     report["delta"] = delta_against(report, previous)
     report["generated_at"] = datetime.now(TAIPEI).isoformat(timespec="seconds")
     report["seconds"] = round(time.time() - started, 1)
