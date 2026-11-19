@@ -8265,3 +8265,10 @@ commit `4549564b`（Windows：flutter analyze 無 error、flutter test 全過；
 - 聽審結果須含實際聽審者與逐類結論；Windows 據此執行 `approve-listening`，另需英／法 golden/QC 通過才會在夜間放量。操作說明：`lexicon/docs/agents/card1227_french_piper.md`。
 - 首批正式寫入、服務與 App 詞庫更新後，用 owner 的 iPad A16 驗：法文例句旁有播放鈕、Piper 可播放、既有 Azure 仍優先，以及「資料來源與授權」的 SIWIS 出處。
 - 回報表第一欄為 **#1227**，另設 **結果**、**裝置**；本輪樣本尚未寫入正式詞庫，不要先判 iPad 通過。
+
+## M1073（2026-11-19 17:32）狀態：待做
+commit `a839f61a`（Windows：flutter analyze 無 error、flutter test 全過（1 檔在全部一起跑時失敗、單獨重跑通過）；另有 3 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #5：檢查標籤分級是否錯誤
+  結果：第 39 輪全庫 B 群掃描完成（唯讀，440 秒）：估算詞略減（17,288→17,100），衍生詞高 ≥2 級仍 304，無新增問題。
+  需要 Mac：無。
+    - 剩下：304 個 base 誤判待 #162/#163；無新增問題回報。
