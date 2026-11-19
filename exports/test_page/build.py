@@ -103,7 +103,25 @@ def fr_sentence_layer():
     return ('法文例句發音比較', '2026-11-19', intro, table + item)
 
 
-LAYERS = [fr_sentence_layer(), trial50_layer(), sentence_audio_layer()]
+PIPER20 = HERE.parent.parent / 'lexicon' / 'raw-data' / 'card1227_piper'
+
+
+def fr_piper20_layer():
+    rows = []
+    for n, p in enumerate(json.load(open(PIPER20 / 'preview.json', encoding='utf-8')), 1):
+        f = PIPER20 / 'out' / (p['text_hash'] + '.mp3')
+        if not f.exists():
+            continue
+        rows.append(f'<article class="item"><div class="word">{n}. {html.escape(p.get("difficulty") or "")}</div>'
+                    f'<p class="en">{html.escape(p["text"])}</p><div class="keys">'
+                    f'<button class="key" type="button"><span class="k1">Piper</span><span class="k2">siwis</span>'
+                    f'<audio preload="none" src="{data_uri(f)}"></audio></button></div></article>')
+    intro = ('卡 #1227（問題回報 #1675）全量補法文例句前的試聽：20 句，特別挑了省略形（l’、d’）、數字、縮寫。'
+             '聽完告訴我「都可以」就開始補剩下約 4.95 萬句；有唸錯的請說第幾句。')
+    return ('法文 Piper 例句試聽 20 句', '2026-11-20', intro, ''.join(rows))
+
+
+LAYERS = [fr_piper20_layer(), fr_sentence_layer(), trial50_layer(), sentence_audio_layer()]
 
 STYLE = '''<title>單字卡測試頁</title>
 <meta name="claude:viewport-fit-sides" content="cover">
