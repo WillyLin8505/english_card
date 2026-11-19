@@ -8257,3 +8257,11 @@ commit `4549564b`（Windows：flutter analyze 無 error、flutter test 全過；
 - 卡 #224：模擬使用者・拍照
   結果：第 4470 輪：photoui 1/1 通過；pins 8 個切片全部通過；新問題 0；UX 建議 0（只跑 widget 模擬，沒有截圖可評）。
   需要 Mac：無。
+
+
+## 卡 #1227（2026-11-19）第 1 輪：先聽審，尚未全量
+- 卡 #1227／問題 #1675：法文 Piper（fr_FR-siwis-medium）20 句已產生，Windows 試聽頁 http://127.0.0.1:5173/ui/card1227-piper.html 。離線附件在 `lexicon/raw-data/card1227_piper/preview.html`（音檔內嵌）。
+- 先實際聽完 20 句，核對全文、省略形、250／11／25／300／95 mph、ADN／PIN／EPO；Windows CLI 只驗音檔格式與長度，未宣稱聽過。若無可用聽審方式，明確記待聽審，不能以檔案存在代替。
+- 聽審結果須含實際聽審者與逐類結論；Windows 據此執行 `approve-listening`，另需英／法 golden/QC 通過才會在夜間放量。操作說明：`lexicon/docs/agents/card1227_french_piper.md`。
+- 首批正式寫入、服務與 App 詞庫更新後，用 owner 的 iPad A16 驗：法文例句旁有播放鈕、Piper 可播放、既有 Azure 仍優先，以及「資料來源與授權」的 SIWIS 出處。
+- 回報表第一欄為 **#1227**，另設 **結果**、**裝置**；本輪樣本尚未寫入正式詞庫，不要先判 iPad 通過。

@@ -1714,8 +1714,8 @@ class Tick:
                              creationflags=flags)
 
     def sentence_audio_night(self):
-        """Card #879: English sentence audio (Tatoeba human, then Piper). card879_piper_tts.py night ingests finished
-        files and, 01:00-06:30 Taipei only, fetches human audio and keeps 3 background Piper workers running."""
+        """Cards #879/#1227: French bounded foreground batches, then English human/Piper.
+        Synthesis is restricted to 01:00-06:30 Taipei by each runner."""
         # French batches are foreground and bounded; no extra background workers.
         # Exit 3 means outside its window, review pending, or French is complete.
         french = TOOLS / "card1227_piper_tts.py"
