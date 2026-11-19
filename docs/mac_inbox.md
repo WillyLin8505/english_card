@@ -8322,3 +8322,13 @@ commit `6ce57987`（Windows：flutter analyze 無 error、flutter test 全過）
   結果：第213–215輪：4/4項模擬全通過（frmedia 已能編譯）；未發現新問題，未新開問題回報。
   需要 Mac：用 iPad 驗證例句播放鈕與卡片集安裝）。
     產物：app/build/rounds_fr/{213,214,215}/（summary.json、fr_learner_a1/b1.json、card_draw.json、fr_media.json、decks.json）。
+
+## M1081（2026-11-20 04:59）狀態：待做
+commit `78cc19fd`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #227：模擬使用者・單字本
+  結果：第 4476 輪：2/2 通過（database 119 秒、detail 97 秒）；新問題 0、UX 建議 0 新增（沿用 #1649）。需要你決定：無。需要 Mac：無。
+  需要 Mac：無。
+    
+    - 本輪沒有失敗，沒改程式與資料；golden／QC 不適用，無備份。
+    - log：app/build/rounds/4476/。PostHog 已上傳 851 筆模擬事件。
+    - 剩餘：畫面文字 UX 評估可搭配 learner_view 做。
