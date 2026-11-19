@@ -102,6 +102,7 @@ def test_post_qc_failure_rolls_back_only_batch_even_after_window(tmp_path, monke
     monkeypatch.setattr(fr, "BASE", tmp_path)
     monkeypatch.setattr(fr, "slot", lambda: nullcontext(True))
     monkeypatch.setattr(fr, "english_running", lambda: False)
+    monkeypatch.setattr(fr, "resource_ok", lambda: True)
     monkeypatch.setattr(fr, "in_window", lambda _: False)
     monkeypatch.setattr(fr, "qc_step", lambda *args: 1)
     rolled_back = []
@@ -116,6 +117,7 @@ def test_incomplete_post_qc_retries_without_starting_another_batch(tmp_path, mon
     monkeypatch.setattr(fr, "BASE", tmp_path)
     monkeypatch.setattr(fr, "slot", lambda: nullcontext(True))
     monkeypatch.setattr(fr, "english_running", lambda: False)
+    monkeypatch.setattr(fr, "resource_ok", lambda: True)
     monkeypatch.setattr(fr, "qc_step", lambda *args: 2)
     monkeypatch.setattr(fr, "batch", lambda **_: pytest.fail("must finish QC first"))
     fr.write_json(tmp_path / "night_phase.json", {"phase": "after", "hashes": ["h"]})
