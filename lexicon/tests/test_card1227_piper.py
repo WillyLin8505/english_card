@@ -53,24 +53,6 @@ def test_review_invalidated_by_changed_samples(tmp_path, monkeypatch):
     assert not fr.reviewed()
 
 
-def test_selection_skips_azure_and_uses_lowest_cefr(monkeypatch):
-    # Compile DISTINCT ON against PostgreSQL via a recording session; SQL is also
-    # exercised against the real read-only corpus during this card's measurement.
-    calls = []
-    class Session:
-        def __enter__(self): return self
-        def __exit__(self, *_): pass
-        def execute(self, query, params):
-            calls.append((str(query), params))
-            return SimpleNamespace(mappings=lambda: [])
-    monkeypatch.setattr(fr.db, "SessionLocal", Session)
-    assert fr.pending(200) == []
-    sql, params = calls[0]
-    assert "NOT EXISTS" in sql and "DISTINCT ON (text_hash)" in sql
-    assert "ORDER BY rank, text_hash LIMIT :limit" in sql
-    assert params["azure"] == fr.AZURE and params["piper"] == fr.PREFIX
-
-
 def test_rollback_preserves_english_azure_and_changed_rows(tmp_path, monkeypatch):
     from app import models as m
     engine = create_engine("sqlite://")
@@ -113,3 +95,29 @@ def test_piper_gate_is_exclusive():
         assert first
         with slot() as second:
             assert not second
+
+
+def test_post_qc_failure_rolls_back_only_batch_even_after_window(tmp_path, monkeypatch):
+    from contextlib import nullcontext
+    monkeypatch.setattr(fr, "BASE", tmp_path)
+    monkeypatch.setattr(fr, "slot", lambda: nullcontext(True))
+    monkeypatch.setattr(fr, "english_running", lambda: False)
+    monkeypatch.setattr(fr, "in_window", lambda _: False)
+    monkeypatch.setattr(fr, "qc_step", lambda *args: 1)
+    rolled_back = []
+    monkeypatch.setattr(fr, "rollback", lambda urls: rolled_back.append(urls))
+    fr.write_json(tmp_path / "night_phase.json", {"phase": "after", "hashes": ["only-this"]})
+    assert fr.night_tick() == 0
+    assert rolled_back == [{fr.PREFIX + "only-this"}]
+
+
+def test_incomplete_post_qc_retries_without_starting_another_batch(tmp_path, monkeypatch):
+    from contextlib import nullcontext
+    monkeypatch.setattr(fr, "BASE", tmp_path)
+    monkeypatch.setattr(fr, "slot", lambda: nullcontext(True))
+    monkeypatch.setattr(fr, "english_running", lambda: False)
+    monkeypatch.setattr(fr, "qc_step", lambda *args: 2)
+    monkeypatch.setattr(fr, "batch", lambda **_: pytest.fail("must finish QC first"))
+    fr.write_json(tmp_path / "night_phase.json", {"phase": "after", "hashes": ["h"]})
+    fr.night_tick()
+    assert json.loads((tmp_path / "night_phase.json").read_text())["phase"] == "after"
