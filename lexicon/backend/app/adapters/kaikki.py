@@ -108,8 +108,22 @@ def _pos(e: dict) -> str | None:
     return POS.get(e.get("pos", ""))
 
 
+_ETY_REF = re.compile(r"\s*\(etymology \d+(?:\.\d+)?(?P<rest>(?:,[^()]*)?)\)", re.I)
+
+
+def strip_etymology_ref(text: str) -> str:
+    """Wiktionary cross-reference notes ("(etymology 1, noun sense 3)",
+    "(etymology 1, time unit, all same senses)") are editor markup, not part of
+    the definition (card #1232). Keep a meaningful middle part: "(time unit)"."""
+    def sub(m):
+        parts = [p.strip() for p in m.group("rest").split(",") if p.strip()]
+        parts = [p for p in parts if not re.fullmatch(r"(?:\w+ )?sense [\d.]+|all same senses", p)]
+        return f" ({', '.join(parts)})" if parts else ""
+    return _ETY_REF.sub(sub, text).strip()
+
+
 def _gloss(s: dict) -> str:
-    return (s.get("glosses") or s.get("raw_glosses") or [""])[-1].strip()
+    return strip_etymology_ref((s.get("glosses") or s.get("raw_glosses") or [""])[-1].strip())
 
 
 RARE_FORM_TAGS = {"dialectal", "obsolete", "archaic", "rare", "nonstandard", "eye-dialect",
