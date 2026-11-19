@@ -618,7 +618,8 @@ def audio_library(s: Session, status: str | None = None, q: str | None = None,
                      "channels": a.channels, "size_bytes": a.size_bytes, "sha256": a.sha256,
                      "path": a.path, "status": a.status, "error": a.error, "on_disk": on_disk,
                      "used_by": used, "orphan": not used})
-    known = {a.path for a in assets if a.path}
+    # Search/page limits must not turn registered files into stray files.
+    known = set(s.scalars(select(m.AudioAsset.path).where(m.AudioAsset.path.is_not(None))))
     stray = []
     root = config.MEDIA / "audio"
     if root.exists():

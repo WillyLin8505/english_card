@@ -121,3 +121,55 @@ def test_incomplete_post_qc_retries_without_starting_another_batch(tmp_path, mon
     fr.write_json(tmp_path / "night_phase.json", {"phase": "after", "hashes": ["h"]})
     fr.night_tick()
     assert json.loads((tmp_path / "night_phase.json").read_text())["phase"] == "after"
+
+
+@pytest.mark.parametrize("azure_status,expected", [(None, 2), ("ready", 1), ("failed", 2)])
+def test_french_pack_links_real_sentence_audio(tmp_path, monkeypatch, azure_status, expected):
+    import sqlite3
+    from app import exporter, views, models as m
+    from app.text import text_hash, example_key
+    engine = create_engine("sqlite://")
+    # No shared PostgreSQL test database; omit unrelated PostgreSQL FTS indexes.
+    m.Base.metadata.create_all(engine, tables=[t for t in m.Base.metadata.sorted_tables
+                                              if not t.name.startswith("tatoeba_")])
+    monkeypatch.setattr(exporter, "_images", lambda *args: [])
+    monkeypatch.setattr(views, "word_images", lambda *args: {})
+    sentence = "La pomme est rouge."
+    h, k = text_hash(sentence), example_key(sentence)
+    with sessionmaker(engine)() as s:
+        s.add(m.Lexeme(id=1, language="fr", lemma="pomme", normalized="pomme", pos="noun", status="full", cefr="A1"))
+        s.add(m.Sense(id=1, lexeme_id=1, sense_key="fruit", ordinal=0))
+        s.add(m.Example(id=1, lexeme_id=1, language="fr", text=sentence, text_hash=h,
+                        source="tatoeba", ordinal=0))
+        fields = {"definition": [{"sense_key": "fruit", "gloss": "fruit du pommier", "source": "kaikki"}],
+                  "native_definition": [{"sense_key": "fruit", "text": "apple"}],
+                  "example_sentences": [{"text": sentence, "key": k, "sense_key": "fruit", "source": "tatoeba"}]}
+        for i, (field, items) in enumerate(fields.items(), 1):
+            s.add(m.FieldValue(id=i, target_language="fr", native_language="en", lemma="pomme",
+                              field=field, status="complete", items=items))
+        s.add(m.AudioAsset(id=2, language="fr", source="piper_tts_sentence", source_url=fr.PREFIX+h,
+                          path="audio/fr/piper.mp3", sha256="piper", status="ready", speaker=fr.SPEAKER))
+        if azure_status:
+            s.add(m.AudioAsset(id=1, language="fr", source="azure_tts_sentence", source_url=fr.AZURE+h,
+                              path="audio/fr/azure.mp3", sha256="azure", status=azure_status))
+        s.commit()
+        assert views.word(s, "fr", "en", "pomme")["examples"][0]["audio"]["id"] == expected
+        db_path = tmp_path / "pack.sqlite"
+        exporter._build(s, db_path, "fr", "en", None, False, tmp_path, copy_media=False)
+        with sqlite3.connect(db_path) as con:
+            assert con.execute("SELECT audio_id FROM examples").fetchone() == (expected,)
+            assert con.execute("SELECT source_url FROM audio").fetchone()[0] == (fr.AZURE if expected == 1 else fr.PREFIX) + h
+
+
+def test_audio_search_finds_sentence_older_than_2000_assets(tmp_path, monkeypatch):
+    from app import views, models as m
+    engine = create_engine("sqlite://")
+    for cls in (m.AudioAsset, m.Lexeme, m.Pronunciation, m.FieldValue):
+        cls.__table__.create(engine)
+    monkeypatch.setattr(views.config, "MEDIA", tmp_path)
+    with sessionmaker(engine)() as s:
+        s.add(m.AudioAsset(id=1, language="fr", source="piper_tts_sentence", source_url=fr.PREFIX + "old-sentence"))
+        s.add_all([m.AudioAsset(id=i, language="en", source="other", source_url=f"other://{i}") for i in range(2, 2004)])
+        s.commit()
+        result = views.audio_library(s, q="old-sentence")
+        assert [a["id"] for a in result["assets"]] == [1]
