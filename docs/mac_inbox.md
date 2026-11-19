@@ -8277,3 +8277,8 @@ commit `a839f61a`（Windows：flutter analyze 無 error、flutter test 全過（
 commit `8cc6edfc`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #168：常態：全庫掃描屈折形／衍生詞的身分與等級
   結果：第 38 輪未完成量測：heavylock 被另一個 flutter test（pid 123356，05:37 起）占住，scanlibrary.py --only A,B 兩次各等 590 秒仍沒輪到，未取得新數字。
+
+## M1075（2026-11-19 18:09）狀態：待做
+commit `c29a5d1c`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1230：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
+  結果：全部完成：不用改程式，三個測試單獨與全套 flutter test 現在都過（+1031、2 個略過、0 失敗）；flutter analyze 12 個 info/warning、0 error。
