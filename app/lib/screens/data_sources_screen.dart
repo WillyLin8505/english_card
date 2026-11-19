@@ -90,6 +90,13 @@ class DataSourcesScreen extends StatelessWidget {
       'https://commons.wikimedia.org/',
     ),
     (
+      '法文例句合成語音',
+      'Piper fr_FR-siwis-medium；SIWIS 法文語音資料集（Yamagishi、Honnet、Garner、Lazaridis，2017）',
+      '聲音訓練資料：CC BY 4.0；音檔為 AI 合成並轉為 MP3。'
+          'Piper 舊版程式為 MIT；本機使用 piper-tts 1.8.0（GPL-3.0-or-later），App 僅提供音檔。',
+      'https://doi.org/10.7488/ds/1705',
+    ),
+    (
       '發音音檔',
       'Wikimedia Commons（含 Shtooka 錄音），以及 Wiktionary 音檔',
       '每個音檔依各自授權：CC BY-SA 4.0、CC BY-SA 3.0、CC BY 3.0 US 等。',
