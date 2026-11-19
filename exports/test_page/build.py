@@ -90,7 +90,17 @@ def fr_sentence_layer():
              'Tatoeba 真人錄音只有約 1% 的句子有，而且大多是不可商用（CC BY-NC）或沒標授權，能用的極少。'
              'Piper、Kokoro 在這台電腦上免費合成；Azure 每月免費 50 萬字元，超過要付費。'
              'Apple 手機內建法文語音（App 沒音檔時用的）請直接在 iPad 上聽單字發音比較。')
-    return ('法文例句發音比較', '2026-11-19', intro, item)
+    rows = [
+        ('Piper', '0.29 秒', '免費（本機）', '全部 4.95 萬句', '約 4 小時（單核心），晚上多核心約 1 小時'),
+        ('Kokoro', '1.33 秒', '免費（本機）', '全部 4.95 萬句', '約 18 小時（單核心）'),
+        ('Azure', '約 1 秒（網路，估計）', '每月 50 萬字元免費，超過約 US$15／100 萬字元', '免費額度每月約 9,000 句', '免費約 5–6 個月；付費約 US$40 一次做完'),
+        ('Tatoeba 真人', '下載即可', '免費，但大多不可商用', '可商用的只有個位數句', '—'),
+        ('Apple 手機語音', '即時', '免費', '每句都能唸（不存檔）', '不用做；音質看 iPad 語音'),
+    ]
+    table = ('<table class="cmp"><thead><tr><th>方式</th><th>每句合成時間</th><th>費用</th><th>能做的量</th><th>補完剩下 4.95 萬句</th></tr></thead><tbody>'
+             + ''.join('<tr>' + ''.join(f'<td>{html.escape(c)}</td>' for c in r) + '</tr>' for r in rows)
+             + '</tbody></table><p class="note">本機 20 句法文例句實測（平均 60 字元、音長約 3 秒）。法文例句共 58,494 句，Azure 已做 8,975 句，剩 49,519 句。</p>')
+    return ('法文例句發音比較', '2026-11-19', intro, table + item)
 
 
 LAYERS = [fr_sentence_layer(), trial50_layer(), sentence_audio_layer()]
@@ -125,6 +135,9 @@ h1 { font-size:24px; margin:0 0 4px; text-wrap:balance }
 .key.playing { background:var(--on); color:var(--on-ink); border-color:var(--on) }
 .k1 { font-weight:500; font-size:14px }
 .k2 { font-size:12px; opacity:.72; overflow-wrap:anywhere }
+.cmp { width:100%; border-collapse:collapse; font-size:13px; margin:8px 0 4px; display:block; overflow-x:auto }
+.cmp th, .cmp td { border-bottom:1px solid var(--line); padding:6px 8px; text-align:left; vertical-align:top }
+.cmp th { color:var(--mut); font-weight:500; white-space:nowrap }
 @media (max-width:480px) { .keys { grid-template-columns:repeat(2,minmax(0,1fr)) } }
 </style>'''
 
