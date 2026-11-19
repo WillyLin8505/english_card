@@ -110,3 +110,25 @@ def test_cli_explicit_previous_for_group_only_scan(tmp_path):
     diff = report['delta']['E.examples_odd_tatoeba_names']
     assert diff['diff'] == -1
     assert len(diff['row_diff']['removed']) == 1
+
+
+def test_old_report_has_no_invented_row_delta_and_fallback_ids_are_stable():
+    pack = merged_pack()
+    for lx in pack['lexemes']:
+        for ex in lx['examples']:
+            ex.pop('id')
+    before = scan.scan_pack(pack)
+    old = copy.deepcopy(before)
+    old['groups']['E']['checks']['examples_odd_tatoeba_names'].pop('rows')
+    assert scan.delta_against(before, old)['E.examples_odd_tatoeba_names']['row_diff'] is None
+    pack['lexemes'].reverse()
+    assert checks(pack)['examples_odd_tatoeba_names']['rows'] == before['groups']['E']['checks']['examples_odd_tatoeba_names']['rows']
+
+
+def test_invalid_previous_fails_before_building_live_pack(tmp_path, monkeypatch):
+    def forbidden_build():
+        pytest.fail('invalid input must fail before building the live pack')
+    monkeypatch.setattr(scan, 'build_pack', forbidden_build)
+    with pytest.raises(SystemExit) as caught:
+        scan.main(['--previous', str(tmp_path / 'missing.json')])
+    assert caught.value.code == 2

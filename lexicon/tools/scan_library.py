@@ -628,6 +628,11 @@ def main(argv=None) -> int:
     parser.add_argument("--previous", help="previous report for counts and complete row comparisons")
     parser.add_argument("--no-write", action="store_true", help="print the summary only")
     args = parser.parse_args(argv)
+    previous = None
+    if args.previous:
+        previous = _load_previous(Path(args.previous))
+        if previous is None:
+            parser.error(f"cannot read previous report: {args.previous}")
     only = args.only.split(",") if args.only else None
     started = time.time()
     if args.pack:
@@ -636,10 +641,8 @@ def main(argv=None) -> int:
         pack = build_pack()
     report = select_groups(scan_pack(pack), only)
     out_dir = Path(args.out) if args.out else OUT
-    if args.previous and not Path(args.previous).is_file():
-        parser.error(f"previous report does not exist: {args.previous}")
-    previous = _load_previous(Path(args.previous)) if args.previous else (
-        _load_previous(out_dir / "latest.json") if not args.no_write else None)
+    if not args.previous and not args.no_write:
+        previous = _load_previous(out_dir / "latest.json")
     report["delta"] = delta_against(report, previous)
     report["generated_at"] = datetime.now(TAIPEI).isoformat(timespec="seconds")
     report["seconds"] = round(time.time() - started, 1)
