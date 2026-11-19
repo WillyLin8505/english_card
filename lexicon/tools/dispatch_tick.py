@@ -1721,7 +1721,8 @@ class Tick:
         french = TOOLS / "card1227_piper_tts.py"
         if not self.dry and french.exists() and not (TOOLS / "card1227_piper_off").exists():
             try:
-                result = subprocess.run([python_exe(), str(french), "night"], cwd=ROOT,
+                result = subprocess.run([python_exe(), str(TOOLS / "card1227_run_bounded.py"),
+                    "night", python_exe(), str(french), "night"], cwd=ROOT,
                     capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=570,
                     creationflags=NO_WINDOW if os.name == "nt" else 0)
                 if result.returncode != 3:

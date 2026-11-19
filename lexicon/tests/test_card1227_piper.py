@@ -203,3 +203,26 @@ def test_production_requires_quality_gate_even_after_listening(tmp_path, monkeyp
     monkeypatch.setattr(fr, "reviewed", lambda: True)
     monkeypatch.setattr(fr, "batch", lambda **_: pytest.fail("QC not complete"))
     assert fr.night_tick() == 3
+
+
+@pytest.mark.parametrize("dry, french_exit, en_launches", [(True,0,0),(False,0,0),(False,3,1),(False,1,0)])
+def test_dispatch_reserves_tick_for_french_and_uses_bounded_runner(tmp_path, monkeypatch, dry, french_exit, en_launches):
+    import dispatch_tick as dt
+    for name in ("card879_piper_tts.py", "card1227_piper_tts.py", "card1227_run_bounded.py"):
+        (tmp_path / name).touch()
+    monkeypatch.setattr(dt, "TOOLS", tmp_path)
+    monkeypatch.setattr(dt, "python_exe", lambda: sys.executable)
+    monkeypatch.setattr(dt, "log", lambda *_: None)
+    runs, launches = [], []
+    def run(cmd, **kw):
+        runs.append(cmd)
+        return SimpleNamespace(returncode=french_exit, stderr="failure" if french_exit == 1 else "")
+    monkeypatch.setattr(dt.subprocess, "run", run)
+    monkeypatch.setattr(dt.subprocess, "Popen", lambda cmd, **kw: launches.append(cmd))
+    tick = object.__new__(dt.Tick)
+    tick.dry = dry
+    tick.sentence_audio_night()
+    assert len(launches) == en_launches
+    assert len(runs) == (0 if dry else 1)
+    if runs:
+        assert Path(runs[0][1]).name == "card1227_run_bounded.py"
