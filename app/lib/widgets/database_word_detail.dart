@@ -331,10 +331,35 @@ class DatabaseWordScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          LinkedText(example.text,
-                              links: WordLinks.of(scope.repository),
-                              style: MFont.manrope(
-                                  15, FontWeight.w700, MColors.ink)),
+                          // 問題回報 #1676: every sentence has a play button
+                          // (recording, else the phone's voice).
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: LinkedText(example.text,
+                                    links: WordLinks.of(scope.repository),
+                                    style: MFont.manrope(
+                                        15, FontWeight.w700, MColors.ink)),
+                              ),
+                              IconButton(
+                                tooltip: ui(context, '播放例句'),
+                                visualDensity: VisualDensity.compact,
+                                constraints: const BoxConstraints(
+                                    minWidth: 36, minHeight: 36),
+                                onPressed: () => scope.speak(
+                                    context, example.text,
+                                    language: pack.target ?? 'en',
+                                    audioUrl: example.audio == null ||
+                                            example.audio!.isEmpty
+                                        ? null
+                                        : packRecordingUrl(
+                                            pack.mediaBase, example.audio!)),
+                                icon: const Icon(Icons.volume_up_outlined,
+                                    size: 20),
+                              ),
+                            ],
+                          ),
                           const SizedBox(height: 4),
                           Text(example.translation!, style: MFont.bodyMuted),
                         ],

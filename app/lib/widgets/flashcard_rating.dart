@@ -24,37 +24,31 @@ class ExampleText extends StatelessWidget {
   Widget build(BuildContext context) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Card #807 (owner 2026-10-29): a sentence with a synthesized
-          // recording gets a play button; no recording, no button (never the
-          // phone's TTS for a whole sentence).
-          if (example.audioUrl case final url?)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: LinkedText(example.text,
-                      style: MFont.manrope(15, FontWeight.w800, MColors.ink),
-                      links: _links(context),
-                      onOpenWord: onOpenWord),
-                ),
-                IconButton(
-                  tooltip: ui(context, '播放例句'),
-                  visualDensity: VisualDensity.compact,
-                  constraints:
-                      const BoxConstraints(minWidth: 36, minHeight: 36),
-                  onPressed: () => AppScope.of(context).speak(
-                      context, example.text,
-                      language: AppScope.of(context).repository.language,
-                      audioUrl: url),
-                  icon: const Icon(Icons.volume_up_outlined, size: 20),
-                ),
-              ],
-            )
-          else
-            LinkedText(example.text,
-                style: MFont.manrope(15, FontWeight.w800, MColors.ink),
-                links: _links(context),
-                onOpenWord: onOpenWord),
+          // Every sentence gets a play button (問題回報 #1676, owner 11/19): the
+          // recording when there is one, else the phone's voice reads the
+          // whole sentence (Speaker.say falls back to TTS when the recording
+          // is missing or fails to play).
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: LinkedText(example.text,
+                    style: MFont.manrope(15, FontWeight.w800, MColors.ink),
+                    links: _links(context),
+                    onOpenWord: onOpenWord),
+              ),
+              IconButton(
+                tooltip: ui(context, '播放例句'),
+                visualDensity: VisualDensity.compact,
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                onPressed: () => AppScope.of(context).speak(
+                    context, example.text,
+                    language: AppScope.of(context).repository.language,
+                    audioUrl: example.audioUrl),
+                icon: const Icon(Icons.volume_up_outlined, size: 20),
+              ),
+            ],
+          ),
           if (showTranslation && example.translation != null) ...[
             const SizedBox(height: 2),
             Text.rich(TextSpan(children: [

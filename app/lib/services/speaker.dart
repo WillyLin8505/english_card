@@ -7,13 +7,15 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'audio_file_cache.dart';
 import 'pack_media.dart';
 
-/// Word pronunciation (spec section 7: 翻到背面時自動播放單字真人發音；所有
-/// 順位皆無音檔時才使用系統 TTS). Example sentences are never read aloud
-/// (移除例句整句發音).
+/// Pronunciation (spec section 7: 翻到背面時自動播放單字真人發音；所有
+/// 順位皆無音檔時才使用系統 TTS). Example sentences have a play button
+/// each (問題回報 #1676): their recording when there is one, else the
+/// system TTS reads the whole sentence.
 abstract interface class Speaker {
   /// Plays [audioUrl] if there is one, else speaks [text] in [language]
   /// ("en", "fr", "zh-TW"), using [accent] ("en-GB" or "en-US") when
-  /// [language] is "en". Never throws; returns false when nothing could be
+  /// [language] is "en". A recording that is missing or fails to play also
+  /// falls back to TTS. Never throws; returns false when nothing could be
   /// played (e.g. a browser blocking autoplay) so the caller can tell the
   /// learner there was no sound.
   Future<bool> say(String text,
