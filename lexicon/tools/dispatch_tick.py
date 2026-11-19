@@ -1716,6 +1716,21 @@ class Tick:
     def sentence_audio_night(self):
         """Card #879: English sentence audio (Tatoeba human, then Piper). card879_piper_tts.py night ingests finished
         files and, 01:00-06:30 Taipei only, fetches human audio and keeps 3 background Piper workers running."""
+        # French batches are foreground and bounded; no extra background workers.
+        # Exit 3 means outside its window, review pending, or French is complete.
+        french = TOOLS / "card1227_piper_tts.py"
+        if not self.dry and french.exists() and not (TOOLS / "card1227_piper_off").exists():
+            try:
+                result = subprocess.run([python_exe(), str(french), "night"], cwd=ROOT,
+                    capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=570,
+                    creationflags=NO_WINDOW if os.name == "nt" else 0)
+                if result.returncode != 3:
+                    if result.returncode:
+                        log(f"French sentence audio: exit {result.returncode}: {result.stderr[-300:]}")
+                    return
+            except subprocess.TimeoutExpired:
+                log("French sentence audio batch timed out; retry next tick")
+                return
         tool = TOOLS / "card879_piper_tts.py"
         if self.dry or not tool.exists() or (TOOLS / "card879_piper_off").exists():
             return

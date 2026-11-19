@@ -588,6 +588,13 @@ def audio_library(s: Session, status: str | None = None, q: str | None = None,
     query = select(m.AudioAsset).order_by(m.AudioAsset.id.desc())
     if status:
         query = query.where(m.AudioAsset.status == status)
+    if q:
+        # Filter before the cap: sentence audio now exceeds 2,000 rows.
+        linked = select(m.Pronunciation.audio_asset_id).join(
+            m.Lexeme, m.Lexeme.id == m.Pronunciation.lexeme_id).where(
+                m.Lexeme.lemma.ilike(f"%{q}%"))
+        query = query.where(m.AudioAsset.source_url.ilike(f"%{q}%") |
+                            m.AudioAsset.id.in_(linked))
     assets = s.execute(query.limit(2000)).scalars().all()
     users: dict[int, list] = {}
     for p, lx in s.execute(select(m.Pronunciation, m.Lexeme).join(

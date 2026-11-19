@@ -32,7 +32,8 @@ from .function_words import FUNCTION_WORD_RELATIONS, is_noisy_function_word_rela
 from .text import example_key, text_hash, is_column_word_list
 
 # Ordered providers: retain the legacy primary URL for existing producers.
-SENTENCE_VOICES = {"fr": ("fr-FR-DeniseNeural", "piper-siwis-medium"),
+SENTENCE_VOICES = {"fr": "fr-FR-DeniseNeural", "en": "piper-lessac-medium"}
+SENTENCE_PROVIDERS = {"fr": ("fr-FR-DeniseNeural", "piper-siwis-medium"),
                    "en": ("piper-lessac-medium",)}
 SENTENCE_SCHEME = {"fr-FR-DeniseNeural": "azure-tts",
                    "piper-siwis-medium": "piper-tts", "piper-lessac-medium": "piper-tts"}
@@ -40,7 +41,7 @@ SENTENCE_SCHEME = {"fr-FR-DeniseNeural": "azure-tts",
 
 def sentence_audio_urls(target: str, text_hash_: str) -> tuple[str, ...]:
     return tuple(f"{SENTENCE_SCHEME[v]}://{v}/s/{text_hash_}"
-                 for v in SENTENCE_VOICES.get(target, ()))
+                 for v in SENTENCE_PROVIDERS.get(target, ()))
 
 
 def sentence_audio_url(target: str, text_hash_: str) -> str:
