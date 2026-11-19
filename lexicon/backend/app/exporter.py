@@ -31,13 +31,27 @@ from .quality import example_other_pos_only
 from .function_words import FUNCTION_WORD_RELATIONS, is_noisy_function_word_relation
 from .text import example_key, text_hash, is_column_word_list
 
-SENTENCE_VOICES = {"fr": "fr-FR-DeniseNeural", "en": "piper-lessac-medium"}  # card #807 (fr), #879 (en: Tatoeba human recording or local Piper)
-SENTENCE_SCHEME = {"en": "piper-tts"}  # default azure-tts
+# Ordered providers: retain the legacy primary URL for existing producers.
+SENTENCE_VOICES = {"fr": ("fr-FR-DeniseNeural", "piper-siwis-medium"),
+                   "en": ("piper-lessac-medium",)}
+SENTENCE_SCHEME = {"fr-FR-DeniseNeural": "azure-tts",
+                   "piper-siwis-medium": "piper-tts", "piper-lessac-medium": "piper-tts"}
+
+
+def sentence_audio_urls(target: str, text_hash_: str) -> tuple[str, ...]:
+    return tuple(f"{SENTENCE_SCHEME[v]}://{v}/s/{text_hash_}"
+                 for v in SENTENCE_VOICES.get(target, ()))
 
 
 def sentence_audio_url(target: str, text_hash_: str) -> str:
-    """audio_assets.source_url of a sentence's synthesized recording."""
-    return f"{SENTENCE_SCHEME.get(target, 'azure-tts')}://{SENTENCE_VOICES.get(target, '')}/s/{text_hash_}"
+    """Primary URL, preserved for Azure and English Piper writers."""
+    return next(iter(sentence_audio_urls(target, text_hash_)), "")
+
+
+def sentence_audio_asset(assets, target: str, text_hash_: str):
+    """First usable provider; failed/pending Azure must not hide ready Piper."""
+    return next((a for url in sentence_audio_urls(target, text_hash_)
+                 if (a := assets.get(url)) is not None and a.status == "ready" and a.path), None)
 
 
 SCHEMA_VERSION = 6  # 5: per-sense register (neutral / written / spoken / slang)
@@ -725,7 +739,7 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_saf
             # a verb-sense sentence under fear/noun was still shown on the noun
             # card (問題回報 #557).
             # Card #807: a synthesized sentence recording (azure_tts_sentence), one per text.
-            ex_asset = audio_by_url.get(sentence_audio_url(target, ex.text_hash))
+            ex_asset = sentence_audio_asset(audio_by_url, target, ex.text_hash)
             if ex_asset is not None and ex_asset.status == "ready" and ex_asset.path:
                 add_audio_row(ex_asset)
             else:
