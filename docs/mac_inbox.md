@@ -8287,3 +8287,11 @@ commit `c29a5d1c`（Windows：flutter analyze 無 error、flutter test 全過）
 commit `c14df694`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #1231：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
   結果：全部完成：privacysettingstest 現在通過（2/2），無需改動——未能重現失敗；flutter test 全套 1031 過、0 失敗，flutter analyze 無 error（12 個 info）。
+
+## M1077（2026-11-20 03:52）狀態：待做
+commit `c5a724c8`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1228：問題回報 #1676：[owner] 每句例句旁都要有播放鈕：有音檔播音檔（Azure／Piper），沒有就用手機語音（
+  結果：全部完成：每句例句旁都有播放鈕（有音檔播音檔，沒有音檔就用系統語音唸整句）；flutter analyze 無問題，相關 widget 測試 35 項全過；待 Mac 在 iPad 驗。
+  需要 Mac：在 iPad 上確認每句例句都有播放鈕，沒有音檔的句子會用 iPad 語音唸整句（不改 iPad 系統語言）。
+- 卡 #496：模擬使用者・法語（英語母語者學法語）
+  結果：第212輪：3/4項模擬通過；frmedia 編譯失敗，本輪圖片詳情與卡片集尚未驗完；新開1筆 #1678。
