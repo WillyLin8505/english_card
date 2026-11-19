@@ -175,3 +175,31 @@ def test_audio_search_finds_sentence_older_than_2000_assets(tmp_path, monkeypatc
         s.commit()
         result = views.audio_library(s, q="old-sentence")
         assert [a["id"] for a in result["assets"]] == [1]
+
+
+def test_legacy_english_rollback_keeps_french_piper(tmp_path, monkeypatch):
+    import card879_piper_tts as en
+    from app import models as m
+    engine = create_engine("sqlite://")
+    m.AudioAsset.__table__.create(engine)
+    factory = sessionmaker(engine)
+    monkeypatch.setattr(en.db, "SessionLocal", factory)
+    monkeypatch.setattr(en.config, "MEDIA", tmp_path)
+    with factory() as s:
+        for i, language in enumerate(("en", "fr"), 1):
+            (tmp_path / (language + ".mp3")).write_bytes(language.encode())
+            s.add(m.AudioAsset(id=i, language=language, source="piper_tts_sentence",
+                              source_url=language, path=language + ".mp3"))
+        s.commit()
+    en.rollback()
+    with factory() as s:
+        assert [a.language for a in s.query(m.AudioAsset)] == ["fr"]
+    assert (tmp_path / "fr.mp3").exists()
+
+
+def test_production_requires_quality_gate_even_after_listening(tmp_path, monkeypatch):
+    monkeypatch.setattr(fr, "BASE", tmp_path)
+    monkeypatch.setattr(fr, "in_window", lambda _: True)
+    monkeypatch.setattr(fr, "reviewed", lambda: True)
+    monkeypatch.setattr(fr, "batch", lambda **_: pytest.fail("QC not complete"))
+    assert fr.night_tick() == 3
