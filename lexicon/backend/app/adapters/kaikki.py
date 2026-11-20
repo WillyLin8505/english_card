@@ -1351,7 +1351,12 @@ def _native_word(tr: dict, native: str) -> str | None:
     return None
 
 
-_TREE_TAG = re.compile(r"(?:der|bor|inh|lbor|slbor|cal|uder)\.\??$")
+_TREE_TAG = re.compile(r"(?:der|bor|inh|lbor|slbor|cal|uder|influ|deverb|redup)\.\??$")
+# Opens an etymology sentence (card #1243), not a tree node: no language name starts a node.
+_PROSE_START = re.compile(
+    r"^(?:Inherited|Borrowed|Learned|Derived|Deverbal|Blend|Compound|Back-formation|Clipping|"
+    r"Calque|Onomatopoei[ac]|From|Ultimately|Possibly|Probably|Coined|Formed|Shortening|"
+    r"Semi-learned|Doublet|Rebracketing|Univerbation|Reduplication|Abbreviation|Named)\b")
 
 
 _JUNK_ETYMOLOGY = re.compile(
@@ -1391,7 +1396,10 @@ def _clean_etymology(text: str) -> str:
             # final punctuation or end in a relation tag; the text is a
             # sentence. A node may end in a transliteration ("Sanskrit -इक
             # (-ika)", card #1243): ")" is not sentence end.
-            while i < len(lines) and len(lines[i].split()) <= 6 and (
+            # A sentence that ends in a word like "commander." is not a
+            # relation tag, so a line that opens like prose stops the walk.
+            while i < len(lines) and len(lines[i].split()) <= 6 and not (
+                    _PROSE_START.match(lines[i])) and (
                     not lines[i].rstrip().endswith((".", "”", "\""))
                     or _TREE_TAG.search(lines[i])
                     or _JUNK_ETYMOLOGY.match(lines[i])):
