@@ -1389,10 +1389,12 @@ def _clean_etymology(text: str) -> str:
             i = 1
             # Tree nodes ("Old English æppel", "▲") are short and have no
             # final punctuation or end in a relation tag; the text is a
-            # sentence.
+            # sentence. A node may end in a transliteration ("Sanskrit -इक
+            # (-ika)", card #1243): ")" is not sentence end.
             while i < len(lines) and len(lines[i].split()) <= 6 and (
-                    not lines[i].rstrip().endswith((".", ")", "”", "\""))
-                    or _TREE_TAG.search(lines[i])):
+                    not lines[i].rstrip().endswith((".", "”", "\""))
+                    or _TREE_TAG.search(lines[i])
+                    or _JUNK_ETYMOLOGY.match(lines[i])):
                 i += 1
             lines = lines[i:]
     first = next((ln for ln in lines if ln), "")
