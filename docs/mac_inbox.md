@@ -8382,3 +8382,10 @@ commit `7209879b`（Windows：flutter analyze 無 error、flutter test 全過）
 - 卡 #224：模擬使用者・拍照
   結果：第 4481 輪：photoui 1/1 通過；pins 8 個切片（0–7）全部通過；新問題 0；UX 建議 0（只跑 widget 模擬，沒有截圖可評）。
   需要 Mac：無。
+
+## M1089（2026-11-20 09:50）狀態：待做
+commit `da94be2e`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1234：問題回報 #1681：[Mac 注意] M1047–M1077 Windows 已修的卡（Mac 2026-11-20
+  結果：全部完成：Mac「注意」只是測試沒涵蓋到法文精簡字典字，不是缺陷，不需改程式或資料（0 筆變動）。
+  需要 Mac：下一輪在 iPad 抽驗詞庫沒有的法文字（點到精簡字典頁）並量翻卡時間。
+    - 未改資料，無備份；golden/QC 不受影響。
