@@ -931,3 +931,20 @@ def test_base_form_after_auxiliary_is_the_verb():
     # The noun entry rejects the sentence, the verb entry accepts it.
     assert not matches_lexeme_pos("The newborn doesn't fear the tiger.", "fear", "noun", fear, only)
     assert matches_lexeme_pos("The newborn doesn't fear the tiger.", "fear", "verb", fear, only)
+
+
+def test_example_sense_fallback_skips_second_etymology_when_all_rare():
+    """Card #1242: crap's senses are all slang/vulgar; the sentence must not fall to the
+    etymology-2 dice throw just because it is listed first."""
+    ctx = Context('en', 'zh-TW', 'crap')
+    ctx.resolved.update({
+        'pos': [{'pos': 'noun'}],
+        'definition': [
+            {'sense_key': 'dice', 'pos': 'noun', 'labels': ['etymology-2'],
+             'gloss': 'A losing throw of 2, 3, or 12 in craps.'},
+            {'sense_key': 'feces', 'pos': 'noun', 'labels': ['slang', 'vulgar'], 'gloss': 'Feces.'},
+        ],
+        'example_sentences': [{'text': 'Elias has had enough of the crap.'}],
+    })
+    out = [c.value for c in LocalCalc().normalize('example_sense', None, ctx)]
+    assert out[0]['sense_key'] == 'feces'
