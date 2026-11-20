@@ -8389,3 +8389,26 @@ commit `da94be2e`（Windows：flutter analyze 無 error、flutter test 全過；
   結果：全部完成：Mac「注意」只是測試沒涵蓋到法文精簡字典字，不是缺陷，不需改程式或資料（0 筆變動）。
   需要 Mac：下一輪在 iPad 抽驗詞庫沒有的法文字（點到精簡字典頁）並量翻卡時間。
     - 未改資料，無備份；golden/QC 不受影響。
+
+## M1090（2026-11-20 10:04）狀態：待做
+commit `e3926c1d`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1237：問題回報 #1684：[Mac 注意] M1047–M1077 Windows 已修的卡（Mac 2026-11-20
+  結果：第 1 輪（只查證，未改程式）：#1212 的多字標籤已由 Mac 驗證全部消失，不需再修；剩下的單字殘留（jean、fry、teen、plat、suivre、tirer）不在本卡範圍，建議不處理本問題回報。
+  需要 Mac：下輪驗證時，若 plat/suivre/tirer 再出現，附上該照片的 Vision 原始標籤。
+- 卡 #1236：問題回報 #1683：[Mac 注意] M1047–M1077 Windows 已修的卡（Mac 2026-11-20
+  結果：已修：héros 詞形 chip 不再顯示「yes（有聲 h（h aspiré））」，h aspiré 只顯示標籤（英文介面為 "aspirated h (h aspiré)"），h muet 不顯示 chip。
+  需要 Mac：在 iPad 看 héros 頁 Inflections（英文介面）確認 chip 為 "aspirated h (h aspiré)"。
+- 卡 #1235：問題回報 #1682：[Mac 注意] M1047–M1077 Windows 已修的卡（Mac 2026-11-20
+  結果：第 1 輪：Mac 看到舊的『Inflections』標籤列是模擬器法文包還沒有 #1219 的新欄位；另查到 App 與 #1219 欄位名不一致（簡單過去式），已修。
+- 卡 #1238：問題回報 #1688：[Mac 注意] Windows 近期已修的卡：iPad 重驗（Mac 2026-11-20 09
+  結果：單字數 2001→1998 不是遺失單字：詞庫更新後「一詞一卡」把 3 個變化形併進原形卡，屬設計行為，不修程式。
+  需要 Mac：下次在 iPad 看到數字變動時，記下前後單字清單（或匯出），或看啟動後 DictionarySync 是否剛套用新詞庫版本；若被併的是原形不存在、卻被刪掉的字才是 bug。
+    
+    建議問題回報 #1688 標不處理（設計行為）。未動資料、未跑 golden/QC（無資料變更）。
+- 卡 #1239：問題回報 #1685：[Mac 注意] Windows 近期已修的卡：iPad 重驗（Mac 2026-11-20 09
+  結果：結論：不需修改，#1685 標不處理：#1217 的新規則是對的，owner 那張舊照片只要在 App 內按「重新辨識」就會改出法文；舊照片標籤不自動重算是設計（已存的標籤不可在使用者不知情下被改寫）。
+  需要 Mac：在 iPad 對 owner 那張照片（photo-1795013219769602）按重新辨識，確認 flavor 變成法文名詞（saveur 等）；這項沿用 #1217 的待驗項目，不另開。
+- 卡 #1240：問題回報 #1687：[Mac 注意] Windows 近期已修的卡：iPad 重驗（Mac 2026-11-20 09
+  結果：結論：iPad 上動詞只看到舊的 Inflections 標籤，原因是 App 當時還讀不到 #1219 補進的欄位名（simple past 欄位在 pack 叫 frpassesimple，App 讀 frsimplepast）；工作樹的 app/lib 修正已解決，需 Mac 重建後在 iPad 重驗。
+- 卡 #1241：問題回報 #1686：[Mac 注意] Windows 近期已修的卡：iPad 重驗（Mac 2026-11-20 09
+  結果：修好：#1218 點字開精簡字典的兩處英文介面中文（問題回報 #1686）— 已補進 uicatalog 的完整句與『已在單字本』。
