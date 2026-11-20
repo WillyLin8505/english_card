@@ -3213,3 +3213,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #1207 字的品質 | 注意 | 候選裡混了不該當單字的 Vision 標籤：cake regular、road other、raw glass、pot cooking、tea drink、interior room、printed page、consumer electronics、engine vehicle；還有法文字跑進英文候選：plat、suivre、tirer，以及 jean（應 jeans）、fry。請過濾多字標籤／非英文字。正確率（對照 Qwen 核可標籤）這輪沒量準：golden 照片 id 對不上詞庫 catalog 圖 id（啟動時詞庫圖 0 張），7/230 不可採信，需要 Windows 給 golden 照片的 Qwen 標籤來源。 | — | 中 | iPad |
 | #1205 法文本機辨識 | 部分通過 | 同 50 張轉法文：平均每張 5.78 個法文字，0 字照片 4 張。139 組對照裡約 17 組譯錯或用俚語：mug→gueule（嘴，粗話）、plate→plaque（應 assiette）、cup→coupe（應 tasse）、bedding→litière（貓砂）、plant→fabrique（工廠義）、pickle→pétrin、lime→tilleul、watch→garde、horse→dada、river→cours、cake→friandise、carton→pot、pacifier→pacificateur、chart→carte、suit→costard、land→pays、phone→phone（應 téléphone）。請改對照表取第一義的規則，至少把俚語和非具體義排掉。法文相片冊下載、加入單字本、進複習這輪沒驗。 | — | 中 | iPad |
 | #1197 拍照預覽被拉長 | 待 owner 手測 | 自動測試拍不到相機畫面（測試啟動會讓相機變黑），需要 owner 在 iPad 直向、橫向開拍照頁看人物有沒有變胖或變長。iPad 已裝回一般版 App。 | — | — | iPad |
+
+## M1077 卡 #1228 例句播放鈕（Mac 2026-11-20 08:35，模擬器）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1228 例句播放鈕 | 通過 | 單字頁 apple、run、house、beautiful、coffee 各 5 句例句，5 句都有播放鈕；複習背面 house 3 句，3 句都有。點了 20 次，全部播的是例句音檔（這些字的例句都有音檔，沒碰到要用系統語音的句子）。待 iPad：實際聽聲音，並找一句沒有音檔的例句確認改用 iPad 語音唸整句。 | 模擬器截圖（未上傳） | — | 模擬器 |
