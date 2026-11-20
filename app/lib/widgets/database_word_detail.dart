@@ -80,12 +80,18 @@ class DatabaseWordScreen extends StatelessWidget {
             ? allForms.where((f) => f.field == 'fr_plural').firstOrNull?.form
             : null;
         final frShown = {
+          // h muet (0/false/no) is the default: no chip; h aspiré shows the label only.
+          for (final f in allForms)
+            if (f.field == 'fr_h_aspire' &&
+                const {'0', 'false', 'no', 'muet', ''}
+                    .contains(f.form.toLowerCase()))
+              'fr_h_aspire',
           if (frGender != null) 'fr_gender',
           if (frPlural != null) 'fr_plural',
           if (frVerb != null) ...[
             for (final f in allForms)
               if (RegExp(
-                      r'^fr_(present|imperfect|future|conditional|subjunctive|imperative|simple_past|pluperfect)_[123][sp]$|^fr_(past|present)_participle$|^fr_auxiliary$')
+                      r'^fr_(present|imperfect|future|conditional|subjunctive|imperative|simple_past|passe_simple|pluperfect)_[123][sp]$|^fr_(past|present)_participle$|^fr_auxiliary$')
                   .hasMatch(f.field))
                 f.field
           ],
@@ -393,9 +399,12 @@ class DatabaseWordScreen extends StatelessWidget {
                               form.field == 'fr_gender'
                                   ? '${frenchWithArticle(word.lemma, form.form)}'
                                       '（${frenchGenderLabel(form.form)}）'
-                                  : '${form.form}（${formLabel(form.label ?? form.field)}）',
+                                  : form.field == 'fr_h_aspire'
+                                      ? formLabel(form.field)
+                                      : '${form.form}（${formLabel(form.label ?? form.field)}）',
                               key: ValueKey('form-${form.form}'),
-                              onTap: form.field == 'fr_gender'
+                              onTap: form.field == 'fr_gender' ||
+                                      form.field == 'fr_h_aspire'
                                   ? null
                                   : openWord(form.form)),
                     ],

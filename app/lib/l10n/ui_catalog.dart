@@ -1079,6 +1079,13 @@ const uiCatalog = <String, (String, String)>{
   '可加入': ('Ready', 'Prêt'),
   '基本資料': ('Basic entry', 'Entrée de base'),
   '已在單字本（略過）': ('Already added (skipped)', 'Déjà ajouté (ignoré)'),
+  // 問題回報 #1686 (card #1218 badge): the whole sentence needs its own key,
+  // or _labelParts only swaps 基本資料 and leaves the rest in Chinese.
+  '基本資料（精簡字典）：連網後會補上例句、關聯詞與圖片。': (
+    'Basic entry (condensed dictionary): example sentences, related words and pictures are added when online.',
+    'Entrée de base (dictionnaire condensé) : exemples, mots liés et images ajoutés une fois connecté.'
+  ),
+  '已在單字本': ('Already in My words', 'Déjà dans Mes mots'),
   '詞庫沒有，仍可加入': (
     'Not in dictionary, can still add',
     'Absent du dictionnaire, ajout possible'

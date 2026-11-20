@@ -172,4 +172,17 @@ void main() {
     expect(frenchDefiniteArticle('homme', 'm', hAspire: false), "l'homme");
     expect(frenchDefiniteArticle('homme', 'm'), isNull);
   });
+
+  test('card 1240: pack field fr_passe_simple_* fills the simple past table', () {
+    const persons = ['1s', '2s', '3s', '1p', '2p', '3p'];
+    const vals = ['parlai', 'parlas', 'parla', 'parlâmes', 'parlâtes', 'parlèrent'];
+    final forms = [
+      const LexForm('fr_present_1s', 'parle', 'parle', null),
+      for (var i = 0; i < 6; i++)
+        LexForm('fr_passe_simple_${persons[i]}', vals[i], vals[i], null),
+    ];
+    final v = frenchVerbFrom('parler', forms)!;
+    final t = v.tables.firstWhere((x) => x.tense.code == 'simple_past');
+    expect(t.cells.length, 6);
+  });
 }
