@@ -1357,6 +1357,14 @@ _PROSE_START = re.compile(
     r"^(?:Inherited|Borrowed|Learned|Derived|Deverbal|Blend|Compound|Back-formation|Clipping|"
     r"Calque|Onomatopoei[ac]|From|Ultimately|Possibly|Probably|Coined|Formed|Shortening|"
     r"Semi-learned|Doublet|Rebracketing|Univerbation|Reduplication|Abbreviation|Named)\b")
+_PROSE_WORDS = re.compile(r"\b(?:of|from|the|and|in|with)\b")
+
+
+def _is_prose(line: str) -> bool:
+    """An etymology sentence: opens like prose, or has four or more words with
+    a function word (「Present participle of commander.」)."""
+    return bool(_PROSE_START.match(line)) or (
+        len(line.split()) >= 4 and bool(_PROSE_WORDS.search(line)))
 
 
 _JUNK_ETYMOLOGY = re.compile(
@@ -1398,8 +1406,8 @@ def _clean_etymology(text: str) -> str:
             # (-ika)", card #1243): ")" is not sentence end.
             # A sentence that ends in a word like "commander." is not a
             # relation tag, so a line that opens like prose stops the walk.
-            while i < len(lines) and len(lines[i].split()) <= 6 and not (
-                    _PROSE_START.match(lines[i])) and (
+            while i < len(lines) and len(lines[i].split()) <= 6 and not _is_prose(
+                    lines[i]) and (
                     not lines[i].rstrip().endswith((".", "”", "\""))
                     or _TREE_TAG.search(lines[i])
                     or _JUNK_ETYMOLOGY.match(lines[i])):
