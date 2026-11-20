@@ -8412,3 +8412,10 @@ commit `e3926c1d`（Windows：flutter analyze 無 error、flutter test 全過；
   結果：結論：iPad 上動詞只看到舊的 Inflections 標籤，原因是 App 當時還讀不到 #1219 補進的欄位名（simple past 欄位在 pack 叫 frpassesimple，App 讀 frsimplepast）；工作樹的 app/lib 修正已解決，需 Mac 重建後在 iPad 重驗。
 - 卡 #1241：問題回報 #1686：[Mac 注意] Windows 近期已修的卡：iPad 重驗（Mac 2026-11-20 09
   結果：修好：#1218 點字開精簡字典的兩處英文介面中文（問題回報 #1686）— 已補進 uicatalog 的完整句與『已在單字本』。
+
+## M1091（2026-11-20 18:05）狀態：待做
+commit `29b659d1`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #5：檢查標籤分級是否錯誤
+  結果：第 41 輪全庫 B 群掃描完成（唯讀，418 秒）：數字與第 40 輪完全相同，無新增問題。
+  需要 Mac：無。
+    - 剩下：304 個 base 誤判待 #162/#163；無新增問題回報。
