@@ -179,7 +179,7 @@ String? _regularForm(String lemma, String? group, String tense, String person) {
 FrenchVerb? frenchVerbFrom(String lemma, List<LexForm> forms) {
   final f = _byField(forms);
   final conjugated = forms.any((x) => RegExp(
-          r'^fr_(present|imperfect|future|conditional|subjunctive|imperative|simple_past|pluperfect)_[123][sp]$')
+          r'^fr_(present|imperfect|future|conditional|subjunctive|imperative|simple_past|passe_simple|pluperfect)_[123][sp]$')
       .hasMatch(x.field));
   final pp = f['fr_past_participle'];
   final prp = f['fr_present_participle'];
@@ -228,7 +228,8 @@ FrenchVerb? frenchVerbFrom(String lemma, List<LexForm> forms) {
       final persons =
           tense.code == 'imperative' ? const ['2s', '1p', '2p'] : frenchPersons;
       for (final p in persons) {
-        final value = f['fr_${tense.code}_$p'];
+        final code = tense.code == 'simple_past' ? 'passe_simple' : tense.code;
+        final value = f['fr_${code}_$p'];
         if (value == null || value.trim().isEmpty) continue;
         final reg = _regularForm(bare, ending, tense.code, p);
         final off = reg != null && reg != value;
