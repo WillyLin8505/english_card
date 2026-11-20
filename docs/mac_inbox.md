@@ -8436,3 +8436,8 @@ commit `0073b351`（Windows：flutter analyze 無 error、flutter test 全過）
   結果：第 85 輪：2/2 通過（learner 77 秒、restart 42 秒）；無新問題回報、無新 UX 建議。
   需要 Mac：無。
     - 剩餘：本輪沒有截圖，未做畫面 UX 評估。
+
+## M1094（2026-11-20 19:16）狀態：待做
+commit `7a48da98`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #496：模擬使用者・法語（英語母語者學法語）
+  結果：第220輪檢查完成：4/4模擬通過；新開 #1691 詞源矛盾，補既有引導與變位表問題；不代表學習體驗全部通過。
