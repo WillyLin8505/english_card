@@ -1,8 +1,10 @@
 # 卡 #1227：法文例句 Piper
 
 ## 本輪狀態
-程式已接上；20 句僅為試聽附件，尚未寫入 audio_assets。未宣稱聽過或通過 iPad。
-全量仍由「20 句實際聽審」及「英文／法文 QC 前後比對」雙關卡擋住。
+owner 已於 2026-11-20 在 #1679 選 A，20 句試聽核准已執行 approve-listening。
+第 2 輪法文 QC 無退步；英文 QC 540.6 秒逾時，追蹤既有 #1601。
+listening_reviewed=true、quality_ready=false；仍缺 49,521 句，正式 Piper 0 句。
+排除 #1601 並完成 EN/FR 前後快照、quality-gate 後，原夜間流程才可續補。iPad 尚未驗收。
 不更動 examples.text；Azure 優先，其次 Piper。未知等級排在 C2 後。
 
 ## 試聽
