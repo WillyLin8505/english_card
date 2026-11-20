@@ -3219,3 +3219,20 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
 |----|----|----|----|----|----|
 | #1228 例句播放鈕 | 通過 | 單字頁 apple、run、house、beautiful、coffee 各 5 句例句，5 句都有播放鈕；複習背面 house 3 句，3 句都有。點了 20 次，全部播的是例句音檔（這些字的例句都有音檔，沒碰到要用系統語音的句子）。待 iPad：實際聽聲音，並找一句沒有音檔的例句確認改用 iPad 語音唸整句。 | 模擬器截圖（未上傳） | — | 模擬器 |
+
+## M1047–M1077 Windows 已修的卡（Mac 2026-11-20 09:20，模擬器＋iPad A16）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1210 旅行相片冊代表圖 | 部分通過 | 模擬器新包：img 527 太空站、31401 角色扮演都不在旅行相片冊了；98 張，每字最多約 6–10 張。img 625 幾何圓圈仍以 border r-1 排第 6 張（標籤本身錯，請刪這個標籤）。 | 模擬器截圖（未上傳） | 低 | 模擬器 |
+| #1214 長按照片預覽 | 通過 | coffee 那張照片長按面板現在列 10 個單字（coffee、egg、plat、fork、croissant、napkin、saucer、teapot、espresso、pancake），不再是 0。『開啟照片』進照片詳情這點測試方式限制仍未確認，請 owner 手按一次。 | 模擬器截圖（未上傳） | — | 模擬器 |
+| #1218 每個字都能點（英文） | 通過 | beautiful 例句裡點『These』（詞庫沒有，只在精簡字典）→ 開精簡字典頁：these /ði:z/ 代名詞：這些、『基本資料（精簡字典）』說明、『加入單字本』鈕；按加入後單字本有 these。 | 模擬器截圖（未上傳） | — | 模擬器 |
+| #1218 每個字都能點（法文） | 注意 | 法文 maison、aller、parler、beau、chat、eau 的例句裡每個字都在詞庫，沒碰到只在精簡字典的字，所以法文精簡字典頁這輪沒點到；翻卡時間沒量。 | — | — | 模擬器 |
+| #1220 法文單字詳情新版 | 部分通過 | App 內切學法文（母語英文），加入 French Basic 2000 後開 aller、parler、maison、beau、héros：冠詞有（la maison、un héros）、形容詞變化有（bel、belle、beaux、belles）、h aspiré 有標。但動詞仍是舊的『Inflections』小標籤列（vais（present je）、vas…），沒有看到完整變位表；se lever 不在單字本未看。可能是模擬器上的法文包還沒有 #1219 的資料，請確認新版變位表的出現條件。 | 模擬器截圖（未上傳） | 中 | 模擬器 |
+| #1222 英文介面不出中文 | 部分通過 | aller、parler、maison、beau 單字頁與 maison 複習背面全英文，無中文。héros 頁 Inflections 有一顆『yes（有聲 h（h aspiré））』：『有聲 h』沒翻成英文，值也只寫 yes，請改成例如 『h aspiré』。 | 模擬器截圖（未上傳） | 低 | 模擬器 |
+| #1213 法文卡片集／加入／複習 | 通過 | 法文卡片集清單 37 個（French Basic 2000／3000、A1／A2／B1、Animal／Kitchen／Living Room Photo Deck…）；加入 French Basic 2000 → 單字 2000；maison 複習背面正常（照片 17 張、例句、Inflections）。 | 模擬器截圖（未上傳） | — | 模擬器 |
+| #1212 英文候選多字標籤 | 部分通過 | iPad 重跑 golden 50 張：多字標籤（cake regular、tea drink…）全部不見了。平均每張 5.84 字（上輪 6.82），0 字照片 5 張（剛好在目標 ≤5 邊上）。plat、jean、fry、teen、suivre、tirer 還在（Windows 已說未處理）。 | — | 中 | iPad |
+| #1211 #1213 法文對照表 | 通過 | 同 50 張轉法文：平均每張 5.76 字，0 字照片 4 張。上輪 17 組錯譯幾乎都修好（cup→tasse、plate→assiette、mug 不再出 gueule、bedding→literie、phone→téléphone、horse→cheval、watch→montre、pickle→cornichon）。還剩 3 組：cabinet→dunkerque（地名，應 meuble／armoire）、gift→don（應 cadeau）、vase→pot（應 vase）。 | — | 低 | iPad |
+| #1228 例句播放鈕（iPad 聽音） | 待 owner 手測 | 模擬器已過（見上節）。iPad 實際聽聲音、以及沒有音檔的句子用 iPad 語音，請 owner 手按。 | — | — | iPad |
+| #1217 #1221 照片辨識 | 待 owner 手測 | 要在 owner 自己的照片上重新辨識才看得到（flavor 是否變法文、『AI 辨識中…』是否出現後消失）；自動測試會改到 owner 照片資料，這輪沒做。 | — | — | iPad |
+| #1219 #1223 #1225 #1227 #1230 #1231 | 參考 | 資料／測試卡，Mac 不需手測；#1227 法文 Piper 只在 Windows 試聽頁，App 尚未接上。 | — | — | 模擬器 |
