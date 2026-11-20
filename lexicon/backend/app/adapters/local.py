@@ -1300,7 +1300,11 @@ class LocalCalc(SourceAdapter):
                     use = _fr_guess_pos(item.get("text", ""), forms, set(by_pos))
                 usage = use if use in by_pos else main_pos
                 common = [x for x in by_pos.get(usage, []) if not _rare_sense(x)]
-                first = common[0] if common else (by_pos.get(usage) or [None])[0]
+                # No common sense (crap: all slang/vulgar): never the other
+                # etymology's (craps dice throw) when this one has senses (卡 #1242).
+                pool = by_pos.get(usage) or []
+                first = common[0] if common else next(
+                    (x for x in pool if not _other_etymology(x)), (pool or [None])[0])
                 if first is not None:
                     value = {"example_key": k, "sense_key": first.get("sense_key")}
                     # Kaikki order is not frequency order (spell 「使著魔」
@@ -1344,6 +1348,11 @@ def _bare_ipa(ipa: str | None) -> str:
 def _rare_sense(sense: dict) -> bool:
     return any(str(l).lower() in RARE_SENSE_LABELS or str(l).startswith("etymology-")
                for l in (sense.get("labels") or []))
+
+
+def _other_etymology(sense: dict) -> bool:
+    """The sense belongs to a second or later etymology (label ``etymology-2``)."""
+    return any(re.fullmatch(r"etymology-([2-9]|\d\d+)", str(l)) for l in (sense.get("labels") or []))
 
 
 def base_is_word(form: str, lemma: str) -> bool:
