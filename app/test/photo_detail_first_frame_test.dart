@@ -51,9 +51,9 @@ void main() {
     // Then the shortcuts, then the notes under the list.
     await tester.pump();
     expect(find.byKey(const ValueKey('add-word')), findsOneWidget);
-    expect(find.text('返回時自動保存，不用再按建立。'), findsNothing);
+    expect(find.text('離開這一頁會自動保存。'), findsNothing);
     await tester.pump();
-    expect(find.text('返回時自動保存，不用再按建立。'), findsOneWidget);
+    expect(find.text('離開這一頁會自動保存。'), findsOneWidget);
 
     await tester.pumpAndSettle();
     expect(inScreen(find.text('Coffee')), findsNWidgets(2)); // pin + card

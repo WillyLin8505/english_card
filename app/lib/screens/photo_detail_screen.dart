@@ -47,9 +47,10 @@ String relativeDifficulty(int offset) => switch (offset) {
 /// a word left when you already know it (已學會); ☆ keeps a word while
 /// the dial moves; drag a pin to put it on the right spot; tap a pin to
 /// correct it or delete a wrong one; 自己加字 adds a word the AI missed,
-/// placed with a tap on the photo (問題回報 #323). There is no 建立 button
-/// — leaving the page saves the list and creates the cards; a photo just
-/// taken also has 儲存, which saves and goes back to 拍照 (問題回報 #850).
+/// placed with a tap on the photo (問題回報 #323). Leaving the page saves
+/// the list and creates the cards; a photo just taken also has 儲存, which
+/// saves and goes back to 拍照 (問題回報 #850). 問題回報 #1692: the notes
+/// say that, and never mention a 建立 button.
 class PhotoDetailScreen extends StatefulWidget {
   final String photoId;
 
@@ -1037,8 +1038,9 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                         : () => _saveAndLeave(photo, session),
                   ),
                 ],
-                // 問題回報 #276: the "no 建立 button, leaving saves" rule used to sit
-                // under all five words; #451 (owner 10/21) moved it below the list too.
+                // 問題回報 #276: the save note used to sit under all five words;
+                // #451 (owner 10/21) moved it below the list. #1692: it matches
+                // the real save (leave, or 儲存 on a photo not saved yet).
                 const SizedBox(height: 8),
                 Row(
                   children: [
@@ -1046,7 +1048,10 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                         size: 14, color: MColors.label),
                     const SizedBox(width: 4),
                     Expanded(
-                      child: UiText('返回時自動保存，不用再按建立。',
+                      child: UiText(
+                          _fresh
+                              ? '按儲存，或離開這一頁，都會保存。'
+                              : '離開這一頁會自動保存。',
                           style: MFont.manrope(
                               12, FontWeight.w600, MColors.label)),
                     ),

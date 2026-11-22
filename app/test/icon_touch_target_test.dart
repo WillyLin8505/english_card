@@ -14,7 +14,7 @@ void main() {
     await tester.pumpAndSettle();
     final star = find.descendant(
       of: row,
-      matching: find.bySemanticsLabel('收集單字（按儲存後加入單字庫）'),
+      matching: find.bySemanticsLabel('收集單字（保存後加入單字庫）'),
     );
     final audio = find.descendant(
       of: row,

@@ -131,7 +131,7 @@ void main() {
 
     final bar = tester.getTopLeft(find.byKey(const ValueKey('difficulty-bar')));
     final word = tester.getTopLeft(find.byKey(const ValueKey('word:cat')));
-    final note = tester.getTopLeft(find.textContaining('返回時自動保存'));
+    final note = tester.getTopLeft(find.textContaining('都會保存'));
     expect(bar.dy, lessThan(word.dy));
     expect(word.dy, lessThan(note.dy));
   });

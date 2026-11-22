@@ -161,6 +161,11 @@ void main() {
       final button = find.byKey(const ValueKey('photo-save'));
       expect(button, findsOneWidget);
       expect(app.repository.photo('p850')!.wordsSavedAt, isNull);
+      // 問題回報 #1692: 收集說明與頁底保存說明不再互相矛盾，也不提「建立」。
+      expect(find.text('按儲存，或離開這一頁，都會保存。'), findsOneWidget);
+      expect(find.textContaining('有收集時只保存這些字'), findsOneWidget);
+      expect(find.textContaining('不用再按建立'), findsNothing);
+      expect(find.textContaining('按儲存才會進單字庫'), findsNothing);
 
       await tester.ensureVisible(button);
       await tester.tap(button);

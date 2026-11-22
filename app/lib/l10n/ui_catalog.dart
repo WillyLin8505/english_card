@@ -481,9 +481,13 @@ const uiCatalog = <String, (String, String)>{
     'Previously learned and current words',
     'Mots déjà acquis et en cours'
   ),
-  '返回時自動保存，不用再按建立。': (
-    'Saved automatically when you go back; no Create button needed.',
-    'Enregistré automatiquement en revenant en arrière ; pas de bouton Créer.'
+  '離開這一頁會自動保存。': (
+    'Saved automatically when you leave this page.',
+    'Enregistré automatiquement en quittant cette page.'
+  ),
+  '按儲存，或離開這一頁，都會保存。': (
+    'Press Save, or leave this page — either one saves.',
+    'Appuyez sur Enregistrer, ou quittez cette page : les deux enregistrent.'
   ),
   '左滑單字表示已經會了；拖曳照片上的標籤可調整位置。': (
     'Swipe a word left if you know it; drag photo labels to reposition them.',
@@ -1445,9 +1449,9 @@ const uiCatalog = <String, (String, String)>{
   '為什麼是這些字？': ('Why these words?', 'Pourquoi ces mots ?'),
   // 卡 #899: ☆ collects the word (單字收集區 → 單字庫 on 儲存), it no longer locks.
   '取消收集單字': ('Remove word from collection', 'Retirer le mot de la collection'),
-  '收集單字（按儲存後加入單字庫）': (
-    'Collect word (added to your word book on save)',
-    'Collecter le mot (ajouté à votre carnet à l’enregistrement)'
+  '收集單字（保存後加入單字庫）': (
+    'Collect word (added to your word book when saved)',
+    'Collecter le mot (ajouté à votre carnet lors de l’enregistrement)'
   ),
   '正在找照片裡的單字…': (
     'Finding words in the photo…',
@@ -1825,9 +1829,9 @@ const _templateCopy = <String, (String, String)>{
   ),
   '每天最多複習 {0} 張': ('Up to {0} reviews a day', 'Jusqu’à {0} révisions par jour'),
   '單字收集區 ({0})': ('Word collection ({0})', 'Mots collectés ({0})'),
-  '按單字的星星，或把照片上的標籤拖到這裡；按儲存才會進單字庫。': (
-    'Tap a word’s star, or drag a label from the photo here; only these go to your word book when you save.',
-    'Touchez l’étoile d’un mot, ou glissez une étiquette de la photo ici ; seuls ces mots entrent dans votre carnet à l’enregistrement.'
+  '按單字的星星，或把照片上的標籤拖到這裡。有收集時只保存這些字；沒收集時保存整份列表。': (
+    'Tap a word’s star, or drag a photo label here. If you collect any, only those are saved; if none, the whole list is saved.',
+    'Touchez l’étoile d’un mot, ou glissez une étiquette ici. S’il y en a, seuls ceux-là sont enregistrés ; sinon, toute la liste l’est.'
   ),
   '辨識單字列表 ({0})': ('Recognised words ({0})', 'Mots reconnus ({0})'),
   '這 {0} 個字在詞庫裡還沒有圖片，可以先看單字': (

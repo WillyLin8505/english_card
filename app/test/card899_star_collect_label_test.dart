@@ -8,7 +8,7 @@ import 'helpers.dart';
 void main() {
   const oldLock = '鎖定（調整難度時保留）';
   const oldUnlock = '取消鎖定';
-  const collect = '收集單字（按儲存後加入單字庫）';
+  const collect = '收集單字（保存後加入單字庫）';
   const uncollect = '取消收集單字';
   final cjk = RegExp(r'[一-鿿]');
 

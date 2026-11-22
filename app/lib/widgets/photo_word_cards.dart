@@ -228,7 +228,7 @@ class _WordCard extends StatelessWidget {
             action(
               starred ? MColors.successSoft : MColors.surfaceSoft,
               MSvg(starred ? MIcon.star : MIcon.starOff, size: 18),
-              starred ? '取消收集單字' : '收集單字（按儲存後加入單字庫）',
+              starred ? '取消收集單字' : '收集單字（保存後加入單字庫）',
               onStar,
             ),
           ],
@@ -506,7 +506,8 @@ class _CollectionTray extends StatelessWidget {
               style: MFont.manrope(13, FontWeight.w800, MColors.primary)),
           const SizedBox(height: 6),
           if (words.isEmpty)
-            UiText('按單字的星星，或把照片上的標籤拖到這裡；按儲存才會進單字庫。',
+            UiText(
+                '按單字的星星，或把照片上的標籤拖到這裡。有收集時只保存這些字；沒收集時保存整份列表。',
                 style: MFont.manrope(12, FontWeight.w600, MColors.muted))
           else
             AnimatedSize(

@@ -124,7 +124,7 @@ void main() {
       expect(find.text('入門 · 剛好'), findsOneWidget);
 
       // ☆ Apple, then turn the dial to B2.
-      await tester.tap(find.bySemanticsLabel('收集單字（按儲存後加入單字庫）').at(1));
+      await tester.tap(find.bySemanticsLabel('收集單字（保存後加入單字庫）').at(1));
       await tester.pump();
       // The difficulty bar under the photo (問題回報 #442): tap where B2 is
       // (問題回報 #708: the bar no longer shows the A1…C2 ticks).
@@ -154,7 +154,7 @@ void main() {
     testWidgets('自動保存提示在單字列表之後，第一個字緊接列表標題（問題回報 #276／#451）',
         (tester) async {
       await openBreakfast(tester);
-      final hint = find.text('返回時自動保存，不用再按建立。');
+      final hint = find.text('離開這一頁會自動保存。');
       expect(hint, findsOneWidget);
       final titleY = tester.getTopLeft(find.text('辨識單字列表 (5)')).dy;
       final firstWordY = tester.getTopLeft(find.byType(Dismissible).first).dy;
