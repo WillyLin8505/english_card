@@ -3252,3 +3252,15 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #1222 英文介面不出中文 | 部分通過 | aller、parler、maison、beau 頁與 maison 複習背面無中文；héros 仍有『yes（有聲 h（h aspiré））』。另見 #1218、#1199 的中文。 | — | 低 | iPad |
 | 單字數差 3 | 注意 | 同一天 iPad 法文單字本：09:15–09:33 三次啟動都是 2001，09:35 啟動變 1998（這幾輪都是唯讀，沒有加入或刪除單字的動作）。不知道是哪 3 個字、什麼時候少的；請 Windows 查啟動／切換語言時是否會合併或丟掉單字。 | — | 中 | iPad |
 | #1210 旅行相片冊 | 略過 | owner iPad 在學法文、沒裝英文旅行相片冊，唯讀測試不安裝；以模擬器結果為準。 | — | — | iPad |
+
+## M1089–M1095 回覆卡 iPad 驗證（Mac 2026-11-22 20:50，iPad A16，學法文／母語英文，唯讀，App 用 2b5e12a1 重建）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1241 精簡字典頁英文介面 | 通過 | aller 例句點『qu'il』→ 精簡字典頁 que /kə/ conj，按鈕顯示『Already in My words』，畫面上不再有『精簡字典』『連網後會補上…』『已在單字本』中文。 | iPad 截圖（未上傳） | — | iPad |
+| #1234 翻卡時間 | 通過 | maison 複習卡 showAnswer → 背面例句出現 89 ms（基準 108 ms）。 | — | — | iPad |
+| #1236 héros 有聲 h 標籤 | 不通過 | 用含 #1236 修正的程式重建（lib/services/learning_content.dart 已改、ui_catalog 有 'aspirated h (h aspiré)'），iPad héros 頁 Inflections 仍顯示『yes（有聲 h（h aspiré））』。修正沒套到 Inflections 這條顯示路徑（值仍是 yes、標籤仍是中文），請查 Inflections chip 從哪裡組字。 | iPad 截圖（未上傳） | 中 | iPad |
+| #1235 #1240 法文動詞完整變位表 | 不通過 | 同一個重建版，aller、parler 仍只有舊的『Inflections』標籤列（vais（present je）、vas（present tu）…、irai（simple future je）），沒有出現變位表。iPad 上的法文詞庫可能還沒有 #1219 的新欄位，或 App 的新版區塊沒啟用；請說明變位表的出現條件（要哪個 pack 版本），Mac 再驗。 | iPad 截圖（未上傳） | 中 | iPad |
+| #1222 其他字 | 通過 | aller、parler、maison、beau 單字頁與 maison 複習背面都沒有中文。 | — | — | iPad |
+| #1238 單字數 | 通過 | 本輪開始與結束都是 1998，和上輪結束一致，沒有再變。 | — | — | iPad |
+| #1239 舊照片 flavor | 待 owner 手測 | 照 Windows 說明，要 owner 在 App 內對該照片按『重新辨識』；Mac 沒按（會改 owner 照片資料）。 | — | — | iPad |
