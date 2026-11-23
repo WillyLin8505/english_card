@@ -3264,3 +3264,11 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #1222 其他字 | 通過 | aller、parler、maison、beau 單字頁與 maison 複習背面都沒有中文。 | — | — | iPad |
 | #1238 單字數 | 通過 | 本輪開始與結束都是 1998，和上輪結束一致，沒有再變。 | — | — | iPad |
 | #1239 舊照片 flavor | 待 owner 手測 | 照 Windows 說明，要 owner 在 App 內對該照片按『重新辨識』；Mac 沒按（會改 owner 照片資料）。 | — | — | iPad |
+
+## 2026-11-23 卡 #1248 法語精簡字典重建（iPad）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1248 | 通過 | iPad（學法文 fr/en，唯讀）：App 讀到新版 compact_fr_en.sqlite（28815360 bytes，大小變了所以會重新複製）。精簡字典頁 d'abord 由 3 義變 6 義（多了 annoyed emphasis／immediately／in that case, then），faire、prendre、bien 都是 6 義，chat 4 義、maison 3 義；publia 正確顯示原形 publier 的意思。全庫比對：357234 字不變，9069 字的說明變長，3 義以上的原形字 4960 → 6102；頁面上沒有中文。 | docs/mac_verify_shots/2026-11-23/1248_dabord.png、1248_faire.png、1248_prendre.png | — | iPad |
+| #1248 | 通過 | 模擬器快速檢查：同一份字典，d'abord／faire／prendre 都查得到 6 義。 | （模擬器，無截圖） | — | 模擬器 |
+| #1248 | 注意 | 兩個小地方：(1) 同形動詞那行只寫「(verb) first/third-person singular present indicative/subjunctive」，沒說是哪個動詞的變位（aile、aiguille、aire、adresse 都有，舊版就有），讀者看不懂；建議寫成「… of ailer」或拿掉。(2) 有 535 條義項超過 120 字（最長 128，含詞性前綴與省略號），和卡上寫的每義 120 字差一點，影響很小。另：單字本裡的法文字詳情頁資料少（近義詞每字 0.6 個、相關詞 0.8、衍生詞 0.5，英文分別 5.1／6.0／4.1；構詞只有 13%），這是詞庫資料，不是精簡字典，已告知 Windows。 | （詞庫統計，無截圖） | 低 | Mac |
