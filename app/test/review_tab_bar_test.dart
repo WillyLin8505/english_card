@@ -8,7 +8,7 @@ import 'package:photo_english_app/services/word_database_repository.dart';
 import 'helpers.dart';
 
 void main() {
-  testWidgets('the tab bar hides during a review run and comes back after (問題回報 #101)',
+  testWidgets('the tab bar stays visible during a review run (問題回報 #1701)',
       (tester) async {
     final app = await pumpApp(tester, initialTab: AppTab.review,
         repository: WordDatabaseRepository(clock: () => testNow));
@@ -23,7 +23,7 @@ void main() {
     expect(find.byType(MobileTabBar), findsOneWidget);
     await tester.tap(find.text('綜合'));
     await tester.pumpAndSettle();
-    expect(find.byType(MobileTabBar), findsNothing);
+    expect(find.byType(MobileTabBar), findsOneWidget);
     await tester.tap(find.bySemanticsLabel('返回'));
     await tester.pumpAndSettle();
     expect(find.byType(MobileTabBar), findsOneWidget);
@@ -36,7 +36,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('自由加練，不更動下次複習時間'), findsNothing);
     expect(find.bySemanticsLabel('返回'), findsOneWidget);
-    expect(find.byType(MobileTabBar), findsNothing);
+    expect(find.byType(MobileTabBar), findsOneWidget);
     await tester.tap(find.bySemanticsLabel('返回'));
     await tester.pumpAndSettle();
     expect(find.byType(MobileTabBar), findsOneWidget);

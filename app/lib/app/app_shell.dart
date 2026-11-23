@@ -269,9 +269,8 @@ class AppShellState extends State<AppShell> implements AppNavigator {
                           onDone: () => settings.markTutorialSeen(_tab.name));
                     })),
         ]),
-        bottomNavigationBar: _reviewing && _tab == AppTab.review
-            ? null
-            : MobileTabBar(current: _tab, onSelect: selectTab),
+        // 問題回報 #1701: the five-tab row stays visible during a review run.
+        bottomNavigationBar: MobileTabBar(current: _tab, onSelect: selectTab),
       ),
     );
   }

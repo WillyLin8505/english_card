@@ -58,8 +58,8 @@ void main() {
 
     await tester.tap(find.text('複習這些字'));
     await tester.pumpAndSettle();
-    // A run is going on in the 複習 tab: the tab bar hides (問題回報 #101).
-    expect(find.byType(MobileTabBar), findsNothing);
+    // A run is going on in the 複習 tab: the tab bar stays (問題回報 #1701).
+    expect(find.byType(MobileTabBar), findsOneWidget);
     expect(app.navigator.target, isNotNull);
   });
 }
