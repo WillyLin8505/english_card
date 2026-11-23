@@ -3272,3 +3272,20 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #1248 | 通過 | iPad（學法文 fr/en，唯讀）：App 讀到新版 compact_fr_en.sqlite（28815360 bytes，大小變了所以會重新複製）。精簡字典頁 d'abord 由 3 義變 6 義（多了 annoyed emphasis／immediately／in that case, then），faire、prendre、bien 都是 6 義，chat 4 義、maison 3 義；publia 正確顯示原形 publier 的意思。全庫比對：357234 字不變，9069 字的說明變長，3 義以上的原形字 4960 → 6102；頁面上沒有中文。 | docs/mac_verify_shots/2026-11-23/1248_dabord.png、1248_faire.png、1248_prendre.png | — | iPad |
 | #1248 | 通過 | 模擬器快速檢查：同一份字典，d'abord／faire／prendre 都查得到 6 義。 | （模擬器，無截圖） | — | 模擬器 |
 | #1248 | 注意 | 兩個小地方：(1) 同形動詞那行只寫「(verb) first/third-person singular present indicative/subjunctive」，沒說是哪個動詞的變位（aile、aiguille、aire、adresse 都有，舊版就有），讀者看不懂；建議寫成「… of ailer」或拿掉。(2) 有 535 條義項超過 120 字（最長 128，含詞性前綴與省略號），和卡上寫的每義 120 字差一點，影響很小。另：單字本裡的法文字詳情頁資料少（近義詞每字 0.6 個、相關詞 0.8、衍生詞 0.5，英文分別 5.1／6.0／4.1；構詞只有 13%），這是詞庫資料，不是精簡字典，已告知 Windows。 | （詞庫統計，無截圖） | 低 | Mac |
+
+## 2026-11-23 卡 #1251 法文學習者清單（iPad 唯讀＋模擬器全新安裝）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1251 | 通過 | 1) 首次設定：模擬器全新安裝，選學法文、母語英文 → 程度、目的、認字三題 → 推薦卡片集 6 秒出現，加入 French Basic 3000 Words 後進主畫面，單字 3000、詞庫 fr/en 已下載；引導頁全英文。 | docs/mac_verify_shots/2026-11-23/1251_sim_onboarding.png | — | 模擬器 |
+| #1251 | 通過 | 2) 照片辨識與加入：模擬器沒有 Apple Vision，用 App 的測試接口給英文標籤（dog、chair、bicycle、umbrella、bread、apple、corkscrew、saxophone、lighthouse）→ 照片詳情出現 9 個法文字 chien、chaise、bicyclette、pain、pomme、ombrelle、tire-bouchon、saxophone、fanal；按儲存後單字本新增 tire-bouchon、saxophone、fanal 三個字。 | docs/mac_verify_shots/2026-11-23/1251_sim_photo.png | — | 模擬器 |
+| #1251 | 注意 | 2) 照片加字的品質：umbrella→ombrelle（陽傘，雨傘應是 parapluie）、lighthouse→fanal（燈籠／信號燈，燈塔應是 phare）；新加的 tire-bouchon、saxophone、fanal 幾分鐘後在單字本裡意思仍是空的（模擬器有網路）。 | （模擬器 log） | 中 | 模擬器 |
+| #1251 | 不通過 | 3) 單字詳情（單字本裡的字）：iPad 與模擬器 aller、parler、maison、beau、grand 都沒有變位表與形容詞變化表，只有舊的 Inflections；être 只有簡短變位、沒有 passé composé（已知 #1703、#1698）。例句、播放鈕（首屏 5 個）、Piper／錄音都正常，無中文。 | docs/mac_verify_shots/2026-11-23/1251_ipad_dict_pages.png | 高 | iPad |
+| #1251 | 通過 | 3) 詞庫頁（點例句裡不在單字本的字會開的頁）：aller、parler、finir、prendre 有完整變位表含 passé composé 與助動詞；grand 有形容詞變化（grande…）；maison 顯示 la maison f.、複數 maisons。例句的字約 9 成可點（aller 36 個字 31 個、parler 32/29、maison 36/30），只有 l'、d'、J'、s'、N' 這類省略形與人名沒連結；點後開精簡字典頁或詞庫頁。 | docs/mac_verify_shots/2026-11-23/1251_ipad_dict_pages.png | — | iPad |
+| #1251 | 不通過 | 3) 詞庫頁標題用了名詞的冠詞與複數：動詞 aller 標題是「l'aller m. plural allers」、parler 是「le parler m. plural parlers」，形容詞 beau「le beau m. plural beaux」、grand「le grand m. plural grands」；這些字主要詞性是動詞／形容詞，不該加 le/l' 與陽性名詞的複數（finir、prendre 正常）。beau 第一個意思排的是名詞 boyfriend。 | docs/mac_verify_shots/2026-11-23/1251_ipad_dict_pages.png | 中 | iPad |
+| #1251 | 通過 | 4) 複習：模擬器 15 張（sentenceCloze 7、textChoice 5、similarMatch 2、photoChoice 1）翻卡、評分都成功；背面意思、例句、例句播放正常，15 次發音全是法文錄音（機器朗讀 0 次），正反面都沒中文。 | （模擬器 log） | — | 模擬器 |
+| #1251 | 不通過 | 4) 複習背面 ne 連錯詞條：ne 的背面顯示 /nɔ.ʁɛst/、Noun「abbreviation of nord-est／NE」，應是否定副詞 ne（/nə/）。la 背面意思重複兩次「her, it (direct object)」且寫「No example for this word yet」。 | （模擬器 log） | 中 | 模擬器 |
+| #1251 | 不通過 | 5) 單字本搜尋排序：搜尋會比對例句與翻譯，結果照字母排，打的字本身排很後面：搜 maison 共 88 筆，maison 排第 51；chien 排第 10／46；tire 排第 93／113；aller 排第 5。建議完全相同或開頭相同的字排最前面。 | docs/mac_verify_shots/2026-11-23/1251_sim_search.png | 中 | 模擬器 |
+| #1251 | 注意 | 5) 相片冊下載：法文卡片集 37 個，種類全部是 words（包括 French Animal Photo Deck、French Kitchen Photo Deck 等 9 個標題叫 Photo Deck／Photo Album 的），沒有 photos 種類可下載成相片冊；請確認法文是否該有相片冊。 | （模擬器 log） | 中 | 模擬器 |
+| #1251 | 不通過 | 6) 英文介面中文：iPad 詞庫頁 héros 標題下仍顯示「h aspiré：不連音、不省略（le héros，不是 l'héros）」（同 #1236）。其他頁面與複習背面無中文。 | docs/mac_verify_shots/2026-11-23/1251_ipad_dict_pages.png | 中 | iPad |
+| #1251 | 通過 | 6) 離線精簡字典：App 內建檔案直接查，不需網路：mangeons→to eat、publia→to publish、d'abord→first…、boulangerie→bakery、parapluie→umbrella for rain。 | （iPad log） | — | iPad |
