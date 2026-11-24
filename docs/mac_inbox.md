@@ -8524,7 +8524,7 @@ commit `1f9dbec0`（Windows：flutter analyze 無 error、flutter test 全過；
 - 卡 #1298：問題回報 #1725：[Mac 注意] 2026-11-24 法文、英文完整重測（新的一鍵重測，iPad 唯讀＋模擬器全
   結果：卡 #1298 結論：問題回報 #1725（iPad 第一次重測停住 8 分鐘）是單次測試卡頓，重跑 156 秒完整通過，無可修根因，已標不處理。
 
-## M1104（2026-11-25 07:33）狀態：待做
+## M1104（2026-11-25 07:33）狀態：完成（iPad 唯讀＋模擬器法文、英文全新安裝；#1280 #1289 #1302 通過，#1313 仍在修，其餘卡不需 Mac）
 commit `7b2b7085`（Windows：flutter analyze 無 error、flutter test 全過；另有 46 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #1280：問題回報 #1735：[Mac] M1100 卡 #1252 法文清單（問題回報 #1704）：iPad 唯讀＋模：2)
   結果：修好了：umbrella→parapluie、lighthouse→phare；對照表重建，14,390→16,677 個英文標籤，159 個標籤的第一選擇改變（其餘 FR15 的 chien/chaise/pain/pomme 不變）。

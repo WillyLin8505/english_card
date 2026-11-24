@@ -3374,3 +3374,24 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 英文 EN05 | 注意 | beautiful 的複習卡背面顯示形容詞英文解釋、沒有中文，存的意思是名詞「美人」：詞性排序問題（同前一輪），其餘英文 13 項通過，相片冊下載照片 1→13。 | — | 低 | 模擬器 |
 | 詞庫版本 | 注意 | 模擬器全新安裝下載到新的 fr-en 詞庫 b71671a8…（21.2 MB）。iPad 上的 App 讀到的詞庫版本仍是空的，但查字、變位表、照片標籤都正常。 | — | 低 | iPad＋模擬器 |
 | iPad 還原 | 通過 | iPad 只讀跑完，沒有例外；平常版 App 02:04 已裝回並開啟。 | — | — | iPad |
+
+## M1104 卡 #1280 #1289 #1302 #1308 #1311 #1314 #1313 #1312 #5 #224 #227 #496 #1318 #1320 #1321 #226 #1315（commit 7b2b7085）：iPad 唯讀＋模擬器全新安裝（法文、英文）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1280 | 通過 | FR15：模擬器全新安裝拍照辨識 umbrella→parapluie（umbrella for rain）、lighthouse→phare（lighthouse; lantern…），存進單字本後 20 秒內有意思（FR16、FR17）。chien、chaise、pain、pomme、bicyclette 不變。iPad 只讀，不能存照片字，所以照片辨識只在模擬器測。 | — | — | 模擬器 |
+| #1289 | 通過 | 同 #1280：umbrella 不再是 ombrelle、lighthouse 不再是 fanal。 | — | — | 模擬器 |
+| #1302 | 通過 | FR01：iPad 和模擬器各開 9 個單字本頁，沒有中文。maison 的詞庫照片標籤顯示英文意思（maison house、amas pile, heap…），沒有「待補齊」字樣。 | docs/mac_verify_shots/2026-11-25/m1104_ipad_wb_maison_photos.png | — | iPad＋模擬器 |
+| #1308 | 注意 | Windows 說是啟動時詞庫還沒載入完。這輪模擬器 FR00 讀到版本 f176a10f…（24.4 MB）；iPad 仍讀到空的。查字等功能正常。 | — | 低 | iPad＋模擬器 |
+| #1311 | 注意 | 卡上要 iPad 重新下載 fr-en 詞庫比對雜湊。Mac 規則是 iPad 只讀、不改 owner 資料，所以沒有在 iPad 重新下載；要比對請 owner 決定或在模擬器比。 | — | — | — |
+| #1320 | 注意 | 同 #1308：iPad 版本仍是空的，沒有重新同步（iPad 只讀）。 | — | 低 | iPad |
+| #1313 | 注意 | Windows 還在修（只找到原因）。這輪英文模擬器 beautiful 仍是「美人（也可用作稱呼）」，複習卡背面沒中文（EN05）；dog 的單字頁第一個意思是「追捕」。 | — | 中 | 模擬器 |
+| #1321 | 注意 | 與 #1313 同一問題，結果同上。 | — | — | 模擬器 |
+| #1314 #1318 #1312 #5 #224 #227 #496 #226 #1315 | 注意 | 這些卡只有 Windows 的測試、模擬或不處理結論，App 沒有可在裝置上驗的改動；Mac 這輪三次測試都沒有例外（FR99、EN99）。 | — | — | — |
+| 搜尋排序 | 通過 | iPad 法文 maison、chien、aller、parler、chat 都排第 1（M1103 時 iPad 仍是 32、5、4、23、12）；法文模擬器、英文模擬器也都排第 1。 | — | — | iPad＋模擬器 |
+| 法文相片冊 | 通過 | iPad 和模擬器都列出 9 個 fr-…-photos；模擬器下載 fr-travel-photos，38 字都在單字本，29 字有圖。 | — | — | iPad＋模擬器 |
+| 單字本頁標題 #1281 | 不通過 | FR23：單字本頁的動詞、形容詞標題仍加名詞冠詞和複數：aller=「l'aller m. plural · allers」，parler、être、manger、beau、grand 同樣。詞庫頁標題正常（FR06）。iPad、模擬器相同。 | docs/mac_verify_shots/2026-11-25/m1104_ipad_wb_aller_title.png | 中 | iPad＋模擬器 |
+| ne／la 卡 #1294 | 不通過 | FR12：ne 音標仍是 /nɔ.ʁɛst/，詞性變成 Other，第 1 義是空的，第 2 義是「see usage notes)」；la 仍沒有例句。 | docs/mac_verify_shots/2026-11-25/m1104_sim_card_ne.png | 中 | iPad＋模擬器 |
+| 代動詞 FR21 | 不通過 | 單字本 être、詞庫頁 prendre 仍顯示代動詞變位（je me suis、je me prends）。 | — | 中 | iPad＋模擬器 |
+| héros FR07 #1236 | 不通過 | héros 仍有中文說明「h aspiré：不連音、不省略（le héros，不是 l'héros）」。 | — | 低 | iPad＋模擬器 |
+| iPad 還原 | 通過 | iPad 只讀跑完，沒有例外；平常版 App 07:40 已裝回並開啟。 | — | — | iPad |
