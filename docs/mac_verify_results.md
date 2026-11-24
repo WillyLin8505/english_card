@@ -3329,3 +3329,18 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #1236 héros 說明 | 不通過 | FR07：英文介面 héros 詞庫頁仍有中文「h aspiré：不連音、不省略（le héros，不是 l'héros）」。 | docs/mac_verify_shots/2026-11-24/m1100_ipad_db_heros.png | 中 | iPad＋模擬器 |
 | 6) 離線精簡字典 | 通過 | d'abord、faire、prendre 各 6 義；mangeons、publia、boulangerie、parapluie 都查得到。 | — | — | iPad＋模擬器 |
 | iPad 還原 | 通過 | iPad 只讀跑完（158 秒，沒有例外），平常版 App 23:33 已裝回並開啟。 | — | — | iPad |
+
+## M1101 卡 #1252 #1256 #1272（commit c421788f）：iPad 唯讀＋模擬器全新安裝
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1256 | 通過 | iPad：單字本頁 aller、parler、être、finir、manger 都有變位表且含 passé composé，beau、grand 有形容詞表（FR02／FR03，上一版沒有）；例句 45 句都有播放鈕。模擬器 être、finir、manger 有變位表；aller、parler 打開時全新安裝的 3000 字還在補意思（頁面寫 Missing: English meaning…），測試時機造成，不算。 | docs/mac_verify_shots/2026-11-25/m1101_ipad_wb_etre_1.png | — | iPad＋模擬器 |
+| #1256 單字本頁標題 | 不通過 | 單字本頁新的標題跟詞庫頁一樣取了名詞的形式：動詞 aller 顯示「l'aller m. plural allers」（FR06 同一原因，現在單字本頁也出現）；名詞 maison「la maison f. plural maisons」正確。 | docs/mac_verify_shots/2026-11-25/m1101_ipad_wb_aller_title.png | 中 | iPad |
+| #1256 être 變位表 | 不通過 | être 的變位表顯示「pronominal verb、auxiliary être」，現在式「je me suis」（應為 je suis）。原因：新的 fr-en 詞庫（created_at f1906b84…）把 1159 個動詞裡 305 個標成 fr_pronominal=yes，含 A1／A2 的 être、faire、pouvoir、prendre、dire、penser、devoir、vouloir 等 165 個；App（french_detail.dart:187-202）見到這個欄位就把整張表做成代動詞、助動詞改成 être。建議：詞庫只在 lemma 本身是 se／s' 開頭時標代動詞，App 也只在 lemma 是 se／s' 開頭時套用。Mac 測試已加 FR21 檢查。 | docs/mac_verify_shots/2026-11-25/m1101_ipad_wb_etre_1.png | 高 | iPad＋模擬器 |
+| #1252 照片新字意思 | 通過 | FR17（上一版是空的）：照片新加的 bicyclette=bicycle、ombrelle=umbrella、saxophone=saxophone，20 秒內都有意思（#1723 修好）。 | — | — | 模擬器 |
+| #1252 單字本頁照片標籤 | 不通過 | FR01：英文介面單字本頁（maison、chat、manger）的詞庫照片區出現中文「Unrated: demeure · {N}意思待補齊」，{N} 沒換掉。原因：database_image_data.dart:64-66 的「單字待補齊」「{N}意思待補齊」沒經過翻譯；新詞庫裡 demeure、saute、palme 等字的 native 是空的（英文解釋其實有），所以現在才露出來。 | （iPad、模擬器 log） | 中 | iPad＋模擬器 |
+| #1252 首次設定認字頁 | 不通過 | 全新安裝英文母語學法文，認字測驗頁副標題是中文「一次只看 3 個字。」。原因：這版把 onboarding_screen.dart:588 的副標題改短，ui_catalog 只有舊的整句，查不到翻譯。其餘首次設定 7 項全過（教學卡已拿掉，所以檢查變少）。 | docs/mac_verify_shots/2026-11-25/m1101_sim_onboard_quiz_zh.png | 中 | 模擬器 |
+| #1252 其餘法文清單 | 不通過 | 和 M1100 相同仍不通過：FR06 詞庫頁動詞標題加名詞冠詞；FR07 #1236 héros 中文說明；FR09 搜尋排序（iPad maison 32/58）；FR12 ne 卡是 NE 縮寫、la 卡沒有例句；FR14 沒有法文相片冊；FR15 umbrella→ombrelle、lighthouse→fanal。通過：詞庫頁變位表、形容詞表、例句字可點 30/30、離線精簡字典、複習卡沒有中文且讀音為法文真人錄音、複習 10 張評分寫入 10 筆。 | （log） | 中 | iPad＋模擬器 |
+| #1252 詞庫版本 | 注意 | 伺服器已換新的 fr-en 詞庫（模擬器下載到 created_at f1906b84…，20 MB，7946 個詞條）；兩台測試開始時 App 讀到的詞庫版本都是空的，可能正在換新詞庫。 | — | 低 | iPad＋模擬器 |
+| #1272 | 注意 | 只有 Windows 電腦記憶體，沒有 App 改動，Mac 沒有可驗的。 | — | — | — |
+| iPad 還原 | 通過 | iPad 只讀跑完（164 秒，沒有例外），平常版 App 00:33 已裝回並開啟（新版會依 #1732 移除舊的範例照片）。 | — | — | iPad |
