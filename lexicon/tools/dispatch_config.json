@@ -105,7 +105,12 @@
   "_night_simulation_note": "owner 11/03：晚上沒在用電腦，夜間一直模擬使用者、發現問題就開卡。模擬卡在 window 內每張最多每 cooldown_hours 小時跑一次（白天仍 12 小時），發現的問題照常變成問題回報、由 issue swarm 開卡修。Mac 在 iPad 上的夜間模擬見 docs/mac_inbox.md。owner 11/10：#1065（夜間 Qwen 抓圖補缺）也照這個規則，夜裡每小時一輪。",
   "night_safe_stop": "06:45",
   "goals": {
-    "fr_en": {"enabled": true, "every_hours": 3, "stuck_hours": 12, "card": 1035}
+    "fr_en": {
+      "enabled": true,
+      "every_hours": 3,
+      "stuck_hours": 12,
+      "card": 1035
+    }
   },
   "_goals_note": "owner 11/10：「設定目標，自動偵測還有什麼沒做，而不要每次都是我下指令」。dispatch_tick 每輪叫 lexicon/tools/goal_check.py run，到時間（every_hours）才量：清單 lexicon/docs/goals/fr_en_usable.md；沒過的資料／相片冊項目開 [目標 法文] 問題回報，[owner]／法文卡卡住 stuck_hours 以上排回待辦（每張每天一次、最多三次），分數寫在卡 card（skip_tasks 裡，不派 CLI）。",
   "finish_grace_minutes": 10,
@@ -216,9 +221,22 @@
   "launch_schedule": {
     "enabled": true,
     "windows": [
-      {"days": "mon-fri", "from": "09:30", "to": "19:30"},
-      {"days": "all", "from": "01:00", "to": "07:00"}
+      {
+        "days": "mon-fri",
+        "from": "09:30",
+        "to": "19:30"
+      },
+      {
+        "days": "all",
+        "from": "01:00",
+        "to": "07:00"
+      }
     ]
   },
-  "_launch_schedule_note": "owner 11/11 「開卡的時間是平日早上九點半到晚上七點半，再從凌晨一點開到早上七點」：只在這兩個時段（台北）派新的 CLI（卡片、問題回報、tag_fallback 的 Codex/Cursor）。時段外照常收卡、量目標、開問題回報，已在跑的 CLI 做完為止。days：all／mon-fri／sat-sun。夜間時段每天都開（週末也開）；夜間卡另外照 night_last_launch。"
+  "_launch_schedule_note": "owner 11/11 「開卡的時間是平日早上九點半到晚上七點半，再從凌晨一點開到早上七點」：只在這兩個時段（台北）派新的 CLI（卡片、問題回報、tag_fallback 的 Codex/Cursor）。時段外照常收卡、量目標、開問題回報，已在跑的 CLI 做完為止。days：all／mon-fri／sat-sun。夜間時段每天都開（週末也開）；夜間卡另外照 night_last_launch。",
+  "resource_guard": {
+    "limit_pct": 95.0,
+    "release_pct": 93.0,
+    "_note_1124": "owner 11/24 22:30「开卡去做」：記憶體 92%（doc-explainer 11 GB，老闆說不要關），上限暫時 80→95%。記憶體回到 80% 以下後改回（刪掉 limit_pct/release_pct）。"
+  }
 }
