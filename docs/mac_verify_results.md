@@ -3344,3 +3344,15 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #1252 詞庫版本 | 注意 | 伺服器已換新的 fr-en 詞庫（模擬器下載到 created_at f1906b84…，20 MB，7946 個詞條）；兩台測試開始時 App 讀到的詞庫版本都是空的，可能正在換新詞庫。 | — | 低 | iPad＋模擬器 |
 | #1272 | 注意 | 只有 Windows 電腦記憶體，沒有 App 改動，Mac 沒有可驗的。 | — | — | — |
 | iPad 還原 | 通過 | iPad 只讀跑完（164 秒，沒有例外），平常版 App 00:33 已裝回並開啟（新版會依 #1732 移除舊的範例照片）。 | — | — | iPad |
+
+## M1102 卡 #1281 #496（commit 41d069d5）：iPad 唯讀
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1281 | 通過 | 詞庫頁標題只剩原形：aller、parler、finir、prendre（動詞）、beau、grand（形容詞）都不再帶 l'／le 和 m.／plural；héros（名詞）仍是「le héros m.」。 | docs/mac_verify_shots/2026-11-25/m1102_ipad_db_aller_title.png | — | iPad |
+| #1281 單字本頁標題 | 不通過 | 單字本頁（WordDetailScreen）的標題沒有一起改：動詞 aller 仍是「l'aller m. plural allers」。這次只改了 database_word_detail.dart；單字本頁的標題也要只在名詞時取陰陽性和複數。 | docs/mac_verify_shots/2026-11-25/m1102_ipad_wb_aller_title.png | 中 | iPad |
+| #496 | 通過 | FR22：détailler 詳情頁（74 段文字）、trou de balle 詳情頁（22 段文字）捲完整頁，沒有版面例外。 | docs/mac_verify_shots/2026-11-25/m1102_ipad_db_detailler.png | — | iPad |
+| #496 代動詞變位 | 不通過 | FR21：單字本頁 être、詞庫頁 prendre 的變位表變成代動詞（je me suis／je me prends）。原因見 M1101：新詞庫 305 個動詞標 fr_pronominal=yes，french_detail.dart:187-202 就整張做成代動詞。 | docs/mac_verify_shots/2026-11-25/m1101_ipad_wb_etre_1.png | 高 | iPad |
+| #496 其餘 | 不通過 | 和 M1101 相同：FR01 單字本頁照片標籤出現中文「{N}意思待補齊」（maison、chat）；FR07 #1236 héros 中文說明；FR09 搜尋排序；FR12 ne／la 卡。通過：單字本頁變位表含 passé composé、形容詞表、詞庫頁變位表、例句字可點 30/30、例句 45 句都有播放鈕、精簡字典、複習卡沒有中文、讀音為法文真人錄音、沒有例外。 | （log） | 中 | iPad |
+| 伺服器 | 注意 | 測試時 api.willylinai.com 逾時（Mac 用 curl 也 15 秒沒回應）：App 顯示「The dictionary didn't update this time…」，卡片集讀不到（FR14 這次不算）。模擬器全新安裝要下載詞庫，等伺服器恢復再跑。 | docs/mac_verify_shots/2026-11-25/m1102_ipad_db_detailler.png | 中 | iPad |
+| iPad 還原 | 通過 | iPad 只讀跑完（196 秒，沒有例外），平常版 App 01:01 已裝回並開啟。 | — | — | iPad |
