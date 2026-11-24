@@ -631,7 +631,11 @@ class WordDatabaseRepository extends ChangeNotifier {
     }
     final status = filter.status;
     if (status != null) rows.removeWhere((r) => r.status != status);
-    rows.sort((a, b) => compareRows(filter.sort, a, b));
+    rows.sort((a, b) {
+      final r = searchRank(filter.search, a.entry)
+          .compareTo(searchRank(filter.search, b.entry));
+      return r != 0 ? r : compareRows(filter.sort, a, b);
+    });
     return rows;
   }
 

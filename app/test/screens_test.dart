@@ -566,7 +566,7 @@ void main() {
         (tester) async {
       // 卡 #389／#375：401 的說明句帶「（設定 → 照片辨識連線）」，結果列不顯示它。
       await check(tester, MockClient((r) async => jsonResponse({}, 401)),
-          '✕ API Key 不正確');
+          '✕ API Key 不正確或還沒填，要先在設定填辨識金鑰');
       expect(find.textContaining('（設定 → 照片辨識連線）'), findsNothing);
     });
 

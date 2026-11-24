@@ -254,6 +254,18 @@ bool matchesSearch(String query, WordEntry e, Iterable<Photo> photos) {
   return haystack.any((s) => s != null && s.toLowerCase().contains(q));
 }
 
+/// How well the headword matches a search: 0 exact, 1 prefix, 2 contains in
+/// the word, 3 only matched elsewhere (meaning, examples...). Card #1288.
+int searchRank(String query, WordEntry e) {
+  final q = query.trim().toLowerCase();
+  if (q.isEmpty) return 0;
+  final w = e.word.toLowerCase();
+  if (w == q) return 0;
+  if (w.startsWith(q)) return 1;
+  if (w.contains(q)) return 2;
+  return 3;
+}
+
 int compareRows(SortOrder sort, DatabaseRow a, DatabaseRow b) {
   switch (sort) {
     case SortOrder.alphabetical:
