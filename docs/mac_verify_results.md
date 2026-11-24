@@ -3272,3 +3272,39 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #1248 | 通過 | iPad（學法文 fr/en，唯讀）：App 讀到新版 compact_fr_en.sqlite（28815360 bytes，大小變了所以會重新複製）。精簡字典頁 d'abord 由 3 義變 6 義（多了 annoyed emphasis／immediately／in that case, then），faire、prendre、bien 都是 6 義，chat 4 義、maison 3 義；publia 正確顯示原形 publier 的意思。全庫比對：357234 字不變，9069 字的說明變長，3 義以上的原形字 4960 → 6102；頁面上沒有中文。 | docs/mac_verify_shots/2026-11-23/1248_dabord.png、1248_faire.png、1248_prendre.png | — | iPad |
 | #1248 | 通過 | 模擬器快速檢查：同一份字典，d'abord／faire／prendre 都查得到 6 義。 | （模擬器，無截圖） | — | 模擬器 |
 | #1248 | 注意 | 兩個小地方：(1) 同形動詞那行只寫「(verb) first/third-person singular present indicative/subjunctive」，沒說是哪個動詞的變位（aile、aiguille、aire、adresse 都有，舊版就有），讀者看不懂；建議寫成「… of ailer」或拿掉。(2) 有 535 條義項超過 120 字（最長 128，含詞性前綴與省略號），和卡上寫的每義 120 字差一點，影響很小。另：單字本裡的法文字詳情頁資料少（近義詞每字 0.6 個、相關詞 0.8、衍生詞 0.5，英文分別 5.1／6.0／4.1；構詞只有 13%），這是詞庫資料，不是精簡字典，已告知 Windows。 | （詞庫統計，無截圖） | 低 | Mac |
+
+## 2026-11-23 卡 #1251 法文學習者清單（iPad 唯讀＋模擬器全新安裝）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1251 | 通過 | 1) 首次設定：模擬器全新安裝，選學法文、母語英文 → 程度、目的、認字三題 → 推薦卡片集 6 秒出現，加入 French Basic 3000 Words 後進主畫面，單字 3000、詞庫 fr/en 已下載；引導頁全英文。 | docs/mac_verify_shots/2026-11-23/1251_sim_onboarding.png | — | 模擬器 |
+| #1251 | 通過 | 2) 照片辨識與加入：模擬器沒有 Apple Vision，用 App 的測試接口給英文標籤（dog、chair、bicycle、umbrella、bread、apple、corkscrew、saxophone、lighthouse）→ 照片詳情出現 9 個法文字 chien、chaise、bicyclette、pain、pomme、ombrelle、tire-bouchon、saxophone、fanal；按儲存後單字本新增 tire-bouchon、saxophone、fanal 三個字。 | docs/mac_verify_shots/2026-11-23/1251_sim_photo.png | — | 模擬器 |
+| #1251 | 注意 | 2) 照片加字的品質：umbrella→ombrelle（陽傘，雨傘應是 parapluie）、lighthouse→fanal（燈籠／信號燈，燈塔應是 phare）；新加的 tire-bouchon、saxophone、fanal 幾分鐘後在單字本裡意思仍是空的（模擬器有網路）。 | （模擬器 log） | 中 | 模擬器 |
+| #1251 | 不通過 | 3) 單字詳情（單字本裡的字）：iPad 與模擬器 aller、parler、maison、beau、grand 都沒有變位表與形容詞變化表，只有舊的 Inflections；être 只有簡短變位、沒有 passé composé（已知 #1703、#1698）。例句、播放鈕（首屏 5 個）、Piper／錄音都正常，無中文。 | docs/mac_verify_shots/2026-11-23/1251_ipad_dict_pages.png | 高 | iPad |
+| #1251 | 通過 | 3) 詞庫頁（點例句裡不在單字本的字會開的頁）：aller、parler、finir、prendre 有完整變位表含 passé composé 與助動詞；grand 有形容詞變化（grande…）；maison 顯示 la maison f.、複數 maisons。例句的字約 9 成可點（aller 36 個字 31 個、parler 32/29、maison 36/30），只有 l'、d'、J'、s'、N' 這類省略形與人名沒連結；點後開精簡字典頁或詞庫頁。 | docs/mac_verify_shots/2026-11-23/1251_ipad_dict_pages.png | — | iPad |
+| #1251 | 不通過 | 3) 詞庫頁標題用了名詞的冠詞與複數：動詞 aller 標題是「l'aller m. plural allers」、parler 是「le parler m. plural parlers」，形容詞 beau「le beau m. plural beaux」、grand「le grand m. plural grands」；這些字主要詞性是動詞／形容詞，不該加 le/l' 與陽性名詞的複數（finir、prendre 正常）。beau 第一個意思排的是名詞 boyfriend。 | docs/mac_verify_shots/2026-11-23/1251_ipad_dict_pages.png | 中 | iPad |
+| #1251 | 通過 | 4) 複習：模擬器 15 張（sentenceCloze 7、textChoice 5、similarMatch 2、photoChoice 1）翻卡、評分都成功；背面意思、例句、例句播放正常，15 次發音全是法文錄音（機器朗讀 0 次），正反面都沒中文。 | （模擬器 log） | — | 模擬器 |
+| #1251 | 不通過 | 4) 複習背面 ne 連錯詞條：ne 的背面顯示 /nɔ.ʁɛst/、Noun「abbreviation of nord-est／NE」，應是否定副詞 ne（/nə/）。la 背面意思重複兩次「her, it (direct object)」且寫「No example for this word yet」。 | （模擬器 log） | 中 | 模擬器 |
+| #1251 | 不通過 | 5) 單字本搜尋排序：搜尋會比對例句與翻譯，結果照字母排，打的字本身排很後面：搜 maison 共 88 筆，maison 排第 51；chien 排第 10／46；tire 排第 93／113；aller 排第 5。建議完全相同或開頭相同的字排最前面。 | docs/mac_verify_shots/2026-11-23/1251_sim_search.png | 中 | 模擬器 |
+| #1251 | 注意 | 5) 相片冊下載：法文卡片集 37 個，種類全部是 words（包括 French Animal Photo Deck、French Kitchen Photo Deck 等 9 個標題叫 Photo Deck／Photo Album 的），沒有 photos 種類可下載成相片冊；請確認法文是否該有相片冊。 | （模擬器 log） | 中 | 模擬器 |
+| #1251 | 不通過 | 6) 英文介面中文：iPad 詞庫頁 héros 標題下仍顯示「h aspiré：不連音、不省略（le héros，不是 l'héros）」（同 #1236）。其他頁面與複習背面無中文。 | docs/mac_verify_shots/2026-11-23/1251_ipad_dict_pages.png | 中 | iPad |
+| #1251 | 通過 | 6) 離線精簡字典：App 內建檔案直接查，不需網路：mangeons→to eat、publia→to publish、d'abord→first…、boulangerie→bakery、parapluie→umbrella for rain。 | （iPad log） | — | iPad |
+
+## 2026-11-24 法文、英文完整重測（新的一鍵重測，iPad 唯讀＋模擬器全新安裝）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| 法文重測 | 通過 | 模擬器全新安裝（英文母語學法文，加入 French Basic 3000）與 iPad 唯讀都跑完同一套 FR 檢查：首次設定 16 項全過；單字本頁沒有中文；詞庫頁動詞變位表含 passé composé（aller、parler、finir、prendre）；例句裡的字 30/30 可點並能開頁；離線精簡字典 d'abord、faire、prendre 各 6 義；6 張複習卡背面沒有中文、讀音全是法文真人錄音；照片辨識存檔後加進單字本；複習 10 張評分都寫入紀錄。 | docs/mac_fr_root_causes_2026-11-23.md | — | 模擬器＋iPad |
+| #1703 #1698 | 不通過 | FR02／FR03：單字本頁（aller、parler、être、manger、beau、grand）沒有動詞變位表和形容詞表，iPad 與模擬器相同。原因：卡 #1220 只接在詞庫頁，WordDetailScreen 沒有引用 FrenchVerbSection／FrenchAdjectiveSection；詞庫資料齊全。修法見原因文件。 | docs/mac_verify_shots/2026-11-24/fr_ipad_wb_aller.png | 高 | 模擬器＋iPad |
+| 法文詞庫頁標題 | 不通過 | FR06：動詞、形容詞頁標題用了名詞形式：aller「l'aller m. plural allers」、parler「le parler m.」、beau「le beau m.」、grand「le grand m.」。原因：database_word_detail.dart 把所有詞性的形式合在一起取陰陽性和複數。 | docs/mac_verify_shots/2026-11-24/fr_db_aller_title.png | 中 | 模擬器＋iPad |
+| 法文詞性排序 | 不通過 | FR05：beau 的主詞性被排成名詞 boyfriend，形容詞變成少用（法文詞庫 912 個次要詞性全被標少用），所以 beau 的詞庫頁、單字本頁、複習卡都先顯示 boyfriend，也沒有形容詞表；manger 同樣名詞在前。屬詞庫建置端。 | （模擬器 log） | 中 | 模擬器＋iPad |
+| #1236 | 不通過 | FR07：英文介面 héros 頁仍有中文「h aspiré：不連音、不省略（le héros，不是 l'héros）」。原因：翻譯放在 ui_catalog.dart 的 _templateCopy 而不是 uiCatalog，且撇號 ' 和 ’ 不同，查不到。 | docs/mac_verify_shots/2026-11-24/fr_ipad_db_heros.png | 中 | 模擬器＋iPad |
+| 搜尋排序 | 不通過 | FR09／EN03：打的字排很後面。法文 iPad：maison 32/58、chien 5/25、parler 23/45；英文模擬器：dog 12/34、run 58/81、house 39/88。原因：搜尋只篩選、照字母排，沒有完全相同優先。 | （log） | 中 | 模擬器＋iPad |
+| ne／la 卡 | 不通過 | FR12：ne 的卡是縮寫 NE（東北，/nɔ.ʁɛst/）：詞庫根本沒有否定詞 ne（建置時詞性表沒有 particle，且 NE 與 ne 大小寫合併）。la 的卡顯示冠詞意思卻讀代名詞的例句（空的），同樣情況 13 個字（de、un、pas、bien…）。 | docs/mac_verify_shots/2026-11-24/fr_ipad_card_ne.png | 中 | 模擬器＋iPad |
+| 法文相片冊 | 不通過 | FR14：37 個法文卡片集沒有一個是相片冊（伺服器沒有 kind=photos 的法文卡片集，叫 Photo Deck 的也是單字集）。需 owner 決定法文要不要有真的照片相片冊。 | （log） | 低 | 模擬器＋iPad |
+| 照片翻譯 | 不通過 | FR15：umbrella→ombrelle（應 parapluie）、lighthouse→fanal（應 phare）。原因：內建對照表 vision_fr.json 由精簡字典反查產生，parapluie 的解釋是「umbrella for rain」搶不到 umbrella，phare 被標成形容詞。 | （模擬器 log） | 中 | 模擬器 |
+| 照片新字意思 | 不通過 | FR17：照片新加的 bicyclette、ombrelle、saxophone 意思是空的。原因：存檔時有寫入英文意思，但詞條沒標母語，WordEnricher 當成舊的中文資料清掉，只試一次不再補（只影響 fr-en 詞庫沒有的字）。 | （模擬器 log） | 高 | 模擬器 |
+| 英文重測 | 通過 | 模擬器全新安裝（中文母語學英文）：首次設定 16 項全過；單字頁有中文意思與音標、沒有法文；例句字 36/36、28/28 可點；離線英中精簡字典查得到；讀音是英文；有英文相片冊並可下載（水果與蔬菜圖片集，照片 1→13）；照片辨識給中文意思、存檔後 20 秒內有意思；複習 10 張評分都寫入紀錄。法文的改動沒有影響英文。 | （模擬器 log） | — | 模擬器 |
+| 英文單字主意思 | 注意 | 單字本存的意思用了次要詞性：dog 存成「追捕」（動詞 to dog，程度 B2），beautiful 存成「美人」；單字頁會先列形容詞 漂亮，但單字列表顯示的是存的意思。和法文 beau 同一類詞性排序問題。 | docs/mac_verify_shots/2026-11-24/en_wb_dog.png | 中 | 模擬器 |
+| iPad 執行 | 注意 | iPad 第一次重測跑到第 2 個單字頁後停住 8 分鐘沒有新記錄，停掉重跑一次就完整跑完（156 秒）。之後平常版 App 已裝回並開啟。 | — | — | iPad |
+| 新用戶提案 | 注意 | 新用戶走查 13 項改進提案已對照程式碼與既有決定複查，見 docs/mac_ux_proposals_2026-11-23.md：7 項小改動可直接做（例如加入單字集後落在拍照分頁、教學卡指錯位置、1 words 單數），6 項需 owner 決定。 | docs/mac_ux_proposals_2026-11-23.md | — | 模擬器 |
