@@ -67,8 +67,19 @@ class DatabaseWordScreen extends StatelessWidget {
         // Card #1220: the French blocks read every form (je/il share one).
         final french = (pack.target ?? 'en') == 'fr';
         final allForms = [for (final usage in usages) ...usage.forms];
-        final frGender = french
-            ? allForms.where((f) => f.field == 'fr_gender').firstOrNull?.form
+        // Card #1286: the title reads only the forms of this entry's own part
+        // of speech (aller the verb must not take 「l'aller m.」 from a noun usage).
+        final posUsages = usages.where((u) => u.pos == word.pos);
+        final titleForms = posUsages.isEmpty
+            ? allForms
+            : [for (final u in posUsages) ...u.forms];
+        // Card #1281: only nouns get 「le/la …」 + gender + plural in the title;
+        // a verb or adjective that carries fr_gender stays a bare lemma.
+        final frGender = french &&
+                word.pos != 'verb' &&
+                !word.pos.startsWith('adj') &&
+                !word.pos.startsWith('adv')
+            ? titleForms.where((f) => f.field == 'fr_gender').firstOrNull?.form
             : null;
         final frVerb = french && word.pos == 'verb'
             ? frenchVerbFrom(word.lemma, allForms)
@@ -77,7 +88,7 @@ class DatabaseWordScreen extends StatelessWidget {
             ? frenchAdjectiveFrom(word.lemma, allForms)
             : null;
         final frPlural = french && frGender != null
-            ? allForms.where((f) => f.field == 'fr_plural').firstOrNull?.form
+            ? titleForms.where((f) => f.field == 'fr_plural').firstOrNull?.form
             : null;
         final frShown = {
           // h muet (0/false/no) is the default: no chip; h aspiré shows the label only.
@@ -87,6 +98,8 @@ class DatabaseWordScreen extends StatelessWidget {
                     .contains(f.form.toLowerCase()))
               'fr_h_aspire',
           if (frGender != null) 'fr_gender',
+          if (french && frGender == null) 'fr_gender',
+          if (french && frGender == null && word.pos == 'verb') 'fr_plural',
           if (frPlural != null) 'fr_plural',
           if (frVerb != null) ...[
             for (final f in allForms)

@@ -57,7 +57,9 @@ class FrenchTitle extends StatelessWidget {
           Row(children: [
             UiText('複數', style: MFont.caption),
             Text(' · ', style: MFont.caption),
-            Text(plural!, key: const ValueKey('fr-plural'), style: MFont.body),
+            Flexible(
+                child: Text(plural!,
+                    key: const ValueKey('fr-plural'), style: MFont.body)),
           ]),
         ],
         if (hAspire == true) ...[
@@ -139,12 +141,15 @@ class _FrenchVerbSectionState extends State<FrenchVerbSection> {
               if (v.presentParticiple != null)
                 Row(mainAxisSize: MainAxisSize.min, children: [
                   UiText('現在分詞', style: MFont.caption),
-                  Text('  ${v.presentParticiple}', style: MFont.body),
+                  Flexible(
+                      child:
+                          Text('  ${v.presentParticiple}', style: MFont.body)),
                 ]),
               if (v.pastParticiple != null)
                 Row(mainAxisSize: MainAxisSize.min, children: [
                   UiText('過去分詞', style: MFont.caption),
-                  Text('  ${v.pastParticiple}', style: MFont.body),
+                  Flexible(
+                      child: Text('  ${v.pastParticiple}', style: MFont.body)),
                 ]),
             ]),
           ),
