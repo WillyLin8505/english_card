@@ -3308,3 +3308,24 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 英文單字主意思 | 注意 | 單字本存的意思用了次要詞性：dog 存成「追捕」（動詞 to dog，程度 B2），beautiful 存成「美人」；單字頁會先列形容詞 漂亮，但單字列表顯示的是存的意思。和法文 beau 同一類詞性排序問題。 | docs/mac_verify_shots/2026-11-24/en_wb_dog.png | 中 | 模擬器 |
 | iPad 執行 | 注意 | iPad 第一次重測跑到第 2 個單字頁後停住 8 分鐘沒有新記錄，停掉重跑一次就完整跑完（156 秒）。之後平常版 App 已裝回並開啟。 | — | — | iPad |
 | 新用戶提案 | 注意 | 新用戶走查 13 項改進提案已對照程式碼與既有決定複查，見 docs/mac_ux_proposals_2026-11-23.md：7 項小改動可直接做（例如加入單字集後落在拍照分頁、教學卡指錯位置、1 words 單數），6 項需 owner 決定。 | docs/mac_ux_proposals_2026-11-23.md | — | 模擬器 |
+
+## M1100 卡 #1252 法文清單（問題回報 #1704）：iPad 唯讀＋模擬器全新安裝
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| 1) 首次設定、下載詞庫 | 通過 | 模擬器全新安裝（英文母語學法文，加入 French Basic 3000）首次設定 16 項全過；下載的 fr-en 詞庫 19.0 MB，版本 dc92ac17…（manifest created_at 欄位）。 | — | — | 模擬器 |
+| 1) iPad 詞庫版本 | 注意 | iPad 上的 fr-en 詞庫是下載的、19.0 MB，但版本是 6d12217e…，和模擬器剛下載的 dc92ac17… 不同：iPad 的詞庫可能沒有更新到伺服器現在的版本。 | — | 低 | iPad |
+| 2) #1217 照片辨識 | 不通過 | FR15：照片辨識出法文字，但 umbrella→ombrelle（應 parapluie）、lighthouse→fanal（應 phare）；其他 chien、chaise、pain、pomme 正確。原因：vision_fr.json 對照表由精簡字典反查產生。 | （模擬器 log） | 中 | 模擬器 |
+| 2) #1217 加入單字本 | 通過 | FR16：存檔後 bicyclette、ombrelle、saxophone 加進單字本。（iPad 只讀，加字在模擬器做） | — | — | 模擬器 |
+| 2) 照片新字意思 | 不通過 | FR17：照片新加的 bicyclette、ombrelle、saxophone 20 秒內意思仍是空的。原因：新詞條沒標 translatedFor，WordEnricher 把意思清掉（只影響 fr-en 詞庫沒有的字）。 | （模擬器 log） | 高 | 模擬器 |
+| 3) 單字詳情：釋義、例句、發音 | 通過 | 單字本 8 頁沒有中文；例句裡的字 30/30 可點並能開頁（#1218）；頁面上 40 句例句旁都有播放鈕（#1228）；6 張卡讀音都是法文真人錄音；詞庫頁 aller、parler、finir、prendre 變位表含 passé composé，beau、grand 有形容詞表。 | docs/mac_verify_shots/2026-11-24/m1100_ipad_wb_aller_play.png | — | iPad＋模擬器 |
+| #1703 #1698 單字本頁變位表 | 不通過 | FR02／FR03：單字本頁 aller、parler、être、manger 沒有變位表，beau、grand 沒有形容詞表（不是不全，是整個沒有；詞庫頁有）。原因：WordDetailScreen 沒有引用 FrenchVerbSection／FrenchAdjectiveSection。 | docs/mac_verify_shots/2026-11-24/m1100_ipad_wb_aller.png | 高 | iPad＋模擬器 |
+| 3) 冠詞／詞性標題 | 不通過 | FR06：動詞、形容詞的詞庫頁標題加了名詞冠詞與複數：aller「l'aller m. plural allers」、parler「le parler m.」、beau「le beau m. plural beaux」、grand「le grand m.」。 | docs/mac_verify_shots/2026-11-24/m1100_ipad_db_aller.png | 中 | iPad＋模擬器 |
+| 4) 複習翻卡、評分、背面 | 通過 | 6 張複習卡背面沒有中文、讀音法文；模擬器複習 10 張可翻卡評分，寫入 10 筆紀錄（填空 4、選字 4、照片選 1、相似字 1）。 | — | — | iPad＋模擬器 |
+| 4) ne／la 卡 | 不通過 | FR12：ne 的卡是縮寫 NE（abbreviation of nord-est，/nɔ.ʁɛst/）；la 的卡顯示冠詞意思但沒有例句。原因：詞庫沒有否定詞 ne；la 讀了代名詞的例句。 | docs/mac_verify_shots/2026-11-24/m1100_ipad_card_ne.png | 中 | iPad＋模擬器 |
+| 5) 單字本搜尋 | 不通過 | FR09：打的字排很後面。iPad：maison 第 32/58、parler 23/45、chat 12/23；模擬器：maison 51/88、parler 34/60。搜尋只篩選、照字母排。 | （log） | 中 | iPad＋模擬器 |
+| 5) #1210 相片冊下載 | 不通過 | FR14／FR19：37 個法文卡片集沒有一個是相片冊（伺服器沒有 kind=photos 的法文卡片集），沒有可下載的法文相片冊。需 owner 決定。 | （log） | 低 | iPad＋模擬器 |
+| 6) #1222 英文介面 | 通過 | 單字本頁、複習卡背面、照片辨識結果都沒有中文（唯一例外見下一列 #1236）。 | — | — | iPad＋模擬器 |
+| #1236 héros 說明 | 不通過 | FR07：英文介面 héros 詞庫頁仍有中文「h aspiré：不連音、不省略（le héros，不是 l'héros）」。 | docs/mac_verify_shots/2026-11-24/m1100_ipad_db_heros.png | 中 | iPad＋模擬器 |
+| 6) 離線精簡字典 | 通過 | d'abord、faire、prendre 各 6 義；mangeons、publia、boulangerie、parapluie 都查得到。 | — | — | iPad＋模擬器 |
+| iPad 還原 | 通過 | iPad 只讀跑完（158 秒，沒有例外），平常版 App 23:33 已裝回並開啟。 | — | — | iPad |
