@@ -609,7 +609,7 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_header('Vary', 'Origin')
             self.send_header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
             self.send_header('Access-Control-Allow-Headers', 'Content-Type, If-None-Match, Authorization, X-API-Key')
-            self.send_header('Access-Control-Expose-Headers', 'ETag')
+            self.send_header('Access-Control-Expose-Headers', 'ETag, X-Lexicon-Raw-Length')
             self.send_header('Access-Control-Allow-Private-Network', 'true')
 
     def proxy_tagger(self, body=None, timeout=115):
@@ -1247,7 +1247,8 @@ class Handler(SimpleHTTPRequestHandler):
         unchanged = matches_etag(self.headers.get('If-None-Match', ''), snapshot.etag)
         # format=sqlite (card #428): phones take the slim pack as one SQLite
         # file, or a JSON delta when they hold the previous version.
-        fmt = 'sqlite' if query.get('format', ['json'])[0] == 'sqlite' else 'json'
+        fmt = query.get('format', ['json'])[0]
+        fmt = fmt if fmt in ('sqlite', 'web') else 'json'
         body, ctype, gz = b'', 'application/json; charset=utf-8', False
         status = 304 if unchanged else 200
         pieces = None
@@ -1280,6 +1281,9 @@ class Handler(SimpleHTTPRequestHandler):
             if gz:
                 self.send_header('Content-Encoding', 'gzip')
             self.send_header('Content-Length', str(length if pieces is not None else len(body)))
+            if fmt == 'web' and gz:
+                # The browser inflates for us, so progress needs the inflated size (card #1269).
+                self.send_header('X-Lexicon-Raw-Length', str(int.from_bytes(body[-4:], 'little')))
         self.end_headers()
         if pieces is not None:
             for piece in pieces:

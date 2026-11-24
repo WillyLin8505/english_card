@@ -239,6 +239,9 @@ def build_prompt(level: str, lang: str = 'en', native: str = 'zh-TW',
     ]
     if exclude:
         lines.append('Do not repeat these words: ' + ', '.join(exclude[:40]) + '.')
+    if lang != 'en':
+        # Card 1270: said last, so the model does not answer in English and force a second call.
+        lines.append(f'Every "word" value must be written in {lang_name}, never in English.')
     lines.append('Reply with JSON only.')
     return '\n'.join(lines)
 
@@ -1248,7 +1251,7 @@ class Tagger:
             'exclude': sorted(w.strip().lower() for w in (exclude or []) if w.strip()),
             'prep': IMAGE_PREP_VERSION,
             # Card 806: non-English prompts/filters changed; English keys stay as they were.
-            **({'lang_policy': 'pack-v1'} if lang != 'en' else {})},
+            **({'lang_policy': 'pack-v2'} if lang != 'en' else {})},
             sort_keys=True).encode()
         cache_file = os.path.join(CACHE_DIR, hashlib.sha256(key_data).hexdigest() + '.json')
         # The cache holds the model's labels; the level filter and CEFR bands are applied

@@ -80,6 +80,7 @@ class Snapshot:
         self.sqlite_path = sqlite_path
         self._sqlite_bytes = None
         self._slim = None
+        self._slim_gz = None
         self._sqlite_lock = threading.Lock()
         self.sqlite_delta_from = None
         self.sqlite_delta_body = None
@@ -137,6 +138,32 @@ class Snapshot:
                         self._sqlite_bytes = target.read_bytes()
             return self._sqlite_bytes
 
+    def slim_json_gz(self):
+        """The slim pack as gzipped JSON for the web page (card #1269): ~75 MB
+        instead of the 600 MB full JSON that Cloudflare cut off after 90 s.
+        Built once per version into a file beside the snapshot."""
+        with self._sqlite_lock:
+            if self._slim_gz is None:
+                path = None
+                if self.sqlite_path:
+                    safe = ''.join(c if c.isalnum() else '_' for c in self.version)
+                    path = Path(self.sqlite_path).with_name(
+                        Path(self.sqlite_path).stem + '.' + safe + '.slim.json.gz')
+                if path is not None and path.is_file():
+                    self._slim_gz = path.read_bytes()
+                else:
+                    raw = json.dumps(self.slim, ensure_ascii=False, separators=(',', ':')).encode('utf-8')
+                    self._slim_gz = gzip.compress(raw, compresslevel=6, mtime=0)
+                    del raw
+                    if path is not None:
+                        tmp = path.with_suffix('.part')
+                        tmp.write_bytes(self._slim_gz)
+                        tmp.replace(path)
+                        for old in path.parent.glob(Path(self.sqlite_path).stem + '.*.slim.json.gz'):
+                            if old != path:
+                                old.unlink(missing_ok=True)
+            return self._slim_gz
+
     def representation(self, since, compressed):
         if since and since == self.delta_from:
             return self.delta_gzip if compressed else self.delta_body
@@ -146,6 +173,9 @@ class Snapshot:
         """(body, content type, gzipped?) for a GET. `fmt` 'sqlite' answers a
         phone: a JSON delta when it holds the previous version, else the
         whole SQLite file (its rows are already compressed, never gzipped)."""
+        if fmt == 'web':
+            gz = self.slim_json_gz()
+            return (gz, JSON_TYPE, True) if compressed else (gzip.decompress(gz), JSON_TYPE, False)
         if fmt == 'sqlite':
             if since and since == self.sqlite_delta_from:
                 return ((self.sqlite_delta_gzip if compressed else self.sqlite_delta_body),
