@@ -65,12 +65,18 @@ class TaggingQueue extends ChangeNotifier {
 
   /// Initially allow one minute per photo; adapt to this session's replies.
   /// An overdue request remains an estimate, never a false zero-second promise.
+  /// Upper bound for durations. Not `1 << 40`: on the web shifts are 32-bit,
+  /// so that is 0 and `clamp(1000, 0)` threw — every web photo was marked
+  /// failed right after recognition and the progress line crashed the page
+  /// to grey (owner 11/25 desktop simulation).
+  static const _maxMs = 1 << 30;
+
   Duration get estimatedRemaining {
     if (!hasWork) return Duration.zero;
     final average = _samples == 0 ? 60000 : _sampleMilliseconds ~/ _samples;
     if (_current == null) return Duration(milliseconds: pending * average);
     final currentLeft =
-        (average - _photoWatch.elapsedMilliseconds).clamp(10000, 1 << 40);
+        (average - _photoWatch.elapsedMilliseconds).clamp(10000, _maxMs);
     final queued = (_total - _completed - 1).clamp(0, 1 << 30);
     return Duration(milliseconds: currentLeft + queued * average);
   }
@@ -231,7 +237,7 @@ class TaggingQueue extends ChangeNotifier {
       final found = await _request(photo, level: level);
       _samples++;
       _sampleMilliseconds +=
-          _photoWatch.elapsedMilliseconds.clamp(1000, 1 << 40);
+          _photoWatch.elapsedMilliseconds.clamp(1000, _maxMs);
       final latest = repo.photo(photo.id);
       if (latest == null) return true;
       repo.updatePhoto(latest.copyWith(

@@ -124,7 +124,8 @@ class DatabaseImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final resolved = resolvePackMedia(image['url'] as String);
-    final label = databaseImageLabels(image, LexiconPack.instance);
+    final label = databaseImageLabels(image, LexiconPack.instance,
+        tr: (s) => ui(context, s));
     final missing = Center(child: UiText('圖片暫時無法載入', style: MFont.bodyMuted));
     if (packMediaIsAsset(resolved)) {
       return Image.asset(

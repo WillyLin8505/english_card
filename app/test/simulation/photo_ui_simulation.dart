@@ -138,9 +138,22 @@ void main() {
           f.add('左滑後沒有進入已學會', '$id $word');
         }
         final sw = find.byType(Switch);
+        // 顯示已學會 switch: scroll it into view, then tap only if a tap can
+        // reach it, and check that it flipped. A miss or no change is a
+        // finding (問題回報 #1694), not a silent pass.
         if (sw.evaluate().isNotEmpty) {
-          await tester.tap(sw.first);
+          await tester.ensureVisible(sw.first);
           await tester.pumpAndSettle();
+          if (sw.hitTestable().evaluate().isEmpty) {
+            f.add('顯示已學會開關點不到', id);
+          } else {
+            final before = tester.widget<Switch>(sw.first).value;
+            await tester.tap(sw.hitTestable().first);
+            await tester.pumpAndSettle();
+            if (tester.widget<Switch>(sw.first).value == before) {
+              f.add('點了顯示已學會開關但狀態沒變', id);
+            }
+          }
         }
       }
       final back = find.bySemanticsLabel('返回');

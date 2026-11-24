@@ -59,16 +59,22 @@ List<Map<String, dynamic>> databaseImageTags(Map<String, dynamic> image) {
   ];
 }
 
-String databaseTagLabel(Map<String, dynamic> tag, LexiconPack pack) {
+/// [tr] translates the two placeholder strings (UI copy, not dictionary text):
+/// pass `(s) => ui(context, s)` so the English / French interface shows them
+/// in its language (卡 #1302, 問題回報 #1747).
+String databaseTagLabel(Map<String, dynamic> tag, LexiconPack pack,
+    {String Function(String)? tr}) {
+  String t(String s) => tr == null ? s : tr(s);
   final word = pack.byId((tag['lexeme_id'] as num).toInt());
-  if (word == null) return '單字待補齊';
+  if (word == null) return t('單字待補齊');
   final sense = word.senses.where((s) => s.id == tag['sense_id']).firstOrNull;
-  return '${word.lemma} · ${sense?.native ?? word.nativeMeaning ?? '{N}意思待補齊'}';
+  return '${word.lemma} · ${sense?.native ?? word.nativeMeaning ?? t('{N}意思待補齊')}';
 }
 
-String databaseImageLabels(Map<String, dynamic> image, LexiconPack pack) =>
+String databaseImageLabels(Map<String, dynamic> image, LexiconPack pack,
+        {String Function(String)? tr}) =>
     databaseImageTags(image)
-        .map((tag) => databaseTagLabel(tag, pack))
+        .map((tag) => databaseTagLabel(tag, pack, tr: tr))
         .toSet()
         .join('、');
 

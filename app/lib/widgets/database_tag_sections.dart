@@ -134,7 +134,7 @@ class _DatabaseTagGroupState extends State<_DatabaseTagGroup> {
         final word = pack.byId((tag['lexeme_id'] as num).toInt());
         final label = databaseImageLabels({
           'tags': [tag]
-        }, pack);
+        }, pack, tr: (s) => ui(context, s));
         final wholePicture =
             !widget.positioned.contains((tag['lexeme_id'] as num).toInt());
         final from = borrowed(tag);
@@ -221,7 +221,7 @@ String _compactTagLabels(
     for (final tag in tags)
       databaseImageLabels({
             'tags': [tag]
-          }, pack) +
+          }, pack, tr: (s) => ui(context, s)) +
           // 問題回報 #763: a word borrowed from a nearby level names it.
           switch (databaseTagLevel(tag, pack)) {
             final l? when group.key != null && l != group.key =>

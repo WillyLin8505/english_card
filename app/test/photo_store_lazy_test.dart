@@ -78,15 +78,15 @@ void main() {
     rebuild(() {});
     await tester.pump();
     expect(store.reads, ['first']);
-    final data = await rootBundle.load('assets/sample/photo_kitchen.jpg');
-    store.pending['first']!.complete(data.buffer.asUint8List());
+    final data = File('test/fixtures/photos/photo_kitchen.jpg').readAsBytesSync();
+    store.pending['first']!.complete(data);
     await decode();
     expect(pixels(), isNotNull);
     rebuild(() => key = 'second');
     await tester.pump();
     expect(store.reads, ['first', 'second']);
     expect(pixels(), isNull);
-    store.pending['second']!.complete(data.buffer.asUint8List());
+    store.pending['second']!.complete(data);
     await decode();
     expect(pixels(), isNotNull);
     // Back to the first photo: decoded once, kept in the ImageCache — no

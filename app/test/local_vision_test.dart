@@ -52,6 +52,16 @@ void main() {
     expect(cs.first.level, 'A1');
   });
 
+  // 問題回報 #1722 / card #1289: the reverse lookup picked ombrelle / fanal
+  // ("umbrella for rain", phare tagged adj); the table must keep the plain noun first.
+  test('French label table keeps the everyday noun first (umbrella, lighthouse)', () {
+    final m = (jsonDecode(File('assets/vision_fr.json').readAsStringSync())
+        as Map<String, dynamic>)['labels'] as Map<String, dynamic>;
+    String first(String k) => ((m[k] as List).first as List).first as String;
+    expect(first('umbrella'), 'parapluie');
+    expect(first('lighthouse'), 'phare');
+  });
+
   test('classifier labels become known words, best first, spread out', () {
     final cs = candidatesFromLabels(
       [
