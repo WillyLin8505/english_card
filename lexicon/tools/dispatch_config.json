@@ -233,10 +233,5 @@
       }
     ]
   },
-  "_launch_schedule_note": "owner 11/11 「開卡的時間是平日早上九點半到晚上七點半，再從凌晨一點開到早上七點」：只在這兩個時段（台北）派新的 CLI（卡片、問題回報、tag_fallback 的 Codex/Cursor）。時段外照常收卡、量目標、開問題回報，已在跑的 CLI 做完為止。days：all／mon-fri／sat-sun。夜間時段每天都開（週末也開）；夜間卡另外照 night_last_launch。",
-  "resource_guard": {
-    "limit_pct": 95.0,
-    "release_pct": 93.0,
-    "_note_1124": "owner 11/24 22:30「开卡去做」：記憶體 92%（doc-explainer 11 GB，老闆說不要關），上限暫時 80→95%。記憶體回到 80% 以下後改回（刪掉 limit_pct/release_pct）。"
-  }
+  "_launch_schedule_note": "owner 11/11 「開卡的時間是平日早上九點半到晚上七點半，再從凌晨一點開到早上七點」：只在這兩個時段（台北）派新的 CLI（卡片、問題回報、tag_fallback 的 Codex/Cursor）。時段外照常收卡、量目標、開問題回報，已在跑的 CLI 做完為止。days：all／mon-fri／sat-sun。夜間時段每天都開（週末也開）；夜間卡另外照 night_last_launch。"
 }
