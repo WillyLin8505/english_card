@@ -76,6 +76,9 @@ launches a card for each idle AI (pick_card rules + `lexicon/tools/dispatch_conf
   問題回報 swarm, tag_fallback) start only inside `launch_schedule` in dispatch_config.json — weekdays 09:30–19:30 and every
   day 01:00–07:00 (Taipei). Outside them the tick still collects finished cards, measures goals and files issues; running
   CLIs finish. Check: dry run logs `outside launch_schedule`. Tests: `test_launch_window_*`.
+  Owner 11/24 「監控記憶體，當掉到五十的時候就開卡」: `lexicon/tools/memory_launch_trigger.py` (run detached with pythonw)
+  waits for memory ≤ 50 %, then writes `lexicon/state/launch_override.json` (`until` = +8 h) and exits; until then the
+  tick launches outside launch_schedule too (resource_guard 80 % still applies). Log `lexicon/logs/memory_launch_trigger.log`.
 - Pause: board Grokbot ⏸, or `schtasks /change /tn EnglishCard_DispatchTick /disable` (`/enable` to resume).
 - **Issue swarm** (owner, 2026-10-18): every new 問題回報 card (and every decision the owner has answered) gets its
   own new Claude CLI (`Claude CLI 1..N`, `issue_swarm.max_parallel` in dispatch_config.json, Claude Code's quota);
