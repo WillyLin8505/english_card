@@ -325,6 +325,19 @@ def night_launch_ok(task_id, night_tasks, now: datetime, last_launch: str) -> bo
 DAY_SETS = {"all": set(range(7)), "mon-fri": set(range(5)), "sat-sun": {5, 6}}
 
 
+LAUNCH_OVERRIDE_FILE = STATE_DIR / "launch_override.json"
+
+
+def launch_override_active(now: datetime, path: Path = LAUNCH_OVERRIDE_FILE) -> bool:
+    """Owner 11/24 「監控記憶體，當掉到五十的時候就開卡」: memory_launch_trigger.py writes
+    {"until": iso, "reason": ...} once memory is low; until then new CLIs start outside launch_schedule too."""
+    try:
+        until = datetime.fromisoformat(json.loads(path.read_text(encoding="utf-8"))["until"])
+    except (OSError, ValueError, KeyError, TypeError):
+        return False
+    return now < until
+
+
 def launch_window_open(now: datetime, sched: dict | None) -> bool:
     """Owner 11/11 「開卡的時間是平日早上九點半到晚上七點半，再從凌晨一點開到早上七點」: new CLIs start only
     inside launch_schedule.windows ([{days, from, to}], Taipei). Running CLIs finish; no config = always open."""
@@ -546,7 +559,8 @@ class Tick:
         self._running = None  # CLIs already running, see running_clis
         self.now = now_tp()
         self.cfg = load_config()
-        self.launch_open = launch_window_open(self.now, self.cfg.get("launch_schedule"))
+        self.launch_open = (launch_window_open(self.now, self.cfg.get("launch_schedule"))
+                            or launch_override_active(self.now))
         self.state = load_json(STATE_FILE, {})
         for k in ("runs", "limits", "failures", "seen_limits"):
             self.state.setdefault(k, {})

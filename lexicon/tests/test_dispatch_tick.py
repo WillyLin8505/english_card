@@ -500,3 +500,18 @@ def test_launch_window_across_midnight():
     assert dt.launch_window_open(datetime(2026, 11, 13, 23, 0, tzinfo=TP), s)      # Fri 23:00
     assert dt.launch_window_open(datetime(2026, 11, 14, 1, 0, tzinfo=TP), s)       # Sat 01:00, Fri's night
     assert not dt.launch_window_open(datetime(2026, 11, 16, 1, 0, tzinfo=TP), s)   # Mon 01:00, Sun's night
+
+
+def test_launch_override_opens_launches_until_its_time(tmp_path):
+    """Owner 11/24 「監控記憶體，當掉到五十的時候就開卡」: memory_launch_trigger's file opens launches."""
+    import json as _json
+    from datetime import datetime as _dt, timedelta as _td, timezone as _tz
+    import dispatch_tick as dt_mod
+    now = _dt(2026, 11, 24, 22, 30, tzinfo=_tz(_td(hours=8)))
+    f = tmp_path / "launch_override.json"
+    assert not dt_mod.launch_override_active(now, f)
+    f.write_text(_json.dumps({"until": (now + _td(hours=8)).isoformat()}), encoding="utf-8")
+    assert dt_mod.launch_override_active(now, f)
+    assert not dt_mod.launch_override_active(now + _td(hours=9), f)
+    f.write_text("not json", encoding="utf-8")
+    assert not dt_mod.launch_override_active(now, f)
