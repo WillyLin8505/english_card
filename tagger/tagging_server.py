@@ -482,6 +482,12 @@ def _unit(v, default: float) -> float:
 
 _SPACE = re.compile(r'\s+')
 _GENERIC_TEXT_LABELS = {'brand', 'label', 'logo', 'packaging', 'sign', 'text', 'watermark'}
+# 問題回報 #1770: English words that name no visible thing (Natural on a window, Working).
+# Dropped for English only; the same list is visionCategoryLabels in app/lib/services/local_vision_rules.dart.
+_VAGUE_ENGLISH_LABELS = {
+    'natural', 'working', 'general', 'common', 'normal', 'basic', 'simple', 'main',
+    'real', 'whole', 'different', 'various', 'other', 'good', 'nice', 'new', 'old',
+}
 
 
 def _looks_like_name_label(word: str, evidence: str) -> bool:
@@ -545,6 +551,8 @@ def to_candidates(raw: list[dict], lexicon: 'Lexicon | None' = None,
             ' ', str(c.get('word') or c.get('w') or '').replace('_', ' ').strip().lower()
         ).strip(' .,"\'')
         if not word or len(word) > 40:
+            continue
+        if lang == 'en' and word in _VAGUE_ENGLISH_LABELS:
             continue
         pack = pack_index(lang) if lang != 'en' else None
         if pack is not None:

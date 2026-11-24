@@ -23,6 +23,11 @@ LABEL_LIMIT = 8   # labels a deck picture keeps (the app lists five words per ph
 
 
 def _count(s: Session, deck: m.Deck) -> int:
+    if deck.kind == "words":
+        # 問題回報 #1769: one item per (word, pos), but the app keeps one entry per word
+        # (basic-core listed 2898 and opened as 1706): count the words the app will get.
+        word = func.lower(func.trim(m.DeckItem.lemma))
+        return s.scalar(select(func.count(func.distinct(word))).where(m.DeckItem.deck_id == deck.id)) or 0
     return s.scalar(select(func.count()).select_from(m.DeckItem).where(m.DeckItem.deck_id == deck.id)) or 0
 
 
