@@ -8495,7 +8495,7 @@ commit `41d069d5`（Windows：flutter analyze 無 error、flutter test 全過；
   需要 Mac：看 détailler、trou de balle 詳情）；本輪未讀3字完整正反面／詳情、未補既有回報。
     產物：app/build/rounds_fr/223/。
 
-## M1103（2026-11-25 01:57）狀態：待做
+## M1103（2026-11-25 01:57）狀態：完成（iPad 唯讀＋模擬器法文、英文全新安裝；7 張通過，#1294 ne／la 不通過）
 commit `1f9dbec0`（Windows：flutter analyze 無 error、flutter test 全過；另有 81 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #1276：問題回報 #1723：[Mac] 2026-11-24 法文、英文完整重測（新的一鍵重測，iPad 唯讀＋模擬器全：照片
   結果：第 1 輪：已修好根因（照片／手動新增的字沒標母語，被 WordEnricher 當舊 zh-TW 資料清掉意思）；Mac 需重驗 FR17。

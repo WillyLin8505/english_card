@@ -3356,3 +3356,21 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #496 其餘 | 不通過 | 和 M1101 相同：FR01 單字本頁照片標籤出現中文「{N}意思待補齊」（maison、chat）；FR07 #1236 héros 中文說明；FR09 搜尋排序；FR12 ne／la 卡。通過：單字本頁變位表含 passé composé、形容詞表、詞庫頁變位表、例句字可點 30/30、例句 45 句都有播放鈕、精簡字典、複習卡沒有中文、讀音為法文真人錄音、沒有例外。 | （log） | 中 | iPad |
 | 伺服器 | 注意 | 測試時 api.willylinai.com 逾時（Mac 用 curl 也 15 秒沒回應）：App 顯示「The dictionary didn't update this time…」，卡片集讀不到（FR14 這次不算）。模擬器全新安裝要下載詞庫，等伺服器恢復再跑。 | docs/mac_verify_shots/2026-11-25/m1102_ipad_db_detailler.png | 中 | iPad |
 | iPad 還原 | 通過 | iPad 只讀跑完（196 秒，沒有例外），平常版 App 01:01 已裝回並開啟。 | — | — | iPad |
+
+## M1103 卡 #1276 #1279 #1283 #1288 #1290 #1295 #1296 #1294 #1298（commit 1f9dbec0）：iPad 唯讀＋模擬器全新安裝（法文、英文）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1276 | 通過 | FR17：模擬器全新安裝後照片新加的 bicyclette=bicycle、ombrelle=parasol; umbrella…、saxophone=saxophone，20 秒內都有意思。英文同樣：saxophone=薩克斯管、lighthouse=燈塔。 | — | — | 模擬器 |
+| #1279 | 通過 | 同 #1276：照片新加的法文字意思不再是空的。 | — | — | 模擬器 |
+| #1283 | 注意 | 只有 Windows 的 flutter test，App 沒有可在裝置上驗的改動；Mac 這輪三次測試都沒有例外。 | — | — | — |
+| #1288 | 通過 | 搜尋時打的字排第一：英文模擬器 apple、dog、run、beautiful、house 都是第 1（dog 原本 12/34、run 58/81）；法文 iPad maison、chien、aller、parler、chat 都是第 1（maison 原本 32/58）；法文模擬器同樣都是第 1。 | — | — | iPad＋模擬器 |
+| #1290 | 通過 | iPad 法文單字本搜尋 maison 1/58、parler 1/45、chat 1/23。 | — | — | iPad |
+| #1295 | 通過 | FR14 改照新規則（target=fr、slug fr-…-photos）：iPad 和模擬器都列出 9 本法文相片冊：fr-travel-photos（38）、fr-animals-photos（31）、fr-kitchen-photos（34）、fr-living-room-photos（37）、fr-outdoors-photos（44）、fr-school-photos（35）、fr-sports-photos（36）、fr-work-photos（39）、fr-exam-photos。 | — | — | iPad＋模擬器 |
+| #1296 | 通過 | FR19：模擬器下載 fr-travel-photos，38 個字都在單字本（新增 9 個），其中 30 個字有詞庫照片；aéroport 單字頁顯示 Database photos (4)。iPad 只讀，沒有下載（下載會改 owner 的資料）。 | docs/mac_verify_shots/2026-11-25/m1103_sim_album_aeroport.png | — | 模擬器 |
+| #1294 | 不通過 | FR12：ne 的卡現在是否定詞（not…），但音標仍是 NE 縮寫的 /nɔ.ʁɛst/，而且意思在括號中間被切成兩條：「1. not (used alone to negate a verb, now chiefly with only a few particular verbs」「2. see usage notes)」。la 的卡仍顯示「No example for this word yet」。iPad、模擬器相同。（與 #1293 同一問題） | docs/mac_verify_shots/2026-11-25/m1103_sim_card_ne.png | 中 | iPad＋模擬器 |
+| #1298 | 注意 | 同意結論；這輪 iPad、模擬器法文、模擬器英文三次都完整跑完，沒有停住。 | — | — | iPad＋模擬器 |
+| 其餘法文 | 不通過 | 仍不通過：FR21 代動詞（單字本 être、詞庫頁 prendre 是 je me suis／je me prends）；FR07 #1236 héros 中文說明；FR15 umbrella→ombrelle、lighthouse→fanal。這輪變好：FR01 單字本頁沒有中文了（新詞庫補了意思，{N}意思待補齊 不再出現）；FR06 詞庫頁標題通過；例句 50 句都有播放鈕；détailler、trou de balle 版面正常。 | （log） | 中 | iPad＋模擬器 |
+| 英文 EN05 | 注意 | beautiful 的複習卡背面顯示形容詞英文解釋、沒有中文，存的意思是名詞「美人」：詞性排序問題（同前一輪），其餘英文 13 項通過，相片冊下載照片 1→13。 | — | 低 | 模擬器 |
+| 詞庫版本 | 注意 | 模擬器全新安裝下載到新的 fr-en 詞庫 b71671a8…（21.2 MB）。iPad 上的 App 讀到的詞庫版本仍是空的，但查字、變位表、照片標籤都正常。 | — | 低 | iPad＋模擬器 |
+| iPad 還原 | 通過 | iPad 只讀跑完，沒有例外；平常版 App 02:04 已裝回並開啟。 | — | — | iPad |
