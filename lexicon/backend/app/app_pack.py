@@ -455,7 +455,10 @@ def rank_usages(lexemes: list[dict], cefr_by_pos: dict | None = None,
         except Exception:  # noqa: BLE001 — no list: senses and examples only
             cefr_by_pos = {}
     if pos_votes is None:
-        pos_votes = dictionary_pos
+        # WordNet and ECDICT are English: for a French word they vote on the
+        # English word (beau = boyfriend made the noun main). Only English
+        # packs use them (問題回報 #1717).
+        pos_votes = dictionary_pos if language == "en" else (lambda word: (0, {}, {}))
     listed_pos = {"adj.": "adj", "adv.": "adv"}
     groups: dict[str, list[dict]] = {}
     for lx in lexemes:

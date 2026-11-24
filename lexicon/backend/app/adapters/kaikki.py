@@ -105,6 +105,10 @@ def ipa_to_arpabet(ipa: str) -> str | None:
 
 
 def _pos(e: dict) -> str | None:
+    # 問題回報 #1720: French particles (ne 「not」, the negation) were dropped
+    # because POS has no particle key. English particles stay out (not in scope).
+    if e.get("pos") == "particle" and e.get("lang_code") == "fr":
+        return "particle"
     return POS.get(e.get("pos", ""))
 
 
