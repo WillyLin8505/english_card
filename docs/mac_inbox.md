@@ -8483,3 +8483,14 @@ commit `c421788f`（Windows：flutter analyze 無 error、flutter test 全過；
   結果：第 2 輪：單字詳情已接上法文區塊（標題含冠詞、變位表、形容詞），全庫掃描 1109 個動詞完成，126 個缺格交給卡 #1257 處理；analyze 與相關測試通過，還剩 Mac 在 iPad 驗 aller、parler、être、finir。
 - 卡 #1272：問題回報 #1733：[owner] Windows PC 資源超過 80% 超過 10 分鐘：memory
   結果：結論：記憶體已自行回到 73%（17.6 GB 可用／65 GB），超標原因是 node.exe×9 10.5 GB 暫時暴增，現已降到 12 個 1.2 GB；沒有改程式或資料。
+
+## M1102（2026-11-25 00:52）狀態：待做
+commit `41d069d5`（Windows：flutter analyze 無 error、flutter test 全過；另有 41 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1281：問題回報 #1738：[Mac] M1100 卡 #1252 法文清單（問題回報 #1704）：iPad 唯讀＋模：3)
+  結果：第 1 輪：App 詞庫頁只給名詞加冠詞標題；動詞／形容詞／副詞的標題恢復為原形（aller、parler、beau、grand）。
+  需要 Mac：在 iPad 重看 aller／parler／beau／grand 詞庫頁標題。
+    剩餘：資料層為何動詞帶 fr_gender 未查（可另開問題回報）；golden/QC 不受影響（未動資料）。
+- 卡 #496：模擬使用者・法語（英語母語者學法語）
+  結果：第223輪完成：4/4模擬通過（B1先失敗後修好）、7121詞、中文殘留0；修了法語詳情頁3處版面溢位（7個錯誤→0）。
+  需要 Mac：看 détailler、trou de balle 詳情）；本輪未讀3字完整正反面／詳情、未補既有回報。
+    產物：app/build/rounds_fr/223/。
