@@ -91,7 +91,7 @@ def test_http_gzip_validators_cors_and_incremental_fallback(monkeypatch, tmp_pat
                                                'Origin': 'http://localhost:9999'})
         assert status == 200
         assert headers['Content-Encoding'] == 'gzip'
-        assert headers['Access-Control-Expose-Headers'] == 'ETag'
+        assert headers['Access-Control-Expose-Headers'] == 'ETag, X-Lexicon-Raw-Length'
         assert json.loads(gzip.decompress(compressed)) == pack()
         assert headers['ETag'] == 'W/"one"'
         assert request({'If-None-Match': '"other", "one"'})[::2] == (304, b'')
@@ -185,3 +185,16 @@ def test_stale_snapshot_names_its_revision_until_the_current_build_replaces_it(t
         release.set()
     wait_idle(store)
     assert store.get('en', 'zh-TW').stale_revision is None
+
+
+def test_card1269_web_format_is_gzipped_slim_json_cached_on_disk(tmp_path):
+    import gzip, json
+    from pathlib import Path
+    import lexicon_transport as t
+    pack = {'created_at': '2026-11-24T00:00:00', 'target_language': 'en',
+            'native_language': 'zh-TW', 'lexemes': [{'id': 1, 'lemma': 'a'}]}
+    snap = t.Snapshot(json.dumps(pack).encode(), sqlite_path=Path(tmp_path) / 'x.sqlite')
+    body, ctype, gz = snap.respond(None, True, 'web')
+    assert gz and ctype.startswith('application/json')
+    assert json.loads(gzip.decompress(body))['created_at'] == pack['created_at']
+    assert len(list(Path(tmp_path).glob('*.slim.json.gz'))) == 1

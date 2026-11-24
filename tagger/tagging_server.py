@@ -241,7 +241,8 @@ def build_prompt(level: str, lang: str = 'en', native: str = 'zh-TW',
         lines.append('Do not repeat these words: ' + ', '.join(exclude[:40]) + '.')
     if lang != 'en':
         # Card 1270: said last, so the model does not answer in English and force a second call.
-        lines.append(f'Every "word" value must be written in {lang_name}, never in English.')
+        lines.append(f'Any answer with English words is rejected: use only genuine {lang_name} '
+                     f'words, never English. Answer entirely in {lang_name}.')
     lines.append('Reply with JSON only.')
     return '\n'.join(lines)
 
