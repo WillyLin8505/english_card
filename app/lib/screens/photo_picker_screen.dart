@@ -3,8 +3,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart'
-    show MissingPluginException, Uint8List, rootBundle;
+import 'package:flutter/services.dart' show MissingPluginException, Uint8List;
 import 'package:image_picker/image_picker.dart';
 import 'package:photo_manager/photo_manager.dart';
 
@@ -15,35 +14,17 @@ import '../widgets/mobile/common.dart';
 import '../widgets/mobile/dialogs.dart';
 import '../widgets/mobile/m_icon.dart';
 
-/// Bundled sample images offered under 最近相片 until the user picks
-/// their own (the mock's thumbnails).
-const sampleRecentPhotos = [
-  'assets/sample/recent_pasta.jpg',
-  'assets/sample/recent_1.jpg',
-  'assets/sample/recent_2.jpg',
-  'assets/sample/recent_3.jpg',
-  'assets/sample/recent_4.jpg',
-  'assets/sample/recent_5.jpg',
-  'assets/sample/recent_6.jpg',
-];
-
+/// A photo the learner can add: one they picked, or one of their own recent
+/// device photos. Owner 11/24 (問題回報 #1732): no bundled sample photos.
 class _Candidate {
-  final String? asset;
-  final Uint8List? bytes;
+  final Uint8List bytes;
   final AssetEntity? entity;
 
-  const _Candidate.asset(String this.asset)
-      : bytes = null,
-        entity = null;
-  const _Candidate.bytes(Uint8List this.bytes)
-      : asset = null,
-        entity = null;
+  const _Candidate.bytes(this.bytes) : entity = null;
   const _Candidate.device(AssetEntity this.entity, Uint8List thumbnail)
-      : asset = null,
-        bytes = thumbnail;
+      : bytes = thumbnail;
 
-  ImageProvider get image =>
-      asset != null ? AssetImage(asset!) as ImageProvider : MemoryImage(bytes!);
+  ImageProvider get image => MemoryImage(bytes);
 
   /// Decoded at a display size, never the full picture: a strip of picked
   /// 2048px photos decoded whole is 12 MB each (問題回報 #677, jetsam #413).
@@ -70,8 +51,8 @@ class _Candidate {
   }
 
   Future<Uint8List> load() async {
-    if (entity != null) return await _loadDevice(entity!) ?? bytes!;
-    return bytes ?? (await rootBundle.load(asset!)).buffer.asUint8List();
+    if (entity != null) return await _loadDevice(entity!) ?? bytes;
+    return bytes;
   }
 }
 
@@ -79,8 +60,9 @@ class _Candidate {
 /// recent photos, and 從相簿選擇. 完成 saves the photo to a 相片冊 and
 /// opens it for AI tagging — the spec's core loop, steps 1–2.
 ///
-/// On Android and iOS, 最近相片 reads the device library after permission.
-/// The web keeps the file-picker plus bundled samples as its fallback.
+/// On Android and iOS, 最近相片 reads the device library after permission;
+/// the web has 從相簿選擇 only. Photos picked there are added at once and
+/// recognition starts (owner 11/24, 問題回報 #1730).
 ///
 /// Several photos can be ticked and added at once (問題回報 #677): the
 /// album is asked once, they are saved one by one, and the tagging queue
@@ -94,6 +76,11 @@ class PhotoPickerScreen extends StatefulWidget {
 
   const PhotoPickerScreen({super.key, this.albumId, this.pickLibrary});
 
+  /// Tests that open the picker through the app (no [pickLibrary] to pass)
+  /// set this instead of the system picker.
+  @visibleForTesting
+  static Future<List<XFile>> Function()? debugPickLibrary;
+
   @override
   State<PhotoPickerScreen> createState() => _PhotoPickerScreenState();
 }
@@ -101,10 +88,7 @@ class PhotoPickerScreen extends StatefulWidget {
 class _PhotoPickerScreenState extends State<PhotoPickerScreen> {
   static final _sessionPicks = <_Candidate>[];
 
-  late final List<_Candidate> _candidates = [
-    ..._sessionPicks,
-    for (final a in sampleRecentPhotos) _Candidate.asset(a),
-  ];
+  late final List<_Candidate> _candidates = [..._sessionPicks];
 
   /// The big preview; the newest candidate until one is tapped.
   _Candidate? _preview;
@@ -237,7 +221,9 @@ class _PhotoPickerScreenState extends State<PhotoPickerScreen> {
 
   Future<void> _pickFromLibrary() async {
     try {
-      final files = await (widget.pickLibrary ?? _systemPicker)();
+      final files = await (widget.pickLibrary ??
+          PhotoPickerScreen.debugPickLibrary ??
+          _systemPicker)();
       if (files.isEmpty || !mounted) return;
       // One file at a time: each is already scaled to 2048px by the picker.
       final picks = <_Candidate>[];
@@ -251,9 +237,13 @@ class _PhotoPickerScreenState extends State<PhotoPickerScreen> {
       }
       setState(() {
         _candidates.insertAll(0, picks);
-        _chosen.addAll(picks);
+        _chosen
+          ..clear()
+          ..addAll(picks);
         _preview = picks.first;
       });
+      // 問題回報 #1730: picked = added; recognition starts right away.
+      await (picks.length == 1 ? _addOne(picks.single) : _addMany(picks));
     } catch (e) {
       if (mounted) showToast(context, photoErrorMessage(e));
     }
@@ -273,14 +263,9 @@ class _PhotoPickerScreenState extends State<PhotoPickerScreen> {
   Future<void> _addMany(List<_Candidate> picks) async {
     final scope = AppScope.of(context);
     final messenger = ScaffoldMessenger.of(context);
-    final choice = await showSaveToAlbumDialog(
-      context,
-      repository: scope.repository,
-      defaultTitle: defaultPhotoTitle(scope.clock()),
-      albumId: widget.albumId,
-      count: picks.length,
-    );
-    if (choice == null || !mounted) return;
+    final choice = autoSaveChoice(scope.repository,
+        defaultTitle: defaultPhotoTitle(scope.clock()),
+        albumId: widget.albumId);
     setState(() => _saving = true);
     var added = 0;
     var skipped = 0;
@@ -380,13 +365,8 @@ class _PhotoPickerScreenState extends State<PhotoPickerScreen> {
         return;
       }
     }
-    final choice = await showSaveToAlbumDialog(
-      context,
-      repository: scope.repository,
-      defaultTitle: defaultPhotoTitle(now),
-      albumId: widget.albumId,
-    );
-    if (choice == null || !mounted) return;
+    final choice = autoSaveChoice(scope.repository,
+        defaultTitle: defaultPhotoTitle(now), albumId: widget.albumId);
     setState(() => _saving = true);
     try {
       final Photo photo = await scope.intake.addPhoto(
@@ -458,22 +438,22 @@ class _PhotoPickerScreenState extends State<PhotoPickerScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Container(
-                        height: 280,
-                        clipBehavior: Clip.antiAlias,
-                        decoration: BoxDecoration(
-                          border: Border.all(color: MColors.hairline),
-                          borderRadius: MRadii.rXl,
-                          boxShadow: MShadows.card,
+                    // Nothing picked yet: no empty frame (問題回報 #1732).
+                    if (selected != null)
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Container(
+                          height: 280,
+                          clipBehavior: Clip.antiAlias,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: MColors.hairline),
+                            borderRadius: MRadii.rXl,
+                            boxShadow: MShadows.card,
+                          ),
+                          child: Image(
+                              image: selected.sized(1200), fit: BoxFit.cover),
                         ),
-                        child: selected == null
-                            ? const SizedBox.shrink()
-                            : Image(
-                                image: selected.sized(1200), fit: BoxFit.cover),
                       ),
-                    ),
                     const SizedBox(height: 38),
                     Padding(
                       padding: const EdgeInsets.symmetric(
@@ -481,15 +461,7 @@ class _PhotoPickerScreenState extends State<PhotoPickerScreen> {
                       child: Row(
                         children: [
                           Expanded(
-                            child: UiText(
-                                _loadingDevice
-                                    ? '正在讀取最近照片…'
-                                    : _candidates.length >
-                                            sampleRecentPhotos.length
-                                        ? '最近照片'
-                                        : _sessionPicks.isEmpty
-                                            ? '範例照片'
-                                            : '已選照片與範例',
+                            child: UiText(_loadingDevice ? '正在讀取最近照片…' : '最近照片',
                                 style: MFont.inter(
                                     14, FontWeight.w700, MColors.albumInk)),
                           ),
@@ -499,8 +471,8 @@ class _PhotoPickerScreenState extends State<PhotoPickerScreen> {
                               label: '顯示最近照片',
                               child: Container(
                                 height: 32,
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 10),
                                 alignment: Alignment.center,
                                 child: UiText('顯示最近照片',
                                     style: MFont.inter(

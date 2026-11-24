@@ -228,7 +228,7 @@ WordDatabaseData sampleWordDatabaseData({DateTime? now, CefrLexicon? lexicon}) {
         id: id,
         name: name,
         category: category,
-        coverAsset: cover == null ? null : 'assets/sample/$cover.jpg',
+        coverAsset: cover == null ? null : 'test/fixtures/photos/$cover.jpg',
         createdAt: inDays(-60 + i),
       ),
   ];
@@ -256,7 +256,7 @@ WordDatabaseData sampleWordDatabaseData({DateTime? now, CefrLexicon? lexicon}) {
       title: title,
       place: place,
       takenAt: takenAt,
-      assetPath: asset == null ? null : 'assets/sample/$asset.jpg',
+      assetPath: asset == null ? null : 'test/fixtures/photos/$asset.jpg',
       placeholderColors: gradient,
       width: size?.$1,
       height: size?.$2,

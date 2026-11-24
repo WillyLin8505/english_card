@@ -88,7 +88,7 @@ class DictionarySync extends ChangeNotifier {
   /// (問題回報 #260); the failure message is.
   bool hasError = false;
 
-  /// 問題回報 #856: a fresh install fetches the whole pack (~62 MB) in its
+  /// 問題回報 #856: a fresh install fetches the whole pack (~79 MB) in its
   /// first minutes; the 資料庫 pages show this progress instead of an empty
   /// list. [downloadTotalBytes] is null when the server sends no length.
   bool downloading = false;
@@ -103,7 +103,7 @@ class DictionarySync extends ChangeNotifier {
   int? mobileWaitBytes;
   bool _mobileAllowed = false;
   static const mobileAskBytes = 5 * 1000 * 1000;
-  static const defaultPackBytes = 62 * 1000 * 1000;
+  static const defaultPackBytes = 79 * 1000 * 1000;
 
   /// True on cellular only (no Wi-Fi/ethernet). Tests replace it.
   Future<bool> Function() onMobileOnly = _mobileOnlyNow;
@@ -211,7 +211,12 @@ class DictionarySync extends ChangeNotifier {
     _cache ??= await Hive.openLazyBox<String>('dictionary_cache_v1',
         compactionStrategy: (entries, deleted) => deleted > 0);
     if (_disposed) return;
-    _timer ??= Timer.periodic(const Duration(seconds: 30), (_) => refresh());
+    _timer ??= Timer.periodic(const Duration(seconds: 30), (_) {
+      // After a failure the poll backs off (1, 2, 4 … up to 30 min) instead
+      // of refetching the whole pack every 2 min (card #1269, 問題回報 #1728).
+      if (_retryAfter != null && DateTime.now().isBefore(_retryAfter!)) return;
+      refresh();
+    });
   }
 
   /// Old builds appended every update to one file (261 MB on an iPhone, #425).
@@ -268,7 +273,17 @@ class DictionarySync extends ChangeNotifier {
     }
   }
 
+  int _failStreak = 0;
+  DateTime? _retryAfter;
+
+  /// Minutes the timer waits after [failures] failed refreshes in a row.
+  @visibleForTesting
+  static int backoffMinutes(int failures) =>
+      failures <= 0 ? 0 : (1 << (failures - 1).clamp(0, 5)).clamp(1, 30);
+
   void _succeeded() {
+    _failStreak = 0;
+    _retryAfter = null;
     lastSuccess = DateTime.now();
     status = '已連接詞庫 · 每 30 秒自動更新';
     hasError = false;
@@ -429,6 +444,9 @@ class DictionarySync extends ChangeNotifier {
           uri.replace(queryParameters: {
             ...uri.queryParameters,
             if (useSqlite) 'format': 'sqlite',
+            // The browser takes the slim pack as gzipped JSON (card #1269): the
+            // full 600 MB JSON was cut off by the tunnel after ~90 s, every time.
+            if (kIsWeb) 'format': 'web',
             if (canReuse) 'since': cachedVersion,
           }))
         ..headers.addAll({
@@ -467,7 +485,11 @@ class DictionarySync extends ChangeNotifier {
         if (!_disposed) notifyListeners();
       }
       final contentType = response.headers['content-type'] ?? '';
-      final body = trackDownload(response.stream, response.contentLength);
+      // The browser inflates gzip before Dart sees the bytes, so the total
+      // is the inflated size the server names, not Content-Length.
+      final rawLength = int.tryParse(response.headers['x-lexicon-raw-length'] ?? '');
+      final body =
+          trackDownload(response.stream, rawLength ?? response.contentLength);
       if (useSqlite && contentType.contains('sqlite')) {
         // The whole pack as a file: streamed to disk, never held in memory.
         await _installSqliteDownload(body, pair, target, native, repo, current);
@@ -545,6 +567,9 @@ class DictionarySync extends ChangeNotifier {
             (e is SocketException || e is http.ClientException);
         status = offline ? '暫時無法連線 · 使用已儲存的詞庫，稍後自動重試' : '詞庫這次沒更新成功（伺服器忙或網路不穩）。已存的詞庫照常可用，App 會自動再試，也可以點「重試」';
         hasError = true;
+        _failStreak++;
+        _retryAfter =
+            DateTime.now().add(Duration(minutes: backoffMinutes(_failStreak)));
         BackgroundErrors.instance.report(this, status, retry: refresh);
       }
     } finally {

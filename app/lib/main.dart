@@ -114,7 +114,10 @@ Future<void> _start() async {
     )
       ..linkLexicon(LexiconPack.instance, fold: false, refreshWords: false)
       ..onPhotoRemoved = ((p) =>
-          photoStore.remove(filePath: p.filePath, storedKey: p.storedKey));
+          photoStore.remove(filePath: p.filePath, storedKey: p.storedKey))
+      // 問題回報 #1732: stock 範例照片 added by older builds are not the
+      // learner's own pictures.
+      ..removeBundledSamplePhotos();
   }
 
   await CompactDictionary.instance

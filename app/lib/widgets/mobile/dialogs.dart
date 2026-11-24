@@ -264,6 +264,24 @@ Future<SavePhotoChoice?> showSaveToAlbumDialog(
 /// camera and picker alike; falls back to the first album when it is gone.
 String? _lastSavedAlbumId;
 
+/// Owner 11/24 (問題回報 #1730): a photo goes straight in and recognition
+/// starts at once — no 存到相片冊 question. It lands in [albumId], else the
+/// album last saved to, else the first album (none: no album); moving it is
+/// done in 照片詳情.
+SavePhotoChoice autoSaveChoice(
+  WordDatabaseRepository repository, {
+  required String defaultTitle,
+  String? albumId,
+}) {
+  final albums = repository.albums;
+  final id = albumId ??
+      (albums.any((a) => a.id == _lastSavedAlbumId)
+          ? _lastSavedAlbumId
+          : null) ??
+      albums.firstOrNull?.id;
+  return (title: defaultTitle, albumId: id, scanMode: PhotoScanMode.both);
+}
+
 class _SaveToAlbumDialog extends StatefulWidget {
   final WordDatabaseRepository repository;
   final String defaultTitle;
@@ -482,7 +500,7 @@ class _TemplateOrderDialogState extends State<_TemplateOrderDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             UiText(
-              '拖曳調整順序；關閉的欄位不會出現在卡片背面。{L}單字固定為標題。',
+              '關閉的欄位不會出現在卡片背面。{L}單字固定為標題。',
               style: MFont.inter(13, FontWeight.w400, MColors.gray500),
             ),
             const SizedBox(height: 12),

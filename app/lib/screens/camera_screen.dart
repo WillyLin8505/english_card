@@ -231,15 +231,9 @@ class _CameraScreenState extends State<CameraScreen>
       final bytes = await shot.readAsBytes();
       if (!mounted) return;
       final now = scope.clock();
-      final choice = await showSaveToAlbumDialog(
-        context,
-        repository: scope.repository,
-        defaultTitle: defaultPhotoTitle(now),
-      );
-      if (choice == null) {
-        if (mounted) showToast(context, '照片未儲存');
-        return;
-      }
+      // 問題回報 #1730: straight in, recognition starts at once.
+      final choice = autoSaveChoice(scope.repository,
+          defaultTitle: defaultPhotoTitle(now));
       final photo = await scope.intake.addPhoto(bytes,
           title: choice.title,
           albumId: choice.albumId,
@@ -558,25 +552,6 @@ class _Viewfinder extends StatelessWidget {
               ),
             ),
           ),
-          if (c == null && cameraError != null)
-            Positioned(
-              left: MSpace.lg,
-              right: MSpace.lg,
-              bottom: MSpace.lg,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: MSpace.md, vertical: MSpace.sm),
-                decoration: MDecor.card(
-                  color: MColors.surface.withValues(alpha: 0.95),
-                  radius: MRadii.md,
-                  shadow: MShadows.card,
-                ),
-                child: UiText(
-                  '你可以按下方「選擇照片」，開始學單字。',
-                  style: MFont.manrope(12, FontWeight.w600, MColors.ink),
-                ),
-              ),
-            ),
         ],
       ),
     );

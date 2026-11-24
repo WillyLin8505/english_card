@@ -43,8 +43,8 @@ class _IosLikeCamera extends CameraPlatform {
   @override
   Future<void> initializeCamera(int cameraId,
       {ImageFormatGroup imageFormatGroup = ImageFormatGroup.unknown}) async {
-    scheduleMicrotask(() => _initialized.add(CameraInitializedEvent(cameraId,
-        1280, 720, ExposureMode.auto, true, FocusMode.auto, true)));
+    scheduleMicrotask(() => _initialized.add(CameraInitializedEvent(
+        cameraId, 1280, 720, ExposureMode.auto, true, FocusMode.auto, true)));
   }
 
   @override
@@ -161,7 +161,8 @@ void main() {
     await tester.tap(_shutter);
     await settle(tester);
     expect(camera.takePictureCalls, 2);
-    expect(find.text('存到相片冊'), findsWidgets);
+    // 問題回報 #1730: saved straight away, no album question.
+    expect(find.text('存到相片冊'), findsNothing);
     await finish(tester);
   });
 }

@@ -29,7 +29,6 @@ import '../widgets/mobile/dialogs.dart';
 import '../widgets/anki_export_button.dart';
 import '../widgets/card_style_picker.dart';
 import '../widgets/backup_buttons.dart';
-import '../widgets/tab_tutorial.dart';
 
 /// 設定 — the fifth tab. The Figma file has no frame for it, so it uses
 /// the other screens' nav bar and card style. It holds spec section 4's
@@ -65,7 +64,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     '卡片樣式',
     '資料',
     '隱私',
-    '使用教學',
     '關於',
     '進階設定',
   ];
@@ -137,6 +135,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
           duration: const Duration(milliseconds: 200));
     }
   }
+
+  /// 問題回報 #1730: only the page opened on this computer (127.0.0.1) gets
+  /// recognition without a key; from api.willylinai.com the key is needed.
+  static bool get _onThisComputer =>
+      const {'127.0.0.1', 'localhost'}.contains(Uri.base.host);
 
   Future<void> _testConnection() async {
     final scope = AppScope.of(context);
@@ -483,7 +486,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               children: [
                                 Expanded(
                                   child:
-                                      _note('點一下試聽「water」；單字頁、單字本和複習卡都用這個腔調。'),
+                                      _note('單字頁、單字本和複習卡都用這個腔調。'),
                                 ),
                                 Tooltip(
                                   message: ui(context, _accentInfo),
@@ -638,7 +641,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ),
                             ),
                           ),
-                          _note('用來先列出符合的相片冊。'),
                         ],
                       ),
                       // 問題回報 #317: the review card's look only.
@@ -812,42 +814,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                         ],
                       ),
-                      // 卡 #893: 各分頁的使用教學可以重看。
-                      _Card(
-                        key: _keyFor('使用教學'),
-                        title: '使用教學',
-                        children: [
-                          _note('每個分頁第一次進入會顯示教學。想再看，選分頁或全部重看。'),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 4,
-                            children: [
-                              TextButton(
-                                key: const ValueKey('tutorial-reset-all'),
-                                onPressed: () {
-                                  settings.resetTutorials();
-                                  showToast(context, '切到各分頁時會再顯示教學');
-                                },
-                                child: const UiText('全部重看'),
-                              ),
-                              for (final t in tabTutorialNames.entries)
-                                TextButton(
-                                  key: ValueKey('tutorial-reset-${t.key.name}'),
-                                  onPressed: () {
-                                    settings.resetTutorials(t.key.name);
-                                    showToast(context, '切到各分頁時會再顯示教學');
-                                  },
-                                  child: UiText(t.value),
-                                ),
-                            ],
-                          ),
-                        ],
-                      ),
                       // 問題回報 #701: what this phone sent, deletable.
                       _Card(
                         title: '意見回饋',
                         children: [
-                          _note('看這支手機送過的意見回饋與卡片回報，也可以刪除。'),
                           Align(
                             alignment: Alignment.centerLeft,
                             child: TextButton(
@@ -923,7 +893,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           if (settings.showsTaggingServer) ...[
                             const SectionLabel('照片辨識連線'),
                             const SizedBox(height: 10),
-                            _note(kIsWeb
+                            _note(kIsWeb && !_onThisComputer
+                                ? '從網址或其他裝置開啟時，要填這台電腦的連線金鑰（API Key）才能辨識。連不上時照片會先排隊，恢復連線後自動處理。'
+                                : kIsWeb
                                 ? '網頁版會自動連接這台電腦的照片辨識服務，不用填網址或金鑰。只有使用其他服務時才需要修改。連不上時照片會先排隊，'
                                     '恢復連線後自動處理。'
                                 : '手機版照片只在手機上辨識。'),

@@ -688,6 +688,12 @@ class WordDatabaseRepository extends ChangeNotifier {
       lexemeId: lexemeId,
       now: clock(),
     ).copyWith(
+        // A meaning given at creation is in the learner's native language;
+        // unmarked, WordEnricher reads it as legacy zh-TW and drops it
+        // (問題回報 #1723, card #1276).
+        translatedFor: meaning.trim().isNotEmpty && pack.native != null
+            ? pack.native
+            : null,
         entryType: pack.target == language
             ? pack.lookup(normalized, pos: pos)?.entry.entryType ?? 'word'
             : 'word',
@@ -1395,6 +1401,42 @@ class WordDatabaseRepository extends ChangeNotifier {
       _dropIfUnused(id);
     }
     notifyListeners();
+  }
+
+  /// The stock pictures older builds offered as 範例照片 in 選擇照片 (and the
+  /// mock albums), by [PhotoIntake.hashBytes] of the original file. Owner
+  /// 11/24 (問題回報 #1732): 「這些預設的東西都拿掉，又不是我自己的圖片」.
+  static const bundledSampleHashes = {
+    '253227-3f1e5fa1542229e9', // album_breakfast.jpg
+    '172415-794316786b99d2eb', // album_fruit.jpg
+    '112727-74cd149e7f5f0d9f', // album_kitchen.jpg
+    '168800-d44c74d648346cb', // album_office.jpg
+    '453244-167644a1246f88c1', // album_park.jpg
+    '153768-4313cf711db07f40', // album_room.jpg
+    '178585-52d60dff2b091c45', // photo_breakfast.jpg
+    '141379--124e3d891e4aef1c', // photo_kitchen.jpg
+    '192907-199dde5baea67b08', // recent_1.jpg
+    '200770-3387a7945a57ef05', // recent_2.jpg (puppy)
+    '180144--28d9a1a9ee226a14', // recent_3.jpg
+    '101061--5f52468114b397d', // recent_4.jpg
+    '196436--14385c08d1176ab1', // recent_5.jpg
+    '313568-93c7e7c749e743a', // recent_6.jpg
+    '185225-30e0dc965f30bd9a', // recent_pasta.jpg
+  };
+
+  /// Takes the stock sample pictures out of the learner's albums (they were
+  /// added from 選擇照片 before 問題回報 #1732). Words learned from them stay
+  /// if they have review history, like any other removed photo. Returns how
+  /// many were removed.
+  int removeBundledSamplePhotos() {
+    final ids = [
+      for (final p in _photos)
+        if (bundledSampleHashes.contains(p.contentHash)) p.id
+    ];
+    for (final id in ids) {
+      removePhoto(id);
+    }
+    return ids.length;
   }
 
   // ── 卡片集 (card #323, 問題回報 #320) ─────────────────────────────────

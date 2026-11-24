@@ -1,4 +1,3 @@
-import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -15,7 +14,6 @@ import '../screens/word_database_screen.dart';
 import '../screens/word_detail_screen.dart';
 import '../widgets/mobile/common.dart';
 import '../widgets/mobile/tab_bar.dart';
-import '../widgets/tab_tutorial.dart';
 import 'app_scope.dart';
 import '../theme/mobile_theme.dart';
 import '../services/analytics.dart';
@@ -50,10 +48,6 @@ class AppShell extends StatefulWidget {
 class AppShellState extends State<AppShell> implements AppNavigator {
   late AppTab _tab = widget.initialTab;
   bool _reviewing = false;
-  // 卡 #893: the tab tutorials wait a moment after start-up, so the first one
-  // does not land on top of the screen onboarding just left.
-  bool _tutorialReady = false;
-  Timer? _tutorialTimer;
   // Tabs are built the first time they are shown: building all five at start
   // put the 單字本 list, settings and review in the first frame (3.2 s with
   // 8,680 words on a phone; card #791, 問題回報 #928). Once built a tab stays
@@ -90,9 +84,6 @@ class AppShellState extends State<AppShell> implements AppNavigator {
       final scope = AppScope.of(context);
       UsageReport(scope.settings, scope.repository).sendIfDue();
       EventReport.instance.appStarted();
-    });
-    _tutorialTimer = Timer(const Duration(milliseconds: 1500), () {
-      if (mounted) setState(() => _tutorialReady = true);
     });
     // 卡 #737: a stored 繁中母語＋法文 went back to English at start-up.
     SchedulerBinding.instance.addPostFrameCallback((_) {
@@ -177,7 +168,6 @@ class AppShellState extends State<AppShell> implements AppNavigator {
   @override
   void dispose() {
     FeedbackContext.instance.tab = null;
-    _tutorialTimer?.cancel();
     _reviewRequest.dispose();
     super.dispose();
   }
@@ -251,23 +241,6 @@ class AppShellState extends State<AppShell> implements AppNavigator {
               ],
             ),
           )),
-          if (_tutorialReady && !_reviewing)
-            Align(
-                alignment: Alignment.bottomCenter,
-                child: ListenableBuilder(
-                    listenable: Listenable.merge(
-                        [AppScope.of(context).settings, _covered]),
-                    builder: (context, _) {
-                      final settings = AppScope.of(context).settings;
-                      if (settings.tutorialSeen(_tab.name) ||
-                          _covered.value.contains(_tab)) {
-                        return const SizedBox.shrink();
-                      }
-                      return TabTutorialOverlay(
-                          key: ValueKey(_tab),
-                          tab: _tab,
-                          onDone: () => settings.markTutorialSeen(_tab.name));
-                    })),
         ]),
         // 問題回報 #1701: the five-tab row stays visible during a review run.
         bottomNavigationBar: MobileTabBar(current: _tab, onSelect: selectTab),

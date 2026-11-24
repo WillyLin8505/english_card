@@ -7,9 +7,11 @@ import '../app/app_scope.dart';
 import '../models/learning_card.dart';
 import '../models/photo.dart';
 import '../models/word_entry.dart';
+import '../services/french_detail.dart';
 import '../services/lexicon_pack.dart';
 import '../services/word_database_query.dart';
 import '../theme/mobile_theme.dart';
+import '../widgets/french_detail_sections.dart';
 import '../widgets/recording_credit.dart';
 import '../widgets/mobile/common.dart';
 import '../widgets/mobile/dialogs.dart';
@@ -245,22 +247,73 @@ class _WordBody extends StatelessWidget {
             (e.translation ?? '').trim().isNotEmpty &&
             seenExamples.add(e.text.toLowerCase()))
         .toList();
+    // Card #1256 (問題回報 #1703): a French word shows the same blocks as the
+    // database page (title with article, 變位表, 形容詞) instead of the old
+    // 詞形變化 chips; the rest of its forms are chips, as in the database.
+    final french = (pack.target ?? 'en') == 'fr';
+    // The pack's entries carry the LexForm fields the French blocks read.
+    final allForms = [
+      if (french)
+        for (final e in pack.entriesFor(entry.word))
+          if (e.full && !e.cardForm) ...e.forms,
+    ];
+    final frGender = french
+        ? allForms.where((f) => f.field == 'fr_gender').firstOrNull?.form
+        : null;
+    final frVerb = french && entry.pos == 'verb'
+        ? frenchVerbFrom(entry.word, allForms)
+        : null;
+    final frAdjective = french && entry.pos.startsWith('adj')
+        ? frenchAdjectiveFrom(entry.word, allForms)
+        : null;
+    final frPlural = french && frGender != null
+        ? allForms.where((f) => f.field == 'fr_plural').firstOrNull?.form
+        : null;
+    final frShown = {
+      for (final f in allForms)
+        if (f.field == 'fr_h_aspire' &&
+            const {'0', 'false', 'no', 'muet', ''}.contains(f.form.toLowerCase()))
+          'fr_h_aspire',
+      if (frGender != null) 'fr_gender',
+      if (frPlural != null) 'fr_plural',
+      if (frVerb != null) ...[
+        for (final f in allForms)
+          if (RegExp(
+                  r'^fr_(present|imperfect|future|conditional|subjunctive|imperative|simple_past|passe_simple|pluperfect)_[123][sp]$|^fr_(past|present)_participle$|^fr_auxiliary$')
+              .hasMatch(f.field))
+            f.field
+      ],
+      if (frAdjective != null) ...[
+        'fr_feminine',
+        'fr_plural',
+        'fr_feminine_plural',
+        'fr_masculine_before_vowel'
+      ],
+    };
     final forms = <String, Set<String>>{};
     void addForm(String form, String label) {
       if (form.trim().isEmpty) return;
       (forms[form.trim()] ??= {}).add(formLabel(label));
     }
 
-    for (final usage in entry.effectiveUsages) {
-      final source = pack.lookup(entry.word, pos: usage.pos)?.entry;
-      if (source != null) {
-        for (final form in pack.detailFor(source).inflections) {
-          addForm(form.form, form.label);
+    if (french) {
+      for (final form in allForms) {
+        if (!frShown.contains(form.field)) {
+          addForm(form.form, form.label ?? form.field);
         }
       }
-    }
-    for (final form in entry.forms) {
-      addForm(form.form, form.label);
+    } else {
+      for (final usage in entry.effectiveUsages) {
+        final source = pack.lookup(entry.word, pos: usage.pos)?.entry;
+        if (source != null) {
+          for (final form in pack.detailFor(source).inflections) {
+            addForm(form.form, form.label);
+          }
+        }
+      }
+      for (final form in entry.forms) {
+        addForm(form.form, form.label);
+      }
     }
     // The photo the learner came from first, then the learner's own photos
     // (newest first, 問題回報 #864), then the rest.
@@ -306,16 +359,22 @@ class _WordBody extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                    headword(entry.word, entry.language,
-                        pos: entry.pos,
-                        inflections: [
-                          for (final u in entry.effectiveUsages)
-                            if (pack.lookup(entry.word, pos: u.pos)?.entry
-                                case final s?)
-                              ...pack.detailFor(s).inflections
-                        ]),
-                    style: MFont.manrope(32, FontWeight.w800, MColors.ink)),
+                if (french)
+                  FrenchTitle(entry.word,
+                      gender: frGender,
+                      plural: frPlural,
+                      hAspire: frenchHAspire(allForms))
+                else
+                  Text(
+                      headword(entry.word, entry.language,
+                          pos: entry.pos,
+                          inflections: [
+                            for (final u in entry.effectiveUsages)
+                              if (pack.lookup(entry.word, pos: u.pos)?.entry
+                                  case final s?)
+                                ...pack.detailFor(s).inflections
+                          ]),
+                      style: MFont.manrope(32, FontWeight.w800, MColors.ink)),
                 // 卡 #227 第 147 輪: the IPA in 設定's accent, like the audio.
                 if ((repo.language == 'en'
                         ? accentIpa(entry, scope.settings.englishAccent)
@@ -559,6 +618,14 @@ class _WordBody extends StatelessWidget {
             ],
           ),
         ),
+      if (frVerb != null && frVerb.tables.isNotEmpty)
+        Padding(
+            padding: const EdgeInsets.only(top: MSpace.lg),
+            child: FrenchVerbSection(frVerb)),
+      if (frAdjective != null)
+        Padding(
+            padding: const EdgeInsets.only(top: MSpace.lg),
+            child: FrenchAdjectiveSection(frAdjective)),
       relatedSection('近義詞', ['synonyms']),
       relatedSection('反義詞', ['antonyms']),
       relatedSection('同音詞', ['homophones']),

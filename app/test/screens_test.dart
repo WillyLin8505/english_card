@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:photo_english_app/app/app_scope.dart';
 import 'package:photo_english_app/data/sample_word_database.dart';
 import 'package:photo_english_app/models/learning_card.dart';
@@ -14,6 +16,7 @@ import 'package:photo_english_app/models/vocabulary_profile.dart';
 import 'package:photo_english_app/models/word_entry.dart';
 import 'package:photo_english_app/screens/flashcard_screen.dart';
 import 'package:photo_english_app/screens/onboarding_screen.dart';
+import 'package:photo_english_app/screens/photo_picker_screen.dart';
 import 'package:photo_english_app/services/app_settings.dart';
 import 'package:photo_english_app/services/dictionary_sync.dart';
 import 'package:photo_english_app/services/speaker.dart';
@@ -151,8 +154,7 @@ void main() {
       expect(app.repository.cardOf(apple.id), isNotNull);
     });
 
-    testWidgets('自動保存提示在單字列表之後，第一個字緊接列表標題（問題回報 #276／#451）',
-        (tester) async {
+    testWidgets('自動保存提示在單字列表之後，第一個字緊接列表標題（問題回報 #276／#451）', (tester) async {
       await openBreakfast(tester);
       final hint = find.text('離開這一頁會自動保存。');
       expect(hint, findsOneWidget);
@@ -161,7 +163,8 @@ void main() {
       final lastWordY = tester.getTopLeft(find.byType(Dismissible).last).dy;
       final hintY = tester.getTopLeft(hint).dy;
       expect(firstWordY, greaterThan(titleY));
-      expect(hintY, greaterThan(lastWordY), reason: '#451: hint sits under the list');
+      expect(hintY, greaterThan(lastWordY),
+          reason: '#451: hint sits under the list');
       expect(find.textContaining('離開這一頁時會自動保存'), findsNothing,
           reason: 'the bottom hint no longer repeats the save rule');
     });
@@ -224,7 +227,8 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('前往設定'));
       await tester.pumpAndSettle();
-      await tester.scrollUntilVisible(find.text('新照片的單字以下面選的程度為主，App 會依你的複習慢慢調整。'), 200,
+      await tester.scrollUntilVisible(
+          find.text('新照片的單字以下面選的程度為主，App 會依你的複習慢慢調整。'), 200,
           scrollable: find.byType(Scrollable).last);
       expect(find.text('新照片的單字以下面選的程度為主，App 會依你的複習慢慢調整。'), findsOneWidget);
 
@@ -289,11 +293,17 @@ void main() {
         ),
       );
       final photosBefore = app.repository.photoCount;
+      // 問題回報 #1730/#1732: no sample photos; a picked photo is added at
+      // once, with no album question.
+      PhotoPickerScreen.debugPickLibrary = () async => [
+            XFile.fromData(
+                File('test/fixtures/photos/recent_pasta.jpg').readAsBytesSync(),
+                name: 'recent_pasta.jpg')
+          ];
+      addTearDown(() => PhotoPickerScreen.debugPickLibrary = null);
       await tester.tap(find.text('選擇新照片'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('完成'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('儲存'));
+      await tester.tap(find.text('從相簿選擇'));
       await settle(tester,
           until: () =>
               app.repository.photoCount == photosBefore + 1 &&
@@ -376,7 +386,7 @@ void main() {
       expect(find.text('拍照學單字'), findsOneWidget);
       expect(find.text('目前無法使用相機'), findsOneWidget);
       expect(find.text('重試相機'), findsOneWidget);
-      expect(find.text('你可以按下方「選擇照片」，開始學單字。'), findsOneWidget);
+      expect(find.text('你可以按下方「選擇照片」，開始學單字。'), findsNothing);
       expect(find.text('Cutting Board'), findsNothing);
     });
 
@@ -536,7 +546,10 @@ void main() {
           '✕ 服務正常，但 API Key 不正確');
       await tester.scrollUntilVisible(
           find.byKey(const ValueKey('settings-fix-hint')), -300,
-          scrollable: find.descendant(of: find.byType(ListView), matching: find.byType(Scrollable)).first);
+          scrollable: find
+              .descendant(
+                  of: find.byType(ListView), matching: find.byType(Scrollable))
+              .first);
       expect(
           find.descendant(
               of: find.byKey(const ValueKey('settings-fix-hint')),
@@ -565,21 +578,21 @@ void main() {
         '✕ 連不到 AI 辨識服務（http://127.0.0.1:8765/tag），請確認服務已啟動',
       );
       // 問題回報 #475：只是暫時連不上時，提示說照片會排隊、之後自動辨識。
-      expect(find.text('照片辨識暫時連不上：新照片會先排隊，連上後自動辨識，不用處理'),
-          findsOneWidget);
+      expect(find.text('照片辨識暫時連不上：新照片會先排隊，連上後自動辨識，不用處理'), findsOneWidget);
       expect(find.textContaining('點開修正'), findsNothing);
       await tester.scrollUntilVisible(find.text('學習語言'), -300,
-          scrollable: find.descendant(of: find.byType(ListView), matching: find.byType(Scrollable)).first);
+          scrollable: find
+              .descendant(
+                  of: find.byType(ListView), matching: find.byType(Scrollable))
+              .first);
       expect(find.byKey(const ValueKey('settings-fix-hint')), findsNothing);
     });
 
     for (final code in [403, 500]) {
-      testWidgets('測試連線: $code 是伺服器端狀況，歸到暫時連不上 (問題回報 #476)',
-          (tester) async {
-        await check(tester, MockClient((r) async => jsonResponse({}, code)),
-            null);
-        expect(find.text('照片辨識暫時連不上：新照片會先排隊，連上後自動辨識，不用處理'),
-            findsOneWidget);
+      testWidgets('測試連線: $code 是伺服器端狀況，歸到暫時連不上 (問題回報 #476)', (tester) async {
+        await check(
+            tester, MockClient((r) async => jsonResponse({}, code)), null);
+        expect(find.text('照片辨識暫時連不上：新照片會先排隊，連上後自動辨識，不用處理'), findsOneWidget);
         expect(find.textContaining('點開修正'), findsNothing);
       });
     }
@@ -619,20 +632,19 @@ void main() {
               profile: UserVocabularyProfile.start('C1',
                   source: 'elo', now: testNow)));
       expect(find.text('App 已依你的複習調成 進階（C1）'), findsOneWidget);
-      expect(find.text('新照片的單字以這個程度為主，App 會依你的複習慢慢調整。'),
-          findsOneWidget);
-      expect(find.text('新照片的單字以下面選的程度為主，App 會依你的複習慢慢調整。'),
-          findsNothing);
+      expect(find.text('新照片的單字以這個程度為主，App 會依你的複習慢慢調整。'), findsOneWidget);
+      expect(find.text('新照片的單字以下面選的程度為主，App 會依你的複習慢慢調整。'), findsNothing);
     });
 
-    testWidgets('French is a learning language (#700); native UI languages are available',
+    testWidgets(
+        'French is a learning language (#700); native UI languages are available',
         (tester) async {
       final app = await pumpApp(tester,
           initialTab: AppTab.settings, size: const Size(402, 1600));
       // Owner opened French (問題回報 #700): a learning chip and a native
       // chip, both enabled, nothing marked 即將推出.
-      expect(find.widgetWithText(ChoiceChip, '法文（Français） · 即將推出'),
-          findsNothing);
+      expect(
+          find.widgetWithText(ChoiceChip, '法文（Français） · 即將推出'), findsNothing);
       final french = find.widgetWithText(ChoiceChip, '法文（Français）');
       expect(french, findsNWidgets(2));
       for (final chip in tester.widgetList<ChoiceChip>(french)) {
@@ -648,7 +660,8 @@ void main() {
       expect(find.text('照片辨識'), findsOneWidget);
     });
 
-    testWidgets('a restored retention outside the slider is clamped (card #228)',
+    testWidgets(
+        'a restored retention outside the slider is clamped (card #228)',
         (tester) async {
       final settings = AppSettings.inMemory()..desiredRetention = 0.97;
       expect(settings.desiredRetention, AppSettings.maxRetention);
@@ -664,8 +677,7 @@ void main() {
       await tester.scrollUntilVisible(advanced, 300);
       // Clear the bottom bar: the second learning language (#700) adds a
       // line above, so the row can stop right under it.
-      await tester.drag(
-          find.byType(Scrollable).first, const Offset(0, -200));
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, -200));
       await tester.pumpAndSettle();
       await tester.tap(advanced);
       await tester.pumpAndSettle();
@@ -685,8 +697,7 @@ void main() {
         ..hasError = false;
       await pumpApp(tester,
           initialTab: AppTab.settings, size: const Size(402, 1600));
-      await tester.scrollUntilVisible(
-          find.text('字卡和複習紀錄保存在此裝置。'), 300,
+      await tester.scrollUntilVisible(find.text('字卡和複習紀錄保存在此裝置。'), 300,
           scrollable: find.byType(Scrollable).first);
       expect(find.text('詞庫連線'), findsNothing);
       expect(find.textContaining('每 30 秒'), findsNothing);

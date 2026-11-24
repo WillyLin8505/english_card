@@ -234,7 +234,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _page({
     required String title,
-    required String subtitle,
+    String? subtitle,
     required List<Widget> children,
     required Widget action,
   }) =>
@@ -252,8 +252,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   UiText(title,
                       style: MFont.manrope(24, FontWeight.w800, MColors.ink)),
                   const SizedBox(height: 8),
-                  UiText(subtitle,
-                      style: MFont.manrope(14, FontWeight.w600, MColors.muted)),
+                  if (subtitle != null) ...[
+                    UiText(subtitle,
+                        style: MFont.manrope(14, FontWeight.w600, MColors.muted)),
+                  ],
                   const SizedBox(height: 24),
                   ...children,
                 ],
@@ -363,7 +365,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _languages() => _page(
         title: '歡迎使用拍照學單字',
-        subtitle: '用喜歡的照片學單字。先選想學的語言和你的母語。',
+        subtitle: '用喜歡的照片學單字。',
         children: [
           const SectionLabel('我想學'),
           const SizedBox(height: 8),
@@ -493,7 +495,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _goalsPage() => _page(
         title: '你為什麼想學？',
-        subtitle: '可以複選，也可以略過。',
         children: [
           Wrap(spacing: 10, runSpacing: 10, children: [
             for (final (key, label, icon) in learningGoalOptions)
@@ -522,7 +523,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _interestsPage() => _page(
         title: '你對哪些主題有興趣？',
-        subtitle: '可以複選，也可以略過。我們會先列出符合的相片冊。',
+        subtitle: '我們會先列出符合的相片冊。',
         children: [
           Wrap(spacing: 10, runSpacing: 10, children: [
             for (final (key, label, icon, _)
@@ -584,7 +585,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _check() => _page(
         title: '試試你認得哪些單字',
-        subtitle: '一次只看 3 個字。認得就點一下，不認得也沒關係。',
+        subtitle: '一次只看 3 個字。',
         children: [
           Wrap(
             spacing: 10,
