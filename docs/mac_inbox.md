@@ -8862,3 +8862,8 @@ commit `9f379414`（Windows：flutter analyze 無 error、flutter test 全過）
 - 卡 #496：模擬使用者・法語（英語母語者學法語）
   結果：第234-236輪完成：4/4模擬通過（A1 22秒、B1 22秒、抽卡 36秒、媒體 13秒）、詞庫17315詞、無測試失敗（只依通過與 pack 統計；未逐項讀 JSON，中文殘留未另量）。
   需要 Mac：無新項目。
+
+## M1124（2026-11-25 19:47）狀態：待做
+commit `a8b28898`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1401：問題回報 #1838：[owner] Windows PC 資源超過 80% 超過 10 分鐘：memory
+  結果：已修好根因：兩張模擬卡同時各跑一個 fluttertester（各約 8–10 GB）造成記憶體 99%；runround.py 現在先排 heavylock 才跑，之後同時只會有一個。
