@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:photo_english_app/app/app_scope.dart';
-import 'package:photo_english_app/app/phone_frame.dart';
 import 'package:photo_english_app/main.dart' as app;
 
 import 'helpers.dart';
@@ -13,10 +12,24 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(MaterialApp(
-      home: Builder(builder: (context) => app.phoneFrameBuilder(context, null)),
+      home: Builder(builder: (context) => app.appRootBuilder(context, null)),
     ));
 
-    expect(find.byType(PhoneFrame), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('wide screens show no fake phone frame or status bar (#1771)',
+      (tester) async {
+    tester.view.physicalSize = const Size(1280, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(MaterialApp(
+      home: Builder(
+          builder: (context) => app.appRootBuilder(context, const Text('本體'))),
+    ));
+
+    expect(find.text('本體'), findsOneWidget);
+    expect(find.byType(ClipRRect), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -53,6 +66,6 @@ void main() {
     await tester.tap(find.bySemanticsLabel(RegExp('^開啟照片「晨光陽台」')));
     await tester.pumpAndSettle();
     expect(find.text('照片詳情'), findsOneWidget);
-    expect(find.text('Balcony'), findsWidgets);
+    expect(find.text('balcony'), findsWidgets);
   });
 }

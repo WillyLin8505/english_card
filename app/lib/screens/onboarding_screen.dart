@@ -120,6 +120,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   late final bool _askConsent = widget.settings != null &&
       widget.settings!.anonymousEventsChoice == null;
   int _checkLevel = 0;
+  // 問題回報 #1771: the last tap saves settings and opens the App, which can
+  // take a second or two on the web. Show progress at once and ignore repeats.
+  bool _finishing = false;
   late String _native =
       nativeLanguageAvailable(widget.uiLanguage) ? widget.uiLanguage : 'zh-TW';
   late String _learning = _learningFor(_native);
@@ -163,6 +166,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       cefrLevels.every((l) => _checkWords![l]?.length == 3);
 
   void _finish({required bool checked}) {
+    if (_finishing) return;
+    setState(() => _finishing = true);
     final self = _self ?? 'A1';
     widget.onDone(OnboardingResult(
       _learning,
@@ -225,6 +230,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           onPressed: () => setState(() => _step--),
                           icon: const Icon(Icons.arrow_back),
                           label: const UiText('上一步'))),
+                if (_finishing)
+                  const LinearProgressIndicator(
+                      minHeight: 3, color: MColors.primary),
                 Expanded(child: steps[_step]()),
               ],
             ),
@@ -549,25 +557,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       _finish(checked: false);
                     },
                     child: const UiText('略過')),
-                if (widget.settings != null)
-                  TextButton(
-                    key: const Key('onboardingSignIn'),
-                    onPressed: () => showDialog<void>(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const UiText('已有帳號？登入（可略過）'),
-                        content: AccountSignInButtons(
-                            settings: widget.settings!,
-                            onSignedIn: () => Navigator.of(context).pop()),
-                        actions: [
-                          TextButton(
-                              onPressed: () => Navigator.of(context).pop(),
-                              child: const UiText('略過')),
-                        ],
-                      ),
-                    ),
-                    child: const UiText('已有帳號？登入（可略過）'),
-                  ),
+                if (widget.settings != null) _signInLink(),
                 if (_canCheck)
                   TextButton(
                     onPressed: () => setState(() {
@@ -581,6 +571,27 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
           ],
         ),
+      );
+
+  // 已有帳號？登入 — shared by the interests page and the quiz page (the
+  // interests page is skipped when no deck matches, 卡 #1310 K).
+  Widget _signInLink() => TextButton(
+        key: const Key('onboardingSignIn'),
+        onPressed: () => showDialog<void>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const UiText('已有帳號？登入（可略過）'),
+            content: AccountSignInButtons(
+                settings: widget.settings!,
+                onSignedIn: () => Navigator.of(context).pop()),
+            actions: [
+              TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const UiText('略過')),
+            ],
+          ),
+        ),
+        child: const UiText('已有帳號？登入（可略過）'),
       );
 
   Widget _check() => _page(
@@ -621,8 +632,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             },
           ),
           TextButton(
-              onPressed: () => _finish(checked: true),
-              child: UiText(_checkLevel == 0 ? '都不認識，從基礎開始' : '先到這裡，開始學習'))
+              // 都不認識 keeps the self-rated level instead of forcing A1.
+              onPressed: () => _finish(checked: _checkLevel != 0),
+              child: UiText(_checkLevel == 0 ? '都不認識，從基礎開始' : '先到這裡，開始學習')),
+          if (widget.settings != null) _signInLink(),
         ]),
       );
 }

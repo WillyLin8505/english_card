@@ -10,7 +10,6 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import 'app/app_scope.dart';
 import 'app/app_shell.dart';
-import 'app/phone_frame.dart';
 import 'models/vocabulary_profile.dart';
 import 'screens/onboarding_screen.dart';
 import 'services/event_report.dart';
@@ -45,10 +44,11 @@ import 'services/memory_monitor.dart';
 import 'widgets/feedback_button.dart';
 
 /// MaterialApp can call its builder with no child during route/bootstrap
-/// transitions on Flutter web. Keep the phone shell renderable instead of
-/// throwing from a null assertion on a learner's first launch.
-Widget phoneFrameBuilder(BuildContext context, Widget? child) =>
-    PhoneFrame(child: child ?? const SizedBox.shrink());
+/// transitions on Flutter web. Keep the app renderable instead of throwing
+/// from a null assertion on a learner's first launch. On wide screens the app
+/// fills the window: no fake phone frame or status bar (問題回報 #1771).
+Widget appRootBuilder(BuildContext context, Widget? child) =>
+    child ?? const SizedBox.shrink();
 
 /// Crash reports (Sentry) only exist when a SENTRY_DSN was compiled in.
 Future<void> main() => CrashReporting.instance.run(_start);
@@ -346,7 +346,7 @@ class _PhotoEnglishAppState extends State<PhotoEnglishApp>
           theme: MobileTheme.light(),
           navigatorKey: _rootNavigator,
           navigatorObservers: [FeedbackObserver(null)],
-          builder: (context, child) => phoneFrameBuilder(
+          builder: (context, child) => appRootBuilder(
               context,
               FeedbackOverlay(
                 navigatorKey: _rootNavigator,
