@@ -3405,3 +3405,12 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #496 #224 | 注意 | 只有 Windows 的模擬，App 沒有可在裝置上驗的改動。這批只改了內建精簡字典，沒有改 App 程式，所以這輪沒跑模擬器。 | — | — | — |
 | 上一輪仍不通過 | 注意 | iPad 這輪仍看到：單字本頁標題 l'aller m. plural allers（FR23）、ne/la 卡（FR12）、être/prendre 代動詞（FR21）、héros 中文說明（FR07），與 M1104 相同，已請 Windows 開回報。 | — | — | iPad |
 | iPad 還原 | 通過 | iPad 只讀跑完，沒有例外；平常版 App 08:42 已裝回並開啟。 | — | — | iPad |
+
+## M1106 卡 #1330 #1284（commit f91265bc）：iPad 唯讀＋模擬器全新安裝（法文）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1284 | 通過 | FR26（新檢查）：iPad 和模擬器開 d'abord 都是完整詞庫頁：Adverb、Beginner (A1)、/d‿a.bɔʁ/、6 個意思（first, at first, right away…），沒有「Basic entry」。 | docs/mac_verify_shots/2026-11-25/m1106_ipad_dabord.png | — | iPad＋模擬器 |
+| #1330 | 注意 | 舊的假手機外框只在畫面寬度 ≥600 時出現。iOS App 是 iPhone 專用（TARGETED_DEVICE_FAMILY = 1），在 iPad 上以 iPhone 模式執行，寬 375 點，所以 iPad 和 iPhone 模擬器本來就沒有外框，這次改動在裝置上看不到差別（這輪截圖和上一輪一樣是 375×820 點）。外框只影響桌面／網頁版，Mac 沒驗。引導頁：模擬器全新安裝首次設定 7 項都通過（FR-ON），但沒量「開始使用」點下去到出現進度條的時間。 | — | — | iPad＋模擬器 |
+| 上一輪仍不通過 | 注意 | iPad 和模擬器這輪仍看到：單字本頁標題 l'aller m. plural allers（FR23）、ne/la 卡（FR12）、être/prendre 代動詞（FR21）、héros 中文說明（FR07），與 M1104、M1105 相同。 | — | — | iPad＋模擬器 |
+| iPad 還原 | 通過 | iPad 只讀跑完，沒有例外；平常版 App 09:38 已裝回並開啟。模擬器全新安裝下載到 fr-en 詞庫 23b557c8…（24.5 MB）。 | — | — | iPad |
