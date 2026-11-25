@@ -252,7 +252,17 @@ bool matchesSearch(String query, WordEntry e, Iterable<Photo> photos) {
     for (final r in e.related) r.word,
     for (final p in photos) ...[p.title, p.place],
   ];
-  return haystack.any((s) => s != null && s.toLowerCase().contains(q));
+  if (haystack.any((s) => s != null && s.toLowerCase().contains(q))) return true;
+  // Card #1382: French reflexive verbs are stored under the bare infinitive
+  // (lever, not se lever), so "se lever" / "s'asseoir" also finds the headword.
+  final bare = reflexiveBare(q);
+  return bare != null && e.word.toLowerCase().contains(bare);
+}
+
+/// "se lever" -> "lever", "s'asseoir" -> "asseoir"; null when not reflexive.
+String? reflexiveBare(String q) {
+  final m = RegExp(r"^(?:se\s+|s['’]\s*)(\S.*)$").firstMatch(q.trim().toLowerCase());
+  return m?.group(1);
 }
 
 /// How well the headword matches a search: 0 exact, 1 prefix, 2 contains in

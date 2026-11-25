@@ -225,6 +225,13 @@ void main() {
     expect(find.text('je vais'), findsOneWidget);
   });
 
+  // Card #1378 (問題回報 #1815): iPad's saved aller (pos noun, Verb + Noun usages).
+  testWidgets('wordbook page: aller saved as noun still shows the table', (t) async {
+    await openWordbook(t, 'aller', 'noun');
+    expect(find.text('Conjugation'), findsOneWidget);
+    expect(find.text('je vais'), findsOneWidget);
+  });
+
   testWidgets('wordbook page: verb aller title has no gender or plural', (t) async {
     await openWordbook(t, 'aller', 'verb');
     expect(find.textContaining("l'aller"), findsNothing);

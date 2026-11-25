@@ -281,9 +281,16 @@ class _WordBody extends StatelessWidget {
     // Card #1366: a saved entry whose own pos is not 'verb' (aller kept with
     // pos noun/unknown) still lists a Verb usage on the page: it shows the
     // table too.
+    // Card #1378 (問題回報 #1815): the iPad's saved aller still had no table,
+    // so a pack verb entry of the same spelling counts too (noun/unknown pos).
+    bool isVerbPos(String p) => const {'verb', 'v', 'v.'}.contains(p.trim().toLowerCase());
+    final packHasVerb = french &&
+        pack.entriesFor(entry.word).any((e) =>
+            e.full && !e.cardForm && !e.rareUsage && e.pos == 'verb');
     final frVerb = french &&
-            (entry.pos == 'verb' ||
-                entry.effectiveUsages.any((u) => u.pos == 'verb'))
+            (isVerbPos(entry.pos) ||
+                entry.effectiveUsages.any((u) => isVerbPos(u.pos)) ||
+                (packHasVerb && !entry.pos.startsWith('adj') && !entry.pos.startsWith('adv')))
         ? frenchVerbFrom(entry.word, allForms)
         : null;
     final frAdjective = french && entry.pos.startsWith('adj')

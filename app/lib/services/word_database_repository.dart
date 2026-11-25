@@ -1383,8 +1383,17 @@ class WordDatabaseRepository extends ChangeNotifier {
         }
         merged[field] = fresh[field];
       }
+      // A word saved from a photo keeps only that label's part of speech and
+      // sense (問題回報 #1816 / card #1379: the refresh put 動詞 種植 and every
+      // noun sense back after _createEntry had trimmed them).
+      final allUsages = pack.usagesFor(e.word);
+      final fromPhoto = _occurrences
+          .any((o) => o.wordEntryId == e.id && !o.fromImport);
       merged['lexeme_usages'] = [
-        for (final u in pack.usagesFor(e.word)) u.toJson()
+        for (final u in fromPhoto
+            ? _usagesForSense(allUsages, pos, '${merged['meaning'] ?? ''}')
+            : allUsages)
+          u.toJson()
       ];
       merged['pos'] = pos;
       merged['lexemeId'] = x.id;
