@@ -266,8 +266,9 @@ String? _lastSavedAlbumId;
 
 /// Owner 11/24 (問題回報 #1730): a photo goes straight in and recognition
 /// starts at once — no 存到相片冊 question. It lands in [albumId], else the
-/// album last saved to, else the first album (none: no album); moving it is
-/// done in 照片詳情.
+/// album last saved to, else the first album. A learner with no album yet
+/// gets one made here (問題回報 #1768): a photo in no album never shows on
+/// 相片冊. Moving it is done in 照片詳情.
 SavePhotoChoice autoSaveChoice(
   WordDatabaseRepository repository, {
   required String defaultTitle,
@@ -278,7 +279,8 @@ SavePhotoChoice autoSaveChoice(
       (albums.any((a) => a.id == _lastSavedAlbumId)
           ? _lastSavedAlbumId
           : null) ??
-      albums.firstOrNull?.id;
+      albums.firstOrNull?.id ??
+      repository.addAlbum(name: '我的照片').id;
   return (title: defaultTitle, albumId: id, scanMode: PhotoScanMode.both);
 }
 

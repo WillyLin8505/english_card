@@ -239,8 +239,8 @@ class WordLinks {
         }
       }
       if (id == null) {
-        _linkParts(text, tokens[i], out, plain, () => cursor,
-            (c) => cursor = c);
+        _linkParts(
+            text, tokens[i], out, plain, () => cursor, (c) => cursor = c);
         i++;
         continue;
       }
@@ -253,6 +253,7 @@ class WordLinks {
     plain(text.length);
     return out;
   }
+
   /// A token nothing matched whole: l'arbre links arbre, a hyphenated word
   /// links the parts that are words (card #1218).
   void _linkParts(
@@ -497,10 +498,27 @@ class FlashcardBack extends StatelessWidget {
           initial: 3);
 
   /// The meaning split into its senses (「國民、民族；人們」 → two).
-  static List<String> meaningParts(String meaning) => [
-        for (final part in meaning.split(RegExp(r'\s*[；;]\s*')))
-          if (part.trim().isNotEmpty) part.trim(),
-      ];
+  static List<String> meaningParts(String meaning) {
+    // 卡 #1317: a ';' inside (...) belongs to the note, not a new sense.
+    final parts = <String>[];
+    final buf = StringBuffer();
+    var depth = 0;
+    for (final ch in meaning.split('')) {
+      if (ch == '(' || ch == '（') depth++;
+      if ((ch == ')' || ch == '）') && depth > 0) depth--;
+      if (depth == 0 && (ch == ';' || ch == '；')) {
+        parts.add(buf.toString());
+        buf.clear();
+      } else {
+        buf.write(ch);
+      }
+    }
+    parts.add(buf.toString());
+    return [
+      for (final p in parts)
+        if (p.trim().isNotEmpty) p.trim(),
+    ];
+  }
 
   Widget? _configuredField(BuildContext context, TemplateField setting,
       WordLinks links, CardLook look) {
@@ -936,8 +954,26 @@ class FlashcardBack extends StatelessWidget {
 
   /// The examples for the learner's level, best first (M-PERF: sorted once).
   List<WordExample> _examples() {
-    final own = _data.examples.putIfAbsent(learnerLevel,
-        () => learningExamples(entry, learnerLevel, maxItems: 10000));
+    final own = _data.examples.putIfAbsent(learnerLevel, () {
+      final saved = learningExamples(entry, learnerLevel, maxItems: 10000);
+      if (saved.isNotEmpty) return saved;
+      // Card #1304 (FR12): the saved word is the pronoun 「la」 but the card
+      // shows the article's usage; read that usage's sentences instead.
+      final src = _source;
+      if (src == null || src.examples.isEmpty) return saved;
+      return learningExamples(
+          entry.copyWith(examples: [
+            for (final x in src.examples)
+              WordExample(
+                  text: x.text,
+                  translation: x.translation,
+                  source: x.source,
+                  difficulty: x.difficulty,
+                  aiTranslated: x.translationAi)
+          ]),
+          learnerLevel,
+          maxItems: 10000);
+    });
     if (contextExamples.isEmpty) return own;
     final seen = {for (final x in contextExamples) x.text.toLowerCase()};
     return [
@@ -989,8 +1025,13 @@ class FlashcardBack extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final source = _source;
-    final ipa =
-        (entry.ipa?.trim().isNotEmpty ?? false) ? entry.ipa : source?.ipa;
+    // 問題回報 #1767: one IPA everywhere (photo page, word page): the
+    // entry's in 設定's accent.
+    final scope = AppScope.of(context);
+    final ipa = (scope.repository.language == 'en'
+            ? accentIpa(entry, scope.settings.englishAccent)
+            : null) ??
+        ((entry.ipa?.trim().isNotEmpty ?? false) ? entry.ipa : source?.ipa);
     // 發音與 IPA sits in the header; switched off in 卡片背面順序, the IPA
     // and the play button go (the switch used to do nothing).
     final showPronunciation = template.backFields
@@ -1989,7 +2030,7 @@ class _PhotoPagerState extends State<_PhotoPager> {
           // a counter replaces them.
           ? Center(
               child: UiText(
-                '第 ${index + 1} / $count 張　·　左右滑動換照片',
+                '第 ${index + 1} / $count 張',
                 style: MFont.manrope(13, FontWeight.w600, MColors.muted),
               ),
             )
@@ -2129,7 +2170,8 @@ class CompactWordScreen extends StatelessWidget {
               key: const ValueKey('compact-word-page'),
               padding: const EdgeInsets.all(MSpace.md),
               children: [
-                Text(hit.word, style: MFont.manrope(28, FontWeight.w800, MColors.ink)),
+                Text(hit.word,
+                    style: MFont.manrope(28, FontWeight.w800, MColors.ink)),
                 if (hit.ipa != null)
                   Text('/${hit.ipa}/', style: MFont.bodyMuted),
                 if (hit.pos.isNotEmpty)

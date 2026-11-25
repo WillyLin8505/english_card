@@ -1,8 +1,12 @@
 import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/widgets.dart' show Widget;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+
+import 'google_web_button_stub.dart'
+    if (dart.library.js_interop) 'google_web_button.dart';
 
 /// An ID token from Google / Apple, plus the name they shared the first time.
 class SocialCredential {
@@ -24,6 +28,10 @@ abstract class SocialSignIn {
   Future<SocialCredential?> google();
   Future<SocialCredential?> apple();
 
+  /// Web only: Google's own sign-in button; null elsewhere. The credential
+  /// arrives through [onCredential] when the learner picks an account.
+  Widget? googleWebButton(void Function(SocialCredential) onCredential);
+
   /// Revokes the Google grant on sign-out / account deletion (5.1.1(v)).
   Future<void> googleDisconnect();
 }
@@ -35,11 +43,22 @@ class PlatformSocialSignIn implements SocialSignIn {
   static const googleServerClientId =
       String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID');
 
+  /// Web OAuth client ID (`--dart-define=GOOGLE_WEB_CLIENT_ID=...`, authorised
+  /// origins https://api.willylinai.com and http://127.0.0.1:8123).
+  static const googleWebClientId = String.fromEnvironment('GOOGLE_WEB_CLIENT_ID');
+
   static bool _googleReady = false;
 
   @override
-  bool get googleConfigured =>
-      !kIsWeb && (googleClientId.isNotEmpty || googleServerClientId.isNotEmpty);
+  bool get googleConfigured => kIsWeb
+      ? googleWebClientId.isNotEmpty
+      : (googleClientId.isNotEmpty || googleServerClientId.isNotEmpty);
+
+  @override
+  Widget? googleWebButton(void Function(SocialCredential) onCredential) =>
+      kIsWeb && googleWebClientId.isNotEmpty
+          ? buildGoogleWebButton(googleWebClientId, onCredential)
+          : null;
 
   /// Apple's button is required next to Google on iOS (App Review 4.8).
   @override

@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:photo_english_app/app/app_scope.dart';
 import 'package:photo_english_app/screens/onboarding_screen.dart';
 import 'package:photo_english_app/screens/flashcard_screen.dart';
+import 'package:photo_english_app/services/app_settings.dart';
+
 import 'helpers.dart';
 
 void main() {
@@ -46,7 +48,7 @@ void main() {
     final row = find.byKey(const ValueKey('word:apple'));
     await tester.ensureVisible(row);
     // The row also contains independent 48px actions. Tap the word itself.
-    await tester.tap(find.descendant(of: row, matching: find.text('Apple')));
+    await tester.tap(find.descendant(of: row, matching: find.text('apple')));
     await tester.pumpAndSettle();
     expect(find.text('單字詳情'), findsOneWidget);
     expect(find.text('查看單字'), findsNothing);
@@ -61,8 +63,17 @@ void main() {
     for (final entry in repo.entries.where((entry) => entry.word != 'apple')) {
       repo.archiveWord(entry.id);
     }
+    // Since 問題回報 #1767 a new word starts with recognising; the two photo
+    // exercises wait for their picture, and this test's sample pictures are
+    // no longer bundled (#1732). The answer layout is what is checked here.
+    final settings = AppSettings.inMemory()
+      ..hideExerciseType('photoRecall')
+      ..hideExerciseType('imageDrag');
     await pumpApp(tester,
-        initialTab: AppTab.words, repository: repo, size: const Size(360, 740));
+        initialTab: AppTab.words,
+        repository: repo,
+        settings: settings,
+        size: const Size(360, 740));
     expect(find.text('缺漏欄位'), findsNothing);
     await tester.tap(find.text('還在學'));
     await tester.pumpAndSettle();

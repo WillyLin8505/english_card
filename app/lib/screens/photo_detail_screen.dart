@@ -1,4 +1,5 @@
 import '../l10n/ui_text.dart';
+import '../services/accent_audio.dart';
 import '../services/learning_content.dart';
 import 'dart:async';
 import 'dart:math' as math;
@@ -24,6 +25,7 @@ import '../widgets/mobile/m_icon.dart';
 import '../widgets/mobile/photo_widgets.dart';
 import '../widgets/mobile/level_column_panel.dart';
 import '../widgets/mobile/photo_word_grid_table.dart';
+import 'database_library_screen.dart' show openDatabaseWord;
 
 part '../widgets/photo_word_cards.dart';
 part '../widgets/photo_difficulty_controls.dart';
@@ -192,8 +194,14 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
             lang: lang));
   }
 
-  String? _ipa(WordDatabaseRepository repo, String word) =>
-      _ipaCache.putIfAbsent(word, () => repo.entryByWord(word)?.ipa);
+  // 問題回報 #1767: the same IPA as the review card and the word page
+  // (the entry's, in 設定's accent) — the recognizer's own /plænt/ differed.
+  String? _ipa(WordDatabaseRepository repo, String word, String accent) =>
+      _ipaCache.putIfAbsent(word, () {
+        final e = repo.entryByWord(word);
+        if (e == null) return null;
+        return repo.language == 'en' ? accentIpa(e, accent) : e.ipa;
+      });
 
   @override
   void didChangeDependencies() {
@@ -311,10 +319,20 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
 
   Future<void> _openWord(SessionWord w) async {
     final scope = AppScope.of(context);
-    _save();
+    // 問題回報 #1772: looking at a word is not collecting it. Only words the
+    // learner starred are saved here; with none starred, nothing is saved
+    // (the whole-list save is for leaving the page, not for tapping a word).
+    if (_session?.collected.isNotEmpty ?? false) _save();
     final e = scope.repository.entryByWord(w.word);
     if (e != null) {
       scope.navigator.openWord(e.id);
+      return;
+    }
+    // Owner 11/25 (screenshot 「還沒存進單字本，沒有詳情可看」): a word not
+    // in the book yet still has its dictionary page — show that one.
+    final hit = LexiconPack.instance.lookup(w.word, pos: w.candidate.pos);
+    if (hit != null) {
+      if (mounted) openDatabaseWord(context, hit.entry.id);
       return;
     }
     // 問題回報 #1586: a word not in the book (deleted / not saved) used to do
@@ -406,7 +424,6 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
     final result = await showLabelDialog(
       context,
       title: '自己加字',
-      hint: '中文可以留空，會用詞庫的意思。',
     );
     if (result == null || !mounted) return;
     final word = LexiconPack.normalize(result.word);
@@ -518,9 +535,6 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                 leading: const _SpotNumber(1),
                 title: UiText(choices.isEmpty ? 'AI 在這裡沒有認出東西' : 'AI 在這裡看到',
                     style: MFont.manrope(16, FontWeight.w800, MColors.ink)),
-                subtitle: UiText(choices.isEmpty
-                    ? '可以換個位置再長按，或自己輸入。'
-                    : '選一個字，就會在照片上標 1 的位置加上標籤。'),
               ),
               for (final c in choices)
                 ListTile(
@@ -561,7 +575,6 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
     final result = await showLabelDialog(
       context,
       title: '自己加字',
-      hint: '中文可以留空，會用詞庫的意思。',
     );
     if (result == null || !mounted) return;
     final word = LexiconPack.normalize(result.word);
@@ -974,7 +987,9 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                 },
                 child: _WordCard(
                   word: _shown(w.word, w.candidate.pos),
-                  ipa: w.candidate.ipa ?? _ipa(scope.repository, w.word),
+                  ipa: _ipa(scope.repository, w.word,
+                          scope.settings.englishAccent) ??
+                      w.candidate.ipa,
                   zh: _zh(w.word, w.candidate.pos, w.candidate.meaning),
                   level: w.candidate.level,
                   // 問題回報 #703: no pin because the recognizer could not
@@ -1009,13 +1024,6 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                           style: MFont.manrope(
                               13, FontWeight.w800, MColors.primary)),
                     ),
-                    // 問題回報 #616: the other way to add a word.
-                    Expanded(
-                      child: UiText('或在照片上長按，讓 AI 認那個位置',
-                          maxLines: 2,
-                          style: MFont.manrope(
-                              12, FontWeight.w600, MColors.muted)),
-                    ),
                   ],
                 ),
               ],
@@ -1048,10 +1056,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                         size: 14, color: MColors.label),
                     const SizedBox(width: 4),
                     Expanded(
-                      child: UiText(
-                          _fresh
-                              ? '按儲存，或離開這一頁，都會保存。'
-                              : '離開這一頁會自動保存。',
+                      child: UiText(_fresh ? '按儲存，或離開這一頁，都會保存。' : '離開這一頁會自動保存。',
                           style: MFont.manrope(
                               12, FontWeight.w600, MColors.label)),
                     ),
@@ -1077,12 +1082,6 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                     const SizedBox(height: 8),
                   ],
                 ],
-                const SizedBox(height: 4),
-                UiText(
-                  '左滑單字表示已經會了；拖曳照片上的標籤可調整位置；點標籤可改字或刪除。',
-                  textAlign: TextAlign.center,
-                  style: MFont.manrope(12, FontWeight.w600, MColors.label),
-                ),
                 if (session.selection != null &&
                     session.selection!.scored.isNotEmpty)
                   Center(
@@ -1252,9 +1251,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
         );
       default:
         title = '這張照片沒有新的單字';
-        body = session.oldWords.isEmpty
-            ? '可以拖動難度條，或按「多看動詞」找找看其他的詞。'
-            : '打開「顯示已學會單字」可以看到照片裡已經學過的詞。';
+        body = '';
     }
     return Container(
       margin: const EdgeInsets.only(bottom: MSpace.sm),
@@ -1264,10 +1261,12 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
       child: Column(
         children: [
           UiText(title, style: MFont.manrope(15, FontWeight.w800, MColors.ink)),
-          const SizedBox(height: MSpace.xxs + 2),
-          Text(body,
-              textAlign: TextAlign.center,
-              style: MFont.manrope(13, FontWeight.w600, MColors.muted)),
+          if (body.isNotEmpty) ...[
+            const SizedBox(height: MSpace.xxs + 2),
+            Text(body,
+                textAlign: TextAlign.center,
+                style: MFont.manrope(13, FontWeight.w600, MColors.muted)),
+          ],
           if (action != null) ...[const SizedBox(height: MSpace.sm), action],
         ],
       ),
@@ -1296,7 +1295,7 @@ class _PlacingBar extends StatelessWidget {
                 size: 18, color: MColors.primary),
             const SizedBox(width: 8),
             Expanded(
-              child: UiText('在照片上點一下，放「$word」的位置',
+              child: UiText('放「$word」的位置',
                   style: MFont.manrope(13, FontWeight.w700, MColors.ink)),
             ),
             TextButton(onPressed: onSkip, child: const UiText('不放位置')),

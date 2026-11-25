@@ -236,6 +236,7 @@ class LocalVisionTagger implements PhotoTagger {
     String? focus,
     List<String> exclude = const [],
     bool? asWeb,
+    bool allLevels = false,
   }) async {
     final labels = await LocalVision.classify(jpeg);
     if (lang == 'fr') {

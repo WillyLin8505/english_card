@@ -84,18 +84,28 @@ class WordDetailScreen extends StatelessWidget {
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(MSpace.xl),
-                    child: _WordBody(entry: entry, occurrenceId: occurrenceId),
+                    // 問題回報 #1772: at the bottom edge it sat where the tab
+                    // bar is (desktop), so it was tapped by accident. At the
+                    // end of the page it is still reachable, not next to tabs.
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _WordBody(entry: entry, occurrenceId: occurrenceId),
+                        if (card != null) ...[
+                          const SizedBox(height: MSpace.xl),
+                          _ArchiveButton(
+                            archived: card.archived,
+                            // The button's own label says what happened; a
+                            // toast would cover it.
+                            onTap: () => card.archived
+                                ? repo.restoreWord(entry.word)
+                                : repo.archiveWord(entry.id),
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
                 ),
-                if (card != null)
-                  _ArchiveButton(
-                    archived: card.archived,
-                    // The button's own label says what happened; a toast
-                    // would cover it.
-                    onTap: () => card.archived
-                        ? repo.restoreWord(entry.word)
-                        : repo.archiveWord(entry.id),
-                  ),
               ],
             ),
           ),
@@ -239,14 +249,12 @@ class _WordBody extends StatelessWidget {
     }
 
     final seenExamples = <String>{};
+    // 問題回報 #1772: a sentence whose translation is blank (母語變更後還沒
+    // 翻譯) used to hide the whole 例句 section; the English sentence shows.
     final examples = [
       ...entry.examples,
       for (final usage in entry.effectiveUsages) ...usage.examples,
-    ]
-        .where((e) =>
-            (e.translation ?? '').trim().isNotEmpty &&
-            seenExamples.add(e.text.toLowerCase()))
-        .toList();
+    ].where((e) => seenExamples.add(e.text.toLowerCase())).toList();
     // Card #1256 (問題回報 #1703): a French word shows the same blocks as the
     // database page (title with article, 變位表, 形容詞) instead of the old
     // 詞形變化 chips; the rest of its forms are chips, as in the database.
@@ -257,8 +265,18 @@ class _WordBody extends StatelessWidget {
         for (final e in pack.entriesFor(entry.word))
           if (e.full && !e.cardForm) ...e.forms,
     ];
-    final frGender = french
-        ? allForms.where((f) => f.field == 'fr_gender').firstOrNull?.form
+    // Card #1286: only nouns get the 「le/la …」 title; the forms are read from
+    // this entry's own part of speech, not from a noun usage of the same lemma.
+    final titleForms = [
+      if (french)
+        for (final e in pack.entriesFor(entry.word))
+          if (e.full && !e.cardForm && e.pos == entry.pos) ...e.forms,
+    ];
+    final frGender = french &&
+            entry.pos != 'verb' &&
+            !entry.pos.startsWith('adj') &&
+            !entry.pos.startsWith('adv')
+        ? (titleForms.isEmpty ? allForms : titleForms).where((f) => f.field == 'fr_gender').firstOrNull?.form
         : null;
     final frVerb = french && entry.pos == 'verb'
         ? frenchVerbFrom(entry.word, allForms)
@@ -267,7 +285,7 @@ class _WordBody extends StatelessWidget {
         ? frenchAdjectiveFrom(entry.word, allForms)
         : null;
     final frPlural = french && frGender != null
-        ? allForms.where((f) => f.field == 'fr_plural').firstOrNull?.form
+        ? (titleForms.isEmpty ? allForms : titleForms).where((f) => f.field == 'fr_plural').firstOrNull?.form
         : null;
     final frShown = {
       for (final f in allForms)
@@ -275,6 +293,8 @@ class _WordBody extends StatelessWidget {
             const {'0', 'false', 'no', 'muet', ''}.contains(f.form.toLowerCase()))
           'fr_h_aspire',
       if (frGender != null) 'fr_gender',
+      if (french && frGender == null) 'fr_gender',
+      if (french && frGender == null && entry.pos == 'verb') 'fr_plural',
       if (frPlural != null) 'fr_plural',
       if (frVerb != null) ...[
         for (final f in allForms)
@@ -296,9 +316,15 @@ class _WordBody extends StatelessWidget {
       (forms[form.trim()] ??= {}).add(formLabel(label));
     }
 
+    // Card #1291 (問題回報 #1697): an aspirated h is a label alone, as on the
+    // database page; its value (yes / 1) is not a word and must not show.
+    String? hAspireChip;
     if (french) {
       for (final form in allForms) {
-        if (!frShown.contains(form.field)) {
+        if (frShown.contains(form.field)) continue;
+        if (form.field == 'fr_h_aspire') {
+          hAspireChip = formLabel(form.field);
+        } else {
           addForm(form.form, form.label ?? form.field);
         }
       }
@@ -365,15 +391,9 @@ class _WordBody extends StatelessWidget {
                       plural: frPlural,
                       hAspire: frenchHAspire(allForms))
                 else
-                  Text(
-                      headword(entry.word, entry.language,
-                          pos: entry.pos,
-                          inflections: [
-                            for (final u in entry.effectiveUsages)
-                              if (pack.lookup(entry.word, pos: u.pos)?.entry
-                                  case final s?)
-                                ...pack.detailFor(s).inflections
-                          ]),
+                  // 問題回報 #1772: the English title is the lemma as stored
+                  // (plant, not Plant); headword() would capitalise it.
+                  Text(entry.word,
                       style: MFont.manrope(32, FontWeight.w800, MColors.ink)),
                 // 卡 #227 第 147 輪: the IPA in 設定's accent, like the audio.
                 if ((repo.language == 'en'
@@ -613,7 +633,10 @@ class _WordBody extends StatelessWidget {
               for (final example in examples)
                 Padding(
                   padding: const EdgeInsets.only(bottom: MSpace.sm),
-                  child: ExampleText(example: example),
+                  child: ExampleText(
+                    example: example,
+                    showTranslation: (example.translation ?? '').trim().isNotEmpty,
+                  ),
                 ),
             ],
           ),
@@ -632,13 +655,14 @@ class _WordBody extends StatelessWidget {
       relatedSection('衍生詞', ['derived_terms']),
       relatedSection('相關詞', ['related']),
       relatedSection('容易混淆的字', ['near_homophones', 'similar_spelling']),
-      if (forms.isNotEmpty)
+      if (forms.isNotEmpty || hAspireChip != null)
         _Section(
             label: '詞形變化',
             child: Wrap(
               spacing: 8,
               runSpacing: 8,
               children: [
+                if (hAspireChip case final chip?) TagChip(chip),
                 for (final form in forms.entries)
                   TagChip('${form.key}（${mergeFormLabels(form.value)}）')
               ],
@@ -879,38 +903,33 @@ class _ArchiveButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bottom = MediaQuery.paddingOf(context).bottom;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-          MSpace.xl, MSpace.md, MSpace.xl, MSpace.xl + bottom),
-      child: Tap(
-        onTap: onTap,
-        label: archived ? '復原學習' : '標為已學會',
-        child: Container(
-          height: 54,
-          decoration: archived
-              ? MDecor.primaryPill(radius: 27)
-              : MDecor.insetCard(color: MColors.successSoft, radius: 27),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(archived ? Icons.undo_rounded : Icons.check_rounded,
-                  size: 20, color: archived ? Colors.white : MColors.success),
-              const SizedBox(width: MSpace.xs),
-              // 問題回報 #534: the French label overflowed at 375 pt (the
-              // end screen's forgotten words open this page).
-              Flexible(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: UiText(
-                    archived ? '復原學習' : '標為已學會',
-                    style: MFont.manrope(16, FontWeight.w800,
-                        archived ? Colors.white : MColors.success),
-                  ),
+    return Tap(
+      onTap: onTap,
+      label: archived ? '復原學習' : '標為已學會',
+      child: Container(
+        height: 54,
+        decoration: archived
+            ? MDecor.primaryPill(radius: 27)
+            : MDecor.insetCard(color: MColors.successSoft, radius: 27),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(archived ? Icons.undo_rounded : Icons.check_rounded,
+                size: 20, color: archived ? Colors.white : MColors.success),
+            const SizedBox(width: MSpace.xs),
+            // 問題回報 #534: the French label overflowed at 375 pt (the
+            // end screen's forgotten words open this page).
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: UiText(
+                  archived ? '復原學習' : '標為已學會',
+                  style: MFont.manrope(16, FontWeight.w800,
+                      archived ? Colors.white : MColors.success),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

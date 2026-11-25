@@ -240,7 +240,7 @@ void main() {
     await pumpBack(tester, photos: [
       for (var i = 0; i < 29; i++) (_photo('p$i'), null, null),
     ]);
-    expect(find.text('第 1 / 29 張　·　左右滑動換照片'), findsOneWidget);
+    expect(find.text('第 1 / 29 張'), findsOneWidget);
     expect(find.bySemanticsLabel(RegExp('第 1 張，共 29 張')), findsOneWidget);
   });
 
@@ -317,6 +317,9 @@ void main() {
         speaker: speaker,
         size: const Size(402, 1400));
     await tester.tap(find.text('綜合'));
+    await tester.pumpAndSettle();
+    await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 300)));
     await tester.pumpAndSettle();
     await tester.tap(find.text('顯示答案'));
     await tester.pumpAndSettle();

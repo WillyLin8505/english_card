@@ -144,7 +144,6 @@ class _WordDeckPhotosScreenState extends State<WordDeckPhotosScreen> {
     final images = _images ?? const [];
     final pending = lexiconPending();
     final failed = pending && lexiconDownloadFailed();
-    final progress = pending ? lexiconProgressText() : null;
     return Scaffold(
       backgroundColor: MColors.canvas,
       body: SafeArea(
@@ -165,11 +164,9 @@ class _WordDeckPhotosScreenState extends State<WordDeckPhotosScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      UiText('詞庫下載中（約 62 MB）',
-                          style: MFont.manrope(
+                      LexiconProgressLine(
+                          titleStyle: MFont.manrope(
                               13, FontWeight.w600, MColors.muted)),
-                      if (progress != null)
-                        UiText(progress, style: MFont.caption),
                     ],
                   ),
                 ),
@@ -181,7 +178,7 @@ class _WordDeckPhotosScreenState extends State<WordDeckPhotosScreen> {
                   alignment: Alignment.centerLeft,
                   child: UiText(
                       images.isEmpty
-                          ? '這 ${_deck.wordCount} 個字在詞庫裡還沒有圖片，可以先看單字'
+                          ? '這 ${_deck.wordCount} 個字在詞庫裡還沒有圖片'
                           : '相片冊 · ${_deck.wordCount} 個單字 · ${images.length} 張詞庫圖片',
                       style: MFont.manrope(13, FontWeight.w600, MColors.muted)),
                 ),

@@ -160,6 +160,8 @@ class PhotoIntake {
       contentHash: hashBytes(bytes),
       credit: credit,
       albumId: albumId,
+      // Its words come with the album (問題回報 #1154): never read again.
+      levelsAsked: true,
     );
     return (photo: photo, created: repo.addDeckPhoto(photo, labels));
   }

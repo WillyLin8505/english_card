@@ -4,6 +4,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:photo_english_app/screens/database_library_screen.dart';
+import 'package:photo_english_app/screens/word_detail_screen.dart';
+import 'package:photo_english_app/services/word_database_repository.dart';
 import 'package:photo_english_app/services/app_settings.dart';
 import 'package:photo_english_app/services/french_detail.dart';
 import 'package:photo_english_app/services/lexicon_pack.dart';
@@ -49,6 +51,9 @@ Map<String, dynamic> _pack() => {
           _f('fr_auxiliary', 'être'),
           _f('fr_past_participle', 'allé'),
           _f('fr_present_participle', 'allant'),
+          // Card #1305: stray noun fields must not title the verb 「l'aller m.」.
+          _f('fr_gender', 'm'),
+          _f('fr_plural', 'allers'),
         ]),
         _lex(2, 'parler', 'verb', 'to speak', [
           ..._tense('present',
@@ -133,6 +138,17 @@ void main() {
     expect(find.text('nous nous sommes levé(e)s'), findsOneWidget);
   });
 
+  test('card #1300: fr_pronominal (can be se …) does not make prendre reflexive', () {
+    final v = frenchVerbFrom('prendre', const [
+      LexForm('fr_pronominal', 'yes', 'yes', null),
+      LexForm('fr_auxiliary', 'avoir', 'avoir', null),
+      LexForm('fr_past_participle', 'pris', 'pris', null),
+      LexForm('fr_present_1s', 'prends', 'prends', null),
+    ])!;
+    expect(v.pronominal, isFalse);
+    expect(v.auxiliaries, ['avoir']);
+  });
+
   testWidgets('maison: la maison, f., plural', (t) async {
     await open(t, 4);
     expect(find.text('la maison'), findsOneWidget);
@@ -155,6 +171,9 @@ void main() {
     await open(t, 6);
     expect(find.text('le héros'), findsOneWidget);
     expect(find.byKey(const ValueKey('fr-h-aspire')), findsOneWidget);
+    // Card #1282: the English UI must not show the Chinese source note.
+    expect(find.textContaining('不連音'), findsNothing);
+    expect(find.textContaining('no liaison, no elision'), findsOneWidget);
     await open(t, 7);
     expect(find.text("l'arbre"), findsOneWidget);
     expect(find.text('m.'), findsOneWidget);
@@ -184,5 +203,37 @@ void main() {
     final v = frenchVerbFrom('parler', forms)!;
     final t = v.tables.firstWhere((x) => x.tense.code == 'simple_past');
     expect(t.cells.length, 6);
+  });
+
+  // 問題回報 #1715: the 單字本 page (WordDetailScreen) lacked the tables.
+  Future<void> openWordbook(WidgetTester tester, String word, String pos) async {
+    final repo = WordDatabaseRepository(clock: () => testNow);
+    final id = repo.addWord(word: word, pos: pos, meaning: '').id;
+    repo.linkLexicon(LexiconPack.instance);
+    await pumpApp(tester,
+        repository: repo,
+        settings:
+            AppSettings.inMemory(nativeLanguage: 'en', learningLanguage: 'fr'),
+        home: WordDetailScreen(wordEntryId: id),
+        size: const Size(402, 1800));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('wordbook page: aller shows the conjugation table', (t) async {
+    await openWordbook(t, 'aller', 'verb');
+    expect(find.text('Conjugation'), findsOneWidget);
+    expect(find.text('je vais'), findsOneWidget);
+  });
+
+  testWidgets('wordbook page: verb aller title has no gender or plural', (t) async {
+    await openWordbook(t, 'aller', 'verb');
+    expect(find.textContaining("l'aller"), findsNothing);
+    expect(find.textContaining('allers'), findsNothing);
+  });
+
+  testWidgets('wordbook page: beau shows the adjective grid', (t) async {
+    await openWordbook(t, 'beau', 'adj');
+    expect(find.text('belle'), findsWidgets);
+    expect(find.text('bel'), findsWidgets);
   });
 }

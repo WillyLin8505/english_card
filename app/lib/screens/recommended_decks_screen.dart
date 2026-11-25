@@ -86,7 +86,7 @@ class _RecommendedDecksScreenState extends State<RecommendedDecksScreen> {
       if (created.isNotEmpty) unawaited(scope.enricher.process());
       messenger
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: UiText('已加入「${info.title}」，可以開始複習')));
+        ..showSnackBar(SnackBar(content: UiText('已加入「${info.title}」')));
     } on DeckException catch (e) {
       messenger
         ..hideCurrentSnackBar()
@@ -113,7 +113,7 @@ class _RecommendedDecksScreenState extends State<RecommendedDecksScreen> {
                     UiText('為你挑的相片冊',
                         style: MFont.manrope(24, FontWeight.w800, MColors.ink)),
                     const SizedBox(height: 8),
-                    UiText('依你的興趣和程度挑選，一下就能加入；之後也能在「相片冊」找到更多。',
+                    UiText('依你的興趣和程度挑選。',
                         style:
                             MFont.manrope(14, FontWeight.w600, MColors.muted)),
                     const SizedBox(height: 20),
@@ -147,7 +147,17 @@ class _RecommendedDecksScreenState extends State<RecommendedDecksScreen> {
                     label: _library.installed.isEmpty ? '略過' : '開始使用',
                     onTap: _busy != null
                         ? null
-                        : () => Navigator.of(context).maybePop()),
+                        : () {
+                            // Mac 提案 A (2026-11-23): after adding a deck,
+                            // land on 複習 where the new words are, not on
+                            // the empty 拍照 tab.
+                            if (_library.installed.isNotEmpty) {
+                              AppScope.of(context)
+                                  .navigator
+                                  .selectTab(AppTab.review);
+                            }
+                            Navigator.of(context).maybePop();
+                          }),
               ),
             ],
           ),

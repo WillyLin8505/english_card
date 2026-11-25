@@ -134,6 +134,14 @@ class _PhotoPickerScreenState extends State<PhotoPickerScreen> {
   void initState() {
     super.initState();
     unawaited(_checkRecentAccess());
+    // 問題回報 #1768: with no photo library here (desktop, web) the file
+    // picker opens at once; a picked photo goes straight to 照片詳情 instead
+    // of waiting on an empty page for a second 從相簿選擇 tap.
+    if (!_hasPhotoLibrary && _candidates.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) unawaited(_pickFromLibrary());
+      });
+    }
   }
 
   /// Reads the permission without asking; the photos load only if the

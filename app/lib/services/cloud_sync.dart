@@ -284,7 +284,7 @@ class CloudSync extends ChangeNotifier {
   static String _newDevice() {
     final r = Random.secure();
     return '${DateTime.now().millisecondsSinceEpoch.toRadixString(36)}-'
-        '${r.nextInt(1 << 32).toRadixString(36)}';
+        '${r.nextInt(0xFFFFFFFF) /* a 32-bit shift is 0 on the web */.toRadixString(36)}';
   }
 
   // ── Changes that have no write hook ──────────────────────────────────

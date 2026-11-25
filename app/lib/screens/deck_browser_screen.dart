@@ -86,7 +86,7 @@ class _DeckBrowserScreenState extends State<DeckBrowserScreen> {
         if (mounted) setState(() => _progress = '$done/$total');
       });
       if (created.isNotEmpty) unawaited(scope.enricher.process());
-      _message('已加入「${info.title}」，可以開始複習');
+      _message('已加入「${info.title}」');
     } on DeckException catch (e) {
       _message(e.message);
     } finally {

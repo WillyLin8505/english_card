@@ -90,6 +90,11 @@ class Photo {
   /// "Jane Doe · CC BY 4.0 · https://…". Null for the learner's own photos.
   final String? credit;
 
+  /// Whether the photo was read for every level (A1–C2) at once, or has been
+  /// asked for them since (問題回報 #1774). Set once; the difficulty bar never
+  /// asks the recognizer again for a photo that has it.
+  final bool levelsAsked;
+
   const Photo({
     required this.id,
     this.albumId,
@@ -114,6 +119,7 @@ class Photo {
     this.scanMode = PhotoScanMode.objects,
     this.rejectedWords = const [],
     this.credit,
+    this.levelsAsked = false,
   });
 
   bool get hasImage =>
@@ -138,6 +144,7 @@ class Photo {
     int? difficultyOffset,
     DateTime? wordsSavedAt,
     List<String>? rejectedWords,
+    bool? levelsAsked,
   }) =>
       Photo(
         id: id,
@@ -163,6 +170,7 @@ class Photo {
         scanMode: scanMode,
         rejectedWords: rejectedWords ?? this.rejectedWords,
         credit: credit,
+        levelsAsked: levelsAsked ?? this.levelsAsked,
       );
 
   factory Photo.fromJson(Map<String, dynamic> j) => Photo(
@@ -197,6 +205,7 @@ class Photo {
         rejectedWords:
             (j['rejectedWords'] as List?)?.cast<String>() ?? const [],
         credit: j['credit'] as String?,
+        levelsAsked: j['levelsAsked'] as bool? ?? false,
       );
 
   Map<String, dynamic> toJson() => {
@@ -222,6 +231,7 @@ class Photo {
         if (scanMode != PhotoScanMode.objects) 'scanMode': scanMode.name,
         if (rejectedWords.isNotEmpty) 'rejectedWords': rejectedWords,
         if (credit != null) 'credit': credit,
+        if (levelsAsked) 'levelsAsked': true,
       };
 }
 

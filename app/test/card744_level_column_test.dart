@@ -22,13 +22,14 @@ void main() {
   testWidgets('A1: four parts of speech, empty adverb hint, no phrase',
       (t) async {
     await t.pumpWidget(host(0));
-    for (final r in ['noun', 'verb', 'adjective', 'adverb']) {
+    for (final r in ['noun', 'verb', 'adjective']) {
       expect(find.byKey(ValueKey('level-row-$r')), findsOneWidget);
     }
+    expect(find.byKey(const ValueKey('level-row-adverb')), findsNothing);
     expect(find.byKey(const ValueKey('level-row-phrase')), findsNothing);
     expect(find.byKey(const ValueKey('level-word:look up')), findsNothing);
     expect(find.byKey(const ValueKey('level-word:dog')), findsOneWidget);
-    expect(find.text('這個難度沒有合適的副詞'), findsOneWidget);
+    expect(find.text('這個難度沒有合適的副詞'), findsNothing);
     expect(find.byKey(const ValueKey('pos-filter-all')), findsNothing);
   });
 
@@ -37,9 +38,7 @@ void main() {
     await t.pumpWidget(host(4));
     expect(find.byKey(const ValueKey('level-word:canine')), findsOneWidget);
     expect(find.byKey(const ValueKey('level-word:dog')), findsNothing);
-    for (final r in ['noun', 'verb', 'adjective', 'adverb']) {
-      expect(find.byKey(ValueKey('level-row-$r')), findsOneWidget);
-    }
-    expect(find.text('這個難度沒有合適的動詞'), findsOneWidget);
+    expect(find.byKey(const ValueKey('level-row-verb')), findsNothing);
+    expect(find.text('這個難度沒有合適的動詞'), findsNothing);
   });
 }

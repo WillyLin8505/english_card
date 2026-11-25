@@ -75,7 +75,7 @@ Photo _photo() => Photo(
     title: '早餐',
     takenAt: testNow,
     createdAt: testNow,
-    assetPath: 'assets/sample/photo_breakfast.jpg',
+    assetPath: 'test/fixtures/photos/photo_breakfast.jpg',
     width: 1200,
     height: 900);
 
@@ -218,7 +218,7 @@ void main() {
     expect(find.byKey(const ValueKey('card-frame')), findsNothing);
     await showBack(tester, s);
     expect(find.byKey(const ValueKey('hero-word')), findsNothing);
-    final word = tester.widget<Text>(find.text('Breakfast').first);
+    final word = tester.widget<Text>(find.text('breakfast').first);
     expect(word.style?.fontSize, 32);
   });
 
@@ -233,7 +233,7 @@ void main() {
     await showBack(tester, s);
     expect(find.byKey(const ValueKey('hero-word')), findsOneWidget);
     // The word is written once — on the photo, not again below it.
-    expect(find.text('Breakfast'), findsOneWidget);
+    expect(find.text('breakfast'), findsOneWidget);
   });
 
   testWidgets('new styles give word chips a 44 pt touch target',

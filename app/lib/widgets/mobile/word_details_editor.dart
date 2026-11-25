@@ -210,8 +210,6 @@ class _WordDetailsEditorState extends State<WordDetailsEditor> {
       heading('構詞與詞源'),
       field(d.morphology, '構詞（字根、字首／字尾與解釋）', multiline: true),
       field(d.etymology, '詞源', multiline: true),
-      const SizedBox(height: 6),
-      const UiText('可直接修改內容；清空構詞或詞源即可刪除。'),
     ]);
   }
 }

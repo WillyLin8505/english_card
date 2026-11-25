@@ -129,12 +129,6 @@ class FlashcardFront extends StatelessWidget {
             textAlign: TextAlign.center,
             style: look.frontMeaning,
           ),
-        const SizedBox(height: 32),
-        UiText(
-          '先在心裡想出這個字，再按「顯示答案」。',
-          textAlign: TextAlign.center,
-          style: MFont.manrope(13, FontWeight.w600, MColors.label),
-        ),
       ],
     );
   }

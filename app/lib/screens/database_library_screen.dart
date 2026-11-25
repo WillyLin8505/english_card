@@ -81,7 +81,6 @@ class _DatabaseLibraryScreenState extends State<DatabaseLibraryScreen> {
     } else {
       body = const LexiconPicturePlaceholders();
     }
-    final progress = lexiconProgressText();
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Padding(
           padding:
@@ -93,8 +92,7 @@ class _DatabaseLibraryScreenState extends State<DatabaseLibraryScreen> {
             // the line does.
             if (!card) ...[
               const SizedBox(height: 4),
-              UiText('詞庫下載中（約 62 MB）', style: MFont.bodyMuted),
-              if (progress != null) UiText(progress, style: MFont.caption),
+              const LexiconProgressLine(),
             ],
             const SizedBox(height: MSpace.sm),
             TextField(

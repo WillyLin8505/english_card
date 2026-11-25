@@ -5,7 +5,7 @@ import '../services/dictionary_sync.dart';
 import '../services/lexicon_pack.dart';
 import '../theme/mobile_theme.dart';
 
-/// 問題回報 #856: on a fresh install the pack (~62 MB, 18,288 words, 10,720
+/// 問題回報 #856: on a fresh install the pack (18,288 words, 10,720
 /// pictures) arrives in the first minutes. Until it is in, the 資料庫 pages
 /// say so instead of 「null 筆」, 「沒有符合的單字」 or an empty grid.
 bool lexiconPending([LexiconPack? pack]) =>
@@ -18,14 +18,15 @@ bool lexiconDownloadFailed([DictionarySync? sync]) {
   return s.hasError && !s.downloading;
 }
 
-/// 「已下載 12 / 62 MB（19%）」, or null before the first byte arrives.
+/// 「已下載 12 / 79 MB（19%）」, or null before the first byte arrives.
 String? lexiconProgressText([DictionarySync? sync]) {
   final s = sync ?? DictionarySync.instance;
   if (!s.downloading || s.downloadedBytes <= 0) return null;
   String mb(int bytes) => (bytes / 1000000).toStringAsFixed(0);
   final total = s.downloadTotalBytes;
   if (total == null) return '已下載 ${mb(s.downloadedBytes)} MB';
-  final percent = (s.downloadedBytes * 100 / total).clamp(0, 100).floor();
+  // Never 100 % before the last byte is in (card #1269).
+  final percent = (s.downloadedBytes * 100 / total).clamp(0, 99).floor();
   return '已下載 ${mb(s.downloadedBytes)} / ${mb(total)} MB（$percent%）';
 }
 
@@ -55,12 +56,12 @@ class LexiconDownloadCard extends StatelessWidget {
             child: LinearProgressIndicator(
                 key: const ValueKey('lexicon-download-progress'),
                 value: progress != null && total != null
-                    ? (sync.downloadedBytes / total).clamp(0.0, 1.0)
+                    ? (sync.downloadedBytes / total).clamp(0.0, 0.99)
                     : null,
                 color: MColors.primary),
           ),
         const SizedBox(height: MSpace.md),
-        UiText(failed ? '正在取得資料庫內容' : '詞庫下載中（約 62 MB）',
+        UiText(failed ? '正在取得資料庫內容' : '詞庫下載中',
             textAlign: TextAlign.center, style: MFont.titleSm),
         if (failed) ...[
           const SizedBox(height: MSpace.xs),
@@ -145,4 +146,37 @@ class LexiconPicturePlaceholders extends StatelessWidget {
           ]),
         ),
       );
+}
+
+/// The same determinate bar and 「已下載 x / y MB」 line everywhere the
+/// dictionary is still downloading (card #1269, 問題回報 #1728).
+class LexiconProgressLine extends StatelessWidget {
+  const LexiconProgressLine({super.key, this.titleStyle});
+  final TextStyle? titleStyle;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+        listenable: DictionarySync.instance, builder: _build);
+  }
+
+  Widget _build(BuildContext context, Widget? _) {
+    final sync = DictionarySync.instance;
+    final total = sync.downloadTotalBytes;
+    final progress = lexiconProgressText(sync);
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      UiText('詞庫下載中', style: titleStyle ?? MFont.bodyMuted),
+      const SizedBox(height: 4),
+      SizedBox(
+        width: 220,
+        child: LinearProgressIndicator(
+            key: const ValueKey('lexicon-download-progress'),
+            value: progress != null && total != null
+                ? (sync.downloadedBytes / total).clamp(0.0, 0.99)
+                : null,
+            color: MColors.primary),
+      ),
+      if (progress != null) UiText(progress, style: MFont.caption),
+    ]);
+  }
 }

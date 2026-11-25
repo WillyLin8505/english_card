@@ -532,6 +532,7 @@ class TextScanTagger implements PhotoTagger {
     String? focus,
     List<String> exclude = const [],
     bool? asWeb,
+    bool allLevels = false,
   }) async {
     final lines = await TextScan.recognize(jpeg);
     if (lang == 'fr') {

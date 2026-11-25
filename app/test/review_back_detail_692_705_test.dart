@@ -79,16 +79,13 @@ void main() {
     if (s != null && !s.canAnswer) s.reportPhotoState(s.photoAttempt, true);
     s?.showAnswer();
     await tester.pumpAndSettle();
-    expect(top, findsOneWidget);
+    expect(top, findsNothing, reason: '#1797: only one 回到正面');
     expect(bottom, findsOneWidget);
-    expect(tester.getTopLeft(top).dy,
-        lessThan(tester.getTopLeft(find.byType(FlashcardBack)).dy),
-        reason: 'above the word');
 
-    await tester.tap(top);
+    await tester.tap(bottom);
     await tester.pumpAndSettle();
     expect(find.byType(FlashcardFront), findsOneWidget);
-    expect(top, findsNothing);
+    expect(bottom, findsNothing);
   });
 
   testWidgets('#694 the English definition is numbered on the back',

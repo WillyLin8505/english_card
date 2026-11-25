@@ -184,9 +184,9 @@ FrenchVerb? frenchVerbFrom(String lemma, List<LexForm> forms) {
   final pp = f['fr_past_participle'];
   final prp = f['fr_present_participle'];
   if (!conjugated && pp == null && prp == null) return null;
-  final pronominal = lemma.startsWith('se ') ||
-      lemma.startsWith("s'") ||
-      (f['fr_pronominal'] ?? '').isNotEmpty && f['fr_pronominal'] != '0';
+  // fr_pronominal only says the verb CAN be used as se … (prendre, être), so
+  // the table turns reflexive only when the lemma itself is (card #1300).
+  final pronominal = lemma.startsWith('se ') || lemma.startsWith("s'");
   final bare = lemma.replaceFirst(RegExp(r"^(se |s')"), '');
   final end = bare.length > 2 ? bare.substring(bare.length - 2) : '';
   final ending = const {'er', 'ir', 're'}.contains(end) ? '-$end' : null;

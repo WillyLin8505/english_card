@@ -26,7 +26,7 @@ void main() {
         for (final (id, lex) in [(1, 10), (2, 11), (3, 99)])
           {
             'id': id,
-            'url': 'assets/sample/photo_kitchen.jpg',
+            'url': 'test/fixtures/photos/photo_kitchen.jpg',
             'width': 100,
             'height': 100,
             'tags': [
@@ -105,7 +105,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('基礎 3000 字・C2'));
     await tester.pumpAndSettle();
-    expect(find.text('這 2 個字在詞庫裡還沒有圖片，可以先看單字'), findsOneWidget);
+    expect(find.text('這 2 個字在詞庫裡還沒有圖片'), findsOneWidget);
     expect(find.byKey(const ValueKey('deck-word-counsel')), findsOneWidget);
     expect(find.byKey(const ValueKey('deck-word-situate')), findsOneWidget);
   });

@@ -147,9 +147,9 @@ class _AnkiExportButtonState extends State<AnkiExportButton> {
       children: [
         TextButton(
             onPressed: _busy ? null : _export, child: const UiText('匯出到 Anki')),
-        UiText(
-            _busy ? '正在建立 Anki 匯入檔…' : '把單字卡連同照片和發音存成 Anki 檔，可以存到檔案或傳到其他 App。',
-            style: MFont.manrope(12, FontWeight.w600, MColors.muted)),
+        if (_busy)
+          UiText('正在建立 Anki 匯入檔…',
+              style: MFont.manrope(12, FontWeight.w600, MColors.muted)),
       ],
     );
   }

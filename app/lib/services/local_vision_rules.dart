@@ -14,6 +14,9 @@ const visionCategoryLabels = <String>{
   'structure', 'wood processed', 'wood natural', 'material', 'textile',
   'fabric', 'metal', 'plastic', 'paper product', 'liquid', 'plant matter',
   'natural', 'pattern', 'texture', 'surface', 'object', 'item', 'thing',
+  // vague adjectives that show nothing in the photo (問題回報 #1770; tagger's _VAGUE_ENGLISH_LABELS)
+  'working', 'general', 'common', 'normal', 'basic', 'simple', 'main',
+  'real', 'whole', 'different', 'various', 'other', 'good', 'nice', 'new', 'old',
   // food and kitchen parents
   'food', 'food and drink', 'drink', 'beverage', 'produce', 'fruit',
   'vegetable', 'baked goods', 'dessert', 'meal', 'dish', 'cuisine',

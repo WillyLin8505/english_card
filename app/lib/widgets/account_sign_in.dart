@@ -32,6 +32,7 @@ class AccountSignInButtons extends StatefulWidget {
 class _AccountSignInButtonsState extends State<AccountSignInButtons> {
   static const _buttonHeight = 44.0;
   bool _busy = false;
+  Widget? _webGoogle;
 
   CloudBackup get _cloud => widget.cloud ?? CloudBackup(widget.settings);
 
@@ -58,6 +59,9 @@ class _AccountSignInButtonsState extends State<AccountSignInButtons> {
         final c = await widget.social.google();
         if (c != null) await _cloud.loginWithGoogle(c.token, name: c.name);
       });
+
+  Future<void> _onWebGoogle(SocialCredential c) => _run(
+      () => _cloud.loginWithGoogle(c.token, name: c.name));
 
   Future<void> _apple() => _run(() async {
         final c = await widget.social.apple();
@@ -102,11 +106,16 @@ class _AccountSignInButtonsState extends State<AccountSignInButtons> {
 
   @override
   Widget build(BuildContext context) {
+    final webGoogle = widget.social.googleConfigured
+        ? (_webGoogle ??= widget.social.googleWebButton(_onWebGoogle))
+        : null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Wrap(spacing: 8, children: [
-          if (widget.social.googleConfigured)
+          if (webGoogle != null)
+            webGoogle
+          else if (widget.social.googleConfigured)
             SizedBox(
                 height: _buttonHeight,
                 child: OutlinedButton(

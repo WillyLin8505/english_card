@@ -234,7 +234,8 @@ class TaggingQueue extends ChangeNotifier {
     try {
       final level = cefrLevels[(repo.profile.level + photo.difficultyOffset)
           .clamp(0, cefrLevels.length - 1)];
-      final found = await _request(photo, level: level);
+      // 問題回報 #1774: one call for A1–C2, so the bar never has to ask again.
+      final found = await _request(photo, level: level, allLevels: true);
       _samples++;
       _sampleMilliseconds +=
           _photoWatch.elapsedMilliseconds.clamp(1000, _maxMs);
@@ -245,6 +246,7 @@ class TaggingQueue extends ChangeNotifier {
         safetyStatus: PhotoSafetyStatus.safe,
         taggingError: () => null,
         candidates: _merge(latest.candidates, found),
+        levelsAsked: true,
       ));
       _offline = false;
       return true;
@@ -283,6 +285,7 @@ class TaggingQueue extends ChangeNotifier {
     required String level,
     String? focus,
     List<String> exclude = const [],
+    bool allLevels = false,
   }) async {
     // Top-ups ask for more things in the picture; text is read once.
     final mode = focus == null ? photo.scanMode : PhotoScanMode.objects;
@@ -296,7 +299,10 @@ class TaggingQueue extends ChangeNotifier {
     return [
       if (objects)
         ...await _ask(_objectTagger(), bytes,
-            level: level, focus: focus, exclude: exclude),
+            level: level,
+            focus: focus,
+            exclude: exclude,
+            allLevels: allLevels),
       if (text)
         ...await _ask(intake.createTextTagger(), bytes,
             level: level, exclude: exclude),
@@ -338,6 +344,7 @@ class TaggingQueue extends ChangeNotifier {
     required String level,
     String? focus,
     List<String> exclude = const [],
+    bool allLevels = false,
   }) async {
     try {
       return LexiconPack.instance.linkAll(await tagger.candidates(
@@ -348,6 +355,7 @@ class TaggingQueue extends ChangeNotifier {
         native: settings.nativeLanguage,
         focus: focus,
         exclude: exclude,
+        allLevels: allLevels,
       ));
     } finally {
       tagger.close();
@@ -425,6 +433,43 @@ class TaggingQueue extends ChangeNotifier {
       _asked.remove(key);
       rethrow;
     }
+  }
+
+  /// 問題回報 #1774: a photo whose pool holds one level only (tagged before
+  /// every level was asked for) is read once for all levels — the first time
+  /// its level bar moves. The flag is kept on the photo, so it never repeats.
+  /// Returns how many new words arrived.
+  Future<int> fillLevels(String photoId) async {
+    for (var running = _toppingUp[photoId];
+        running != null;
+        running = _toppingUp[photoId]) {
+      try {
+        await running;
+      } catch (_) {
+        // That request's caller reports it.
+      }
+    }
+    final repo = repository();
+    final photo = repo.photo(photoId);
+    if (photo == null ||
+        photo.levelsAsked ||
+        photo.taggingStatus != TaggingStatus.done ||
+        !canAskMore(photo)) {
+      return 0;
+    }
+    return _run(photoId, 'levels', () async {
+      final level = cefrLevels[(repo.profile.level + photo.difficultyOffset)
+          .clamp(0, cefrLevels.length - 1)];
+      final found = await _request(photo,
+          level: level,
+          allLevels: true,
+          exclude: _topUpExclude(repo, photo, level));
+      final latest = repo.photo(photo.id);
+      if (latest == null) return 0;
+      final merged = _merge(latest.candidates, found);
+      repo.updatePhoto(latest.copyWith(candidates: merged, levelsAsked: true));
+      return merged.length - latest.candidates.length;
+    });
   }
 
   /// 重新掃描標籤 (問題回報 #670): the whole photo is read again, without a

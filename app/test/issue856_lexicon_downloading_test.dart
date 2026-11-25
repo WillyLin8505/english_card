@@ -10,6 +10,7 @@ import 'package:photo_english_app/screens/database_library_screen.dart';
 import 'package:photo_english_app/screens/word_deck_photos_screen.dart';
 import 'package:photo_english_app/services/deck_library.dart';
 import 'package:photo_english_app/services/dictionary_sync.dart';
+import 'package:photo_english_app/widgets/lexicon_download_status.dart';
 import 'package:photo_english_app/services/lexicon_pack.dart';
 
 import 'helpers.dart';
@@ -45,7 +46,7 @@ Map<String, dynamic> pack() => {
         for (final (id, lex) in [(1, 1), (2, 2)])
           {
             'id': id,
-            'url': 'assets/sample/photo_kitchen.jpg',
+            'url': 'assets/lexicon/media/images/photo_kitchen.jpg',
             'width': 100,
             'height': 100,
             'tags': [
@@ -62,6 +63,7 @@ Map<String, dynamic> pack() => {
     };
 
 void main() {
+  card1269Tests();
   final sync = DictionarySync.instance;
   late (String, bool, bool, int, int?) saved;
   setUp(() {
@@ -97,7 +99,7 @@ void main() {
       (tester) async {
     await pumpApp(tester, initialTab: AppTab.words, databaseLibrary: true);
     await tester.pump();
-    expect(find.text('詞庫下載中（約 62 MB）'), findsOneWidget);
+    expect(find.text('詞庫下載中'), findsOneWidget);
     expect(find.text('已下載 12 / 62 MB（19%）'), findsOneWidget);
     final progress = tester.widget<LinearProgressIndicator>(
         find.byKey(const ValueKey('lexicon-download-progress')));
@@ -136,7 +138,7 @@ void main() {
         databaseLibrary: true,
         size: const Size(402, 1200));
     await tester.pumpAndSettle();
-    expect(find.text('詞庫下載中（約 62 MB）'), findsOneWidget);
+    expect(find.text('詞庫下載中'), findsOneWidget);
     expect(find.text('已下載 12 / 62 MB（19%）'), findsOneWidget);
     expect(find.byKey(const ValueKey('lexicon-picture-placeholders')),
         findsOneWidget);
@@ -195,7 +197,7 @@ void main() {
     await tester.tap(find.text('相片冊・B1'));
     await tester.pumpAndSettle();
     expect(find.byType(WordDeckPhotosScreen), findsOneWidget);
-    expect(find.text('詞庫下載中（約 62 MB）'), findsOneWidget);
+    expect(find.text('詞庫下載中'), findsOneWidget);
     expect(find.text('已下載 12 / 62 MB（19%）'), findsOneWidget);
     expect(find.text('圖片會隨詞庫一起下載'), findsWidgets);
     expect(find.textContaining('還沒有圖片'), findsNothing);
@@ -224,9 +226,26 @@ void main() {
     expect(translateUi('已下載 12 / 62 MB（19%）', 'en'),
         '12 / 62 MB downloaded (19%)');
     expect(translateUi('已下載 12 MB', 'fr'), '12 Mo téléchargés');
-    for (final zh in ['詞庫下載中（約 62 MB）', '詞庫還在下載，下載完成後就能搜尋', '圖片會隨詞庫一起下載']) {
+    for (final zh in ['詞庫下載中', '詞庫還在下載，下載完成後就能搜尋', '圖片會隨詞庫一起下載']) {
       expect(translateUi(zh, 'en'), isNot(zh));
       expect(translateUi(zh, 'fr'), isNot(zh));
     }
+  });
+}
+
+// Card #1269 (問題回報 #1728): the percentage is never 100 before the end,
+// and the retry wait grows.
+void card1269Tests() {
+  test('progress stays below 100 % while downloading', () {
+    final s = DictionarySync.instance
+      ..downloading = true
+      ..downloadedBytes = 187000000
+      ..downloadTotalBytes = 79000000;
+    expect(lexiconProgressText(s), contains('99%'));
+    s.downloading = false;
+  });
+  test('backoff grows to 30 minutes', () {
+    expect([for (var i = 0; i <= 7; i++) DictionarySync.backoffMinutes(i)],
+        [0, 1, 2, 4, 8, 16, 30, 30]);
   });
 }

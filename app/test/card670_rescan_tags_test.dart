@@ -292,7 +292,7 @@ void main() {
     expect(find.textContaining('AI 正在重新掃描'), findsOneWidget);
     await settle(tester,
         until: () => find.textContaining('新增了').evaluate().isNotEmpty);
-    expect(find.text('Peel'), findsWidgets);
+    expect(find.text('peel'), findsWidgets);
     expect(find.textContaining('新增了 1 個單字'), findsOneWidget);
     expect(find.textContaining('AI 正在重新掃描'), findsNothing);
   });

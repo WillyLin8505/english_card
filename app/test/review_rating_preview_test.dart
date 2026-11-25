@@ -42,7 +42,7 @@ WordDatabaseRepository ratingRepo() {
           title: 'test',
           takenAt: testNow,
           createdAt: testNow,
-          assetPath: 'assets/sample/photo_kitchen.jpg')
+          assetPath: 'test/fixtures/photos/photo_kitchen.jpg')
   ], occurrences: [
     for (final e in entries) ...[
       PhotoOccurrence(
@@ -61,6 +61,15 @@ WordDatabaseRepository ratingRepo() {
 }
 
 void main() {
+  test('問題回報 #1767: a never-reviewed word is not first asked as typing',
+      () {
+    final repo = ratingRepo();
+    final session = FlashcardSession(repo);
+    expect(session.card!.fsrs.reps, 0);
+    expect(session.exercise!.type, isNot(ReviewExerciseType.sentenceCloze));
+    expect(session.photoOptions.length, lessThanOrEqualTo(12));
+    session.dispose();
+  });
   test(
       'photo recall and drag wait for a loaded image; photo choice does not',
       () {
@@ -121,17 +130,30 @@ void main() {
       await tester.tap(find.text('綜合'));
       await tester.pumpAndSettle();
       var front = tester.widget<FlashcardFront>(find.byType(FlashcardFront));
-      await tester.enterText(find.byType(TextField), front.entry.word);
-      await tester.tap(find.text('顯示答案'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('記得'));
-      await tester.pumpAndSettle();
-      front = tester.widget<FlashcardFront>(find.byType(FlashcardFront));
+      // 問題回報 #1767: a new word starts with recognising, so answer the
+      // other kinds quickly until the photo choice comes up.
+      for (var i = 0;
+          i < 8 &&
+              front.session!.exercise!.type != ReviewExerciseType.photoChoice;
+          i++) {
+        await tester.runAsync(() => precacheImage(
+            const AssetImage('test/fixtures/photos/photo_kitchen.jpg'),
+            tester.element(find.byType(FlashcardFront))));
+        await tester.pumpAndSettle();
+        if (find.byType(TextField).evaluate().isNotEmpty) {
+          await tester.enterText(find.byType(TextField), front.entry.word);
+        }
+        await tester.tap(find.text('顯示答案'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('記得'));
+        await tester.pumpAndSettle();
+        front = tester.widget<FlashcardFront>(find.byType(FlashcardFront));
+      }
       final s = front.session!;
       expect(s.exercise!.type, ReviewExerciseType.photoChoice);
       final id = s.card!.id;
       await tester.runAsync(() => precacheImage(
-          const AssetImage('assets/sample/photo_kitchen.jpg'),
+          const AssetImage('test/fixtures/photos/photo_kitchen.jpg'),
           tester.element(find.byType(FlashcardFront))));
       await tester.pumpAndSettle();
       expect(s.canAnswer, isTrue);

@@ -53,7 +53,7 @@ void main() {
     // traditional flip front, rather than being silently skipped.
     expect(find.byType(TextField), findsNothing);
     expect(find.text('蘋果'), findsOneWidget);
-    expect(find.text('先在心裡想出這個字，再按「顯示答案」。'), findsOneWidget);
+    expect(find.textContaining('先在心裡想出'), findsNothing);
     await tester.tap(find.text('顯示答案'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('記得'));

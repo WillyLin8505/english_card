@@ -324,7 +324,7 @@ class AnkiExportScope {
     if (p.id.startsWith('photo-deck-')) {
       return '相片冊圖片（作者與授權見 App「資料來源與授權」：Wikimedia Commons 等，各圖授權不同）';
     }
-    if (p.assetPath != null) return 'English Card 範例照片';
+    if (p.assetPath != null) return 'English Card';
     return '你自己的照片';
   }
 

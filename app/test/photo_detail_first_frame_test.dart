@@ -32,7 +32,7 @@ void main() {
     // Frame 1: the labels, shown at once (not popping in as new ones).
     await tester.pump();
     expect(inScreen(find.byType(PinnedPhoto)), findsOneWidget);
-    expect(inScreen(find.text('Coffee')), findsOneWidget, reason: 'the pin');
+    expect(inScreen(find.text('coffee')), findsOneWidget, reason: 'the pin');
     expect(find.text('跳過動畫'), findsNothing);
     expect(inScreen(find.byType(Dismissible)), findsNothing);
 
@@ -56,7 +56,7 @@ void main() {
     expect(find.text('離開這一頁會自動保存。'), findsOneWidget);
 
     await tester.pumpAndSettle();
-    expect(inScreen(find.text('Coffee')), findsNWidgets(2)); // pin + card
+    expect(inScreen(find.text('coffee')), findsNWidgets(2)); // pin + card
     expect(find.text('跳過動畫'), findsNothing);
   });
 }

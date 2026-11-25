@@ -72,7 +72,7 @@ void main() {
       await tester.tap(find.text('balcony'));
       await tester.pumpAndSettle();
       expect(find.text('單字詳情'), findsOneWidget);
-      expect(find.text('Balcony'), findsOneWidget);
+      expect(find.text('balcony'), findsOneWidget);
     });
 
     testWidgets('開始複習 goes to the 複習 tab', (tester) async {
@@ -123,7 +123,7 @@ void main() {
         (tester) async {
       final app = await openBreakfast(tester);
       expect(find.text('辨識單字列表 (5)'), findsOneWidget);
-      expect(find.text('Coffee'), findsNWidgets(2)); // pin + card
+      expect(find.text('coffee'), findsNWidgets(2)); // pin + card
       expect(find.text('入門 · 剛好'), findsOneWidget);
 
       // ☆ Apple, then turn the dial to B2.
@@ -134,9 +134,9 @@ void main() {
       await tester.tapAt(_barLevel(tester, 3));
       await tester.pumpAndSettle();
       expect(find.text('中高階 · 挑戰'), findsOneWidget);
-      expect(find.text('Apple'), findsNWidgets(3),
+      expect(find.text('apple'), findsNWidgets(3),
           reason: 'starred: pin, card and 單字收集區 chip');
-      expect(find.text('Coffee'), findsNothing,
+      expect(find.text('coffee'), findsNothing,
           reason: 'A1 is too far from B2');
 
       // Nothing is written until the page is left.
@@ -174,7 +174,7 @@ void main() {
       await tester.drag(
           find.byKey(const ValueKey('word:bread')), const Offset(-500, 0));
       await tester.pumpAndSettle();
-      expect(find.text('已把「Bread」移到已學會'), findsOneWidget);
+      expect(find.text('已把「bread」移到已學會'), findsOneWidget);
       expect(app.repository.isArchived(app.repository.entryByWord('bread')!.id),
           isTrue);
       expect(find.text('辨識單字列表 (5)'), findsOneWidget, reason: 'refilled');
@@ -183,9 +183,9 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('已學會與學習中的舊詞'), findsOneWidget);
       // Scroll it clear of the bottom edge first (the list's height changed in #444).
-      await tester.ensureVisible(find.bySemanticsLabel(RegExp('^復原 Bread')));
+      await tester.ensureVisible(find.bySemanticsLabel(RegExp('^復原 bread')));
       await tester.pumpAndSettle();
-      await tester.tap(find.bySemanticsLabel(RegExp('^復原 Bread')));
+      await tester.tap(find.bySemanticsLabel(RegExp('^復原 bread')));
       await tester.pumpAndSettle();
       expect(app.repository.isArchived(app.repository.entryByWord('bread')!.id),
           isFalse);
@@ -307,15 +307,15 @@ void main() {
       await settle(tester,
           until: () =>
               app.repository.photoCount == photosBefore + 1 &&
-              find.text('Fork').evaluate().isNotEmpty);
+              find.text('fork').evaluate().isNotEmpty);
 
       expect(app.repository.photoCount, photosBefore + 1);
       final tag = requests.firstWhere((r) => r.url.path == '/tag');
       expect(tag.headers['X-API-Key'], 'k');
       expect(tag.url.queryParameters['level'], 'A1');
       expect(find.text('照片詳情'), findsOneWidget);
-      expect(find.text('Pasta'), findsWidgets);
-      expect(find.text('Fork'), findsWidgets);
+      expect(find.text('pasta'), findsWidgets);
+      expect(find.text('fork'), findsWidgets);
       // Suggested only — no entries until the page is left.
       expect(app.repository.entryByWord('pasta'), isNull);
 
@@ -344,11 +344,11 @@ void main() {
       app.navigator.openWord(apple.id);
       await tester.pumpAndSettle();
 
-      expect(find.text('Apple'), findsOneWidget);
+      expect(find.text('apple'), findsOneWidget);
       expect(find.text('蘋果'), findsOneWidget);
       expect(find.text('出現這個單字的照片（2）'), findsOneWidget);
       expect(find.text('I eat an apple every day.'), findsOneWidget);
-      expect(find.text('Fruit'),
+      expect(find.text('fruit'),
           findsNothing); // untranslated legacy associations are not taught
       expect(find.text('apples（複數）'), findsOneWidget);
       expect(find.text('更多單字資訊'), findsNothing);
@@ -384,7 +384,9 @@ void main() {
           () => Future<void>.delayed(const Duration(milliseconds: 100)));
       await tester.pumpAndSettle();
       expect(find.text('拍照學單字'), findsOneWidget);
-      expect(find.text('目前無法使用相機'), findsOneWidget);
+      // 問題回報 #1797: no empty viewfinder, one big 選擇照片 button.
+      expect(find.text('目前無法使用相機'), findsNothing);
+      expect(find.byKey(const ValueKey('camera-choose-photo')), findsOneWidget);
       expect(find.text('重試相機'), findsOneWidget);
       expect(find.text('你可以按下方「選擇照片」，開始學單字。'), findsNothing);
       expect(find.text('Cutting Board'), findsNothing);
@@ -445,9 +447,17 @@ void main() {
           ['句子填空', '看圖選單字', '相似詞配對', '母語說明＋照片', '拖曳到圖片']
               .where((label) => find.text(label).evaluate().isNotEmpty),
           isEmpty);
-      expect(find.text('Railing'), findsNothing);
-      expect(find.text('Coffee'), findsNothing);
+      expect(find.text('railing'), findsNothing);
+      expect(find.text('coffee'), findsNothing);
 
+      // A photo question waits for its photo before it can be answered.
+      for (var i = 0;
+          i < 50 && find.text('正在載入圖片…').evaluate().isNotEmpty;
+          i++) {
+        await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 20)));
+        await tester.pump();
+      }
       await tester.tap(find.text('顯示答案'));
       await tester.pumpAndSettle();
       expect(find.byType(FlashcardBack), findsOneWidget);
@@ -792,7 +802,9 @@ void main() {
           await tester.pump();
         }
         await tester.tap(find.text('繼續'));
-        await tester.pumpAndSettle();
+        await tester.pump();
+        // 問題回報 #1771: the last tap shows a progress bar that never stops.
+        if (result == null) await tester.pumpAndSettle();
         screens++;
       }
       expect(screens, 6, reason: '18 words, A1 to C2');

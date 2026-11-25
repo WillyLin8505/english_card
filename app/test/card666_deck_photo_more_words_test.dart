@@ -268,7 +268,7 @@ void main() {
       expect(find.textContaining('AI 正在找更多動詞'), findsOneWidget);
       await settle(tester,
           until: () => find.text('Peel').evaluate().isNotEmpty);
-      expect(find.text('Peel'), findsWidgets);
+      expect(find.text('peel'), findsWidgets);
       expect(find.textContaining('AI 正在找更多動詞'), findsNothing);
     });
 

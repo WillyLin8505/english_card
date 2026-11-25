@@ -507,7 +507,7 @@ class _CollectionTray extends StatelessWidget {
           const SizedBox(height: 6),
           if (words.isEmpty)
             UiText(
-                '按單字的星星，或把照片上的標籤拖到這裡。有收集時只保存這些字；沒收集時保存整份列表。',
+                '有收集時只保存這些字；沒收集時保存整份列表。',
                 style: MFont.manrope(12, FontWeight.w600, MColors.muted))
           else
             AnimatedSize(

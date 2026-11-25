@@ -4,7 +4,12 @@
 #
 # Reads app/google.local.json (git-ignored, *.local.json):
 #   {"GOOGLE_IOS_CLIENT_ID": "<n>-<x>.apps.googleusercontent.com",
-#    "GOOGLE_SERVER_CLIENT_ID": "<n>-<y>.apps.googleusercontent.com"}
+#    "GOOGLE_SERVER_CLIENT_ID": "<n>-<y>.apps.googleusercontent.com",
+#    "GOOGLE_WEB_CLIENT_ID": "<n>-<z>.apps.googleusercontent.com"}
+# (card #1271) GOOGLE_WEB_CLIENT_ID = the web client for `flutter build web
+# --dart-define-from-file=google.local.json`; authorised JavaScript origins
+# https://api.willylinai.com and http://127.0.0.1:8123. The backend needs ALL
+# the IDs (iOS, server, web) in LEXICON_GOOGLE_CLIENT_IDS (comma list).
 # Client IDs are not secrets but stay out of git. Passes the file as a
 # --dart-define-from-file and writes ios/Flutter/Google.local.xcconfig
 # (git-ignored) with the reversed iOS client ID, which Info.plist uses as a

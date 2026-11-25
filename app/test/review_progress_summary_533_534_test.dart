@@ -94,7 +94,7 @@ void main() {
     // 3 cards × 25 s = 1.25 → 1; × 1.39 = 1.7 → 2.
     expect(find.text('約 1–2 分鐘'), findsWidgets);
     expect(tester.takeException(), isNull);
-    expect(translateUi('今天 3 張，約 1–2 分鐘。做完還可以繼續練習，想休息時按左上角結束。', 'fr'),
+    expect(translateUi('今天 3 張，約 1–2 分鐘。', 'fr'),
         startsWith('3 cartes aujourd’hui, env. 1–2 min.'));
     expect(translateUi('約 19–27 分鐘', 'en'), 'About 19–27 min');
   });

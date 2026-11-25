@@ -11,12 +11,10 @@ int levelIndex(String? level) {
   return i < 0 ? 2 : i;
 }
 
-/// Photo labels and the word-detail title show words capitalised
-/// ("Cutting Board"); the word database lists the normalized headword.
-String displayWord(String word) => word
-    .split(' ')
-    .map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1))
-    .join(' ');
+/// English words are shown as the lowercase headword ("plant", "cutting
+/// board"), like the word-detail title (問題回報 #1772) and the photo labels
+/// (問題回報 #1770). Earlier builds capitalised each word (卡 #496, #499).
+String displayWord(String word) => word.trim().toLowerCase();
 
 /// The headword on a card. French keeps its lowercase spelling (a capital
 /// makes a noun look like a proper noun) and a noun shows with its article —

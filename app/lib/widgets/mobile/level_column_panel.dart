@@ -61,21 +61,23 @@ class LevelColumnPanel extends StatelessWidget {
               UiText('的字', style: head),
             ],
           ]),
-          for (final r in levelColumnRows) ...[
-            const SizedBox(height: 8),
-            Row(
-              key: ValueKey('level-row-${r.name}'),
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                    width: 52,
-                    child: UiText(gridRowLabel(r),
-                        style: MFont.manrope(12, FontWeight.w800,
-                            posAccent(r.name, '') ?? MColors.muted))),
-                Expanded(child: _cell(context, r, _words(r))),
-              ],
-            ),
-          ],
+          // 問題回報 #1797: a part of speech with no word is not listed.
+          for (final r in levelColumnRows)
+            if (_words(r).isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Row(
+                key: ValueKey('level-row-${r.name}'),
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                      width: 52,
+                      child: UiText(gridRowLabel(r),
+                          style: MFont.manrope(12, FontWeight.w800,
+                              posAccent(r.name, '') ?? MColors.muted))),
+                  Expanded(child: _cell(context, r, _words(r))),
+                ],
+              ),
+            ],
         ],
       ),
     );

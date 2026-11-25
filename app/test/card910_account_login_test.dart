@@ -22,6 +22,8 @@ class _Social implements SocialSignIn {
   Future<SocialCredential?> apple() async => null; // learner closed the sheet
   @override
   Future<void> googleDisconnect() async {}
+  @override
+  Widget? googleWebButton(void Function(SocialCredential) onCredential) => null;
 }
 
 class _CancelGoogle extends _Social {

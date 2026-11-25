@@ -359,6 +359,12 @@ class PhotoWordSession extends ChangeNotifier {
     final p = photo;
     final focus = sel.topUp;
     if (q == null || p == null || focus == null || p.candidates.isEmpty) return;
+    // 問題回報 #1774: the level bar never asks for a fresh pool; the photo's
+    // levels are read once (for photos tagged before that) instead.
+    if (focus == 'harder' || focus == 'easier') {
+      _fillLevels();
+      return;
+    }
     if (!q.canTopUp(p, focus)) return;
     final level = targetLevel;
     // Not synchronously: this can run while a screen is building, and the
@@ -379,6 +385,27 @@ class PhotoWordSession extends ChangeNotifier {
         }
       } catch (e) {
         debugPrint('Top-up for $photoId failed: $e');
+      }
+    });
+  }
+
+  /// 問題回報 #1774: a photo whose pool has one level only is read for every
+  /// level, once; the words of the level the learner is on then show.
+  void _fillLevels() {
+    final q = queue;
+    final p = photo;
+    if (q == null || p == null || p.levelsAsked || p.candidates.isEmpty) return;
+    if (!q.canAskMore(p)) return;
+    Future<void>.microtask(() async {
+      try {
+        final added = await q.fillLevels(photoId);
+        if (!_disposed && added > 0) {
+          _reselect();
+          _dirty = true;
+          notifyListeners();
+        }
+      } catch (e) {
+        debugPrint('Level fill for $photoId failed: $e');
       }
     });
   }
@@ -409,7 +436,9 @@ class PhotoWordSession extends ChangeNotifier {
 
   /// Moves the dial. Only the photo's existing candidates are used — the
   /// AI is never asked again by a dial move (問題回報 #1154, which
-  /// supersedes the harder/easier rescans of #666, #671).
+  /// supersedes the harder/easier rescans of #666, #671). The one exception
+  /// is a photo read before every level was asked for (問題回報 #1774): on
+  /// release it is read for all levels, once.
   void setTarget(int level, {bool live = false}) {
     final t = level.clamp(0, cefrLevels.length - 1);
     if (t == _target && live) return;
@@ -417,14 +446,11 @@ class PhotoWordSession extends ChangeNotifier {
     _target = t;
     if (t != from) _dialMoved = true;
     _dirty = true;
-    if (live || t == from) {
-      _reselect(allowTopUp: !live);
-    } else {
-      // 問題回報 #1154: a step on the bar only picks from the words the AI
-      // already found — no new scan. The AI reads the photo again only on
-      // 重新掃描, a long press on the photo, or when the photo is taken.
-      _reselect();
-    }
+    // 問題回報 #1154: a step on the bar only picks from the words the AI
+    // already found — no new scan. The AI reads the photo again only on
+    // 重新掃描, a long press on the photo, or when the photo is taken.
+    _reselect();
+    if (!live) _fillLevels();
     notifyListeners();
   }
 

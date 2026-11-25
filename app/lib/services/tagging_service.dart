@@ -36,6 +36,7 @@ abstract class PhotoTagger {
     String? focus,
     List<String> exclude = const [],
     bool? asWeb,
+    bool allLevels = false,
   });
 
   Future<EnrichResult> enrich({
@@ -115,7 +116,7 @@ class EnrichResult {
 String describeTaggingError(Object e, String url, {bool showUrl = true}) {
   if (e is TaggingApiException) {
     return switch (e.statusCode) {
-      401 => 'API Key 不正確（設定 → 照片辨識連線）',
+      401 => 'API Key 不正確或還沒填，要先在設定填辨識金鑰（設定 → 照片辨識連線）',
       502 => 'AI 模型沒有回應，稍後會自動重試',
       451 => '這張照片含有成人內容，未加入相片冊',
       422 => '這張照片的辨識結果格式不完整，請稍後重新辨識',
@@ -258,7 +259,8 @@ class TaggingService implements PhotoTagger {
 
   /// Stage 1 for one JPEG: the candidate pool, centred on [level].
   /// [focus] and [exclude] ask for more candidates of a kind the pool is
-  /// short of.
+  /// short of. [allLevels] (問題回報 #1774): one call for every level A1–C2,
+  /// each word carrying its own band, so the difficulty bar only filters.
   @override
   Future<List<WordCandidate>> candidates(
     Uint8List jpeg, {
@@ -269,12 +271,14 @@ class TaggingService implements PhotoTagger {
     String? focus,
     List<String> exclude = const [],
     bool? asWeb,
+    bool allLevels = false,
   }) async {
     final uri = endpoint.replace(queryParameters: {
       ...endpoint.queryParameters,
       'level': level,
       'lang': lang,
       'native': native,
+      if (allLevels) 'mode': 'cefr',
       if (focus != null) 'focus': focus,
       if (exclude.isNotEmpty) 'exclude': exclude.take(40).join(','),
     });

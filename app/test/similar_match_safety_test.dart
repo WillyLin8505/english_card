@@ -113,15 +113,15 @@ void main() {
       if (wrongFirst) {
         await tester.tap(find.widgetWithText(ChoiceChip, '熱'));
         await tester.pumpAndSettle();
-        await tester.tap(find.text('Cold'));
+        await tester.tap(find.text('cold'));
         await tester.pumpAndSettle();
         expect(find.text('這一組不相符，再試一次。'), findsOneWidget);
         expect(repo.logsOf(repo.cardOf('hot')!.id), isEmpty);
       }
       for (final (meaning, word) in [
-        ('熱', 'Hot'),
-        ('冷', 'Cold'),
-        ('溫暖', 'Warm')
+        ('熱', 'hot'),
+        ('冷', 'cold'),
+        ('溫暖', 'warm')
       ]) {
         await tester.tap(find.widgetWithText(ChoiceChip, meaning));
         await tester.pumpAndSettle();

@@ -7,6 +7,7 @@ import 'lexicon_pack.dart';
 enum SortOrder {
   alphabetical('字母 A–Z'),
   recentlyUpdated('最近更新'),
+  byLevel('照程度（A1 先）'),
   nextDue('下次出現');
 
   final String label;
@@ -271,6 +272,17 @@ int compareRows(SortOrder sort, DatabaseRow a, DatabaseRow b) {
     case SortOrder.alphabetical:
       final c = a.entry.word.compareTo(b.entry.word);
       return c != 0 ? c : a.id.compareTo(b.id);
+    case SortOrder.byLevel:
+      // Words without a level go last; ties fall back to the headword.
+      int rank(DatabaseRow r) {
+        final i = cefrLevels.indexOf((r.entry.level ?? '').toUpperCase());
+        return i < 0 ? cefrLevels.length : i;
+      }
+      final c = rank(a).compareTo(rank(b));
+      if (c != 0) return c;
+      final w =
+          a.entry.word.toLowerCase().compareTo(b.entry.word.toLowerCase());
+      return w != 0 ? w : a.id.compareTo(b.id);
     case SortOrder.recentlyUpdated:
       final c = b.entry.updatedAt.compareTo(a.entry.updatedAt);
       return c != 0 ? c : a.id.compareTo(b.id);

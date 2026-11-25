@@ -335,8 +335,7 @@ class FlashcardSession extends ChangeNotifier {
     for (var i = 1; i <= a.length; i++) {
       final cur = List<int>.filled(b.length + 1, 0)..[0] = i;
       for (var j = 1; j <= b.length; j++) {
-        cur[j] = math.min(
-            math.min(cur[j - 1], prev[j]) + 1,
+        cur[j] = math.min(math.min(cur[j - 1], prev[j]) + 1,
             prev[j - 1] + (a[i - 1] == b[j - 1] ? 0 : 1));
       }
       prev = cur;
@@ -570,6 +569,16 @@ class FlashcardSession extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 問題回報 #1766: a word collected from a photo is reviewed only in the
+  /// part of speech the photo label had, also for entries saved before the
+  /// label's usage was trimmed. Imported / deck words keep rotating.
+  List<LexemeUsage> _photoUsages(
+      String wordId, String own, List<LexemeUsage> usages) {
+    if (!repo.occurrencesOf(wordId).any((o) => !o.fromImport)) return usages;
+    final same = usages.where((u) => shortPos(u.pos) == own).toList();
+    return same.isEmpty ? usages : same;
+  }
+
   ReviewExercise? _buildExercise() {
     final c = card;
     final original = c == null ? null : repo.entry(c.wordEntryId);
@@ -579,7 +588,8 @@ class FlashcardSession extends ChangeNotifier {
     final all = original.effectiveUsages;
     final own = shortPos(original.pos);
     final common = all.where((u) => !u.rare || shortPos(u.pos) == own).toList();
-    final usages = common.isEmpty ? all : common;
+    final usages =
+        _photoUsages(original.id, own, common.isEmpty ? all : common);
     for (var i = 0; i < usages.length; i++) {
       final usage = usages[(_step + i) % usages.length];
       final senses =
@@ -617,13 +627,27 @@ class FlashcardSession extends ChangeNotifier {
       (ReviewExerciseType.photoRecall, () => _photoRecall(entry)),
       (ReviewExerciseType.imageDrag, () => _imageDrag(entry)),
     ];
-    final builders = [
-      for (final (type, build) in all)
-        if (!hidden.contains(type.name)) build
-    ];
+    // 問題回報 #1767: a word seen for the first time starts with recognising
+    // (pick the word, match), not typing it; typing comes from the 2nd look.
+    final isNew = card?.fsrs.reps == 0 && card?.fsrs.lastReview == null;
+    List<ReviewExercise? Function()> pick(bool recognitionOnly) => [
+          for (final (type, build) in all)
+            if (!hidden.contains(type.name) &&
+                !(recognitionOnly && type == ReviewExerciseType.sentenceCloze))
+              build
+        ];
+    var builders = pick(isNew);
+    if (builders.isEmpty) builders = pick(false);
     for (var offset = 0; offset < builders.length; offset++) {
       final found = builders[(_step + offset) % builders.length]();
       if (found != null) return found;
+    }
+    if (isNew) {
+      final all2 = pick(false);
+      for (var offset = 0; offset < all2.length; offset++) {
+        final found = all2[(_step + offset) % all2.length]();
+        if (found != null) return found;
+      }
     }
     return null;
   }
@@ -1131,7 +1155,8 @@ class FlashcardSession extends ChangeNotifier {
     final all = original.effectiveUsages;
     final own = shortPos(original.pos);
     final common = all.where((u) => !u.rare || shortPos(u.pos) == own).toList();
-    final usages = common.isEmpty ? all : common;
+    final usages =
+        _photoUsages(original.id, own, common.isEmpty ? all : common);
     if (usages.isEmpty) return null;
     final usage = usages[_step % usages.length];
     return usage.senses
@@ -1139,6 +1164,8 @@ class FlashcardSession extends ChangeNotifier {
         .firstOrNull
         ?.id;
   }
+
+  static const _maxBackPhotos = 12;
 
   CardPhoto _plannedPhoto(String wordId, List<CardPhoto> options) {
     final fresh =
@@ -1160,7 +1187,10 @@ class FlashcardSession extends ChangeNotifier {
     final options = _optionsFor(wordId);
     if (options.isEmpty) return options;
     final chosen = _plannedPhoto(wordId, options);
-    return [chosen, ...options.where((o) => o.$1.id != chosen.$1.id)];
+    return [
+      chosen,
+      ...options.where((o) => o.$1.id != chosen.$1.id).take(_maxBackPhotos - 1)
+    ];
   }
 
   void _choosePhoto() {
@@ -1178,7 +1208,12 @@ class FlashcardSession extends ChangeNotifier {
     }
     final chosen = _plannedPhoto(c.wordEntryId, options);
     _photoPlans.remove(c.wordEntryId);
-    _photoOptions = [chosen, ...options.where((o) => o.$1.id != chosen.$1.id)];
+    // 問題回報 #1767: 'plant' had 597 database pictures, so the back counted
+    // 「第 1 / 597 張」; a handful is enough to swipe through.
+    _photoOptions = [
+      chosen,
+      ...options.where((o) => o.$1.id != chosen.$1.id).take(_maxBackPhotos - 1)
+    ];
     _photo = chosen.$1;
     _anchor = chosen.$2;
     _box = _boxes[chosen.$1.id];

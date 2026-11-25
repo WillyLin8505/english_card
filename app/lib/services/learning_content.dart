@@ -36,6 +36,8 @@ String posLabel(String value) => switch (value) {
       'preposition' || 'prep' => '介系詞',
       'conjunction' || 'conj' => '連接詞',
       'interjection' || 'intj' => '感嘆詞',
+      // French particles such as ne (問題回報 #1720).
+      'particle' => '助詞',
       'determiner' || 'det' || 'article' => '限定詞',
       'numeral' || 'num' => '數詞',
       'phrase' => '片語',

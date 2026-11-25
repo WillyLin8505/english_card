@@ -60,14 +60,14 @@ const uiCatalog = <String, (String, String)>{
     'This app uses the data below, credited to their authors and sources under each license. For the author, license and source page of an image or audio file, long-press the image or open its card.',
     'Cette app utilise les données ci-dessous, avec auteur et source indiqués selon leur licence. Pour l’auteur, la licence et la page source d’une image ou d’un audio, appuyez longuement sur l’image ou ouvrez sa carte.'
   ),
-  '選一個字，就會在照片上標 1 的位置加上標籤。': (
-    'Pick a word to label the spot marked 1 on the photo.',
-    'Choisissez un mot pour étiqueter l’emplacement 1 sur la photo.'
-  ),
   '還原': ('Restore', 'Restaurer'),
   '還原會用雲端備份取代這台裝置目前所有的單字、照片、相片冊、複習紀錄與設定。': (
     'Restoring replaces all words, photos, albums, review history and settings on this device with the cloud backup.',
     'La restauration remplace tous les mots, photos, albums, historique de révision et réglages de cet appareil par la sauvegarde en ligne.'
+  ),
+  'API Key 不正確或還沒填，要先在設定填辨識金鑰（設定 → 照片辨識連線）': (
+    'The API key is wrong or missing: enter the recognition key in Settings first (Settings → Photo recognition connection)',
+    'La clé API est incorrecte ou absente : saisissez d’abord la clé de reconnaissance dans Réglages (Réglages → Connexion de reconnaissance photo)'
   ),
   '（設定 → 照片辨識連線）': (
     '(Settings → Photo recognition connection)',
@@ -131,50 +131,22 @@ const uiCatalog = <String, (String, String)>{
     'The tutorial shows again on each tab',
     'Le mode d’emploi réapparaîtra sur chaque onglet'
   ),
-  '每個分頁第一次進入會顯示教學。想再看，選分頁或全部重看。': (
-    'Each tab shows a short tutorial the first time you open it. Pick a tab or show all again.',
-    'Chaque onglet affiche un court mode d’emploi à la première ouverture. Choisissez un onglet ou tout revoir.'
-  ),
   '相機怎麼用': ('How to use Camera', 'Utiliser l’appareil photo'),
   '相片冊怎麼用': ('How to use Albums', 'Utiliser les albums'),
   '複習怎麼用': ('How to use Review', 'Utiliser la révision'),
   '單字本怎麼用': ('How to use Words', 'Utiliser Mes mots'),
   '設定怎麼用': ('How to use Settings', 'Utiliser les réglages'),
-  '對準身邊的東西按拍照，或點左下角選一張照片。': (
-    'Point at something nearby and tap the shutter, or tap the bottom-left to pick a photo.',
-    'Visez un objet et appuyez sur le déclencheur, ou touchez en bas à gauche pour choisir une photo.'
-  ),
   '拍完會找出照片裡的單字，並收進單字本。': (
     'After the shot, the words in the photo are found and added to your word book.',
     'Après la prise, les mots de la photo sont trouvés et ajoutés à votre carnet.'
-  ),
-  '第一次使用時，請在系統提示出現時允許相機。': (
-    'The first time, allow the camera when the system asks.',
-    'La première fois, autorisez l’appareil photo quand le système le demande.'
-  ),
-  '這裡是你拍過、選過的所有照片。': (
-    'All the photos you took or picked are here.',
-    'Toutes les photos prises ou choisies sont ici.'
   ),
   '點一張照片，看上面的單字和意思。': (
     'Tap a photo to see its words and meanings.',
     'Touchez une photo pour voir ses mots et leurs sens.'
   ),
-  '右上角可以搜尋照片或選新照片。': (
-    'Top right: search photos or pick new ones.',
-    'En haut à droite : rechercher des photos ou en choisir de nouvelles.'
-  ),
   '這裡用字卡複習你學過的單字。': (
     'Review the words you have learned with flashcards.',
     'Révisez les mots appris avec des cartes.'
-  ),
-  '先想一想答案，再翻開卡片核對。': (
-    'Think of the answer first, then flip the card to check.',
-    'Pensez à la réponse, puis retournez la carte pour vérifier.'
-  ),
-  '翻開後依記得多少評分，系統會安排下次複習的時間。': (
-    'Rate how well you remembered; the next review is scheduled for you.',
-    'Notez votre souvenir ; la prochaine révision est planifiée pour vous.'
   ),
   '這是你的單字本，列出所有收進來的字。': (
     'This is your word book, with every word you have collected.',
@@ -184,21 +156,9 @@ const uiCatalog = <String, (String, String)>{
     'Tap a word for details; add words at the top right.',
     'Touchez un mot pour les détails ; ajoutez des mots en haut à droite.'
   ),
-  '想練習時按「開始複習」。': (
-    'To practise, tap “Start review”.',
-    'Pour vous exercer, touchez « Commencer la révision ».'
-  ),
-  '這裡可以改語言、卡片樣式和每天的學習量。': (
-    'Change languages, card style and your daily amount here.',
-    'Changez ici les langues, le style des cartes et le volume quotidien.'
-  ),
   '往下捲還有資料備份、隱私和意見回饋。': (
     'Scroll down for backup, privacy and feedback.',
     'Plus bas : sauvegarde, confidentialité et commentaires.'
-  ),
-  '想再看一次教學，用「使用教學」。': (
-    'To see a tutorial again, use “How to use”.',
-    'Pour revoir un mode d’emploi, utilisez « Mode d’emploi ».'
   ),
   // Owner 2026-10-30: bring photos over from another learning language.
   '匯入照片？': ('Import photos?', 'Importer les photos ?'),
@@ -238,10 +198,6 @@ const uiCatalog = <String, (String, String)>{
   '自己加字': ('Add a word', 'Ajouter un mot'),
   '放到照片上': ('Place on the photo', 'Placer sur la photo'),
   '不放位置': ('No position', 'Sans position'),
-  '左滑單字表示已經會了；拖曳照片上的標籤可調整位置；點標籤可改字或刪除。': (
-    'Swipe a word left if you know it; drag a label on the photo to move it; tap a label to change or delete it.',
-    'Balayez un mot vers la gauche si vous le connaissez ; faites glisser une étiquette pour la déplacer ; touchez-la pour la modifier ou la supprimer.'
-  ),
   '可查看意思、改成正確的字、刪除或標為已學會。': (
     'See the meaning, correct the word, delete it or mark it as learned.',
     'Voir le sens, corriger le mot, le supprimer ou le marquer comme appris.'
@@ -249,10 +205,6 @@ const uiCatalog = <String, (String, String)>{
   '刪除（照片裡沒有這個）': (
     'Delete (not in the photo)',
     'Supprimer (absent de la photo)'
-  ),
-  '中文可以留空，會用詞庫的意思。': (
-    'The meaning can stay empty; the dictionary’s is used.',
-    'Le sens peut rester vide ; celui du dictionnaire est utilisé.'
   ),
   '改了英文、中文沒改，會改用詞庫的意思。': (
     'If you change the word but not the meaning, the dictionary’s meaning is used.',
@@ -308,10 +260,6 @@ const uiCatalog = <String, (String, String)>{
   '刪除相關字': ('Delete related word', 'Supprimer le mot associé'),
   '新增詞形變化': ('Add a form', 'Ajouter une forme'),
   '刪除詞形變化': ('Delete form', 'Supprimer la forme'),
-  '可直接修改內容；清空構詞或詞源即可刪除。': (
-    'Edit directly; clear word parts or etymology to delete them.',
-    'Modifiez directement ; videz la formation ou l’étymologie pour les supprimer.'
-  ),
   '授權條文': ('License texts', 'Textes des licences'),
   '圖片在 App 內以縮小後的縮圖顯示，未做其他修改。': (
     'Pictures appear in the app as reduced thumbnails, with no other changes.',
@@ -319,10 +267,6 @@ const uiCatalog = <String, (String, String)>{
   ),
   // 設定 → 我的意見回饋 (問題回報 #701).
   '我的意見回饋': ('My feedback', 'Mes commentaires'),
-  '看這支手機送過的意見回饋與卡片回報，也可以刪除。': (
-    'See the feedback and card reports sent from this phone, and delete them.',
-    'Voir les commentaires et signalements envoyés depuis ce téléphone, et les supprimer.'
-  ),
   // 問題回報 #716 / #728: deleting a sent one deletes its 問題回報 too; each
   // shows whether it is being handled or done.
   '這支手機送過的意見回饋與卡片回報，以及處理進度。刪除已送出的會連問題回報一起刪除；還沒送出的就不會送出。': (
@@ -391,24 +335,12 @@ const uiCatalog = <String, (String, String)>{
   // 長按辨識 (問題回報 #616).
   'AI 在這裡看到': ('The AI sees here', 'L’IA voit ici'),
   'AI 在這裡沒有認出東西': ('The AI found nothing here', 'L’IA n’a rien reconnu ici'),
-  '可以換個位置再長按，或自己輸入。': (
-    'Long-press another spot, or type the word yourself.',
-    'Appuyez longuement ailleurs, ou saisissez le mot vous-même.'
-  ),
-  '選一個字，就會在你長按的位置加上標籤。': (
-    'Pick a word to label the spot you pressed.',
-    'Choisissez un mot pour étiqueter l’endroit touché.'
-  ),
   '已在照片上，選它會移到這裡': (
     'Already on the photo; picking it moves it here',
     'Déjà sur la photo ; le choisir le déplace ici'
   ),
   '移到這裡': ('Move here', 'Déplacer ici'),
   '都不是，自己輸入': ('None of these, type it', 'Aucun, saisir le mot'),
-  '或在照片上長按，讓 AI 認那個位置': (
-    'or long-press the photo to have the AI read that spot',
-    'ou appuyez longuement sur la photo pour que l’IA lise cet endroit'
-  ),
   '還沒設定照片辨識：到 設定 → 進階設定 → 照片辨識連線': (
     'Photo recognition isn’t set up: Settings → Advanced → Photo recognition',
     'Reconnaissance non configurée : Réglages → Avancé → Reconnaissance des photos'
@@ -489,30 +421,15 @@ const uiCatalog = <String, (String, String)>{
     'Press Save, or leave this page — either one saves.',
     'Appuyez sur Enregistrer, ou quittez cette page : les deux enregistrent.'
   ),
-  '左滑單字表示已經會了；拖曳照片上的標籤可調整位置。': (
-    'Swipe a word left if you know it; drag photo labels to reposition them.',
-    'Balayez un mot à gauche si vous le connaissez ; faites glisser les étiquettes pour les déplacer.'
-  ),
-  '打開「顯示已學會單字」可以看到照片裡已經學過的詞。': (
-    'Turn on “Show learned words” to see familiar words in the photo.',
-    'Activez « Afficher les mots acquis » pour voir les mots déjà appris sur la photo.'
-  ),
   '這張照片沒有新的單字': (
     'No new words in this photo',
     'Aucun nouveau mot sur cette photo'
-  ),
-  '可以拖動難度條，或按「多看動詞」找找看其他的詞。': (
-    'Drag the difficulty bar or tap “More verbs” to find other words.',
-    'Faites glisser la barre de difficulté ou touchez « Plus de verbes » pour trouver d’autres mots.'
   ),
   'AI 先從照片找出候選詞，再由這台裝置依程度、未知機率、圖片關聯、實用性與詞性多樣性打分，最多選 5 個；名詞最多 3 個，同義詞只留一個。': (
     'AI proposes words from the photo. This device scores level, familiarity, relevance, usefulness and variety, choosing up to five words, at most three nouns, and one of each synonym group.',
     'L’IA propose des mots. Cet appareil évalue le niveau, la familiarité, la pertinence, l’utilité et la variété pour choisir au plus cinq mots, dont trois noms et un seul mot par groupe de synonymes.'
   ),
-  '拖曳調整順序；關閉的欄位不會出現在卡片背面。{L}單字固定為標題。': (
-    'Drag to reorder. Hidden fields are omitted from the back. The {L} word remains the title.',
-    'Faites glisser pour réorganiser. Les champs masqués sont omis du verso. Le mot en {L} reste le titre.'
-  ),
+  '關閉的欄位不會出現在卡片背面。{L}單字固定為標題。': ('Hidden fields are omitted from the back. The {L} word remains the title.', 'Les champs masqués sont omis du verso. Le mot en {L} reste le titre.'),
   '等待 AI 辨識': ('Waiting for AI recognition', 'En attente de reconnaissance IA'),
   'AI 辨識中…': ('AI recognition in progress…', 'Reconnaissance IA en cours…'),
   '跳過動畫': ('Skip animation', 'Passer l’animation'),
@@ -543,10 +460,6 @@ const uiCatalog = <String, (String, String)>{
     'No camera or photo available yet',
     'Aucun appareil photo ni photo disponible'
   ),
-  '你可以按下方「選擇照片」，開始學單字。': (
-    'Choose a photo below to start learning words.',
-    'Choisissez une photo ci-dessous pour commencer.'
-  ),
   '請稍後再試。': ('Please try again later.', 'Veuillez réessayer plus tard.'),
   '還沒有照片': ('No photos yet', 'Aucune photo pour le moment'),
   '找不到符合的照片': ('No matching photos', 'Aucune photo correspondante'),
@@ -570,6 +483,7 @@ const uiCatalog = <String, (String, String)>{
   ),
   '字母 A–Z': ('Alphabetical A–Z', 'Ordre alphabétique A–Z'),
   '最近更新': ('Recently updated', 'Mise à jour récente'),
+  '照程度（A1 先）': ('By level (A1 first)', "Par niveau (A1 d'abord)"),
   '下次出現': ('Next review', 'Prochaine révision'),
   '新單字': ('New word', 'Nouveau mot'),
   '複習中': ('Reviewing', 'En révision'),
@@ -628,10 +542,7 @@ const uiCatalog = <String, (String, String)>{
     'Welcome to photo vocabulary',
     'Bienvenue dans l’apprentissage par photos'
   ),
-  '用喜歡的照片學單字。先選想學的語言和你的母語。': (
-    'Learn with your favourite photos. Choose your learning and native languages.',
-    'Apprenez avec vos photos préférées. Choisissez la langue étudiée et votre langue maternelle.'
-  ),
+  '用喜歡的照片學單字。': ('Learn with your favourite photos.', 'Apprenez avec vos photos préférées.'),
   '我想學': ('I want to learn', 'Je veux apprendre'),
   '我的母語（翻譯與提示會用這個語言）': (
     'My native language (for translations and hints)',
@@ -700,10 +611,7 @@ const uiCatalog = <String, (String, String)>{
     'Which words do you recognise?',
     'Quels mots reconnaissez-vous ?'
   ),
-  '一次只看 3 個字。認得就點一下，不認得也沒關係。': (
-    'Three words at a time. Tap the ones you know; it’s fine if you don’t.',
-    'Trois mots à la fois. Touchez ceux que vous connaissez ; sinon, aucun souci.'
-  ),
+  '一次只看 3 個字。': ('Three words at a time.', 'Trois mots à la fois.'),
   '繼續': ('Continue', 'Continuer'),
   '都不認識，從基礎開始': ('Start with the basics', 'Commencer par les bases'),
   '先到這裡，開始學習': (
@@ -934,10 +842,7 @@ const uiCatalog = <String, (String, String)>{
   ),
   '英式（en-GB）': ('British (en-GB)', 'Britannique (en-GB)'),
   '美式（en-US）': ('American (en-US)', 'Américain (en-US)'),
-  '點一下試聽「water」；單字頁、單字本和複習卡都用這個腔調。': (
-    'Tap to hear “water”; word pages, the Words tab and review cards use this accent.',
-    'Touchez pour entendre « water » ; fiches de mots, onglet Mots et cartes utilisent cet accent.'
-  ),
+  '單字頁、單字本和複習卡都用這個腔調。': ('The word page, word list and review cards use this accent.', 'Fiches de mots, onglet Mots et cartes utilisent cet accent.'),
   '複習卡翻到背面時英式、美式各唸一次。沒有這個腔調錄音的字，播現有的錄音。': (
     'The back of a review card plays British, then American. Words with no recording in this accent play the one they have.',
     'Le verso d’une carte joue l’accent britannique puis américain. Un mot sans enregistrement dans cet accent joue celui qu’il a.'
@@ -959,6 +864,10 @@ const uiCatalog = <String, (String, String)>{
   '累積至少 20 次使用紀錄後，程度會依你的評分、左滑與轉盤自動調整，一次最多一級。照片詳情的難度轉盤只影響那一張照片。': (
     'After at least 20 interactions, your ratings, swipes and difficulty dial adjust the level, one step at a time. The dial in photo details affects only that photo.',
     'Après au moins 20 interactions, vos notes, balayages et le cadran ajustent le niveau, un palier à la fois. Le cadran des détails ne concerne que cette photo.'
+  ),
+  '從網址或其他裝置開啟時，要填這台電腦的連線金鑰（API Key）才能辨識。連不上時照片會先排隊，恢復連線後自動處理。': (
+    'Opened from a web address or another device, recognition needs this computer’s API key. Photos wait offline and resume when connected.',
+    'Ouverte depuis une adresse web ou un autre appareil, la reconnaissance demande la clé API de cet ordinateur. Les photos attendent hors ligne puis reprennent à la connexion.'
   ),
   '網頁版會自動連接這台電腦的照片辨識服務，不用填網址或金鑰。只有使用其他服務時才需要修改。連不上時照片會先排隊，恢復連線後自動處理。': (
     'The web app connects to this computer’s recognition service automatically. Only change these settings for another service. Photos wait offline and resume when connected.',
@@ -1039,9 +948,9 @@ const uiCatalog = <String, (String, String)>{
   '正在取得資料庫內容': ('Loading database content', 'Chargement du dictionnaire'),
   '重新連線': ('Reconnect', 'Reconnecter'),
   // 問題回報 #856: the 資料庫 pages while a fresh install fetches the pack.
-  '詞庫下載中（約 62 MB）': (
-    'Downloading the dictionary (about 62 MB)',
-    'Téléchargement du dictionnaire (environ 62 Mo)'
+  '詞庫下載中': (
+    'Downloading the dictionary',
+    'Téléchargement du dictionnaire'
   ),
   // 審查 4.2.3(ii), card #1015: full pack on mobile data asks first.
   '下載完整詞庫，建議使用 Wi-Fi': (
@@ -1243,14 +1152,7 @@ const uiCatalog = <String, (String, String)>{
   '想複習哪一本？': ('Which one to review?', 'Quel album réviser ?'),
   // 問題回報 #534 (M214).
   '這次忘記的字': ('Forgotten this time', 'Oubliés cette fois'),
-  '今天的份量已完成。想多練習可以繼續，想休息時按左上角結束。': (
-    'Today’s share is done. Keep practising if you like; tap the top-left button to stop.',
-    'La part du jour est faite. Continuez si vous voulez ; touchez en haut à gauche pour arrêter.'
-  ),
-  '點一格就開始；做完還可以繼續練習，想休息時按左上角結束。': (
-    'Tap a tile to start. Keep practising after you finish, or stop with the top-left button.',
-    'Touchez une tuile pour commencer. Continuez après la séance, ou arrêtez avec le bouton en haut à gauche.'
-  ),
+  '今天的份量已完成。': ('Today’s share is done.', 'La part du jour est faite.'),
   '綜合': ('All together', 'Tout'),
   '今天新加的單字': ('Added today', 'Ajoutés aujourd’hui'),
   '弱項單字': ('Weak words', 'Mots faibles'),
@@ -1262,10 +1164,6 @@ const uiCatalog = <String, (String, String)>{
     'Pas encore de photos : prenez-en, ou téléchargez un album'
   ),
   '想複習的時候就開始吧': ('Ready when you are', 'Révisez à votre rythme'),
-  '先想答案，再翻面；隨時可以結束。': (
-    'Think of the answer, then flip. Stop whenever you like.',
-    'Cherchez la réponse, puis retournez la carte. Arrêtez quand vous voulez.'
-  ),
   '等待詞庫補齊': ('Waiting for dictionary content', 'En attente du dictionnaire'),
   '現在沒有需要複習的卡片': (
     'No cards to review right now',
@@ -1301,10 +1199,7 @@ const uiCatalog = <String, (String, String)>{
   ),
   '查看相片冊': ('View albums', 'Voir les albums'),
   '今天先到這裡': ('That’s all for now', 'C’est tout pour le moment'),
-  '這次的練習先到這裡。\n想複習時，再回來就好。': (
-    'That’s all for this session.\nCome back whenever you want to review.',
-    'Cette séance est terminée.\nRevenez quand vous souhaitez réviser.'
-  ),
+  '這次的練習先到這裡。': ('That’s all for this session.', 'Cette séance est terminée.'),
   '顯示答案': ('Show answer', 'Afficher la réponse'),
   '空白鍵': ('Space', 'Espace'),
   '送出答案': ('Submit answer', 'Valider la réponse'),
@@ -1316,10 +1211,6 @@ const uiCatalog = <String, (String, String)>{
   '字首提示': ('First-letter hint', 'Première lettre'),
   '母語提示': ('Native-language hint', 'Indice en langue maternelle'),
   '母語說明＋照片': ('Native meaning + photo', 'Sens + photo'),
-  '先在心裡想出這個字，再按「顯示答案」。': (
-    'Recall the word, then select “Show answer”.',
-    'Retrouvez le mot, puis sélectionnez « Afficher la réponse ».'
-  ),
   '這一組不相符，再試一次。': (
     'These do not match. Try again.',
     'Ces éléments ne correspondent pas. Réessayez.'
@@ -1335,10 +1226,6 @@ const uiCatalog = <String, (String, String)>{
   '拍照或選一張照片，找出生活中的{L}單字': (
     'Take or choose a photo to find {L} words around you',
     'Prenez ou choisissez une photo pour trouver les mots {L} autour de vous'
-  ),
-  '先選一張照片開始學習': (
-    'Choose a photo to start learning',
-    'Choisissez une photo pour commencer'
   ),
   '從相簿選擇': ('Choose from gallery', 'Choisir dans la galerie'),
   '最近照片': ('Recent photos', 'Photos récentes'),
@@ -1412,10 +1299,7 @@ const uiCatalog = <String, (String, String)>{
   '這張照片已經加入過': ('This photo is already added', 'Cette photo est déjà ajoutée'),
   '仍要再加入': ('Add anyway', 'Ajouter quand même'),
   '打開原本的照片': ('Open the existing photo', 'Ouvrir la photo existante'),
-  '辛苦了。每張卡下次出現的時間已經排好，\n想複習時，再回來就好。': (
-    'Nice work. Each card\'s next time is scheduled;\ncome back whenever you like.',
-    'Bravo. La prochaine fois de chaque carte est planifiée ;\nrevenez quand vous voulez.'
-  ),
+  '辛苦了。每張卡下次出現的時間已經排好。': ('Nice work. Each card’s next time is scheduled.', 'Bravo. La prochaine fois de chaque carte est planifiée.'),
   '相片冊名稱': ('Album name', 'Nom de l’album'),
   '＋ 新相片冊': ('＋ New album', '＋ Nouvel album'),
   '這個分類還沒有相片冊': (
@@ -1630,6 +1514,14 @@ const uiCatalog = <String, (String, String)>{
   '變位範本': ('conjugation model', 'modèle de conjugaison'),
   '可作代動詞': ('can be pronominal', 'peut être pronominal'),
   '有聲 h（h aspiré）': ('aspirated h (h aspiré)', 'h aspiré'),
+  "h aspiré：不連音、不省略（le héros，不是 l'héros）": (
+    'h aspiré: no liaison, no elision (le héros, not l’héros)',
+    'h aspiré : pas de liaison ni d’élision (le héros, pas l’héros)'
+  ),
+  'h aspiré：不連音、不省略（le héros，不是 l’héros）': (
+    'h aspiré: no liaison, no elision (le héros, not l’héros)',
+    'h aspiré : pas de liaison ni d’élision (le héros, pas l’héros)'
+  ),
 };
 
 /// Language names for copy that names the language being learned (`{L}`) or
@@ -1742,10 +1634,7 @@ const _templateCopy = <String, (String, String)>{
     'Skip, see the next spot ({0} more)',
     'Passer, voir l’emplacement suivant ({0} de plus)'
   ),
-  '已加入「{0}」，可以開始複習': (
-    'Added “{0}”. You can start reviewing',
-    '« {0} » ajouté. Vous pouvez commencer à réviser'
-  ),
+  '已加入「{0}」': ('Added “{0}”', '« {0} » ajouté'),
   '超過 3000 個，後面的 {0} 個沒有檢查': (
     'Over 3000. The last {0} were not checked',
     'Plus de 3000. Les {0} derniers n’ont pas été vérifiés'
@@ -1829,15 +1718,9 @@ const _templateCopy = <String, (String, String)>{
   ),
   '每天最多複習 {0} 張': ('Up to {0} reviews a day', 'Jusqu’à {0} révisions par jour'),
   '單字收集區 ({0})': ('Word collection ({0})', 'Mots collectés ({0})'),
-  '按單字的星星，或把照片上的標籤拖到這裡。有收集時只保存這些字；沒收集時保存整份列表。': (
-    'Tap a word’s star, or drag a photo label here. If you collect any, only those are saved; if none, the whole list is saved.',
-    'Touchez l’étoile d’un mot, ou glissez une étiquette ici. S’il y en a, seuls ceux-là sont enregistrés ; sinon, toute la liste l’est.'
-  ),
+  '有收集時只保存這些字；沒收集時保存整份列表。': ('If you collect any, only those are saved; if none, the whole list is saved.', 'S’il y en a, seuls ceux-là sont enregistrés ; sinon, toute la liste l’est.'),
   '辨識單字列表 ({0})': ('Recognised words ({0})', 'Mots reconnus ({0})'),
-  '這 {0} 個字在詞庫裡還沒有圖片，可以先看單字': (
-    'No lexicon pictures for these {0} words yet; here are the words',
-    'Pas encore d’images pour ces {0} mots ; voici les mots'
-  ),
+  '這 {0} 個字在詞庫裡還沒有圖片': ('No lexicon pictures for these {0} words yet', 'Pas encore d’images pour ces {0} mots'),
   '相片冊 · {0} 個單字 · {1} 張詞庫圖片': (
     'Word set · {0} words · {1} lexicon pictures',
     'Liste de mots · {0} mots · {1} images'
@@ -1850,10 +1733,7 @@ const _templateCopy = <String, (String, String)>{
   '全部加入（{0}）': ('Add all ({0})', 'Tout ajouter ({0})'),
   '已加入 {0} 個單字': ('{0} words added', '{0} mots ajoutés'),
   '顯示更多（{0}）': ('Show more ({0})', 'Afficher plus ({0})'),
-  '第 {0} / {1} 張　·　左右滑動換照片': (
-    'Photo {0} of {1} · swipe to change photo',
-    'Photo {0} sur {1} · balayez pour changer de photo'
-  ),
+  '第 {0} / {1} 張': ('Photo {0} of {1}', 'Photo {0} sur {1}'),
   '最近 7 天（每日）：{0}': (
     'Last 7 days (daily): {0}',
     '7 derniers jours (par jour) : {0}'
@@ -1869,10 +1749,7 @@ const _templateCopy = <String, (String, String)>{
   '圖片來源：{0}': ('Photo source: {0}', 'Source de la photo : {0}'),
   '這次複習了 {0} 張卡': ('You reviewed {0} cards', 'Vous avez révisé {0} cartes'),
   // 問題回報 #533 #534 (M214).
-  '今天 {0} 張，約 {1} 分鐘。做完還可以繼續練習，想休息時按左上角結束。': (
-    '{0} cards today, about {1} min. You can keep practising after; tap the top-left button to stop.',
-    '{0} cartes aujourd’hui, env. {1} min. Vous pouvez continuer ensuite ; touchez en haut à gauche pour arrêter.'
-  ),
+  '今天 {0} 張，約 {1} 分鐘。': ('{0} cards today, about {1} min.', '{0} cartes aujourd’hui, env. {1} min.'),
   '約 {0} 分鐘': ('About {0} min', 'Env. {0} min'),
   '已完成 {0} / {1} 張': ('{0} of {1} cards done', '{0} cartes sur {1} faites'),
   '記得 {0} 張・再練 {1} 次': (
@@ -1969,6 +1846,10 @@ const _templateCopy = <String, (String, String)>{
   '另有 {0} 個字還沒有{N}意思，補齊後會自動加入複習。': (
     '{0} more words have no {N} meaning yet and join review once it is ready.',
     '{0} autres mots n’ont pas encore de sens en {N} ; ils rejoindront la révision dès qu’il sera disponible.'
+  ),
+  '另有 1 個字還沒有{N}意思，補齊後會自動加入複習。': (
+    '1 more word has no {N} meaning yet and joins review once it is ready.',
+    '1 autre mot n’a pas encore de sens en {N} ; il rejoindra la révision dès qu’il sera disponible.'
   ),
   '第 {0} 個，共 {1} 個': ('{0} of {1}', '{0} sur {1}'),
   '共 {0} 個': ('{0} in total', '{0} au total'),
@@ -2077,10 +1958,6 @@ const _templateCopy = <String, (String, String)>{
     'Exporter vers Anki : choisir'
   ),
   '正在建立 Anki 匯入檔…': ('Creating the Anki file…', 'Création du fichier Anki…'),
-  '把單字卡連同照片和發音存成 Anki 檔，可以存到檔案或傳到其他 App。': (
-    'Saves your word cards with photos and pronunciation as an Anki file you can save to Files or send to another app.',
-    'Enregistre vos cartes avec photos et prononciation dans un fichier Anki, à garder dans Fichiers ou envoyer à une autre app.'
-  ),
   '這個範圍沒有單字可以匯出': ('No words to export here', 'Aucun mot à exporter ici'),
   // 備份與還原 (問題回報 #278)
   '匯出備份': ('Export backup', 'Exporter une sauvegarde'),
@@ -2133,10 +2010,7 @@ const _templateCopy = <String, (String, String)>{
   ),
   '已把「{0}」移到已學會': ('Moved “{0}” to Learned', '« {0} » déplacé dans Appris'),
   '已復原「{0}」': ('Restored “{0}”', '« {0} » restauré'),
-  '在照片上點一下，放「{0}」的位置': (
-    'Tap the photo where “{0}” goes',
-    'Touchez la photo à l’endroit de « {0} »'
-  ),
+  '放「{0}」的位置': ('Spot for “{0}”', 'Emplacement de « {0} »'),
   '已移除「{0}」，可在單字本復原': (
     'Removed “{0}”; restore it from My words',
     '« {0} » retiré ; restaurez-le depuis Mes mots'
@@ -2211,7 +2085,6 @@ const _templateCopy = <String, (String, String)>{
     'Dérivé de données CC BY-SA 4.0 et partagé sous CC BY-SA 4.0'
   ),
   // M180 (owner #732): the photo's 詞性 × CEFR table.
-  '已加入「{0}」': ('Added “{0}”', '« {0} » ajouté'),
   // 問題回報 #850: 照片詳情's 儲存 with reduced motion.
   '已儲存到單字本和相片冊': (
     'Saved to My words and the album',
@@ -2225,23 +2098,13 @@ const _templateCopy = <String, (String, String)>{
     'Which topics interest you?',
     'Quels sujets vous intéressent ?'
   ),
-  '可以複選，也可以略過。': (
-    'Pick any, or skip.',
-    'Plusieurs choix possibles, ou passez.'
-  ),
-  '可以複選，也可以略過。我們會先列出符合的相片冊。': (
-    'Pick any, or skip. Matching albums are listed first.',
-    'Plusieurs choix possibles, ou passez. Les albums correspondants passent en premier.'
-  ),
+  '我們會先列出符合的相片冊。': ('Matching albums are listed first.', 'Les albums correspondants passent en premier.'),
   '略過': ('Skip', 'Passer'),
   // 卡 #891: 推薦卡片集.
   '運動': ('Sports', 'Sport'),
   '爬山健行': ('Hiking', 'Randonnée'),
   '為你挑的相片冊': ('Albums picked for you', 'Albums choisis pour vous'),
-  '依你的興趣和程度挑選，一下就能加入；之後也能在「相片冊」找到更多。': (
-    'Picked for your interests and level. Add one in a tap; find more later under Albums.',
-    'Choisis selon vos centres d’intérêt et votre niveau. Ajoutez-en un d’un geste ; d’autres sont dans « Albums ».'
-  ),
+  '依你的興趣和程度挑選。': ('Picked for your interests and level.', 'Choisis selon vos centres d’intérêt et votre niveau.'),
   '已加入': ('Added', 'Ajouté'),
   '加入相片冊': ('Add to albums', 'Ajouter aux albums'),
   '旅行': ('Travel', 'Voyage'),
@@ -2272,10 +2135,6 @@ const _templateCopy = <String, (String, String)>{
   '動物': ('Animals', 'Animaux'),
   '進階單字': ('Advanced words', 'Mots avancés'),
   '學習目的與興趣': ('Goals and interests', 'Objectifs et centres d’intérêt'),
-  '用來先列出符合的相片冊。': (
-    'Used to list matching albums first.',
-    'Sert à afficher d’abord les albums correspondants.'
-  ),
   // 卡 #1220: French word page.
   '複合過去式': ('passé composé (past)', 'passé composé'),
   '未完成過去式': ('imperfect (past)', 'imparfait'),
@@ -2296,8 +2155,4 @@ const _templateCopy = <String, (String, String)>{
   '陰性單數': ('feminine singular', 'féminin singulier'),
   '陽性複數': ('masculine plural', 'masculin pluriel'),
   '陽性單數（母音前）': ('masculine singular (before a vowel)', 'masculin singulier (devant voyelle)'),
-  'h aspiré：不連音、不省略（le héros，不是 l’héros）': (
-    'h aspiré: no liaison, no elision (le héros, not l’héros)',
-    'h aspiré : pas de liaison ni d’élision (le héros, pas l’héros)'
-  ),
 };

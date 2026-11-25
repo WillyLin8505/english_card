@@ -193,9 +193,7 @@ class _Intro extends StatelessWidget {
               UiText(
                 // Today's capped share, never the overdue backlog (spec: 不顯示欠卡數).
                 any
-                    ? (today > 0
-                        ? '今天 $today 張，約 $minutes 分鐘。做完還可以繼續練習，想休息時按左上角結束。'
-                        : '今天的份量已完成。想多練習可以繼續，想休息時按左上角結束。')
+                    ? (today > 0 ? '今天 $today 張，約 $minutes 分鐘。' : '今天的份量已完成。')
                     : waiting
                         ? '單字的{N}意思補齊後，會自動加入複習。'
                         : '在照片詳情挑幾個單字，或下載相片冊，就會變成卡片。',
@@ -205,7 +203,9 @@ class _Intro extends StatelessWidget {
               if (any && repo.cardsWaitingForMeaning > 0) ...[
                 const SizedBox(height: 8),
                 UiText(
-                  '另有 ${repo.cardsWaitingForMeaning} 個字還沒有{N}意思，補齊後會自動加入複習。',
+                  repo.cardsWaitingForMeaning == 1
+                      ? '另有 1 個字還沒有{N}意思，補齊後會自動加入複習。'
+                      : '另有 ${repo.cardsWaitingForMeaning} 個字還沒有{N}意思，補齊後會自動加入複習。',
                   textAlign: TextAlign.center,
                   style: MFont.manrope(13, FontWeight.w600, MColors.label),
                 ),
@@ -339,24 +339,27 @@ class _ScopeGrid extends StatelessWidget {
       children: [
         UiText('想複習哪一本？',
             style: MFont.manrope(20, FontWeight.w800, MColors.ink)),
-        const SizedBox(height: 4),
-        UiText('點一格就開始；做完還可以繼續練習，想休息時按左上角結束。',
-            style: MFont.manrope(13, FontWeight.w600, MColors.muted)),
         if (repo.cardsWaitingForMeaning > 0) ...[
           const SizedBox(height: 4),
           UiText(
-            '另有 ${repo.cardsWaitingForMeaning} 個字還沒有{N}意思，補齊後會自動加入複習。',
+            repo.cardsWaitingForMeaning == 1
+                ? '另有 1 個字還沒有{N}意思，補齊後會自動加入複習。'
+                : '另有 ${repo.cardsWaitingForMeaning} 個字還沒有{N}意思，補齊後會自動加入複習。',
             style: MFont.manrope(13, FontWeight.w600, MColors.label),
           ),
         ],
         const SizedBox(height: MSpace.md),
-        GridView.count(
+        // 問題回報 #1797: tiles stop growing on wide screens (2 across on a
+        // phone, more on a desktop).
+        GridView(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: 2,
-          mainAxisSpacing: MSpace.sm,
-          crossAxisSpacing: MSpace.sm,
-          childAspectRatio: 1.0,
+          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: 200,
+            mainAxisSpacing: MSpace.sm,
+            crossAxisSpacing: MSpace.sm,
+            childAspectRatio: 1.0,
+          ),
           children: [
             for (final (value, name, count, downloaded, cover, asset, url)
                 in tiles)
@@ -381,7 +384,7 @@ class _ScopeGrid extends StatelessWidget {
                     color: value == 'all' ? MColors.primarySoft : Colors.white,
                     borderRadius: MRadii.rLg,
                     boxShadow: MShadows.card,
-                    border: value == last
+                    border: value == last && repo.recentReviewLogs(1).isNotEmpty
                         ? Border.all(color: MColors.primary, width: 1.5)
                         : null,
                   ),
@@ -412,7 +415,8 @@ class _ScopeGrid extends StatelessWidget {
                                   spacing: 4,
                                   runSpacing: 4,
                                   children: [
-                                    if (value == last)
+                                    if (value == last &&
+                                        repo.recentReviewLogs(1).isNotEmpty)
                                       const _TileBadge('上次複習',
                                           color: MColors.primary),
                                     if (downloaded)
@@ -592,9 +596,7 @@ class _Finished extends StatelessWidget {
               ],
               const SizedBox(height: 8),
               UiText(
-                reviewed > 0
-                    ? '辛苦了。每張卡下次出現的時間已經排好，\n想複習時，再回來就好。'
-                    : '這次的練習先到這裡。\n想複習時，再回來就好。',
+                reviewed > 0 ? '辛苦了。每張卡下次出現的時間已經排好。' : '這次的練習先到這裡。',
                 textAlign: TextAlign.center,
                 style: MFont.manrope(14, FontWeight.w600, MColors.muted),
               ),
@@ -687,8 +689,8 @@ class FlashcardCardView extends StatelessWidget {
     final native = scope.settings.nativeLanguage;
     final bottom = MediaQuery.paddingOf(context).bottom;
     final look = CardLook.of(context);
-    // 問題回報 #641 #692: look at the question again first — above the word
-    // and above the rating buttons.
+    // 問題回報 #641 #1797: look at the question again first — once, above
+    // the rating buttons.
     Widget flipToFront(Key key) => Align(
           alignment: Alignment.centerLeft,
           child: TextButton.icon(
@@ -709,14 +711,15 @@ class FlashcardCardView extends StatelessWidget {
             // scrolled clear of the rating bar.
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
             child: Column(children: [
-              // 問題回報 #692: 回到正面 above the word too, not only at the
-              // bottom.
-              if (session.showingBack && !session.viewingPrevious)
-                flipToFront(const ValueKey('flip-to-front-top')),
               _CardFrame(
                   look: look,
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 180),
+                    // 問題回報 #1767: the old side must not stay stacked
+                    // under the new one (front sentence + input showed
+                    // through the back).
+                    layoutBuilder: (current, _) =>
+                        current ?? const SizedBox.shrink(),
                     child: session.showingBack
                         ? FlashcardBack(
                             key: ValueKey('back:${card.id}'),

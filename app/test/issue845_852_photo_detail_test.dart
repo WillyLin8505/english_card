@@ -110,7 +110,7 @@ void main() {
       app.navigator.openPhoto('p848');
       await tester.pumpAndSettle();
 
-      for (final word in ['Conspicuous', 'Congregation']) {
+      for (final word in ['conspicuous', 'congregation']) {
         final f = find.byKey(ValueKey('word-card-word-$word'));
         expect(f, findsOneWidget, reason: word);
         final text = tester.widget<Text>(f);

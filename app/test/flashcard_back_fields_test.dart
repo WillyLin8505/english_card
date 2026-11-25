@@ -122,7 +122,9 @@ void main() {
       (tester) async {
     await pumpBack(tester, RecordingSpeaker());
     for (final form in ['goes', 'going', 'went', 'gone']) {
-      expect(find.textContaining(form), findsOneWidget);
+      // The title is the lowercase headword 'went' too (問題回報 #1772).
+      expect(find.textContaining(form),
+          form == 'went' ? findsNWidgets(2) : findsOneWidget);
     }
     for (final text in [
       '來源',

@@ -307,6 +307,7 @@ class _CameraScreenState extends State<CameraScreen>
           );
         }
 
+        final noCamera = _controller == null && !_starting && !_busy;
         return Scaffold(
           backgroundColor: MColors.canvas,
           body: SafeArea(
@@ -339,79 +340,100 @@ class _CameraScreenState extends State<CameraScreen>
                     ],
                   ),
                 ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: MSpace.xl),
-                    child: Container(
-                      decoration: MDecor.heroPhotoFrame(),
-                      clipBehavior: Clip.hardEdge,
-                      child: _Viewfinder(
-                        controller: _controller,
-                        cameraError: _cameraError,
-                        badge: badge,
-                        onBadgeTap: _controller != null &&
-                                !_busy &&
-                                !scope.settings.taggingConfigured
-                            ? () => scope.navigator.selectTab(AppTab.settings)
-                            : null,
+                // 問題回報 #1797: no camera (desktop) — no empty viewfinder, just
+                // one big 選擇照片 button.
+                if (noCamera)
+                  Expanded(
+                    child: Center(
+                      child: FilledButton.icon(
+                        key: const ValueKey('camera-choose-photo'),
+                        style: FilledButton.styleFrom(
+                            minimumSize: const Size(240, 72),
+                            textStyle: MFont.manrope(
+                                18, FontWeight.w800, MColors.surface)),
+                        onPressed: _busy ? null : _capture,
+                        icon: const MSvg(MIcon.gallery20, size: 24),
+                        label: const UiText('選擇照片'),
+                      ),
+                    ),
+                  )
+                else
+                  Expanded(
+                    child: Padding(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: MSpace.xl),
+                      child: Container(
+                        decoration: MDecor.heroPhotoFrame(),
+                        clipBehavior: Clip.hardEdge,
+                        child: _Viewfinder(
+                          controller: _controller,
+                          cameraError: _cameraError,
+                          badge: badge,
+                          onBadgeTap: _controller != null &&
+                                  !_busy &&
+                                  !scope.settings.taggingConfigured
+                              ? () => scope.navigator.selectTab(AppTab.settings)
+                              : null,
+                        ),
                       ),
                     ),
                   ),
-                ),
                 Padding(
                   padding: const EdgeInsets.symmetric(
                       horizontal: MSpace.xl, vertical: MSpace.lg),
                   child: Column(
                     children: [
-                      Row(
-                        mainAxisAlignment: _controller == null
-                            ? MainAxisAlignment.center
-                            : MainAxisAlignment.spaceBetween,
-                        children: [
-                          // Without a camera the big middle button is the
-                          // one 選擇照片 entry; gallery and flash are hidden
-                          // (問題回報 #402).
-                          Tap(
-                            onTap: _capture,
-                            label: _controller == null ? '選擇照片' : '拍照',
-                            child: Container(
-                              width: 76,
-                              height: 76,
-                              decoration: BoxDecoration(
-                                color: MColors.primarySoft,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color:
-                                      MColors.primary.withValues(alpha: 0.25),
-                                  width: 2,
-                                ),
-                              ),
-                              child: Center(
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  width: 58,
-                                  height: 58,
-                                  decoration: BoxDecoration(
-                                    color: _busy
-                                        ? MColors.primary.withValues(alpha: 0.6)
-                                        : MColors.primary,
-                                    shape: BoxShape.circle,
-                                    boxShadow: MShadows.primaryGlow,
+                      if (!noCamera)
+                        Row(
+                          mainAxisAlignment: _controller == null
+                              ? MainAxisAlignment.center
+                              : MainAxisAlignment.spaceBetween,
+                          children: [
+                            // Without a camera the big middle button is the
+                            // one 選擇照片 entry; gallery and flash are hidden
+                            // (問題回報 #402).
+                            Tap(
+                              onTap: _capture,
+                              label: _controller == null ? '選擇照片' : '拍照',
+                              child: Container(
+                                width: 76,
+                                height: 76,
+                                decoration: BoxDecoration(
+                                  color: MColors.primarySoft,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color:
+                                        MColors.primary.withValues(alpha: 0.25),
+                                    width: 2,
                                   ),
-                                  child: Center(
-                                    child: MSvg(
-                                      _controller == null
-                                          ? MIcon.gallery20
-                                          : MIcon.cameraWhite,
-                                      size: 24,
+                                ),
+                                child: Center(
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    width: 58,
+                                    height: 58,
+                                    decoration: BoxDecoration(
+                                      color: _busy
+                                          ? MColors.primary
+                                              .withValues(alpha: 0.6)
+                                          : MColors.primary,
+                                      shape: BoxShape.circle,
+                                      boxShadow: MShadows.primaryGlow,
+                                    ),
+                                    child: Center(
+                                      child: MSvg(
+                                        _controller == null
+                                            ? MIcon.gallery20
+                                            : MIcon.cameraWhite,
+                                        size: 24,
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
                       // With a camera, the badge and the top-right settings
                       // button already lead to setup; this panel is only
                       // the fallback when there is no camera (問題回報 #535).

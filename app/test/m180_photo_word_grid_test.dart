@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:photo_english_app/app/app_scope.dart';
 import 'package:photo_english_app/models/learning_card.dart';
-import 'package:photo_english_app/screens/word_detail_screen.dart';
 import 'package:photo_english_app/services/photo_word_grid.dart';
 import 'package:photo_english_app/widgets/mobile/photo_word_grid_table.dart';
 
@@ -164,7 +163,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('grid-add')));
     await tester.pumpAndSettle();
-    expect(find.text('已加入「Rustic」'), findsOneWidget);
+    expect(find.text('已加入「rustic」'), findsOneWidget);
     expect(find.byKey(const ValueKey('word:rustic')), findsOneWidget);
 
     // A listed word opens 單字詳情 (saved first).
@@ -173,7 +172,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(first);
     await tester.pumpAndSettle();
-    expect(find.byType(WordDetailScreen), findsOneWidget);
+    // 問題回報 #1772: looking at a word does not collect it; an unsaved word
+    // shows its dictionary page (or a note), not 單字詳情.
+    expect(app.repository.entryByWord('rustic'), isNull);
     expect(tester.takeException(), isNull);
   });
 
