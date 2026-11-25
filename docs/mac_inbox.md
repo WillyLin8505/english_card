@@ -8857,7 +8857,7 @@ commit `7f9addea`（Windows：flutter analyze 無 error、flutter test 全過）
     - log：app/build/rounds/4493/。PostHog 已上傳 865 筆模擬事件。
     - 剩餘：無新項目。
 
-## M1123（2026-11-25 19:16）狀態：待做
+## M1123（2026-11-25 19:16）狀態：完成（App 沒有改動，不需裝置驗證）
 commit `9f379414`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #496：模擬使用者・法語（英語母語者學法語）
   結果：第234-236輪完成：4/4模擬通過（A1 22秒、B1 22秒、抽卡 36秒、媒體 13秒）、詞庫17315詞、無測試失敗（只依通過與 pack 統計；未逐項讀 JSON，中文殘留未另量）。
