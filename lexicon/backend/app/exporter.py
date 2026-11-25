@@ -639,7 +639,7 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_saf
                 used(tr.get("source"))
                 counts["sense_translations"] += 1
         # forms
-        from .materialize import FORM_POS, british_first, main_accent
+        from .materialize import FORM_POS, british_first, ipa_fallback, main_accent
         from .text import normalize_lemma
         for f in catalog.FORM_FIELDS:
             lx = by_pos.get(FORM_POS.get(f, "")) or (by_pos.get("noun") if FORM_POS.get(f) == "adj"
@@ -685,7 +685,14 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_saf
             n = 0
             for kind in ("ipa", "phonemes", "syllables", "stress"):
                 rows = items(lemma, kind)
-                for i, it in enumerate(british_first(rows) if kind == "ipa" else rows):
+                # Card #1367 / issue #1802: a pronunciation filed under another pos (ne = NE
+                # the compass point, /nɔ.ʁɛst/) is not the lexeme's; same rule as materialize.
+                rows = [it for it in rows if not it.get("pos") or it.get("pos") == lx.pos]
+                if kind == "ipa":
+                    if not any(it.get("ipa") for it in rows):
+                        rows = ipa_fallback(items(lemma, kind), lx.pos)
+                    rows = british_first(rows)
+                for i, it in enumerate(rows):
                     val = (it.get("ipa") or it.get("phonemes") or "·".join(it.get("syllables") or [])
                            or str(it.get("count") or it.get("pattern")
                                   or it.get("primary_syllable") or ""))
