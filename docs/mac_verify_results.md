@@ -3395,3 +3395,13 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 代動詞 FR21 | 不通過 | 單字本 être、詞庫頁 prendre 仍顯示代動詞變位（je me suis、je me prends）。 | — | 中 | iPad＋模擬器 |
 | héros FR07 #1236 | 不通過 | héros 仍有中文說明「h aspiré：不連音、不省略（le héros，不是 l'héros）」。 | — | 低 | iPad＋模擬器 |
 | iPad 還原 | 通過 | iPad 只讀跑完，沒有例外；平常版 App 07:40 已裝回並開啟。 | — | — | iPad |
+
+## M1105 卡 #1297 #496 #1328 #224（commit ba42ee9f）：iPad 唯讀
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1297 | 通過 | FR24（新檢查）：iPad 上 App 內建的離線精簡字典查 aile，變位行寫成「(verb) first/third-person singular present indicative/subjunctive of ailer」和「(verb) second-person singular imperative of ailer」；名詞義 wing、fender…正常。d'abord 6 義、faire 6 義等 FR10 照常。 | — | — | iPad |
+| #1328 | 通過 | FR25（新檢查）：iPad 讀伺服器 fr/en、en/zh-TW、fr/zh-TW、en/fr 四種卡片集清單共 156 個，名稱和說明都沒有「・」（U+30FB）。含 3000 的名稱：基礎 3000 字（全部）、A1 級單字（基礎 3000 字）、French Basic 3000 Words 及 A1／A2／B1。封面和重複名稱這輪沒有用畫面看。 | — | — | iPad |
+| #496 #224 | 注意 | 只有 Windows 的模擬，App 沒有可在裝置上驗的改動。這批只改了內建精簡字典，沒有改 App 程式，所以這輪沒跑模擬器。 | — | — | — |
+| 上一輪仍不通過 | 注意 | iPad 這輪仍看到：單字本頁標題 l'aller m. plural allers（FR23）、ne/la 卡（FR12）、être/prendre 代動詞（FR21）、héros 中文說明（FR07），與 M1104 相同，已請 Windows 開回報。 | — | — | iPad |
+| iPad 還原 | 通過 | iPad 只讀跑完，沒有例外；平常版 App 08:42 已裝回並開啟。 | — | — | iPad |

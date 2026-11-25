@@ -8581,7 +8581,7 @@ commit `7b2b7085`（Windows：flutter analyze 無 error、flutter test 全過；
 - 卡 #1315：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
   結果：全部完成：卡上列的 10 個測試檔現在全過；flutter analyze 0 error（12 個 info/warning）；完整 flutter test 1047 通過、2 略過、0 失敗。
 
-## M1105（2026-11-25 08:34）狀態：待做
+## M1105（2026-11-25 08:34）狀態：完成（iPad 唯讀；#1297 #1328 通過，#496 #224 不需 Mac）
 commit `ba42ee9f`（Windows：flutter analyze 無 error、flutter test 全過（2 檔在全部一起跑時失敗、單獨重跑通過）；另有 40 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #1297：問題回報 #1708：[Mac 注意] 2026-11-23 卡 #1248 法語精簡字典重建（iPad）：注意
   結果：結論：精簡字典已重建，同形動詞變位行加上「of <原形動詞>」（原本 44,719 行裸變位，現只剩 3 行），超過 120 字的義項由 535 降為 0（最長 120）。
