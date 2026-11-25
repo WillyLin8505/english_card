@@ -49,3 +49,25 @@ class GpuDutyTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ForegroundHoldTest(unittest.TestCase):
+    """問題回報 #1842: a learner's photo keeps new background calls from starting."""
+
+    def test_background_waits_while_a_photo_is_tagged(self):
+        c = FakeClock()
+        g = GpuDuty(1.0, clock=c, sleep=c.sleep)
+        g.foreground = 1          # a photo call is running
+        g.foreground_hold_s = 3.0
+        with g.run(wait=True):
+            pass
+        self.assertGreaterEqual(c.slept, 3.0)  # held, but never longer than the cap
+
+    def test_foreground_counts_itself_and_never_waits(self):
+        c = FakeClock()
+        g = GpuDuty(1.0, clock=c, sleep=c.sleep)
+        g.foreground = 1
+        with g.run(wait=False):
+            self.assertEqual(g.foreground, 2)
+        self.assertEqual(g.foreground, 1)
+        self.assertEqual(c.slept, 0.0)

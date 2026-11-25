@@ -68,6 +68,11 @@ class GpuDuty:
         self.clock, self.sleep = clock, sleep
         self.quiet_until = 0.0
         self.lock = threading.Lock()
+        # 問題回報 #1842: while a learner's photo is being tagged, background
+        # calls do not start (calls already running finish); at most
+        # FOREGROUND_HOLD_S so imports never stall for good.
+        self.foreground = 0
+        self.foreground_hold_s = 120.0
 
     def wait_s(self):
         with self.lock:
@@ -75,15 +80,25 @@ class GpuDuty:
 
     @contextlib.contextmanager
     def run(self, wait=True):
+        if wait:
+            held_since = self.clock()
+            while self.foreground > 0 and self.clock() - held_since < self.foreground_hold_s:
+                self.sleep(0.5)
         while wait and self.duty < 1:
             delay = self.wait_s()
             if delay <= 0:
                 break
             self.sleep(min(delay, 1.0))
+        if not wait:
+            with self.lock:
+                self.foreground += 1
         started = self.clock()
         try:
             yield
         finally:
+            if not wait:
+                with self.lock:
+                    self.foreground -= 1
             if self.duty < 1:
                 ran = self.clock() - started
                 with self.lock:

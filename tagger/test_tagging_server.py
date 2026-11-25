@@ -314,6 +314,17 @@ def test_compact_grammar_leaves_no_room_for_whitespace():
                                'required': []}) is None
 
 
+def test_cefr_grammar_caps_the_label_count():
+    """問題回報 #1842: the grammar allows at most CEFR_MAX_ITEMS labels (the
+    model wrote 26-38 for "up to 18"); arrays without maxItems stay open."""
+    import tagging_server as ts
+    grammar = ts.compact_grammar(ts.CEFR_CANDIDATE_SCHEMA)
+    assert '{0,%d}' % (ts.CEFR_MAX_ITEMS - 1) in grammar
+    open_list = ts.compact_grammar({'type': 'object', 'required': ['a'], 'properties': {
+        'a': {'type': 'array', 'items': {'type': 'string'}}}})
+    assert '("," string)*' in open_list
+
+
 def test_level_filter_drops_labels_below_one_band_under_the_level():
     # Card #657: pedestrian is B2 in CEFR-J and propulsion is a frequency estimate of B2
     # (zipf 3.6); neither may reach a C2 learner, and no easier word is filled in.

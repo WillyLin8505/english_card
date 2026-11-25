@@ -259,12 +259,16 @@ CEFR_BEGINNER_MAX_PER_LEVEL = int(os.environ.get(
 CEFR_MAX_TOKENS = int(os.environ.get('TAGGER_CEFR_NUM_PREDICT', '820'))
 # Experimental until the full golden-photo comparison passes (card44).
 CEFR_REPEAT_GUARD = os.environ.get('TAGGER_CEFR_REPEAT_GUARD', '0') == '1'
+# 問題回報 #1842 (owner 11/25 「找單字的時間有點太長」): at most this many
+# labels per photo, enforced by the grammar (the prompt asks for per_level * 6).
+CEFR_MAX_ITEMS = int(os.environ.get('TAGGER_CEFR_MAX_ITEMS', str(CEFR_TAGS_PER_LEVEL * 6)))
 CEFR_CANDIDATE_SCHEMA = {
     'type': 'object',
     'properties': {
         'safe': {'type': 'boolean'},
         'candidates': {
             'type': 'array',
+            'maxItems': CEFR_MAX_ITEMS,
             'items': {
                 'type': 'object',
                 'properties': {
@@ -767,7 +771,11 @@ def compact_grammar(schema: dict) -> str | None:
             return '("true" | "false")'
         if kind == 'array':
             item = expr(node.get('items') or {}, name + '-item')
-            return item and f'("[" ({item} ("," {item})*)? "]")'
+            # 問題回報 #1842: maxItems caps the reply (the model ignored
+            # "up to 18" and wrote 26-38 labels, ~40 % more decode time).
+            most = node.get('maxItems')
+            rest = '*' if not isinstance(most, int) or most < 1 else '{0,%d}' % (most - 1)
+            return item and f'("[" ({item} ("," {item}){rest})? "]")'
         if kind == 'object':
             props = node.get('properties') or {}
             if set(node.get('required', [])) != set(props):
