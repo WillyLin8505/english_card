@@ -8738,7 +8738,7 @@ commit `70886417`（Windows：flutter analyze 無 error、flutter test 全過；
 - 卡 #1364：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
   結果：全部完成：flutter analyze 無 error（只剩 12 個 info），flutter test 全過（1056 通過、2 略過、0 失敗）。
 
-## M1112（2026-11-25 13:20）狀態：待做
+## M1112（2026-11-25 13:20）狀態：完成（iPad 唯讀＋模擬器法文、英文全新安裝；ne 音標與詞性標籤修好，iPad aller 變位表、照片 plant 詞義仍不通過）
 commit `ac90abf5`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #1324：問題回報 #1766：[owner] 複習卡用錯詞義：照片收藏的是 plant＝植物（名詞），複習卻考『工廠』例句和『種
   結果：第 1 輪完成程式修正：照片收藏的字只留照片那個詞性＋詞義；全庫舊資料與 iPad 驗證尚未做。
