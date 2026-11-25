@@ -8631,3 +8631,104 @@ commit `145161a9`（Windows：flutter analyze 無 error、flutter test 全過；
 commit `47c1cf3d`（Windows：flutter analyze 無 error、flutter test 全過；另有 45 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #1354：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
   結果：全部完成：卡上列的 10 個測試檔現在全過（38 項），flutter test 全部 1056 過（2 skipped、0 失敗），flutter analyze 0 error（12 個 info）。
+
+## M1110（2026-11-25 12:19）狀態：待做
+commit `a4ed8d2e`（Windows：flutter analyze 無 error、flutter test 全過；另有 2 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1259：問題回報 #1698：[Mac] M1089–M1095 回覆卡 iPad 驗證（Mac 2026-11-22 2：#1
+  結果：根因已確認，修法與 #1256（問題回報 #1703）是同一份，該卡正在改；本卡不重複改程式，等 #1256 收尾後驗證即可。
+- 卡 #1258：問題回報 #1710：[Mac] 2026-11-23 卡 #1251 法文學習者清單（iPad 唯讀＋模擬器全新：不通
+  結果：同根因、已有卡 #1256 在修：沒有重複改程式（worddetailscreen.dart 3 分鐘前才被 #1256 的 CLI 5 改動）。
+- 卡 #1271：問題回報 #1731：[owner] 帳號登入：Google 登入（網頁版＋iPhone／iPad）與自行註冊（Emai
+  結果：第一輪完成：網頁版 Google 按鈕已做好（Google 官方按鈕），Email 註冊→登出→登入→刪除在外網 api.willylinai.com 實測全通；Google 實際可用還差 owner 的 Client ID。
+  需要 Mac：拿到 iOS Client ID 後在 iPad 驗證 Google 按鈕、登入、取消不閃退；網頁版實際 Google 按鈕待 Web ID 後驗。
+- 卡 #1245：問題回報 #1692：照片詳情儲存說明互相矛盾：收集區說必須按儲存，頁底說返回自動保存
+  結果：全部完成：照片詳情的儲存說明已統一，不再互相矛盾，也沒有「建立」用語（程式已由前一輪改好，本輪只驗證）。；- 收集區（photowordcards.dart:510）：「有收集時只保存這些字；沒收集時保存整份列表。」只說明保存範圍，不再說「按儲存才會進單字庫」。
+- 卡 #1270：問題回報 #1730：[owner] 拍完照沒有進入辨識、單字辨識看起來沒在跑
+  結果：第 2 輪：法文照片辨識從 2 次模型呼叫降為 1 次（測試照 34.4 s → 約 11.3 s，一次呼叫）；網頁版重新打包與 iPad 驗證還沒做。
+  需要 Mac：在 iPad 與網頁版各拍一張／選一張照片，確認立刻進入辨識畫面、法文一張約 10–15 s；沒填金鑰時看到新的 401 提示。
+- 卡 #1269：問題回報 #1728：[owner] 網頁版詞庫一直下載失敗（每 2 分鐘整包重抓 85 秒）＋進度條數字錯；並拿掉各分
+  結果：第 1 輪：網頁版改拿約 75 MB 的壓縮精簡詞庫（原本 600 MB 完整 JSON），進度條與數字修好、使用導覽移除；外網實測與 iPad 驗證還沒做。
+  需要 Mac：iPad 全新安裝下載法文詞庫，進度條 0→100%、數字合理；任何分頁不出現使用導覽。
+- 卡 #1275：問題回報 #1715：[Mac] 2026-11-24 法文、英文完整重測（新的一鍵重測，iPad 唯讀＋模擬器全：#1
+  結果：已修好（卡 #1256 已把 FrenchVerbSection／FrenchAdjectiveSection 接進 WordDetailScreen，Mac 驗的是舊版）；本輪補上 WordDetailScreen 的回歸測試，通過，等 Mac 用新版 iPad 重驗。
+- 卡 #1277：問題回報 #1737：[Mac] M1100 卡 #1252 法文清單（問題回報 #1704）：iPad 唯讀＋模：#1
+  結果：全部完成：單字本頁（WordDetailScreen）的法文變位表／形容詞表程式已在工作樹裡，flutter test 11/11 通過、analyze 0 問題；Mac 看到的是舊建置，需重新建置後在 iPad 驗證。
+  需要 Mac：用含此工作樹的新建置，在 iPad 單字本頁驗 aller、parler、être、manger（變位表）與 beau、grand（形容詞表）。
+    注意：此檔尚未 commit，mac_sync 同步後 Mac 才會拿到。
+- 卡 #1273：問題回報 #1729：[owner] 拿掉 App 裡所有教學式說明文字（例：複習卡『先在心裡想出這個字，再按「顯示答案
+  結果：第 1 輪：文字已全部拿掉並同步 uicatalog、測試；flutter analyze 無錯誤；screenstest 10 項失敗已查明原因但未證實為既有問題，還剩：網頁版打包、iPad 驗證。
+- 卡 #1282：問題回報 #1742：[Mac] M1100 卡 #1252 法文清單（問題回報 #1704）：iPad 唯讀＋模：#1
+  結果：全部完成：héros 的 h aspiré 說明在英文介面仍顯示中文，原因是翻譯表的鍵用彎引號 ’，程式裡用直引號 '，查表對不上；已改鍵為直引號（1 處）。
+  需要 Mac：iPad 英文介面開 héros 詞庫頁，確認說明為英文 "h aspiré: no liaison, no elision (le héros, not l'héros)"。
+- 卡 #1286：問題回報 #1716：[Mac] 2026-11-24 法文、英文完整重測（新的一鍵重測，iPad 唯讀＋模擬器全：法文
+  結果：第 1 輪：法文詞庫頁／單字詳情頁標題只讀本詞性的詞形（修好 aller／parler／beau／grand 套用名詞「le … m.」）；flutter analyze 無問題，flutter test 見下。
+  需要 Mac：用 iPad 開 aller、parler、beau、grand 詞庫頁，標題應為裸 lemma，不帶 le/l' 與 m.／plural。
+    剩餘：未新增單元測試。
+- 卡 #1287：問題回報 #1718：[Mac] 2026-11-24 法文、英文完整重測（新的一鍵重測，iPad 唯讀＋模擬器全：不通
+  結果：已修：FR07 héros 頁的「h aspiré：不連音…」英文介面改成英文（直引號與彎引號兩種寫法都查得到），新測試通過。
+  需要 Mac：在 iPad/模擬器英文介面開 héros 頁，確認該行為英文。
+- 卡 #1291：問題回報 #1697：[Mac] M1089–M1095 回覆卡 iPad 驗證（Mac 2026-11-22 2：#1
+  結果：問題回報 #1697（#1236 héros 有聲 h 標籤）：已在 Windows 重現並修正，flutter analyze 通過；測試：新測試與 card1220、card1219 共 13 個全部通過。
+- 卡 #1293：問題回報 #1720：[Mac] 2026-11-24 法文、英文完整重測（新的一鍵重測，iPad 唯讀＋模擬器全：ne
+  結果：卡 #1293（問題回報 #1720）：ne 已修（詞性表缺 particle，現在有 4 個義項、20 句例句全部有中文）；la 在 11/24 23:48 的匯出中查無「空例句」，待 Mac 在 iPad 重驗。
+- 卡 #1300：問題回報 #1753：[Mac] M1102 卡 #1281 #496（commit 41d069d5）：iPad：#4
+  結果：根因已修：詞庫 frpronominal=yes 只表示「可作代動詞」（305 個動詞），卻被當成「此詞是代動詞」，prendre／être 的變位表變成 je me suis／je me prends。
+  需要 Mac：iPad 重看 FR21 的 être（單字本）、prendre（詞庫），應是 je suis／je prends；se lever 仍為 je me lève。
+- 卡 #1303：問題回報 #1748：[Mac] M1101 卡 #1252 #1256 #1272（commit c421788：#1
+  結果：結論：#1252 認字頁副標題變中文的根因是 uicatalog 缺新短句的翻譯；工作樹的 uicatalog.dart:613 已有 '一次只看 3 個字。'（英／法），修正已在，待 Mac 重驗。
+  需要 Mac：模擬器全新安裝英文母語學法文，確認認字頁副標題為 Three words at a time. / Trois mots à la fois.
+- 卡 #1307：問題回報 #1745：[Mac] M1101 卡 #1252 #1256 #1272（commit c421788：#1
+  結果：結論：Windows 工作樹的程式已修好（卡 #1286/#1305），Mac 驗的 commit c421788f 還沒含這個修正；本輪未能跑完測試確認。
+  需要 Mac：把含工作樹修正的下一次 mac_sync 版本在 iPad 看單字本頁 aller（應為裸 aller，無 l'aller m.），maison 仍為 la maison f. plural maisons。
+    剩餘：card1220_fr_detail_test 與 flutter analyze 尚未在本輪跑成功，需重跑；全庫量測未做（此問題只在 App 顯示邏輯）。
+- 卡 #1301：問題回報 #1746：[Mac] M1101 卡 #1252 #1256 #1272（commit c421788：#1
+  結果：修好 être 變位表：App 只在 lemma 以 se／s' 開頭時才當代動詞（詞庫資料不用改）。；根因：frpronominal 的意思是「可作代動詞」（catalog 標籤「可作代動詞（se …）」），不是「本身是代動詞」。305/1159 個動詞有此標記是正確資料。app/lib/services/frenc
+  需要 Mac：用 iPad 重驗 être、faire、pouvoir 的變位表（現在式 je suis；不再顯示「pronominal verb」），並確認 se lever 仍是代動詞。
+- 卡 #1305：問題回報 #1752：[Mac] M1102 卡 #1281 #496（commit 41d069d5）：iPad：#1
+  結果：單字本頁（WordDetailScreen）動詞 aller 標題已修：標題只在名詞取陰陽性＋複數，動詞的 frgender/frplural 也不再變成詞形 chip；新測試 13/13 通過，flutter analyze 無問題。
+  需要 Mac：mac_sync 後在 iPad 單字本開 aller（動詞），標題應為「aller」，無「l'aller m.」與 plural。
+- 卡 #1316：問題回報 #1760：[Mac] M1103 卡 #1276 #1279 #1283 #1288 #1290 #1：其餘
+  結果：第 1 輪：三項（FR21 代動詞、FR07 héros 中文、FR15 umbrella／lighthouse）在工作樹都已修好，Mac 測的 commit 1f9dbec0 還沒包含；本卡只驗證，未再改程式。
+- 卡 #1317：問題回報 #1759：[Mac] M1103 卡 #1276 #1279 #1283 #1288 #1290 #1：不通
+  結果：第 1 輪：#1294 的 ne 已在資料端修好（見卡 #1293）；本卡只修 App 把括號內的「；」切成兩個義項（新測試已通過）。
+  需要 Mac：用新 pack 在 iPad 重看 ne、la。
+- 卡 #1325：問題回報 #1767：[owner] 複習流程問題：『第 1 / 597 張』但今天只有 1 張；新字第一次就要打字；卡
+  結果：全部完成（App 程式修正，無資料變動）：問題回報 #1767 五點都已處理，flutter analyze 無新問題、相關 160 個測試全過；需要 Mac 在 iPad 驗證。
+- 卡 #1327：問題回報 #1772：[owner] 照片詳情點一下單字就把整份辨識列表存進單字本（只想看不想收）；單字詳情例句空白、標
+  結果：第 1 輪：三項程式已改、flutter analyze 無問題；測試只跑到兩個照片詳情測試失敗，還沒確認是不是舊問題。
+- 卡 #1326：問題回報 #1768：[owner] 桌面版加照片：沒有相片冊時加的照片在相片冊頁看不到；『選擇新照片』多一層頁面
+  結果：全部完成：問題回報 #1768 兩個症狀已修（新使用者第一張照片會建立相片冊；桌面／網頁按「選擇新照片」直接開檔案選擇並進照片詳情），新增 2 個測試全綠。
+- 卡 #1329：問題回報 #1770：[owner] 照片辨識結果：單字顯示成大寫開頭（Plant、Keyboard），並挑了空泛的形容
+  結果：第一輪：英文照片標籤改小寫（plant、keyboard），vague 形容詞（natural、working 等）不再進候選；ergonomic 釋義已修正。golden/QC 未跑（見下）。；- ergonomic 釋義：前「形容詞：人類環境改造學的」→ 後「形容詞：符合人體工學的」；同族 ergonomical、
+- 卡 #1310：問題回報 #1726：[Mac 注意] 2026-11-24 法文、英文完整重測（新的一鍵重測，iPad 唯讀＋模擬器全
+  結果：第 2 輪：H（單字本「照程度」排序）和 K（測驗頁登入連結＋保留自評程度）已做；flutter analyze 無問題，flutter test 在 heavylock 排隊、送出時未跑完。
+- 卡 #1304：問題回報 #1749：[Mac] M1101 卡 #1252 #1256 #1272（commit c421788：#1
+  結果：第 2 輪：沒有新改動；owner 已決定 FR14 不判定（法文先不做相片冊）。FR06／FR07／FR09／FR12／FR15 的修法都在工作樹（上一輪報告），Mac 要用新版重驗。flutter test 這輪沒跑完：heavylock 排隊超過 10 分鐘被停止，沒有任何通過或失敗的結果。
+- 卡 #1342：問題回報 #1778：[Mac] M1104 卡 #1280 #1289 #1302 #1308 #1311 #1：單字
+  結果：全部完成：單字本頁（WordDetailScreen）動詞／形容詞標題不再加名詞冠詞與複數的修正，工作樹裡已經有；Mac 驗的 commit 7b2b7085 還是舊版（frGender 未限名詞）。
+  需要 Mac：把工作樹這一版 commit 後，在 iPad 看單字本頁 aller、parler、beau 標題是否為光桿原形。
+- 卡 #1345：問題回報 #1781：[Mac] M1104 卡 #1280 #1289 #1302 #1308 #1311 #1：hé
+  結果：héros 的「h aspiré」說明在 Windows 無法重現：英文／法文介面都已翻譯，沒有改程式（測試 card1220、card1287 共 14 項通過）。
+  需要 Mac：確認 héros 詞條時，設定的母語是 en（不是 zh-TW）、且是含 2d9a8a33 之後的 build，再看詞條有沒有英文「h aspiré: no liaison…」。
+    
+    未改資料、未跑 golden/QC（無資料變更）。
+- 卡 #1344：問題回報 #1780：[Mac] M1104 卡 #1280 #1289 #1302 #1308 #1311 #1：代動
+  結果：第 1 輪：根因已在卡 #1300 修好（app/lib/services/frenchdetail.dart，尚未 commit），Mac 驗的是修好之前的版本；本輪沒有再改程式，flutter test 兩次排 heavylock 都逾時，未驗證。
+  需要 Mac：commit 後用新版 iPad／模擬器重看 FR21：être（單字本）應為 je suis，prendre（詞庫）應為 je prends，se lever 仍為 je me lève。
+- 卡 #1353：問題回報 #1793：[Mac 注意] M1105 卡 #1297 #496 #1328 #224（commit ba4
+  結果：全部完成：問題回報 #1793 是 M1105 對 M1104 的重複回報（FR23／FR21／FR07／FR12），不需新修，已標「不處理」並寫明理由。
+  需要 Mac：用含目前 app/lib 的新建置在 iPad 重驗 FR21（être／prendre）、FR07（héros）、FR23（aller 標題）。
+    - 沒改程式或資料；不需備份／還原；golden/QC 未動。
+    - 剩下：等 Mac 下一輪驗證結果。
+- 卡 #1335：問題回報 #1774：[owner] 照片辨識要一次掃完所有難度（A1–C2）的單字，拖難度條不要再叫 AI 重掃
+  結果：第 1 輪完成：照片第一次辨識已改成一次取得 A1–C2 全部難度，難度條拖動不再叫模型；舊照片拖一次補掃一次。flutter 相關測試 86 項全過、tagger 測試 21 項全過；網頁版與 iPad 實測還沒做。
+- 卡 #1356：問題回報 #1796：[Mac 注意] M1106 卡 #1330 #1284（commit f91265bc）：iPa
+  結果：需要你決定：無（這張只是 Mac 重複回報；Windows 工作樹已有 FR07／FR21／FR23 的修正，但 app/ 程式還沒同步給 Mac）。
+- 卡 #1357：問題回報 #1797：[owner] 驗收後剩下的桌面版問題：拍照分頁空白相機框、灰字說明列、『回到正面』兩次、筆電點位
+  結果：第 1 輪：#1797 五項都改了（桌面拍照分頁、灰字列、回到正面、laptop 點位、寬螢幕/封面）；全套 flutter test 通過（1056），tagger 21 過；封面 37 本詞庫從 0 → 80/80 有封面。尚未用 iPad／桌面網頁實機驗收。
+- 卡 #1361：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
+  結果：全部完成：不需再修改，#1354 已修好；本輪重驗 flutter analyze 0 error（12 個 info），flutter test 1056 過（2 skipped、0 失敗）。
+- 卡 #1363：問題回報 #1801：[Mac 注意] M1109 卡 #1354（commit 47c1cf3d）：注意
+  結果：全部完成：問題回報 #1801（M1109 卡 #1354）不需處理——Mac 標「注意」只是說明沒有重跑，不是缺陷。
+  需要 Mac：無。
+    剩餘：無。建議標「不處理」，理由：僅說明沒有 app 改動所以沒重測。
