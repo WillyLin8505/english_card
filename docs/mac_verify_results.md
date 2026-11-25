@@ -3564,3 +3564,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
 |----|----|----|----|----|----|
 | #1396 | 通過 | 5c1f10f0 到 de3e480d 之間 app/ 沒有改動。M1119（同一版 App）iPad 和模擬器都通過 FR27：搜尋「se lever」lever 第 1，lever 詳情頁按 Pronominal (se …) forms 後有 je me lève、je me suis levé(e)；法文 iPad 23 項、模擬器 29 項全部通過。 | docs/mac_verify_shots/2026-11-25/m1119_ipad_lever_pronominal.png | — | iPad＋模擬器 |
+
+## M1121 卡 #226（commit 97f1cd9f）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #226 | 注意 | Windows 的模擬使用者（複習）結果，卡上寫不需要 Mac；de3e480d 到 97f1cd9f 之間 App 程式沒有改動，所以沒有重跑。上一次完整驗證是 M1119（iPad、模擬器法文全部通過）。 | — | — | — |
