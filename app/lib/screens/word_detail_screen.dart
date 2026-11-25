@@ -278,7 +278,12 @@ class _WordBody extends StatelessWidget {
             !entry.pos.startsWith('adv')
         ? (titleForms.isEmpty ? allForms : titleForms).where((f) => f.field == 'fr_gender').firstOrNull?.form
         : null;
-    final frVerb = french && entry.pos == 'verb'
+    // Card #1366: a saved entry whose own pos is not 'verb' (aller kept with
+    // pos noun/unknown) still lists a Verb usage on the page: it shows the
+    // table too.
+    final frVerb = french &&
+            (entry.pos == 'verb' ||
+                entry.effectiveUsages.any((u) => u.pos == 'verb'))
         ? frenchVerbFrom(entry.word, allForms)
         : null;
     final frAdjective = french && entry.pos.startsWith('adj')

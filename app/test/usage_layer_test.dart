@@ -112,7 +112,9 @@ void main() {
   test('new words use the already linked pack', () {
     final repo = WordDatabaseRepository()..linkLexicon(usagePack());
     final e = repo.addWord(word: 'match', pos: 'noun', meaning: 'custom');
-    expect(e.usages.length, 2);
+    // 問題回報 #1766: a word saved with a part of speech keeps only that usage.
+    expect(e.usages.length, 1);
+    expect(e.usages.single.pos, 'noun');
     repo.dispose();
   });
 

@@ -523,6 +523,8 @@ const uiCatalog = <String, (String, String)>{
   '介系詞': ('Preposition', 'Préposition'),
   '連接詞': ('Conjunction', 'Conjonction'),
   '感嘆詞': ('Interjection', 'Interjection'),
+  // French particles such as ne (問題回報 #1803 / #1720).
+  '助詞': ('Particle', 'Particule'),
   '限定詞': ('Determiner', 'Déterminant'),
   '數詞': ('Numeral', 'Numéral'),
   '片語': ('Phrase', 'Expression'),

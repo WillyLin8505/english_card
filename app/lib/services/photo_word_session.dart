@@ -640,7 +640,7 @@ class PhotoWordSession extends ChangeNotifier {
       required LabelPoint point,
       String evidence = '',
       double visualConfidence = 1.0}) {
-    final hit = pack.lookup(word, pos: pos);
+    final hit = pack.lookupCommon(word, pos: pos);
     // No pack downloaded yet: nothing to link, and nothing is "missing".
     WordCandidate link(WordCandidate c) => pack.isEmpty ? c : pack.link(c);
     final c = link(WordCandidate(

@@ -701,11 +701,55 @@ class WordDatabaseRepository extends ChangeNotifier {
         entryType: pack.target == language
             ? pack.lookup(normalized, pos: pos)?.entry.entryType ?? 'word'
             : 'word',
-        usages:
-            pack.target == language ? pack.usagesFor(normalized) : const []);
+        usages: pack.target == language
+            ? _usagesForSense(pack.usagesFor(normalized), pos, meaning)
+            : const []);
     _entries.add(entry);
     _persist((s) => s.putEntry(entry));
     return entry;
+  }
+
+  /// 問題回報 #1766 / card #1324: a word saved with a part of speech (a photo
+  /// label: plant = 植物 n.) keeps only that usage, and only the sense the
+  /// label meant, so review and the word list never show the other meanings
+  /// (工廠, 種植). No usage of that part of speech → everything is kept.
+  @visibleForTesting
+  static List<LexemeUsage> usagesForSenseForTest(
+          List<LexemeUsage> all, String? pos, String meaning) =>
+      _usagesForSense(all, pos, meaning);
+
+  static List<LexemeUsage> _usagesForSense(
+      List<LexemeUsage> all, String? pos, String meaning) {
+    if (pos == null || pos.trim().isEmpty) return all;
+    final own = shortPos(pos);
+    final same = all.where((u) => shortPos(u.pos) == own).toList();
+    if (same.isEmpty) return all;
+    final want = meaning.trim();
+    if (want.isEmpty) return same;
+    return [
+      for (final u in same)
+        () {
+          final withMeaning =
+              u.senses.where((s) => s.meaning.trim().isNotEmpty).toList();
+          if (withMeaning.isEmpty) return u;
+          final hit = withMeaning
+                  .where((s) =>
+                      s.meaning.trim() == want ||
+                      s.meaning.contains(want) ||
+                      want.contains(s.meaning.trim()))
+                  .firstOrNull ??
+              withMeaning.first;
+          return LexemeUsage(
+              id: u.id,
+              pos: u.pos,
+              rare: u.rare,
+              senses: [hit],
+              examples: [
+                for (final e in u.examples)
+                  if (e.senseId == hit.id || e.senseId == null) e
+              ]);
+        }()
+    ];
   }
 
   LearningCard _ensureCard(String wordEntryId) {

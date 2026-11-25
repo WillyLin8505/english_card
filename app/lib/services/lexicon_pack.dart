@@ -512,6 +512,19 @@ class LexiconPack extends ChangeNotifier {
         'family');
   }
 
+  /// [lookup] for a part of speech guessed by a recognizer (card #1313): a
+  /// lemma match on a rare usage (dog verb 「追捕」, beautiful noun 「美人」)
+  /// gives way to the word's common entry, so a new card does not start with
+  /// the rare sense. A form hit (lying → lie) keeps its part of speech.
+  LexiconHit? lookupCommon(String word, {String? pos}) {
+    final hit = lookup(word, pos: pos);
+    if (hit == null || !hit.entry.rareUsage || hit.via != 'lemma+pos') {
+      return hit;
+    }
+    final common = entriesFor(word).where((e) => !e.rareUsage).firstOrNull;
+    return common == null ? hit : LexiconHit(common, 'lemma');
+  }
+
   static List<LexEntry> _prefer(List<LexEntry> list, String? pos) {
     if (pos == null) return list;
     final p = packPos(pos);
@@ -552,7 +565,7 @@ class LexiconPack extends ChangeNotifier {
   /// looked up through the forms table), native meaning and lexeme id.
   /// Words the pack lacks are recorded as missing-word requests.
   WordCandidate link(WordCandidate c) {
-    final hit = lookup(c.word, pos: c.pos);
+    final hit = lookupCommon(c.word, pos: c.pos);
     if (hit == null) {
       _request('missing_lexeme', c.word, c.pos);
       return c.lexemeId == null ? c : c.copyWith(lexemeId: () => null);
@@ -564,6 +577,10 @@ class LexiconPack extends ChangeNotifier {
     }
     return c.copyWith(
       word: hit.via == 'form' || hit.via == 'family' ? e.normalized : null,
+      // The common entry replaced a guessed rare part of speech (card #1313).
+      pos: hit.via == 'lemma' && e.pos != packPos(c.pos)
+          ? switch (e.pos) { 'adj' => 'adj.', 'adv' => 'adv.', final p => p }
+          : null,
       meaning: meaning ?? (c.meaning.isEmpty ? null : c.meaning),
       lexemeId: () => e.id,
     );

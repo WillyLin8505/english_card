@@ -81,7 +81,8 @@ class DatabaseWordScreen extends StatelessWidget {
                 !word.pos.startsWith('adv')
             ? titleForms.where((f) => f.field == 'fr_gender').firstOrNull?.form
             : null;
-        final frVerb = french && word.pos == 'verb'
+        final frVerb = french &&
+                (word.pos == 'verb' || usages.any((u) => u.pos == 'verb'))
             ? frenchVerbFrom(word.lemma, allForms)
             : null;
         final frAdjective = french && word.pos.startsWith('adj')
