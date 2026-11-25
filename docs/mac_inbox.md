@@ -8594,3 +8594,11 @@ commit `ba42ee9f`（Windows：flutter analyze 無 error、flutter test 全過（
 - 卡 #224：模擬使用者・拍照
   結果：本輪未完成（第 86 輪）：photoui／pins 沒跑出結果；heavylock 等約 10 分鐘（timeout 590 s）沒有任何輸出就被截斷；新問題 0；UX 建議 0。連續第 4 輪（r83–r86）。
   需要 Mac：無。
+
+## M1106（2026-11-25 09:31）狀態：待做
+commit `f91265bc`（Windows：flutter analyze 無 error、flutter test 全過；另有 87 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1330：問題回報 #1771：[owner] 桌面版畫面：寬螢幕顯示假手機外框和假狀態列；引導頁點擊常常沒反應要等 1–2 秒
+  結果：第 1 輪：桌面寬螢幕假手機外框已拿掉；引導頁「開始使用」已改成點了立即顯示進度條。widgettest 仍有 1 個測試失敗（見下），未完成。
+- 卡 #1284：問題回報 #1706：[法文詞庫] 13,529 個待補齊單字已有 Kaikki 釋義卻沒寫進詞庫（App 因此落到精簡
+  結果：全部完成：owner 決定 A（問題回報 #1765）維持現狀，變位形不單獨寫入；非變位形 stub 待辦 = 0，本輪無資料寫入。
+  需要 Mac：iPad 看 d'abord 不再顯示「Basic entry」。
