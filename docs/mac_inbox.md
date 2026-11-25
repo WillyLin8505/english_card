@@ -8737,3 +8737,32 @@ commit `a4ed8d2e`（Windows：flutter analyze 無 error、flutter test 全過；
 commit `70886417`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #1364：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
   結果：全部完成：flutter analyze 無 error（只剩 12 個 info），flutter test 全過（1056 通過、2 略過、0 失敗）。
+
+## M1112（2026-11-25 13:20）狀態：待做
+commit `ac90abf5`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1324：問題回報 #1766：[owner] 複習卡用錯詞義：照片收藏的是 plant＝植物（名詞），複習卻考『工廠』例句和『種
+  結果：第 1 輪完成程式修正：照片收藏的字只留照片那個詞性＋詞義；全庫舊資料與 iPad 驗證尚未做。
+  需要 Mac：- 已經存成「名詞・動詞」的舊單字，單字本／單字詳情仍會列出全部詞性（只有複習已限縮）；要不要遷移舊資料裁剪 usages 未做。
+    - 需要 Mac：在 iPad 收藏照片上的 plant（植物），確認複習全是植物義。
+- 卡 #1362：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
+  結果：全部完成：flutter analyze 0 error（只剩 12 個 info）、flutter test 1056 通過、2 略過、0 失敗。
+- 卡 #1371：問題回報 #1810：[Mac 注意] M1110 36 張卡（commit a4ed8d2e）：iPad 唯讀＋模擬器
+  結果：結論：#1810 是 Mac 驗證範圍缺口（沒有專門驗 5 張卡的操作），沒有發現壞掉，判斷不需修，已在問題回報標「不處理」。
+  需要 Mac：在 iPad 實測照片詳情與照片辨識速度。
+- 卡 #1372：問題回報 #1812：[Mac 注意] M1110 36 張卡（commit a4ed8d2e）：iPad 唯讀＋模擬器
+  結果：不處理：這是 Mac 的「注意」說明，沒有壞掉，三次測試（FR99、EN99）都沒有例外。
+- 卡 #1374：問題回報 #1808：[Mac 注意] M1110 36 張卡（commit a4ed8d2e）：iPad 唯讀＋模擬器
+  結果：不處理：Mac 的「注意」不是缺陷，只是 M1110 這輪沒有專門驗 H（單字本照程度排序）與 K（測驗頁登入連結），全新安裝首次設定（法文、英文）已通過。
+  需要 Mac：下一輪在 iPad 上順便驗 H、K 兩項（僅驗證，不是修改）。
+- 卡 #1377：問題回報 #1813：[Mac 注意] M1111 卡 #1364（commit 70886417）：注意
+  結果：不處理：Mac 的「注意」只是說 a4ed8d2e→70886417 之間 app/ 沒有改動，所以沒重跑，沒有發現任何問題（0 個壞掉的項目）。
+- 卡 #1375：問題回報 #1809：[Mac 注意] M1110 36 張卡（commit a4ed8d2e）：iPad 唯讀＋模擬器
+  結果：不修：Mac 的「注意」只是模擬器照片測試用固定假辨識結果，驗不到真模型；程式本身已涵蓋，無需改動（#1809 可標不處理）。
+  需要 Mac：無。
+- 卡 #1366：問題回報 #1804：[Mac] M1110 36 張卡（commit a4ed8d2e）：iPad 唯讀＋模擬器：不通
+  結果：第 1 輪：已改 App 判斷，尚未能實機驗證（flutter analyze 兩檔無問題；flutter test 未跑；Mac 需用 iPad 複驗 aller）
+  需要 Mac：iPad 單字本頁 aller（已存單字）確認有變位表，並確認名詞 usage 不出現怪標題。
+    未做：全庫量測受影響字數（需看 iPad 存檔的 entry.pos 分佈，Windows 沒有）。
+- 卡 #1367：問題回報 #1802：[Mac] M1110 36 張卡（commit a4ed8d2e）：iPad 唯讀＋模擬器：不通
+  結果：根因已修：匯出包把詞的所有詞性音標都寫給每個詞性，ne（助詞）因此先顯示縮寫 NE 的 /nɔ.ʁɛst/；已改 exporter，只剩重新匯出詞庫包。；- 重現：DB 的 pronunciations 表 ne(particle) 本來就是 /nə/；fieldvalues.ipa 有 3 筆（noun/name =
+  需要 Mac：重新下載包後在 iPad 看 ne 卡音標是否為 /nə/。
