@@ -81,6 +81,7 @@ class FrenchVerbSection extends StatefulWidget {
 
 class _FrenchVerbSectionState extends State<FrenchVerbSection> {
   bool _more = false;
+  bool _reflexive = false;
 
   Widget _table(FrenchTenseTable t) => Container(
         key: ValueKey('fr-tense-${t.tense.code}'),
@@ -109,7 +110,8 @@ class _FrenchVerbSectionState extends State<FrenchVerbSection> {
 
   @override
   Widget build(BuildContext context) {
-    final v = widget.verb;
+    final base = widget.verb;
+    final v = _reflexive ? (base.reflexiveForm ?? base) : base;
     final facts = <String>[
       if (v.group != null) '${v.group} ${ui(context, '動詞')}',
       if (v.irregular) ui(context, '不規則動詞'),
@@ -133,6 +135,19 @@ class _FrenchVerbSectionState extends State<FrenchVerbSection> {
                 child: Text(f, style: MFont.caption),
               ),
           ]),
+        if (base.reflexiveForm != null)
+          Padding(
+            padding: const EdgeInsets.only(top: MSpace.xs),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: FilterChip(
+                key: const ValueKey('fr-reflexive-toggle'),
+                label: UiText(_reflexive ? '一般變位' : '代動詞變位（se …）'),
+                selected: _reflexive,
+                onSelected: (x) => setState(() => _reflexive = x),
+              ),
+            ),
+          ),
         const SizedBox(height: MSpace.xs),
         if (v.pastParticiple != null || v.presentParticiple != null)
           Padding(

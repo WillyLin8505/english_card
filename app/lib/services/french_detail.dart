@@ -92,6 +92,9 @@ class FrenchVerb {
   final bool irregular;
   final List<String> auxiliaries; // avoir / être
   final bool pronominal;
+  /// The same verb as "se …", for verbs the pack marks fr_pronominal (card
+  /// #1390: se lever is stored as lever); null when it is not flagged.
+  final FrenchVerb? reflexiveForm;
   final String? pastParticiple;
   final String? presentParticiple;
   final List<FrenchTenseTable> tables;
@@ -101,6 +104,7 @@ class FrenchVerb {
     required this.irregular,
     required this.auxiliaries,
     required this.pronominal,
+    this.reflexiveForm,
     required this.pastParticiple,
     required this.presentParticiple,
     required this.tables,
@@ -176,7 +180,8 @@ String? _regularForm(String lemma, String? group, String tense, String person) {
 
 /// Everything the detail page needs about a French verb, or null when the
 /// pack holds no conjugation for it.
-FrenchVerb? frenchVerbFrom(String lemma, List<LexForm> forms) {
+FrenchVerb? frenchVerbFrom(String lemma, List<LexForm> forms,
+    {bool asReflexive = false}) {
   final f = _byField(forms);
   final conjugated = forms.any((x) => RegExp(
           r'^fr_(present|imperfect|future|conditional|subjunctive|imperative|simple_past|passe_simple|pluperfect)_[123][sp]$')
@@ -186,7 +191,8 @@ FrenchVerb? frenchVerbFrom(String lemma, List<LexForm> forms) {
   if (!conjugated && pp == null && prp == null) return null;
   // fr_pronominal only says the verb CAN be used as se … (prendre, être), so
   // the table turns reflexive only when the lemma itself is (card #1300).
-  final pronominal = lemma.startsWith('se ') || lemma.startsWith("s'");
+  final pronominal =
+      asReflexive || lemma.startsWith('se ') || lemma.startsWith("s'");
   final bare = lemma.replaceFirst(RegExp(r"^(se |s')"), '');
   final end = bare.length > 2 ? bare.substring(bare.length - 2) : '';
   final ending = const {'er', 'ir', 're'}.contains(end) ? '-$end' : null;
@@ -251,6 +257,9 @@ FrenchVerb? frenchVerbFrom(String lemma, List<LexForm> forms) {
     irregular: irregular,
     auxiliaries: auxiliaries,
     pronominal: pronominal,
+    reflexiveForm: !pronominal && f['fr_pronominal'] != null
+        ? frenchVerbFrom(lemma, forms, asReflexive: true)
+        : null,
     pastParticiple: pp,
     presentParticiple: prp,
     tables: tables,

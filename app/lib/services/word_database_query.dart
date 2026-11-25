@@ -271,6 +271,9 @@ int searchRank(String query, WordEntry e) {
   final q = query.trim().toLowerCase();
   if (q.isEmpty) return 0;
   final w = e.word.toLowerCase();
+  // Card #1390: "se lever" ranks the stored headword "lever" as an exact hit.
+  final bare = reflexiveBare(q);
+  if (bare != null && w == bare) return 0;
   if (w == q) return 0;
   if (w.startsWith(q)) return 1;
   if (w.contains(q)) return 2;

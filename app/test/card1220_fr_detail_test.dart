@@ -149,6 +149,24 @@ void main() {
     expect(v.auxiliaries, ['avoir']);
   });
 
+  test('card #1390: lever (stored without se) offers a reflexive table', () {
+    final v = frenchVerbFrom('lever', const [
+      LexForm('fr_pronominal', 'yes', 'yes', null),
+      LexForm('fr_auxiliary', 'avoir', 'avoir', null),
+      LexForm('fr_past_participle', 'levé', 'levé', null),
+      LexForm('fr_present_1s', 'lève', 'lève', null),
+    ])!;
+    expect(v.pronominal, isFalse);
+    final r = v.reflexiveForm!;
+    expect(r.pronominal, isTrue);
+    expect(r.auxiliaries, ['être']);
+    final texts = [for (final t in r.tables) for (final c in t.cells) c.text];
+    expect(texts, contains('je me lève'));
+    expect(r.reflexiveForm, isNull);
+    // not flagged -> no toggle
+    expect(frenchVerbFrom('x', const [LexForm('fr_present_1s', 'a', 'a', null)])!.reflexiveForm, isNull);
+  });
+
   testWidgets('maison: la maison, f., plural', (t) async {
     await open(t, 4);
     expect(find.text('la maison'), findsOneWidget);
