@@ -271,11 +271,13 @@ void main() {
         session.showAnswer();
         session.rate(Rating.good);
       }
-      // textChoice is French-only (問題回報 #1508).
+      // textChoice is French-only (問題回報 #1508); a new word starts with
+      // recognising, so no typed cloze on the first look (問題回報 #1767).
       expect(
           types,
-          containsAll(ReviewExerciseType.values
-              .where((t) => t != ReviewExerciseType.textChoice)));
+          containsAll(ReviewExerciseType.values.where((t) =>
+              t != ReviewExerciseType.textChoice &&
+              t != ReviewExerciseType.sentenceCloze)));
       final logs = [
         for (final entry in repo.entries)
           if (repo.cardOf(entry.id) case final card?) ...repo.logsOf(card.id),
