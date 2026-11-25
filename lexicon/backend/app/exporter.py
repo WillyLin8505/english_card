@@ -588,7 +588,12 @@ def _build(s, db_path, target, native, fields, include_audio, tmp_dir, store_saf
             sense = first_for_ids(senses_index, ids, sk)
             if sense is not None:
                 matched.append((it, sk, sense))
-        matched.sort(key=lambda t: t[2].ordinal)  # stable: equal ordinals keep item order
+        # Card #1349 (問題回報 #1785): English words list the main part of speech's senses first
+        # (dog 家狗 before the verb 追捕); French keeps the plain ordinal order.
+        if target == "en":
+            matched.sort(key=lambda t: (t[2].lexeme_id != main.id, t[2].ordinal))
+        else:
+            matched.sort(key=lambda t: t[2].ordinal)  # stable: equal ordinals keep item order
         for it, sk, sense in matched:
             n = ord_by_lx.get(sense.lexeme_id, 0)
             ord_by_lx[sense.lexeme_id] = n + 1
