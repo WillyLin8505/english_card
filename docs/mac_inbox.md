@@ -8767,7 +8767,7 @@ commit `ac90abf5`（Windows：flutter analyze 無 error、flutter test 全過；
   結果：根因已修：匯出包把詞的所有詞性音標都寫給每個詞性，ne（助詞）因此先顯示縮寫 NE 的 /nɔ.ʁɛst/；已改 exporter，只剩重新匯出詞庫包。；- 重現：DB 的 pronunciations 表 ne(particle) 本來就是 /nə/；fieldvalues.ipa 有 3 筆（noun/name =
   需要 Mac：重新下載包後在 iPad 看 ne 卡音標是否為 /nə/。
 
-## M1113（2026-11-25 13:37）狀態：待做
+## M1113（2026-11-25 13:37）狀態：完成（和 M1114 一起驗；#1369 通過，#1368 beautiful／dog 不通過）
 commit `a3004996`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #1365：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
   結果：已修好：flutter analyze 無 error；card1324 / privacysettings / usagelayer 測試單獨與整批皆過（HEAD 上 privacysettings 已不再失敗）。
