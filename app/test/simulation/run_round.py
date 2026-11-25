@@ -245,6 +245,14 @@ def main():
     results = (json.loads(previous.read_text(encoding="utf-8")).get("results", {})
                if previous.exists() and a.round else {})
     flutter = "flutter.bat" if os.name == "nt" else "flutter"
+    # card #1401 / issue #1838: each flutter_tester takes 8 GB; two simulation cards ran at once
+    # and pushed the PC to 99 % memory. Wait for the shared heavy-job slot (kept until this process exits).
+    sys.path.insert(0, str(APP.parent / "lexicon" / "tools"))
+    try:
+        import heavy_lock
+        heavy_lock.slot()
+    except Exception as e:  # never block a round on the lock itself
+        print("heavy_lock unavailable:", e)
     for name, (file, extra) in {**sims, **(AI_SIMS if a.with_ai and a.lang == "en" else {})}.items():
         if a.only and name not in a.only.split(","):
             continue
