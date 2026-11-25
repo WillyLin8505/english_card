@@ -739,15 +739,12 @@ class WordDatabaseRepository extends ChangeNotifier {
                       want.contains(s.meaning.trim()))
                   .firstOrNull ??
               withMeaning.first;
-          return LexemeUsage(
-              id: u.id,
-              pos: u.pos,
-              rare: u.rare,
-              senses: [hit],
-              examples: [
-                for (final e in u.examples)
-                  if (e.senseId == hit.id || e.senseId == null) e
-              ]);
+          return LexemeUsage(id: u.id, pos: u.pos, rare: u.rare, senses: [
+            hit
+          ], examples: [
+            for (final e in u.examples)
+              if (e.senseId == hit.id || e.senseId == null) e
+          ]);
         }()
     ];
   }
@@ -1316,11 +1313,16 @@ class WordDatabaseRepository extends ChangeNotifier {
       pauses = _linkPauses;
       final e = entryNow == null ? snap : entryNow[snap.id];
       if (e == null || e.language != pack.target) continue;
-      final hit = pack.lookup(e.word, pos: e.pos);
+      // A word saved on a recognizer's guessed rare pos (dog verb 「追捕」,
+      // beautiful noun 「美人」, card #1385) moves to its common entry.
+      final own = pack.lookup(e.word, pos: e.pos);
+      final hit = pack.lookupCommon(e.word, pos: e.pos);
       if (hit == null) {
         yield 0;
         continue;
       }
+      final fromRare =
+          own != null && own.entry.rareUsage && hit.entry != own.entry;
       final x = hit.entry;
       // The pack dropped this part of speech for the word (問題回報 #436):
       // the card moves to the pos the pack kept, so it keeps updating. A pos
@@ -1329,7 +1331,9 @@ class WordDatabaseRepository extends ChangeNotifier {
       // Nor does the bundled pack move it: it can be older (Mac M374: it
       // made boring adj. → verb, and the downloaded pack then folded boring
       // verb into bore).
-      if (moved && (e.userEdited.contains(WordField.pos) || pack.bundled)) {
+      if (moved &&
+          (e.userEdited.contains(WordField.pos) ||
+              (pack.bundled && !fromRare))) {
         continue;
       }
       final pos = !moved
@@ -1387,8 +1391,8 @@ class WordDatabaseRepository extends ChangeNotifier {
       // sense (問題回報 #1816 / card #1379: the refresh put 動詞 種植 and every
       // noun sense back after _createEntry had trimmed them).
       final allUsages = pack.usagesFor(e.word);
-      final fromPhoto = _occurrences
-          .any((o) => o.wordEntryId == e.id && !o.fromImport);
+      final fromPhoto =
+          _occurrences.any((o) => o.wordEntryId == e.id && !o.fromImport);
       merged['lexeme_usages'] = [
         for (final u in fromPhoto
             ? _usagesForSense(allUsages, pos, '${merged['meaning'] ?? ''}')
