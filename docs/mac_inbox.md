@@ -8632,7 +8632,7 @@ commit `47c1cf3d`（Windows：flutter analyze 無 error、flutter test 全過；
 - 卡 #1354：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
   結果：全部完成：卡上列的 10 個測試檔現在全過（38 項），flutter test 全部 1056 過（2 skipped、0 失敗），flutter analyze 0 error（12 個 info）。
 
-## M1110（2026-11-25 12:19）狀態：待做
+## M1110（2026-11-25 12:19）狀態：完成（iPad 唯讀＋模擬器法文、英文全新安裝；標題、héros、代動詞、la、引導頁副標題修好；iPad aller 變位表不見、ne 音標與「助詞」、beautiful 仍不通過）
 commit `a4ed8d2e`（Windows：flutter analyze 無 error、flutter test 全過；另有 2 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #1259：問題回報 #1698：[Mac] M1089–M1095 回覆卡 iPad 驗證（Mac 2026-11-22 2：#1
   結果：根因已確認，修法與 #1256（問題回報 #1703）是同一份，該卡正在改；本卡不重複改程式，等 #1256 收尾後驗證即可。

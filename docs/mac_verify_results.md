@@ -3439,3 +3439,35 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
 |----|----|----|----|----|----|
 | #1354 | 注意 | 只有 Windows 的 flutter test 修正：145161a9 到 47c1cf3d 之間 app/ 底下沒有任何檔案改動，App 和上一輪（M1108，模擬器全新安裝 3 次沒有例外）完全相同，所以沒有在 iPad 或模擬器重跑。 | — | — | — |
+
+## M1110 36 張卡（commit a4ed8d2e）：iPad 唯讀＋模擬器全新安裝（法文、英文）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1305 | 通過 | FR23：單字本頁 aller、parler、être、manger、beau、grand 標題都是光桿原形（aller），不再是「l'aller m. plural allers」。iPad、模擬器相同。 | docs/mac_verify_shots/2026-11-25/m1110_ipad_wb_aller_title.png | — | iPad＋模擬器 |
+| #1342 | 通過 | 同 #1305。 | — | — | iPad＋模擬器 |
+| #1307 | 通過 | 同 #1305；maison 仍是 la maison f.。 | — | — | iPad＋模擬器 |
+| #1286 | 通過 | FR06：詞庫頁 aller、parler、finir、prendre、beau、grand 標題沒有名詞冠詞。 | — | — | iPad＋模擬器 |
+| #1300 | 通過 | FR21：單字本 être、詞庫頁 aller／parler／finir／prendre 都不是代動詞變位（je suis、je prends）。 | — | — | iPad＋模擬器 |
+| #1344 | 通過 | 同 #1300。 | — | — | iPad＋模擬器 |
+| #1301 | 通過 | FR27（新檢查）：詞庫頁 être（je suis / je serai）、faire（je fais / je faisais）、pouvoir 都是一般變位，沒有「pronominal verb」。se lever 這輪沒驗到：詞庫用「se lever」查不到詞條，要另外找它在詞庫裡的寫法。 | — | — | iPad＋模擬器 |
+| #1282 | 通過 | FR07：héros 詞庫頁說明是英文「h aspiré: no liaison, no elision (le héros, not l’héros)」，沒有中文。 | — | — | iPad＋模擬器 |
+| #1287 | 通過 | 同 #1282。 | — | — | iPad＋模擬器 |
+| #1291 | 通過 | 同 #1282。 | — | — | iPad＋模擬器 |
+| #1345 | 通過 | 同 #1282（母語 en）。 | — | — | iPad＋模擬器 |
+| #1303 | 通過 | 模擬器全新安裝英文母語學法文：認字頁副標題是「Three words at a time.」。首次設定 8 項都通過。 | — | — | 模擬器 |
+| #1273 | 通過 | 全新安裝後拍照、相片冊、複習、單字本、設定五個分頁都沒有教學卡（法文、英文都一樣）。 | — | — | 模擬器 |
+| #1293 | 不通過 | FR12：la 卡現在有例句（J'ai décidé d'apprendre la sténographie.…），ne 卡意思是完整一條「not (used alone to negate a verb…; see usage notes)」並有例句，但 ne 的音標仍是縮寫 NE 的 /nɔ.ʁɛst/。iPad、模擬器相同。 | docs/mac_verify_shots/2026-11-25/m1110_ipad_card_ne.png | 中 | iPad＋模擬器 |
+| #1317 | 通過 | ne 的意思不再在括號中間切成兩條；la 有例句。（ne 音標見 #1293） | docs/mac_verify_shots/2026-11-25/m1110_ipad_card_la.png | — | iPad＋模擬器 |
+| ne 詞性標籤 | 不通過 | FR11（新問題）：英文介面的 ne 複習卡背面，詞性標籤顯示中文「助詞」（新的 particle 詞性沒有翻譯）。iPad、模擬器相同。 | docs/mac_verify_shots/2026-11-25/m1110_ipad_card_ne.png | 中 | iPad＋模擬器 |
+| #1277 | 不通過 | FR02：iPad 單字本頁 aller 沒有變位表了（M1104 時有），頁面是 Verb、Noun 兩段意思和例句，最底下直接是 Mark as learned；parler、être、finir、manger 都有變位表。模擬器全新安裝的 aller 有變位表。兩邊詞庫版本相同（7610dded…），所以可能是 iPad 上這個已存的 aller 單字資料和新程式的判斷對不上（標題修正之後才出現）。 | docs/mac_verify_shots/2026-11-25/m1110_ipad_wb_aller_bottom.png | 高 | iPad |
+| #1275 | 注意 | 同 #1277：模擬器有，iPad 的 aller 沒有；beau、grand 形容詞表 iPad、模擬器都有。 | — | — | iPad＋模擬器 |
+| #1259 #1258 | 注意 | Windows 說等 #1256 收尾；這輪單字本頁變位表見 #1277（iPad aller 沒有）。 | — | — | iPad |
+| #1316 #1304 | 通過 | 這幾項這輪都看到修好：FR21 代動詞、FR07 héros、FR15 umbrella→parapluie、lighthouse→phare（模擬器）、FR06 標題、FR09 搜尋第一；FR12 ne 音標仍是舊的（見 #1293）。 | — | — | iPad＋模擬器 |
+| #1310 | 注意 | H（單字本照程度排序）、K（測驗頁登入連結）這輪沒有專門驗；全新安裝首次設定通過。 | — | — | 模擬器 |
+| #1329 | 注意 | 英文照片標籤改小寫：Mac 的照片測試用固定的模擬辨識結果，沒有呼叫真的模型，所以驗不到大小寫和空泛形容詞。EN08 的 dog、chair、bicycle、umbrella、saxophone、lighthouse 中文意思正常。 | — | — | 模擬器 |
+| #1313 beautiful | 不通過 | EN05：英文模擬器 beautiful 仍存成「美人（也可用作稱呼）」，複習卡背面沒有中文；dog 單字頁第一個意思仍是「追捕」。 | — | 中 | 模擬器 |
+| #1325 #1327 #1270 #1269 #1335 | 注意 | 複習流程、照片詳情、照片辨識速度、詞庫下載進度條、一次掃完難度：這輪 Mac 的一鍵重測沒有專門驗這些操作（照片辨識是模擬的，iPad 不能下載詞庫）。複習 10 張評分 FR18、EN11 都通過；模擬器全新安裝下載法文詞庫並開啟正常。 | — | — | 模擬器 |
+| #1271 | 注意 | Google 登入還差 owner 的 Client ID，Mac 這輪沒驗。 | — | — | — |
+| #1245 #1326 #1357 #1353 #1356 #1361 #1363 | 注意 | 說明文字、桌面／網頁版或只有 Windows 測試的卡，Mac 這輪沒有裝置可驗的項目；三次測試都沒有例外（FR99、EN99）。 | — | — | — |
+| iPad 還原 | 通過 | iPad 只讀跑完，沒有例外；平常版 App（新版程式）12:27 已裝回並開啟。 | — | — | iPad |
