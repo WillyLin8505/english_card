@@ -361,6 +361,18 @@ def fr_gender(noun_entries) -> str | None:
 FR_ELIDED = re.compile(r"^(?:[mtsl]['’]|(?:me|te|se|nous|vous)\s)", re.I)
 
 
+def _fr_has_plain_forms(entry, owner):
+    """True when the entry lists any person form (parle, acquiers) without a clitic pronoun
+    (acquérir: acquiers). False = its table is only pronoun forms (card #1336)."""
+    for fo in entry.get("forms", []):
+        form = (fo.get("form") or "").strip()
+        if (form and form != owner and not form.startswith("-") and not FR_ELIDED.match(form)
+                and " " not in form and "-" not in form
+                and {"first-person", "second-person", "third-person"} & set(fo.get("tags", []))):
+            return True
+    return False
+
+
 FR_PERSON_TAGS = (("first-person", "1"), ("second-person", "2"), ("third-person", "3"))
 # Letters no French spelling has: Wiktionary's table sometimes carries an IPA
 # transcription as a form (parler: «paʁl» tagged first-person singular, card #1219).
@@ -776,7 +788,11 @@ class Kaikki(SourceAdapter):
                         continue
                     # The pronominal table (m'acquiers, s'acquérant) is not
                     # acquérir's own conjugation (card #429).
-                    if t == "fr" and FR_ELIDED.match(form) and not FR_ELIDED.match(owner):
+                    # Unless every form in the entry is pronominal (bichonner,
+                    # emparer, fier: Kaikki writes only se bichonneront), then
+                    # the pronoun forms are the whole table (card #1336).
+                    if (t == "fr" and FR_ELIDED.match(form) and not FR_ELIDED.match(owner)
+                            and _fr_has_plain_forms(e, owner)):
                         continue
                     if t == "fr" and (not fr_spelling_ok(form) or (pos == "verb" and "-" in form)):
                         continue  # an IPA transcription (paʁl) or an imperative with its pronoun

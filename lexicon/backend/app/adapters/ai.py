@@ -269,6 +269,8 @@ class AITranslate(SourceAdapter):
             if not spec:
                 continue
             kind, items = spec
+            if kind == "etymology":
+                continue  # card #1176: only the single-kind prompt keeps foreign roots
             for item in items:
                 identity = (kind, item.get("text", ""), item.get("context", ""))
                 request_id = deduplicated.get(identity)
@@ -278,6 +280,7 @@ class AITranslate(SourceAdapter):
                     owners[request_id] = []
                     flat.append({**item, "id": request_id, "task": kind})
                 owners[request_id].append((field_key, item["id"]))
+        fields = [f for f in fields if f != "etymology_native"]  # card #1176: asked on its own below
         by_field = {field_key: {} for field_key in fields}
         reused_fields = set()
         for task in ("word", "sentence"):

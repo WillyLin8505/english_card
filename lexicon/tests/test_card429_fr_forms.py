@@ -82,3 +82,12 @@ def test_pronominal_forms_and_auxiliary_are_not_own_forms():
         assert kaikki.FR_ELIDED.match(form)
     assert not kaikki.FR_ELIDED.match("acquiers")
     assert "fr_auxiliary" in catalog.FORM_FIELDS and "fr_auxiliary" not in catalog.INFLECTION_FIELDS
+
+
+def test_card1336_pure_pronominal_table_is_kept():
+    pure = {"forms": [{"form": "se bichonneront", "tags": ["future", "third-person", "plural"]},
+                      {"form": "me bichonne", "tags": ["present", "first-person", "singular"]}]}
+    plain = {"forms": [{"form": "acquiers", "tags": ["present", "first-person"]},
+                       {"form": "m'acquiers", "tags": ["present"]}]}
+    assert not kaikki._fr_has_plain_forms(pure, "bichonner")
+    assert kaikki._fr_has_plain_forms(plain, "acquérir")

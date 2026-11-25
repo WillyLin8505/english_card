@@ -1481,7 +1481,7 @@ TRANSLATE_KIND = {
               'a short {native} translation of the defined word; sentence means translate the '
               'sentence naturally into {native}; word means return the short {native} meaning '
               'matching its context; etymology means rewrite the note as one or two plain '
-              '{native} sentences; part means give the word-part meaning in {native} in 1-6 '
+              '{native} sentences, copying every foreign word, root and affix exactly as written; part means give the word-part meaning in {native} in 1-6 '
               'words. Never merge, omit, or reorder items.',
 }
 # Kinds whose results are in the learning language, not the native one.
