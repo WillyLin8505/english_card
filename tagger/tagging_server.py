@@ -106,10 +106,14 @@ IMAGE_PREP_VERSION = f'edge{IMAGE_MAX_EDGE}q{IMAGE_JPEG_QUALITY}'
 LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 POS = ['noun', 'verb', 'adjective', 'adverb', 'phrase']
 FOCUS = {
-    'harder': 'This time prefer specific, precise labels instead of broad category names. '
-              'Every label must be a more advanced word than the usual everyday ones '
-              '(e.g. "ergonomic", "cluttered", "luminous", "peripheral"), not a synonym of a '
-              'basic word. Include verbs and adjectives, not only nouns.',
+    # 問題回報 #1843/owner 11/25: the harder pass fills B2-C2 in the background;
+    # it must still name what is visible (it used to pull in congregate, situate).
+    'harder': 'This time return less common, more precise words (upper-intermediate to '
+              'advanced) for things that are clearly visible: the exact name of an object '
+              'or part, its material, texture, shape or condition, or an action someone in '
+              'the photo is doing right now (e.g. "terracotta", "upholstered", "cluttered", '
+              '"translucent", "slouch"). Never abstract or inferred words, and no formal verb '
+              'for an action nobody in the photo is doing.',
     'easier': 'This time prefer common, broad everyday labels.',
     'actions': 'This time every label must be a verb or action phrase for something visibly '
                'happening or implied (e.g. "stroll", "queue up", "gaze"); no nouns.',
