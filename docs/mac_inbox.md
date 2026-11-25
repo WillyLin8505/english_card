@@ -8603,7 +8603,7 @@ commit `f91265bc`（Windows：flutter analyze 無 error、flutter test 全過；
   結果：全部完成：owner 決定 A（問題回報 #1765）維持現狀，變位形不單獨寫入；非變位形 stub 待辦 = 0，本輪無資料寫入。
   需要 Mac：iPad 看 d'abord 不再顯示「Basic entry」。
 
-## M1107（2026-11-25 10:03）狀態：待做
+## M1107（2026-11-25 10:03）狀態：完成（iPad 唯讀；#1348 確認詞庫版本載入後有值，其餘卡不需 Mac）
 commit `e3a06c1e`（Windows：flutter analyze 無 error、flutter test 全過；另有 86 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #1346：問題回報 #1782：[Mac 注意] M1104 卡 #1280 #1289 #1302 #1308 #1311 #1
   結果：全部完成：問題回報 #1782（Mac 注意 #1308 詞庫版本空）判斷為不需修，已標 wontfix 並寫理由。
