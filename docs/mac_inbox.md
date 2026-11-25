@@ -8580,3 +8580,17 @@ commit `7b2b7085`（Windows：flutter analyze 無 error、flutter test 全過；
     - 剩餘：重跑 `python lexicon/tools/heavy_lock.py run -- python app/test/simulation/run_round.py --only learner,restart --no-posthog`。建議派工程式把 #12、#224–#228、#496 的夜間啟動錯開（每張 ≥ 15 分鐘），或讓 run_round 的 pack 下載與模擬分段拿鎖。
 - 卡 #1315：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
   結果：全部完成：卡上列的 10 個測試檔現在全過；flutter analyze 0 error（12 個 info/warning）；完整 flutter test 1047 通過、2 略過、0 失敗。
+
+## M1105（2026-11-25 08:34）狀態：待做
+commit `ba42ee9f`（Windows：flutter analyze 無 error、flutter test 全過（2 檔在全部一起跑時失敗、單獨重跑通過）；另有 40 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1297：問題回報 #1708：[Mac 注意] 2026-11-23 卡 #1248 法語精簡字典重建（iPad）：注意
+  結果：結論：精簡字典已重建，同形動詞變位行加上「of <原形動詞>」（原本 44,719 行裸變位，現只剩 3 行），超過 120 字的義項由 535 降為 0（最長 120）。
+  需要 Mac：iPad 抽看 aile 的動詞變位行是否顯示「of ailer」。
+- 卡 #496：模擬使用者・法語（英語母語者學法語）
+  結果：第231-233輪完成：4/4模擬通過（A1 48秒、B1 38秒、抽卡 71秒、媒體 32秒）、詞庫17315詞、無測試失敗（只依通過與 pack 統計；未逐項讀 JSON，中文殘留未另量）。
+  需要 Mac：無新項目。
+- 卡 #1328：問題回報 #1769：[owner] 推薦相片冊頁：名稱出現亂碼方塊、封面空白、三個幾乎一樣的『基礎 3000 字』、顯
+  結果：項目 · 修前 · 修後；標題／說明含 U+30FB「・」（字型缺字 → ⊠）的冊 · 57 · 0（改成「·」U+00B7）
+- 卡 #224：模擬使用者・拍照
+  結果：本輪未完成（第 86 輪）：photoui／pins 沒跑出結果；heavylock 等約 10 分鐘（timeout 590 s）沒有任何輸出就被截斷；新問題 0；UX 建議 0。連續第 4 輪（r83–r86）。
+  需要 Mac：無。
