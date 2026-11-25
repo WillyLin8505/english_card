@@ -8776,3 +8776,14 @@ commit `a3004996`（Windows：flutter analyze 無 error、flutter test 全過；
 - 卡 #1368：問題回報 #1805：[Mac] M1110 36 張卡（commit a4ed8d2e）：iPad 唯讀＋模擬器：#1
   結果：第 1 輪：已修 App 端根因（辨識器猜的詞性選到罕見詞條）；英文詞庫與 API 排序本來就對，未改資料。尚需 Mac 在模擬器重驗 beautiful／dog。
   需要 Mac：全新安裝英文，拍照或輸入 dog、beautiful，確認單字列表為「家犬／漂亮」，複習卡背面有中文。
+
+## M1114（2026-11-25 14:36）狀態：待做
+commit `dcf1e226`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1379：問題回報 #1816：[Mac] M1112 卡 #1324 #1362 #1371 #1372 #1374 #1：不通
+  結果：根因找到並修正（未跑完整測試）：照片存的字，詞庫更新時又被補回全部詞性／義項。；根因：建立單字時 createEntry 已只留照片的詞性＋詞義（第 1 輪），但 WordDatabaseRepository 的詞庫刷新（refreshWords 那段）每次都把 lexemeusages 覆寫成 pack.usages
+  需要 Mac：模擬器英文再做 EN13（照片加 plant、全部加入、儲存、等詞庫更新後看 usages 只剩 名詞・植物）。
+- 卡 #1378：問題回報 #1815：[Mac] M1112 卡 #1324 #1362 #1371 #1372 #1374 #1：不通
+  結果：第 2 輪：Windows 重現並修好「已存為 noun 的 aller 沒有變位表」（App 端；尚待 Mac 在 iPad 複驗）
+  需要 Mac：iPad 單字本頁 aller（已存單字）確認有 Conjugation 表；若 iPad 的法文包比 20261124 舊，也要重新下載包。
+- 卡 #1384：問題回報 #1821：[Mac 注意] M1112 卡 #1324 #1362 #1371 #1372 #1374 #1
+  結果：不處理：Mac「注意」的 #1362 #1372 #1375 #1377 只是 Windows 測試／不處理結論，三次測試無例外，無需修改（問題回報 #1821 已標不處理）。
