@@ -8787,3 +8787,14 @@ commit `dcf1e226`（Windows：flutter analyze 無 error、flutter test 全過；
   需要 Mac：iPad 單字本頁 aller（已存單字）確認有 Conjugation 表；若 iPad 的法文包比 20261124 舊，也要重新下載包。
 - 卡 #1384：問題回報 #1821：[Mac 注意] M1112 卡 #1324 #1362 #1371 #1372 #1374 #1
   結果：不處理：Mac「注意」的 #1362 #1372 #1375 #1377 只是 Windows 測試／不處理結論，三次測試無例外，無需修改（問題回報 #1821 已標不處理）。
+
+## M1115（2026-11-25 14:57）狀態：待做
+commit `bab7a00c`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1382：問題回報 #1819：[Mac 注意] M1112 卡 #1324 #1362 #1371 #1372 #1374 #1
+  結果：結論：不是資料缺漏——法文代動詞存成不帶 se 的原形（lever），所以在詞庫搜尋「se lever」找不到；已讓搜尋自動去掉 se／s' 再比對（只影響搜尋，不動資料）。；- 改動：app/lib/services/worddatabasequery.dart（matchesSearch 加 reflexiveBa
+  需要 Mac：iPad 詞庫搜尋「se lever」應出現 lever；je me lève 的變位表在 lever 詳情頁驗（lever 若沒存進詞庫，需先加入）。
+    - 剩餘：未跑完整 flutter test（只跑新測試）。
+- 卡 #5：檢查標籤分級是否錯誤
+  結果：第 43 輪全庫 B 群掃描完成（唯讀，604 秒）：數字與第 42 輪幾乎相同（照片上估算 C1/C2 +4、名詞 +4），無新問題類型。
+  需要 Mac：無。
+    - 剩下：304 個 base 誤判待 #162/#163；無新增問題回報。
