@@ -3549,3 +3549,12 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 其餘 | 通過 | iPad：單字本頁 9 頁沒有中文，aller 等 5 個動詞都有變位表（aller 存為 verb）。模擬器法文 28 項通過，首次設定 8 項通過。 | — | — | iPad＋模擬器 |
 | iPad 連線 | 注意 | iPad 讀卡片集清單時伺服器又一時連不上（FR14），幾分鐘後模擬器讀得到；不是 App 問題。 | — | 低 | iPad |
 | iPad 還原 | 通過 | iPad 只讀跑完，沒有例外；平常版 App 16:24 已裝回並開啟。 | — | — | iPad |
+
+## M1119 卡 #1393 #1390 #1394（commit 5c1f10f0）：iPad 唯讀＋模擬器全新安裝（法文）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1390 | 通過 | FR27：單字本搜尋「se lever」lever 排第 1（之後 coucher、enlever）；lever 詳情頁按「Pronominal (se …) forms」後顯示 pronominal verb、je me lève、tu te lèves、il／elle se lève，複合過去式有 je me suis levé(e)。être、faire、pouvoir 預設仍是一般變位（je suis、je fais、je peux）。iPad、模擬器相同。 | docs/mac_verify_shots/2026-11-25/m1119_ipad_lever_pronominal.png | — | iPad＋模擬器 |
+| #1393 #1394 | 注意 | Windows 的不處理結論，不需裝置驗證。iPad 這輪 aller 仍有變位表（存為 verb）。 | — | — | iPad |
+| 法文全部 | 通過 | 這輪 iPad 法文 23 項、模擬器法文 29 項全部通過（只有 FR00 狀態不判定），首次設定 8 項通過，沒有例外。 | — | — | iPad＋模擬器 |
+| iPad 還原 | 通過 | iPad 只讀跑完，沒有例外；平常版 App 16:43 已裝回並開啟。 | — | — | iPad |
