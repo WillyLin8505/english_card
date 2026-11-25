@@ -8868,7 +8868,7 @@ commit `a8b28898`（Windows：flutter analyze 無 error、flutter test 全過；
 - 卡 #1401：問題回報 #1838：[owner] Windows PC 資源超過 80% 超過 10 分鐘：memory
   結果：已修好根因：兩張模擬卡同時各跑一個 fluttertester（各約 8–10 GB）造成記憶體 99%；runround.py 現在先排 heavylock 才跑，之後同時只會有一個。
 
-## M1125（2026-11-25 20:01）狀態：待做
+## M1125（2026-11-25 20:01）狀態：完成（App 沒有改動，不需裝置驗證）
 commit `54e95d5e`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #224：模擬使用者・拍照
   結果：第 87 輪：photoui 1/1、pins 8/8 切片全部通過（約 47,000 張快取照片、14 萬個圖釘版面，findings 0）；新問題 0；UX 建議 0。
