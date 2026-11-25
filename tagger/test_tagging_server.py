@@ -404,3 +404,13 @@ def test_english_label_pos_corrected_to_dictionary_card968():
     assert got["expose"] in ("verb", "noun")
     assert got["undulating"] == "adjective"
     assert got["serve"] == "verb"
+
+
+def test_a_looped_reply_is_detected():
+    """問題回報 #1843: "wooden" x18 for an office photo; a normal list is fine."""
+    import tagging_server as ts
+    loop = [{'w': 'wooden', 'p': 'a', 'x': 1, 'y': 1}] * 18
+    assert ts.repeated_label_words(loop) == ['wooden']
+    fine = [{'w': w, 'p': 'n', 'x': 1, 'y': 1} for w in ('desk', 'chair', 'lamp', 'book', 'pen', 'cup')]
+    assert ts.repeated_label_words(fine) == []
+    assert ts.repeated_label_words([{'w': 'cup'}] * 3) == []

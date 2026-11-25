@@ -561,6 +561,17 @@ def pack_resolve(word: str, pos: str, index: dict) -> tuple[str, str] | None:
     return word, (pos if pos in pos_list else pos_list[0])
 
 
+def repeated_label_words(raw: list[dict]) -> list[str]:
+    """The words a reply looped on (問題回報 #1843): fewer than 4 distinct
+    labels among 6 or more items. Empty when the reply is fine."""
+    words = [str(c.get('w') or c.get('word') or '').strip().lower() for c in raw or []]
+    words = [w for w in words if w]
+    distinct = list(dict.fromkeys(words))
+    if len(words) >= 6 and len(distinct) < 4:
+        return distinct
+    return []
+
+
 def to_candidates(raw: list[dict], lexicon: 'Lexicon | None' = None,
                   exclude: list[str] | None = None, lang: str = 'en') -> list[dict]:
     """Model output -> API candidates: cleaned, clamped, one per word."""
@@ -1398,7 +1409,17 @@ class Tagger:
                                  max_tokens=CEFR_MAX_TOKENS, compact=COMPACT_JSON)
             if content.get('safe') is not True:
                 raise UnsafeImage('explicit adult content')
-            items = to_candidates(content.get('candidates', []), self.lexicon, exclude, lang)
+            raw = content.get('candidates', [])
+            stuck = repeated_label_words(raw)
+            if stuck:
+                # 問題回報 #1843: at temperature 0 the model can loop on one label
+                # (an office photo came back as "wooden" x18 -> one word). Ask once
+                # more, a little warmer, without the looped words, and merge.
+                again = self._chat(build_cefr_prompt(lang, (exclude or []) + stuck, per_level),
+                                   CEFR_CANDIDATE_SCHEMA, prepared, temperature=0.4,
+                                   max_tokens=CEFR_MAX_TOKENS, compact=COMPACT_JSON)
+                raw = list(raw) + list(again.get('candidates', []))
+            items = to_candidates(raw, self.lexicon, exclude, lang)
             # Hard-cap A1/A2 so a noun-heavy first pass cannot fill TAGS_MAX alone.
             items = cap_cefr_beginner_bands(items)
             # Do not cache empty CEFR-band replies: a truncated or weak answer
