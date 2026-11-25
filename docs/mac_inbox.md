@@ -8799,12 +8799,12 @@ commit `bab7a00c`（Windows：flutter analyze 無 error、flutter test 全過；
   需要 Mac：無。
     - 剩下：304 個 base 誤判待 #162/#163；無新增問題回報。
 
-## M1116（2026-11-25 15:37）狀態：待做
+## M1116（2026-11-25 15:37）狀態：完成（beautiful／dog 修好；iPad aller 第一次開沒有變位表、App 更新存檔後就有）
 commit `0aa7627e`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #1388：問題回報 #1825：[Mac 注意] M1114 卡 #1379 #1378 #1384（commit dcf1e22
   結果：不處理：Mac「注意」的 #1384 只是 Windows 的不處理結論，不需裝置驗證，無需修改（問題回報 #1825 已標不處理）。
 
-## M1117（2026-11-25 15:52）狀態：待做
+## M1117（2026-11-25 15:52）狀態：完成（beautiful／dog 修好）
 commit `f3857535`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #1385：問題回報 #1822：[Mac] M1113 卡 #1365 #1369 #1368（commit a300499：不通
   結果：第 2 輪：Windows 全庫詞庫與 API 排序皆正確，仍無法在 Windows 重現；補上「已存進單字本的舊字自動換成常見詞條」的 App 修正，需 Mac 重驗。
