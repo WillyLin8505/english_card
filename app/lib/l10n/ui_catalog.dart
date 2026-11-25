@@ -2150,6 +2150,8 @@ const _templateCopy = <String, (String, String)>{
   '形容詞變化': ('Adjective forms', 'Formes de l’adjectif'),
   '不規則動詞': ('irregular verb', 'verbe irrégulier'),
   '代動詞': ('pronominal verb', 'verbe pronominal'),
+  '代動詞變位（se …）': ('Pronominal (se …) forms', 'Forme pronominale (se …)'),
+  '一般變位': ('Plain forms', 'Forme simple'),
   '助動詞': ('auxiliary', 'auxiliaire'),
   '顯示更多時態': ('Show more tenses', 'Afficher plus de temps'),
   '收起時態': ('Show fewer tenses', 'Afficher moins de temps'),
