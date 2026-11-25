@@ -73,7 +73,7 @@ KEY_FILE = os.path.join(HERE, '.api_key')
 CMUDICT = os.path.join(ROOT, 'data', 'raw', 'cmudict.dict')
 DEFAULT_MODEL = 'qwen3.5:4b'
 MAX_BODY = 20 * 1024 * 1024
-PROMPT_VERSION = 'photo-tags-context-v11-harder-level'
+PROMPT_VERSION = 'photo-tags-context-v12-pointable-only'
 CACHE_DIR = os.path.join(HERE, 'cache')
 MODEL_CONTEXT = int(os.environ.get('TAGGER_NUM_CTX', '4096'))
 MODEL_MAX_TOKENS = int(os.environ.get('TAGGER_NUM_PREDICT', '1200'))
@@ -198,6 +198,9 @@ def build_prompt(level: str, lang: str = 'en', native: str = 'zh-TW',
         'Only identify what the photo supports: objects, visible actions, visible qualities, '
         'spatial relations and short scene phrases. Do not translate, define, estimate CEFR, '
         'write example sentences, or provide pronunciation.',
+        'Name only what you can point at in this photo. No abstract or inferred words (family, '
+        'household, idea, community) and no verbs for actions nobody in the photo does '
+        '(congregate, situate); if the photo shows neither, leave that label out.',
         'Use concrete nouns, verbs, adjectives, adverbs and short phrases only when directly '
         'visible. There is no part-of-speech quota. Prefer one clear label for each distinct '
         'visual idea; do not pad with synonyms or descriptions of the photograph itself.',
@@ -209,17 +212,16 @@ def build_prompt(level: str, lang: str = 'en', native: str = 'zh-TW',
             f'The learner is at CEFR level {level}. Aim most labels at words a {level} learner '
             f'is about to learn, i.e. from {_shift(level, -1)} to {_shift(level, 1)}; do not '
             'fill the list with A1 words such as "man", "tree", "car", "building" unless they '
-            'are all the photo offers. Include at least 2 verbs or adjectives and at least 2 '
-            f'labels above {level} whenever the photo supports them.')
+            'are all the photo offers. Labels above {level} only when the photo shows them; '
+            'no quota of verbs or adjectives (issue #1843: a verb nobody is doing is not a label).')
     if lang != 'en':
         lines.append(
             f'Every word must be a real {lang_name} word. The "evidence" field is the only English '
             f'text; never answer a label in English (write pomme, not apple; ordinateur portable is '
             f'too long, write ordinateur). Give the dictionary headword: singular noun (arbre, not '
             f'arbres), infinitive verb, masculine singular adjective. Use common everyday '
-            f'vocabulary of a small learner dictionary, not rare or invented words. Include at '
-            f'least 2 verbs (visible actions) and 2 adjectives (visible qualities) whenever the '
-            f'photo supports them, not only nouns.')
+            f'vocabulary of a small learner dictionary, not rare or invented words. Verbs and '
+            f'adjectives only for an action someone is doing or a quality you can see (no quota).')
     if focus in FOCUS:
         lines.append(FOCUS[focus])
     if focus == 'harder' and lang == 'en' and level in LEVELS:
@@ -249,7 +251,7 @@ def build_prompt(level: str, lang: str = 'en', native: str = 'zh-TW',
 
 SCORE_PROMPT_VERSION = 'label-check-v2'
 SCORE_MAX_LABELS = 24
-CEFR_PROMPT_VERSION = 'photo-tags-visible-v14-no-quotas'
+CEFR_PROMPT_VERSION = 'photo-tags-visible-v15-pointable-only'
 CEFR_TAGS_PER_LEVEL = 3
 # A1/A2 may not exceed this many labels each (default = per_level) so beginners
 # cannot consume TAGS_MAX (~18) and leave B2-C2 with no slots.
@@ -317,10 +319,11 @@ def build_cefr_prompt(lang: str = 'en', exclude: list[str] | None = None,
         f'Return up to {n} distinct labels for things that are clearly visible '
         '(objects, parts, materials, actions, qualities). Do not invent CEFR levels; '
         'do not pad the list to fill difficulty bands. Cover the same visible regions with '
-        'a useful vocabulary range: common everyday words plus precise, formal, literary or '
-        'technical nouns, verbs and adjectives whose meanings are directly visible. Examples: '
-        'wood / wooden / grain / rustic; glass / transparent / reflective. The lexicon assigns '
-        'the real level later, so never guess a level.',
+        'a useful vocabulary range: common everyday words plus more precise nouns, verbs and '
+        'adjectives whose meanings the photo itself shows. Examples: '
+        'wood / wooden / grain / rustic; glass / transparent / reflective. Never a formal or '
+        'literary word for an action or idea the photo does not show (issue #1843). The lexicon '
+        'assigns the real level later, so never guess a level.',
         'Mix parts of speech only when visible: nouns, verbs (visible actions), adjectives '
         '(visible qualities), adverbs and short phrases. There is no part-of-speech quota. '
         'Prefer a specific object or part to a generic category for the same region. '
@@ -492,6 +495,19 @@ _VAGUE_ENGLISH_LABELS = {
     'natural', 'working', 'general', 'common', 'normal', 'basic', 'simple', 'main',
     'real', 'whole', 'different', 'various', 'other', 'good', 'nice', 'new', 'old',
 }
+# 問題回報 #1843: English labels a photo cannot show. Abstract or inferred nouns (household on a
+# wall), and formal verbs for actions nobody in the photo does (congregate, situate) that the
+# learner-level prompt used to pull in. Dropped for English only.
+_NOT_VISIBLE_ENGLISH_LABELS = {
+    'household', 'family', 'community', 'society', 'culture', 'freedom', 'idea', 'concept',
+    'history', 'future', 'past', 'luck', 'success', 'belief', 'experience', 'importance',
+    'nation', 'economy', 'relationship', 'opportunity', 'situation', 'aspect', 'factor',
+    'congregate', 'situate', 'reside', 'ponder', 'contemplate', 'envision', 'anticipate',
+    'deliberate', 'ascertain', 'endeavor', 'utilize', 'facilitate', 'necessitate',
+}
+# A label the model itself calls implied or likely is not something the photo shows.
+_HEDGED_EVIDENCE = re.compile(r'\b(?:implied|implies|suggests?|likely|possibly|perhaps|presumably)\b',
+                              re.I)
 
 
 def _looks_like_name_label(word: str, evidence: str) -> bool:
@@ -556,7 +572,7 @@ def to_candidates(raw: list[dict], lexicon: 'Lexicon | None' = None,
         ).strip(' .,"\'')
         if not word or len(word) > 40:
             continue
-        if lang == 'en' and word in _VAGUE_ENGLISH_LABELS:
+        if lang == 'en' and (word in _VAGUE_ENGLISH_LABELS or word in _NOT_VISIBLE_ENGLISH_LABELS):
             continue
         pack = pack_index(lang) if lang != 'en' else None
         if pack is not None:
@@ -570,6 +586,8 @@ def to_candidates(raw: list[dict], lexicon: 'Lexicon | None' = None,
         if word in seen:
             continue
         evidence = str(c.get('evidence') or c.get('e') or '').strip()[:120]
+        if lang == 'en' and _HEDGED_EVIDENCE.search(evidence):
+            continue
         # Reject descriptions of the photograph, not physical parts/materials.
         # Ambiguous words such as display, pattern and handle remain valid.
         if lang == 'en' and (word in {'close-up', 'close up', 'depict'} or

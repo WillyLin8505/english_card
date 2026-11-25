@@ -46,12 +46,27 @@ def test_english_candidates_reject_unattested_scene_descriptions():
     assert [item["word"] for item in out] == ["butter knife", "traffic light"]
 
 
+def test_english_candidates_drop_labels_the_photo_cannot_show():
+    """問題回報 #1843: abstract nouns, formal verbs nobody does, and hedged evidence go."""
+    out = to_candidates([
+        candidate("household", "a family name on the wall"),
+        candidate("congregate", "people standing in a room"),
+        candidate("situate", "the desk placed in the corner"),
+        candidate("keyboard", "black keyboard on the desk"),
+        candidate("clothing", "shirts hanging on the rack"),
+        candidate("monitor", "computer screen on the desk"),
+        candidate("chair", "office chair, implied to be used by a worker"),
+    ], FakeLexicon(), lang="en")
+
+    assert [item["word"] for item in out] == ["keyboard", "clothing", "monitor"]
+
+
 def test_prompt_explicitly_excludes_names_and_invalidates_old_cache():
     prompt = build_prompt("A2", "en", "zh-TW")
     assert "not company, product, model or person names" in prompt
     assert "Ignore words" in prompt and "logos" in prompt
     assert "safe=false" in prompt and "explicit adult nudity" in prompt
-    assert PROMPT_VERSION == "photo-tags-context-v11-harder-level"
+    assert PROMPT_VERSION == "photo-tags-context-v12-pointable-only"
 
 
 def test_cefr_prompt_lists_visible_objects_level_from_lexicon():
@@ -67,8 +82,9 @@ def test_cefr_prompt_lists_visible_objects_level_from_lexicon():
     assert "- l:" not in prompt
     assert "safe=false" in prompt and "explicit adult nudity" in prompt
     assert "compact JSON keys" in prompt
-    assert "precise, formal, literary or" in prompt
-    assert CEFR_PROMPT_VERSION == "photo-tags-visible-v14-no-quotas"
+    assert "more precise nouns, verbs and" in prompt
+    assert "Never a formal or" in prompt
+    assert CEFR_PROMPT_VERSION == "photo-tags-visible-v15-pointable-only"
 
 
 def test_compact_cefr_candidates_decode_to_public_shape():
