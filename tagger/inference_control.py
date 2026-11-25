@@ -11,6 +11,7 @@ class PrioritySlots:
         self.capacity = max(1, capacity)
         self.background_limit = max(1, self.capacity - 1)
         self.active = self.background_active = self.interactive_waiting = 0
+        self.interactive_active = 0
         self.condition = threading.Condition()
         self.local = threading.local()
 
@@ -30,11 +31,15 @@ class PrioritySlots:
             if not background:
                 self.interactive_waiting += 1
             try:
+                # Batch (background) work starts nothing new while a learner's photo
+                # is queued or running (owner 11/25: 照片找單字太慢). In-flight calls finish.
                 self.condition.wait_for(lambda: self.active < self.capacity and (
                     not background or (self.background_active < self.background_limit
-                                       and self.interactive_waiting == 0)))
+                                       and self.interactive_waiting == 0
+                                       and self.interactive_active == 0)))
                 self.active += 1
                 self.background_active += int(background)
+                self.interactive_active += int(not background)
             finally:
                 if not background:
                     self.interactive_waiting -= 1
@@ -45,6 +50,7 @@ class PrioritySlots:
             with self.condition:
                 self.active -= 1
                 self.background_active -= int(background)
+                self.interactive_active -= int(not background)
                 self.condition.notify_all()
 
 
