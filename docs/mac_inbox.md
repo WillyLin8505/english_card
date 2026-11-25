@@ -8847,7 +8847,7 @@ commit `97f1cd9f`（Windows：flutter analyze 無 error、flutter test 全過）
   需要 Mac：無。
     - 剩餘：下一輪夜間排程時，tasklist 仍見 4 個 flutter_tester，留意是否為卡住的舊行程（#1491-2）。
 
-## M1122（2026-11-25 18:29）狀態：待做
+## M1122（2026-11-25 18:29）狀態：完成（App 沒有改動，不需裝置驗證）
 commit `7f9addea`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #227：模擬使用者・單字本
   結果：第 4493 輪：2/2 通過（database 130 秒、detail 97 秒）；新問題 0、UX 建議 0 新增（沿用 #1649）。需要你決定：無。需要 Mac：無。
