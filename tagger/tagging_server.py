@@ -627,6 +627,14 @@ def to_candidates(raw: list[dict], lexicon: 'Lexicon | None' = None,
                 item['point'] = [round((b[0] + b[2]) / 2, 4), round((b[1] + b[3]) / 2, 4)]
             else:
                 item['pointUngrounded'] = True
+        # Card #1357 (問題回報 #1797): a pin outside its own label box sits on another object
+        # (laptop pinned on the monitor); the box is what the model drew for this word, so the
+        # box centre wins.
+        if item['box'] and not item.get('pointUngrounded'):
+            b = item['box']
+            px, py = item['point']
+            if not (b[0] <= px <= b[2] and b[1] <= py <= b[3]):
+                item['point'] = [round((b[0] + b[2]) / 2, 4), round((b[1] + b[3]) / 2, 4)]
         if lexicon is not None:
             item.update(lexicon.describe(word))
         out.append(item)
