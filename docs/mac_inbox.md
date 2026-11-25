@@ -8813,3 +8813,24 @@ commit `f3857535`（Windows：flutter analyze 無 error、flutter test 全過；
 commit `b625d81d`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #1389：問題回報 #1827：[Mac] M1115 卡 #1382 #5（commit bab7a00c）：iPad 唯：#1
   結果：第 1 輪：此問題已由卡 #1385 的修正涵蓋（3d34f54a），Mac 失敗的版本 bab7a00c 比它早，需 Mac 用 HEAD 重驗；本卡未改程式與資料。
+
+## M1119（2026-11-25 16:34）狀態：待做
+commit `5c1f10f0`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1393：問題回報 #1830：[Mac 注意] M1116 卡 #1388（commit 0aa7627e，含 #1385 be
+  結果：不處理：Mac「注意」的 #1388 列只是 Windows 的不處理結論，不需裝置驗證，無需修改（問題回報 #1830 已標不處理）。
+- 卡 #1390：問題回報 #1826：[Mac] M1115 卡 #1382 #5（commit bab7a00c）：iPad 唯：不通
+  結果：已在 Windows 修好：詞庫把 se lever 存成 lever（1159 個動詞中 305 個標 frpronominal，無資料可分辨哪些是真代動詞），App 現在在這 305 個動詞的變位區加「代動詞變位（se …）」切換，打開即顯示 je me lève、être 助動詞；預設仍是一般變位，être/fa
+  需要 Mac：iPad 開 lever 詳情，點「代動詞變位（se …）」應見 je me lève／je me suis levé(e)；單字本搜尋 se lever，lever 應在第一；être 預設仍是 je suis。
+    
+    改了什麼：
+    - app/lib/services/french_detail.dart：frenchVerbFrom 新增 asReflexive，FrenchVerb.reflexiveForm（僅 fr_pronominal 動詞）。
+    - app/lib/widgets/french_detail_sections.dart：切換 chip（key fr-reflexive-toggle）。
+    - app/lib/services/word_database_query.dart：searchRank 對 se／s' 開頭查詢，把去掉 se 的詞頭視為完全相符。
+    - app/lib/l10n/ui_catalog.dart：兩條新 UI 文字（英／法）。
+    - app/test/card1220_fr_detail_test.dart：新增 lever 測試。
+    
+    沒有改詞庫資料（無備份／還原需求）；golden／QC 不受影響（只動 App）。
+    測試：card1220、card1382 flutter test 通過；flutter analyze 只剩 4 個舊的 info（非本次檔案）。
+    剩下：詞庫無法區分「本質代動詞」（se souvenir）與「可作代動詞」（prendre），所以切換是手動；若要自動預設代動詞，需詞庫補欄位（未開問題回報）。
+- 卡 #1394：問題回報 #1831：[Mac 注意] M1116 卡 #1388（commit 0aa7627e，含 #1385 be
+  結果：不處理：iPad aller 第一次沒變位表，是 #1385 詞庫刷新（罕見詞性 noun → 常用 verb）完成前的一次性短暫狀態，第二次已正常。
