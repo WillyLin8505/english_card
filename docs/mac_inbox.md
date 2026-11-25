@@ -8767,7 +8767,7 @@ commit `ac90abf5`（Windows：flutter analyze 無 error、flutter test 全過；
   結果：根因已修：匯出包把詞的所有詞性音標都寫給每個詞性，ne（助詞）因此先顯示縮寫 NE 的 /nɔ.ʁɛst/；已改 exporter，只剩重新匯出詞庫包。；- 重現：DB 的 pronunciations 表 ne(particle) 本來就是 /nə/；fieldvalues.ipa 有 3 筆（noun/name =
   需要 Mac：重新下載包後在 iPad 看 ne 卡音標是否為 /nə/。
 
-## M1113（2026-11-25 13:37）狀態：待做
+## M1113（2026-11-25 13:37）狀態：完成（和 M1114 一起驗；#1369 通過，#1368 beautiful／dog 不通過）
 commit `a3004996`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #1365：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
   結果：已修好：flutter analyze 無 error；card1324 / privacysettings / usagelayer 測試單獨與整批皆過（HEAD 上 privacysettings 已不再失敗）。
@@ -8777,7 +8777,7 @@ commit `a3004996`（Windows：flutter analyze 無 error、flutter test 全過；
   結果：第 1 輪：已修 App 端根因（辨識器猜的詞性選到罕見詞條）；英文詞庫與 API 排序本來就對，未改資料。尚需 Mac 在模擬器重驗 beautiful／dog。
   需要 Mac：全新安裝英文，拍照或輸入 dog、beautiful，確認單字列表為「家犬／漂亮」，複習卡背面有中文。
 
-## M1114（2026-11-25 14:36）狀態：待做
+## M1114（2026-11-25 14:36）狀態：完成（iPad aller 變位表回來、照片 plant 只留植物義通過；se lever 還沒驗到）
 commit `dcf1e226`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #1379：問題回報 #1816：[Mac] M1112 卡 #1324 #1362 #1371 #1372 #1374 #1：不通
   結果：根因找到並修正（未跑完整測試）：照片存的字，詞庫更新時又被補回全部詞性／義項。；根因：建立單字時 createEntry 已只留照片的詞性＋詞義（第 1 輪），但 WordDatabaseRepository 的詞庫刷新（refreshWords 那段）每次都把 lexemeusages 覆寫成 pack.usages
@@ -8788,7 +8788,7 @@ commit `dcf1e226`（Windows：flutter analyze 無 error、flutter test 全過；
 - 卡 #1384：問題回報 #1821：[Mac 注意] M1112 卡 #1324 #1362 #1371 #1372 #1374 #1
   結果：不處理：Mac「注意」的 #1362 #1372 #1375 #1377 只是 Windows 測試／不處理結論，三次測試無例外，無需修改（問題回報 #1821 已標不處理）。
 
-## M1115（2026-11-25 14:57）狀態：待做
+## M1115（2026-11-25 14:57）狀態：完成（搜尋 se lever 找得到 lever；lever 詳情頁沒有 je me lève）
 commit `bab7a00c`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #1382：問題回報 #1819：[Mac 注意] M1112 卡 #1324 #1362 #1371 #1372 #1374 #1
   結果：結論：不是資料缺漏——法文代動詞存成不帶 se 的原形（lever），所以在詞庫搜尋「se lever」找不到；已讓搜尋自動去掉 se／s' 再比對（只影響搜尋，不動資料）。；- 改動：app/lib/services/worddatabasequery.dart（matchesSearch 加 reflexiveBa
