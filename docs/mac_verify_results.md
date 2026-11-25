@@ -3558,3 +3558,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | #1393 #1394 | 注意 | Windows 的不處理結論，不需裝置驗證。iPad 這輪 aller 仍有變位表（存為 verb）。 | — | — | iPad |
 | 法文全部 | 通過 | 這輪 iPad 法文 23 項、模擬器法文 29 項全部通過（只有 FR00 狀態不判定），首次設定 8 項通過，沒有例外。 | — | — | iPad＋模擬器 |
 | iPad 還原 | 通過 | iPad 只讀跑完，沒有例外；平常版 App 16:43 已裝回並開啟。 | — | — | iPad |
+
+## M1120 卡 #1396（commit de3e480d）：用 M1119 的 iPad＋模擬器結果
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| #1396 | 通過 | 5c1f10f0 到 de3e480d 之間 app/ 沒有改動。M1119（同一版 App）iPad 和模擬器都通過 FR27：搜尋「se lever」lever 第 1，lever 詳情頁按 Pronominal (se …) forms 後有 je me lève、je me suis levé(e)；法文 iPad 23 項、模擬器 29 項全部通過。 | docs/mac_verify_shots/2026-11-25/m1119_ipad_lever_pronominal.png | — | iPad＋模擬器 |
