@@ -83,7 +83,7 @@ FR_SIMS = {
 AI_SIMS = {"photo": ("photo_simulation.dart", {})}
 
 
-PIN_CHUNK = 6000
+PIN_CHUNK = 1000  # card 224 r89: 2000+ files per flutter_tester run die silently (exit 79), 1000 pass
 
 
 def pin_slices(out: Path) -> list:
