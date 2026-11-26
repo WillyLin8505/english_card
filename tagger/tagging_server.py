@@ -297,7 +297,7 @@ CEFR_CANDIDATE_SCHEMA = {
 LABEL_VERIFY = os.environ.get('TAGGER_LABEL_VERIFY', '1').strip().lower() not in {'0', 'false', 'no', 'off'}
 LABEL_VERIFY_MIN = float(os.environ.get('TAGGER_LABEL_VERIFY_MIN', '0.6'))
 VERB_CHECK = os.environ.get('TAGGER_VERB_CHECK', '1').strip().lower() not in {'0', 'false', 'no', 'off'}
-CEFR_HARDER_MAX_ITEMS = int(os.environ.get('TAGGER_CEFR_HARDER_MAX_ITEMS', '8'))
+CEFR_HARDER_MAX_ITEMS = int(os.environ.get('TAGGER_CEFR_HARDER_MAX_ITEMS', '12'))
 CEFR_HARDER_SCHEMA = json.loads(json.dumps(CEFR_CANDIDATE_SCHEMA))
 CEFR_HARDER_SCHEMA['properties']['candidates']['maxItems'] = CEFR_HARDER_MAX_ITEMS
 SCORE_SCHEMA = {
@@ -952,6 +952,13 @@ def word_cefr(word: str, zipf: float | None) -> tuple[str | None, str | None]:
     return zipf_level(zipf), 'estimate'
 
 
+def keep_hard_words(items: list[dict]) -> list[dict]:
+    """The harder pass keeps B2-C2 words only (owner 11/26); a word with no known
+    band stays."""
+    return [i for i in items
+            if (word_cefr(i.get('word'), i.get('zipf'))[0] or 'C2') in ('B2', 'C1', 'C2')]
+
+
 def attach_cefr(items: list[dict]) -> list[dict]:
     """Card #657: every English candidate carries its band (`cefr`) and `cefrSource`,
     so the App does not fall back to a guessed B1 when its own database misses a word."""
@@ -1459,6 +1466,12 @@ class Tagger:
                 raw = list(raw) + list(again.get('candidates', []))
             items = to_candidates(raw, self.lexicon, exclude, lang)
             items = self._drop_unseen_verbs(prepared, items, lang, exclude)
+            if focus == 'harder':
+                # Owner 11/26 「移動困難度 bar 要出現更難的標籤」: the pass came back with
+                # code / screen / display (A1-A2), so the hard end of the bar showed
+                # nothing new. Keep only words the CEFR list or their frequency puts
+                # at B2 or above (unknown words stay; the App levels them by zipf).
+                items = keep_hard_words(items)
             items = self._drop_unshown_labels(prepared, items, lang)
             # Hard-cap A1/A2 so a noun-heavy first pass cannot fill TAGS_MAX alone.
             items = cap_cefr_beginner_bands(items)

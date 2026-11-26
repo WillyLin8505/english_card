@@ -420,7 +420,7 @@ def test_a_looped_reply_is_detected():
 
 
 def test_harder_pass_has_its_own_small_cap():
-    """Owner 11/25 comparison: the background harder pass asks for at most 8."""
+    """Owner 11/25 comparison: the background harder pass asks for at most CEFR_HARDER_MAX_ITEMS (12 since 11/26)."""
     import tagging_server as ts
     g = ts.compact_grammar(ts.CEFR_HARDER_SCHEMA)
     assert '{0,%d}' % (ts.CEFR_HARDER_MAX_ITEMS - 1) in g
@@ -476,3 +476,13 @@ def test_labels_the_photo_does_not_show_are_dropped_card1418():
     items = [{'word': 'mouse', 'pos': 'noun'}, {'word': 'sit', 'pos': 'verb'},
              {'word': 'secure', 'pos': 'adjective'}]
     assert [i['word'] for i in T()._drop_unshown_labels(b'img', items, 'en')] == ['mouse', 'sit']
+
+
+def test_harder_pass_keeps_b2_and_above_only():
+    """Owner 11/26: the harder pass brought code / screen / display, so the hard end
+    of the bar showed nothing new."""
+    import tagging_server as ts
+    items = [{'word': w, 'pos': 'noun'} for w in ('screen', 'code', 'snout', 'canine', 'incisor')]
+    kept = [i['word'] for i in ts.keep_hard_words(items)]
+    assert 'screen' not in kept and 'code' not in kept
+    assert {'snout', 'incisor'} <= set(kept)
