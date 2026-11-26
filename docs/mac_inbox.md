@@ -9049,3 +9049,10 @@ commit `01170151`（Windows：flutter analyze 無 error、flutter test 全過）
   結果：第242輪完成：4/4模擬通過（A1 29秒、B1 20秒、抽卡 34秒、媒體 13秒）、詞庫17315詞；A1/B1 chineseinenglishui=0（通過）。
   需要 Mac：無新項目。
     下一輪：沿用 app/test/simulation/run_round.py --lang fr；可順手查詞庫是否有單字母詞條 f、d。
+
+## M1143（2026-11-27 06:08）狀態：待做
+commit `ce38bc86`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #226：模擬使用者・複習
+  結果：第 93 輪：2/2 通過（learner 92 秒、restart 51 秒，round 4513）；沒有新問題。
+  需要 Mac：無。
+    - 剩餘：無。
