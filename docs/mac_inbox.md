@@ -9016,3 +9016,9 @@ commit `be35a6f3`（Windows：flutter analyze 無 error、flutter test 全過）
     - 沒改程式與資料；golden／QC 不適用，無備份。
     - log：app/build/rounds/4510/。
     - 剩餘：無新項目。
+
+## M1139（2026-11-27 04:42）狀態：待做
+commit `e5411a3d`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #224：模擬使用者・拍照
+  結果：第 89 輪（部分）：photoui 未重跑（r88 1/1 通過）；pins 全部 47818 張快取檔改以每 1000 張一片分段，47 片中 46 片通過、1 片（47000–47818）失敗一次但拆成 200／100 張後全部通過；新問題 0；UX 建議 0。
+  需要 Mac：無。
