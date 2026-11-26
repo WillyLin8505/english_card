@@ -756,7 +756,8 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
             pos: w.candidate.pos,
             anchor: w.anchor,
             word: _shown(w.word, w.candidate.pos),
-            zh: _zh(w.word, w.candidate.pos, w.candidate.meaning),
+            zh: shortLabelMeaning(
+                _zh(w.word, w.candidate.pos, w.candidate.meaning)),
             linked: w.candidate.inDatabase || LexiconPack.instance.isEmpty,
             // A word read off the photo is framed where it is printed,
             // until the learner drags its label somewhere else.
@@ -772,7 +773,8 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
             pos: o.candidate.pos,
             anchor: o.anchor,
             word: _shown(o.word, o.candidate.pos),
-            zh: _zh(o.word, o.candidate.pos, o.candidate.meaning),
+            zh: shortLabelMeaning(
+                _zh(o.word, o.candidate.pos, o.candidate.meaning)),
             muted: true,
           ),
     ];
@@ -791,6 +793,14 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
       onPinLongPress: (p) {
         final w = wordOf(p);
         if (w != null) _pinActions(w);
+      },
+      // Owner 11/25: 「點兩下是收藏單字 不是開啟單字詳情」.
+      onPinDoubleTap: (p) {
+        final w = wordOf(p);
+        if (w == null) return;
+        session.toggleStar(w);
+        showToast(context,
+            w.starred ? '已收藏「${w.word}」' : '已取消收藏「${w.word}」');
       },
       // 卡 #835: a label let go over the 單字收集區 is collected, not moved.
       onPinHeld: (v) {
@@ -892,7 +902,9 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                     ? 'AI 正在找更多${PhotoWordSession.focusLabel(session.fetchingMore!)}…'
                     : working
                         ? 'AI 辨識中…'
-                        : null,
+                        : queue.toppingFocus(photo.id) == 'harder'
+                            ? '正在找更難的字…'
+                            : null,
             onBias: session.setBias,
             // 問題回報 #670: read the whole photo again.
             onRescan: session.rescanning ? null : session.rescan,

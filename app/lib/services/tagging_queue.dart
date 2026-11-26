@@ -73,7 +73,8 @@ class TaggingQueue extends ChangeNotifier {
 
   Duration get estimatedRemaining {
     if (!hasWork) return Duration.zero;
-    final average = _samples == 0 ? 60000 : _sampleMilliseconds ~/ _samples;
+    // 問題回報 #1842: a photo takes ~7-16 s since the label cap (was ~18-30 s).
+    final average = _samples == 0 ? 15000 : _sampleMilliseconds ~/ _samples;
     if (_current == null) return Duration(milliseconds: pending * average);
     final currentLeft =
         (average - _photoWatch.elapsedMilliseconds).clamp(10000, _maxMs);
@@ -87,7 +88,8 @@ class TaggingQueue extends ChangeNotifier {
           settings.taggingConfigured ? '等待 AI 服務恢復，會自動重試' : '這台裝置沒有照片辨識';
       return '已處理 $_completed/${_completed + pending} 張 · $reason';
     }
-    final average = _samples == 0 ? 60000 : _sampleMilliseconds ~/ _samples;
+    // 問題回報 #1842: a photo takes ~7-16 s since the label cap (was ~18-30 s).
+    final average = _samples == 0 ? 15000 : _sampleMilliseconds ~/ _samples;
     final elapsed = _photoWatch.elapsedMilliseconds;
     if (elapsed > average) {
       // 問題回報 #1417: past the estimate, a fixed 「大約剩 10 秒」 looked
@@ -249,6 +251,7 @@ class TaggingQueue extends ChangeNotifier {
         levelsAsked: true,
       ));
       _offline = false;
+      _fillHardLevels(photo.id);
       return true;
     } catch (e) {
       final latest = repo.photo(photo.id);
@@ -377,6 +380,32 @@ class TaggingQueue extends ChangeNotifier {
   final _asked = <String>{};
 
   bool isToppingUp(String photoId) => _toppingUp.containsKey(photoId);
+
+  /// The kind of words being fetched for [photoId] right now, if any.
+  String? toppingFocus(String photoId) =>
+      isToppingUp(photoId) ? _toppingFocus[photoId] : null;
+
+  /// Owner 11/25 「每一種難度要三個」, 「先出簡單、背景補難」: the first scan
+  /// shows at once; when B2, C1 or C2 holds fewer than [minPerHardLevel]
+  /// words, harder words are fetched once in the background.
+  static const minPerHardLevel = 3;
+
+  /// Off in tests by default (flutter_test_config.dart): their fake servers
+  /// answer a fixed number of requests.
+  static bool autoHarderLevels = true;
+
+  void _fillHardLevels(String photoId) {
+    if (!autoHarderLevels) return;
+    final photo = repository().photo(photoId);
+    if (photo == null) return;
+    final counts = {for (final l in const ['B2', 'C1', 'C2']) l: 0};
+    for (final c in photo.candidates) {
+      if (counts.containsKey(c.level)) counts[c.level] = counts[c.level]! + 1;
+    }
+    if (counts.values.every((n) => n >= minPerHardLevel)) return;
+    unawaited(topUp(photoId, focus: 'harder', level: 'B2').then((_) {},
+        onError: (Object e) => debugPrint('Harder words for $photoId: $e')));
+  }
 
   /// Whether a recognizer could be asked about [photo] at all: things in
   /// the picture need the phone's classifier or a server. Downloaded deck
@@ -555,8 +584,14 @@ class TaggingQueue extends ChangeNotifier {
 
   Future<int> _topUp(WordDatabaseRepository repo, Photo photo,
       {required String focus, required String level}) async {
+    // Owner 11/25 comparison: harder words come from the all-levels request
+    // with the 'harder' focus (8 more, ~22 in all); the single-level path
+    // returned ~5.
     final found = await _request(photo,
-        level: level, focus: focus, exclude: _topUpExclude(repo, photo, level));
+        level: level,
+        focus: focus,
+        allLevels: focus == 'harder',
+        exclude: _topUpExclude(repo, photo, level));
     final latest = repo.photo(photo.id);
     if (latest == null) return 0;
     final merged = _merge(latest.candidates, found);

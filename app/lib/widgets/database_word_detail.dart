@@ -276,10 +276,22 @@ class DatabaseWordScreen extends StatelessWidget {
               // enough for a small phone; the rest stay at the bottom.
               if (images.isNotEmpty) ...[
                 const SizedBox(height: MSpace.sm),
-                SizedBox(
+                // 卡 #1415: the picture keeps 160 pt; the tags go below it.
+                KeyedSubtree(
                     key: const ValueKey('database-first-image'),
-                    height: 160,
-                    child: DatabaseImageTile(image: images.first)),
+                    // Owner 11/26: a wide screen shows the whole picture and
+                    // every tag; a phone keeps #895's short first picture.
+                    child: LayoutBuilder(
+                        builder: (context, box) => box.maxWidth < 600
+                            ? DatabaseImageTile(
+                                image: images.first, photoHeight: 160)
+                            : DatabaseImageTile(
+                                image: images.first,
+                                expanded: true,
+                                photoHeight: databasePhotoHeight(
+                                    images.first, box.maxWidth,
+                                    max: MediaQuery.sizeOf(context).height *
+                                        0.6)))),
               ],
               const SizedBox(height: MSpace.md),
               // Already collected: says so before any tap.
@@ -467,8 +479,16 @@ class DatabaseWordScreen extends StatelessWidget {
               for (final image in images.skip(1))
                 Padding(
                     padding: const EdgeInsets.only(top: MSpace.sm),
-                    child: SizedBox(
-                        height: 240, child: DatabaseImageTile(image: image))),
+                    child: LayoutBuilder(
+                        builder: (context, box) => box.maxWidth < 600
+                            ? DatabaseImageTile(image: image, photoHeight: 200)
+                            : DatabaseImageTile(
+                                image: image,
+                                expanded: true,
+                                photoHeight: databasePhotoHeight(
+                                    image, box.maxWidth,
+                                    max: MediaQuery.sizeOf(context).height *
+                                        0.8)))),
             ]));
       });
 }

@@ -68,8 +68,18 @@ class DatabaseImageTile extends StatelessWidget {
   /// off when every result shares one hint, which it then shows once under
   /// the search box instead of on each picture (問題回報 #397).
   final bool showSearchHint;
+
+  /// 卡 #1415: a fixed picture height with the tags below it, so the tile
+  /// grows instead of squeezing the picture under its labels (null = the
+  /// album's grid cell, where the picture takes what the tags leave).
+  final double? photoHeight;
+
+  /// Owner 11/26: on 單字詳情 the whole picture and every tag show.
+  final bool expanded;
   const DatabaseImageTile(
       {super.key,
+      this.photoHeight,
+      this.expanded = false,
       required this.image,
       this.level,
       this.search = '',
@@ -89,19 +99,29 @@ class DatabaseImageTile extends StatelessWidget {
                   imageId: (image['id'] as num).toInt(),
                   initialLevel: level,
                   search: search))),
-          child:
-              Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Expanded(
-                child: PinnedPhoto(
-                    photo: databasePhoto(image),
-                    pins: databasePins(image, LexiconPack.instance,
-                        max: 4, level: level),
-                    radius: 0)),
+          child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize:
+                  photoHeight == null ? MainAxisSize.max : MainAxisSize.min,
+              children: [
+            () {
+              final photo = PinnedPhoto(
+                  photo: databasePhoto(image),
+                  pins: databasePins(image, LexiconPack.instance,
+                      max: 4, level: level),
+                  // Owner 11/26: the whole picture, never cropped to a strip.
+                  fit: expanded ? BoxFit.contain : BoxFit.cover,
+                  radius: 0);
+              return photoHeight == null
+                  ? Expanded(child: photo)
+                  : SizedBox(height: photoHeight, child: photo);
+            }(),
             if (elsewhere != null && onLevelChanged != null)
               DatabaseSearchHint(
                   hit: elsewhere, onSwitch: onLevelChanged!, compact: true),
             ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 100),
+              constraints: BoxConstraints(
+                  maxHeight: expanded ? double.infinity : 100),
               child: SingleChildScrollView(
                 child: Padding(
                   padding: const EdgeInsets.all(MSpace.xs),
@@ -109,13 +129,24 @@ class DatabaseImageTile extends StatelessWidget {
                       image: image,
                       pack: LexiconPack.instance,
                       level: level,
-                      compact: true),
+                      compact: true,
+                      expanded: expanded),
                 ),
               ),
             ),
           ])),
     );
   }
+}
+
+/// Owner 11/26: the picture's own shape at [width], at most [max] tall, so a
+/// wide screen shows the whole photo instead of a 160 pt strip.
+double databasePhotoHeight(Map<String, dynamic> image, double width,
+    {double max = 600}) {
+  final w = (image['width'] as num?)?.toDouble();
+  final h = (image['height'] as num?)?.toDouble();
+  final aspect = (w != null && h != null && w > 0 && h > 0) ? w / h : 4 / 3;
+  return (width / aspect).clamp(120.0, max);
 }
 
 class DatabaseImage extends StatelessWidget {

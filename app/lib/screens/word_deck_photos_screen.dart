@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../app/app_scope.dart';
 import '../l10n/ui_text.dart';
+import '../models/photo.dart';
+import '../widgets/mobile/photo_widgets.dart' show PhotoImage;
 import '../services/deck_library.dart';
 import '../services/dictionary_sync.dart';
 import '../services/lexicon_pack.dart';
@@ -225,40 +227,105 @@ class WordDeckAlbumCard extends StatelessWidget {
   final InstalledDeck deck;
   final VoidCallback onTap;
 
-  const WordDeckAlbumCard({super.key, required this.deck, required this.onTap});
+  /// 問題回報 #1845: the deck has no picture of its own; it shows the first
+  /// album's cover instead of an empty tile.
+  final Photo? cover;
+
+  const WordDeckAlbumCard(
+      {super.key, required this.deck, required this.onTap, this.cover});
 
   @override
-  Widget build(BuildContext context) => Tap(
-        onTap: onTap,
-        label: '${deck.info.title}，${ui(context, '${deck.wordCount} 個單字')}',
-        child: Container(
-          decoration: BoxDecoration(
-            color: MColors.primarySoft,
-            borderRadius: MRadii.rLg,
-            boxShadow: MShadows.card,
-          ),
-          padding: const EdgeInsets.all(MSpace.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: MSpace.xs, vertical: 2),
-                decoration: MDecor.softPanel(color: Colors.white, radius: 10),
-                child: UiText('相片冊',
-                    style: MFont.inter(11, FontWeight.w700, MColors.primary)),
+  Widget build(BuildContext context) {
+    final cover = this.cover;
+    return Tap(
+      onTap: onTap,
+      label: '${deck.info.title}，${ui(context, '${deck.wordCount} 個單字')}',
+      child: cover != null
+          ? _coverTile(cover)
+          : Container(
+              decoration: BoxDecoration(
+                color: MColors.primarySoft,
+                borderRadius: MRadii.rLg,
+                boxShadow: MShadows.card,
               ),
-              const Spacer(),
-              const Icon(Icons.menu_book_rounded,
-                  size: 36, color: MColors.primary),
-              const SizedBox(height: MSpace.sm),
-              Text(deck.info.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: MFont.inter(15, FontWeight.w700, MColors.ink)),
-              const SizedBox(height: 2),
-              UiText('${deck.wordCount} 個單字',
-                  style: MFont.inter(12, FontWeight.w600, MColors.muted)),
+              padding: const EdgeInsets.all(MSpace.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: MSpace.xs, vertical: 2),
+                    decoration:
+                        MDecor.softPanel(color: Colors.white, radius: 10),
+                    child: UiText('相片冊',
+                        style:
+                            MFont.inter(11, FontWeight.w700, MColors.primary)),
+                  ),
+                  const Spacer(),
+                  const Icon(Icons.menu_book_rounded,
+                      size: 36, color: MColors.primary),
+                  const SizedBox(height: MSpace.sm),
+                  Text(deck.info.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: MFont.inter(15, FontWeight.w700, MColors.ink)),
+                  const SizedBox(height: 2),
+                  UiText('${deck.wordCount} 個單字',
+                      style: MFont.inter(12, FontWeight.w600, MColors.muted)),
+                ],
+              ),
+            ),
+    );
+  }
+
+  Widget _coverTile(Photo cover) => Container(
+        decoration: BoxDecoration(
+          borderRadius: MRadii.rLg,
+          boxShadow: MShadows.card,
+        ),
+        child: ClipRRect(
+          borderRadius: MRadii.rLg,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              PhotoImage(cover),
+              const DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment(0.72, -1),
+                    end: Alignment(-0.72, 1),
+                    colors: [
+                      Color(0x00000000),
+                      Color(0x00000000),
+                      MColors.photoScrim,
+                    ],
+                    stops: [0, 0.45, 0.75],
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(MSpace.sm),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(deck.info.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: MFont.inter(15, FontWeight.w700, Colors.white)),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: MSpace.xs, vertical: 2),
+                      decoration:
+                          MDecor.softPanel(color: MColors.frost, radius: 10),
+                      child: UiText('${deck.wordCount} 個單字',
+                          style:
+                              MFont.inter(11, FontWeight.w600, Colors.white)),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),

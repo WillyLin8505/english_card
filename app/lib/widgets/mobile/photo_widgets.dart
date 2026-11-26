@@ -551,6 +551,9 @@ class PinnedPhoto extends StatefulWidget {
   final bool largePins;
   final ValueChanged<PinData>? onPinTap;
   final ValueChanged<PinData>? onPinLongPress;
+
+  /// Owner 11/25: 「點兩下是收藏單字」 — a double tap collects the word.
+  final ValueChanged<PinData>? onPinDoubleTap;
   final void Function(PinData pin, LabelPoint to)? onPinMoved;
 
   /// 卡 #835: told where the finger lifted (screen coordinates) after a drag;
@@ -651,6 +654,7 @@ class PinnedPhoto extends StatefulWidget {
     this.largePins = false,
     this.onPinTap,
     this.onPinLongPress,
+    this.onPinDoubleTap,
     this.onPinMoved,
     this.onPinDropped,
     this.onPinHeld,
@@ -1052,6 +1056,11 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
                                             ? null
                                             : () => widget
                                                 .onPinLongPress!(byId[pl.id]!),
+                                        onDoubleTap: widget.onPinDoubleTap ==
+                                                null
+                                            ? null
+                                            : () => widget
+                                                .onPinDoubleTap!(byId[pl.id]!),
                                         child: Tap(
                                           onTap: widget.onPinTap == null
                                               ? null

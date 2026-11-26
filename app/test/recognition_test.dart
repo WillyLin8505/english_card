@@ -219,10 +219,10 @@ void main() {
         c('laptop'), c('notebook'), c('cup'), c('mouse'),
         c('plant'), c('phone'), c('desk'), c('shelf'),
       ];
+      // Owner 11/25: five labels at every notch, nouns fill the rest.
       final first = pick(nouns, target: 1);
-      expect(first.words, hasLength(WordSelector.maxNouns));
+      expect(first.words, hasLength(WordSelector.maxWords));
       expect(first.words.every((word) => word.isNoun), isTrue);
-      expect(first.topUp, 'actions');
 
       final mixed = pick([
         ...nouns,

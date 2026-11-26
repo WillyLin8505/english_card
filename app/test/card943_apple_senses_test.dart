@@ -91,4 +91,15 @@ void main() {
     expect(image, findsOneWidget);
     expect(tester.getBottomLeft(image).dy, lessThan(667));
   });
+
+  // Owner 11/26 「單字詳情裡面的圖片幫我全部展開」: a wide screen shows the
+  // whole first picture (its own shape, not a 160 pt strip) and every tag.
+  testWidgets('wide screen: first picture uncropped and tags expanded', (tester) async {
+    await pumpApp(tester,
+        home: const DatabaseWordScreen(wordId: 1), size: const Size(1200, 900));
+    await tester.pumpAndSettle();
+    final tile = tester.widget<DatabaseImageTile>(find.byType(DatabaseImageTile).first);
+    expect(tile.expanded, isTrue);
+    expect(tile.photoHeight, greaterThan(160));
+  });
 }

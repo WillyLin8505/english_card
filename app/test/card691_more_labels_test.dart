@@ -37,11 +37,12 @@ final _street = [
 void main() {
   final profile = UserVocabularyProfile.start('A2', now: testNow);
 
-  test('the noun cap gives way once the recognizer had its chance', () {
+  // Owner 11/25 「停在某一格至少要有五個標籤」: nouns fill a list short of five
+  // straight away; the noun cap only shapes the first three picks.
+  test('the noun cap gives way when the list is short of five', () {
     final capped = const WordSelector()
         .select(pool: _street, target: 1, profile: profile, now: testNow);
-    expect(capped.words, hasLength(WordSelector.maxNouns));
-    expect(capped.topUp, 'actions');
+    expect(capped.words, hasLength(WordSelector.maxWords));
 
     final relaxed = const WordSelector().select(
         pool: _street,

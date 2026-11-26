@@ -19,6 +19,24 @@ String entryTypeLabel(String value, {String lang = 'zh-TW'}) {
   return translateUi(zh, lang);
 }
 
+/// 問題回報 #1843: a label on the photo shows one short meaning (≤ [max]
+/// characters), not the dictionary's whole gloss (fuzzy showed 「覆蓋著絨毛或
+/// 大量類似地毯…纖維；模糊不清或不精確的」). The word page keeps the full one.
+String shortLabelMeaning(String meaning, {int max = 8}) {
+  final text = meaning.trim();
+  if (text.runes.length <= max) return text;
+  final parts = [
+    for (final p in text.split(RegExp(r'[；;，,、/\n]')))
+      if (p.replaceAll(RegExp(r'[（(][^）)]*[）)]'), '').trim().isNotEmpty)
+        p.replaceAll(RegExp(r'[（(][^）)]*[）)]'), '').trim(),
+  ];
+  if (parts.isEmpty) return text;
+  final fits = parts.where((p) => p.runes.length <= max).firstOrNull;
+  if (fits != null) return fits;
+  final shortest = parts.reduce((a, b) => b.runes.length < a.runes.length ? b : a);
+  return '${String.fromCharCodes(shortest.runes.take(max))}…';
+}
+
 String typedMeaning(String meaning, String entryType, {String lang = 'zh-TW'}) {
   final label = entryTypeLabel(entryType, lang: lang);
   return label.isEmpty

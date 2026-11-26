@@ -157,6 +157,9 @@ class _AlbumScreenState extends State<AlbumScreen> {
                         final d = decks[i - albums.length];
                         return WordDeckAlbumCard(
                             deck: d,
+                            cover: albums.isEmpty
+                                ? null
+                                : repo.albumCoverPhoto(albums.first.id),
                             onTap: () => Navigator.of(context).push(
                                 MaterialPageRoute<void>(
                                     builder: (_) =>

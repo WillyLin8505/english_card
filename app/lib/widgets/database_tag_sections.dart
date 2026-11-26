@@ -7,12 +7,16 @@ class DatabaseTagSections extends StatelessWidget {
   final LexiconPack pack;
   final String? level;
   final bool compact;
+
+  /// Owner 11/26 「單字詳情裡面的圖片幫我全部展開」: every word of every level.
+  final bool expanded;
   const DatabaseTagSections(
       {super.key,
       required this.image,
       required this.pack,
       this.level,
-      this.compact = false});
+      this.compact = false,
+      this.expanded = false});
 
   @override
   Widget build(BuildContext context) => Column(
@@ -57,7 +61,8 @@ class DatabaseTagSections extends StatelessWidget {
             group: group,
             pack: pack,
             positioned: positioned,
-            compact: compact)
+            compact: compact,
+            expanded: expanded)
     ];
   }
 }
@@ -67,18 +72,20 @@ class _DatabaseTagGroup extends StatefulWidget {
   final LexiconPack pack;
   final Set<int> positioned;
   final bool compact;
+  final bool expanded;
   const _DatabaseTagGroup(
       {super.key,
       required this.group,
       required this.pack,
       this.positioned = const {},
-      required this.compact});
+      required this.compact,
+      this.expanded = false});
   @override
   State<_DatabaseTagGroup> createState() => _DatabaseTagGroupState();
 }
 
 class _DatabaseTagGroupState extends State<_DatabaseTagGroup> {
-  bool _expanded = false;
+  late bool _expanded = widget.expanded;
   @override
   Widget build(BuildContext context) {
     final group = widget.group;

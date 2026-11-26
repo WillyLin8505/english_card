@@ -291,7 +291,9 @@ class WordSelector {
     // 問題回報 #691: a photo of nothing but things (a street, a shelf) kept
     // three labels when the recognizer had no verb or adjective to add.
     // Once it has been asked ([relaxNounCap]), more nouns fill the list.
-    if (relaxNounCap) {
+    // Owner 11/25 「停在某一格至少要有五個標籤」: short of five, nouns fill
+    // the rest whether or not verbs were asked for.
+    if (relaxNounCap || picked().length < maxWords) {
       for (final s in nearest) {
         if (picked().length >= maxWords) break;
         if (s.rejected != null || !allowed(s, nounCap: false)) continue;

@@ -7,6 +7,7 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:photo_english_app/services/analytics.dart';
 import 'package:photo_english_app/services/dictionary_sync.dart';
+import 'package:photo_english_app/services/tagging_queue.dart';
 import 'package:photo_english_app/theme/mobile_theme.dart';
 
 /// Runs before every test file: tests never download fonts.
@@ -16,6 +17,9 @@ Future<void> testExecutable(FutureOr<void> Function() testMain) async {
   MFont.useGoogleFonts = false;
   // The app polls the public dictionary by default; tests must not.
   DictionarySync.defaultRemote = false;
+  // Owner 11/25: the background harder-words pass is tested on its own
+  // (card_harder_levels_test.dart); other fake servers answer fixed requests.
+  TaggingQueue.autoHarderLevels = false;
   final path = Platform.environment['SIM_EVENTS'];
   if (path != null && path.isNotEmpty) {
     final events = <Map<String, Object?>>[];
