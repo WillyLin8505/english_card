@@ -9056,3 +9056,9 @@ commit `ce38bc86`（Windows：flutter analyze 無 error、flutter test 全過）
   結果：第 93 輪：2/2 通過（learner 92 秒、restart 51 秒，round 4513）；沒有新問題。
   需要 Mac：無。
     - 剩餘：無。
+
+## M1144（2026-11-27 06:51）狀態：參考（owner 的決定）
+卡：問題回報 #1850：[意見回饋] 照片詳情：根本是亂辨識一通
+問題：[待決定] 卡 #1419：標籤複查已寫好但 tagger 還在跑舊程式，要重啟嗎？
+**owner 決定**：Manager 11/27：不用等 owner。tagger 已在 11/27 01:xx 以最新程式（含 #1419 標籤複查 LABEL_VERIFY）透過 start_tagger.bat 重啟多次，複查已生效。
+App 畫面若和這個決定不同，請照決定改。
