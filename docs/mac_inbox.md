@@ -8888,3 +8888,9 @@ commit `e422164f`（Windows：flutter analyze 無 error、flutter test 全過；
   結果：全部完成：Albums 頁的 French Basic 單字集卡片現在顯示第一個相片冊的封面照，不再是空白圖示（只改 App，沒動資料）。；驗證：flutter analyze 兩檔無問題。flutter test test/card897rootbacktest.dart 因 heavylock 排隊超過 10 分鐘
   需要 Mac：在 iPad 開 Albums 頁，確認 French Basic 卡片顯示第一個相片冊的封面照、文字清楚可讀。
     剩下：假設「第一個圖庫」= 清單中第一個相片冊；若 owner 其實要的是該單字集自己的第一張詞庫圖，需另改。
+
+## M1127（2026-11-26 10:00）狀態：待做
+commit `476b2a5c`（Windows：flutter analyze 無 error、flutter test 全過；另有 2 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #496：模擬使用者・法語（英語母語者學法語）
+  結果：第237-239輪完成：4/4模擬通過（A1 37秒、B1 35秒、抽卡 63秒、媒體 19秒）、詞庫17315詞、無測試失敗（只依通過與 pack 統計；未逐項讀 JSON，中文殘留未另量）。
+  需要 Mac：無新項目。
