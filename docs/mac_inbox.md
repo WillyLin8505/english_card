@@ -8916,3 +8916,12 @@ commit `218debaa`（Windows：flutter analyze 無 error、flutter test 全過；
 - 卡 #224：模擬使用者・拍照
   結果：第 88 輪（未完成）：photoui 1/1 通過；pins 8 片只有 0–2 片通過，第 3 片（檔案 18000–23999）連兩次在約 47–88 秒無訊息中斷（exit 79，"did not complete"），第 4–7 片沒跑到；新問題 0（未開問題回報）；UX 建議 0。
   需要 Mac：無。輸出：card224_r88_photo_ui.txt、card224_r88_pins.txt、card224_r88_pins2.txt。
+
+## M1131（2026-11-26 11:30）狀態：待做
+commit `476a735e`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1422：問題回報 #1855：[owner] Windows PC 資源超過 80% 超過 10 分鐘：memory
+  結果：已自行恢復：記憶體 96% → 約 72%（aiwatch 10:57，低於 80%），卡上的 fluttertester 10.5 GB 已不在，無需改程式或資料。
+- 卡 #5：檢查標籤分級是否錯誤
+  結果：第 44 輪全庫 B 群掃描完成（唯讀，573 秒）：數字與第 43 輪幾乎相同（照片上估算 C1/C2 +2、名詞 +1），無新問題類型。
+  需要 Mac：無。
+    - 剩下：304 個 base 誤判待 #162/#163；無新增問題回報。
