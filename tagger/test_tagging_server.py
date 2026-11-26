@@ -84,7 +84,7 @@ def test_cefr_prompt_lists_visible_objects_level_from_lexicon():
     assert "compact JSON keys" in prompt
     assert "more precise nouns, verbs and" in prompt
     assert "Never a formal or" in prompt
-    assert CEFR_PROMPT_VERSION == "photo-tags-visible-v15-pointable-only"
+    assert CEFR_PROMPT_VERSION == "photo-tags-visible-v16-no-examples"
 
 
 def test_compact_cefr_candidates_decode_to_public_shape():
@@ -413,4 +413,39 @@ def test_a_looped_reply_is_detected():
     assert ts.repeated_label_words(loop) == ['wooden']
     fine = [{'w': w, 'p': 'n', 'x': 1, 'y': 1} for w in ('desk', 'chair', 'lamp', 'book', 'pen', 'cup')]
     assert ts.repeated_label_words(fine) == []
+    # owner 11/26: one label per copy (person x7, glass x7) also asks again
+    copies = [{'w': 'person'}] * 7 + [{'w': 'glass'}] * 7 + [{'w': 'table'}, {'w': 'book'}]
+    assert ts.repeated_label_words(copies) == ['person', 'glass', 'table', 'book']
     assert ts.repeated_label_words([{'w': 'cup'}] * 3) == []
+
+
+def test_harder_pass_has_its_own_small_cap():
+    """Owner 11/25 comparison: the background harder pass asks for at most 8."""
+    import tagging_server as ts
+    g = ts.compact_grammar(ts.CEFR_HARDER_SCHEMA)
+    assert '{0,%d}' % (ts.CEFR_HARDER_MAX_ITEMS - 1) in g
+    assert ts.CEFR_CANDIDATE_SCHEMA['properties']['candidates']['maxItems'] == ts.CEFR_MAX_ITEMS
+
+
+def test_verbs_the_photo_does_not_show_are_dropped():
+    """Owner 11/26: 「rest 休息」 on a pile of clothes — verbs are checked again."""
+    import tagging_server as ts
+
+    class T(ts.Tagger):
+        def __init__(self):
+            pass
+
+        def _chat(self, prompt, schema, image=None, **kw):
+            assert '1. rest' in prompt and '2. sit' in prompt
+            return {'checks': [{'word': 'rest', 'shown': False}, {'word': 'sit', 'shown': True}]}
+
+    items = [{'word': 'man', 'pos': 'noun'}, {'word': 'rest', 'pos': 'verb'},
+             {'word': 'sit', 'pos': 'verb'}]
+    out = T()._drop_unseen_verbs(b'img', items, 'en')
+    assert [i['word'] for i in out] == ['man', 'sit']
+    # nobody in the photo: verbs go without asking the model
+    still = [{'word': 'bed', 'pos': 'noun'}, {'word': 'rest', 'pos': 'verb'}]
+    assert [i['word'] for i in T()._drop_unseen_verbs(b'img', still, 'en')] == ['bed']
+    # the harder pass sees the first pass's words (here: woman) as seen_words
+    hard = [{'word': 'rest', 'pos': 'verb'}, {'word': 'sit', 'pos': 'verb'}]
+    assert [i['word'] for i in T()._drop_unseen_verbs(b'img', hard, 'en', ['woman'])] == ['sit']

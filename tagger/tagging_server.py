@@ -109,11 +109,11 @@ FOCUS = {
     # 問題回報 #1843/owner 11/25: the harder pass fills B2-C2 in the background;
     # it must still name what is visible (it used to pull in congregate, situate).
     'harder': 'This time return less common, more precise words (upper-intermediate to '
-              'advanced) for things that are clearly visible: the exact name of an object '
-              'or part, its material, texture, shape or condition, or an action someone in '
-              'the photo is doing right now (e.g. "terracotta", "upholstered", "cluttered", '
-              '"translucent", "slouch"). Never abstract or inferred words, and no formal verb '
-              'for an action nobody in the photo is doing.',
+              'advanced) for things that are clearly visible in THIS photo: the exact name '
+              'of an object or part you can point to, its material, texture, shape or '
+              'condition, or an action a person or animal is doing right now. Only words you '
+              'can see here; return fewer when nothing more is visible. Never abstract or '
+              'inferred words, and no verb for an action nobody in the photo is doing.',
     'easier': 'This time prefer common, broad everyday labels.',
     'actions': 'This time every label must be a verb or action phrase for something visibly '
                'happening or implied (e.g. "stroll", "queue up", "gaze"); no nouns.',
@@ -255,7 +255,7 @@ def build_prompt(level: str, lang: str = 'en', native: str = 'zh-TW',
 
 SCORE_PROMPT_VERSION = 'label-check-v2'
 SCORE_MAX_LABELS = 24
-CEFR_PROMPT_VERSION = 'photo-tags-visible-v15-pointable-only'
+CEFR_PROMPT_VERSION = 'photo-tags-visible-v16-no-examples'
 CEFR_TAGS_PER_LEVEL = 3
 # A1/A2 may not exceed this many labels each (default = per_level) so beginners
 # cannot consume TAGS_MAX (~18) and leave B2-C2 with no slots.
@@ -289,6 +289,12 @@ CEFR_CANDIDATE_SCHEMA = {
     },
     'required': ['safe', 'candidates'],
 }
+# Owner 11/25 comparison (8 photos): 18 labels first, then 8 harder ones in the
+# background gave the most words (22.4) and level coverage (3.8 of 6 bands >= 3).
+VERB_CHECK = os.environ.get('TAGGER_VERB_CHECK', '1').strip().lower() not in {'0', 'false', 'no', 'off'}
+CEFR_HARDER_MAX_ITEMS = int(os.environ.get('TAGGER_CEFR_HARDER_MAX_ITEMS', '8'))
+CEFR_HARDER_SCHEMA = json.loads(json.dumps(CEFR_CANDIDATE_SCHEMA))
+CEFR_HARDER_SCHEMA['properties']['candidates']['maxItems'] = CEFR_HARDER_MAX_ITEMS
 SCORE_SCHEMA = {
     'type': 'object',
     'properties': {
@@ -324,13 +330,14 @@ def build_cefr_prompt(lang: str = 'en', exclude: list[str] | None = None,
         '(objects, parts, materials, actions, qualities). Do not invent CEFR levels; '
         'do not pad the list to fill difficulty bands. Cover the same visible regions with '
         'a useful vocabulary range: common everyday words plus more precise nouns, verbs and '
-        'adjectives whose meanings the photo itself shows. Examples: '
-        'wood / wooden / grain / rustic; glass / transparent / reflective. Never a formal or '
+        'adjectives whose meanings the photo itself shows. Never a formal or '
         'literary word for an action or idea the photo does not show (issue #1843). The lexicon '
         'assigns the real level later, so never guess a level.',
         'Mix parts of speech only when visible: nouns, verbs (visible actions), adjectives '
         '(visible qualities), adverbs and short phrases. There is no part-of-speech quota. '
         'Prefer a specific object or part to a generic category for the same region. '
+        'Each word appears once: never repeat a word for several copies of the same thing '
+        '(one "person" for a group, one "glass" for many glasses). '
         'Do not repeat synonyms for the same visual idea, and return fewer labels when needed. '
         'Avoid brand, product, model '
         'and person names. Ignore words only read from logos or watermarks. '
@@ -565,13 +572,25 @@ def pack_resolve(word: str, pos: str, index: dict) -> tuple[str, str] | None:
     return word, (pos if pos in pos_list else pos_list[0])
 
 
+# Words that mean a person or animal is in the photo, so a verb can be an action.
+_ANIMATE_ENGLISH = {
+    'person', 'people', 'man', 'woman', 'men', 'women', 'child', 'children', 'kid', 'kids',
+    'boy', 'girl', 'baby', 'student', 'teacher', 'worker', 'pedestrian', 'pedestrians',
+    'crowd', 'customer', 'player', 'friend', 'friends', 'family', 'hand', 'hands', 'face',
+    'dog', 'puppy', 'cat', 'kitten', 'bird', 'animal', 'horse', 'cow', 'fish', 'duck',
+    'golden retriever', 'pet', 'chef', 'barista', 'waiter', 'driver', 'rider', 'cyclist',
+}
+
+
 def repeated_label_words(raw: list[dict]) -> list[str]:
-    """The words a reply looped on (問題回報 #1843): fewer than 4 distinct
-    labels among 6 or more items. Empty when the reply is fine."""
+    """The words a reply spent its slots repeating (問題回報 #1843, owner 11/26):
+    a loop ("wooden" x18) or one label per copy (person x7, glass x7 -> 5 words).
+    When 6+ items hold fewer than 10 distinct words, the distinct words are
+    returned so a second call can exclude them; empty when the reply is fine."""
     words = [str(c.get('w') or c.get('word') or '').strip().lower() for c in raw or []]
     words = [w for w in words if w]
     distinct = list(dict.fromkeys(words))
-    if len(words) >= 6 and len(distinct) < 4:
+    if len(words) >= 6 and len(distinct) < min(10, len(words)):
         return distinct
     return []
 
@@ -1367,8 +1386,13 @@ class Tagger:
                         per_level: int = CEFR_TAGS_PER_LEVEL,
                         target_levels: list[str] | None = None,
                         existing_counts: dict[str, int] | None = None,
-                        internal_topup: bool = False) -> list[dict]:
-        """Return visible labels; the trusted backend assigns CEFR and requests retries."""
+                        internal_topup: bool = False,
+                        focus: str | None = None) -> list[dict]:
+        """Return visible labels; the trusted backend assigns CEFR and requests retries.
+        ``focus='harder'`` (owner 11/25, method E of the comparison): the App's
+        background pass for B2-C2 — the same prompt plus FOCUS['harder'], at most
+        CEFR_HARDER_MAX_ITEMS labels."""
+        focus = focus if focus == 'harder' else None
         target_levels = list(dict.fromkeys(
             level.upper() for level in (target_levels or []) if level.upper() in LEVELS))
         existing_counts = {level: min(max(int((existing_counts or {}).get(level, 0)), 0),
@@ -1383,6 +1407,7 @@ class Tagger:
             'target_levels': target_levels,
             'existing_counts': existing_counts,
             'internal_topup': internal_topup,
+            'focus': focus,
             'exclude': sorted(w.strip().lower() for w in (exclude or []) if w.strip()),
             'prep': IMAGE_PREP_VERSION},
             sort_keys=True).encode()
@@ -1408,22 +1433,27 @@ class Tagger:
                 lang, target_levels, exclude or [], per_level,
                 existing_counts) if target_levels
                 else build_cefr_prompt(lang, exclude, per_level))
+            schema = CEFR_CANDIDATE_SCHEMA
+            if focus == 'harder':
+                prompt += '\n' + FOCUS['harder']
+                schema = CEFR_HARDER_SCHEMA
             content = self._chat(prompt,
-                                 CEFR_CANDIDATE_SCHEMA, prepared,
+                                 schema, prepared,
                                  max_tokens=CEFR_MAX_TOKENS, compact=COMPACT_JSON)
             if content.get('safe') is not True:
                 raise UnsafeImage('explicit adult content')
             raw = content.get('candidates', [])
-            stuck = repeated_label_words(raw)
+            stuck = [] if focus == 'harder' else repeated_label_words(raw)
             if stuck:
                 # 問題回報 #1843: at temperature 0 the model can loop on one label
                 # (an office photo came back as "wooden" x18 -> one word). Ask once
                 # more, a little warmer, without the looped words, and merge.
                 again = self._chat(build_cefr_prompt(lang, (exclude or []) + stuck, per_level),
-                                   CEFR_CANDIDATE_SCHEMA, prepared, temperature=0.4,
+                                   CEFR_CANDIDATE_SCHEMA, prepared, temperature=0.8,
                                    max_tokens=CEFR_MAX_TOKENS, compact=COMPACT_JSON)
                 raw = list(raw) + list(again.get('candidates', []))
             items = to_candidates(raw, self.lexicon, exclude, lang)
+            items = self._drop_unseen_verbs(prepared, items, lang, exclude)
             # Hard-cap A1/A2 so a noun-heavy first pass cannot fill TAGS_MAX alone.
             items = cap_cefr_beginner_bands(items)
             # Do not cache empty CEFR-band replies: a truncated or weak answer
@@ -1438,6 +1468,39 @@ class Tagger:
                     if os.path.exists(temporary):
                         os.remove(temporary)
             return items
+
+    def _drop_unseen_verbs(self, prepared: bytes, items: list[dict], lang: str,
+                           seen_words: list[str] | None = None) -> list[dict]:
+        """Owner 11/26 (「rest 休息」 on a pile of clothes; 「這個動詞掃描根本是錯的」):
+        every verb is checked once more against the photo — someone or something
+        must be doing it right now — and dropped when the model says no."""
+        if not VERB_CHECK:
+            return items
+        verbs = [i for i in items if str(i.get('pos', '')).startswith('verb')]
+        if not verbs:
+            return items
+        # Owner 11/26 round 3: the model still said yes to "rest" in an empty bedroom,
+        # "open" for a laptop and "glow" for a bulb. No person or animal in the photo
+        # (this pass or the words already found) -> no verb at all.
+        words = {str(i.get('word', '')).lower() for i in items} | {
+            str(w).strip().lower() for w in (seen_words or [])}
+        if not words & _ANIMATE_ENGLISH:
+            return [i for i in items if i not in verbs]
+        lines = [
+            f'Look at this photo. For each {LANGS[lang]} verb below answer shown = true only if a '
+            'person or animal in the photo is clearly doing that action right now. '
+            'A thing lying, hanging, stacked, open or standing somewhere is not doing an '
+            'action, and text or a screen showing a word is not the action. '
+            'If you are not sure, answer false. Keep the order and copy each word exactly.',
+        ] + [f'{n}. {v["word"]}' for n, v in enumerate(verbs, 1)] + ['Reply with JSON only.']
+        try:
+            content = self._chat('\n'.join(lines), SCORE_SCHEMA, prepared, max_tokens=300)
+        except Exception:  # noqa: BLE001 - a failed check keeps the labels
+            return items
+        seen = {str(c.get('word', '')).strip().lower(): c.get('shown') is True
+                for c in content.get('checks', [])}
+        drop = {v['word'] for v in verbs if not seen.get(str(v['word']).lower(), False)}
+        return [i for i in items if i['word'] not in drop]
 
     def enrich(self, req: dict) -> dict:
         word = str(req.get('word', '')).strip().lower()
@@ -1850,7 +1913,7 @@ def make_handler(tagger: Tagger, api_key: str):
                 self._model_call(lambda: {
                     'candidates': tagger.candidates_cefr(
                         image, lang, exclude, per_level, target_levels,
-                        existing_counts, internal_topup),
+                        existing_counts, internal_topup, focus),
                     'level': level, 'lang': lang, 'native': native,
                     'mode': 'cefr', 'perLevel': per_level,
                     'targetLevels': target_levels,
