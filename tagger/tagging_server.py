@@ -969,6 +969,12 @@ def attach_cefr(items: list[dict]) -> list[dict]:
     return items
 
 
+def with_cefr(items: list[dict], lang: str) -> list[dict]:
+    """English labels with their CEFR band attached (see attach_cefr); other
+    languages unchanged."""
+    return attach_cefr(items) if lang == 'en' else items
+
+
 def filter_level(items: list[dict], level: str) -> list[dict]:
     """Keep labels no easier than one band below `level`. Card #657: no fill-up with
     easier words any more (the old fill-to-3 let B2 labels through for a C2 learner).
@@ -1955,9 +1961,11 @@ def make_handler(tagger: Tagger, api_key: str):
                 internal_topup = (query.get('topup') or ['0'])[0].strip().lower() not in {
                     '0', 'false', 'no', 'off'}
                 self._model_call(lambda: {
-                    'candidates': tagger.candidates_cefr(
+                    # Owner 11/26: without a band the App read every unlisted word
+                    # (sill, headboard) as B1, so the hard end of the bar stayed empty.
+                    'candidates': with_cefr([dict(i) for i in tagger.candidates_cefr(
                         image, lang, exclude, per_level, target_levels,
-                        existing_counts, internal_topup, focus),
+                        existing_counts, internal_topup, focus)], lang),
                     'level': level, 'lang': lang, 'native': native,
                     'mode': 'cefr', 'perLevel': per_level,
                     'targetLevels': target_levels,

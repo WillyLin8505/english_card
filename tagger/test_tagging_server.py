@@ -486,3 +486,12 @@ def test_harder_pass_keeps_b2_and_above_only():
     kept = [i['word'] for i in ts.keep_hard_words(items)]
     assert 'screen' not in kept and 'code' not in kept
     assert {'snout', 'incisor'} <= set(kept)
+
+
+def test_cefr_mode_labels_carry_their_band():
+    """Owner 11/26: sill / headboard came back with cefr None and the App called them B1."""
+    import tagging_server as ts
+    out = ts.with_cefr([{'word': 'headboard', 'pos': 'noun', 'cefr': None},
+                        {'word': 'cup', 'pos': 'noun'}], 'en')
+    assert out[0]['cefr'] in ('B2', 'C1', 'C2') and out[1]['cefr'] == 'A1'
+    assert ts.with_cefr([{'word': 'tasse'}], 'fr') == [{'word': 'tasse'}]
