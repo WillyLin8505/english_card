@@ -952,6 +952,14 @@ def word_cefr(word: str, zipf: float | None) -> tuple[str | None, str | None]:
     return zipf_level(zipf), 'estimate'
 
 
+def harder_skip_line(exclude: list[str] | None) -> str:
+    """The harder pass repeats the first pass's words unless told again, last."""
+    if not exclude:
+        return ''
+    return (' These words are already on the photo; return none of them and no synonym '
+            'or plural of them: ' + ', '.join(exclude[:60]) + '.')
+
+
 def keep_hard_words(items: list[dict]) -> list[dict]:
     """The harder pass keeps B2-C2 words only (owner 11/26); a word with no known
     band stays."""
@@ -1453,7 +1461,7 @@ class Tagger:
                 else build_cefr_prompt(lang, exclude, per_level))
             schema = CEFR_CANDIDATE_SCHEMA
             if focus == 'harder':
-                prompt += '\n' + FOCUS['harder']
+                prompt += '\n' + FOCUS['harder'] + harder_skip_line(exclude)
                 schema = CEFR_HARDER_SCHEMA
             content = self._chat(prompt,
                                  schema, prepared,
@@ -1471,6 +1479,15 @@ class Tagger:
                                    max_tokens=CEFR_MAX_TOKENS, compact=COMPACT_JSON)
                 raw = list(raw) + list(again.get('candidates', []))
             items = to_candidates(raw, self.lexicon, exclude, lang)
+            if focus == 'harder' and len(items) < 3:
+                # Owner 11/27: at temperature 0 the harder pass can return the first
+                # pass's words again (type, code, screen ...), all excluded -> nothing.
+                # Ask once more, warmer, and keep what is new.
+                again = self._chat(prompt, schema, prepared, temperature=0.7,
+                                   max_tokens=CEFR_MAX_TOKENS, compact=COMPACT_JSON)
+                have = {i['word'] for i in items}
+                items += [i for i in to_candidates(again.get('candidates', []), self.lexicon,
+                                                   exclude, lang) if i['word'] not in have]
             items = self._drop_unseen_verbs(prepared, items, lang, exclude)
             if focus == 'harder':
                 # Owner 11/26 「移動困難度 bar 要出現更難的標籤」: the pass came back with

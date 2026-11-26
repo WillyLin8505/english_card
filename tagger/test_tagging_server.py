@@ -495,3 +495,11 @@ def test_cefr_mode_labels_carry_their_band():
                         {'word': 'cup', 'pos': 'noun'}], 'en')
     assert out[0]['cefr'] in ('B2', 'C1', 'C2') and out[1]['cefr'] == 'A1'
     assert ts.with_cefr([{'word': 'tasse'}], 'fr') == [{'word': 'tasse'}]
+
+
+def test_harder_pass_is_told_again_which_words_are_taken():
+    """Owner 11/27: the harder pass returned type / code / screen again -> empty."""
+    import tagging_server as ts
+    line = ts.harder_skip_line(['screen', 'code'])
+    assert 'already on the photo' in line and 'screen, code' in line
+    assert ts.harder_skip_line([]) == ''
