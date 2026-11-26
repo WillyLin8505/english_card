@@ -8925,3 +8925,18 @@ commit `476a735e`（Windows：flutter analyze 無 error、flutter test 全過；
   結果：第 44 輪全庫 B 群掃描完成（唯讀，573 秒）：數字與第 43 輪幾乎相同（照片上估算 C1/C2 +2、名詞 +1），無新問題類型。
   需要 Mac：無。
     - 剩下：304 個 base 誤判待 #162/#163；無新增問題回報。
+
+## M1132（2026-11-26 11:42）狀態：待做
+commit `01e30ee9`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #227：模擬使用者・單字本
+  結果：第 4500 輪：2/2 通過（database 通過、detail 111 秒）；新問題 0、UX 建議 0 新增（沿用 #1649）。需要你決定：無。需要 Mac：無。
+  需要 Mac：無。
+    
+    - database：抽 250 字、加入 222、等待 24、findings 空；detail：全部單字詳情頁渲染正常。
+    - 備註：database 與 detail 第一次合跑時機器很忙，超過 10 分鐘上限被中斷；detail 沿用同一輪的 pack 重跑後通過（日期 11/26，4499 輪為中斷的空輪）。
+    - 沒改程式與資料；golden／QC 不適用，無備份。
+    - log：app/build/rounds/4500/。第二次重跑加了 --no-posthog，所以 detail 的事件沒上傳。
+    - 剩餘：無新項目。
+- 卡 #1424：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
+  結果：全部完成：app/test/privacysettingstest.dart 現在通過（2/2），flutter test 全部通過（+1068，~2 略過），flutter analyze 0 error（12 個 info）。
+  需要 Mac：無；可由 mac_sync 重試推送 #1416、#224。
