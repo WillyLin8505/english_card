@@ -224,10 +224,14 @@ class CefrLexicon {
         ? stem.substring(0, stem.length - 1)
         : stem;
     String cut(int n) => word.substring(0, word.length - n);
+    // -es is the plural ending only after s, x, z, ch, sh (boxes → box);
+    // otherwise the -s comes off (panes → pane, not pan; owner 11/26).
+    final esPlural = RegExp(r'(s|x|z|ch|sh)es$').hasMatch(word);
     final tries = <String>[
       if (noun && word.endsWith('ies')) '${cut(3)}y',
-      if (noun && word.endsWith('es')) cut(2),
+      if (noun && esPlural) cut(2),
       if (noun && word.endsWith('s')) cut(1),
+      if (noun && word.endsWith('es') && !esPlural) cut(2),
       if (verb && word.endsWith('ied')) '${cut(3)}y',
       if (verb && word.endsWith('ed')) cut(2),
       if (verb && word.endsWith('ed')) cut(1),

@@ -748,7 +748,37 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
   void dispose() {
     _ticker?.cancel();
     _foundTimer?.cancel();
+    _tapTimer?.cancel();
     super.dispose();
+  }
+
+  // Owner 11/26: a double click on a label collects it, a single click opens
+  // 單字詳情. Counted here, not by a DoubleTapGestureRecognizer: under the
+  // label's pan / long-press detector the web build either opened 單字詳情 on
+  // the first click or dropped the tap altogether.
+  static const doubleTapWindow = Duration(milliseconds: 300);
+  Timer? _tapTimer;
+  String? _tapPin;
+
+  void _pinTapped(PinData pin) {
+    final single = widget.onPinTap;
+    final double = widget.onPinDoubleTap;
+    if (double == null) {
+      single?.call(pin);
+      return;
+    }
+    if (_tapTimer?.isActive == true && _tapPin == pin.id) {
+      _tapTimer!.cancel();
+      _tapPin = null;
+      double(pin);
+      return;
+    }
+    _tapTimer?.cancel();
+    _tapPin = pin.id;
+    _tapTimer = Timer(doubleTapWindow, () {
+      _tapPin = null;
+      if (mounted) single?.call(pin);
+    });
   }
 
   void _pop() => setState(() {
@@ -1057,16 +1087,12 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
                                             ? null
                                             : () => widget
                                                 .onPinLongPress!(byId[pl.id]!),
-                                        onDoubleTap: widget.onPinDoubleTap ==
-                                                null
-                                            ? null
-                                            : () => widget
-                                                .onPinDoubleTap!(byId[pl.id]!),
                                         child: Tap(
-                                          onTap: widget.onPinTap == null
+                                          onTap: widget.onPinTap == null &&
+                                                  widget.onPinDoubleTap == null
                                               ? null
-                                              : () => widget
-                                                  .onPinTap!(byId[pl.id]!),
+                                              : () =>
+                                                  _pinTapped(byId[pl.id]!),
                                           label:
                                               '${byId[pl.id]!.word} ${byId[pl.id]!.zh}',
                                           child: WordPin(

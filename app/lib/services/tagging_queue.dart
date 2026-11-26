@@ -350,7 +350,7 @@ class TaggingQueue extends ChangeNotifier {
     bool allLevels = false,
   }) async {
     try {
-      return LexiconPack.instance.linkAll(await tagger.candidates(
+      return dropRelinkedAdjectives(await tagger.candidates(
         bytes,
         level: level,
         lexicon: lexicon(),
@@ -363,6 +363,36 @@ class TaggingQueue extends ChangeNotifier {
     } finally {
       tagger.close();
     }
+  }
+
+  /// [found] linked to the lexicon pack, minus the adjectives the pack could
+  /// only read as another word (owner 11/26: ribbed → rib 「肋骨」, textured →
+  /// texture 「施加紋理」, molded → mold 「形成」 on photos). A label that
+  /// would show the wrong word is left out; the photo has plenty of others.
+  static List<WordCandidate> dropRelinkedAdjectives(List<WordCandidate> found,
+      {LexiconPack? pack}) {
+    final p = pack ?? LexiconPack.instance;
+    final out = <WordCandidate>[];
+    for (final c in found) {
+      // Only an inflected form of another word ('form'): an adjective with
+      // its own entry kept on its word's card (illuminated → illuminate,
+      // 問題回報 #706, via 'family') stays.
+      final hit = p.lookupCommon(c.word, pos: c.pos);
+      // A harder word the dictionary lacks shows 「未收錄」 with no meaning
+      // (owner 11/27: integumentary, golden retriever on a puppy); the easy
+      // pass keeps its words, they are the photo's basics.
+      if (c.focus == 'harder' && hit == null && !p.isEmpty) continue;
+      if (c.pos.startsWith('adj') &&
+          hit != null &&
+          ((hit.via == 'form' && !hit.entry.pos.startsWith('adj')) ||
+              // ribbed kept on rib's card showed rib 「肋骨」 (owner 11/27):
+              // an adjective never becomes a noun on the photo.
+              (hit.via == 'family' && hit.entry.pos.startsWith('n')))) {
+        continue;
+      }
+      out.add(p.link(c));
+    }
+    return out;
   }
 
   static List<WordCandidate> _merge(

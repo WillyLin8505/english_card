@@ -314,7 +314,10 @@ class AppSettings extends ChangeNotifier {
       : kIsWeb
           ? Uri.base.resolve('/tag').toString()
           : '';
-  String get apiKey => _taggingUrl.trim().isEmpty && kIsWeb ? '' : _apiKey;
+  /// Sent also when the web build uses its own server (owner 11/26: from
+  /// api.willylinai.com the server needs the key, 問題回報 #1730; dropping it
+  /// made every key look wrong). This computer's own page ignores it.
+  String get apiKey => _apiKey;
 
   /// The device can classify and no address is set (always so on phones,
   /// card #1074): photos are recognized on the phone and never uploaded.
