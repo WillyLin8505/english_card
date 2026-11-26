@@ -8985,3 +8985,10 @@ commit `4efc66c5`（Windows：flutter analyze 無 error、flutter test 全過（
     
     剩下
     - 1.8 GB 的主要來源未知（相機預覽 + 詞庫 pack + 圖片快取疊加的可能性大），需要 iPhone 上的 Instruments／memory_monitor 快照才能定位；iPhone 12 只有 4 GB。
+
+## M1136（2026-11-27 03:51）狀態：待做
+commit `f5c3c64a`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #226：模擬使用者・複習
+  結果：第 91 輪：2/2 通過（learner 123 秒、restart 58 秒，round 4502）；沒有新問題。
+  需要 Mac：無。
+    - 剩餘：無。
