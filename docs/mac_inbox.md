@@ -8908,3 +8908,11 @@ commit `f81bec3e`（Windows：flutter analyze 無 error、flutter test 全過；
   結果：第 90 輪：learner 通過（204 秒，round 4498）；restart 在 runround 中失敗「No tests were found」，單獨重跑通過（40 天、13 次重開、1303 次複習、findings 空），判定為暫時性問題。沒有新問題。
   需要 Mac：無。
     - 剩餘：若 run_round 的 restart 再出現「No tests were found」，考慮讓 run_round 對此訊息自動重試一次。
+
+## M1130（2026-11-26 11:15）狀態：待做
+commit `218debaa`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1416：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
+  結果：全部完成：目前 flutter analyze 0 error／0 warning；flutter test 全套 1068 通過、2 個既有跳過、0 失敗。
+- 卡 #224：模擬使用者・拍照
+  結果：第 88 輪（未完成）：photoui 1/1 通過；pins 8 片只有 0–2 片通過，第 3 片（檔案 18000–23999）連兩次在約 47–88 秒無訊息中斷（exit 79，"did not complete"），第 4–7 片沒跑到；新問題 0（未開問題回報）；UX 建議 0。
+  需要 Mac：無。輸出：card224_r88_photo_ui.txt、card224_r88_pins.txt、card224_r88_pins2.txt。
