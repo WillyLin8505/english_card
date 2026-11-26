@@ -79,6 +79,13 @@ class _CameraScreenState extends State<CameraScreen>
             (ModalRoute.of(context)?.isCurrent ?? true);
     if (active == _active) return;
     _active = active;
+    // 問題回報 #1862: the live view needs the memory; decoded pictures of the
+    // tabs behind are rebuilt when shown again.
+    if (active) {
+      PaintingBinding.instance.imageCache
+        ..clear()
+        ..clearLiveImages();
+    }
     _syncCamera();
   }
 
@@ -710,7 +717,8 @@ class _FullCameraState extends State<_FullCamera> {
                           color: Colors.white.withValues(alpha: 0.16),
                         ),
                         child: widget.lastPhoto != null
-                            ? PhotoImage(widget.lastPhoto!, fit: BoxFit.cover)
+                            ? PhotoImage(widget.lastPhoto!,
+                                thumbnail: true, fit: BoxFit.cover)
                             : const Center(
                                 child: MSvg(MIcon.gallery20,
                                     size: 22, tint: Colors.white)),

@@ -9,9 +9,31 @@ import '../models/learning_card.dart';
 /// of the picture's shorter side, at most [maxEdge] px.
 Future<Uint8List> cropAround(Uint8List image, LabelPoint at,
     {double fraction = 0.35, double maxEdge = 640}) async {
-  final codec = await ui.instantiateImageCodec(image);
-  final source = (await codec.getNextFrame()).image;
-  codec.dispose();
+  // 問題回報 #1863: decode no larger than the crop needs. A 12 MP shot held
+  // ~48 MB for a crop that ends at ≤ [maxEdge] px; read the header, then
+  // decode scaled so the crop square is about [maxEdge] wide.
+  final buffer = await ui.ImmutableBuffer.fromUint8List(image);
+  final ui.ImageDescriptor descriptor;
+  try {
+    descriptor = await ui.ImageDescriptor.encoded(buffer);
+  } finally {
+    buffer.dispose();
+  }
+  final fullSide = math.min(descriptor.width, descriptor.height) * fraction;
+  final scale = fullSide > maxEdge ? maxEdge / fullSide : 1.0;
+  ui.Image source;
+  try {
+    final codec = await descriptor.instantiateCodec(
+        targetWidth: scale < 1 ? (descriptor.width * scale).round() : null);
+    source = (await codec.getNextFrame()).image;
+    codec.dispose();
+  } catch (_) {
+    // A format that cannot be decoded scaled: the full size, as before.
+    final codec = await descriptor.instantiateCodec();
+    source = (await codec.getNextFrame()).image;
+    codec.dispose();
+  }
+  descriptor.dispose();
   try {
     final w = source.width.toDouble(), h = source.height.toDouble();
     final side = math.min(w, h) * fraction;

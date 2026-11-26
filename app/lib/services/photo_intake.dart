@@ -166,17 +166,21 @@ class PhotoIntake {
     return (photo: photo, created: repo.addDeckPhoto(photo, labels));
   }
 
+  /// Reads only the header: a full decode of a 12 MP camera shot is ~48 MB
+  /// of pixels on top of everything else (問題回報 #1860, 拍照 memory warning).
   static Future<(int, int)?> _imageSize(Uint8List bytes) async {
+    ui.ImmutableBuffer? buffer;
+    ui.ImageDescriptor? descriptor;
     try {
-      final codec = await ui.instantiateImageCodec(bytes);
-      final frame = await codec.getNextFrame();
-      final size = (frame.image.width, frame.image.height);
-      frame.image.dispose();
-      codec.dispose();
-      return size;
+      buffer = await ui.ImmutableBuffer.fromUint8List(bytes);
+      descriptor = await ui.ImageDescriptor.encoded(buffer);
+      return (descriptor.width, descriptor.height);
     } catch (e) {
       debugPrint('Image size detection failed: $e');
       return null;
+    } finally {
+      descriptor?.dispose();
+      buffer?.dispose();
     }
   }
 

@@ -571,7 +571,7 @@ class LexiconPack extends ChangeNotifier {
       return c.lexemeId == null ? c : c.copyWith(lexemeId: () => null);
     }
     final e = hit.entry;
-    final meaning = e.learnerMeaning;
+    final meaning = e.meaningForEvidence(c.evidence);
     if (meaning == null) {
       _request('missing_localization', e.lemma, e.pos, lexemeId: e.id);
     }
@@ -1253,18 +1253,58 @@ class LexEntry {
     return best ?? (searchText.contains(query) ? 3 : null);
   }
 
+  /// The senses a learner is shown: with a Chinese gloss, and not obsolete,
+  /// slang or another word with the same spelling.
+  List<LexSense> _usableSenses() => [
+        for (var i = 0; i < senses.length; i++)
+          if ((senses[i].native ?? '').trim().isNotEmpty &&
+              !senses[i].labels.any((l) =>
+                  _rareLabels.contains(l.toLowerCase()) ||
+                  // Another etymology: a different word with the same
+                  // spelling — unless the lexicon put it first (問題回報
+                  // #341: date 「日期」, pen 「筆」, plane 「飛機」).
+                  (i > 0 && l.startsWith('etymology-'))))
+            senses[i]
+      ];
+
+  /// 問題回報 #1866: a photo label takes the sense the photo shows. The
+  /// recognizer's English [evidence] ("kitchen countertop") is matched with
+  /// each sense's English definition; the sense sharing the most words gives
+  /// the label (counter 「流理台」, not the first 「計算者」). No shared word →
+  /// the usual [learnerMeaning]. The dictionary's own senses win a tie.
+  String? meaningForEvidence(String evidence) {
+    final want = _contentWords(evidence);
+    if (want.isEmpty) return learnerMeaning;
+    final pool = _usableSenses();
+    final dictionary = pool.where((s) => !s.nativeAi).toList();
+    LexSense? best;
+    var bestShared = 0;
+    for (final s in dictionary.isNotEmpty ? dictionary : pool) {
+      final shared = _contentWords(s.definition).where(want.contains).length;
+      if (shared > bestShared) {
+        best = s;
+        bestShared = shared;
+      }
+    }
+    return best?.native?.trim() ?? learnerMeaning;
+  }
+
+  static const _stopWords = {
+    'a', 'an', 'the', 'of', 'or', 'and', 'to', 'in', 'on', 'at', 'for', 'by',
+    'with', 'is', 'are', 'be', 'it', 'its', 'one', 'who', 'that', 'which',
+    'someone', 'something', 'from', 'as',
+  };
+
+  /// The English content words of [text]: lower case, no stop words, a
+  /// plural s dropped so countertops and countertop match.
+  static Set<String> _contentWords(String text) => {
+        for (final w in text.toLowerCase().split(RegExp(r'[^a-z]+')))
+          if (w.length > 2 && !_stopWords.contains(w))
+            w.endsWith('s') && w.length > 3 ? w.substring(0, w.length - 1) : w
+      };
+
   String? _learnerMeaning() {
-    final usable = [
-      for (var i = 0; i < senses.length; i++)
-        if ((senses[i].native ?? '').trim().isNotEmpty &&
-            !senses[i].labels.any((l) =>
-                _rareLabels.contains(l.toLowerCase()) ||
-                // Another etymology: a different word with the same
-                // spelling — unless the lexicon put it first (問題回報
-                // #341: date 「日期」, pen 「筆」, plane 「飛機」).
-                (i > 0 && l.startsWith('etymology-'))))
-          senses[i]
-    ];
+    final usable = _usableSenses();
     final dictionary = usable.where((s) => !s.nativeAi).toList();
     final common =
         (dictionary.isNotEmpty ? dictionary : usable).take(2).toList();
