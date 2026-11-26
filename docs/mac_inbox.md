@@ -9062,3 +9062,11 @@ commit `ce38bc86`（Windows：flutter analyze 無 error、flutter test 全過）
 問題：[待決定] 卡 #1419：標籤複查已寫好但 tagger 還在跑舊程式，要重啟嗎？
 **owner 決定**：Manager 11/27：不用等 owner。tagger 已在 11/27 01:xx 以最新程式（含 #1419 標籤複查 LABEL_VERIFY）透過 start_tagger.bat 重啟多次，複查已生效。
 App 畫面若和這個決定不同，請照決定改。
+
+## M1145（2026-11-27 07:19）狀態：待做
+commit `1e61e295`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1442：問題回報 #1871：[owner] Windows PC 資源超過 80% 超過 10 分鐘：memory
+  結果：已自行恢復：記憶體 93% → 07:00 已降到 42%（可用 34 GB／63 GB），fluttertester 已不在，無需改程式或資料。
+- 卡 #1444：問題回報 #1872：[記憶體] 拍照
+  結果：第 1 輪：#1872 與 #1860–#1863 同一台 iPhone 12（iPhone13,2，4 GB）、同一畫面的重複回報；先前四張卡的修正都已在工作樹，本卡不再改程式，等 iPhone 實測。
+  需要 Mac：iPhone 12 實機開拍照分頁，用 Instruments／memory_monitor 快照看相機預覽 + 詞庫 pack + 圖片快取各佔多少；若 App 基礎佔用仍 > 1.5 GB，再評估 preset 改 medium 或預覽期間暫停 TaggingQueue。
