@@ -9003,3 +9003,16 @@ commit `d639088f`（Windows：flutter analyze 無 error、flutter test 全過）
   結果：第241輪完成：4/4模擬通過（A1 28秒、B1 31秒、抽卡 46秒、媒體 19秒）、詞庫17315詞；B1 chineseinenglishui=0，A1 有 1 筆但是詞源文字（見下），非畫面中文殘留。
   需要 Mac：無新項目。
     下一輪：沿用 app/test/simulation/run_round.py --lang fr（A1/B1 先跑、再 N --only card_draw,fr_media）。
+
+## M1138（2026-11-27 04:10）狀態：待做
+commit `be35a6f3`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #227：模擬使用者・單字本
+  結果：第 4510 輪：2/2 通過（database 204 秒、detail 99 秒）；新問題 0、UX 建議 0 新增（沿用 #1649）。需要你決定：無。需要 Mac：無。
+  需要 Mac：無。
+    
+    - database：抽 250 字、加入 226、等待（有詞條無中文意思）20（約 8%，上一輪 222/24）、findings 空；detail：393 個詞條詳情頁全部渲染正常、findings 空。
+    - UX 觀察：「等待補意思」比例下降，說明文字已在 #1649 處理（等 iPad 驗證），沒有重複開單。
+    - 備註：detail 前兩次在 10 分鐘上限內沒跑完（排隊等共用 heavy 鎖，機器忙），第三次通過；第一次未指定輪次時 4501 只留下 pack（被中斷的空輪）。加了 --no-posthog，事件沒上傳。
+    - 沒改程式與資料；golden／QC 不適用，無備份。
+    - log：app/build/rounds/4510/。
+    - 剩餘：無新項目。
