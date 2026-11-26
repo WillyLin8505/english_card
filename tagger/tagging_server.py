@@ -255,7 +255,7 @@ def build_prompt(level: str, lang: str = 'en', native: str = 'zh-TW',
 
 SCORE_PROMPT_VERSION = 'label-check-v2'
 SCORE_MAX_LABELS = 24
-CEFR_PROMPT_VERSION = 'photo-tags-visible-v16-no-examples'
+CEFR_PROMPT_VERSION = 'photo-tags-visible-v17-verified'
 CEFR_TAGS_PER_LEVEL = 3
 # A1/A2 may not exceed this many labels each (default = per_level) so beginners
 # cannot consume TAGS_MAX (~18) and leave B2-C2 with no slots.
@@ -291,6 +291,11 @@ CEFR_CANDIDATE_SCHEMA = {
 }
 # Owner 11/25 comparison (8 photos): 18 labels first, then 8 harder ones in the
 # background gave the most words (22.4) and level coverage (3.8 of 6 bands >= 3).
+# Card #1418 / 問題回報 #1849 (「標籤都是錯的，辨識太快」): after the first pass every
+# non-verb label is looked at against the photo once more (the score() question) and
+# dropped when the model's P(shown) is below this. Slower on purpose, more accurate.
+LABEL_VERIFY = os.environ.get('TAGGER_LABEL_VERIFY', '1').strip().lower() not in {'0', 'false', 'no', 'off'}
+LABEL_VERIFY_MIN = float(os.environ.get('TAGGER_LABEL_VERIFY_MIN', '0.6'))
 VERB_CHECK = os.environ.get('TAGGER_VERB_CHECK', '1').strip().lower() not in {'0', 'false', 'no', 'off'}
 CEFR_HARDER_MAX_ITEMS = int(os.environ.get('TAGGER_CEFR_HARDER_MAX_ITEMS', '8'))
 CEFR_HARDER_SCHEMA = json.loads(json.dumps(CEFR_CANDIDATE_SCHEMA))
@@ -1454,6 +1459,7 @@ class Tagger:
                 raw = list(raw) + list(again.get('candidates', []))
             items = to_candidates(raw, self.lexicon, exclude, lang)
             items = self._drop_unseen_verbs(prepared, items, lang, exclude)
+            items = self._drop_unshown_labels(prepared, items, lang)
             # Hard-cap A1/A2 so a noun-heavy first pass cannot fill TAGS_MAX alone.
             items = cap_cefr_beginner_bands(items)
             # Do not cache empty CEFR-band replies: a truncated or weak answer
@@ -1501,6 +1507,31 @@ class Tagger:
                 for c in content.get('checks', [])}
         drop = {v['word'] for v in verbs if not seen.get(str(v['word']).lower(), False)}
         return [i for i in items if i['word'] not in drop]
+
+    def _drop_unshown_labels(self, prepared: bytes, items: list[dict], lang: str) -> list[dict]:
+        """Card #1418: a mouse photo came back as collaborate / secure / elastic / craft /
+        coil. Ask the model once more, label by label, whether the photo shows it and
+        keep only labels whose P(shown) reaches LABEL_VERIFY_MIN. Verbs already had
+        their own stricter check. A failed or unreadable check keeps the labels."""
+        if not LABEL_VERIFY:
+            return items
+        todo = [i for i in items if not str(i.get('pos', '')).startswith('verb')][:SCORE_MAX_LABELS]
+        if not todo:
+            return items
+        labels = [{'word': str(i['word']).lower(), 'pos': i.get('pos')} for i in todo]
+        try:
+            content, logprobs = self._chat(build_score_prompt(labels, lang), SCORE_SCHEMA,
+                                           prepared, max_tokens=40 + 24 * len(labels),
+                                           logprobs=True)
+        except Exception:  # noqa: BLE001
+            return items
+        checks = content.get('checks') or []
+        probs = boolean_scores(logprobs)
+        if len(checks) != len(labels) or len(probs) < len(checks):
+            return items
+        drop = {labels[n]['word'] for n in range(len(labels))
+                if probs[n] is not None and probs[n] < LABEL_VERIFY_MIN}
+        return [i for i in items if str(i['word']).lower() not in drop]
 
     def enrich(self, req: dict) -> dict:
         word = str(req.get('word', '')).strip().lower()

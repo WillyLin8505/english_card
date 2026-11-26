@@ -84,7 +84,7 @@ def test_cefr_prompt_lists_visible_objects_level_from_lexicon():
     assert "compact JSON keys" in prompt
     assert "more precise nouns, verbs and" in prompt
     assert "Never a formal or" in prompt
-    assert CEFR_PROMPT_VERSION == "photo-tags-visible-v16-no-examples"
+    assert CEFR_PROMPT_VERSION == "photo-tags-visible-v17-verified"
 
 
 def test_compact_cefr_candidates_decode_to_public_shape():
@@ -449,3 +449,30 @@ def test_verbs_the_photo_does_not_show_are_dropped():
     # the harder pass sees the first pass's words (here: woman) as seen_words
     hard = [{'word': 'rest', 'pos': 'verb'}, {'word': 'sit', 'pos': 'verb'}]
     assert [i['word'] for i in T()._drop_unseen_verbs(b'img', hard, 'en', ['woman'])] == ['sit']
+
+
+def test_labels_the_photo_does_not_show_are_dropped_card1418():
+    """Card #1418: collaborate / secure / elastic on a mouse photo — every non-verb
+    label is checked again and dropped below LABEL_VERIFY_MIN."""
+    import tagging_server as ts
+
+    def tok(word, p):
+        import math
+        return [{'token': '"shown":', 'logprob': 0.0},
+                {'token': word, 'logprob': math.log(p),
+                 'top_logprobs': [{'token': 'true', 'logprob': math.log(p)},
+                                  {'token': 'false', 'logprob': math.log(1 - p)}]}]
+
+    class T(ts.Tagger):
+        def __init__(self):
+            pass
+
+        def _chat(self, prompt, schema, image=None, **kw):
+            assert '1. mouse' in prompt and '2. secure' in prompt and 'sit' not in prompt
+            lp = tok('true', 0.95) + tok('false', 0.2)
+            return ({'checks': [{'word': 'mouse', 'shown': True},
+                                {'word': 'secure', 'shown': True}]}, lp)
+
+    items = [{'word': 'mouse', 'pos': 'noun'}, {'word': 'sit', 'pos': 'verb'},
+             {'word': 'secure', 'pos': 'adjective'}]
+    assert [i['word'] for i in T()._drop_unshown_labels(b'img', items, 'en')] == ['mouse', 'sit']
