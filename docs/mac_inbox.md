@@ -8954,3 +8954,34 @@ commit `d9d4d743`（Windows：flutter analyze 無 error、flutter test 全過；
   結果：第240輪完成：4/4模擬通過（A1 30秒、B1 23秒、抽卡 34秒、媒體 14秒）、詞庫17315詞、chineseinenglishui=0（A1/B1 皆通過）。
   需要 Mac：無新項目。
     下一輪：沿用 app/test/simulation/run_round.py N --lang fr。
+
+## M1135（2026-11-27 02:44）狀態：待做
+commit `4efc66c5`（Windows：flutter analyze 無 error、flutter test 全過（1 檔在全部一起跑時失敗、單獨重跑通過）；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1434：問題回報 #1866：[owner] 照片標籤的中文取錯意思：counter 計算者、grain 穀物、lime 石灰、
+  結果：照片標籤改用「照片裡的那個意思」：counter 會取「流理台」，不再是第一個「計算者」；單元測試與相關 Flutter 測試全部通過，但 10 張照片的實機／網頁版驗收尚未做（見下）。
+- 卡 #1435：問題回報 #1860：[記憶體] 拍照
+  結果：第 1 輪：已改 App 端、未實機驗證——拍照後 PhotoIntake.imageSize 把整張 12 MP 相機照片完整解碼只為了讀寬高（約 48 MB 像素），改成只讀檔頭；需要 Mac／iPhone 13 實機重測。
+  需要 Mac：iPhone 13 profile 版，拍照→辨識，看常駐峰值與是否仍收到記憶體警告。
+    - 若仍高：相機 `ResolutionPreset.high` 可降、拍照後原圖 bytes 傳進 photoStore／Vision 多份可只保留一份；App 基礎佔用 ~1.8 GB 另需查（開問題回報待 Mac 數字）。
+- 卡 #1436：問題回報 #1861：[記憶體] 拍照
+  結果：第 1 輪：拍照畫面記憶體警告（#1861，App 佔 1866 MB）——已減少兩處記憶體用量，尚無法在 iPad 量測實際降幅。
+  需要 Mac：用 iPad／iPhone 開拍照分頁連拍 10 張，看 App 佔用是否明顯低於 1.8 GB；若仍高，要用 Instruments 查相機預覽本身（ResolutionPreset.high）的佔用。這張單筆回報根因無法從報告確定，故不標完成。
+- 卡 #1437：問題回報 #1862：[記憶體] 拍照
+  結果：已改程式、未在 Windows 重現（iOS 專屬）；需 iPhone 實機驗證。iPhone 12（4 GB）拍照畫面 App 佔用 2219 MB、剩 129 MB，收到記憶體警告。
+  需要 Mac：iPhone 12 實機開拍照分頁、連拍數張，看 MemoryMonitor 是否仍報警告（剩餘可用應 > 1 GB）。
+    - 若仍報：相機 `ResolutionPreset.high` 可降為 medium，或預覽期間暫停 TaggingQueue。
+- 卡 #1438：問題回報 #1863：[記憶體] 照片詳情
+  結果：第 1 輪：長按辨識的裁切不再把整張 12 MP 照片解成全尺寸（約 48 MB → 約 35 MB 以內，依照片大小而定）；#1863 的 1.8 GB 主因未能在 Windows 量到，還需要 iPhone 實測。
+  需要 Mac：iPhone 12（iPhone13,2）拍照後進照片詳情，長按標籤辨識一次，看 App 佔用（#1863 為 1867 MB）與是否還收到記憶體警告。
+    
+    背景
+    - #1860／#1861／#1862（拍照畫面，同一台 iPhone、同樣 1866–2219 MB）是同一個問題；#1861 的修正（photo_intake 只讀圖頭取尺寸）已在工作樹，照片詳情沿用同一批照片資料。
+    - 照片詳情的圖片本來就用 ResizeImage 依顯示尺寸解碼（photo_cache.dart），沒有全尺寸解碼；MemoryMonitor 收到警告時也已清圖片／詞庫快取。
+    
+    改了什麼
+    - app/lib/services/spot_crop.dart：cropAround 先讀圖頭，依裁切方塊約 640 px 縮小解碼（不支援縮放解碼的格式回退全尺寸）。
+    - app/test/card1438_crop_decode_test.dart：3000x2000 圖裁出 640x640。
+    - flutter analyze 兩檔 0 問題；新測試過。未跑整套 flutter test；無資料改動，沒有備份；golden／QC 不受影響。
+    
+    剩下
+    - 1.8 GB 的主要來源未知（相機預覽 + 詞庫 pack + 圖片快取疊加的可能性大），需要 iPhone 上的 Instruments／memory_monitor 快照才能定位；iPhone 12 只有 4 GB。
