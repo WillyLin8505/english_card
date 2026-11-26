@@ -484,8 +484,10 @@ class _SaveFlightState extends State<_SaveFlight>
 class _CollectionTray extends StatelessWidget {
   final List<String> words;
   final GlobalKey trayKey;
+  final bool hot;
 
-  const _CollectionTray({required this.words, required this.trayKey});
+  const _CollectionTray(
+      {required this.words, required this.trayKey, this.hot = false});
 
   @override
   Widget build(BuildContext context) {
@@ -495,9 +497,11 @@ class _CollectionTray extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       constraints: const BoxConstraints(minHeight: 64),
       decoration: BoxDecoration(
-        color: MColors.primary.withValues(alpha: 0.06),
+        color: MColors.primary.withValues(alpha: hot ? 0.2 : 0.06),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: MColors.primary.withValues(alpha: 0.35)),
+        border: Border.all(
+            color: MColors.primary.withValues(alpha: hot ? 1 : 0.35),
+            width: hot ? 2 : 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

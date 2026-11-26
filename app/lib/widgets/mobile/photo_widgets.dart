@@ -560,6 +560,8 @@ class PinnedPhoto extends StatefulWidget {
   /// true means the label was dropped somewhere else (the 單字收集區) and
   /// stays where it was.
   final bool Function(PinData pin, Offset globalPosition)? onPinDropped;
+  /// Finger position (global) while a label is dragged; null when it ends.
+  final void Function(Offset? globalPosition)? onPinDragAt;
 
   /// 卡 #951: true while a finger is down on a movable label, so the page
   /// around the photo does not scroll along with the drag.
@@ -657,6 +659,7 @@ class PinnedPhoto extends StatefulWidget {
     this.onPinDoubleTap,
     this.onPinMoved,
     this.onPinDropped,
+    this.onPinDragAt,
     this.onPinHeld,
     this.onPhotoTap,
     this.onPhotoLongPress,
@@ -920,7 +923,8 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
               o.dy.clamp(
                   area.top + 4, math.max(area.top + 4, area.bottom - 4)));
           return Stack(
-            clipBehavior: Clip.hardEdge,
+            // 卡 #1417: a dragged label may leave the photo (to the tray).
+            clipBehavior: _dragging == null ? Clip.hardEdge : Clip.none,
             children: [
               Positioned.fill(
                   child: GestureDetector(
@@ -1015,20 +1019,17 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
                                                     null ||
                                                 byId[pl.id]!.muted
                                             ? null
-                                            : (d) => setState(() {
-                                                  final base = placed
-                                                      .firstWhere(
-                                                          (x) => x.id == pl.id)
-                                                      .anchor;
-                                                  _dragBy = clampToBox(base +
-                                                          _dragBy +
-                                                          d.delta) -
-                                                      base;
-                                                }),
+                                            : (d) {
+                                                setState(
+                                                    () => _dragBy += d.delta);
+                                                widget.onPinDragAt
+                                                    ?.call(d.globalPosition);
+                                              },
                                         onPanEnd: widget.onPinMoved == null ||
                                                 byId[pl.id]!.muted
                                             ? null
                                             : (d) {
+                                                widget.onPinDragAt?.call(null);
                                                 if (widget.onPinDropped?.call(
                                                         byId[pl.id]!,
                                                         d.globalPosition) ==
@@ -1043,7 +1044,7 @@ class _PinnedPhotoState extends State<PinnedPhoto> {
                                                     .firstWhere(
                                                         (x) => x.id == pl.id)
                                                     .anchor;
-                                                final to = base + _dragBy;
+                                                final to = clampToBox(base + _dragBy);
                                                 setState(() {
                                                   _dragging = null;
                                                   _dragBy = Offset.zero;

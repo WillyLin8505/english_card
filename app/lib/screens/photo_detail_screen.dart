@@ -94,6 +94,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
   final _trayKey = GlobalKey();
   // 卡 #951: a finger is on a label — the page must not scroll with it.
   bool _pinHeld = false;
+  bool _trayHot = false;
 
   /// 問題回報：Mac 實機量測照片詳情開啟 114ms（M-PERF）: the whole page in its
   /// first frame took up to 96 ms to build. Frame 0 is the photo and the
@@ -675,7 +676,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                                     MediaQuery.sizeOf(context).height * 0.62),
                             decoration:
                                 MDecor.heroPhotoFrame(radius: MRadii.xxl),
-                            clipBehavior: Clip.antiAlias,
+                            clipBehavior: _pinHeld ? Clip.none : Clip.antiAlias,
                             child: session == null
                                 // M-PERF: frame 0 — the photo alone, as
                                 // PinnedPhoto draws it (labels come next).
@@ -700,6 +701,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
                         if (session != null) ...[
                           _CollectionTray(
                             trayKey: _trayKey,
+                            hot: _trayHot,
                             words: [
                               for (final w in session.collected)
                                 _shown(w.word, w.candidate.pos)
@@ -806,12 +808,13 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
       onPinHeld: (v) {
         if (v != _pinHeld && mounted) setState(() => _pinHeld = v);
       },
+      onPinDragAt: (g) {
+        final hot = g != null && _overTray(g);
+        if (hot != _trayHot && mounted) setState(() => _trayHot = hot);
+      },
       onPinDropped: (p, global) {
         final w = wordOf(p);
-        final box = _trayKey.currentContext?.findRenderObject();
-        if (w == null || box is! RenderBox || !box.attached) return false;
-        final rect = box.localToGlobal(Offset.zero) & box.size;
-        if (!rect.inflate(16).contains(global)) return false;
+        if (w == null || !_overTray(global)) return false;
         session.collect(w);
         return true;
       },
@@ -835,6 +838,14 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen>
       revealNew: true,
       fit: BoxFit.contain,
     );
+  }
+
+  bool _overTray(Offset global) {
+    final box = _trayKey.currentContext?.findRenderObject();
+    if (box is! RenderBox || !box.attached) return false;
+    return (box.localToGlobal(Offset.zero) & box.size)
+        .inflate(16)
+        .contains(global);
   }
 
   Widget? _overlayFor(Photo photo, PhotoWordSession session) {
