@@ -260,7 +260,7 @@ def build_prompt(level: str, lang: str = 'en', native: str = 'zh-TW',
 
 SCORE_PROMPT_VERSION = 'label-check-v2'
 SCORE_MAX_LABELS = 24
-CEFR_PROMPT_VERSION = 'photo-tags-visible-v18-harder-parts'
+CEFR_PROMPT_VERSION = 'photo-tags-visible-v19-main-first'
 CEFR_TAGS_PER_LEVEL = 3
 # A1/A2 may not exceed this many labels each (default = per_level) so beginners
 # cannot consume TAGS_MAX (~18) and leave B2-C2 with no slots.
@@ -345,6 +345,7 @@ def build_cefr_prompt(lang: str = 'en', exclude: list[str] | None = None,
         'assigns the real level later, so never guess a level.',
         'Mix parts of speech only when visible: nouns, verbs (visible actions), adjectives '
         '(visible qualities), adverbs and short phrases. There is no part-of-speech quota. '
+        'Put the main subject of the photo (what it is a photo of) first. '
         'Prefer a specific object or part to a generic category for the same region. '
         'Each word appears once: never repeat a word for several copies of the same thing '
         '(one "person" for a group, one "glass" for many glasses). '
@@ -1483,24 +1484,31 @@ class Tagger:
                                    CEFR_CANDIDATE_SCHEMA, prepared, temperature=0.8,
                                    max_tokens=CEFR_MAX_TOKENS, compact=COMPACT_JSON)
                 raw = list(raw) + list(again.get('candidates', []))
-            items = to_candidates(raw, self.lexicon, exclude, lang)
-            if focus == 'harder' and len(items) < 3:
-                # Owner 11/27: at temperature 0 the harder pass can return the first
-                # pass's words again (type, code, screen ...), all excluded -> nothing.
-                # Ask once more, warmer, and keep what is new.
-                again = self._chat(prompt, schema, prepared, temperature=0.7,
-                                   max_tokens=CEFR_MAX_TOKENS, compact=COMPACT_JSON)
+            def checked(found: list[dict]) -> list[dict]:
+                found = self._drop_unseen_verbs(prepared, found, lang, exclude)
+                if focus == 'harder':
+                    # Owner 11/26 「移動困難度 bar 要出現更難的標籤」: the pass came back
+                    # with code / screen / display (A1-A2). Keep only words the CEFR list
+                    # or their frequency puts at B2 or above.
+                    found = keep_hard_words(found)
+                return self._drop_unshown_labels(prepared, found, lang)
+
+            items = checked(to_candidates(raw, self.lexicon, exclude, lang))
+            # Owner 11/27: at temperature 0 the harder pass can return the first pass's
+            # words again (all excluded) or words the checks drop, leaving the hard end
+            # of the bar with one or two words. Ask again, warmer, without what it has.
+            for temperature in ((0.7, 0.9) if focus == 'harder' else ()):
+                if len(items) >= 3:
+                    break
+                taken = list(exclude or []) + [i['word'] for i in items]
+                again = self._chat(
+                    build_cefr_prompt(lang, taken, per_level) + '\n' + FOCUS['harder']
+                    + harder_skip_line(taken), schema, prepared, temperature=temperature,
+                    max_tokens=CEFR_MAX_TOKENS, compact=COMPACT_JSON)
                 have = {i['word'] for i in items}
-                items += [i for i in to_candidates(again.get('candidates', []), self.lexicon,
-                                                   exclude, lang) if i['word'] not in have]
-            items = self._drop_unseen_verbs(prepared, items, lang, exclude)
-            if focus == 'harder':
-                # Owner 11/26 「移動困難度 bar 要出現更難的標籤」: the pass came back with
-                # code / screen / display (A1-A2), so the hard end of the bar showed
-                # nothing new. Keep only words the CEFR list or their frequency puts
-                # at B2 or above (unknown words stay; the App levels them by zipf).
-                items = keep_hard_words(items)
-            items = self._drop_unshown_labels(prepared, items, lang)
+                items += [i for i in checked(to_candidates(again.get('candidates', []),
+                                                           self.lexicon, taken, lang))
+                          if i['word'] not in have]
             # Hard-cap A1/A2 so a noun-heavy first pass cannot fill TAGS_MAX alone.
             items = cap_cefr_beginner_bands(items)
             # Do not cache empty CEFR-band replies: a truncated or weak answer

@@ -84,7 +84,7 @@ def test_cefr_prompt_lists_visible_objects_level_from_lexicon():
     assert "compact JSON keys" in prompt
     assert "more precise nouns, verbs and" in prompt
     assert "Never a formal or" in prompt
-    assert CEFR_PROMPT_VERSION == "photo-tags-visible-v18-harder-parts"
+    assert CEFR_PROMPT_VERSION == "photo-tags-visible-v19-main-first"
 
 
 def test_compact_cefr_candidates_decode_to_public_shape():
@@ -503,3 +503,38 @@ def test_harder_pass_is_told_again_which_words_are_taken():
     line = ts.harder_skip_line(['screen', 'code'])
     assert 'already on the photo' in line and 'screen, code' in line
     assert ts.harder_skip_line([]) == ''
+
+
+def test_harder_pass_asks_again_until_three_words_survive(tmp_path, monkeypatch):
+    """Owner 11/27: the puppy's hard end got two words; the checks dropped the rest."""
+    import contextlib, io
+    import tagging_server as ts
+    from PIL import Image
+    monkeypatch.setattr(ts, 'CACHE_DIR', str(tmp_path))
+    buf = io.BytesIO()
+    Image.new('RGB', (32, 32), 'white').save(buf, 'JPEG')
+    temps = []
+
+    class T(ts.Tagger):
+        def __init__(self):
+            self.model = 'm'
+            self.lexicon = None
+
+        @contextlib.contextmanager
+        def _inference(self, *a, **kw):
+            yield
+
+        def _chat(self, prompt, schema, image=None, **kw):
+            temps.append(kw.get('temperature'))
+            words = {None: ['canine'], 0.7: ['fawn'], 0.9: ['foliage', 'canopy']}[kw.get('temperature')]
+            return {'safe': True, 'candidates': [{'w': w, 'p': 'n', 'x': 1, 'y': 1} for w in words]}
+
+        def _drop_unseen_verbs(self, prepared, items, lang, seen=None):
+            return items
+
+        def _drop_unshown_labels(self, prepared, items, lang):
+            return items
+
+    out = T().candidates_cefr(buf.getvalue(), 'en', ['puppy'], 3, None, None, False, 'harder')
+    assert temps == [None, 0.7, 0.9]
+    assert [i['word'] for i in out] == ['canine', 'fawn', 'foliage', 'canopy']
