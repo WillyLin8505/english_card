@@ -55,6 +55,12 @@ Future<void> main() => CrashReporting.instance.run(_start);
 
 Future<void> _start() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // 問題回報 #1873: 照片詳情 hit iOS memory warnings at 1.8 GB. Flutter's
+  // default decoded-image cache is 100 MB / 1000 images; keep it smaller
+  // (images are decoded at display size, so 48 MB holds the screens in use).
+  PaintingBinding.instance.imageCache
+    ..maximumSizeBytes = 48 << 20
+    ..maximumSize = 120;
   // Web only: the Chinese font loads in the background, never blocking the
   // first frame (問題回報 #357); text re-lays out when it arrives.
   unawaited(loadWebCjkFont());
