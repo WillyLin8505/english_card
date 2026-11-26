@@ -9070,3 +9070,10 @@ commit `1e61e295`（Windows：flutter analyze 無 error、flutter test 全過；
 - 卡 #1444：問題回報 #1872：[記憶體] 拍照
   結果：第 1 輪：#1872 與 #1860–#1863 同一台 iPhone 12（iPhone13,2，4 GB）、同一畫面的重複回報；先前四張卡的修正都已在工作樹，本卡不再改程式，等 iPhone 實測。
   需要 Mac：iPhone 12 實機開拍照分頁，用 Instruments／memory_monitor 快照看相機預覽 + 詞庫 pack + 圖片快取各佔多少；若 App 基礎佔用仍 > 1.5 GB，再評估 preset 改 medium 或預覽期間暫停 TaggingQueue。
+
+## M1146（2026-11-27 07:38）狀態：待做
+commit `50c9d206`（Windows：flutter analyze 無 error、flutter test 全過；另有 2 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1445：問題回報 #1873：[記憶體] 照片詳情
+  結果：結論：照片詳情已經照顯示大小解碼，找不到單一洩漏點；先把 App 解碼圖片快取從預設 100 MB／1000 張降到 48 MB／120 張，降低再被 iOS 記憶體警告的機率。尚未在實機驗證，不算修好。
+  需要 Mac：- 在 iPhone／iPad 開幾張照片詳情（含很多單字的），用 Xcode Instruments 或 App 內 memory_monitor 的 snapshot 看佔用有沒有降到 1 GB 以下。
+    - 若仍破 1.5 GB，要在實機量是哪一類記憶體（解碼圖、Hive、音檔），再開問題回報。
