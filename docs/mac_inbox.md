@@ -8992,3 +8992,14 @@ commit `f5c3c64a`（Windows：flutter analyze 無 error、flutter test 全過；
   結果：第 91 輪：2/2 通過（learner 123 秒、restart 58 秒，round 4502）；沒有新問題。
   需要 Mac：無。
     - 剩餘：無。
+
+## M1137（2026-11-27 04:03）狀態：待做
+commit `d639088f`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #5：檢查標籤分級是否錯誤
+  結果：第 45 輪全庫 B 群掃描完成（唯讀，614 秒）：數字與第 44 輪幾乎相同（照片上估算 C1/C2 +10、名詞 +5、估算 +1），無新問題類型。
+  需要 Mac：無。
+    - 剩下：304 個 base 誤判待 #162/#163；無新增問題回報。
+- 卡 #496：模擬使用者・法語（英語母語者學法語）
+  結果：第241輪完成：4/4模擬通過（A1 28秒、B1 31秒、抽卡 46秒、媒體 19秒）、詞庫17315詞；B1 chineseinenglishui=0，A1 有 1 筆但是詞源文字（見下），非畫面中文殘留。
+  需要 Mac：無新項目。
+    下一輪：沿用 app/test/simulation/run_round.py --lang fr（A1/B1 先跑、再 N --only card_draw,fr_media）。
