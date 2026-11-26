@@ -8873,3 +8873,18 @@ commit `54e95d5e`（Windows：flutter analyze 無 error、flutter test 全過；
 - 卡 #224：模擬使用者・拍照
   結果：第 87 輪：photoui 1/1、pins 8/8 切片全部通過（約 47,000 張快取照片、14 萬個圖釘版面，findings 0）；新問題 0；UX 建議 0。
   需要 Mac：無。
+
+## M1126（2026-11-26 09:08）狀態：待做
+commit `e422164f`（Windows：flutter analyze 無 error、flutter test 全過；另有 2 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1405：問題回報 #1842：[owner] 照片找單字太慢（每張 25–48 秒）：先顯示再打分、App 照片優先、減少輸出
+  結果：第 1 輪：只做了第 2 項（背景打標等 App 照片結束）；其餘未做，還沒有前後秒數對照表。
+- 卡 #1406：問題回報 #1843：[owner] 照片辨識不準：硬湊看不出來的動詞（congregate、situate）、抽象字（
+  結果：第 2 輪未全部完成：照片標籤的動詞在 B1 路徑已清掉（6 → 0），但 mode=cefr 路徑還有 3 個動詞（grow、eat、sell），全庫量與 golden/QC live 還沒跑完。
+- 卡 #1415：問題回報 #1846：[意見回饋] 照片詳情：那個圖片都被所有的標籤站著了
+  結果：全部完成：單字詳情頁的資料庫圖片被標籤擠成約 55 px 高、只剩標籤，已改成圖片固定高度、標籤文字放在圖片下方。
+  需要 Mac：在 iPad 開法文單字「forêt」詳情頁，確認圖片完整可見、標籤在圖下方、首屏仍看得到圖片。
+    備註：工作樹裡 photo_detail_screen 等是別的卡的未提交修改，我沒碰。
+- 卡 #1414：問題回報 #1845：[意見回饋] 照片詳情：French Basic的那個圖片應該要用第一個圖庫的那張圖
+  結果：全部完成：Albums 頁的 French Basic 單字集卡片現在顯示第一個相片冊的封面照，不再是空白圖示（只改 App，沒動資料）。；驗證：flutter analyze 兩檔無問題。flutter test test/card897rootbacktest.dart 因 heavylock 排隊超過 10 分鐘
+  需要 Mac：在 iPad 開 Albums 頁，確認 French Basic 卡片顯示第一個相片冊的封面照、文字清楚可讀。
+    剩下：假設「第一個圖庫」= 清單中第一個相片冊；若 owner 其實要的是該單字集自己的第一張詞庫圖，需另改。
