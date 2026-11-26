@@ -115,8 +115,10 @@ FOCUS = {
               'already listed and name their visible parts, materials, patterns, shapes and '
               'details with an exact word (a part of an object, what it is made of, its '
               'texture or condition), or a precise name for an object not listed yet. Only '
-              'words you can point to here; return fewer when nothing more is visible. Never '
-              'abstract words, never a verb unless a person or animal is doing it right now.',
+              'words you can point to here; return fewer when nothing more is visible. Use '
+              'words a well-read adult uses in daily life, not scientific, medical or '
+              'technical jargon (no "ocular", "nasal", "integumentary"). Never abstract '
+              'words, never a verb unless a person or animal is doing it right now.',
     'easier': 'This time prefer common, broad everyday labels.',
     'actions': 'This time every label must be a verb or action phrase for something visibly '
                'happening or implied (e.g. "stroll", "queue up", "gaze"); no nouns.',
