@@ -8940,3 +8940,10 @@ commit `01e30ee9`（Windows：flutter analyze 無 error、flutter test 全過）
 - 卡 #1424：問題回報 #571：[Windows] flutter test 失敗：修好才會推給 Mac 驗證
   結果：全部完成：app/test/privacysettingstest.dart 現在通過（2/2），flutter test 全部通過（+1068，~2 略過），flutter analyze 0 error（12 個 info）。
   需要 Mac：無；可由 mac_sync 重試推送 #1416、#224。
+
+## M1133（2026-11-26 12:45）狀態：待做
+commit `510a4639`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1421：問題回報 #1851：[詞庫] 只有一個義項有中文、且是冷僻義：browser 標成「吃嫩葉的動物」（卡 #1419 /
+  結果：第 2 輪完成補驗：QC check --live 跑成功，regressions = []，golden 全部通過（word. 皆 1.0、photo.expectedsense 0.9286）；第 1 輪的資料改動不需還原。
+  需要 Mac：用 iPad 照一張桌面螢幕照片，確認 browser 標籤顯示「瀏覽器」而不是「吃嫩葉的動物」。
+    剩下：180 個無法補的詞（變化形、感嘆詞、縮寫）；-er 施事義掛錯中文 195 個沒有可靠自動判斷，未動；Qwen 視覺端辨識不相關字（saw/interweave）另案。
