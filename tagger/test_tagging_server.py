@@ -84,7 +84,7 @@ def test_cefr_prompt_lists_visible_objects_level_from_lexicon():
     assert "compact JSON keys" in prompt
     assert "more precise nouns, verbs and" in prompt
     assert "Never a formal or" in prompt
-    assert CEFR_PROMPT_VERSION == "photo-tags-visible-v17-verified"
+    assert CEFR_PROMPT_VERSION == "photo-tags-visible-v18-harder-parts"
 
 
 def test_compact_cefr_candidates_decode_to_public_shape():

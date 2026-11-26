@@ -108,12 +108,15 @@ POS = ['noun', 'verb', 'adjective', 'adverb', 'phrase']
 FOCUS = {
     # 問題回報 #1843/owner 11/25: the harder pass fills B2-C2 in the background;
     # it must still name what is visible (it used to pull in congregate, situate).
+    # Owner 11/27: asked only for "harder words", the desk photo came back with the first
+    # pass's words again; naming parts, materials and details of what is listed works.
     'harder': 'This time return less common, more precise words (upper-intermediate to '
-              'advanced) for things that are clearly visible in THIS photo: the exact name '
-              'of an object or part you can point to, its material, texture, shape or '
-              'condition, or an action a person or animal is doing right now. Only words you '
-              'can see here; return fewer when nothing more is visible. Never abstract or '
-              'inferred words, and no verb for an action nobody in the photo is doing.',
+              'advanced) for what is clearly visible in THIS photo. Look closer at the things '
+              'already listed and name their visible parts, materials, patterns, shapes and '
+              'details with an exact word (a part of an object, what it is made of, its '
+              'texture or condition), or a precise name for an object not listed yet. Only '
+              'words you can point to here; return fewer when nothing more is visible. Never '
+              'abstract words, never a verb unless a person or animal is doing it right now.',
     'easier': 'This time prefer common, broad everyday labels.',
     'actions': 'This time every label must be a verb or action phrase for something visibly '
                'happening or implied (e.g. "stroll", "queue up", "gaze"); no nouns.',
@@ -255,7 +258,7 @@ def build_prompt(level: str, lang: str = 'en', native: str = 'zh-TW',
 
 SCORE_PROMPT_VERSION = 'label-check-v2'
 SCORE_MAX_LABELS = 24
-CEFR_PROMPT_VERSION = 'photo-tags-visible-v17-verified'
+CEFR_PROMPT_VERSION = 'photo-tags-visible-v18-harder-parts'
 CEFR_TAGS_PER_LEVEL = 3
 # A1/A2 may not exceed this many labels each (default = per_level) so beginners
 # cannot consume TAGS_MAX (~18) and leave B2-C2 with no slots.
