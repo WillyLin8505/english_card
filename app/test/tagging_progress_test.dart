@@ -143,7 +143,8 @@ void main() {
     final processing = queue.process();
     await tester.pump();
     expect(find.textContaining('第 1/1 張'), findsOneWidget);
-    expect(queue.estimatedRemaining.inSeconds, inInclusiveRange(59, 60));
+    // 問題回報 #1842: no measured photo yet → assume 15 s (was 60 s).
+    expect(queue.estimatedRemaining.inSeconds, inInclusiveRange(14, 15));
     await addPhoto(1);
     await tester.pump(const Duration(seconds: 1));
     expect(find.textContaining('第 1/2 張'), findsOneWidget);
