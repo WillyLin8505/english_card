@@ -408,6 +408,81 @@
     "To become like an apple",
     "To collect fir-cones"
    ]
+  },
+  "reactor|noun": {
+   "first": [
+    "A device which uses atomic energy to produce "
+   ]
+  },
+  "flyer|noun": {
+   "first": [
+    "A leaflet, often for advertising"
+   ]
+  },
+  "hacker|noun": {
+   "first": [
+    "One who uses a computer to gain unauthorized "
+   ]
+  },
+  "sticker|noun": {
+   "first": [
+    "An adhesive label or decal"
+   ]
+  },
+  "thriller|noun": {
+   "first": [
+    "A suspenseful, sensational genre of story, bo"
+   ]
+  },
+  "follower|noun": {
+   "first": [
+    "An account holder who subscribes to see conte"
+   ]
+  },
+  "laser|noun": {
+   "first": [
+    "A beam of light produced by such a device; a "
+   ]
+  },
+  "coaster|noun": {
+   "first": [
+    "A small, flat or tray-like object on which a "
+   ]
+  },
+  "rover|noun": {
+   "first": [
+    "A small manned or unmanned land vehicle for e"
+   ]
+  },
+  "router|noun": {
+   "first": [
+    "Any device that directs packets of informatio"
+   ]
+  },
+  "spoiler|noun": {
+   "first": [
+    "A document, review or comment that discloses "
+   ]
+  },
+  "striker|noun": {
+   "first": [
+    "One of the players on a team in football (soc"
+   ]
+  },
+  "lighter|noun": {
+   "first": [
+    "A device used to light things, especially a r"
+   ]
+  },
+  "minister|noun": {
+   "first": [
+    "A politician who heads a ministry"
+   ]
+  },
+  "browser|noun": {
+   "first": [
+    "Any other type of information browser"
+   ]
   }
  }
 }
