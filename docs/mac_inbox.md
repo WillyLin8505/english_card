@@ -8947,3 +8947,10 @@ commit `510a4639`（Windows：flutter analyze 無 error、flutter test 全過）
   結果：第 2 輪完成補驗：QC check --live 跑成功，regressions = []，golden 全部通過（word. 皆 1.0、photo.expectedsense 0.9286）；第 1 輪的資料改動不需還原。
   需要 Mac：用 iPad 照一張桌面螢幕照片，確認 browser 標籤顯示「瀏覽器」而不是「吃嫩葉的動物」。
     剩下：180 個無法補的詞（變化形、感嘆詞、縮寫）；-er 施事義掛錯中文 195 個沒有可靠自動判斷，未動；Qwen 視覺端辨識不相關字（saw/interweave）另案。
+
+## M1134（2026-11-27 02:09）狀態：待做
+commit `d9d4d743`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #496：模擬使用者・法語（英語母語者學法語）
+  結果：第240輪完成：4/4模擬通過（A1 30秒、B1 23秒、抽卡 34秒、媒體 14秒）、詞庫17315詞、chineseinenglishui=0（A1/B1 皆通過）。
+  需要 Mac：無新項目。
+    下一輪：沿用 app/test/simulation/run_round.py N --lang fr。
