@@ -8901,3 +8901,10 @@ commit `c04d42ef`（Windows：flutter analyze 無 error、flutter test 全過；
   結果：全部完成（程式部分）：照片標籤拖曳時不再被照片框裁切／夾住，可拖過邊緣到單字收集區；放開在收集區 → collect（照片上位置不變），放開在照片內 → 移動；拖經收集區時高亮。新測試 2 個＋相關 13 個通過，flutter analyze 無問題。
   需要 Mac：iPad 手指實測；網頁滑鼠實測未做。
     已知限制：收集區在照片之後繪製，標籤進入收集區時會被蓋在下方（高亮仍會顯示）；如要浮在上面需改用 Overlay。
+
+## M1129（2026-11-26 10:55）狀態：待做
+commit `f81bec3e`（Windows：flutter analyze 無 error、flutter test 全過；另有 2 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #226：模擬使用者・複習
+  結果：第 90 輪：learner 通過（204 秒，round 4498）；restart 在 runround 中失敗「No tests were found」，單獨重跑通過（40 天、13 次重開、1303 次複習、findings 空），判定為暫時性問題。沒有新問題。
+  需要 Mac：無。
+    - 剩餘：若 run_round 的 restart 再出現「No tests were found」，考慮讓 run_round 對此訊息自動重試一次。
