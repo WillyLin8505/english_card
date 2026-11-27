@@ -33,6 +33,29 @@ def duty():
         return 0.6
 
 
+def slots():
+    """MODEL_GATE_SLOTS (default 1): calls allowed at once machine-wide; llama-server has 4 (-np 4).
+    Each slot is one lock file; 1 keeps the original one-call-at-a-time behaviour."""
+    try:
+        return min(4, max(1, int(os.environ.get("MODEL_GATE_SLOTS", "1"))))
+    except ValueError:
+        return 1
+
+
+def _try_lock(f):
+    try:
+        f.seek(0)
+        if os.name == "nt":
+            import msvcrt
+            msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        return True
+    except OSError:
+        return False
+
+
 def _lock(f):
     if os.name == "nt":
         import msvcrt
@@ -85,8 +108,23 @@ def _log(source, secs, ok):
 def urlopen(req, timeout=None, source=None):
     source = source or Path(sys.argv[0] or "python").stem
     LOCK.parent.mkdir(parents=True, exist_ok=True)
-    with open(LOCK, "a+b") as lf:
+    n = slots()
+    if n == 1:
+        lf = open(LOCK, "a+b")
         _lock(lf)
+    else:  # first free slot lock (slot 0 is the shared LOCK, so 1-slot callers still wait for it)
+        files = [LOCK] + [LOCK.with_name(f"model_gate.{i}.lock") for i in range(1, n)]
+        lf = None
+        while lf is None:
+            for p in files:
+                f = open(p, "a+b")
+                if _try_lock(f):
+                    lf = f
+                    break
+                f.close()
+            else:
+                time.sleep(0.2)
+    with lf:
         try:
             held = time.time()
             while _foreground_active() and time.time() - held < FOREGROUND_HOLD_S:
