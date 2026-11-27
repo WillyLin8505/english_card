@@ -20,6 +20,7 @@ from datetime import datetime, timedelta, timezone
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
 sys.path.insert(0, os.path.join(ROOT, 'tagger'))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+os.environ.setdefault('MODEL_GATE_SLOTS', '4')  # owner 11/27: use llama-server's 4 slots (RAM >= 80 % -> 1)
 import model_gate  # card #1465: shared GPU throttle
 OUT = os.path.join(ROOT, 'lexicon', 'raw-data', 'word_ladder')
 EXPORT = os.path.join(ROOT, 'lexicon', 'exports', 'language-data-en-zh-TW-20261028-0929',

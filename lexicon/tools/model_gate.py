@@ -24,6 +24,7 @@ FOREGROUND = LEX / "state" / "gpu_foreground.json"
 LOG = LEX / "logs" / "model_gate.jsonl"
 FOREGROUND_FRESH_S = 30.0
 FOREGROUND_HOLD_S = 120.0
+MEMORY_HIGH = 80.0  # % system RAM: above it MODEL_GATE_SLOTS falls back to 1
 
 
 def duty():
@@ -37,9 +38,17 @@ def slots():
     """MODEL_GATE_SLOTS (default 1): calls allowed at once machine-wide; llama-server has 4 (-np 4).
     Each slot is one lock file; 1 keeps the original one-call-at-a-time behaviour."""
     try:
-        return min(4, max(1, int(os.environ.get("MODEL_GATE_SLOTS", "1"))))
+        n = min(4, max(1, int(os.environ.get("MODEL_GATE_SLOTS", "1"))))
     except ValueError:
         return 1
+    if n > 1:  # owner 11/27 「可以同時開啟多 channel 但要注意記憶體」: back to one call when RAM is high
+        try:
+            import psutil
+            if psutil.virtual_memory().percent >= MEMORY_HIGH:
+                return 1
+        except Exception:
+            pass
+    return n
 
 
 def _try_lock(f):
