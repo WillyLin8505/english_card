@@ -1017,6 +1017,7 @@ class LadderGroup(Base):
     gloss_en: Mapped[str] = mapped_column(Text, default="")
     head_word: Mapped[str] = mapped_column(String(128), default="")
     batch: Mapped[str] = mapped_column(String(64), default="")
+    ssid: Mapped[str] = mapped_column(String(64), default="")  # sense key (WordNet ssid / hand-made group / sense-<id>); "" = legacy prototype group (#1468)
     created_at: Mapped[datetime] = _now()
 
 

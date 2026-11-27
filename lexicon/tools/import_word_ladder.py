@@ -2,11 +2,13 @@
 
   python lexicon/tools/import_word_ladder.py FILE [FILE...] [--batch NAME] [--dry-run] [--no-backup]
 
-FILE is a checked_batch_NN.json (#1875: {"words":[{word,pos,senses:[{gloss_en,zh,words:[{w,pos,cefr,zh,added_by}]}]}]},
-a bare list also works) or a prototype sample (sample_round12.json: senses[].candidates[{w,level}], no Chinese).
-Rerunnable: members are upserted, nothing is deleted. A sense whose words overlap >= half of an existing
-group of the same pos that already holds the source word is merged into that group (shared meaning).
-Backup of both tables first: lexicon/logs/agents/card1451_backup_<time>.json.
+FILE is a checked_batch_NN.json from word_ladder.py: {"words":[{word,pos,senses:[{ssid,senseId,group,zh,members:[{w,pos,zh}]}]}]}
+(a bare list also works; senses[].words is read as an alias of members), or a prototype sample (sample_round12.json:
+senses[].candidates[{w,level}], no Chinese; no ssid, kept as legacy groups).
+Card #1468: a sense with an `ssid` (WordNet synset) is one group, keyed by (language, pos, ssid): rerun = same group,
+members upserted, never merged by member overlap, so different meanings stay apart. Only sense-less prototype
+entries still use the old overlap match. Every sense is validated first; a bad file aborts before any write.
+Backup of both tables first: lexicon/logs/agents/card1468_backup_<time>.json.
 """
 import argparse
 import json
@@ -31,20 +33,52 @@ def norm_pos(p):
 
 
 def senses_of(entry):
-    """Yield (gloss_en, zh, [member dicts]) in the checked format, converting prototype candidates."""
+    """Yield (gloss_en, zh, [member dicts]) in the checked format, converting prototype candidates.
+    Reference-only senses (a key but no members: the group is defined under another word) yield no members."""
     for sn in entry.get("senses", []):
-        if "words" in sn:
-            ws = sn["words"]
+        if "members" in sn or "words" in sn:
+            ws = sn.get("members") or sn.get("words") or []
         else:
             ws = [{"w": c["w"], "pos": entry.get("pos"), "cefr": c.get("level"), "zh": "", "added_by": "qwen"}
                   for c in sn.get("candidates", [])]
         yield sn.get("gloss_en") or sn.get("gloss") or "", sn.get("zh", ""), ws
 
 
+def sense_key(sn):
+    """Stable identity of a checked sense: WordNet ssid, else the hand-made group name, else the App senseId."""
+    return sn.get("ssid") or sn.get("group") or (f"sense-{sn['senseId']}" if sn.get("senseId") else "")
+
+
+def validate_entries(entries):
+    """Return a list of problems; empty = importable. Checked format needs word, ssid, a non-empty members list per sense."""
+    bad = []
+    for i, e in enumerate(entries):
+        w = (e.get("word") or "").strip() if isinstance(e, dict) else ""
+        if not w:
+            bad.append(f"entry {i}: no word")
+            continue
+        senses = e.get("senses")
+        if not isinstance(senses, list):
+            bad.append(f"{w}: senses is not a list")
+            continue
+        for j, sn in enumerate(senses):
+            tag = f"{w}#{j}"
+            checked = "members" in sn or "words" in sn
+            if not checked and "candidates" not in sn and not sense_key(sn):
+                bad.append(f"{tag}: no members/words/candidates")
+                continue
+            ws = sn.get("members") if "members" in sn else sn.get("words")
+            if ws is not None and not all(isinstance(x, dict) and (x.get("w") or "").strip() for x in ws):
+                bad.append(f"{tag}: member without w")
+            if checked and not sense_key(sn):
+                bad.append(f"{tag}: checked sense without ssid/group/senseId")
+    return bad
+
+
 def backup(s):
     rows = {"groups": [{c.name: str(getattr(g, c.name)) for c in g.__table__.columns} for g in s.execute(select(m.LadderGroup)).scalars()],
             "members": [{c.name: getattr(x, c.name) for c in x.__table__.columns} for x in s.execute(select(m.LadderMember)).scalars()]}
-    p = ROOT / "lexicon" / "logs" / "agents" / f"card1451_backup_{datetime.now():%Y%m%d_%H%M%S}.json"
+    p = ROOT / "lexicon" / "logs" / "agents" / f"card1468_backup_{datetime.now():%Y%m%d_%H%M%S}.json"
     p.write_text(json.dumps(rows, ensure_ascii=False), encoding="utf-8")
     print(f"backup {p.name}: {len(rows['groups'])} groups, {len(rows['members'])} members")
 
@@ -67,23 +101,35 @@ def upsert_member(s, gid, w, ordinal):
 
 def import_entry(s, entry, batch, stats):
     word, pos = entry["word"].strip().lower(), norm_pos(entry.get("pos"))
-    for gloss, zh, ws in senses_of(entry):
+    sense_meta = entry.get("senses", [])
+    for idx, (gloss, zh, ws) in enumerate(senses_of(entry)):
         if not ws:
+            stats["refs_skipped"] = stats.get("refs_skipped", 0) + 1
             continue
+        meta = sense_meta[idx] if idx < len(sense_meta) else {}
+        ssid = sense_key(meta)  # senseId is the source word's own sense, not a group property
         names = {x["w"].strip().lower() for x in ws} | {word}
         target = None
-        for g in s.execute(select(m.LadderGroup).join(m.LadderMember, m.LadderMember.group_id == m.LadderGroup.id)
-                           .where(m.LadderGroup.pos == pos, m.LadderMember.word == word).distinct()).scalars():
+        if ssid:  # explicit sense identity: exact key, never overlap
+            target = s.execute(select(m.LadderGroup).where(m.LadderGroup.language == "en", m.LadderGroup.pos == pos,
+                                                           m.LadderGroup.ssid == ssid)).scalar_one_or_none()
+            if target is not None:
+                stats["merged"] += 1
+                target.zh = target.zh or zh
+                target.gloss_en = target.gloss_en or gloss
+        for g in ([] if ssid else s.execute(select(m.LadderGroup).join(m.LadderMember, m.LadderMember.group_id == m.LadderGroup.id)
+                           .where(m.LadderGroup.pos == pos, m.LadderGroup.ssid == "", m.LadderMember.word == word).distinct()).scalars()):
             have = {x for x in s.execute(select(m.LadderMember.word).where(m.LadderMember.group_id == g.id)).scalars()}
             if len(have & names) * 2 >= min(len(have), len(names)) and (g.zh == zh or not zh or not g.zh or len(have & names) > 1):
                 target = g
                 break
         if target is None:
-            target = m.LadderGroup(language="en", pos=pos, zh=zh, gloss_en=gloss, head_word=word, batch=batch)
+            target = m.LadderGroup(language="en", pos=pos, zh=zh, gloss_en=gloss, head_word=word, batch=batch,
+                                   ssid=ssid)
             s.add(target)
             s.flush()
             stats["groups"] += 1
-        else:
+        elif not ssid:
             stats["merged"] += 1
             target.zh = target.zh or zh
             target.gloss_en = target.gloss_en or gloss
@@ -105,13 +151,20 @@ def main():
     ap.add_argument("--no-backup", action="store_true")
     a = ap.parse_args()
     stats = {"words": 0, "groups": 0, "merged": 0, "members_new": 0, "members_upd": 0}
+    loaded = []
+    for f in a.files:
+        d = json.loads(Path(f).read_text(encoding="utf-8"))
+        entries = d if isinstance(d, list) else d.get("words", [])
+        problems = validate_entries(entries)
+        if problems:
+            print(f"{Path(f).name}: {len(problems)} problems, nothing imported:\n  " + "\n  ".join(problems[:20]))
+            sys.exit(2)
+        loaded.append((Path(f), entries))
     with db.SessionLocal() as s:
         if not a.no_backup and not a.dry_run:
             backup(s)
-        for f in a.files:
-            d = json.loads(Path(f).read_text(encoding="utf-8"))
-            entries = d if isinstance(d, list) else d.get("words", [])
-            batch = a.batch or Path(f).stem
+        for f, entries in loaded:
+            batch = a.batch or f.stem
             for e in entries:
                 import_entry(s, e, batch, stats)
                 stats["words"] += 1
