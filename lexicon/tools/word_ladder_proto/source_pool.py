@@ -21,7 +21,7 @@ import word_ladder as wl
 MOBY = os.path.join(wl.ROOT, 'lexicon', 'raw-data', 'moby', 'mthesaur.txt')
 DM_CACHE = os.path.join(wl.OUT, 'datamuse_cache.json')
 M = os.path.join(wl.ROOT, 'lexicon', 'raw-data', 'ls_models', 'minilm')
-SIM_MIN = float(os.environ.get('LADDER_SIM_MIN', '0.30'))
+SIM_MIN = float(os.environ.get('LADDER_SIM_MIN', '0.45'))
 DMPOS = {'noun': 'n', 'verb': 'v', 'adjective': 'adj'}
 
 _moby = None
@@ -55,7 +55,7 @@ def wordnet_pool(word, pos):
             out |= {l.lower() for l in ss.lemmas()}
             for r in ss.get_related('similar') + ss.get_related('also') + ss.hypernyms():
                 out |= {l.lower() for l in r.lemmas()}
-                if r in ss.hypernyms():  # siblings: other children of the same parent (suppose / guess / imagine)
+                if pos == 'verb' and r in ss.hypernyms():  # verb siblings: suppose / guess / imagine
                     for sib in r.hyponyms():
                         out |= {l.lower() for l in sib.lemmas()}
     return out
@@ -124,11 +124,14 @@ def embed(texts):
 def ladder(word, pos):
     t = time.time()
     senses = [s for s in wl.all_senses(word, pos)[:wl.MAX_QWEN_SENSES]
-              if not (s['ss'] and wl.is_dated(word, pos, s['ss'].definition(), []))]
+              if not (s['ss'] and (wl.is_dated(word, pos, s['ss'].definition(), [])
+                                   or s['ss'].get_related('instance_hypernym')))]  # people's names
     src = pool(word, pos)
     antonyms = wl.antonyms_of(word, pos)
     cands = {}
     for x, how in src.items():
+        if how == {'datamuse'}:  # Datamuse 'means like' alone is too loose (hope -> clown, gem, male)
+            continue
         row = keep(word, pos, x, antonyms)
         if row:
             cands[x] = (row, how)
