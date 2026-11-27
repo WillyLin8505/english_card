@@ -71,6 +71,27 @@ def _state() -> dict:
         return {}
 
 
+def codex_only_card(title: str | None, now: datetime | None = None) -> bool:
+    """dispatch_config.json codex_only (owner 11/27): such cards go to Codex only until `until`.
+    The issue swarm checks this in dispatch_tick; idle AIs picking cards here must too (#1464
+    went to Claude Code because only the swarm path checked)."""
+    try:
+        cfg = json.load(open(Path(__file__).with_name("dispatch_config.json"), encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    rule = cfg.get("codex_only") or {}
+    prefixes = tuple(rule.get("prefixes") or ())
+    t = str(title or "")
+    t = t.split("：", 1)[1] if t.startswith("問題回報 #") and "：" in t else t
+    if not prefixes or not t.startswith(prefixes):
+        return False
+    until = rule.get("until")
+    if not until:
+        return True
+    ts = (now or datetime.now().astimezone()).timestamp()
+    return ts < datetime.fromisoformat(until).timestamp()
+
+
 def candidates(board: dict, agent: str, caps: dict, state: dict | None = None,
                now: datetime | None = None) -> list[dict]:
     """Eligible cards for `agent`, best first. Pure: testable without the API."""
@@ -90,6 +111,8 @@ def candidates(board: dict, agent: str, caps: dict, state: dict | None = None,
             continue
         if is_task and night_blocked(caps, c["id"], now):
             continue
+        if "codex" not in agent.lower() and codex_only_card(c.get("title"), now):
+            continue  # owner 11/27: word-ladder checks are Codex's while Claude's weekly quota is low
         if is_task and (c.get("status") == "blocked" or (c.get("agent") and c.get("agent") != agent)):
             continue
         if not is_task and c.get("kind") not in ("bug", "todo"):
