@@ -575,14 +575,63 @@ def ranked(cands):
     return sorted(cands, key=lambda c: ('|broad' in c, ))[:PACK_CANDS]
 
 
+_gl = {}
+
+
+def glosses(x, pos):
+    """Every definition of x in this part of speech (WordNet + Wiktionary)."""
+    if (x, pos) not in _gl:
+        W = wordnet()
+        g = [s.definition() for p in WNPOS[pos] for s in W.synsets(x, pos=p)]
+        g += [r[0] for r in lexdb().execute("""select s.definition from lexemes l join senses s on s.lexeme_id=l.id
+              where l.normalized=? and l.pos=?""", (x, KPOS[pos])).fetchall()]
+        _gl[(x, pos)] = g
+    return _gl[(x, pos)]
+
+
+def plausible(word, pos, ssid, x):
+    """Dictionary-only prefilter (eval_methods.py on batch 00: keeps 88 % of the words both reviewers kept,
+    drops 57 % of Qwen's candidates): same synset / 'similar' neighbour, or x's own definitions name the
+    headword or a sense lemma, or Wu-Palmer similarity >= 0.8."""
+    if not ssid:
+        return True
+    import wn.similarity as sim
+    W = wordnet()
+    ss = W.synset(ssid)
+    lem = {l.lower() for l in ss.lemmas()}
+    near = ss.get_related('similar') + ss.get_related('also') + ss.get_related('verb_group')
+    if x in lem or any(x in {l.lower() for l in n.lemmas()} for n in near):
+        return True
+    keys = ({word} | {l for l in lem if ' ' not in l}) - {x}
+    pat = re.compile(r'\b(' + '|'.join(map(re.escape, keys)) + r')(s|es|ed|d|ing)?\b')
+    if any(pat.search(g.lower()) for g in glosses(x, pos)):
+        return True
+    for p in WNPOS[pos]:
+        for s in W.synsets(x, pos=p):
+            try:
+                if sim.wup(ss, s, simulate_root=True) >= 0.8:
+                    return True
+            except Exception:
+                pass
+    return False
+
+
+def prefiltered(entry):
+    for s in entry['senses']:
+        s['cands'] = [c for c in s['cands'] if '|adv<-' in c or plausible(entry['word'], entry['pos'], s.get('ssid'), c.split('|')[0])]
+    return entry
+
+
 def pack_text(doc):
     lines = [f"# batch {doc['batch']:02d}. One block per word/pos; numbered lines = senses to review.",
-             '# candidate = word|CEFR (adv<-x: adverb of x; broad: wider word). gloss :: example']
+             '# gloss :: example || candidates (* wider word, ~ adverb)']
     for e in doc['entries']:
         lines.append(f"{e['word']}/{e['pos']} {e['level']}")
         for i, s in enumerate(e['senses'], 1):
-            ex = (s.get('example') or '')[:70]
-            lines.append(f" {i} {s['gloss'][:90]}" + (f' :: {ex}' if ex else '') + ' || ' + ' '.join(ranked(s['cands'])))
+            ex = (s.get('example') or '')[:50]
+            gloss = s['gloss'].split(' / ')[0][:70]
+            cands = [c.split('|')[0] + ('*' if '|broad' in c else '') + ('~' if '|adv<-' in c else '') for c in ranked(s['cands'])]
+            lines.append(f" {i} {gloss}" + (f' :: {ex}' if ex else '') + ' || ' + ' '.join(cands))
         for s in e.get('shared') or []:
             lines.append(f" = {s['gloss'][:60]} (shared, no review)")
     return '\n'.join(lines) + '\n'
@@ -591,6 +640,8 @@ def pack_text(doc):
 def cmd_pack(args):
     n = args.batch
     doc = json.load(open(os.path.join(OUT, f'qwen_batch_{n:02d}.json'), encoding='utf-8'))
+    if not args.no_prefilter:
+        doc['entries'] = [prefiltered(e) for e in doc['entries']]
     path = os.path.join(OUT, f'review_batch_{n:02d}.txt')
     open(path, 'w', encoding='utf-8').write(pack_text(doc))
     print(path, os.path.getsize(path), 'bytes')
@@ -844,6 +895,7 @@ if __name__ == '__main__':
     s.add_argument('--seed', type=int, default=1450)
     pk = sub.add_parser('pack')
     pk.add_argument('batch', type=int)
+    pk.add_argument('--no-prefilter', action='store_true')
     ar = sub.add_parser('apply')
     ar.add_argument('batch', type=int)
     ar.add_argument('--suffix', default='')
