@@ -839,21 +839,68 @@ def cmd_relink(_):
 
 
 # ---------- App asset ----------
+REL_LEVELS = 2  # card #1482: WordNet hops searched for a kind (hyponym) or a broader word (hypernym)
+
+
+def relation_neighbours(ss, rel):
+    """Synsets up to REL_LEVELS hops away through hyponyms ('kind') or hypernyms ('broad'), as ids."""
+    out, frontier = set(), [ss]
+    for _ in range(REL_LEVELS):
+        nxt = []
+        for s in frontier:
+            for h in (s.hyponyms() if rel == 'kind' else s.hypernyms()):
+                if h.id not in out:
+                    out.add(h.id)
+                    nxt.append(h)
+        frontier = nxt
+    return out
+
+
+def member_how(anchor, x, pos, cache):
+    """card #1482: how member x relates to the meaning (WordNet synset `anchor`, not to the headword).
+    synonym = same synset · kind = narrower (a kind of the meaning, needs a photo check) ·
+    broad = wider · unknown = WordNet has no link: never treated as a safe synonym (needs a photo check)."""
+    if anchor is None:
+        return 'unknown'
+    if x in {l.lower() for l in anchor.lemmas()}:
+        return 'synonym'
+    cands = [c for p in ({**WNPOS, 'adverb': ['r']}.get(pos, [])) for c in wordnet().synsets(x, pos=p)]
+    if not cands:
+        return 'unknown'
+    if anchor.id not in cache:
+        cache[anchor.id] = {'kind': relation_neighbours(anchor, 'kind'), 'broad': relation_neighbours(anchor, 'broad')}
+    if any(c.id in cache[anchor.id]['kind'] for c in cands):
+        return 'kind'
+    if any(c.id in cache[anchor.id]['broad'] for c in cands):
+        return 'broad'
+    return 'unknown'
+
+
 def cmd_build_app(_):
-    senses, groups, clashes = {}, {}, []
-    for fn in sorted(os.listdir(OUT)):
-        if not re.fullmatch(r'checked_batch_\d+\.json', fn):
-            continue
-        doc = json.load(open(os.path.join(OUT, fn), encoding='utf-8'))
+    docs = [json.load(open(os.path.join(OUT, fn), encoding='utf-8')) for fn in sorted(os.listdir(OUT))
+            if re.fullmatch(r'checked_batch_\d+\.json', fn)]
+    anchors = {}  # group id -> WordNet synset of its meaning (first sense that has one)
+    for doc in docs:
+        for w in doc['words']:
+            for s in w.get('senses', []):
+                gid = s.get('group') or ('g_' + str(s.get('ssid')))
+                if s.get('ssid') and gid not in anchors:
+                    try:
+                        anchors[gid] = wordnet().synset(s['ssid'])
+                    except Exception:  # an id that WordNet 2024 does not know: that group stays 'unknown'
+                        anchors[gid] = None
+    senses, groups, clashes, cache = {}, {}, [], {}
+    for doc in docs:
         for w in doc['words']:
             lid = lexeme_id(w['word'], w['pos'])
             for s in w.get('senses', []):
                 gid = s.get('group') or ('g_' + str(s.get('ssid')))
                 grp = groups.setdefault(gid, {})
-                grp[(w['word'], w['pos'])] = {'lemma': w['word'], 'pos': w['pos'], 'cefr': level(w['word'], w['pos']), 'lexemeId': lid}
-                for m in s.get('members', []):
-                    grp[(m['w'], m['pos'])] = {'lemma': m['w'], 'pos': m['pos'], 'cefr': level(m['w'], m['pos']),
-                                               'lexemeId': lexeme_id(m['w'], m['pos'])}
+                for x in [{'w': w['word'], 'pos': w['pos']}] + s.get('members', []):  # the headword is judged like a member
+                    how = member_how(anchors.get(gid), x['w'], x['pos'], cache)
+                    grp[(x['w'], x['pos'])] = {'lemma': x['w'], 'pos': x['pos'], 'cefr': level(x['w'], x['pos']),
+                                               'lexemeId': lexeme_id(x['w'], x['pos']),
+                                               'how': how, 'needs_photo_check': how in ('kind', 'unknown')}
                 if lid and s.get('senseId') and not link_problem(lid, s['senseId'], None):
                     key = f"{lid}:{s['senseId']}"
                     if senses.setdefault(key, gid) != gid:  # card #1467: first ladder keeps the sense, no overwrite
@@ -861,6 +908,11 @@ def cmd_build_app(_):
     doc = {'senses': senses, 'groups': {g: list(m.values()) for g, m in groups.items() if len(m) > 1}}
     doc['senses'] = {k: g for k, g in senses.items() if g in doc['groups']}
     json.dump(doc, open(APP_ASSET, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
+    hows = {}
+    for members in doc['groups'].values():
+        for x in members:
+            hows[x['how']] = hows.get(x['how'], 0) + 1
+    print('relations', hows)
     print('sense clashes kept as first', len(clashes))
     print('app asset', len(doc['senses']), 'senses', len(doc['groups']), 'groups', os.path.getsize(APP_ASSET), 'bytes')
 
