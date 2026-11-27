@@ -31,7 +31,7 @@ APP_ASSET = os.path.join(ROOT, 'app', 'assets', 'word_ladder_en.json')
 API = 'http://127.0.0.1:5173'
 N_WORDS, BATCH_SIZE, SLOTS = 1000, 75, 4
 MAX_QWEN_SENSES = 6  # owner 11/27 「時間太長」: 8 -> 6 senses, 8+10 -> 6+6 candidates
-PACK_CANDS = 12  # candidates per sense shown to the reviewer (WordNet lemmas first)
+PACK_CANDS = 20  # owner 11/27 「單字還是少很多」: show every Qwen candidate (was 12)
 
 LV = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 K = {'adj.': 'adjective', 'adv.': 'adverb'}
@@ -646,7 +646,7 @@ def pack_text(doc):
 def cmd_pack(args):
     n = args.batch
     doc = json.load(open(os.path.join(OUT, f'qwen_batch_{n:02d}.json'), encoding='utf-8'))
-    if not args.no_prefilter:
+    if args.prefilter:  # off by default: it dropped good words (hope: believe assume anticipate; owner 11/27)
         doc['entries'] = [prefiltered(e) for e in doc['entries']]
     path = os.path.join(OUT, f'review_batch_{n:02d}.txt')
     open(path, 'w', encoding='utf-8').write(pack_text(doc))
@@ -714,9 +714,13 @@ def lean_instructions(n, suffix=''):
             'TSV 每行：word/pos<TAB>意思編號<TAB>這個意思的台灣中文（AI）<TAB>同義字（空格分隔）。\n'
             '- 每個編號都要有一行；要刪的意思寫 -編號（例：like/verb<TAB>-3）；漏掉的常用意思寫 +。\n'
             '- 同義字：能在例句裡直接替換的才留，名詞→名詞、動詞→動詞、形容詞→形容詞或副詞。'
-            '候選裡能用的全部留下，不要只留一兩個；不夠 3 個就自己補常見或較難的同義字'
-            '（例：happen 發生 → occur arise befall；vote 投票權 → suffrage franchise）。'
-            '目標每個意思 3–8 個，簡單（A1–B1）和難（B2–C2）都要，讓難度條有字可換。\n'
+            '候選裡能用的全部留下（意思相近、語氣或正式程度不同也算），不要只留最保險的幾個。\n'
+            '- 這是給難度條用的階梯：主要意思要盡量讓 A1、A2、B1、B2、C1、C2 每一級都有字，候選不夠就自己補'
+            '（常見的 B2–C2 字 Qwen 常漏）。目標：主要意思 8–15 個，次要意思 3–8 個。'
+            '範例 hope（相信會…）：believe think | hope expect trust | suppose guess imagine | presume assume '
+            'anticipate reckon | envisage foresee envision | surmise conjecture；'
+            'hope（希望，名詞）：wish hope | dream | desire ambition | prospect expectation aspiration optimism | '
+            'longing yearning anticipation | hankering pining。\n'
             '- 常用基本意思即使沒有同義字也要留（第四欄空白），例：white 白色的、right 右邊、back 後面；'
             '冷門或過時意思才刪（gay＝快樂、number＝表演節目）。\n'
             '- 每個同義字都寫成 字=這個意思的台灣中文（例 period 一段時間 → term=期間 stretch=一段時間；'
@@ -904,7 +908,7 @@ if __name__ == '__main__':
     s.add_argument('--seed', type=int, default=1450)
     pk = sub.add_parser('pack')
     pk.add_argument('batch', type=int)
-    pk.add_argument('--no-prefilter', action='store_true')
+    pk.add_argument('--prefilter', action='store_true')
     ar = sub.add_parser('apply')
     ar.add_argument('batch', type=int)
     ar.add_argument('--suffix', default='')
