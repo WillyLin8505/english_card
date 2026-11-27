@@ -1004,3 +1004,32 @@ class DeckReport(Base):
     reason: Mapped[str] = mapped_column(Text)
     resolved: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     created_at: Mapped[datetime] = _now()
+
+
+class LadderGroup(Base):
+    """One meaning with its A1-C2 same-meaning words (card #1451). Owned by the
+    group, shared by every member word: leave's 「離開」 group is also depart's."""
+    __tablename__ = "ladder_groups"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    language: Mapped[str] = mapped_column(String(16), default="en")
+    pos: Mapped[str] = mapped_column(String(16), default="")
+    zh: Mapped[str] = mapped_column(String(128), default="")
+    gloss_en: Mapped[str] = mapped_column(Text, default="")
+    head_word: Mapped[str] = mapped_column(String(128), default="")
+    batch: Mapped[str] = mapped_column(String(64), default="")
+    created_at: Mapped[datetime] = _now()
+
+
+class LadderMember(Base):
+    """A word in a group; the (word, group) rows are also "which groups does this word belong to"."""
+    __tablename__ = "ladder_members"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    group_id: Mapped[int] = mapped_column(ForeignKey("ladder_groups.id", ondelete="CASCADE"))
+    word: Mapped[str] = mapped_column(String(128), index=True)
+    pos: Mapped[str] = mapped_column(String(16), default="")
+    cefr: Mapped[str | None] = mapped_column(String(4))
+    zh: Mapped[str] = mapped_column(String(128), default="")
+    zh_ai: Mapped[bool] = mapped_column(Boolean, default=True)
+    added_by: Mapped[str] = mapped_column(String(16), default="qwen")
+    ordinal: Mapped[int] = mapped_column(Integer, default=0)
+    __table_args__ = (UniqueConstraint("group_id", "word", "pos", name="uq_ladder_member"),)

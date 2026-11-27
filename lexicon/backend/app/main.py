@@ -778,3 +778,21 @@ def bulk_add_confirm(body: BulkConfirmBody, s: Session = DB,
 _dist = config.HOME / "frontend" / "dist"
 if _dist.exists():
     app.mount("/ui", StaticFiles(directory=_dist, html=True), name="ui")
+
+
+@app.get("/words/{t}/{n}/{lemma}/ladder", dependencies=[Auth])
+def word_ladder(t: str, n: str, lemma: str, s: Session = DB):
+    """上下游 (card #1451): every meaning group this word belongs to, as POS x A1-C2 tables."""
+    w = normalize_lemma(lemma, t)
+    gids = s.execute(select(m.LadderMember.group_id).join(
+        m.LadderGroup, m.LadderGroup.id == m.LadderMember.group_id).where(
+        m.LadderGroup.language == t, m.LadderMember.word == w).distinct().order_by(
+        m.LadderMember.group_id)).scalars().all()
+    out = []
+    for g in s.execute(select(m.LadderGroup).where(m.LadderGroup.id.in_(gids)).order_by(m.LadderGroup.id)).scalars():
+        mem = s.execute(select(m.LadderMember).where(m.LadderMember.group_id == g.id).order_by(
+            m.LadderMember.ordinal, m.LadderMember.id)).scalars().all()
+        out.append({"id": g.id, "pos": g.pos, "zh": g.zh, "gloss_en": g.gloss_en, "batch": g.batch,
+                    "words": [{"w": x.word, "pos": x.pos, "cefr": x.cefr, "zh": x.zh, "zh_ai": x.zh_ai,
+                               "added_by": x.added_by} for x in mem]})
+    return {"lemma": w, "groups": out}

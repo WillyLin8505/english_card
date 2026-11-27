@@ -279,6 +279,8 @@ export default function Word({ target, native, lemma }: { target: string; native
         )}
       </section>
 
+      <LadderSection target={target} native={native} lemma={d.lemma} />
+
       <div className="grid2">
         <section>
           <h2>{langName(target)} 欄位</h2>
@@ -292,6 +294,58 @@ export default function Word({ target, native, lemma }: { target: string; native
 
       {detail && <FieldDetailModal target={target} native={native} lemma={d.lemma} field={detail} onClose={() => setDetail(null)} onChanged={() => w.reload(true)} />}
     </div>
+  );
+}
+
+type LadderWord = { w: string; pos: string; cefr: string | null; zh: string; zh_ai: boolean; added_by: string };
+type LadderGroup = { id: number; pos: string; zh: string; gloss_en: string; batch: string; words: LadderWord[] };
+const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
+const POS_ROWS: [string, string][] = [["noun", "名詞"], ["verb", "動詞"], ["adj", "形容詞"], ["adv", "副詞"]];
+
+// 單字上下游 (card #1451): one table per meaning, POS rows x A1-C2 columns; groups are shared by their member words.
+function LadderSection({ target, native, lemma }: { target: string; native: string; lemma: string }) {
+  const l = useLoad<{ groups: LadderGroup[] }>(`/words/${target}/${native}/${encodeURIComponent(lemma)}/ladder`, [target, native, lemma]);
+  if (l.error) return <section><h2>上下游</h2><ErrorBox error={l.error} /></section>;
+  if (!l.data) return <section><h2>上下游</h2><Loading /></section>;
+  const groups = l.data.groups;
+  return (
+    <section className="ladder">
+      <h2>上下游（{groups.length} 個意思）</h2>
+      {groups.length === 0 && <Empty>尚未產生上下游。</Empty>}
+      {groups.map((g) => {
+        const rows = POS_ROWS.filter(([p]) => g.words.some((x) => x.pos === p));
+        const extra = [...new Set(g.words.map((x) => x.pos))].filter((p) => !POS_ROWS.some(([q]) => q === p));
+        return (
+          <div key={g.id} className="card" style={{ marginBottom: 12 }}>
+            <h3>{g.zh || g.gloss_en}{g.zh && g.gloss_en && <span className="muted">　{g.gloss_en}</span>}</h3>
+            <table>
+              <thead><tr><th></th>{LEVELS.map((v) => <th key={v}>{v}</th>)}</tr></thead>
+              <tbody>
+                {[...rows, ...extra.map((p) => [p, p] as [string, string])].map(([p, label]) => (
+                  <tr key={p}>
+                    <th>{label}</th>
+                    {LEVELS.map((v) => (
+                      <td key={v}>
+                        {g.words.filter((x) => x.pos === p && x.cefr === v).map((x) => (
+                          <div key={x.w}>
+                            {x.w === lemma ? <strong>{x.w}</strong> : <Link to={`/words/${target}/${native}/${encodeURIComponent(x.w)}`}>{x.w}</Link>}
+                            {x.zh && <span className="muted"> {x.zh}</span>}
+                            {x.added_by === "claude" && <span className="ai" title="Claude 補的字">補</span>}
+                          </div>
+                        ))}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {g.words.some((x) => !LEVELS.includes(x.cefr ?? "")) && (
+              <p className="muted">未分級：{g.words.filter((x) => !LEVELS.includes(x.cefr ?? "")).map((x) => x.w).join("、")}</p>
+            )}
+          </div>
+        );
+      })}
+    </section>
   );
 }
 
