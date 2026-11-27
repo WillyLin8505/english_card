@@ -121,6 +121,7 @@
     }
   },
   "night_only_tasks": [
+    226,
     1065
   ],
   "_night_only_note": "owner 11/01：補缺漏卡與 Qwen 全天跑，CPU、GPU 上限 50% 由 ai_watch 管。要再限夜間時把卡號加回來。owner 11/10：#1065 夜間 Qwen 抓圖補缺只在夜間派。",
