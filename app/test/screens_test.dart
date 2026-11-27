@@ -304,6 +304,16 @@ void main() {
       await tester.tap(find.text('選擇新照片'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('從相簿選擇'));
+      // 問題回報 #1874: the photo goes in at once, then the album is asked.
+      // The saving spinner keeps animating behind the dialog: pump, don't settle.
+      for (var i = 0;
+          i < 400 && find.text('放進哪一本相片冊').evaluate().isEmpty;
+          i++) {
+        await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 30)));
+        await tester.pump(const Duration(milliseconds: 30));
+      }
+      await tester.tap(find.text('留在這裡'));
       await settle(tester,
           until: () =>
               app.repository.photoCount == photosBefore + 1 &&

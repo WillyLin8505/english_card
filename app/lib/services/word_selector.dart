@@ -302,6 +302,7 @@ class WordSelector {
     }
 
     bool isLocked(ScoredCandidate s) => locked.contains(s.word);
+
     ScoredCandidate? weakest(bool Function(ScoredCandidate) where) {
       ScoredCandidate? w;
       for (final s in picked()) {
@@ -309,6 +310,29 @@ class WordSelector {
         if (w == null || s.score(diversity(s)) < w.score(diversity(w))) w = s;
       }
       return w;
+    }
+
+    // Owner 11/27: an ice cream photo opened with sit / soft / wooden / thumb
+    // / finger — the ice cream cone (B2) lost to easier words. The
+    // recognizer names the main subject first; it keeps a place when its
+    // level is one below to two above this position.
+    final lead = pool.isEmpty ? null : byWord[pool.first.word];
+    if (lead != null &&
+        lead.rejected == null &&
+        !picked().contains(lead) &&
+        levelIndex(lead.candidate.level) >= target - 1 &&
+        levelIndex(lead.candidate.level) <= target + 2) {
+      if (picked().length < maxWords) {
+        if (allowed(lead, nounCap: false)) slots.add(lead);
+      } else {
+        final out = weakest((s) =>
+                s.candidate.isNoun == lead.candidate.isNoun &&
+                !related(s.candidate, lead.candidate)) ??
+            weakest((_) => true);
+        if (out != null && allowed(lead, replacing: out, nounCap: false)) {
+          slots[slots.indexOf(out)] = lead;
+        }
+      }
     }
 
     // At least two parts of speech when the photo allows it.

@@ -18,6 +18,7 @@ import 'app_scope.dart';
 import '../theme/mobile_theme.dart';
 import '../services/analytics.dart';
 import '../services/feedback_context.dart';
+import '../services/memory_monitor.dart';
 import '../services/event_report.dart';
 import '../services/usage_report.dart';
 
@@ -78,6 +79,7 @@ class AppShellState extends State<AppShell> implements AppNavigator {
     super.initState();
     FeedbackContext.instance.tab = _tab;
     widget.onNavigatorReady(this);
+    MemoryMonitor.instance.addReleaser(_releaseHiddenTabs);
     // Card #911: signed-in usage numbers, once a day, failures ignored.
     SchedulerBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -165,8 +167,23 @@ class AppShellState extends State<AppShell> implements AppNavigator {
   /// the run has started.
   final _reviewRequest = ValueNotifier<List<String>?>(null);
 
+  /// 問題回報 #1884 (設定 at 1.7 GB): visited tabs stay built in the
+  /// IndexedStack with every page opened on them (photo details, decoded
+  /// images). On a memory warning the hidden ones are dropped; they are
+  /// built again, at their first screen, when the learner returns. The
+  /// review tab stays while a run is on (its progress lives there).
+  void _releaseHiddenTabs() {
+    if (!mounted) return;
+    final drop = _built
+        .where((t) => t != _tab && !(t == AppTab.review && _reviewing))
+        .toList();
+    if (drop.isEmpty) return;
+    setState(() => _built.removeAll(drop));
+  }
+
   @override
   void dispose() {
+    MemoryMonitor.instance.removeReleaser(_releaseHiddenTabs);
     FeedbackContext.instance.tab = null;
     _reviewRequest.dispose();
     super.dispose();

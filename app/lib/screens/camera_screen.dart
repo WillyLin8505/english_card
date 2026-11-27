@@ -14,6 +14,7 @@ import '../widgets/mobile/dialogs.dart';
 import '../widgets/mobile/m_icon.dart';
 import '../widgets/mobile/photo_widgets.dart';
 import '../services/text_scan.dart';
+import '../services/word_database_repository.dart';
 import 'photo_picker_screen.dart';
 
 /// 圖辨單字 — Figma camera-view (11:6), the 拍照 tab: viewfinder, shutter,
@@ -210,6 +211,25 @@ class _CameraScreenState extends State<CameraScreen>
         builder: (_) => const PhotoPickerScreen(),
       ));
 
+  /// The album the next shot goes into (問題回報 #1874).
+  String _defaultAlbumName(WordDatabaseRepository repo) {
+    final id = defaultSaveAlbumId(repo);
+    return (id == null ? null : repo.album(id)?.name) ?? '我的照片';
+  }
+
+  /// 拍之前先選相簿: the same chooser as after the shot. Its save remembers
+  /// the album, so the next shot goes there too.
+  Future<void> _pickAlbum() async {
+    final repo = AppScope.of(context).repository;
+    await showSaveToAlbumDialog(context,
+        repository: repo,
+        defaultTitle: '',
+        albumId: defaultSaveAlbumId(repo),
+        title: '拍照放進哪一本相片冊',
+        keepLabel: '取消');
+    if (mounted) setState(() {});
+  }
+
   /// 前／後鏡頭 (iPhone 相機式): restart the live view on the other lens.
   void _flip() {
     _lens = _lens == CameraLensDirection.back
@@ -234,6 +254,11 @@ class _CameraScreenState extends State<CameraScreen>
       if (mounted) setState(() => _flashing = false);
     });
     try {
+      // 問題回報 #1881: the shot's bytes, their decode and recognition peak
+      // together on a 4 GB phone; hand back the other tabs' decoded pictures first.
+      PaintingBinding.instance.imageCache
+        ..clear()
+        ..clearLiveImages();
       final shot = await c.takePicture().timeout(_shutterTimeout);
       final bytes = await shot.readAsBytes();
       if (!mounted) return;
@@ -246,6 +271,11 @@ class _CameraScreenState extends State<CameraScreen>
           albumId: choice.albumId,
           scanMode: choice.scanMode);
       unawaited(scope.queue.process());
+      // 問題回報 #1874: recognition is already running; now ask the album.
+      if (mounted) {
+        await askAlbumForPhotos(context, scope.repository, [photo.id],
+            albumId: choice.albumId);
+      }
       scope.navigator.openPhoto(photo.id);
     } on TimeoutException {
       // 問題回報 #1135: the shutter never goes dead; reopen and let them retry.
@@ -308,6 +338,8 @@ class _CameraScreenState extends State<CameraScreen>
             busy: _busy,
             flashing: _flashing,
             lastPhoto: photos.isEmpty ? null : photos.first,
+            albumName: _defaultAlbumName(repo),
+            onAlbumTap: _pickAlbum,
             onGallery: _openPicker,
             onShutter: _capture,
             onFlip: _flip,
@@ -598,6 +630,8 @@ class _FullCamera extends StatefulWidget {
   final bool busy;
   final bool flashing;
   final Photo? lastPhoto;
+  final String albumName;
+  final VoidCallback onAlbumTap;
   final VoidCallback onGallery;
   final VoidCallback onShutter;
   final VoidCallback onFlip;
@@ -609,6 +643,8 @@ class _FullCamera extends StatefulWidget {
     required this.busy,
     required this.flashing,
     required this.lastPhoto,
+    required this.albumName,
+    required this.onAlbumTap,
     required this.onGallery,
     required this.onShutter,
     required this.onFlip,
@@ -683,6 +719,40 @@ class _FullCameraState extends State<_FullCamera> {
                       fit: StackFit.expand,
                       children: [
                         ClipRect(child: preview),
+                        // 問題回報 #1874: pick the album before the shot.
+                        Positioned(
+                          left: 10,
+                          top: 10,
+                          child: Tap(
+                            key: const ValueKey('camera-album-pill'),
+                            onTap: widget.busy ? null : widget.onAlbumTap,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.black54,
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.photo_album_outlined,
+                                      size: 14, color: Colors.white),
+                                  const SizedBox(width: 4),
+                                  Flexible(
+                                    child: UiText(widget.albumName,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: MFont.manrope(
+                                            12, FontWeight.w700, Colors.white)),
+                                  ),
+                                  const Icon(Icons.expand_more_rounded,
+                                      size: 14, color: Colors.white70),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
                         IgnorePointer(
                           child: AnimatedOpacity(
                             opacity: widget.flashing ? 1 : 0,

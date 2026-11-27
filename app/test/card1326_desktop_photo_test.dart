@@ -64,7 +64,11 @@ void main() {
           tester,
           () =>
               app.repository.allPhotos.length == before + 1 &&
-              find.byType(PhotoPickerScreen).evaluate().isEmpty);
+              find.text('留在這裡').evaluate().isNotEmpty);
+      // 問題回報 #1874: the album question comes after the save; keep the album.
+      await tester.tap(find.text('留在這裡'));
+      await waitFor(
+          tester, () => find.byType(PhotoPickerScreen).evaluate().isEmpty);
       expect(app.repository.allPhotos.length, before + 1);
       expect(find.byType(PhotoPickerScreen), findsNothing);
       expect(find.text('照片詳情'), findsWidgets);

@@ -253,35 +253,72 @@ Future<SavePhotoChoice?> showSaveToAlbumDialog(
   required String defaultTitle,
   String? albumId,
   int count = 1,
+  String? title,
+  String? keepLabel,
 }) =>
     showDialog<SavePhotoChoice>(
       context: context,
-      builder: (_) =>
-          _SaveToAlbumDialog(repository, defaultTitle, albumId, count),
+      builder: (_) => _SaveToAlbumDialog(
+          repository, defaultTitle, albumId, count, title, keepLabel),
     );
 
 /// The album last saved to (問題回報 #563): the default for the next photo,
 /// camera and picker alike; falls back to the first album when it is gone.
 String? _lastSavedAlbumId;
 
+/// The album a new photo goes into when none is named: [albumId], else the
+/// album last saved to, else the first album. Null when there is no album.
+String? defaultSaveAlbumId(WordDatabaseRepository repository,
+    {String? albumId}) {
+  final albums = repository.albums;
+  return albumId ??
+      (albums.any((a) => a.id == _lastSavedAlbumId)
+          ? _lastSavedAlbumId
+          : null) ??
+      albums.firstOrNull?.id;
+}
+
 /// Owner 11/24 (問題回報 #1730): a photo goes straight in and recognition
 /// starts at once — no 存到相片冊 question. It lands in [albumId], else the
 /// album last saved to, else the first album. A learner with no album yet
 /// gets one made here (問題回報 #1768): a photo in no album never shows on
-/// 相片冊. Moving it is done in 照片詳情.
+/// 相片冊. The choice comes after, see [askAlbumForPhotos] (問題回報 #1874).
 SavePhotoChoice autoSaveChoice(
   WordDatabaseRepository repository, {
   required String defaultTitle,
   String? albumId,
 }) {
-  final albums = repository.albums;
-  final id = albumId ??
-      (albums.any((a) => a.id == _lastSavedAlbumId)
-          ? _lastSavedAlbumId
-          : null) ??
-      albums.firstOrNull?.id ??
+  final id = defaultSaveAlbumId(repository, albumId: albumId) ??
       repository.addAlbum(name: '我的照片').id;
   return (title: defaultTitle, albumId: id, scanMode: PhotoScanMode.both);
+}
+
+/// 問題回報 #1874: once a photo is in (recognition has already started), asks
+/// which 相片冊 it belongs in and moves [photoIds] there. Keeping the current
+/// album, or dismissing, leaves them as they are.
+Future<void> askAlbumForPhotos(
+  BuildContext context,
+  WordDatabaseRepository repository,
+  List<String> photoIds, {
+  required String? albumId,
+}) async {
+  final choice = await showSaveToAlbumDialog(
+    context,
+    repository: repository,
+    defaultTitle: '',
+    albumId: albumId,
+    count: photoIds.length,
+    title: '放進哪一本相片冊',
+    keepLabel: '留在這裡',
+  );
+  final target = choice?.albumId;
+  if (target == null || target == albumId) return;
+  for (final id in photoIds) {
+    final photo = repository.photo(id);
+    if (photo != null) {
+      repository.updatePhoto(photo.copyWith(albumId: () => target));
+    }
+  }
 }
 
 class _SaveToAlbumDialog extends StatefulWidget {
@@ -289,9 +326,11 @@ class _SaveToAlbumDialog extends StatefulWidget {
   final String defaultTitle;
   final String? albumId;
   final int count;
+  final String? title;
+  final String? keepLabel;
 
-  const _SaveToAlbumDialog(
-      this.repository, this.defaultTitle, this.albumId, this.count);
+  const _SaveToAlbumDialog(this.repository, this.defaultTitle, this.albumId,
+      this.count, this.title, this.keepLabel);
 
   @override
   State<_SaveToAlbumDialog> createState() => _SaveToAlbumDialogState();
@@ -358,7 +397,8 @@ class _SaveToAlbumDialogState extends State<_SaveToAlbumDialog> {
   Widget build(BuildContext context) {
     final albums = widget.repository.albums;
     return AlertDialog(
-      title: _title(widget.count > 1 ? '存到相片冊（${widget.count} 張）' : '存到相片冊'),
+      title: _title(widget.title ??
+          (widget.count > 1 ? '存到相片冊（${widget.count} 張）' : '存到相片冊')),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -403,7 +443,8 @@ class _SaveToAlbumDialogState extends State<_SaveToAlbumDialog> {
       actions: [
         TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: UiText(widget.count > 1 ? '取消' : '不要這張')),
+            child: UiText(
+                widget.keepLabel ?? (widget.count > 1 ? '取消' : '不要這張'))),
         FilledButton(
           onPressed:
               (_creating ? _newAlbum.text.trim().isNotEmpty : _albumId != null)

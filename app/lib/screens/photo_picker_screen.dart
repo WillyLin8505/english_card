@@ -277,6 +277,7 @@ class _PhotoPickerScreenState extends State<PhotoPickerScreen> {
     setState(() => _saving = true);
     var added = 0;
     var skipped = 0;
+    final addedIds = <String>[];
     Photo? openInstead;
     Object? error;
     try {
@@ -303,12 +304,13 @@ class _PhotoPickerScreenState extends State<PhotoPickerScreen> {
               continue;
             }
           }
-          await scope.intake.addPhoto(
+          final photo = await scope.intake.addPhoto(
             bytes,
             title: choice.title,
             albumId: choice.albumId,
             scanMode: choice.scanMode,
           );
+          addedIds.add(photo.id);
           added++;
         } catch (e) {
           debugPrint('Adding photo ${i + 1}/${picks.length} failed: $e');
@@ -334,6 +336,10 @@ class _PhotoPickerScreenState extends State<PhotoPickerScreen> {
       }
       return;
     }
+    // 問題回報 #1874: one question for the whole batch, recognition is running.
+    await askAlbumForPhotos(context, scope.repository, addedIds,
+        albumId: choice.albumId);
+    if (!mounted) return;
     Navigator.of(context).pop();
     scope.navigator.selectTab(AppTab.album);
     messenger
@@ -384,6 +390,10 @@ class _PhotoPickerScreenState extends State<PhotoPickerScreen> {
         scanMode: choice.scanMode,
       );
       unawaited(scope.queue.process());
+      if (!mounted) return;
+      // 問題回報 #1874: recognition is already running; now ask the album.
+      await askAlbumForPhotos(context, scope.repository, [photo.id],
+          albumId: choice.albumId);
       if (!mounted) return;
       Navigator.of(context).pop();
       scope.navigator.openPhoto(photo.id);
