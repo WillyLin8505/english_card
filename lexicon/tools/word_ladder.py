@@ -548,7 +548,9 @@ def cmd_open_issues(_):
                 '1) 每個字挑學習者會遇到的常用意思（補漏掉的現代意思）、合併重複意思；\n'
                 '2) 逐字檢查「能否在例句裡直接替換」，不能的刪、漏的補；名詞→名詞、動詞→動詞、形容詞→形容詞或副詞；\n'
                 '3) shared 欄的意思已有組：確認「這個字的這個意思」確實等於該組，不是就改成新組；\n'
-                '4) 給每個保留字「這個意思」的台灣中文（標 AI）。\n'
+                '4) 給每個保留字「這個意思」的台灣中文（標 AI）；\n'
+                '5) 常用的基本意思即使沒有同義字也要保留（members 留空），例如 white「白色的」、right「右邊」、'
+                'back「後面」；冷門意思（number 的表演節目、make 的產量）才刪。\n'
                 'checked 格式：{"batch":N,"words":[{"word","pos","senses":[{"ssid","senseId","group","zh",'
                 '"members":[{"w","pos","zh"}]}]}]}（members 不含原字；shared 的意思只寫 group 與 senseId）。')
         r = api('POST', '/api/issues', {'title': title, 'kind': 'todo', 'area': 'data', 'difficulty': 3,
