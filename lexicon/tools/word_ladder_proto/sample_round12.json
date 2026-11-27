@@ -1,0 +1,812 @@
+{
+ "stats": {
+  "qwen": 185,
+  "to_claude": 98,
+  "merged": 1
+ },
+ "words": [
+  {
+   "word": "pronunciation",
+   "pos": "noun",
+   "level": "A2",
+   "senses": [
+    {
+     "ssid": "oewn-07143654-n",
+     "gloss": "the manner in which someone utters a word",
+     "example": "they are always correcting my pronunciation",
+     "src": "WN+Wiki",
+     "candidates": [
+      {
+       "w": "sound",
+       "level": "A2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "utterance",
+       "level": "C2",
+       "adverb": false,
+       "from": null,
+       "broad": true
+      },
+      {
+       "w": "speaking",
+       "level": "A2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "voice",
+       "level": "A2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "articulation",
+       "level": "C2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "delivery",
+       "level": "B1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      }
+     ]
+    }
+   ],
+   "old": [],
+   "seconds": 3.9
+  },
+  {
+   "word": "idea",
+   "pos": "noun",
+   "level": "A1",
+   "senses": [
+    {
+     "ssid": "oewn-05842164-n",
+     "gloss": "the content of cognition; the main thing you are thinking about",
+     "example": "it was not a good idea",
+     "src": "WN+Wiki",
+     "candidates": [
+      {
+       "w": "thought",
+       "level": "A2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "notion",
+       "level": "B1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "concept",
+       "level": "B1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "plan",
+       "level": "A1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "scheme",
+       "level": "B1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "project",
+       "level": "B1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "conception",
+       "level": "B2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "abstraction",
+       "level": "C1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      }
+     ]
+    },
+    {
+     "ssid": "oewn-05846174-n",
+     "gloss": "a personal view",
+     "example": "he has an idea that we don't like him",
+     "src": "WN",
+     "candidates": [
+      {
+       "w": "opinion",
+       "level": "A2",
+       "adverb": false,
+       "from": null,
+       "broad": true
+      },
+      {
+       "w": "belief",
+       "level": "B1",
+       "adverb": false,
+       "from": null,
+       "broad": true
+      },
+      {
+       "w": "view",
+       "level": "A2",
+       "adverb": false,
+       "from": null,
+       "broad": true
+      },
+      {
+       "w": "perspective",
+       "level": "B1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "judgment",
+       "level": "B1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "sentiment",
+       "level": "B2",
+       "adverb": false,
+       "from": null,
+       "broad": true
+      },
+      {
+       "w": "conviction",
+       "level": "B2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "attitude",
+       "level": "A2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "thesis",
+       "level": "B2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "hypothesis",
+       "level": "C1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      }
+     ]
+    },
+    {
+     "ssid": null,
+     "gloss": "A vague or fanciful notion; a feeling or hunch; an impression.",
+     "example": "",
+     "src": "Wiki",
+     "candidates": [
+      {
+       "w": "hunch",
+       "level": "C1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "feeling",
+       "level": "A1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "intuition",
+       "level": "C1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "suspicions",
+       "level": "C1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "impression",
+       "level": "B1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "guess",
+       "level": "A2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "supposition",
+       "level": "C2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "premonition",
+       "level": "C2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      }
+     ]
+    },
+    {
+     "ssid": "oewn-05991800-n",
+     "gloss": "your intention; what you intend to do",
+     "example": "he had in mind to see his old teacher",
+     "src": "WN+Wiki",
+     "candidates": [
+      {
+       "w": "intention",
+       "level": "B1",
+       "adverb": false,
+       "from": null,
+       "broad": true
+      },
+      {
+       "w": "aim",
+       "level": "B1",
+       "adverb": false,
+       "from": null,
+       "broad": true
+      },
+      {
+       "w": "goal",
+       "level": "A1",
+       "adverb": false,
+       "from": null,
+       "broad": true
+      },
+      {
+       "w": "purpose",
+       "level": "A2",
+       "adverb": false,
+       "from": null,
+       "broad": true
+      },
+      {
+       "w": "design",
+       "level": "A1",
+       "adverb": false,
+       "from": null,
+       "broad": true
+      },
+      {
+       "w": "plan",
+       "level": "A1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "endeavor",
+       "level": "B2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "ambition",
+       "level": "A2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "volition",
+       "level": "C2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "mind",
+       "level": "A1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      }
+     ]
+    }
+   ],
+   "old": [],
+   "seconds": 16.6
+  },
+  {
+   "word": "hurry",
+   "pos": "verb",
+   "level": "A2",
+   "senses": [
+    {
+     "ssid": "oewn-00460453-v",
+     "gloss": "act at high speed / urge to an unnatural speed",
+     "example": "We have to rush!",
+     "src": "WN+Wiki",
+     "candidates": [
+      {
+       "w": "run",
+       "level": "A1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "move",
+       "level": "A2",
+       "adverb": false,
+       "from": null,
+       "broad": true
+      },
+      {
+       "w": "speed",
+       "level": "A2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "dash",
+       "level": "B2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "race",
+       "level": "A2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "rush",
+       "level": "B1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "accelerate",
+       "level": "B2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "propel",
+       "level": "C1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "urge",
+       "level": "B2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "drive",
+       "level": "A2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "press",
+       "level": "A2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "hasten",
+       "level": "C2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "festinate",
+       "level": "C2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "quicken",
+       "level": "C2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      }
+     ]
+    }
+   ],
+   "old": [],
+   "seconds": 6.5
+  },
+  {
+   "word": "rid",
+   "pos": "verb",
+   "level": "B1",
+   "senses": [
+    {
+     "ssid": "oewn-02355171-v",
+     "gloss": "Followed by of: to free (oneself or someone, or a place) from an annoyance or hindrance.",
+     "example": "How can I rid myself of my inferiority complex?",
+     "src": "WN+Wiki",
+     "candidates": [
+      {
+       "w": "remove",
+       "level": "B1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "eliminate",
+       "level": "B1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "clear",
+       "level": "A2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "free",
+       "level": "B1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "purge",
+       "level": "B2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "eradicate",
+       "level": "C1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "dislodge",
+       "level": "C1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "vacate",
+       "level": "C1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "liberate",
+       "level": "B1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "disembarrass",
+       "level": "C2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      }
+     ]
+    }
+   ],
+   "old": [],
+   "seconds": 4.8
+  },
+  {
+   "word": "lonely",
+   "pos": "adjective",
+   "level": "A1",
+   "senses": [
+    {
+     "ssid": "oewn-02258956-s",
+     "gloss": "lacking companions or companionship",
+     "example": "he was alone when we met him",
+     "src": "WN+Wiki",
+     "candidates": [
+      {
+       "w": "sad",
+       "level": "A1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "upset",
+       "level": "A2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "unhappy",
+       "level": "A2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "forlorn",
+       "level": "C2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "alone",
+       "level": "A2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "isolated",
+       "level": "B2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "disappointed",
+       "level": "A2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "heartbroken",
+       "level": "C1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "solitary",
+       "level": "C1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "desolate",
+       "level": "C1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "abandoned",
+       "level": "B2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "bereft",
+       "level": "C2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "forsaken",
+       "level": "C1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "lonesome",
+       "level": "C1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "exiled",
+       "level": "C1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "lone",
+       "level": "B2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      }
+     ]
+    },
+    {
+     "ssid": "oewn-01316603-s",
+     "gloss": "Unfrequented by people; desolate.",
+     "example": "",
+     "src": "Wiki",
+     "candidates": [
+      {
+       "w": "empty",
+       "level": "A2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "quiet",
+       "level": "A1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "still",
+       "level": "A1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "sparse",
+       "level": "C1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "thin",
+       "level": "A1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "bare",
+       "level": "B1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "deserted",
+       "level": "B2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "solitary",
+       "level": "C1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "desolate",
+       "level": "C1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "barren",
+       "level": "B2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "sterile",
+       "level": "C1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "uninhabited",
+       "level": "C1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "vacant",
+       "level": "B2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "forlorn",
+       "level": "C2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "wasteland",
+       "level": "C1",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      },
+      {
+       "w": "unfrequented",
+       "level": "C2",
+       "adverb": false,
+       "from": null,
+       "broad": false
+      }
+     ]
+    }
+   ],
+   "old": [],
+   "seconds": 6.7
+  }
+ ]
+}
