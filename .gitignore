@@ -74,3 +74,4 @@ lexicon/tmp/
 app/ios/Flutter/Google.local.xcconfig
 app/ios/Flutter/Signing.local.xcconfig
 lexicon/raw-data/ls_models/
+lexicon/raw-data/moby/
