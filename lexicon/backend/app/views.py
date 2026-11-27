@@ -3,9 +3,10 @@ audio library. Everything is per direction (target + native)."""
 
 from __future__ import annotations
 
+import time
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import func, select, text
+from sqlalchemy import bindparam, func, select, text
 from sqlalchemy.orm import Session
 
 from . import catalog, config
@@ -269,8 +270,103 @@ def field_detail(s: Session, t: str, n: str, lemma_in: str, field_key: str) -> d
     }
 
 
+_COVERAGE_SUMMARY: dict[tuple, tuple[float, dict]] = {}
+COVERAGE_SUMMARY_TTL = 60.0
+
+
+def _coverage_words(s: Session, t: str, n: str, q: str | None) -> list[dict]:
+    """Per-word coverage rows counted in SQL (owner 11/27 「搜尋為什麼那麼久」: the Python loop over all
+    1.2 M field_values took 8-20 s per request; the same GROUP BY in Postgres takes ~1 s, and a search only
+    reads the matching lemmas). Same shape and numbers as coverage_python()."""
+    scopes = [(k, f.scope) for k, f in catalog.FIELD.items()]
+    params: dict = {"t": t, "n": n, "ok": tuple(OK), "miss": ("missing", "partial", catalog.SHORT)}
+    values = ", ".join(f"(:f{i}, :s{i})" for i in range(len(scopes)))
+    for i, (k, sc) in enumerate(scopes):
+        params[f"f{i}"], params[f"s{i}"] = k, sc
+    qf = qx = ""
+    if q:
+        params["pat"] = "%" + q.lower().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+        qf, qx = "AND f.lemma LIKE :pat", "AND normalized LIKE :pat"
+    sql = text(f"""
+        WITH sc(field, scope) AS (VALUES {values}),
+        w AS (
+          SELECT f.lemma,
+            count(*) FILTER (WHERE sc.scope = 'target' AND f.status NOT IN ('unset', 'unavailable')) AS tt,
+            count(*) FILTER (WHERE sc.scope = 'target' AND f.status IN :ok) AS tok,
+            count(*) FILTER (WHERE sc.scope = 'native' AND f.status NOT IN ('unset', 'unavailable')) AS nt,
+            count(*) FILTER (WHERE sc.scope = 'native' AND f.status IN :ok) AS nok,
+            count(*) FILTER (WHERE f.status = 'failed') AS failed,
+            count(*) FILTER (WHERE f.status IN :miss) AS missing,
+            count(*) FILTER (WHERE f.status = 'user_override') AS override
+          FROM field_values f JOIN sc ON sc.field = f.field
+          WHERE f.target_language = :t AND f.native_language = :n {qf}
+          GROUP BY f.lemma),
+        lx AS (
+          SELECT normalized AS lemma, bool_or(status = 'full') AS full
+          FROM lexemes WHERE language = :t {qx} GROUP BY normalized)
+        SELECT coalesce(w.lemma, lx.lemma) AS lemma, w.lemma IS NOT NULL AS has_fields, lx.lemma IS NOT NULL AS in_lx,
+               coalesce(lx.full, false) AS full, coalesce(w.tt, 0) AS tt, coalesce(w.tok, 0) AS tok,
+               coalesce(w.nt, 0) AS nt, coalesce(w.nok, 0) AS nok, coalesce(w.failed, 0) AS failed,
+               coalesce(w.missing, 0) AS missing, coalesce(w.override, 0) AS override
+        FROM w FULL JOIN lx ON lx.lemma = w.lemma""").bindparams(
+        bindparam("ok", expanding=True), bindparam("miss", expanding=True))
+    words = [{"lemma": r.lemma, "target": [r.tok, r.tt], "native": [r.nok, r.nt], "failed": r.failed,
+              "missing": r.missing, "override": r.override,
+              "status": "full" if r.full else ("stub" if r.in_lx else "fields_only"), "has_fields": r.has_fields}
+             for r in s.execute(sql, params)]
+    words.sort(key=lambda x: x["lemma"])
+    return words
+
+
+def _coverage_summary(s: Session, t: str, n: str, words: list[dict] | None = None) -> dict:
+    """Totals and per-field rates for the whole pair; cached COVERAGE_SUMMARY_TTL s for searches."""
+    hit = _COVERAGE_SUMMARY.get((t, n))
+    if words is None and hit and time.monotonic() - hit[0] < COVERAGE_SUMMARY_TTL:
+        return hit[1]
+    words = _coverage_words(s, t, n, None) if words is None else words
+    per_field: dict[str, dict] = {}
+    for f, st, c in s.execute(text("""SELECT field, status, count(*) FROM field_values
+            WHERE target_language = :t AND native_language = :n GROUP BY field, status"""), {"t": t, "n": n}):
+        if f not in catalog.FIELD:
+            continue
+        pf = per_field.setdefault(f, {"field": f, "label": catalog.FIELD[f].label, "block": catalog.FIELD[f].block,
+                                      "scope": catalog.FIELD[f].scope, "counts": {}})
+        pf["counts"][st] = pf["counts"].get(st, 0) + c
+    for pf in per_field.values():
+        c = pf["counts"]
+        relevant = sum(v for k, v in c.items() if k not in ("unset", "unavailable"))
+        pf["rate"] = round(sum(c.get(k, 0) for k in OK) / relevant, 3) if relevant else None
+    order = [f.key for f in catalog.FIELDS]
+    out = {"total_words": len(words), "full_words": sum(w["status"] == "full" for w in words),
+           "stub_words": sum(w["status"] == "stub" for w in words),
+           "fields_only_words": sum(w["status"] == "fields_only" for w in words),
+           "resolved_words": sum(w["has_fields"] for w in words),
+           "fields": sorted(per_field.values(), key=lambda x: order.index(x["field"]))}
+    _COVERAGE_SUMMARY[(t, n)] = (time.monotonic(), out)
+    return out
+
+
 def coverage(s: Session, t: str, n: str, q: str | None = None, only: str | None = None,
              limit: int = 100, offset: int = 0) -> dict:
+    words = _coverage_words(s, t, n, q)
+    summary = _coverage_summary(s, t, n, None if q else words)
+    if only == "incomplete":
+        words = [w for w in words if w["failed"] or w["missing"] or not w["has_fields"]]
+    elif only == "failed":
+        words = [w for w in words if w["failed"]]
+    elif only == "full":
+        words = [w for w in words if w["status"] == "full"]
+    elif only == "stub":
+        words = [w for w in words if w["status"] == "stub"]
+    elif only == "not_run":
+        words = [w for w in words if not w["has_fields"]]
+    return {"target_language": t, "native_language": n, **{k: v for k, v in summary.items() if k != "fields"},
+            "words": words[offset: offset + limit], "matched": len(words), "fields": summary["fields"]}
+
+
+def coverage_python(s: Session, t: str, n: str, q: str | None = None, only: str | None = None,
+                    limit: int = 100, offset: int = 0) -> dict:
+    """The original all-in-Python version, kept as the reference for test_coverage_sql_matches_python."""
     rows = s.execute(select(m.FieldValue.lemma, m.FieldValue.field, m.FieldValue.status).where(
         m.FieldValue.target_language == t, m.FieldValue.native_language == n)).all()
     # The inventory is the lexeme catalog, not the extraction history for one
