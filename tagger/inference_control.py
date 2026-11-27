@@ -54,6 +54,9 @@ class PrioritySlots:
                 self.condition.notify_all()
 
 
+_FOREGROUND_FILE = Path(__file__).resolve().parents[1] / "lexicon" / "state" / "gpu_foreground.json"
+
+
 class GpuDuty:
     """Keeps the GPU idle part of the time (owner 11/06: 「GPU 已經百分百快爆了」).
 
@@ -74,6 +77,20 @@ class GpuDuty:
         # FOREGROUND_HOLD_S so imports never stall for good.
         self.foreground = 0
         self.foreground_hold_s = 120.0
+        self.foreground_file = _FOREGROUND_FILE
+
+    def _mark_foreground(self):
+        # Card #1465: tools/model_gate.py (other processes) waits while this file is fresh.
+        # Written at each photo call start/end; a long call is covered by its 30 s freshness window.
+        try:
+            if self.foreground_file is None:
+                return
+            if self.foreground > 0:
+                self.foreground_file.write_text('{"at": %f}' % time.time())
+            else:
+                self.foreground_file.unlink(missing_ok=True)
+        except OSError:
+            pass
 
     def wait_s(self):
         with self.lock:
@@ -103,6 +120,7 @@ class GpuDuty:
         if not wait:
             with self.lock:
                 self.foreground += 1
+            self._mark_foreground()
         started = self.clock()
         try:
             yield
@@ -110,6 +128,7 @@ class GpuDuty:
             if not wait:
                 with self.lock:
                     self.foreground -= 1
+                self._mark_foreground()
             if self.duty < 1:
                 ran = self.clock() - started
                 with self.lock:

@@ -27,6 +27,8 @@ from pathlib import Path
 HOME = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(HOME / "backend"))
 from sqlalchemy import text  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import model_gate  # noqa: E402  card #1465: shared GPU throttle
 
 from app import agent_pause
 from app import config, db, quality  # noqa: E402
@@ -51,7 +53,7 @@ def ask(prompt: str, image: Path | None = None) -> str:
                                  {"Content-Type": "application/json"})
     for _ in range(2):
         try:
-            with urllib.request.urlopen(req, timeout=300) as r:
+            with model_gate.urlopen(req, timeout=300, source='quality_ai') as r:
                 reply = json.loads(r.read())
             return reply["choices"][0]["message"]["content"].strip()
         except OSError:

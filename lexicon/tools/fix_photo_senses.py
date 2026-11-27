@@ -25,6 +25,8 @@ from pathlib import Path
 HOME = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(HOME / "backend"))
 from sqlalchemy import text  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import model_gate  # noqa: E402  card #1465: shared GPU throttle
 
 from app import agent_pause
 from app import db, quality  # noqa: E402
@@ -47,9 +49,9 @@ def ask_qwen(word: str, photo_words: list[str], options: list[dict]) -> int | No
     body = json.dumps({"messages": [{"role": "user", "content": prompt}], "temperature": 0,
                        "max_tokens": 4, "chat_template_kwargs": {"enable_thinking": False}}).encode()
     try:
-        with urllib.request.urlopen(urllib.request.Request(
+        with model_gate.urlopen(urllib.request.Request(
                 f"{LLAMACPP_URL}/v1/chat/completions", body,
-                {"Content-Type": "application/json"}), timeout=45) as r:
+                {"Content-Type": "application/json"}), timeout=45, source='fix_photo_senses') as r:
             ans = json.loads(r.read())["choices"][0]["message"]["content"]
     except OSError:
         return None

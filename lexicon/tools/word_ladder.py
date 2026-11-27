@@ -17,6 +17,8 @@ from datetime import datetime, timedelta, timezone
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
 sys.path.insert(0, os.path.join(ROOT, 'tagger'))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import model_gate  # card #1465: shared GPU throttle
 OUT = os.path.join(ROOT, 'lexicon', 'raw-data', 'word_ladder')
 EXPORT = os.path.join(ROOT, 'lexicon', 'exports', 'language-data-en-zh-TW-20261028-0929',
                       'language-data-en-zh-TW-20261028-0929.sqlite')
@@ -279,7 +281,7 @@ def qwen(word, pos, senses):
         try:
             req = urllib.request.Request(ts().LLAMACPP_URL + '/v1/chat/completions', data=json.dumps(body).encode(),
                                          headers={'Content-Type': 'application/json'})
-            raw = json.load(urllib.request.urlopen(req, timeout=300))['choices'][0]['message']['content'] or '{}'
+            raw = json.load(model_gate.urlopen(req, timeout=300, source='word_ladder'))['choices'][0]['message']['content'] or '{}'
             return ts().loads_salvaging(raw).get('senses', []) or []
         except Exception as e:  # llama-server busy / restarting: retry, then give up on this word
             err = e

@@ -21,7 +21,8 @@ class FakeClock:
 class GpuDutyTest(unittest.TestCase):
     def make(self, duty):
         c = FakeClock()
-        return GpuDuty(duty, clock=c, sleep=c.sleep), c
+        g = GpuDuty(duty, clock=c, sleep=c.sleep); g.foreground_file = None
+        return g, c
 
     def call(self, g, c, seconds, wait=True):
         with g.run(wait=wait):
@@ -48,6 +49,17 @@ class GpuDutyTest(unittest.TestCase):
         self.assertEqual(c.slept, 0.0)
 
 
+class ForegroundFlagTest(unittest.TestCase):
+    def test_flag_written_during_photo_call_and_removed_after(self):
+        import tempfile, pathlib
+        c = FakeClock()
+        g = GpuDuty(0.6, clock=c, sleep=c.sleep)
+        g.foreground_file = pathlib.Path(tempfile.mkdtemp()) / "fg.json"
+        with g.run(wait=False):
+            self.assertTrue(g.foreground_file.exists())
+        self.assertFalse(g.foreground_file.exists())
+
+
 if __name__ == "__main__":
     unittest.main()
 
@@ -57,7 +69,7 @@ class ForegroundHoldTest(unittest.TestCase):
 
     def test_background_waits_while_a_photo_is_tagged(self):
         c = FakeClock()
-        g = GpuDuty(1.0, clock=c, sleep=c.sleep)
+        g = GpuDuty(1.0, clock=c, sleep=c.sleep); g.foreground_file = None
         g.foreground = 1          # a photo call is running
         g.foreground_hold_s = 3.0
         with g.run(wait=True):
@@ -66,7 +78,7 @@ class ForegroundHoldTest(unittest.TestCase):
 
     def test_foreground_counts_itself_and_never_waits(self):
         c = FakeClock()
-        g = GpuDuty(1.0, clock=c, sleep=c.sleep)
+        g = GpuDuty(1.0, clock=c, sleep=c.sleep); g.foreground_file = None
         g.foreground = 1
         with g.run(wait=False):
             self.assertEqual(g.foreground, 2)
@@ -77,7 +89,7 @@ class ForegroundHoldTest(unittest.TestCase):
 class ConcurrentDutyTest(unittest.TestCase):
     def test_background_waits_for_active_call_and_its_rest(self):
         c = FakeClock()
-        g = GpuDuty(0.5, clock=c, sleep=c.sleep)
+        g = GpuDuty(0.5, clock=c, sleep=c.sleep); g.foreground_file = None
         attempted = threading.Event()
         entered = threading.Event()
         starts = []
@@ -104,7 +116,7 @@ class ConcurrentDutyTest(unittest.TestCase):
 
     def test_failed_background_call_releases_lane_and_accounts_rest(self):
         c = FakeClock()
-        g = GpuDuty(0.5, clock=c, sleep=c.sleep)
+        g = GpuDuty(0.5, clock=c, sleep=c.sleep); g.foreground_file = None
         with self.assertRaises(ValueError):
             with g.run():
                 c.t += 1
