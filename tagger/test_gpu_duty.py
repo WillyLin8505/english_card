@@ -1,5 +1,6 @@
 """GpuDuty: background model calls leave the GPU idle part of the time (owner 11/06)."""
 import unittest
+import threading
 
 from inference_control import GpuDuty
 
@@ -71,3 +72,42 @@ class ForegroundHoldTest(unittest.TestCase):
             self.assertEqual(g.foreground, 2)
         self.assertEqual(g.foreground, 1)
         self.assertEqual(c.slept, 0.0)
+
+
+class ConcurrentDutyTest(unittest.TestCase):
+    def test_background_waits_for_active_call_and_its_rest(self):
+        c = FakeClock()
+        g = GpuDuty(0.5, clock=c, sleep=c.sleep)
+        attempted = threading.Event()
+        entered = threading.Event()
+        starts = []
+
+        def second():
+            attempted.set()
+            with g.run():
+                starts.append(c.t)
+                entered.set()
+
+        with g.run():
+            worker = threading.Thread(target=second)
+            worker.start()
+            self.assertTrue(attempted.wait(1))
+            overlapped = entered.wait(0.05)
+            # Interactive work must still bypass background pacing.
+            with g.run(wait=False):
+                c.t += 0.25
+            c.t += 0.75
+        worker.join(1)
+        self.assertFalse(worker.is_alive())
+        self.assertFalse(overlapped)
+        self.assertGreaterEqual(starts[0], 2.0)
+
+    def test_failed_background_call_releases_lane_and_accounts_rest(self):
+        c = FakeClock()
+        g = GpuDuty(0.5, clock=c, sleep=c.sleep)
+        with self.assertRaises(ValueError):
+            with g.run():
+                c.t += 1
+                raise ValueError('model failed')
+        with g.run():
+            self.assertEqual(c.t, 2)

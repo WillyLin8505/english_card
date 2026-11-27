@@ -68,6 +68,7 @@ class GpuDuty:
         self.clock, self.sleep = clock, sleep
         self.quiet_until = 0.0
         self.lock = threading.Lock()
+        self.background_lock = threading.Lock()
         # 問題回報 #1842: while a learner's photo is being tagged, background
         # calls do not start (calls already running finish); at most
         # FOREGROUND_HOLD_S so imports never stall for good.
@@ -80,6 +81,16 @@ class GpuDuty:
 
     @contextlib.contextmanager
     def run(self, wait=True):
+        # Card #1463: reserve the background lane through both inference and
+        # cooldown accounting. Otherwise concurrent callers all observe an
+        # expired quiet_until and keep the GPU busy while others should rest.
+        # Interactive photos bypass this lane; never suspend the model process.
+        lane = self.background_lock if wait and self.duty < 1 else contextlib.nullcontext()
+        with lane, self._run(wait):
+            yield
+
+    @contextlib.contextmanager
+    def _run(self, wait):
         if wait:
             held_since = self.clock()
             while self.foreground > 0 and self.clock() - held_since < self.foreground_hold_s:
