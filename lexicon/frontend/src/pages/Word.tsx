@@ -318,7 +318,8 @@ function LadderSection({ target, native, lemma }: { target: string; native: stri
         return (
           <div key={g.id} className="card" style={{ marginBottom: 12 }}>
             <h3>{g.zh || g.gloss_en}{g.zh && g.gloss_en && <span className="muted">　{g.gloss_en}</span>}</h3>
-            <table>
+            <table className="ladder-table">
+              <colgroup><col className="ladder-pos" />{LEVELS.map((v) => <col key={v} />)}</colgroup>
               <thead><tr><th></th>{LEVELS.map((v) => <th key={v}>{v}</th>)}</tr></thead>
               <tbody>
                 {[...rows, ...extra.map((p) => [p, p] as [string, string])].map(([p, label]) => (
@@ -327,9 +328,9 @@ function LadderSection({ target, native, lemma }: { target: string; native: stri
                     {LEVELS.map((v) => (
                       <td key={v}>
                         {g.words.filter((x) => x.pos === p && x.cefr === v).map((x) => (
-                          <div key={x.w}>
+                          <div key={x.w} className="ladder-word">
                             {x.w === lemma ? <strong>{x.w}</strong> : <Link to={`/words/${target}/${native}/${encodeURIComponent(x.w)}`}>{x.w}</Link>}
-                            {x.zh && <span className="muted"> {x.zh}</span>}
+                            {x.zh && <div className="muted ladder-zh">{x.zh}</div>}
                             {x.added_by === "claude" && <span className="ai" title="Claude 補的字">補</span>}
                           </div>
                         ))}

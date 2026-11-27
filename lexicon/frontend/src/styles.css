@@ -563,3 +563,13 @@ pre.raw { max-height: 280px; overflow: auto; background: var(--surface-2); paddi
 .pipe-current { background: var(--warn-soft); color: var(--warn); }
 .pipe-here { outline: 2px solid var(--accent); outline-offset: -2px; }
 .pipe-here-tag { color: var(--accent) !important; font-weight: 700; }
+
+/* 上下游 (owner 11/27 「用表格，你這樣都擠在一起了」): grid lines, equal level columns, one word per line */
+.ladder-table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+.ladder-table col.ladder-pos { width: 64px; }
+.ladder-table th, .ladder-table td { border: 1px solid var(--border, #334155); padding: 6px 8px; vertical-align: top; text-align: left; }
+.ladder-table thead th { text-align: center; background: rgba(148, 163, 184, 0.08); }
+.ladder-table tbody th { white-space: nowrap; }
+.ladder-table .ladder-word { padding: 3px 0; word-break: break-word; }
+.ladder-table .ladder-word + .ladder-word { border-top: 1px dashed rgba(148, 163, 184, 0.25); }
+.ladder-table .ladder-zh { font-size: 12px; line-height: 1.3; }
