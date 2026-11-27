@@ -96,7 +96,7 @@ report('all (same senses)', lambda d: True)
 report('wordnet (same senses)', lambda d: d[3]['wordnet'])
 for th in (-6, -8, -10):
     report(f'BERT logp >= {th}', lambda d, th=th: d[4] >= th)
-for th in (0.85, 0.9, 0.93):
+for th in (0.95, 0.97, 0.98):
     report(f'MiniLM cos >= {th}', lambda d, th=th: d[5] >= th)
 report('BERT>=-8 and MiniLM>=0.85', lambda d: d[4] >= -8 and d[5] >= 0.85)
 report('wordnet or (BERT>=-8 & MiniLM>=.9)', lambda d: d[3]['wordnet'] or (d[4] >= -8 and d[5] >= 0.9))
