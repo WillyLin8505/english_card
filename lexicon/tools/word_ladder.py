@@ -555,20 +555,25 @@ ECPOS = {'noun': ('n.',), 'verb': ('v.', 'vt.', 'vi.'), 'adjective': ('a.', 'adj
 _ecd = None
 
 
-def ecdict_zh(w, pos):
-    """ECDICT's first meaning for this part of speech, Taiwan wording ('' when none)."""
+def ecdict_zh(w, pos, sense_zh=''):
+    """ECDICT meaning for this part of speech, Taiwan wording ('' when none): the one sharing the most
+    characters with the sense's Chinese (period 一段時間 -> term 期限, not 術語), else the first."""
     global _ecd, _CC
     if _ecd is None:
         import opencc
         _ecd, _CC = sqlite3.connect(ECDICT), opencc.OpenCC('s2twp')
     r = _ecd.execute('select translation from e where lower=? limit 1', (w.lower(),)).fetchone()
+    items = []
     for line in re.split(r'\\n|\n', (r[0] or '') if r else ''):
         line = line.strip()
         if line.startswith(ECPOS[pos]):
             t = re.sub(r'^[a-z]+\.\s*', '', line)
             t = re.sub(r'\[[^\]]*\]|（[^）]*）|\([^)]*\)', '', t)
-            return _CC.convert(re.split(r'[，,；;]', t)[0].strip())[:8]
-    return ''
+            items += [_CC.convert(x.strip())[:8] for x in re.split(r'[，,；;]', t) if x.strip()]
+    if not items:
+        return ''
+    mine = set(sense_zh) - set('、的了是（）')
+    return max(items, key=lambda x: len(mine & set(x))) if mine else items[0]
 
 
 def ranked(cands):
@@ -670,7 +675,7 @@ def apply_review(doc, tsv, reviewer):
             continue
         senses = [{'group': s['group'], 'senseId': s['senseId'], 'shared': True} for s in e.get('shared') or []]
         for n, zh, members in rows:
-            if n.startswith('-'):
+            if n.startswith('-') or re.fullmatch(r'-\d*', zh):  # "-3" or "3<TAB>-3" both mean: drop sense 3
                 continue
             src = e['senses'][int(n) - 1] if n.isdigit() and 0 < int(n) <= len(e['senses']) else None
             ms = []
@@ -679,7 +684,7 @@ def apply_review(doc, tsv, reviewer):
                 x = x.lower()
                 if x != e['word']:
                     p = member_pos(x, e['pos'])
-                    ms.append({'w': x, 'pos': p, 'zh': own or ecdict_zh(x, p), 'zh_source': 'AI' if own else 'ECDICT'})
+                    ms.append({'w': x, 'pos': p, 'zh': own or ecdict_zh(x, p, zh), 'zh_source': 'AI' if own else 'ECDICT'})
             senses.append({'ssid': src['ssid'] if src else None, 'senseId': src['senseId'] if src else None,
                            'group': (src['group'] if src and src['group'] else
                                      f"g_b{doc['batch']:02d}_{e['word']}_{e['pos']}_{len(senses)}"),
