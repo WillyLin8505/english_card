@@ -146,22 +146,30 @@ class AITranslate(SourceAdapter):
         if f == "derived_native_meaning" or f in catalog.RELATION_NATIVE:
             rel = "derived_terms" if f == "derived_native_meaning" \
                 else catalog.RELATION_NATIVE[f]
-            sense = (ctx.items("definition") or [{}])[0]
+            defs = ctx.items("definition")
+            sense = (defs or [{}])[0]
             category = "form" if rel in RELATION_FORM else "meaning"
+            head = ctx.display or ctx.lemma
+            form_context = None
             if category == "form":
                 # Never the headword's gloss here (問題回報 #441): with it the
                 # model glossed gulp's look-alike gul as gulp's own 「一口量」.
-                head = ctx.display or ctx.lemma
-                context = (f"a different word that only looks or sounds like '{head}'; "
-                           f"give this word's own meaning, not the meaning of '{head}'; "
-                           f"empty text if it is not a real English word")[:200]
-            else:
-                context = (f"vocabulary connected to {ctx.display or ctx.lemma}; "
-                           f"{sense.get('pos', '')}: {sense.get('gloss', '')}")[:200]
+                form_context = (f"a different word that only looks or sounds like '{head}'; "
+                                f"give this word's own meaning, not the meaning of '{head}'; "
+                                f"empty text if it is not a real English word")[:200]
+
+            def meaning_context(item: dict) -> str:
+                # Card #1473 (問題回報 #253): the headword sense of the relation word's own
+                # part of speech. Only the first sense gave cringe's verb synonym funk the
+                # noun's 「臭味」.
+                pos = item.get("pos") or sense.get("pos", "")
+                match = next((d for d in defs if pos and d.get("pos") == pos), sense)
+                return (f"vocabulary connected to {head}; "
+                        f"{match.get('pos', '')}: {match.get('gloss', '')}")[:200]
+
             return "word", [{"id": i["word"].lower(), "text": i["word"],
-                             "context": (category == "meaning"
-                                         and phrase_context(i["word"], ctx.display or ctx.lemma))
-                             or context, "category": category}
+                             "context": (category == "meaning" and phrase_context(i["word"], head))
+                             or form_context or meaning_context(i), "category": category}
                             for i in ctx.items(rel)
                             if i.get("word") and want(i["word"].lower())][:30]
         if f == "etymology_native":
