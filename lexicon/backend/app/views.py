@@ -302,10 +302,10 @@ def _coverage_words(s: Session, t: str, n: str, q: str | None) -> list[dict]:
           WHERE f.target_language = :t AND f.native_language = :n {qf}
           GROUP BY f.lemma),
         lx AS (
-          SELECT normalized AS lemma, bool_or(status = 'full') AS full
+          SELECT normalized AS lemma, max(CASE WHEN status = 'full' THEN 1 ELSE 0 END) AS full
           FROM lexemes WHERE language = :t {qx} GROUP BY normalized)
         SELECT coalesce(w.lemma, lx.lemma) AS lemma, w.lemma IS NOT NULL AS has_fields, lx.lemma IS NOT NULL AS in_lx,
-               coalesce(lx.full, false) AS full, coalesce(w.tt, 0) AS tt, coalesce(w.tok, 0) AS tok,
+               coalesce(lx.full, 0) AS full, coalesce(w.tt, 0) AS tt, coalesce(w.tok, 0) AS tok,
                coalesce(w.nt, 0) AS nt, coalesce(w.nok, 0) AS nok, coalesce(w.failed, 0) AS failed,
                coalesce(w.missing, 0) AS missing, coalesce(w.override, 0) AS override
         FROM w FULL JOIN lx ON lx.lemma = w.lemma""").bindparams(

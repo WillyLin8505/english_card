@@ -3,7 +3,15 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
 import pytest
 
-from app.views import coverage
+from app import views
+from app.views import coverage, coverage_python
+
+
+@pytest.fixture(autouse=True)
+def fresh_summary():
+    views._COVERAGE_SUMMARY.clear()  # each test builds its own database
+    yield
+    views._COVERAGE_SUMMARY.clear()
 
 
 @pytest.fixture
@@ -77,3 +85,9 @@ def test_field_qc_counts_are_not_diluted_by_stubs(inventory):
     assert fields["definition"]["rate"] == 0.5
     assert fields["native_definition"]["counts"] == {"failed": 1}
     assert fields["native_definition"]["rate"] == 0
+
+
+@pytest.mark.parametrize("q,only", [(None, None), ("an", None), ("BAN", None), (None, "incomplete"), ("e", "full")])
+def test_sql_counts_match_the_python_reference(inventory, q, only):
+    """owner 11/27 「搜尋為什麼那麼久」: counting moved into SQL must give the same page as the old loop."""
+    assert coverage(inventory, "en", "zh-TW", q=q, only=only) == coverage_python(inventory, "en", "zh-TW", q=q, only=only)
