@@ -190,3 +190,42 @@ if __name__ == '__main__':
     for r in res:
         show(r)
     json.dump(res, open(os.path.join(wl.OUT, 'source_pool_sample.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+
+
+# ---------- review pack (pool method): senses + one ranked pool per word; the reviewer sorts words into senses ----------
+POOL_CAP = 70
+
+
+def ranked_pool(word, pos):
+    """All kept candidates, best first: number of sources, then MiniLM closeness to any sense; at most POOL_CAP."""
+    senses = [s for s in wl.all_senses(word, pos)[:wl.MAX_QWEN_SENSES]
+              if not (s['ss'] and (wl.is_dated(word, pos, s['ss'].definition(), [])
+                                   or s['ss'].get_related('instance_hypernym')))]
+    src, antonyms = pool(word, pos), wl.antonyms_of(word, pos)
+    cands = {x: (row, how) for x, how in src.items() if how != {'datamuse'}
+             for row in [keep(word, pos, x, antonyms)] if row}
+    sv = embed([f"{word}: {s['gloss']}" for s in senses])
+    names = list(cands)
+    cv = embed([f"{x}: " + ' / '.join(wl.glosses(x, pos)[:3]) for x in names])
+    rel = (cv @ sv.T).max(1) if len(cv) and len(sv) else np.zeros(len(names))
+    order = sorted(range(len(names)), key=lambda k: (-len(cands[names[k]][1]), -rel[k]))[:POOL_CAP]
+    words = [(names[k], wl.level(names[k], cands[names[k]][0]), cands[names[k]][0]) for k in order]
+    return senses, words
+
+
+def build_pack(items, batch):
+    """-> (pack text for the reviewer, doc for word_ladder.apply_review)."""
+    lines = [f'# pool batch {batch}. Senses (numbered) and one candidate pool per word (word:CEFR, ~ adverb).',
+             '# Put each candidate that can replace the word into the sense(s) it fits; leave out the rest.']
+    entries = []
+    for w, p in items:
+        senses, words = ranked_pool(w, p)
+        lines.append(f'{w}/{p} {wl.level(w, p)}')
+        for i, s in enumerate(senses, 1):
+            ex = (s.get('example') or '')[:50]
+            lines.append(f" {i} {s['gloss'].split(' / ')[0][:80]}" + (f' :: {ex}' if ex else ''))
+        lines.append(' pool: ' + ' '.join(f"{x}:{lv}" + ('~' if row == 'adverb' else '') for x, lv, row in words))
+        entries.append({'word': w, 'pos': p, 'shared': [], 'senses': [
+            {'ssid': s['ss'].id if s['ss'] else None, 'senseId': s['sense_id'],
+             'group': ('g_' + s['ss'].id) if s['ss'] else None, 'gloss': s['gloss']} for s in senses]})
+    return '\n'.join(lines) + '\n', {'batch': batch, 'words': [w for w, _ in items], 'entries': entries}
