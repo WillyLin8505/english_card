@@ -9140,3 +9140,10 @@ commit `3ced5ca9`（Windows：flutter analyze 無 error、flutter test 全過）
 commit `b1b02ce8`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #1467：問題回報 #1892：[卡片回報 #1466] 上下游詞義 senseId 連錯：長音→性器官、房屋→王朝
   結果：第一輪完成：詞義 senseId 錯連根因已修（wordladder.py），批次 00 的 senseId 214 筆重算，共用同一 senseId 的 synset 由 48 降為 0，長音／房屋／一套／排列四個錯例都不再連到錯義。
+
+## M1152（2026-11-27 16:23）狀態：待做
+commit `e623bbee`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #5：檢查標籤分級是否錯誤
+  結果：第 46 輪全庫 B 群掃描完成（唯讀，396 秒）：與第 45 輪幾乎相同，無新問題類型。
+  需要 Mac：無。
+    - 剩下：304 個 base 誤判待 #162/#163；無新增問題回報。
