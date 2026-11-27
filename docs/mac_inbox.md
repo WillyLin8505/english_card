@@ -9164,3 +9164,8 @@ commit `b8d7c7a5`（Windows：flutter analyze 無 error、flutter test 全過）
 commit `2b0ae2af`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #226：模擬使用者・複習
   結果：第 94 輪未執行：非夜間時段；修正 #226 夜間限定漏設，時段檢查 6/6 通過。
+
+## M1156（2026-11-28 02:33）狀態：待做
+commit `efb5df1e`（Windows：flutter analyze 無 error、01:45 +1079 ~2: All tests passed!）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1482：問題回報 #1900：[卡片回報] #1875 上下游 App 匯出缺少種類確認資訊，阻塞 #1876 安全換字
+  結果：上游已修：build-app 現在為每個成員輸出 how（synonym／kind／broad／unknown）與 needsphotocheck，App 資產重建為 1,039 組、4,240 筆成員；QC 未完成（逾時，見下）。
