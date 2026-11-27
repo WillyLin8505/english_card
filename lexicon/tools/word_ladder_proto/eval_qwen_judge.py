@@ -34,7 +34,7 @@ for e in em.qwen['entries']:
             sense_info[(e['word'], e['pos'], s['ssid'])] = s
 
 
-def judge(key):
+def make_prompt(key):
     word, pos, ssid = key
     ss, s = em.W.synset(ssid), sense_info[key]
     lines = '\n'.join(f'{i + 1}. {x}: {best_gloss(x, pos, ss, word)}' for i, (x, _) in enumerate(by[key]))
@@ -43,6 +43,11 @@ def judge(key):
               f'\nCandidates (with their closest dictionary definition):\n{lines}\n'
               f'Which candidates can replace "{word}" in this meaning (same meaning, same part of speech, '
               'a natural sentence still works)? Be strict. Reply with JSON {"keep": [numbers]}.')
+    return prompt
+
+
+def judge(key):
+    prompt = PROMPTS[key]
     body = {'messages': [{'role': 'user', 'content': prompt}], 'temperature': 0, 'max_tokens': 200,
             'chat_template_kwargs': {'enable_thinking': False},
             'response_format': {'type': 'json_schema', 'json_schema': {'name': 'r', 'schema': SCHEMA}}}
@@ -54,6 +59,7 @@ def judge(key):
 
 
 wl.ts()
+PROMPTS = {k: make_prompt(k) for k in keys}  # sqlite / WordNet: main thread only
 t = time.time()
 with ThreadPoolExecutor(4) as pool:
     out = [r for rs in pool.map(judge, keys) for r in rs]
