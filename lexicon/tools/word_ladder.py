@@ -677,8 +677,24 @@ def member_pos(x, pos):
     return 'adverb' if row_of(x, pos) == 'adverb' else 'adjective'
 
 
+REL_ALIASES = {'s': 'synonym', 'syn': 'synonym', 'synonym': 'synonym', 'k': 'kind', 'kind': 'kind',
+               'b': 'broad', 'broad': 'broad'}
+
+
+def parse_rels(text):
+    """card #1484: TSV column 5, 'member:s member:k member:b' (synonym / kind = narrower / broad = wider).
+    Members the checker leaves out keep WordNet's verdict at build-app."""
+    out = {}
+    for tok in (text or '').replace(',', ' ').split():
+        w, _, r = tok.partition(':')
+        if w and r.lower() in REL_ALIASES:
+            out[w.lower()] = REL_ALIASES[r.lower()]
+    return out
+
+
 def apply_review(doc, tsv, reviewer):
-    """review TSV: word/pos <TAB> sense number | + (new sense) | -n (drop) <TAB> zh <TAB> members (space; w=中文 overrides ECDICT)."""
+    """review TSV: word/pos <TAB> sense number | + (new sense) | -n (drop) <TAB> zh <TAB> members (space; w=中文 overrides ECDICT)
+    <TAB> relations (optional; member:s|k|b, card #1484)."""
     by = {}
     for raw in tsv.splitlines():
         if not raw.strip() or raw.startswith('#'):
@@ -692,7 +708,8 @@ def apply_review(doc, tsv, reviewer):
             unreviewed.append(key)
             continue
         senses = [{'group': s['group'], 'senseId': s['senseId'], 'shared': True} for s in e.get('shared') or []]
-        for n, zh, members in rows:
+        for n, zh, members, rels in rows:
+            rel_of = parse_rels(rels)
             if n.startswith('-') or re.fullmatch(r'-\d*', zh):  # "-3" or "3<TAB>-3" both mean: drop sense 3
                 continue
             src = e['senses'][int(n) - 1] if n.isdigit() and 0 < int(n) <= len(e['senses']) else None
@@ -705,6 +722,8 @@ def apply_review(doc, tsv, reviewer):
                     if inflection_of(x, p, [e['word']] + [m['w'] for m in ms]):
                         continue  # card #1485: saw / customers / best are forms of another word
                     ms.append({'w': x, 'pos': p, 'zh': own or ecdict_zh(x, p, zh), 'zh_source': 'AI' if own else 'ECDICT'})
+                    if x in rel_of:
+                        ms[-1]['rel'] = rel_of[x]
             senses.append({'ssid': src['ssid'] if src else None, 'senseId': src['senseId'] if src else None,
                            'group': (src['group'] if src and src['group'] else
                                      f"g_b{doc['batch']:02d}_{e['word']}_{e['pos']}_{len(senses)}"),
@@ -745,6 +764,9 @@ def lean_instructions(n, suffix=''):
             '冷門或過時意思才刪（gay＝快樂、number＝表演節目）。\n'
             '- 每個同義字都寫成 字=這個意思的台灣中文（例 period 一段時間 → term=期間 stretch=一段時間；'
             'wife → partner=伴侶），不要寫成字典上的其他意思（term 不是術語、partner 不是合夥人）。\n'
+            '- 第五欄（可空白，card #1484）：只標你確定的字，寫 字:s（同義，可互換）、字:k（比這個意思更窄，如 dog 之於 animal）、'
+            '字:b（比這個意思更寬）；沒標的字由 WordNet 判斷，查不到就會被當成需要照片確認。同義字多半是 s，請盡量標。
+'
             '- 標 = 的意思已和別的字共用一組，不用寫。\n'
             '在 result.md 寫開始與結束時間。')
 
@@ -876,10 +898,12 @@ def relation_neighbours(ss, rel):
     return out
 
 
-def member_how(anchor, x, pos, cache):
+def member_how(anchor, x, pos, cache, rel=None):
     """card #1482: how member x relates to the meaning (WordNet synset `anchor`, not to the headword).
     synonym = same synset · kind = narrower (a kind of the meaning, needs a photo check) ·
     broad = wider · unknown = WordNet has no link: never treated as a safe synonym (needs a photo check)."""
+    if rel:  # the checker's label (card #1484) beats WordNet's missing link
+        return rel
     if anchor is None:
         return 'unknown'
     if x in {l.lower() for l in anchor.lemmas()}:
@@ -899,11 +923,13 @@ def member_how(anchor, x, pos, cache):
 def cmd_build_app(_):
     docs = [json.load(open(os.path.join(OUT, fn), encoding='utf-8')) for fn in sorted(os.listdir(OUT))
             if re.fullmatch(r'checked_batch_\d+\.json', fn)]
+    gnames = {}  # group id -> every word seen in it (card #1485: a form is dropped when its base is there)
     anchors = {}  # group id -> WordNet synset of its meaning (first sense that has one)
     for doc in docs:
         for w in doc['words']:
             for s in w.get('senses', []):
                 gid = s.get('group') or ('g_' + str(s.get('ssid')))
+                gnames.setdefault(gid, set()).update([w['word']] + [m['w'] for m in s.get('members', [])])
                 if s.get('ssid') and gid not in anchors:
                     try:
                         anchors[gid] = wordnet().synset(s['ssid'])
@@ -916,11 +942,11 @@ def cmd_build_app(_):
             for s in w.get('senses', []):
                 gid = s.get('group') or ('g_' + str(s.get('ssid')))
                 grp = groups.setdefault(gid, {})
-                names = [w['word']] + [m['w'] for m in s.get('members', [])]
+                names = gnames[gid]
                 for x in [{'w': w['word'], 'pos': w['pos']}] + s.get('members', []):  # the headword is judged like a member
                     if x['w'] != w['word'] and inflection_of(x['w'], x['pos'], names):
                         continue  # card #1485
-                    how = member_how(anchors.get(gid), x['w'], x['pos'], cache)
+                    how = member_how(anchors.get(gid), x['w'], x['pos'], cache, x.get('rel'))
                     grp[(x['w'], x['pos'])] = {'lemma': x['w'], 'pos': x['pos'], 'cefr': level(x['w'], x['pos']),
                                                'lexemeId': lexeme_id(x['w'], x['pos']),
                                                'how': how, 'needs_photo_check': how in ('kind', 'unknown')}
@@ -938,6 +964,53 @@ def cmd_build_app(_):
     print('relations', hows)
     print('sense clashes kept as first', len(clashes))
     print('app asset', len(doc['senses']), 'senses', len(doc['groups']), 'groups', os.path.getsize(APP_ASSET), 'bytes')
+
+
+def cmd_rel_pack(args):
+    """card #1484: list the members WordNet cannot place (how=unknown) of checked_batch_NN.json for the checker."""
+    doc = json.load(open(os.path.join(OUT, f'checked_batch_{args.batch:02d}.json'), encoding='utf-8'))
+    anchors, cache, lines, total = {}, {}, ['# word/pos<TAB>sense zh<TAB>members that need a relation (s synonym, k narrower, b wider)'], 0
+    for w in doc['words']:
+        for s in w.get('senses', []):
+            if s.get('shared'):
+                continue
+            ss = None
+            if s.get('ssid'):
+                try:
+                    ss = wordnet().synset(s['ssid'])
+                except Exception:
+                    ss = None
+            todo = [m['w'] for m in s.get('members', []) if not m.get('rel') and member_how(ss, m['w'], m['pos'], cache) == 'unknown']
+            if todo:
+                total += len(todo)
+                lines.append(f"{w['word']}/{w['pos']}	{s['zh']}	{' '.join(todo)}")
+    path = os.path.join(OUT, f'rel_batch_{args.batch:02d}.txt')
+    open(path, 'w', encoding='utf-8').write('
+'.join(lines) + '
+')
+    print(path, total, 'members')
+
+
+def cmd_rel_apply(args):
+    """rel_batch_NN.tsv: word/pos<TAB>zh<TAB>member:s|k|b ... -> writes 'rel' on those members of checked_batch_NN.json."""
+    path = os.path.join(OUT, f'checked_batch_{args.batch:02d}.json')
+    doc = json.load(open(path, encoding='utf-8'))
+    labels = {}
+    for raw in open(os.path.join(OUT, f'rel_batch_{args.batch:02d}.tsv'), encoding='utf-8').read().splitlines():
+        if raw.strip() and not raw.startswith('#'):
+            parts = raw.split('	') + ['', '']
+            labels.setdefault(parts[0].strip(), {}).update(parse_rels(parts[2]))
+    n = 0
+    for w in doc['words']:
+        for s in w.get('senses', []):
+            for m in s.get('members', []):
+                r = labels.get(f"{w['word']}/{w['pos']}", {}).get(m['w'])
+                if r and m.get('rel') != r:
+                    m['rel'] = r
+                    n += 1
+    shutil.copy(path, path + '.card1484.bak')
+    json.dump(doc, open(path, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+    print('labelled', n, 'members in', path)
 
 
 def cmd_words(_):
@@ -976,6 +1049,8 @@ if __name__ == '__main__':
     r.add_argument('--force-day', action='store_true')
     sub.add_parser('open-issues')
     sub.add_parser('build-app')
+    for nm in ('rel-pack', 'rel-apply'):
+        sub.add_parser(nm).add_argument('batch', type=int)
     sub.add_parser('audit')
     sub.add_parser('relink')
     s = sub.add_parser('sample')
@@ -989,4 +1064,5 @@ if __name__ == '__main__':
     ar.add_argument('--suffix', default='')
     ar.add_argument('--reviewer', default='Codex')
     a = ap.parse_args()
-    {'pack': cmd_pack, 'apply': cmd_apply, 'words': cmd_words, 'run': cmd_run, 'open-issues': cmd_open_issues, 'build-app': cmd_build_app, 'audit': cmd_audit, 'relink': cmd_relink, 'sample': cmd_sample}[a.cmd](a)
+    {'pack': cmd_pack, 'apply': cmd_apply, 'words': cmd_words, 'run': cmd_run, 'open-issues': cmd_open_issues, 'build-app': cmd_build_app, 'audit': cmd_audit, 'relink': cmd_relink, 'sample': cmd_sample,
+     'rel-pack': cmd_rel_pack, 'rel-apply': cmd_rel_apply}[a.cmd](a)
