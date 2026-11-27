@@ -16,7 +16,7 @@ doc = json.load(open(os.path.join(D, 'qwen_batch_93.json'), encoding='utf-8'))
 blocks = re.split(r'\n(?=\S+/\S+ [A-C][12]\n)', text.split('\n', 2)[2])
 SCHEMA = {'type': 'object', 'properties': {'senses': {'type': 'array', 'items': {'type': 'object', 'properties': {
     'n': {'type': 'integer'}, 'keep': {'type': 'boolean'}, 'zh': {'type': 'string'},
-    'words': {'type': 'array', 'items': {'type': 'string'}}}, 'required': ['n', 'keep', 'zh', 'words']}}},
+    'words': {'type': 'array', 'maxItems': 15, 'items': {'type': 'string'}}}, 'required': ['n', 'keep', 'zh', 'words']}}},
     'required': ['senses']}
 
 
@@ -28,14 +28,19 @@ def ask(block):
               '(Traditional Chinese as used in Taiwan for this meaning), and "words": the pool words that can '
               'replace the word in this meaning (same part of speech). Use as many fitting words as possible, from '
               'easy to hard; you may add common synonyms that are missing. Reply with JSON only.')
-    body = {'messages': [{'role': 'user', 'content': prompt}], 'temperature': 0, 'max_tokens': 2000,
+    body = {'messages': [{'role': 'user', 'content': prompt}], 'temperature': 0, 'max_tokens': 4000,
             'chat_template_kwargs': {'enable_thinking': False},
             'response_format': {'type': 'json_schema', 'json_schema': {'name': 'r', 'schema': SCHEMA}}}
     req = urllib.request.Request(wl.ts().LLAMACPP_URL + '/v1/chat/completions', data=json.dumps(body).encode(),
                                  headers={'Content-Type': 'application/json'})
     raw = json.load(wl.model_gate.urlopen(req, timeout=600, source='word_ladder'))['choices'][0]['message']['content']
     rows = []
-    for s in wl.ts().loads_salvaging(raw or '{}').get('senses', []):
+    try:
+        got = wl.ts().loads_salvaging(raw or '{}').get('senses', [])
+    except ValueError as e:
+        print('  qwen reply unusable', head, e)
+        return rows
+    for s in got:
         if not s.get('keep'):
             rows.append(f"{head}\t-{s['n']}")
         else:
