@@ -234,5 +234,12 @@
     ]
   },
   "_launch_schedule_note": "owner 11/11 「開卡的時間是平日早上九點半到晚上七點半，再從凌晨一點開到早上七點」：只在這兩個時段（台北）派新的 CLI（卡片、問題回報、tag_fallback 的 Codex/Cursor）。時段外照常收卡、量目標、開問題回報，已在跑的 CLI 做完為止。days：all／mon-fri／sat-sun。夜間時段每天都開（週末也開）；夜間卡另外照 night_last_launch。",
-  "_max_launches_note_1125": "owner 11/25 07:15「没有关系，现在可以开新卡」：每輪最多開 2 → 5 張（資源 80% 保護不變）。"
+  "_max_launches_note_1125": "owner 11/25 07:15「没有关系，现在可以开新卡」：每輪最多開 2 → 5 張（資源 80% 保護不變）。",
+  "codex_only": {
+    "prefixes": [
+      "[上下游檢查]"
+    ],
+    "until": "2026-11-30T19:00:00+08:00"
+  },
+  "_codex_only_note": "owner 11/27「現在暫時先交給 Codex，到週一再用 Claude」：Claude 本週額度剩 11%（11/30 19:00 重置）。標題以 prefixes 開頭的卡在 until 之前只派給 Codex，Codex 忙就等，不改派 Claude；過了 until 恢復一般規則。"
 }

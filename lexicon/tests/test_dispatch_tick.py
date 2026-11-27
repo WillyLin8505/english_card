@@ -515,3 +515,17 @@ def test_launch_override_opens_launches_until_its_time(tmp_path):
     assert not dt_mod.launch_override_active(now + _td(hours=9), f)
     f.write_text("not json", encoding="utf-8")
     assert not dt_mod.launch_override_active(now, f)
+
+
+def test_codex_only_titles_wait_for_codex_until_the_date():
+    """Owner 11/27: word-ladder checks go to Codex only until Claude's weekly quota resets."""
+    import dispatch_tick as dt
+    cfg = {'codex_only': {'prefixes': ['[上下游檢查]'], 'until': '2026-11-30T19:00:00+08:00'}}
+    from datetime import datetime
+    before = datetime.fromisoformat('2026-11-28T10:00:00+08:00').timestamp()
+    after = datetime.fromisoformat('2026-12-01T10:00:00+08:00').timestamp()
+    assert dt.codex_only(cfg, '[上下游檢查] 批次 01（75 字）', before)
+    assert dt.codex_only(cfg, '問題回報 #1900：[上下游檢查] 批次 02', before)
+    assert not dt.codex_only(cfg, '[上下游檢查] 批次 01（75 字）', after)
+    assert not dt.codex_only(cfg, '[owner] 其他卡', before)
+    assert not dt.codex_only({}, '[上下游檢查] 批次 01', before)

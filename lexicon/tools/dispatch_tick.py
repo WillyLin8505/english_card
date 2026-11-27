@@ -64,6 +64,20 @@ CODEX_PREFIX = "Codex CLI "  # owner 10/23: Codex has plenty of tokens — its o
 MAC_PREFIX = "[給 Mac]"
 
 
+def codex_only(cfg: dict, title: str | None, now: float | None = None) -> bool:
+    """Owner 11/27: cards whose title starts with one of codex_only.prefixes go to Codex only (never a
+    Claude CLI) until codex_only.until (ISO time), e.g. word-ladder checks while Claude's weekly quota is low."""
+    rule = cfg.get("codex_only") or {}
+    prefixes = tuple(rule.get("prefixes") or ())
+    if not prefixes or not str(title or "").lstrip("問題回報 #0123456789：").startswith(prefixes):
+        return False
+    until = rule.get("until")
+    if not until:
+        return True
+    from datetime import datetime
+    return (now if now is not None else time.time()) < datetime.fromisoformat(until).timestamp()
+
+
 def is_swarm(agent: str | None) -> bool:
     """An issue-swarm CLI: "Claude CLI 3" (Claude Code's quota) or "Codex CLI 2" (Codex's)."""
     return bool(agent) and any(agent.startswith(p) and agent[len(p):].isdigit()
@@ -1134,6 +1148,8 @@ class Tick:
             # Codex first for cards it may take (≤ 3), Claude for the rest and when Codex is full
             agent = (free_slot(used, codex_n, CODEX_PREFIX)
                      if codex_ok and int(c.get("difficulty") or 3) <= 3 else None)
+            if not agent and codex_only(self.cfg, c.get("title")):
+                continue  # owner 11/27: these wait for Codex while Claude's weekly quota is low
             if not agent and claude_ok:
                 agent = free_slot(used, limit) or (free_slot(used, limit + extra) if from_owner(c) else None)
             if not agent:
