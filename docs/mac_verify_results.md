@@ -3594,3 +3594,9 @@ iPhone 18 Pro 模擬器新安裝、帶 iphone.json，commit d02bfe11 之後的�
 | 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
 |----|----|----|----|----|----|
 | #224 | 注意 | Windows 的模擬使用者（拍照）結果，卡上寫不需要 Mac；App 程式自 M1119 以來沒有改動，所以沒有重跑。上一次完整驗證是 M1119（iPad 法文 23 項、模擬器 29 項全部通過）。 | — | — | — |
+
+## Mac 發現：單字合併刪掉 owner 的字（2026-11-27 iPad）
+
+| 卡／步驟 | 結果 | 實際 | 截圖 | 嚴重度 | 裝置 |
+|----|----|----|----|----|----|
+| 單字合併（#51 一字一卡 relink） | 不通過 | owner 的 iPad 英文單字本在 Mac 測試期間自己少了 shot、furthermore；之後唯讀查：shoot（verb，學習中）、further（adj.，學習中）都在，shot、furthermore 不見了。card manager 查到 word_database_repository.dart 約 1288–1300 行：relink 時只要 pack.lookup 經 'form' 或 'family' 命中、且詞庫沒有這個字自己的詞條，就 _foldInto 併到原形並刪掉原詞（約 1634 行 deleteEntry）。'family' 不該合併（furthermore 不是 further 的變化形），也沒比對詞性（shot 名詞被併進 shoot 動詞）。建議：只經 'form'、且原形詞性相同才合併；被刪的兩個字請從 sync tombstone 或備份找回。 | — | 高（刪掉 owner 的字） | iPad A16（學英文） |
