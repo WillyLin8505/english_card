@@ -9135,3 +9135,8 @@ commit `7893b364`（Windows：flutter analyze 無 error、flutter test 全過；
 commit `3ced5ca9`（Windows：flutter analyze 無 error、flutter test 全過）。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
 - 卡 #1464：問題回報 #1889：[上下游檢查] 批次 00（100 字）
   結果：全部完成：批次 00 檢查完，輸出 checkedbatch00.json（143／146 個字詞性有梯子，397 個意思＋34 個沿用既有組，共 1,589 個替換字，每字附台灣中文標 AI）。
+
+## M1151（2026-11-27 13:48）狀態：待做
+commit `b1b02ce8`（Windows：flutter analyze 無 error、flutter test 全過；另有 1 檔在 HEAD 上就失敗（已開問題回報，不是這批造成））。`git pull` 後在 iPhone 模擬器逐張驗證下面的卡（owner 10/28：用 owner 的 iPad 驗證，模擬器只做快速檢查；不用 owner 的 iPhone）：照卡上的結果實際操作一次、截圖，結果寫進 docs/mac_verify_results.md（每張卡一列：通過／不通過／注意＋原因；第一欄寫卡號 #N，表格加「裝置」欄寫 iPad 或 模擬器，階段依這些欄位自動前進）。不通過的開 `[Mac]` 問題回報，標題寫卡號。
+- 卡 #1467：問題回報 #1892：[卡片回報 #1466] 上下游詞義 senseId 連錯：長音→性器官、房屋→王朝
+  結果：第一輪完成：詞義 senseId 錯連根因已修（wordladder.py），批次 00 的 senseId 214 筆重算，共用同一 senseId 的 synset 由 48 降為 0，長音／房屋／一套／排列四個錯例都不再連到錯義。
