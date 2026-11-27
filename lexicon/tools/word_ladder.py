@@ -530,7 +530,7 @@ def api(method, path, body=None):
 
 def cmd_open_issues(_):
     issues = api('GET', '/api/issues')
-    issues = issues.get('issues', issues) if isinstance(issues, dict) else issues
+    issues = (issues.get('items') or issues.get('issues') or []) if isinstance(issues, dict) else issues
     have = {i.get('title', '') for i in issues}
     for fn in sorted(os.listdir(OUT)):
         m = re.fullmatch(r'qwen_batch_(\d+)\.json', fn)
