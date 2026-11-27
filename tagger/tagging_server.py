@@ -526,6 +526,14 @@ _NOT_VISIBLE_ENGLISH_LABELS = {
     'nation', 'economy', 'relationship', 'opportunity', 'situation', 'aspect', 'factor',
     'congregate', 'situate', 'reside', 'ponder', 'contemplate', 'envision', 'anticipate',
     'deliberate', 'ascertain', 'endeavor', 'utilize', 'facilitate', 'necessitate',
+    # Card #1461 (問題回報 #1886): hedging / evaluative adjectives and abstract nouns that
+    # a wire-and-plant photo came back with (likely, prominent, connection).
+    'likely', 'unlikely', 'probable', 'possible', 'potential', 'apparent', 'evident',
+    'obvious', 'prominent', 'notable', 'significant', 'major', 'essential', 'typical',
+    'certain', 'particular', 'specific', 'overall', 'relevant', 'important', 'popular',
+    'famous', 'common', 'ideal', 'perfect', 'unique', 'special', 'general',
+    'connection', 'condition', 'process', 'quality', 'purpose', 'function', 'feature',
+    'element', 'moment', 'sense', 'impression', 'atmosphere', 'activity', 'environment',
 }
 # A label the model itself calls implied or likely is not something the photo shows.
 _HEDGED_EVIDENCE = re.compile(r'\b(?:implied|implies|suggests?|likely|possibly|perhaps|presumably)\b',
@@ -1580,6 +1588,13 @@ class Tagger:
             return items
         drop = {labels[n]['word'] for n in range(len(labels))
                 if probs[n] is not None and probs[n] < LABEL_VERIFY_MIN}
+        # Card #1461: the model's own P(shown) replaces the fixed 0.7 so the App can rank by it.
+        real = {labels[n]['word']: round(min(max(probs[n], 0.0), 1.0), 2)
+                for n in range(len(labels)) if probs[n] is not None}
+        for i in items:
+            w = str(i['word']).lower()
+            if w in real:
+                i['visualConfidence'] = real[w]
         return [i for i in items if str(i['word']).lower() not in drop]
 
     def enrich(self, req: dict) -> dict:

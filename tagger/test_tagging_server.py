@@ -476,6 +476,13 @@ def test_labels_the_photo_does_not_show_are_dropped_card1418():
     items = [{'word': 'mouse', 'pos': 'noun'}, {'word': 'sit', 'pos': 'verb'},
              {'word': 'secure', 'pos': 'adjective'}]
     assert [i['word'] for i in T()._drop_unshown_labels(b'img', items, 'en')] == ['mouse', 'sit']
+    assert items[0]['visualConfidence'] == 0.95  # card #1461: real P(shown), not a fixed 0.7
+
+
+def test_abstract_adjectives_are_not_candidates():
+    raw = [{'w': w, 'p': 'a', 'x': 500, 'y': 300, 'box': [100, 100, 800, 800]}
+           for w in ('likely', 'prominent', 'connection')]
+    assert to_candidates(raw, None) == []
 
 
 def test_harder_pass_keeps_b2_and_above_only():
