@@ -44,6 +44,19 @@ def senses_of(entry):
         yield sn.get("gloss_en") or sn.get("gloss") or "", sn.get("zh", ""), ws
 
 
+LONG_POS = {"adj": "adjective", "adv": "adverb", "noun": "noun", "verb": "verb"}
+
+
+def cefr_of(word, pos):
+    """CEFR level as word_ladder.level() gives it (CEFR list, else frequency); None if it can't be worked out."""
+    try:
+        sys.path.insert(0, str(ROOT / "lexicon" / "tools"))
+        import word_ladder as wl
+        return wl.level(word.strip().lower(), LONG_POS.get(norm_pos(pos), norm_pos(pos)))
+    except Exception:
+        return None
+
+
 def sense_key(sn):
     """Stable identity of a checked sense: WordNet ssid, else the hand-made group name, else the App senseId."""
     return sn.get("ssid") or sn.get("group") or (f"sense-{sn['senseId']}" if sn.get("senseId") else "")
@@ -134,9 +147,11 @@ def import_entry(s, entry, batch, stats):
             target.zh = target.zh or zh
             target.gloss_en = target.gloss_en or gloss
         order = {"A1": 0, "A2": 1, "B1": 2, "B2": 3, "C1": 4, "C2": 5}
-        members = list(ws)
+        members = [dict(x) for x in ws]
         if word not in {x["w"].strip().lower() for x in ws}:
             members.append({"w": word, "pos": pos, "cefr": entry.get("level") or entry.get("cefr"), "zh": zh if False else "", "added_by": "qwen"})
+        for x in members:  # owner 11/27: lean checked files carry no level -> the board showed every word 未分級
+            x["cefr"] = x.get("cefr") or cefr_of(x["w"], x.get("pos") or pos)
         members.sort(key=lambda x: order.get(x.get("cefr") or "", 9))
         for i, w in enumerate(members):
             stats["members_new" if upsert_member(s, target.id, w, i) else "members_upd"] += 1

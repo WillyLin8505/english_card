@@ -1,0 +1,12 @@
+# 已完成上下游的單字（owner 11/27）
+
+後台網址：http://127.0.0.1:5173/ui/#/words/en/zh-TW/<單字>，往下捲到「上下游」。
+
+## 第 1–100 字（Claude Opus 檢查）
+like · time · get · new · people · good · only · know · see · make · think · back · want · go · well · way · right · work · off · still · take · life · say · world · great · best · love · man · home · long · look · use · same · come · better · find · help · high · little · old · own · game · thing · give · house · place · school · end · show · big · feel · sure · team · family · keep · put · money · free · left · number · city · name · night · play · real · different · set · group · top · business · care · start · case · person · today · change · full · live · point · read · bad · hard · mean · tell · music · stop · water · believe · call · head · small · white · job · side · try · line · order · party · run · open
+
+## 第 101–200 字（Claude Sonnet 精簡版）
+thank · black · following · war · car · face · kind · story · course · health · hope · important · news · book · information · post · thanks · video · young · social · talk · hand · mind · become · body · food · guy · office · pay · problem · true · history · large · room · win · wrong · girl · matter · pretty · remember · friend · nice · class · close · idea · due · happy · move · question · wait · woman · ask · late · leave · saw · special · watch · future · light · morning · short · stay · age · buy · reason · red · turn · check · form · heart · child · fire · fun · living · phone · art · building · easy · plan · front · list · ready · son · street · bring · college · example · meet · program · type · baby · father · song · study · word · action · self · board · cut · field
+
+## 第 201–300 字（Claude Sonnet 精簡版）
+moment · mother · town · fight · fine · hear · price · summer · wife · beautiful · date · site · strong · period · club · personal · share · tv · happen · hold · player · star · test · break · event · middle · present · result · sorry · wish · answer · boy · design · gold · guess · king · learn · bank · church · hot · movie · park · role · cool · ground · meeting · ok · reading · save · stand · blue · drive · eat · fast · feeling · green · match · picture · size · step · key · mom · page · review · science · brother · character · cup · football · vote · dog · language · stage · add · article · enjoy · kill · poor · technology · code · cover · door · foreign · hair · pick · sign · super · walk · bed · daughter · difficult · hospital · paper · forget · goal · internet · listen · okay · practice · sea
