@@ -5,6 +5,8 @@
   python lexicon/tools/word_ladder.py open-issues            # one [上下游檢查] issue per batch file without one
   python lexicon/tools/word_ladder.py build-app              # checked_batch_NN.json -> app/assets/word_ladder_en.json
   python lexicon/tools/word_ladder.py sample N               # N random words (Qwen + filtered) for the result.md
+  python lexicon/tools/word_ladder.py pack N                 # qwen_batch_NN.json -> review_batch_NN.txt (short, for the reviewer)
+  python lexicon/tools/word_ladder.py apply N [--suffix _codex]  # review_batch_NN.tsv -> checked_batch_NN.json
 
 Steps per batch of 75 words: list senses (WordNet + Wiktionary) -> reuse groups already made for the same
 WordNet synset -> Qwen finds candidates (4 words at once = llama-server's 4 slots) -> program filter ->
@@ -27,7 +29,8 @@ STATE = os.path.join(OUT, 'groups_state.json')
 APP_ASSET = os.path.join(ROOT, 'app', 'assets', 'word_ladder_en.json')
 API = 'http://127.0.0.1:5173'
 N_WORDS, BATCH_SIZE, SLOTS = 1000, 75, 4
-MAX_QWEN_SENSES = 8
+MAX_QWEN_SENSES = 6  # owner 11/27 「時間太長」: 8 -> 6 senses, 8+10 -> 6+6 candidates
+PACK_CANDS = 12  # candidates per sense shown to the reviewer (WordNet lemmas first)
 
 LV = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 K = {'adj.': 'adjective', 'adv.': 'adverb'}
@@ -186,19 +189,26 @@ def kaikki_senses(word, pos):
 
 
 def lexeme_id(word, pos):
+    if pos not in KPOS:  # members may be adverbs: no lexeme row to link
+        return None
     r = lexdb().execute('select id from lexemes where normalized=? and pos=? order by id limit 1',
                         (word, KPOS[pos])).fetchone()
     return r[0] if r else None
 
 
+def link_ok(score, mine):
+    """card #1467: one shared stem is a coincidence (house: dwelling ~ dynasty 'family'); need 2, or 1 for a very short gloss."""
+    return score >= 2 or (score >= 1 and len(mine) <= 2)
+
+
 def best_synset(word, pos, gloss):
     best, top = None, 0
-    mine = content(gloss)
+    mine = content(gloss) - {word[:5]}
     for ss in [s for x in WNPOS[pos] for s in wordnet().synsets(word, pos=x)]:
-        score = len(mine & (content(ss.definition()) | {l.lower()[:5] for l in ss.lemmas()}))
+        score = len(mine & ((content(ss.definition()) | {l.lower()[:5] for l in ss.lemmas()}) - {word[:5]}))
         if score > top:
             best, top = ss, score
-    return best
+    return best if best is not None and link_ok(top, mine) else None
 
 
 def is_dated(word, pos, gloss, synonyms):
@@ -236,20 +246,34 @@ def all_senses(word, pos):
         k['ss'] = best_synset(word, pos, k['gloss'])
         k['src'] = 'Wiki'
         out.append(k)
+    taken = {}  # card #1467: a Wiktionary sense id belongs to one sense of this word only
+    for s in out:
+        if s['sense_id'] is not None:
+            if s['sense_id'] in taken:
+                s['sense_id'] = None
+            else:
+                taken[s['sense_id']] = s
     for s in out:  # WordNet-only senses: the closest Wiktionary sense gives the App's senseId
         if s['sense_id'] is None and s['ss'] is not None:
-            s['sense_id'] = closest_sense_id(word, pos, s['ss'])
+            s['sense_id'] = closest_sense_id(word, pos, s['ss'], set(taken))
+            if s['sense_id'] is not None:
+                taken[s['sense_id']] = s
     return out
 
 
-def closest_sense_id(word, pos, ss):
-    rows = lexdb().execute("""select s.id, s.definition from lexemes l join senses s on s.lexeme_id=l.id
+def closest_sense_id(word, pos, ss, taken=()):
+    """The Wiktionary sense of word+pos that says the same as the WordNet synset, or None (card #1467).
+    Never a dated / slang / vulgar sense (the App must not show them), never one already used, and the match must
+    share enough stems (link_ok) -- before, any single shared stem linked long -> 'having a long penis'."""
+    rows = lexdb().execute("""select s.id, s.definition, s.labels from lexemes l join senses s on s.lexeme_id=l.id
         where l.normalized=? and l.pos=? order by s.ordinal""", (word, KPOS[pos])).fetchall()
-    mine = content(ss.definition()) | {l.lower()[:5] for l in ss.lemmas() if l.lower() != word}
+    mine = (content(ss.definition()) | {l.lower()[:5] for l in ss.lemmas() if l.lower() != word}) - {word[:5]}
     best = None
-    for sid, definition in rows:
-        score = len(mine & content(definition or ''))
-        if score and (best is None or score > best[1]):
+    for sid, definition, labels in rows:
+        if sid in taken or not definition or any(t in (labels or '').lower() for t in DROP_TAGS):
+            continue
+        score = len(mine & (content(definition) - {word[:5]}))
+        if link_ok(score, mine) and (best is None or score > best[1]):
             best = (sid, score)
     return best[0] if best else None
 
@@ -258,8 +282,8 @@ def closest_sense_id(word, pos, ss):
 SCHEMA = {'type': 'object', 'properties': {'senses': {'type': 'array', 'maxItems': 8, 'items': {
     'type': 'object', 'properties': {
         'current': {'type': 'boolean'},
-        'english_easier': {'type': 'array', 'maxItems': 8, 'items': {'type': 'string'}},
-        'english_harder': {'type': 'array', 'maxItems': 10, 'items': {'type': 'string'}}},
+        'english_easier': {'type': 'array', 'maxItems': 6, 'items': {'type': 'string'}},
+        'english_harder': {'type': 'array', 'maxItems': 6, 'items': {'type': 'string'}}},
     'required': ['current', 'english_easier', 'english_harder']}}}, 'required': ['senses']}
 
 
@@ -271,10 +295,10 @@ def qwen(word, pos, senses):
               f'"{word}" with this meaning today; "english_easier": simpler, more common everyday ENGLISH '
               f'{NAME[pos]} that could REPLACE "{word}" in the example sentence (or a natural sentence with this '
               f'meaning) without changing its meaning; "english_harder": less common, more precise or advanced '
-              f'ENGLISH {NAME[pos]} that could replace it the same way. Give as many candidates as you can (up to '
-              '8 easier and 10 harder); a later check removes wrong ones. English single words only, dictionary '
+              f'ENGLISH {NAME[pos]} that could replace it the same way. Give up to 6 easier and 6 harder '
+              'candidates; a later check removes wrong ones. English single words only, dictionary '
               'form, lowercase; no slang. Reply with JSON only.')
-    body = {'messages': [{'role': 'user', 'content': prompt}], 'temperature': 0, 'max_tokens': 2500,
+    body = {'messages': [{'role': 'user', 'content': prompt}], 'temperature': 0, 'max_tokens': 1500,
             'chat_template_kwargs': {'enable_thinking': False},
             'response_format': {'type': 'json_schema', 'json_schema': {'name': 'r', 'schema': SCHEMA}}}
     for attempt in range(3):
@@ -522,6 +546,130 @@ def cmd_run(args):
         print(f'batch {n:02d}: {len(batch)} words, {len(entries)} entries, {stats}, {doc["seconds"]}s', flush=True)
 
 
+# ---------- lean review (owner 11/27: fewer tokens, faster) ----------
+# The reviewer (Codex) reads one short text file and writes one TSV line per sense; member Chinese comes
+# from ECDICT here, so the reviewer writes Chinese only for each sense. Shared senses are not reviewed.
+ECDICT = os.path.join(ROOT, 'lexicon', 'raw-data', 'ecdict.sqlite3')
+ECPOS = {'noun': ('n.',), 'verb': ('v.', 'vt.', 'vi.'), 'adjective': ('a.', 'adj.'), 'adverb': ('ad.', 'adv.')}
+_ecd = None
+
+
+def ecdict_zh(w, pos):
+    """ECDICT's first meaning for this part of speech, Taiwan wording ('' when none)."""
+    global _ecd, _CC
+    if _ecd is None:
+        import opencc
+        _ecd, _CC = sqlite3.connect(ECDICT), opencc.OpenCC('s2twp')
+    r = _ecd.execute('select translation from e where lower=? limit 1', (w.lower(),)).fetchone()
+    for line in re.split(r'\\n|\n', (r[0] or '') if r else ''):
+        line = line.strip()
+        if line.startswith(ECPOS[pos]):
+            t = re.sub(r'^[a-z]+\.\s*', '', line)
+            t = re.sub(r'\[[^\]]*\]|（[^）]*）|\([^)]*\)', '', t)
+            return _CC.convert(re.split(r'[，,；;]', t)[0].strip())[:8]
+    return ''
+
+
+def ranked(cands):
+    """WordNet lemmas (not broad) first, then Qwen's order; at most PACK_CANDS."""
+    return sorted(cands, key=lambda c: ('|broad' in c, ))[:PACK_CANDS]
+
+
+def pack_text(doc):
+    lines = [f"# batch {doc['batch']:02d}. One block per word/pos; numbered lines = senses to review.",
+             '# candidate = word|CEFR (adv<-x: adverb of x; broad: wider word). gloss :: example']
+    for e in doc['entries']:
+        lines.append(f"{e['word']}/{e['pos']} {e['level']}")
+        for i, s in enumerate(e['senses'], 1):
+            ex = (s.get('example') or '')[:70]
+            lines.append(f" {i} {s['gloss'][:90]}" + (f' :: {ex}' if ex else '') + ' || ' + ' '.join(ranked(s['cands'])))
+        for s in e.get('shared') or []:
+            lines.append(f" = {s['gloss'][:60]} (shared, no review)")
+    return '\n'.join(lines) + '\n'
+
+
+def cmd_pack(args):
+    n = args.batch
+    doc = json.load(open(os.path.join(OUT, f'qwen_batch_{n:02d}.json'), encoding='utf-8'))
+    path = os.path.join(OUT, f'review_batch_{n:02d}.txt')
+    open(path, 'w', encoding='utf-8').write(pack_text(doc))
+    print(path, os.path.getsize(path), 'bytes')
+
+
+def member_pos(x, pos):
+    if pos != 'adjective':
+        return pos
+    return 'adverb' if row_of(x, pos) == 'adverb' else 'adjective'
+
+
+def apply_review(doc, tsv, reviewer):
+    """review TSV: word/pos <TAB> sense number | + (new sense) | -n (drop) <TAB> zh <TAB> members (space; w=中文 overrides ECDICT)."""
+    by = {}
+    for raw in tsv.splitlines():
+        if not raw.strip() or raw.startswith('#'):
+            continue
+        parts = raw.rstrip('\n').split('\t') + ['', '', '']
+        by.setdefault(parts[0].strip(), []).append([p.strip() for p in parts[1:4]])
+    words, unreviewed = [], []
+    for e in doc['entries']:
+        key, rows = f"{e['word']}/{e['pos']}", by.get(f"{e['word']}/{e['pos']}")
+        if rows is None:
+            unreviewed.append(key)
+            continue
+        senses = [{'group': s['group'], 'senseId': s['senseId'], 'shared': True} for s in e.get('shared') or []]
+        for n, zh, members in rows:
+            if n.startswith('-'):
+                continue
+            src = e['senses'][int(n) - 1] if n.isdigit() and 0 < int(n) <= len(e['senses']) else None
+            ms = []
+            for x in dict.fromkeys(members.replace(',', ' ').split()):
+                x, _, own = x.partition('=')  # adore=非常喜歡: the reviewer's Chinese when ECDICT's is off
+                x = x.lower()
+                if x != e['word']:
+                    p = member_pos(x, e['pos'])
+                    ms.append({'w': x, 'pos': p, 'zh': own or ecdict_zh(x, p), 'zh_source': 'AI' if own else 'ECDICT'})
+            senses.append({'ssid': src['ssid'] if src else None, 'senseId': src['senseId'] if src else None,
+                           'group': (src['group'] if src and src['group'] else
+                                     f"g_b{doc['batch']:02d}_{e['word']}_{e['pos']}_{len(senses)}"),
+                           'zh': zh, 'zh_source': 'AI', 'members': ms})
+        words.append({'word': e['word'], 'pos': e['pos'], 'senses': senses})
+    return {'batch': doc['batch'], 'reviewer': reviewer, 'words': words}, unreviewed
+
+
+def cmd_apply(args):
+    n = args.batch
+    doc = json.load(open(os.path.join(OUT, f'qwen_batch_{n:02d}.json'), encoding='utf-8'))
+    tsv = open(os.path.join(OUT, f'review_batch_{n:02d}{args.suffix}.tsv'), encoding='utf-8').read()
+    out, missing = apply_review(doc, tsv, args.reviewer)
+    path = os.path.join(OUT, f'checked_batch_{n:02d}{args.suffix}.json')
+    json.dump(out, open(path, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+    ns = sum(len(w['senses']) for w in out['words'])
+    nm = sum(len(s.get('members') or []) for w in out['words'] for s in w['senses'])
+    print(path, len(out['words']), 'entries', ns, 'senses', nm, 'members; not reviewed:', missing[:20])
+
+
+def lean_instructions(n, suffix=''):
+    """Check-card text (owner 11/27: fewer tokens). Read only the short pack, write only the TSV."""
+    d = 'lexicon/raw-data/word_ladder/'
+    return (f'只讀 {d}review_batch_{n:02d}.txt（不要讀 qwen_batch 或其他檔，不要寫例句、稽核檔或說明），'
+            f'只寫 {d}review_batch_{n:02d}{suffix}.tsv，然後執行 python lexicon/tools/word_ladder.py apply {n}'
+            + (f' --suffix {suffix}' if suffix else '') + '。
+'
+            'TSV 每行：word/pos<TAB>意思編號<TAB>這個意思的台灣中文（AI）<TAB>同義字（空格分隔）。
+'
+            '- 每個編號都要有一行；要刪的意思寫 -編號（例：like/verb<TAB>-3）；漏掉的常用意思寫 +。
+'
+            '- 同義字：能在例句裡直接替換的才留，名詞→名詞、動詞→動詞、形容詞→形容詞或副詞；可以補字。'
+            '每個意思盡量 3–8 個，簡單（A1–B1）和難（B2–C2）都要，讓難度條有字可換。\n'
+            '- 常用基本意思即使沒有同義字也要留（第四欄空白），例：white 白色的、right 右邊、back 後面；'
+            '冷門或過時意思才刪（gay＝快樂、number＝表演節目）。\n'
+            '- 同義字的中文由程式從 ECDICT 帶入；只有 ECDICT 的意思明顯不對時才寫 字=中文（例 adore=非常喜歡）。
+'
+            '- 標 = 的意思已和別的字共用一組，不用寫。
+'
+            '在 result.md 寫開始與結束時間。')
+
+
 # ---------- board ----------
 def api(method, path, body=None):
     req = urllib.request.Request(API + path, method=method,
@@ -543,24 +691,97 @@ def cmd_open_issues(_):
         title = f'[上下游檢查] 批次 {n:02d}（{len(doc["words"])} 字）'
         if title in have or os.path.exists(os.path.join(OUT, f'checked_batch_{n:02d}.json')):
             continue
-        body = (f'檢查 lexicon/raw-data/word_ladder/qwen_batch_{n:02d}.json，輸出 lexicon/raw-data/word_ladder/checked_batch_{n:02d}.json。\n'
-                '做法：lexicon/tools/word_ladder_proto/README.md 第 4 步與 lexicon/tools/word_ladder.py 檔頭的 checked 格式。\n'
-                '1) 每個字挑學習者會遇到的常用意思（補漏掉的現代意思）、合併重複意思；\n'
-                '2) 逐字檢查「能否在例句裡直接替換」，不能的刪、漏的補；名詞→名詞、動詞→動詞、形容詞→形容詞或副詞；\n'
-                '3) shared 欄的意思已有組：確認「這個字的這個意思」確實等於該組，不是就改成新組；\n'
-                '4) 給每個保留字「這個意思」的台灣中文（標 AI）；\n'
-                '5) 常用的基本意思即使沒有同義字也要保留（members 留空），例如 white「白色的」、right「右邊」、'
-                'back「後面」；冷門意思（number 的表演節目、make 的產量）才刪。\n'
-                'checked 格式：{"batch":N,"words":[{"word","pos","senses":[{"ssid","senseId","group","zh",'
-                '"members":[{"w","pos","zh"}]}]}]}（members 不含原字；shared 的意思只寫 group 與 senseId）。')
+        body = lean_instructions(n)
         r = api('POST', '/api/issues', {'title': title, 'kind': 'todo', 'area': 'data', 'difficulty': 3,
                                         'detail': body, 'by': 'card1450'})
         print('opened', title, r.get('id') if isinstance(r, dict) else r)
 
 
+# ---------- sense-id links (card #1467) ----------
+def link_problem(lid, sense_id, gloss):
+    """Why this senseId must not stay on a ladder sense (None = fine): wrong lexeme, dropped label, no shared meaning."""
+    r = lexdb().execute('select s.lexeme_id, s.definition, s.labels from senses s where s.id=?', (sense_id,)).fetchone()
+    if not r:
+        return 'missing'
+    if lid and r[0] != lid:
+        return 'other-lexeme'
+    if any(t in (r[2] or '').lower() for t in DROP_TAGS):
+        return 'dropped-label'
+    mine = content(gloss or '')
+    if mine and not link_ok(len(mine & content(r[1] or '')), mine):
+        return 'meaning-differs'
+    return None
+
+
+def library_links():
+    """[(file, word, pos, sense dict)] over every checked batch."""
+    out = []
+    for fn in sorted(os.listdir(OUT)):
+        if re.fullmatch(r'checked_batch_\d+\.json', fn):
+            doc = json.load(open(os.path.join(OUT, fn), encoding='utf-8'))
+            out += [(fn, w, s) for w in doc['words'] for s in w.get('senses', [])]
+    return out
+
+
+def cmd_audit(_):
+    """Measure the whole library: wrong / shared senseIds in the checked batches (read only)."""
+    kind, owners, n = {}, {}, 0
+    gloss_of = {}
+    for fn in sorted(os.listdir(OUT)):
+        if re.fullmatch(r'qwen_batch_\d+\.json', fn):
+            for e in json.load(open(os.path.join(OUT, fn), encoding='utf-8')).get('entries', []):
+                for x in e.get('senses', []):
+                    gloss_of[(e['word'], e['pos'], x.get('ssid'))] = x.get('gloss')
+    for fn, w, s in library_links():
+        if not s.get('senseId'):
+            continue
+        n += 1
+        lid = lexeme_id(w['word'], w['pos'])
+        owners.setdefault((lid, s['senseId']), set()).add(s.get('ssid'))
+        gloss = gloss_of.get((w['word'], w['pos'], s.get('ssid')))
+        if not gloss and s.get('ssid'):
+            try:
+                gloss = wordnet().synset(s['ssid']).definition()
+            except Exception:
+                gloss = None
+        why = link_problem(lid, s['senseId'], gloss)
+        if why:
+            kind.setdefault(why, []).append(f"{w['word']}/{w['pos']}:{s['senseId']}")
+    shared = {k: v for k, v in owners.items() if len(v) > 1}
+    print('links', n, '| problems', {k: len(v) for k, v in kind.items()}, '| senseIds shared by >1 synset', len(shared))
+    for k, v in kind.items():
+        print(' ', k, v[:12])
+
+
+def cmd_relink(_):
+    """Re-derive every senseId in the checked batches with the strict matching (backup first, only senseId changes)."""
+    bk = os.path.join(OUT, 'card1467_backup')
+    os.makedirs(bk, exist_ok=True)
+    changed = dropped = 0
+    for fn in sorted(os.listdir(OUT)):
+        if not re.fullmatch(r'checked_batch_\d+\.json', fn):
+            continue
+        path = os.path.join(OUT, fn)
+        if not os.path.exists(os.path.join(bk, fn)):
+            shutil.copyfile(path, os.path.join(bk, fn))
+        doc = json.load(open(path, encoding='utf-8'))
+        for w in doc['words']:
+            fresh = {x['ss'].id: x['sense_id'] for x in all_senses(w['word'], w['pos']) if x['ss'] is not None}
+            for s in w.get('senses', []):
+                new = fresh.get(s.get('ssid'))
+                if new != s.get('senseId'):
+                    changed += 1
+                    dropped += new is None
+                    s['senseId'] = new
+        tmp = path + '.tmp'
+        json.dump(doc, open(tmp, 'w', encoding='utf-8'), ensure_ascii=False)
+        os.replace(tmp, path)
+    print('senseIds changed', changed, '(set to none:', dropped, ')')
+
+
 # ---------- App asset ----------
 def cmd_build_app(_):
-    senses, groups = {}, {}
+    senses, groups, clashes = {}, {}, []
     for fn in sorted(os.listdir(OUT)):
         if not re.fullmatch(r'checked_batch_\d+\.json', fn):
             continue
@@ -574,11 +795,14 @@ def cmd_build_app(_):
                 for m in s.get('members', []):
                     grp[(m['w'], m['pos'])] = {'lemma': m['w'], 'pos': m['pos'], 'cefr': level(m['w'], m['pos']),
                                                'lexemeId': lexeme_id(m['w'], m['pos'])}
-                if lid and s.get('senseId'):
-                    senses[f"{lid}:{s['senseId']}"] = gid
+                if lid and s.get('senseId') and not link_problem(lid, s['senseId'], None):
+                    key = f"{lid}:{s['senseId']}"
+                    if senses.setdefault(key, gid) != gid:  # card #1467: first ladder keeps the sense, no overwrite
+                        clashes.append(key)
     doc = {'senses': senses, 'groups': {g: list(m.values()) for g, m in groups.items() if len(m) > 1}}
     doc['senses'] = {k: g for k, g in senses.items() if g in doc['groups']}
     json.dump(doc, open(APP_ASSET, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
+    print('sense clashes kept as first', len(clashes))
     print('app asset', len(doc['senses']), 'senses', len(doc['groups']), 'groups', os.path.getsize(APP_ASSET), 'bytes')
 
 
@@ -618,8 +842,16 @@ if __name__ == '__main__':
     r.add_argument('--force-day', action='store_true')
     sub.add_parser('open-issues')
     sub.add_parser('build-app')
+    sub.add_parser('audit')
+    sub.add_parser('relink')
     s = sub.add_parser('sample')
     s.add_argument('n', type=int)
     s.add_argument('--seed', type=int, default=1450)
+    pk = sub.add_parser('pack')
+    pk.add_argument('batch', type=int)
+    ar = sub.add_parser('apply')
+    ar.add_argument('batch', type=int)
+    ar.add_argument('--suffix', default='')
+    ar.add_argument('--reviewer', default='Codex')
     a = ap.parse_args()
-    {'words': cmd_words, 'run': cmd_run, 'open-issues': cmd_open_issues, 'build-app': cmd_build_app, 'sample': cmd_sample}[a.cmd](a)
+    {'pack': cmd_pack, 'apply': cmd_apply, 'words': cmd_words, 'run': cmd_run, 'open-issues': cmd_open_issues, 'build-app': cmd_build_app, 'audit': cmd_audit, 'relink': cmd_relink, 'sample': cmd_sample}[a.cmd](a)
