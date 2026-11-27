@@ -653,20 +653,15 @@ def lean_instructions(n, suffix=''):
     d = 'lexicon/raw-data/word_ladder/'
     return (f'只讀 {d}review_batch_{n:02d}.txt（不要讀 qwen_batch 或其他檔，不要寫例句、稽核檔或說明），'
             f'只寫 {d}review_batch_{n:02d}{suffix}.tsv，然後執行 python lexicon/tools/word_ladder.py apply {n}'
-            + (f' --suffix {suffix}' if suffix else '') + '。
-'
-            'TSV 每行：word/pos<TAB>意思編號<TAB>這個意思的台灣中文（AI）<TAB>同義字（空格分隔）。
-'
-            '- 每個編號都要有一行；要刪的意思寫 -編號（例：like/verb<TAB>-3）；漏掉的常用意思寫 +。
-'
+            + (f' --suffix {suffix}' if suffix else '') + '。\n'
+            'TSV 每行：word/pos<TAB>意思編號<TAB>這個意思的台灣中文（AI）<TAB>同義字（空格分隔）。\n'
+            '- 每個編號都要有一行；要刪的意思寫 -編號（例：like/verb<TAB>-3）；漏掉的常用意思寫 +。\n'
             '- 同義字：能在例句裡直接替換的才留，名詞→名詞、動詞→動詞、形容詞→形容詞或副詞；可以補字。'
             '每個意思盡量 3–8 個，簡單（A1–B1）和難（B2–C2）都要，讓難度條有字可換。\n'
             '- 常用基本意思即使沒有同義字也要留（第四欄空白），例：white 白色的、right 右邊、back 後面；'
             '冷門或過時意思才刪（gay＝快樂、number＝表演節目）。\n'
-            '- 同義字的中文由程式從 ECDICT 帶入；只有 ECDICT 的意思明顯不對時才寫 字=中文（例 adore=非常喜歡）。
-'
-            '- 標 = 的意思已和別的字共用一組，不用寫。
-'
+            '- 同義字的中文由程式從 ECDICT 帶入；只有 ECDICT 的意思明顯不對時才寫 字=中文（例 adore=非常喜歡）。\n'
+            '- 標 = 的意思已和別的字共用一組，不用寫。\n'
             '在 result.md 寫開始與結束時間。')
 
 
