@@ -323,6 +323,24 @@ def inflected(x, word, others):
     return False
 
 
+_WL = None
+_WPOS = {'noun': 'n', 'verb': 'v', 'adjective': 'a', 'adverb': 'r'}
+
+
+def inflection_of(x, pos, others=()):
+    """Base word when x is an inflected form (saw, customers, best), else None. Card #1485 / issue #1902.
+    A form that WordNet lists as its own lemma (glasses, pants) stays unless its base is already in the group."""
+    global _WL
+    if _WL is None:
+        import wn.morphy
+        _WL = wn.Wordnet('oewn:2024', lemmatizer=wn.morphy.Morphy(wn.Wordnet('oewn:2024')))
+    ws = _WL.words(x, _WPOS.get(pos, 'n'))
+    base = {w.lemma() for w in ws} - {x}
+    if base and (x not in {w.lemma() for w in ws} or base & set(others)):
+        return sorted(base)[0]
+    return None
+
+
 def norm_spelling(w):
     for a, b in (('ise', 'ize'), ('isation', 'ization'), ('our', 'or'), ('llery', 'lry'), ('ellery', 'elry'),
                  ('tre', 'ter'), ('ogue', 'og'), ('lled', 'led'), ('lling', 'ling'), ('ae', 'e'), ('oe', 'e')):
@@ -403,7 +421,7 @@ def filter_sense(word, pos, sense, answer, antonyms, stats):
         x = x.strip().lower()
         if x == word or x in words or ' ' in x or '-' in x or (x in GENERAL and x not in lemmas):
             continue
-        if (inflected(x, word, words) or not row_of(x, pos) or spelling_variant(x, word)
+        if (inflected(x, word, words) or inflection_of(x, pos, [word] + words) or not row_of(x, pos) or spelling_variant(x, word)
                 or any(spelling_variant(x, y) for y in words) or offensive(x) or x in antonyms):
             continue
         z = ts()._wordfreq_zipf(x) or 0
@@ -684,6 +702,8 @@ def apply_review(doc, tsv, reviewer):
                 x = x.lower()
                 if x != e['word']:
                     p = member_pos(x, e['pos'])
+                    if inflection_of(x, p, [e['word']] + [m['w'] for m in ms]):
+                        continue  # card #1485: saw / customers / best are forms of another word
                     ms.append({'w': x, 'pos': p, 'zh': own or ecdict_zh(x, p, zh), 'zh_source': 'AI' if own else 'ECDICT'})
             senses.append({'ssid': src['ssid'] if src else None, 'senseId': src['senseId'] if src else None,
                            'group': (src['group'] if src and src['group'] else
@@ -896,7 +916,10 @@ def cmd_build_app(_):
             for s in w.get('senses', []):
                 gid = s.get('group') or ('g_' + str(s.get('ssid')))
                 grp = groups.setdefault(gid, {})
+                names = [w['word']] + [m['w'] for m in s.get('members', [])]
                 for x in [{'w': w['word'], 'pos': w['pos']}] + s.get('members', []):  # the headword is judged like a member
+                    if x['w'] != w['word'] and inflection_of(x['w'], x['pos'], names):
+                        continue  # card #1485
                     how = member_how(anchors.get(gid), x['w'], x['pos'], cache)
                     grp[(x['w'], x['pos'])] = {'lemma': x['w'], 'pos': x['pos'], 'cefr': level(x['w'], x['pos']),
                                                'lexemeId': lexeme_id(x['w'], x['pos']),
