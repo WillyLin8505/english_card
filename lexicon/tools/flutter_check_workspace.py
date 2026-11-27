@@ -29,7 +29,8 @@ def check_workspace(root: Path):
                 shutil.copytree(source, app / name)
         for source in (root / "app").glob("*.dart"):
             shutil.copy2(source, app / source.name)
-        for relative in ("pack_sqlite.py",
+        for relative in ("docs/privacy.html",
+                         "pack_sqlite.py",
                          "lexicon/logs/agents/card123.resume.pack.json"):
             source = root / relative
             if source.is_file():
