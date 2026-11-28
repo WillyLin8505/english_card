@@ -7,6 +7,8 @@
   python lexicon/tools/word_ladder.py sample N               # N random words (Qwen + filtered) for the result.md
   python lexicon/tools/word_ladder.py pack N                 # qwen_batch_NN.json -> review_batch_NN.txt (short, for the reviewer)
   python lexicon/tools/word_ladder.py apply N [--suffix _codex]  # review_batch_NN.tsv -> checked_batch_NN.json
+  python lexicon/tools/word_ladder.py rel-pack N             # checked batch: members WordNet cannot place
+  python lexicon/tools/word_ladder.py rel-apply N            # rel_batch_NN.tsv -> member rel on that checked batch
 
 Steps per batch of 75 words: list senses (WordNet + Wiktionary) -> reuse groups already made for the same
 WordNet synset -> Qwen finds candidates (4 words at once = llama-server's 4 slots) -> program filter ->
@@ -699,8 +701,10 @@ def apply_review(doc, tsv, reviewer):
     for raw in tsv.splitlines():
         if not raw.strip() or raw.startswith('#'):
             continue
-        parts = raw.rstrip('\n').split('\t') + ['', '', '']
-        by.setdefault(parts[0].strip(), []).append([p.strip() for p in parts[1:4]])
+        parts = raw.rstrip('\n').split('\t')
+        while len(parts) < 5:  # column 5 (relations) is optional; a short row must still unpack
+            parts.append('')
+        by.setdefault(parts[0].strip(), []).append([p.strip() for p in parts[1:5]])
     words, unreviewed = [], []
     for e in doc['entries']:
         key, rows = f"{e['word']}/{e['pos']}", by.get(f"{e['word']}/{e['pos']}")
@@ -765,8 +769,7 @@ def lean_instructions(n, suffix=''):
             '- 每個同義字都寫成 字=這個意思的台灣中文（例 period 一段時間 → term=期間 stretch=一段時間；'
             'wife → partner=伴侶），不要寫成字典上的其他意思（term 不是術語、partner 不是合夥人）。\n'
             '- 第五欄（可空白，card #1484）：只標你確定的字，寫 字:s（同義，可互換）、字:k（比這個意思更窄，如 dog 之於 animal）、'
-            '字:b（比這個意思更寬）；沒標的字由 WordNet 判斷，查不到就會被當成需要照片確認。同義字多半是 s，請盡量標。
-'
+            '字:b（比這個意思更寬）。你標了的字以你的為準；沒標的字由 WordNet 判斷，查不到就會被當成需要照片確認。同義字多半是 s，請盡量標。\n'
             '- 標 = 的意思已和別的字共用一組，不用寫。\n'
             '在 result.md 寫開始與結束時間。')
 
@@ -985,32 +988,50 @@ def cmd_rel_pack(args):
                 total += len(todo)
                 lines.append(f"{w['word']}/{w['pos']}	{s['zh']}	{' '.join(todo)}")
     path = os.path.join(OUT, f'rel_batch_{args.batch:02d}.txt')
-    open(path, 'w', encoding='utf-8').write('
-'.join(lines) + '
-')
+    open(path, 'w', encoding='utf-8').write('\n'.join(lines) + '\n')
     print(path, total, 'members')
 
 
-def cmd_rel_apply(args):
-    """rel_batch_NN.tsv: word/pos<TAB>zh<TAB>member:s|k|b ... -> writes 'rel' on those members of checked_batch_NN.json."""
-    path = os.path.join(OUT, f'checked_batch_{args.batch:02d}.json')
-    doc = json.load(open(path, encoding='utf-8'))
+def apply_rel_labels(doc, tsv):
+    """rel TSV: word/pos<TAB>sense zh<TAB>member:s|k|b ... Labels stay on that sense (the same word in another
+    sense is not touched). Returns how many members changed. Build-app reads member['rel'] over WordNet."""
     labels = {}
-    for raw in open(os.path.join(OUT, f'rel_batch_{args.batch:02d}.tsv'), encoding='utf-8').read().splitlines():
-        if raw.strip() and not raw.startswith('#'):
-            parts = raw.split('	') + ['', '']
-            labels.setdefault(parts[0].strip(), {}).update(parse_rels(parts[2]))
+    for raw in tsv.splitlines():
+        if not raw.strip() or raw.startswith('#'):
+            continue
+        parts = raw.split('\t')
+        while len(parts) < 3:
+            parts.append('')
+        labels.setdefault((parts[0].strip(), parts[1].strip()), {}).update(parse_rels(parts[2]))
     n = 0
-    for w in doc['words']:
+    for w in doc.get('words', []):
+        head = f"{w['word']}/{w['pos']}"
         for s in w.get('senses', []):
+            rel_of = labels.get((head, (s.get('zh') or '').strip()), {})
             for m in s.get('members', []):
-                r = labels.get(f"{w['word']}/{w['pos']}", {}).get(m['w'])
+                r = rel_of.get(m['w'])
                 if r and m.get('rel') != r:
                     m['rel'] = r
                     n += 1
-    shutil.copy(path, path + '.card1484.bak')
-    json.dump(doc, open(path, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
-    print('labelled', n, 'members in', path)
+    return n
+
+
+def cmd_rel_apply(args):
+    """rel_batch_NN.tsv -> writes 'rel' on those members of checked_batch_NN.json. No rewrite when nothing changes."""
+    path = os.path.join(OUT, f'checked_batch_{args.batch:02d}.json')
+    doc = json.load(open(path, encoding='utf-8'))
+    tsv = open(os.path.join(OUT, f'rel_batch_{args.batch:02d}.tsv'), encoding='utf-8').read()
+    n = apply_rel_labels(doc, tsv)
+    if not n:
+        print('labelled', 0, 'members in', path)
+        return
+    bak = os.path.join(OUT, f'card1484_checked_batch_{args.batch:02d}.json.bak')
+    if not os.path.exists(bak):
+        shutil.copy(path, bak)
+    tmp = path + '.tmp'
+    json.dump(doc, open(tmp, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+    os.replace(tmp, path)
+    print('labelled', n, 'members in', path, '(backup', bak + ')')
 
 
 def cmd_words(_):
